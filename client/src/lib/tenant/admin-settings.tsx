@@ -21,7 +21,13 @@ import {
   Eye,
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -56,7 +62,10 @@ interface BrandingSettingsProps {
   onUpdate: (branding: Partial<TenantBranding>) => void;
 }
 
-export function BrandingSettings({ branding, onUpdate }: BrandingSettingsProps) {
+export function BrandingSettings({
+  branding,
+  onUpdate,
+}: BrandingSettingsProps) {
   const [form, setForm] = React.useState(branding);
 
   const handleSave = () => {
@@ -218,7 +227,15 @@ interface FeatureTogglesSettingsProps {
 const featureGroups = [
   {
     title: "Modules principaux",
-    features: ["storage", "calendar", "tasks", "mail", "chat", "docs", "meet"] as FeatureToggleKey[],
+    features: [
+      "storage",
+      "calendar",
+      "tasks",
+      "mail",
+      "chat",
+      "docs",
+      "meet",
+    ] as FeatureToggleKey[],
   },
   {
     title: "Modules avancés",
@@ -226,15 +243,31 @@ const featureGroups = [
   },
   {
     title: "Fonctionnalités",
-    features: ["dashboardCustomization", "viewsSystem", "commandBar", "darkMode", "multiLanguage"] as FeatureToggleKey[],
+    features: [
+      "dashboardCustomization",
+      "viewsSystem",
+      "commandBar",
+      "darkMode",
+      "multiLanguage",
+    ] as FeatureToggleKey[],
   },
   {
     title: "Administration",
-    features: ["userManagement", "roleManagement", "auditLog", "apiAccess"] as FeatureToggleKey[],
+    features: [
+      "userManagement",
+      "roleManagement",
+      "auditLog",
+      "apiAccess",
+    ] as FeatureToggleKey[],
   },
   {
     title: "Intégrations",
-    features: ["ldapAuth", "samlAuth", "webhooks", "apiKeys"] as FeatureToggleKey[],
+    features: [
+      "ldapAuth",
+      "samlAuth",
+      "webhooks",
+      "apiKeys",
+    ] as FeatureToggleKey[],
   },
 ];
 
@@ -349,9 +382,7 @@ export function LocalizationSettings({
           <Globe className="h-5 w-5" />
           Localisation
         </CardTitle>
-        <CardDescription>
-          Configurez les paramètres régionaux.
-        </CardDescription>
+        <CardDescription>Configurez les paramètres régionaux.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid gap-4 sm:grid-cols-2">
@@ -388,8 +419,12 @@ export function LocalizationSettings({
               <SelectContent>
                 <SelectItem value="Europe/Paris">Europe/Paris</SelectItem>
                 <SelectItem value="Europe/London">Europe/London</SelectItem>
-                <SelectItem value="America/New_York">America/New_York</SelectItem>
-                <SelectItem value="America/Los_Angeles">America/Los_Angeles</SelectItem>
+                <SelectItem value="America/New_York">
+                  America/New_York
+                </SelectItem>
+                <SelectItem value="America/Los_Angeles">
+                  America/Los_Angeles
+                </SelectItem>
                 <SelectItem value="Asia/Tokyo">Asia/Tokyo</SelectItem>
               </SelectContent>
             </Select>
@@ -521,7 +556,10 @@ export function SecuritySettings({ config, onUpdate }: SecuritySettingsProps) {
               { key: "requireUppercase", label: "Majuscules requises" },
               { key: "requireLowercase", label: "Minuscules requises" },
               { key: "requireNumbers", label: "Chiffres requis" },
-              { key: "requireSpecialChars", label: "Caractères spéciaux requis" },
+              {
+                key: "requireSpecialChars",
+                label: "Caractères spéciaux requis",
+              },
             ].map(({ key, label }) => (
               <div key={key} className="flex items-center justify-between py-1">
                 <span className="text-sm">{label}</span>
@@ -621,7 +659,7 @@ export function TenantSettingsPage() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-5">
           <TabsTrigger value="branding">
             <Palette className="h-4 w-4 mr-2" />
             Branding

@@ -218,14 +218,14 @@ export default function DashboardPage() {
     <AppLayout>
       <div className="space-y-6">
         {/* Header */}
-        <header className="flex items-end justify-between">
+        <header className="flex flex-col sm:flex-row items-start sm:items-end justify-between gap-3">
           <div>
             <h2 className="text-2xl font-semibold">Tableau de bord</h2>
             <p className="text-sm text-muted-foreground">
               Bienvenue, voici l&apos;état actuel de votre workspace.
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             {/* Role indicator */}
             <Badge variant="outline" className="text-xs">
               {getRoleLabel(user?.role)}

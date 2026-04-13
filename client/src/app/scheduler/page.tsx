@@ -1,19 +1,22 @@
-'use client';
+"use client";
 
-import { SpinnerInfinity } from 'spinners-react';
+import { SpinnerInfinity } from "spinners-react";
 
-import { useState, useCallback, useMemo } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useTableKeyboard } from '@/hooks/use-table-keyboard';
-import { AppLayout } from '@/components/layout/app-layout';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Skeleton } from '@/components/ui/skeleton';
-import { DataTableSkeleton, CardGridSkeleton } from '@/components/ui/skeleton-loader';
-import { Textarea } from '@/components/ui/textarea';
+import { useState, useCallback, useMemo } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useTableKeyboard } from "@/hooks/use-table-keyboard";
+import { AppLayout } from "@/components/layout/app-layout";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  DataTableSkeleton,
+  CardGridSkeleton,
+} from "@/components/ui/skeleton-loader";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Table,
   TableBody,
@@ -21,28 +24,28 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
+} from "@/components/ui/table";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from "@/components/ui/select";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from "@/components/ui/dropdown-menu";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -52,22 +55,46 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import { Plus, Clock, Play, MoreVertical, Pencil, Trash2, Terminal, Container, Server, RefreshCw, CheckCircle, XCircle, History, ArrowUpDown } from 'lucide-react';
-import { schedulerApi, ScheduledJob, JobRun, JobStats, RunningJob } from '@/lib/api';
-import { toast } from 'sonner';
-import { Switch } from '@/components/ui/switch';
-import { CronBuilder } from '@/components/scheduler/cron-builder';
-import { ExportButton } from '@/components/ui/export-button';
-import { usePageTitle } from '@/hooks/use-page-title';
+} from "@/components/ui/alert-dialog";
+import {
+  Plus,
+  Clock,
+  Play,
+  MoreVertical,
+  Pencil,
+  Trash2,
+  Terminal,
+  Container,
+  Server,
+  RefreshCw,
+  CheckCircle,
+  XCircle,
+  History,
+  ArrowUpDown,
+} from "lucide-react";
+import {
+  schedulerApi,
+  ScheduledJob,
+  JobRun,
+  JobStats,
+  RunningJob,
+} from "@/lib/api";
+import { toast } from "sonner";
+import { Switch } from "@/components/ui/switch";
+import { CronBuilder } from "@/components/scheduler/cron-builder";
+import { ExportButton } from "@/components/ui/export-button";
+import { usePageTitle } from "@/hooks/use-page-title";
 
 export default function SchedulerPage() {
-  usePageTitle('Planificateur');
+  usePageTitle("Planificateur");
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingJob, setEditingJob] = useState<ScheduledJob | null>(null);
   const [saving, setSaving] = useState(false);
-  const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; job: ScheduledJob | null }>({
+  const [deleteDialog, setDeleteDialog] = useState<{
+    open: boolean;
+    job: ScheduledJob | null;
+  }>({
     open: false,
     job: null,
   });
@@ -83,22 +110,30 @@ export default function SchedulerPage() {
 
   // Form state
   const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    cron_expression: '',
-    command: '',
-    target_type: 'host' as 'container' | 'host',
-    target_id: '',
+    name: "",
+    description: "",
+    cron_expression: "",
+    command: "",
+    target_type: "host" as "container" | "host",
+    target_id: "",
     enabled: true,
   });
 
-  const [sortField, setSortField] = useState<string>('name')
-  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
+  const [sortField, setSortField] = useState<string>("name");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
 
-  type SchedulerData = { jobs: ScheduledJob[]; stats: JobStats | null; runningJobs: RunningJob[] };
+  type SchedulerData = {
+    jobs: ScheduledJob[];
+    stats: JobStats | null;
+    runningJobs: RunningJob[];
+  };
 
-  const { data: schedulerData, isLoading: loading, isError: schedulerError } = useQuery<SchedulerData>({
-    queryKey: ['scheduler-jobs'],
+  const {
+    data: schedulerData,
+    isLoading: loading,
+    isError: schedulerError,
+  } = useQuery<SchedulerData>({
+    queryKey: ["scheduler-jobs"],
     queryFn: async () => {
       const [jobsRes, statsRes, runningRes] = await Promise.all([
         schedulerApi.listJobs().catch(() => ({ data: [] as ScheduledJob[] })),
@@ -119,16 +154,21 @@ export default function SchedulerPage() {
 
   const sortedJobs = useMemo(() => {
     return [...jobs].sort((a, b) => {
-      const aVal = a[sortField as keyof ScheduledJob] ?? '';
-      const bVal = b[sortField as keyof ScheduledJob] ?? '';
-      const cmp = String(aVal).localeCompare(String(bVal), 'fr', { numeric: true });
-      return sortDir === 'asc' ? cmp : -cmp;
+      const aVal = a[sortField as keyof ScheduledJob] ?? "";
+      const bVal = b[sortField as keyof ScheduledJob] ?? "";
+      const cmp = String(aVal).localeCompare(String(bVal), "fr", {
+        numeric: true,
+      });
+      return sortDir === "asc" ? cmp : -cmp;
     });
   }, [jobs, sortField, sortDir]);
 
   const toggleSort = (field: string) => {
-    if (sortField === field) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
-    else { setSortField(field); setSortDir('asc'); }
+    if (sortField === field) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    else {
+      setSortField(field);
+      setSortDir("asc");
+    }
   };
 
   // ── Keyboard navigation ───────────────────────────────────────────────────
@@ -147,7 +187,7 @@ export default function SchedulerPage() {
   });
 
   const fetchJobs = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: ['scheduler-jobs'] });
+    queryClient.invalidateQueries({ queryKey: ["scheduler-jobs"] });
   }, [queryClient]);
 
   const handleOpenDialog = (job?: ScheduledJob) => {
@@ -155,22 +195,22 @@ export default function SchedulerPage() {
       setEditingJob(job);
       setFormData({
         name: job.name,
-        description: job.description || '',
+        description: job.description || "",
         cron_expression: job.cron_expression,
         command: job.command,
         target_type: job.target_type,
-        target_id: job.target_id || '',
+        target_id: job.target_id || "",
         enabled: job.enabled,
       });
     } else {
       setEditingJob(null);
       setFormData({
-        name: '',
-        description: '',
-        cron_expression: '',
-        command: '',
-        target_type: 'host',
-        target_id: '',
+        name: "",
+        description: "",
+        cron_expression: "",
+        command: "",
+        target_type: "host",
+        target_id: "",
         enabled: true,
       });
     }
@@ -178,8 +218,12 @@ export default function SchedulerPage() {
   };
 
   const handleSave = async () => {
-    if (!formData.name.trim() || !formData.cron_expression.trim() || !formData.command.trim()) {
-      toast.error('Veuillez remplir tous les champs obligatoires');
+    if (
+      !formData.name.trim() ||
+      !formData.cron_expression.trim() ||
+      !formData.command.trim()
+    ) {
+      toast.error("Veuillez remplir tous les champs obligatoires");
       return;
     }
 
@@ -187,15 +231,15 @@ export default function SchedulerPage() {
     try {
       if (editingJob) {
         await schedulerApi.updateJob(editingJob.id, formData);
-        toast.success('Tâche mise à jour avec succès');
+        toast.success("Tâche mise à jour avec succès");
       } else {
         await schedulerApi.createJob(formData);
-        toast.success('Tâche créée avec succès');
+        toast.success("Tâche créée avec succès");
       }
       setDialogOpen(false);
       fetchJobs();
     } catch {
-      toast.error('Échec de la sauvegarde');
+      toast.error("Échec de la sauvegarde");
     } finally {
       setSaving(false);
     }
@@ -205,24 +249,24 @@ export default function SchedulerPage() {
     try {
       if (job.enabled) {
         await schedulerApi.disableJob(job.id);
-        toast.success('Tâche désactivée');
+        toast.success("Tâche désactivée");
       } else {
         await schedulerApi.enableJob(job.id);
-        toast.success('Tâche activée');
+        toast.success("Tâche activée");
       }
       fetchJobs();
     } catch {
-      toast.error('Échec de la mise à jour');
+      toast.error("Échec de la mise à jour");
     }
   };
 
   const handleRunNow = async (job: ScheduledJob) => {
     try {
       await schedulerApi.runJob(job.id);
-      toast.success('Tâche lancée');
+      toast.success("Tâche lancée");
       setTimeout(fetchJobs, 1000);
     } catch {
-      toast.error('Échec du lancement');
+      toast.error("Échec du lancement");
     }
   };
 
@@ -235,7 +279,7 @@ export default function SchedulerPage() {
         runs: response.data || [],
       });
     } catch {
-      toast.error('Échec du chargement de l\'historique');
+      toast.error("Échec du chargement de l'historique");
     }
   };
 
@@ -244,26 +288,26 @@ export default function SchedulerPage() {
 
     try {
       await schedulerApi.deleteJob(deleteDialog.job.id);
-      toast.success('Tâche supprimée');
+      toast.success("Tâche supprimée");
       setDeleteDialog({ open: false, job: null });
       fetchJobs();
     } catch {
-      toast.error('Échec de la suppression');
+      toast.error("Échec de la suppression");
     }
   };
 
   const formatDate = (dateString?: string) => {
-    if (!dateString) return 'Jamais';
+    if (!dateString) return "Jamais";
     return new Date(dateString).toLocaleString();
   };
 
   const getStatusBadge = (status?: string) => {
     switch (status) {
-      case 'success':
+      case "success":
         return <Badge className="bg-green-500/10 text-green-600">Réussi</Badge>;
-      case 'failed':
+      case "failed":
         return <Badge variant="destructive">Échoué</Badge>;
-      case 'running':
+      case "running":
         return <Badge className="bg-blue-500/10 text-blue-600">En cours</Badge>;
       default:
         return <Badge variant="secondary">-</Badge>;
@@ -298,9 +342,12 @@ export default function SchedulerPage() {
               <div className="flex h-16 w-16 items-center justify-center rounded-full bg-destructive/10 mb-4">
                 <Clock className="h-8 w-8 text-destructive" />
               </div>
-              <h3 className="text-lg font-semibold">Impossible de charger les tâches planifiées</h3>
+              <h3 className="text-lg font-semibold">
+                Impossible de charger les tâches planifiées
+              </h3>
               <p className="text-sm text-muted-foreground mt-1">
-                Le service de planification est peut-être indisponible. Vérifiez votre connexion et réessayez.
+                Le service de planification est peut-être indisponible. Vérifiez
+                votre connexion et réessayez.
               </p>
             </CardContent>
           </Card>
@@ -313,8 +360,8 @@ export default function SchedulerPage() {
   const displayStats = stats || {
     total_jobs: jobs.length,
     enabled_jobs: jobs.filter((j) => j.enabled).length,
-    successful_runs: jobs.filter((j) => j.last_status === 'success').length,
-    failed_runs: jobs.filter((j) => j.last_status === 'failed').length,
+    successful_runs: jobs.filter((j) => j.last_status === "success").length,
+    failed_runs: jobs.filter((j) => j.last_status === "failed").length,
     total_runs: 0,
     disabled_jobs: jobs.filter((j) => !j.enabled).length,
     average_duration_ms: 0,
@@ -327,28 +374,28 @@ export default function SchedulerPage() {
           <h1 className="text-3xl font-bold">Planificateur</h1>
           <div className="flex gap-2">
             <ExportButton
-              data={jobs.map(j => ({
+              data={jobs.map((j) => ({
                 name: j.name,
-                description: j.description || '',
+                description: j.description || "",
                 cron_expression: j.cron_expression,
                 command: j.command,
                 target_type: j.target_type,
-                target_id: j.target_id || '',
-                enabled: j.enabled ? 'Oui' : 'Non',
-                last_run: j.last_run || 'Jamais',
-                last_status: j.last_status || '-',
+                target_id: j.target_id || "",
+                enabled: j.enabled ? "Oui" : "Non",
+                last_run: j.last_run || "Jamais",
+                last_status: j.last_status || "-",
               }))}
               filename={`scheduler-jobs-${new Date().toISOString().slice(0, 10)}`}
               columns={{
-                name: 'Nom',
-                description: 'Description',
-                cron_expression: 'Planification',
-                command: 'Commande',
-                target_type: 'Type Cible',
-                target_id: 'ID Cible',
-                enabled: 'Active',
-                last_run: 'Derniere Execution',
-                last_status: 'Dernier Statut',
+                name: "Nom",
+                description: "Description",
+                cron_expression: "Planification",
+                command: "Commande",
+                target_type: "Type Cible",
+                target_id: "ID Cible",
+                enabled: "Active",
+                last_run: "Derniere Execution",
+                last_status: "Dernier Statut",
               }}
             />
             <Button variant="outline" onClick={fetchJobs}>
@@ -363,7 +410,7 @@ export default function SchedulerPage() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid gap-4 md:grid-cols-4">
+        <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
           <Card>
             <CardContent className="flex items-center gap-4 p-6">
               <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
@@ -382,7 +429,9 @@ export default function SchedulerPage() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Tâches Actives</p>
-                <p className="text-2xl font-bold">{displayStats.enabled_jobs}</p>
+                <p className="text-2xl font-bold">
+                  {displayStats.enabled_jobs}
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -392,16 +441,28 @@ export default function SchedulerPage() {
                 <CheckCircle className="h-6 w-6 text-blue-500" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Exécutions Réussies</p>
-                <p className="text-2xl font-bold">{displayStats.successful_runs}</p>
+                <p className="text-sm text-muted-foreground">
+                  Exécutions Réussies
+                </p>
+                <p className="text-2xl font-bold">
+                  {displayStats.successful_runs}
+                </p>
               </div>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="flex items-center gap-4 p-6">
-              <div className={`flex h-12 w-12 items-center justify-center rounded-lg ${runningJobs.length > 0 ? 'bg-amber-500/10' : 'bg-muted'}`}>
+              <div
+                className={`flex h-12 w-12 items-center justify-center rounded-lg ${runningJobs.length > 0 ? "bg-amber-500/10" : "bg-muted"}`}
+              >
                 {runningJobs.length > 0 ? (
-                  <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-6 w-6 text-amber-500 " />
+                  <SpinnerInfinity
+                    size={24}
+                    secondaryColor="rgba(128,128,128,0.2)"
+                    color="currentColor"
+                    speed={120}
+                    className="h-6 w-6 text-amber-500 "
+                  />
                 ) : (
                   <Server className="h-6 w-6 text-muted-foreground" />
                 )}
@@ -424,15 +485,57 @@ export default function SchedulerPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>État</TableHead>
-                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('name')}>
-                    <span className="flex items-center gap-1">Nom {sortField === 'name' ? (sortDir === 'asc' ? '↑' : '↓') : <ArrowUpDown className="h-3 w-3 text-muted-foreground" />}</span>
+                  <TableHead
+                    className="cursor-pointer select-none"
+                    onClick={() => toggleSort("name")}
+                  >
+                    <span className="flex items-center gap-1">
+                      Nom{" "}
+                      {sortField === "name" ? (
+                        sortDir === "asc" ? (
+                          "↑"
+                        ) : (
+                          "↓"
+                        )
+                      ) : (
+                        <ArrowUpDown className="h-3 w-3 text-muted-foreground" />
+                      )}
+                    </span>
                   </TableHead>
-                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('cron_expression')}>
-                    <span className="flex items-center gap-1">Planification {sortField === 'cron_expression' ? (sortDir === 'asc' ? '↑' : '↓') : <ArrowUpDown className="h-3 w-3 text-muted-foreground" />}</span>
+                  <TableHead
+                    className="cursor-pointer select-none"
+                    onClick={() => toggleSort("cron_expression")}
+                  >
+                    <span className="flex items-center gap-1">
+                      Planification{" "}
+                      {sortField === "cron_expression" ? (
+                        sortDir === "asc" ? (
+                          "↑"
+                        ) : (
+                          "↓"
+                        )
+                      ) : (
+                        <ArrowUpDown className="h-3 w-3 text-muted-foreground" />
+                      )}
+                    </span>
                   </TableHead>
                   <TableHead>Cible</TableHead>
-                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('last_run')}>
-                    <span className="flex items-center gap-1">Dernière Exécution {sortField === 'last_run' ? (sortDir === 'asc' ? '↑' : '↓') : <ArrowUpDown className="h-3 w-3 text-muted-foreground" />}</span>
+                  <TableHead
+                    className="cursor-pointer select-none"
+                    onClick={() => toggleSort("last_run")}
+                  >
+                    <span className="flex items-center gap-1">
+                      Dernière Exécution{" "}
+                      {sortField === "last_run" ? (
+                        sortDir === "asc" ? (
+                          "↑"
+                        ) : (
+                          "↓"
+                        )
+                      ) : (
+                        <ArrowUpDown className="h-3 w-3 text-muted-foreground" />
+                      )}
+                    </span>
                   </TableHead>
                   <TableHead>Dernier Statut</TableHead>
                   <TableHead className="w-[50px]"></TableHead>
@@ -440,7 +543,15 @@ export default function SchedulerPage() {
               </TableHeader>
               <TableBody>
                 {sortedJobs.map((job, rowIndex) => (
-                  <TableRow key={job.id} className={focusedRow === rowIndex ? "bg-primary/10 ring-1 ring-primary/30 ring-inset" : ""} data-focused={focusedRow === rowIndex}>
+                  <TableRow
+                    key={job.id}
+                    className={
+                      focusedRow === rowIndex
+                        ? "bg-primary/10 ring-1 ring-primary/30 ring-inset"
+                        : ""
+                    }
+                    data-focused={focusedRow === rowIndex}
+                  >
                     <TableCell>
                       <Switch
                         checked={job.enabled}
@@ -465,7 +576,7 @@ export default function SchedulerPage() {
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline" className="gap-1">
-                        {job.target_type === 'container' ? (
+                        {job.target_type === "container" ? (
                           <Container className="h-3 w-3" />
                         ) : (
                           <Server className="h-3 w-3" />
@@ -494,7 +605,9 @@ export default function SchedulerPage() {
                             <History className="mr-2 h-4 w-4" />
                             Historique
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleOpenDialog(job)}>
+                          <DropdownMenuItem
+                            onClick={() => handleOpenDialog(job)}
+                          >
                             <Pencil className="mr-2 h-4 w-4" />
                             Modifier
                           </DropdownMenuItem>
@@ -519,8 +632,13 @@ export default function SchedulerPage() {
                           <Clock className="h-8 w-8 text-primary/70" />
                         </div>
                         <div>
-                          <h3 className="text-lg font-semibold text-foreground">Aucune tâche planifiée</h3>
-                          <p className="text-sm text-muted-foreground mt-1">Créez votre première tâche pour automatiser vos opérations</p>
+                          <h3 className="text-lg font-semibold text-foreground">
+                            Aucune tâche planifiée
+                          </h3>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            Créez votre première tâche pour automatiser vos
+                            opérations
+                          </p>
                         </div>
                         <Button size="sm" onClick={() => handleOpenDialog()}>
                           <Plus className="mr-2 h-4 w-4" />
@@ -540,7 +658,9 @@ export default function SchedulerPage() {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editingJob ? 'Modifier la Tâche' : 'Nouvelle Tâche'}</DialogTitle>
+            <DialogTitle>
+              {editingJob ? "Modifier la Tâche" : "Nouvelle Tâche"}
+            </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
@@ -549,7 +669,9 @@ export default function SchedulerPage() {
                 id="name"
                 placeholder="Sauvegarde base de données"
                 value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, name: e.target.value })
+                }
               />
             </div>
 
@@ -559,7 +681,9 @@ export default function SchedulerPage() {
                 id="description"
                 placeholder="Description optionnelle de cette tâche"
                 value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, description: e.target.value })
+                }
               />
             </div>
 
@@ -567,7 +691,9 @@ export default function SchedulerPage() {
               <Label>Planification *</Label>
               <CronBuilder
                 value={formData.cron_expression}
-                onChange={(cron) => setFormData({ ...formData, cron_expression: cron })}
+                onChange={(cron) =>
+                  setFormData({ ...formData, cron_expression: cron })
+                }
               />
             </div>
 
@@ -577,7 +703,9 @@ export default function SchedulerPage() {
                 id="command"
                 placeholder="pg_dump -U postgres mydb > backup.sql"
                 value={formData.command}
-                onChange={(e) => setFormData({ ...formData, command: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, command: e.target.value })
+                }
                 rows={3}
               />
             </div>
@@ -587,8 +715,12 @@ export default function SchedulerPage() {
                 <Label>Type de Cible</Label>
                 <Select
                   value={formData.target_type}
-                  onValueChange={(value: 'container' | 'host') =>
-                    setFormData({ ...formData, target_type: value, target_id: '' })
+                  onValueChange={(value: "container" | "host") =>
+                    setFormData({
+                      ...formData,
+                      target_type: value,
+                      target_id: "",
+                    })
                   }
                 >
                   <SelectTrigger>
@@ -601,14 +733,16 @@ export default function SchedulerPage() {
                 </Select>
               </div>
 
-              {formData.target_type === 'container' && (
+              {formData.target_type === "container" && (
                 <div className="space-y-2">
                   <Label htmlFor="targetId">ID/Nom du Conteneur</Label>
                   <Input
                     id="targetId"
                     placeholder="mon-conteneur"
                     value={formData.target_id}
-                    onChange={(e) => setFormData({ ...formData, target_id: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, target_id: e.target.value })
+                    }
                   />
                 </div>
               )}
@@ -623,7 +757,9 @@ export default function SchedulerPage() {
               </div>
               <Switch
                 checked={formData.enabled}
-                onCheckedChange={(checked) => setFormData({ ...formData, enabled: checked })}
+                onCheckedChange={(checked) =>
+                  setFormData({ ...formData, enabled: checked })
+                }
               />
             </div>
           </div>
@@ -632,15 +768,26 @@ export default function SchedulerPage() {
               Annuler
             </Button>
             <Button onClick={handleSave} disabled={saving}>
-              {saving && <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />}
-              {editingJob ? 'Enregistrer' : 'Créer'}
+              {saving && (
+                <SpinnerInfinity
+                  size={24}
+                  secondaryColor="rgba(128,128,128,0.2)"
+                  color="currentColor"
+                  speed={120}
+                  className="mr-2 h-4 w-4 "
+                />
+              )}
+              {editingJob ? "Enregistrer" : "Créer"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* Job Runs Dialog */}
-      <Dialog open={runsDialog.open} onOpenChange={(open) => setRunsDialog({ ...runsDialog, open })}>
+      <Dialog
+        open={runsDialog.open}
+        onOpenChange={(open) => setRunsDialog({ ...runsDialog, open })}
+      >
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Historique : {runsDialog.job?.name}</DialogTitle>
@@ -656,12 +803,18 @@ export default function SchedulerPage() {
                   <div key={run.id} className="rounded-lg border p-4">
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
-                        {run.status === 'success' ? (
+                        {run.status === "success" ? (
                           <CheckCircle className="h-4 w-4 text-green-500" />
-                        ) : run.status === 'failed' ? (
+                        ) : run.status === "failed" ? (
                           <XCircle className="h-4 w-4 text-red-500" />
                         ) : (
-                          <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-4 w-4  text-blue-500" />
+                          <SpinnerInfinity
+                            size={24}
+                            secondaryColor="rgba(128,128,128,0.2)"
+                            color="currentColor"
+                            speed={120}
+                            className="h-4 w-4  text-blue-500"
+                          />
                         )}
                         {getStatusBadge(run.status)}
                       </div>
@@ -685,7 +838,9 @@ export default function SchedulerPage() {
             )}
           </div>
           <DialogFooter>
-            <Button onClick={() => setRunsDialog({ ...runsDialog, open: false })}>
+            <Button
+              onClick={() => setRunsDialog({ ...runsDialog, open: false })}
+            >
               Fermer
             </Button>
           </DialogFooter>
@@ -701,8 +856,8 @@ export default function SchedulerPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Supprimer la Tâche</AlertDialogTitle>
             <AlertDialogDescription>
-              Êtes-vous sûr de vouloir supprimer &quot;{deleteDialog.job?.name}&quot; ?
-              Cette action est irréversible.
+              Êtes-vous sûr de vouloir supprimer &quot;{deleteDialog.job?.name}
+              &quot; ? Cette action est irréversible.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

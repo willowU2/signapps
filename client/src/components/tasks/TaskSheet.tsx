@@ -1,10 +1,30 @@
-import React from 'react';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { Task } from '@/lib/scheduling/types/scheduling';
-import { CollaborativeEditor } from '@/components/ai/collaborative-editor';
-import { EntityLinks } from '@/components/crosslinks/EntityLinks';
-import { ActivityFeed } from '@/components/crosslinks/ActivityFeed';
-import { CrossLinks, crossLinkHelpers, type CrossLink } from '@/components/interop/cross-links';
+import React from "react";
+import dynamic from "next/dynamic";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import { Task } from "@/lib/scheduling/types/scheduling";
+import { EntityLinks } from "@/components/crosslinks/EntityLinks";
+
+const CollaborativeEditor = dynamic(
+  () =>
+    import("@/components/ai/collaborative-editor").then((m) => ({
+      default: m.CollaborativeEditor,
+    })),
+  {
+    loading: () => <div className="h-96 animate-pulse rounded bg-muted" />,
+    ssr: false,
+  },
+);
+import { ActivityFeed } from "@/components/crosslinks/ActivityFeed";
+import {
+  CrossLinks,
+  crossLinkHelpers,
+  type CrossLink,
+} from "@/components/interop/cross-links";
 
 interface TaskSheetProps {
   task: Task | null;
@@ -17,48 +37,59 @@ export function TaskSheet({ task, open, onOpenChange }: TaskSheetProps) {
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="sm:max-w-[600px] sm:w-[600px] p-0 flex flex-col bg-background/95 backdrop-blur-xl border-l shadow-2xl">
+      <SheetContent
+        side="right"
+        className="w-full sm:max-w-[600px] sm:w-[600px] p-0 flex flex-col bg-background/95 backdrop-blur-xl border-l shadow-2xl"
+      >
         <SheetHeader className="p-6 border-b bg-background">
           <SheetTitle className="text-xl font-semibold tracking-tight text-[#202124]">
             {task.title}
           </SheetTitle>
           <div className="flex gap-2 mt-2">
-             <span className="text-xs uppercase font-bold px-2 py-0.5 rounded-sm bg-blue-100 text-blue-700">
-               {task.priority || 'MEDIUM'}
-             </span>
-             <span className="text-xs uppercase font-bold px-2 py-0.5 rounded-sm bg-secondary text-secondary-foreground">
-               {task.status}
-             </span>
+            <span className="text-xs uppercase font-bold px-2 py-0.5 rounded-sm bg-blue-100 text-blue-700">
+              {task.priority || "MEDIUM"}
+            </span>
+            <span className="text-xs uppercase font-bold px-2 py-0.5 rounded-sm bg-secondary text-secondary-foreground">
+              {task.status}
+            </span>
           </div>
         </SheetHeader>
-        
-        <div className="flex-1 overflow-y-auto w-full">
-            {/* The tiptap Collaborative Editor bound to this task's document ID */}
-            {/* We prefix the document id with 'task-' so the Yjs room is distinct */}
-            <div className="min-h-[400px]">
-                <CollaborativeEditor
-                  docId={`task-${task.id}`}
-                  placeholder="Ajouter une description détaillée avec TipTap..."
-                  onSynced={() => { /* synced */ }}
-                />
-            </div>
 
-            {/* Crosslinks & Activity */}
-            <div className="border-t p-4 space-y-4">
-              <EntityLinks entityType="task" entityId={task.id} />
-              {(() => {
-                const cl: CrossLink[] = [];
-                if (task.assigneeId) cl.push(crossLinkHelpers.toContact(task.assigneeId, "Assigné"));
-                if (task.projectId) cl.push(crossLinkHelpers.toCalendarEvent(task.id, "Calendrier"));
-                return cl.length > 0 ? (
-                  <div>
-                    <p className="text-xs text-muted-foreground mb-1.5">Liens croisés</p>
-                    <CrossLinks links={cl} />
-                  </div>
-                ) : null;
-              })()}
-              <ActivityFeed entityType="task" entityId={task.id} limit={5} />
-            </div>
+        <div className="flex-1 overflow-y-auto w-full">
+          {/* The tiptap Collaborative Editor bound to this task's document ID */}
+          {/* We prefix the document id with 'task-' so the Yjs room is distinct */}
+          <div className="min-h-[400px]">
+            <CollaborativeEditor
+              docId={`task-${task.id}`}
+              placeholder="Ajouter une description détaillée avec TipTap..."
+              onSynced={() => {
+                /* synced */
+              }}
+            />
+          </div>
+
+          {/* Crosslinks & Activity */}
+          <div className="border-t p-4 space-y-4">
+            <EntityLinks entityType="task" entityId={task.id} />
+            {(() => {
+              const cl: CrossLink[] = [];
+              if (task.assigneeId)
+                cl.push(crossLinkHelpers.toContact(task.assigneeId, "Assigné"));
+              if (task.projectId)
+                cl.push(
+                  crossLinkHelpers.toCalendarEvent(task.id, "Calendrier"),
+                );
+              return cl.length > 0 ? (
+                <div>
+                  <p className="text-xs text-muted-foreground mb-1.5">
+                    Liens croisés
+                  </p>
+                  <CrossLinks links={cl} />
+                </div>
+              ) : null;
+            })()}
+            <ActivityFeed entityType="task" entityId={task.id} limit={5} />
+          </div>
         </div>
       </SheetContent>
     </Sheet>

@@ -479,7 +479,7 @@ export default function HelpPage() {
         </div>
 
         {/* Quick Links */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
           <a
             href="#faq"
             className="flex items-center gap-2 p-3 rounded-lg border hover:bg-muted/50 transition-colors"

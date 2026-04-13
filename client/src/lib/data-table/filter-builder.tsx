@@ -39,7 +39,15 @@ import { operatorLabels } from "./filter-chip";
 const operatorsByType: Record<FilterConfig["type"], FilterOperator[]> = {
   text: ["equals", "contains", "starts_with", "ends_with", "is_empty"],
   number: ["equals", "gt", "lt", "gte", "lte", "between"],
-  date: ["equals", "before", "after", "between", "last_n_days", "this_week", "this_month"],
+  date: [
+    "equals",
+    "before",
+    "after",
+    "between",
+    "last_n_days",
+    "this_week",
+    "this_month",
+  ],
   select: ["in", "not_in"],
   boolean: ["is_true", "is_false"],
 };
@@ -141,7 +149,12 @@ function DateValueInput({ value, onChange, operator }: ValueInputProps) {
           type="date"
           value={formatDateForInput(range.start)}
           onChange={(e) =>
-            onChange({ ...range, start: e.target.value ? new Date(e.target.value).toISOString() : undefined })
+            onChange({
+              ...range,
+              start: e.target.value
+                ? new Date(e.target.value).toISOString()
+                : undefined,
+            })
           }
           className="h-8 w-32"
         />
@@ -150,7 +163,12 @@ function DateValueInput({ value, onChange, operator }: ValueInputProps) {
           type="date"
           value={formatDateForInput(range.end)}
           onChange={(e) =>
-            onChange({ ...range, end: e.target.value ? new Date(e.target.value).toISOString() : undefined })
+            onChange({
+              ...range,
+              end: e.target.value
+                ? new Date(e.target.value).toISOString()
+                : undefined,
+            })
           }
           className="h-8 w-32"
         />
@@ -163,14 +181,21 @@ function DateValueInput({ value, onChange, operator }: ValueInputProps) {
       type="date"
       value={formatDateForInput(value as string)}
       onChange={(e) =>
-        onChange(e.target.value ? new Date(e.target.value).toISOString() : undefined)
+        onChange(
+          e.target.value ? new Date(e.target.value).toISOString() : undefined,
+        )
       }
       className="h-8 w-36"
     />
   );
 }
 
-function SelectValueInput({ config, value, onChange, operator }: ValueInputProps) {
+function SelectValueInput({
+  config,
+  value,
+  onChange,
+  operator,
+}: ValueInputProps) {
   const selectedValues = (value as string[]) ?? [];
   const isMulti = operator === "in" || operator === "not_in";
 
@@ -194,7 +219,11 @@ function SelectValueInput({ config, value, onChange, operator }: ValueInputProps
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="outline" size="sm" className="h-8 min-w-32 justify-between">
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-8 min-w-32 justify-between"
+        >
           {selectedValues.length > 0 ? (
             <span className="flex gap-1">
               {selectedValues.length} sélectionné(s)
@@ -266,7 +295,13 @@ interface FilterRowProps {
   index: number;
 }
 
-function FilterRow({ configs, filter, onChange, onRemove, index }: FilterRowProps) {
+function FilterRow({
+  configs,
+  filter,
+  onChange,
+  onRemove,
+  index,
+}: FilterRowProps) {
   const selectedConfig = configs.find((c) => c.columnId === filter.columnId);
   const availableOperators = selectedConfig
     ? operatorsByType[selectedConfig.type]
@@ -285,7 +320,9 @@ function FilterRow({ configs, filter, onChange, onRemove, index }: FilterRowProp
           const config = configs.find((c) => c.columnId === value);
           onChange({
             columnId: value,
-            operator: config?.defaultOperator ?? operatorsByType[config?.type ?? "text"][0],
+            operator:
+              config?.defaultOperator ??
+              operatorsByType[config?.type ?? "text"][0],
             value: undefined,
           });
         }}
@@ -306,7 +343,11 @@ function FilterRow({ configs, filter, onChange, onRemove, index }: FilterRowProp
       <Select
         value={filter.operator ?? ""}
         onValueChange={(value) =>
-          onChange({ ...filter, operator: value as FilterOperator, value: undefined })
+          onChange({
+            ...filter,
+            operator: value as FilterOperator,
+            value: undefined,
+          })
         }
         disabled={!selectedConfig}
       >
@@ -367,15 +408,15 @@ export function FilterBuilder({
   className,
 }: FilterBuilderProps) {
   const [open, setOpen] = React.useState(false);
-  const [pendingFilters, setPendingFilters] = React.useState<Partial<ActiveFilter>[]>([]);
+  const [pendingFilters, setPendingFilters] = React.useState<
+    Partial<ActiveFilter>[]
+  >([]);
 
   // Initialize pending filters from active filters
   React.useEffect(() => {
     if (open) {
       setPendingFilters(
-        filters.length > 0
-          ? filters.map((f) => ({ ...f }))
-          : [{}]
+        filters.length > 0 ? filters.map((f) => ({ ...f })) : [{}],
       );
     }
   }, [open, filters]);
@@ -410,7 +451,7 @@ export function FilterBuilder({
           f.operator === "is_true" ||
           f.operator === "is_false" ||
           f.operator === "this_week" ||
-          f.operator === "this_month")
+          f.operator === "this_month"),
     );
     onFiltersChange(validFilters);
     setOpen(false);
@@ -432,19 +473,25 @@ export function FilterBuilder({
           className={cn(
             "bg-background/50",
             filters.length > 0 && "border-primary text-primary",
-            className
+            className,
           )}
         >
           <Filter className="mr-2 h-4 w-4" />
           Filtres
           {filters.length > 0 && (
-            <Badge variant="secondary" className="ml-2 h-5 min-w-5 px-1.5 text-xs">
+            <Badge
+              variant="secondary"
+              className="ml-2 h-5 min-w-5 px-1.5 text-xs"
+            >
               {filters.length}
             </Badge>
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-auto min-w-[400px] p-4" align="start">
+      <PopoverContent
+        className="w-auto min-w-[min(400px,calc(100vw-2rem))] p-4"
+        align="start"
+      >
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <h4 className="text-sm font-medium">Filtres avancés</h4>
@@ -484,7 +531,11 @@ export function FilterBuilder({
               Ajouter un filtre
             </Button>
             <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={() => setOpen(false)}>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setOpen(false)}
+              >
                 Annuler
               </Button>
               <Button size="sm" onClick={applyFilters}>

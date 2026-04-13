@@ -390,7 +390,7 @@ export default function TimesheetPage() {
     <AppLayout>
       <div className="space-y-6 max-w-5xl mx-auto">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div>
             <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
               <Timer className="h-7 w-7" />
@@ -400,7 +400,7 @@ export default function TimesheetPage() {
               Suivez votre temps par tache, exportez vers la facturation
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <Button variant="outline" size="sm" onClick={exportCsv}>
               <Download className="h-4 w-4 mr-2" />
               CSV
@@ -481,7 +481,7 @@ export default function TimesheetPage() {
         </Card>
 
         {/* Weekly summary */}
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <Card>
             <CardHeader className="pb-2 pt-4 px-4">
               <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wide">

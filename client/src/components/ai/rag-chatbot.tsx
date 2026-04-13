@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { useState, useRef, useEffect, useCallback } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { useState, useRef, useEffect, useCallback } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   MessageCircle,
   Send,
@@ -12,15 +12,20 @@ import {
   Maximize2,
   BookOpen,
   FileText,
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { aiApi, ChatResponse } from '@/lib/api';
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { aiApi, ChatResponse } from "@/lib/api";
 
 interface Message {
   id: string;
-  role: 'user' | 'assistant';
+  role: "user" | "assistant";
   content: string;
-  sources?: { document_id: string; filename: string; score: number; excerpt: string }[];
+  sources?: {
+    document_id: string;
+    filename: string;
+    score: number;
+    excerpt: string;
+  }[];
 }
 
 interface RagChatbotProps {
@@ -34,20 +39,20 @@ interface RagChatbotProps {
 
 export function RagChatbot({
   collections,
-  placeholder = 'Ask about your documents...',
-  title = 'AI Document Assistant',
+  placeholder = "Ask about your documents...",
+  title = "AI Document Assistant",
 }: RagChatbotProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
-  const [inputValue, setInputValue] = useState('');
+  const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [conversationId, setConversationId] = useState<string | undefined>();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const scrollToBottom = useCallback(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, []);
 
   useEffect(() => {
@@ -62,33 +67,42 @@ export function RagChatbot({
 
   const escapeHtml = (str: string): string => {
     return str
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#39;');
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
   };
 
   const renderMarkdown = (text: string) => {
     // Escape HTML first to prevent XSS, then apply safe markdown transforms
     let html = escapeHtml(text)
       // Code blocks (restore escaped backtick content)
-      .replace(/```(\w+)?\n([\s\S]*?)```/g, '<pre class="bg-muted p-2 rounded text-xs my-2 overflow-x-auto"><code>$2</code></pre>')
+      .replace(
+        /```(\w+)?\n([\s\S]*?)```/g,
+        '<pre class="bg-muted p-2 rounded text-xs my-2 overflow-x-auto"><code>$2</code></pre>',
+      )
       // Inline code
-      .replace(/`([^`]+)`/g, '<code class="bg-muted px-1 py-0.5 rounded text-xs">$1</code>')
+      .replace(
+        /`([^`]+)`/g,
+        '<code class="bg-muted px-1 py-0.5 rounded text-xs">$1</code>',
+      )
       // Bold
-      .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
       // Italic
-      .replace(/\*([^*]+)\*/g, '<em>$1</em>')
+      .replace(/\*([^*]+)\*/g, "<em>$1</em>")
       // Links
-      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener" class="text-primary underline">$1</a>')
+      .replace(
+        /\[([^\]]+)\]\(([^)]+)\)/g,
+        '<a href="$2" target="_blank" rel="noopener" class="text-primary underline">$1</a>',
+      )
       // Unordered lists
       .replace(/^[*-] (.+)$/gm, '<li class="ml-4">$1</li>')
       // Ordered lists
       .replace(/^\d+\. (.+)$/gm, '<li class="ml-4 list-decimal">$1</li>')
       // Line breaks
       .replace(/\n\n/g, '</p><p class="mb-2">')
-      .replace(/\n/g, '<br/>');
+      .replace(/\n/g, "<br/>");
 
     return `<p class="mb-2">${html}</p>`;
   };
@@ -98,13 +112,13 @@ export function RagChatbot({
 
     const userMessage: Message = {
       id: Date.now().toString(),
-      role: 'user',
+      role: "user",
       content: inputValue,
     };
 
     setMessages((prev) => [...prev, userMessage]);
     const currentInput = inputValue;
-    setInputValue('');
+    setInputValue("");
     setIsLoading(true);
 
     try {
@@ -118,7 +132,7 @@ export function RagChatbot({
 
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
-        role: 'assistant',
+        role: "assistant",
         content: data.answer,
         sources: data.sources,
       };
@@ -132,8 +146,9 @@ export function RagChatbot({
     } catch (error) {
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: 'Sorry, I encountered an error processing your request. Please try again.',
+        role: "assistant",
+        content:
+          "Sorry, I encountered an error processing your request. Please try again.",
       };
       setMessages((prev) => [...prev, errorMessage]);
     } finally {
@@ -142,14 +157,14 @@ export function RagChatbot({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey && !isLoading) {
+    if (e.key === "Enter" && !e.shiftKey && !isLoading) {
       e.preventDefault();
       handleSendMessage();
     }
   };
 
-  const panelWidth = isExpanded ? 'w-[600px]' : 'w-96';
-  const panelHeight = isExpanded ? 'h-[80vh]' : 'h-[500px]';
+  const panelWidth = isExpanded ? "w-full sm:w-[600px]" : "w-full sm:w-96";
+  const panelHeight = isExpanded ? "h-[80vh]" : "h-[500px]";
 
   return (
     <>
@@ -171,9 +186,9 @@ export function RagChatbot({
       {isOpen && (
         <div
           className={cn(
-            'fixed bottom-6 right-6 z-50 bg-background border border-input rounded-lg shadow-xl flex flex-col overflow-hidden transition-all duration-200',
+            "fixed bottom-6 right-6 z-50 bg-background border border-input rounded-lg shadow-xl flex flex-col overflow-hidden transition-all duration-200",
             panelWidth,
-            panelHeight
+            panelHeight,
           )}
         >
           {/* Header */}
@@ -183,7 +198,8 @@ export function RagChatbot({
               <h3 className="font-semibold text-sm">{title}</h3>
               {collections && collections.length > 0 && (
                 <span className="text-xs bg-primary-foreground/20 px-2 py-0.5 rounded-full">
-                  {collections.length} collection{collections.length > 1 ? 's' : ''}
+                  {collections.length} collection
+                  {collections.length > 1 ? "s" : ""}
                 </span>
               )}
             </div>
@@ -193,7 +209,7 @@ export function RagChatbot({
                 size="icon-xs"
                 onClick={() => setIsExpanded(!isExpanded)}
                 className="hover:bg-primary/80 text-primary-foreground"
-                aria-label={isExpanded ? 'Minimize' : 'Expand'}
+                aria-label={isExpanded ? "Minimize" : "Expand"}
               >
                 {isExpanded ? (
                   <Minimize2 className="h-4 w-4" />
@@ -231,19 +247,21 @@ export function RagChatbot({
                   <div key={message.id} className="space-y-1">
                     <div
                       className={cn(
-                        'flex gap-2',
-                        message.role === 'user' ? 'justify-end' : 'justify-start'
+                        "flex gap-2",
+                        message.role === "user"
+                          ? "justify-end"
+                          : "justify-start",
                       )}
                     >
                       <div
                         className={cn(
-                          'max-w-[85%] px-3 py-2 rounded-lg text-sm',
-                          message.role === 'user'
-                            ? 'bg-primary text-primary-foreground rounded-br-none'
-                            : 'bg-accent text-accent-foreground rounded-bl-none'
+                          "max-w-[85%] px-3 py-2 rounded-lg text-sm",
+                          message.role === "user"
+                            ? "bg-primary text-primary-foreground rounded-br-none"
+                            : "bg-accent text-accent-foreground rounded-bl-none",
                         )}
                       >
-                        {message.role === 'assistant' ? (
+                        {message.role === "assistant" ? (
                           <div
                             className="prose prose-sm max-w-none dark:prose-invert [&_p]:mb-1 [&_li]:text-sm"
                             dangerouslySetInnerHTML={{

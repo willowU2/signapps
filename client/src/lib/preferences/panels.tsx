@@ -28,7 +28,13 @@ import {
   RotateCcw,
   Globe,
 } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -80,10 +86,18 @@ import { exportPreferences, importPreferences } from "./api";
 export function ThemePanel() {
   const { theme, updateTheme } = useThemePreferences();
 
-  const themeModes: { value: ThemeMode; label: string; icon: React.ReactNode }[] = [
+  const themeModes: {
+    value: ThemeMode;
+    label: string;
+    icon: React.ReactNode;
+  }[] = [
     { value: "light", label: "Clair", icon: <Sun className="h-4 w-4" /> },
     { value: "dark", label: "Sombre", icon: <Moon className="h-4 w-4" /> },
-    { value: "system", label: "Système", icon: <Monitor className="h-4 w-4" /> },
+    {
+      value: "system",
+      label: "Système",
+      icon: <Monitor className="h-4 w-4" />,
+    },
   ];
 
   const accentColors: { value: AccentColor; label: string; color: string }[] = [
@@ -104,7 +118,9 @@ export function ThemePanel() {
           <Palette className="h-5 w-5" />
           Apparence
         </CardTitle>
-        <CardDescription>Personnalisez le thème et les couleurs.</CardDescription>
+        <CardDescription>
+          Personnalisez le thème et les couleurs.
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="space-y-3">
@@ -140,7 +156,9 @@ export function ThemePanel() {
             {accentColors.map((color) => (
               <Button
                 key={color.value}
-                variant={theme.accentColor === color.value ? "default" : "outline"}
+                variant={
+                  theme.accentColor === color.value ? "default" : "outline"
+                }
                 size="sm"
                 onClick={() => updateTheme({ accentColor: color.value })}
                 className="gap-2"
@@ -243,7 +261,10 @@ export function LayoutPanel() {
           >
             {densityModes.map((mode) => (
               <div key={mode.value} className="flex items-center space-x-2">
-                <RadioGroupItem value={mode.value} id={`density-${mode.value}`} />
+                <RadioGroupItem
+                  value={mode.value}
+                  id={`density-${mode.value}`}
+                />
                 <Label htmlFor={`density-${mode.value}`}>{mode.label}</Label>
               </div>
             ))}
@@ -256,7 +277,9 @@ export function LayoutPanel() {
           <Label>Barre latérale</Label>
           <Select
             value={layout.sidebarMode}
-            onValueChange={(v) => updateLayout({ sidebarMode: v as SidebarMode })}
+            onValueChange={(v) =>
+              updateLayout({ sidebarMode: v as SidebarMode })
+            }
           >
             <SelectTrigger>
               <SelectValue />
@@ -379,7 +402,9 @@ export function NotificationsPanel() {
                 </div>
                 <Switch
                   checked={notifications.doNotDisturb}
-                  onCheckedChange={(v) => updateNotifications({ doNotDisturb: v })}
+                  onCheckedChange={(v) =>
+                    updateNotifications({ doNotDisturb: v })
+                  }
                 />
               </div>
 
@@ -675,7 +700,9 @@ export function StoragePanel() {
             {viewModes.map((mode) => (
               <Button
                 key={mode.value}
-                variant={storage.viewMode === mode.value ? "default" : "outline"}
+                variant={
+                  storage.viewMode === mode.value ? "default" : "outline"
+                }
                 size="sm"
                 onClick={() => updateStorage({ viewMode: mode.value })}
               >
@@ -948,10 +975,18 @@ export function LocalePanel() {
   const dateFormats: { value: DateFormat; label: string; example: string }[] = [
     { value: "dd/mm/yyyy", label: "Jour/Mois/Annee", example: "28/03/2026" },
     { value: "mm/dd/yyyy", label: "Mois/Jour/Annee", example: "03/28/2026" },
-    { value: "yyyy-mm-dd", label: "Annee-Mois-Jour (ISO)", example: "2026-03-28" },
+    {
+      value: "yyyy-mm-dd",
+      label: "Annee-Mois-Jour (ISO)",
+      example: "2026-03-28",
+    },
   ];
 
-  const numberFormats: { value: NumberFormat; label: string; example: string }[] = [
+  const numberFormats: {
+    value: NumberFormat;
+    label: string;
+    example: string;
+  }[] = [
     { value: "fr", label: "Francais", example: "1 234,56" },
     { value: "en", label: "English", example: "1,234.56" },
   ];
@@ -1005,12 +1040,17 @@ export function LocalePanel() {
             onValueChange={(v) => updateLocale({ dateFormat: v as DateFormat })}
           >
             {dateFormats.map((fmt) => (
-              <div key={fmt.value} className="flex items-center justify-between">
+              <div
+                key={fmt.value}
+                className="flex items-center justify-between"
+              >
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value={fmt.value} id={`date-${fmt.value}`} />
                   <Label htmlFor={`date-${fmt.value}`}>{fmt.label}</Label>
                 </div>
-                <span className="text-xs text-muted-foreground font-mono">{fmt.example}</span>
+                <span className="text-xs text-muted-foreground font-mono">
+                  {fmt.example}
+                </span>
               </div>
             ))}
           </RadioGroup>
@@ -1022,15 +1062,22 @@ export function LocalePanel() {
           <Label>Format des nombres</Label>
           <RadioGroup
             value={locale?.numberFormat || "fr"}
-            onValueChange={(v) => updateLocale({ numberFormat: v as NumberFormat })}
+            onValueChange={(v) =>
+              updateLocale({ numberFormat: v as NumberFormat })
+            }
           >
             {numberFormats.map((fmt) => (
-              <div key={fmt.value} className="flex items-center justify-between">
+              <div
+                key={fmt.value}
+                className="flex items-center justify-between"
+              >
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value={fmt.value} id={`num-${fmt.value}`} />
                   <Label htmlFor={`num-${fmt.value}`}>{fmt.label}</Label>
                 </div>
-                <span className="text-xs text-muted-foreground font-mono">{fmt.example}</span>
+                <span className="text-xs text-muted-foreground font-mono">
+                  {fmt.example}
+                </span>
               </div>
             ))}
           </RadioGroup>
@@ -1114,7 +1161,9 @@ export function PreferencesPage() {
   };
 
   const handleReset = () => {
-    if (confirm("Réinitialiser toutes les préférences aux valeurs par défaut ?")) {
+    if (
+      confirm("Réinitialiser toutes les préférences aux valeurs par défaut ?")
+    ) {
       reset();
       toast.success("Préférences réinitialisées");
     }
@@ -1159,7 +1208,7 @@ export function PreferencesPage() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-4 lg:grid-cols-9">
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 lg:grid-cols-9">
           <TabsTrigger value="theme">Apparence</TabsTrigger>
           <TabsTrigger value="locale">Regional</TabsTrigger>
           <TabsTrigger value="layout">Disposition</TabsTrigger>

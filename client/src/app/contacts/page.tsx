@@ -783,7 +783,7 @@ ${header}
             <Skeleton className="h-8 w-8 rounded-full" />
             <Skeleton className="h-8 w-48" />
           </div>
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
             {[...Array(3)].map((_, i) => (
               <Skeleton key={i} className="h-24 rounded-xl" />
             ))}
@@ -937,7 +937,7 @@ ${header}
         </div>
 
         {/* Stats */}
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
           {[
             {
               label: "Total",

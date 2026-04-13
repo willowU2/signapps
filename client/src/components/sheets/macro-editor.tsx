@@ -353,7 +353,7 @@ export function MacroEditor({
       onClick={onClose}
     >
       <div
-        className="bg-background dark:bg-[#2d2e30] rounded-xl shadow-2xl w-[700px] max-h-[85vh] flex flex-col"
+        className="bg-background dark:bg-[#2d2e30] rounded-xl shadow-2xl w-full max-w-[700px] mx-4 max-h-[85vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}

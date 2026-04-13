@@ -1,25 +1,54 @@
-'use client';
+"use client";
 
-import { SpinnerInfinity } from 'spinners-react';
+import { SpinnerInfinity } from "spinners-react";
 
-import { useState, useEffect } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
-import { AppLayout } from '@/components/layout/app-layout';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Input } from '@/components/ui/input';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { DataTableSkeleton } from '@/components/ui/skeleton-loader';
-import { Plus, Lock, Unlock, ExternalLink, MoreVertical, Search, Shield, RefreshCw, Pencil, Trash2, Power, PowerOff, Globe, ArrowRight, Copy, CheckCircle2, AlertCircle, Server, Network, FileCode, Asterisk, ListTree } from 'lucide-react';
+import { useState, useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { AppLayout } from "@/components/layout/app-layout";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { DataTableSkeleton } from "@/components/ui/skeleton-loader";
+import {
+  Plus,
+  Lock,
+  Unlock,
+  ExternalLink,
+  MoreVertical,
+  Search,
+  Shield,
+  RefreshCw,
+  Pencil,
+  Trash2,
+  Power,
+  PowerOff,
+  Globe,
+  ArrowRight,
+  Copy,
+  CheckCircle2,
+  AlertCircle,
+  Server,
+  Network,
+  FileCode,
+  Asterisk,
+  ListTree,
+} from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from "@/components/ui/dropdown-menu";
 import {
   Table,
   TableBody,
@@ -27,7 +56,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
+} from "@/components/ui/table";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -37,18 +66,18 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+} from "@/components/ui/alert-dialog";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
-import type { Route } from '@/lib/api';
-import { RouteDialog } from '@/components/routes/route-dialog';
-import { toast } from 'sonner';
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import type { Route } from "@/lib/api";
+import { RouteDialog } from "@/components/routes/route-dialog";
+import { toast } from "sonner";
 import {
   useRoutes,
   useCertificates,
@@ -57,30 +86,37 @@ import {
   useToggleRoute,
   useRequestCertificate,
   useRenewCertificate,
-} from '@/hooks/use-routes';
-import { usePageTitle } from '@/hooks/use-page-title';
+} from "@/hooks/use-routes";
+import { usePageTitle } from "@/hooks/use-page-title";
 
 export default function RoutesPage() {
-  usePageTitle('Routes');
+  usePageTitle("Routes");
   const queryClient = useQueryClient();
-  const { data: routes = [], isLoading: loading, isError: routesError } = useRoutes();
+  const {
+    data: routes = [],
+    isLoading: loading,
+    isError: routesError,
+  } = useRoutes();
   const { data: certificates = [] } = useCertificates();
   const { data: shieldStats = null } = useShieldStats();
 
   useEffect(() => {
-    if (routesError) toast.error('Impossible de charger les routes');
+    if (routesError) toast.error("Impossible de charger les routes");
   }, [routesError]);
 
-  const [search, setSearch] = useState('');
-  const [activeTab, setActiveTab] = useState('routes');
+  const [search, setSearch] = useState("");
+  const [activeTab, setActiveTab] = useState("routes");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingRoute, setEditingRoute] = useState<Route | null>(null);
-  const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; route: Route | null }>({
+  const [deleteDialog, setDeleteDialog] = useState<{
+    open: boolean;
+    route: Route | null;
+  }>({
     open: false,
     route: null,
   });
   const [certDialogOpen, setCertDialogOpen] = useState(false);
-  const [certDomain, setCertDomain] = useState('');
+  const [certDomain, setCertDomain] = useState("");
   const [certLoading, setCertLoading] = useState(false);
 
   const deleteRouteMutation = useDeleteRoute();
@@ -89,9 +125,9 @@ export default function RoutesPage() {
   const renewCertMutation = useRenewCertificate();
 
   const refreshData = () => {
-    queryClient.invalidateQueries({ queryKey: ['routes'] });
-    queryClient.invalidateQueries({ queryKey: ['certificates'] });
-    queryClient.invalidateQueries({ queryKey: ['shield'] });
+    queryClient.invalidateQueries({ queryKey: ["routes"] });
+    queryClient.invalidateQueries({ queryKey: ["certificates"] });
+    queryClient.invalidateQueries({ queryKey: ["shield"] });
   };
 
   const handleDelete = async () => {
@@ -121,7 +157,7 @@ export default function RoutesPage() {
       onSettled: () => {
         setCertLoading(false);
         setCertDialogOpen(false);
-        setCertDomain('');
+        setCertDomain("");
       },
     });
   };
@@ -132,31 +168,31 @@ export default function RoutesPage() {
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
-    toast.success('Copié dans le presse-papier');
+    toast.success("Copié dans le presse-papier");
   };
 
   const filteredRoutes = routes.filter(
     (r) =>
       r.name.toLowerCase().includes(search.toLowerCase()) ||
       r.host.toLowerCase().includes(search.toLowerCase()) ||
-      r.target.toLowerCase().includes(search.toLowerCase())
+      r.target.toLowerCase().includes(search.toLowerCase()),
   );
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('fr-FR', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
+    return new Date(dateString).toLocaleDateString("fr-FR", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
     });
   };
 
   const getModeIcon = (mode: string) => {
     switch (mode) {
-      case 'redirect':
+      case "redirect":
         return <ArrowRight className="h-4 w-4" />;
-      case 'loadbalancer':
+      case "loadbalancer":
         return <Server className="h-4 w-4" />;
-      case 'static':
+      case "static":
         return <FileCode className="h-4 w-4" />;
       default:
         return <Network className="h-4 w-4" />;
@@ -165,14 +201,14 @@ export default function RoutesPage() {
 
   const getModeLabel = (mode: string) => {
     switch (mode) {
-      case 'redirect':
-        return 'Redirection';
-      case 'loadbalancer':
-        return 'Load Balancer';
-      case 'static':
-        return 'Statique';
+      case "redirect":
+        return "Redirection";
+      case "loadbalancer":
+        return "Load Balancer";
+      case "static":
+        return "Statique";
       default:
-        return 'Proxy';
+        return "Proxy";
     }
   };
 
@@ -181,10 +217,14 @@ export default function RoutesPage() {
   const securedRoutes = routes.filter((r) => r.tls_enabled).length;
   const protectedRoutes = routes.filter((r) => r.shield_config?.enabled).length;
   // Group routes by domain
-  const domains = [...new Set(routes.map((r) => {
-    const parts = r.host.split('.');
-    return parts.length >= 2 ? parts.slice(-2).join('.') : r.host;
-  }))];
+  const domains = [
+    ...new Set(
+      routes.map((r) => {
+        const parts = r.host.split(".");
+        return parts.length >= 2 ? parts.slice(-2).join(".") : r.host;
+      }),
+    ),
+  ];
 
   if (loading) {
     return (
@@ -222,7 +262,7 @@ export default function RoutesPage() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid gap-4 md:grid-cols-4">
+        <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
           <Card>
             <CardContent className="flex items-center gap-4 p-6">
               <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
@@ -241,7 +281,9 @@ export default function RoutesPage() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Routes Actives</p>
-                <p className="text-2xl font-bold">{activeRoutes} / {routes.length}</p>
+                <p className="text-2xl font-bold">
+                  {activeRoutes} / {routes.length}
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -321,7 +363,10 @@ export default function RoutesPage() {
                   </TableHeader>
                   <TableBody>
                     {filteredRoutes.map((route) => (
-                      <TableRow key={route.id} className={!route.enabled ? 'opacity-50' : ''}>
+                      <TableRow
+                        key={route.id}
+                        className={!route.enabled ? "opacity-50" : ""}
+                      >
                         <TableCell>
                           {route.enabled ? (
                             <Badge className="bg-green-500/10 text-green-600 hover:bg-green-500/20">
@@ -335,18 +380,26 @@ export default function RoutesPage() {
                           <div className="flex items-center gap-2">
                             <div>
                               <div className="flex items-center gap-2">
-                                <span className="font-medium">{route.host}</span>
-                                {route.host.startsWith('*.') && (
-                                  <Badge variant="outline" className="gap-1 text-xs bg-purple-500/10 text-purple-600 border-purple-500/20">
+                                <span className="font-medium">
+                                  {route.host}
+                                </span>
+                                {route.host.startsWith("*.") && (
+                                  <Badge
+                                    variant="outline"
+                                    className="gap-1 text-xs bg-purple-500/10 text-purple-600 border-purple-500/20"
+                                  >
                                     <Asterisk className="h-3 w-3" />
                                     Wildcard
                                   </Badge>
                                 )}
-                                {route.dns_records && route.dns_records.length > 0 && (
-                                  <span title={`${route.dns_records.length} enregistrement(s) DNS`}>
-                                    <ListTree className="h-3.5 w-3.5 text-blue-500" />
-                                  </span>
-                                )}
+                                {route.dns_records &&
+                                  route.dns_records.length > 0 && (
+                                    <span
+                                      title={`${route.dns_records.length} enregistrement(s) DNS`}
+                                    >
+                                      <ListTree className="h-3.5 w-3.5 text-blue-500" />
+                                    </span>
+                                  )}
                                 <button
                                   onClick={() => copyToClipboard(route.host)}
                                   className="text-muted-foreground hover:text-foreground"
@@ -354,7 +407,7 @@ export default function RoutesPage() {
                                   <Copy className="h-3 w-3" />
                                 </button>
                                 <a
-                                  href={`${route.tls_enabled ? 'https' : 'http'}://${route.host}`}
+                                  href={`${route.tls_enabled ? "https" : "http"}://${route.host}`}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   className="text-muted-foreground hover:text-foreground"
@@ -362,7 +415,9 @@ export default function RoutesPage() {
                                   <ExternalLink className="h-3 w-3" />
                                 </a>
                               </div>
-                              <p className="text-xs text-muted-foreground">{route.name}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {route.name}
+                              </p>
                             </div>
                           </div>
                         </TableCell>
@@ -380,8 +435,16 @@ export default function RoutesPage() {
                         <TableCell>
                           <div className="flex items-center gap-2">
                             {route.tls_enabled ? (
-                              <span title={route.tls_config?.wildcard ? "SSL Wildcard active" : "SSL/TLS active"}>
-                                <Lock className={`h-4 w-4 ${route.tls_config?.wildcard ? 'text-blue-500' : 'text-green-500'}`} />
+                              <span
+                                title={
+                                  route.tls_config?.wildcard
+                                    ? "SSL Wildcard active"
+                                    : "SSL/TLS active"
+                                }
+                              >
+                                <Lock
+                                  className={`h-4 w-4 ${route.tls_config?.wildcard ? "text-blue-500" : "text-green-500"}`}
+                                />
                               </span>
                             ) : (
                               <span title="Pas de SSL">
@@ -389,12 +452,18 @@ export default function RoutesPage() {
                               </span>
                             )}
                             {route.tls_config?.wildcard && (
-                              <Badge variant="outline" className="gap-1 text-xs bg-blue-500/10 text-blue-600 border-blue-500/20">
+                              <Badge
+                                variant="outline"
+                                className="gap-1 text-xs bg-blue-500/10 text-blue-600 border-blue-500/20"
+                              >
                                 Wildcard SSL
                               </Badge>
                             )}
                             {route.auth_required && (
-                              <Badge variant="outline" className="gap-1 text-xs">
+                              <Badge
+                                variant="outline"
+                                className="gap-1 text-xs"
+                              >
                                 Auth
                               </Badge>
                             )}
@@ -413,11 +482,15 @@ export default function RoutesPage() {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => handleEdit(route)}>
+                              <DropdownMenuItem
+                                onClick={() => handleEdit(route)}
+                              >
                                 <Pencil className="mr-2 h-4 w-4" />
                                 Modifier
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleToggle(route)}>
+                              <DropdownMenuItem
+                                onClick={() => handleToggle(route)}
+                              >
                                 {route.enabled ? (
                                   <>
                                     <PowerOff className="mr-2 h-4 w-4" />
@@ -433,7 +506,9 @@ export default function RoutesPage() {
                               <DropdownMenuSeparator />
                               <DropdownMenuItem
                                 className="text-destructive"
-                                onClick={() => setDeleteDialog({ open: true, route })}
+                                onClick={() =>
+                                  setDeleteDialog({ open: true, route })
+                                }
                               >
                                 <Trash2 className="mr-2 h-4 w-4" />
                                 Supprimer
@@ -452,8 +527,13 @@ export default function RoutesPage() {
                                 <Network className="h-8 w-8 text-primary/70" />
                               </div>
                               <div>
-                                <h3 className="text-lg font-semibold text-foreground">Aucune route configurée</h3>
-                                <p className="text-sm text-muted-foreground mt-1">Créez votre première route pour exposer vos services</p>
+                                <h3 className="text-lg font-semibold text-foreground">
+                                  Aucune route configurée
+                                </h3>
+                                <p className="text-sm text-muted-foreground mt-1">
+                                  Créez votre première route pour exposer vos
+                                  services
+                                </p>
                               </div>
                               <Button size="sm" onClick={handleCreate}>
                                 <Plus className="mr-2 h-4 w-4" />
@@ -461,7 +541,9 @@ export default function RoutesPage() {
                               </Button>
                             </div>
                           ) : (
-                            <p className="text-center py-8 text-muted-foreground">Aucune route ne correspond à votre recherche</p>
+                            <p className="text-center py-8 text-muted-foreground">
+                              Aucune route ne correspond à votre recherche
+                            </p>
                           )}
                         </TableCell>
                       </TableRow>
@@ -487,7 +569,8 @@ export default function RoutesPage() {
                   <Lock className="h-12 w-12 mx-auto mb-4 opacity-50" />
                   <p>Aucun certificat SSL configuré</p>
                   <p className="text-sm mt-2">
-                    Les certificats Let&apos;s Encrypt sont automatiquement demandés pour les routes avec TLS activé
+                    Les certificats Let&apos;s Encrypt sont automatiquement
+                    demandés pour les routes avec TLS activé
                   </p>
                 </CardContent>
               </Card>
@@ -496,7 +579,10 @@ export default function RoutesPage() {
                 {certificates.map((cert) => {
                   const expiresAt = new Date(cert.expires_at);
                   const now = new Date();
-                  const daysUntilExpiry = Math.ceil((expiresAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+                  const daysUntilExpiry = Math.ceil(
+                    (expiresAt.getTime() - now.getTime()) /
+                      (1000 * 60 * 60 * 24),
+                  );
                   const isExpiringSoon = daysUntilExpiry < 30;
 
                   return (
@@ -504,12 +590,20 @@ export default function RoutesPage() {
                       <CardContent className="p-4">
                         <div className="flex items-start justify-between">
                           <div className="flex items-center gap-3">
-                            <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${
-                              isExpiringSoon ? 'bg-orange-500/10' : 'bg-green-500/10'
-                            }`}>
-                              <Lock className={`h-5 w-5 ${
-                                isExpiringSoon ? 'text-orange-500' : 'text-green-500'
-                              }`} />
+                            <div
+                              className={`flex h-10 w-10 items-center justify-center rounded-lg ${
+                                isExpiringSoon
+                                  ? "bg-orange-500/10"
+                                  : "bg-green-500/10"
+                              }`}
+                            >
+                              <Lock
+                                className={`h-5 w-5 ${
+                                  isExpiringSoon
+                                    ? "text-orange-500"
+                                    : "text-green-500"
+                                }`}
+                              />
                             </div>
                             <div>
                               <p className="font-medium">{cert.domain}</p>
@@ -539,7 +633,10 @@ export default function RoutesPage() {
                               </Badge>
                             )}
                             {isExpiringSoon && (
-                              <Badge variant="secondary" className="gap-1 text-orange-500">
+                              <Badge
+                                variant="secondary"
+                                className="gap-1 text-orange-500"
+                              >
                                 <AlertCircle className="h-3 w-3" />
                                 {daysUntilExpiry} jours
                               </Badge>
@@ -559,11 +656,10 @@ export default function RoutesPage() {
             {(() => {
               // Group routes by domain
               const domainMap = new Map<string, typeof routes>();
-              (routes || []).forEach(route => {
-                const parts = route.host.split('.');
-                const domain = parts.length >= 2
-                  ? parts.slice(-2).join('.')
-                  : route.host;
+              (routes || []).forEach((route) => {
+                const parts = route.host.split(".");
+                const domain =
+                  parts.length >= 2 ? parts.slice(-2).join(".") : route.host;
                 if (!domainMap.has(domain)) {
                   domainMap.set(domain, []);
                 }
@@ -578,76 +674,110 @@ export default function RoutesPage() {
                 );
               }
 
-              return Array.from(domainMap.entries()).map(([domain, domainRoutes]) => (
-                <Card key={domain}>
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <Globe className="h-5 w-5 text-primary" />
-                        <div>
-                          <CardTitle className="text-lg">{domain}</CardTitle>
-                          <p className="text-sm text-muted-foreground">
-                            {domainRoutes.length} route{domainRoutes.length > 1 ? 's' : ''}
-                          </p>
+              return Array.from(domainMap.entries()).map(
+                ([domain, domainRoutes]) => (
+                  <Card key={domain}>
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <Globe className="h-5 w-5 text-primary" />
+                          <div>
+                            <CardTitle className="text-lg">{domain}</CardTitle>
+                            <p className="text-sm text-muted-foreground">
+                              {domainRoutes.length} route
+                              {domainRoutes.length > 1 ? "s" : ""}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {domainRoutes.some((r) => r.tls_enabled) && (
+                            <Badge className="bg-green-500/10 text-green-600">
+                              SSL Active
+                            </Badge>
+                          )}
+                          {domainRoutes.some(
+                            (r) => r.dns_records && r.dns_records.length > 0,
+                          ) && <Badge variant="outline">DNS</Badge>}
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        {domainRoutes.some(r => r.tls_enabled) && (
-                          <Badge className="bg-green-500/10 text-green-600">
-                            SSL Active
-                          </Badge>
-                        )}
-                        {domainRoutes.some(r => r.dns_records && r.dns_records.length > 0) && (
-                          <Badge variant="outline">DNS</Badge>
-                        )}
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2">
-                      {domainRoutes.map(route => (
-                        <div
-                          key={route.id}
-                          className="flex items-center justify-between p-3 rounded-lg border"
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className={`h-2 w-2 rounded-full ${route.enabled ? 'bg-green-500' : 'bg-gray-400'}`} />
-                            <div>
-                              <p className="text-sm font-medium">{route.host}</p>
-                              <p className="text-xs text-muted-foreground">
-                                {route.mode} → {route.target}
-                              </p>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-2">
+                        {domainRoutes.map((route) => (
+                          <div
+                            key={route.id}
+                            className="flex items-center justify-between p-3 rounded-lg border"
+                          >
+                            <div className="flex items-center gap-3">
+                              <div
+                                className={`h-2 w-2 rounded-full ${route.enabled ? "bg-green-500" : "bg-gray-400"}`}
+                              />
+                              <div>
+                                <p className="text-sm font-medium">
+                                  {route.host}
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                  {route.mode} → {route.target}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Badge
+                                variant={
+                                  route.enabled ? "default" : "secondary"
+                                }
+                                className="text-xs"
+                              >
+                                {route.enabled ? "Active" : "Désactivée"}
+                              </Badge>
+                              {route.tls_enabled && (
+                                <Badge variant="outline" className="text-xs">
+                                  TLS
+                                </Badge>
+                              )}
                             </div>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <Badge variant={route.enabled ? 'default' : 'secondary'} className="text-xs">
-                              {route.enabled ? 'Active' : 'Désactivée'}
-                            </Badge>
-                            {route.tls_enabled && (
-                              <Badge variant="outline" className="text-xs">TLS</Badge>
+                        ))}
+                      </div>
+                      {domainRoutes.some(
+                        (r) => r.dns_records && r.dns_records.length > 0,
+                      ) && (
+                        <div className="mt-4 pt-4 border-t">
+                          <h4 className="text-sm font-medium mb-2">
+                            Enregistrements DNS
+                          </h4>
+                          <div className="space-y-1">
+                            {domainRoutes.flatMap((r) =>
+                              (r.dns_records || []).map((record, i) => (
+                                <div
+                                  key={`${r.id}-dns-${i}`}
+                                  className="flex items-center gap-3 text-sm"
+                                >
+                                  <Badge
+                                    variant="outline"
+                                    className="text-xs w-16 justify-center"
+                                  >
+                                    {record.type}
+                                  </Badge>
+                                  <span className="font-mono text-xs">
+                                    {record.name}
+                                  </span>
+                                  <span className="text-muted-foreground">
+                                    &rarr;
+                                  </span>
+                                  <span className="font-mono text-xs">
+                                    {record.value}
+                                  </span>
+                                </div>
+                              )),
                             )}
                           </div>
                         </div>
-                      ))}
-                    </div>
-                    {domainRoutes.some(r => r.dns_records && r.dns_records.length > 0) && (
-                      <div className="mt-4 pt-4 border-t">
-                        <h4 className="text-sm font-medium mb-2">Enregistrements DNS</h4>
-                        <div className="space-y-1">
-                          {domainRoutes.flatMap(r => (r.dns_records || []).map((record, i) => (
-                            <div key={`${r.id}-dns-${i}`} className="flex items-center gap-3 text-sm">
-                              <Badge variant="outline" className="text-xs w-16 justify-center">{record.type}</Badge>
-                              <span className="font-mono text-xs">{record.name}</span>
-                              <span className="text-muted-foreground">&rarr;</span>
-                              <span className="font-mono text-xs">{record.value}</span>
-                            </div>
-                          )))}
-                        </div>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              ));
+                      )}
+                    </CardContent>
+                  </Card>
+                ),
+              );
             })()}
           </TabsContent>
 
@@ -661,7 +791,9 @@ export default function RoutesPage() {
                       <Globe className="h-6 w-6 text-blue-500" />
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground">Total Requêtes</p>
+                      <p className="text-sm text-muted-foreground">
+                        Total Requêtes
+                      </p>
                       <p className="text-2xl font-bold">
                         {(shieldStats?.requests_total ?? 0).toLocaleString()}
                       </p>
@@ -676,7 +808,9 @@ export default function RoutesPage() {
                       <Shield className="h-6 w-6 text-red-500" />
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground">Requêtes Bloquées</p>
+                      <p className="text-sm text-muted-foreground">
+                        Requêtes Bloquées
+                      </p>
                       <p className="text-2xl font-bold">
                         {(shieldStats?.requests_blocked ?? 0).toLocaleString()}
                       </p>
@@ -691,7 +825,9 @@ export default function RoutesPage() {
                       <AlertCircle className="h-6 w-6 text-orange-500" />
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground">Règles Actives</p>
+                      <p className="text-sm text-muted-foreground">
+                        Règles Actives
+                      </p>
                       <p className="text-2xl font-bold">
                         {shieldStats?.active_rules ?? 0}
                       </p>
@@ -709,43 +845,54 @@ export default function RoutesPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {routes.filter(r => r.shield_config?.enabled).length === 0 ? (
+                {routes.filter((r) => r.shield_config?.enabled).length === 0 ? (
                   <p className="text-center py-8 text-muted-foreground">
-                    Aucune route avec SmartShield activé. Activez la protection dans les paramètres de chaque route.
+                    Aucune route avec SmartShield activé. Activez la protection
+                    dans les paramètres de chaque route.
                   </p>
                 ) : (
                   <div className="space-y-3">
-                    {routes.filter(r => r.shield_config?.enabled).map((route) => (
-                      <div
-                        key={route.id}
-                        className="flex items-center justify-between rounded-lg border p-4"
-                      >
-                        <div className="flex items-center gap-3">
-                          <Shield className="h-5 w-5 text-orange-500" />
-                          <div>
-                            <p className="font-medium">{route.host}</p>
-                            <p className="text-sm text-muted-foreground">{route.name}</p>
+                    {routes
+                      .filter((r) => r.shield_config?.enabled)
+                      .map((route) => (
+                        <div
+                          key={route.id}
+                          className="flex items-center justify-between rounded-lg border p-4"
+                        >
+                          <div className="flex items-center gap-3">
+                            <Shield className="h-5 w-5 text-orange-500" />
+                            <div>
+                              <p className="font-medium">{route.host}</p>
+                              <p className="text-sm text-muted-foreground">
+                                {route.name}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-4 text-sm">
+                            <div className="text-right">
+                              <p className="font-medium">
+                                {route.shield_config?.requests_per_second} req/s
+                              </p>
+                              <p className="text-muted-foreground">
+                                Rate limit
+                              </p>
+                            </div>
+                            <div className="text-right">
+                              <p className="font-medium">
+                                {route.shield_config?.burst_size}
+                              </p>
+                              <p className="text-muted-foreground">Burst</p>
+                            </div>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleEdit(route)}
+                            >
+                              Configurer
+                            </Button>
                           </div>
                         </div>
-                        <div className="flex items-center gap-4 text-sm">
-                          <div className="text-right">
-                            <p className="font-medium">{route.shield_config?.requests_per_second} req/s</p>
-                            <p className="text-muted-foreground">Rate limit</p>
-                          </div>
-                          <div className="text-right">
-                            <p className="font-medium">{route.shield_config?.burst_size}</p>
-                            <p className="text-muted-foreground">Burst</p>
-                          </div>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleEdit(route)}
-                          >
-                            Configurer
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
+                      ))}
                   </div>
                 )}
               </CardContent>
@@ -763,18 +910,24 @@ export default function RoutesPage() {
       />
 
       {/* Delete Confirmation */}
-      <AlertDialog open={deleteDialog.open} onOpenChange={(open) => setDeleteDialog({ open, route: null })}>
+      <AlertDialog
+        open={deleteDialog.open}
+        onOpenChange={(open) => setDeleteDialog({ open, route: null })}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Supprimer la route</AlertDialogTitle>
             <AlertDialogDescription>
-              Êtes-vous sûr de vouloir supprimer la route &quot;{deleteDialog.route?.name}&quot; ?
-              Cette action est irréversible.
+              Êtes-vous sûr de vouloir supprimer la route &quot;
+              {deleteDialog.route?.name}&quot; ? Cette action est irréversible.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground">
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-destructive text-destructive-foreground"
+            >
               Supprimer
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -806,8 +959,19 @@ export default function RoutesPage() {
             <Button variant="outline" onClick={() => setCertDialogOpen(false)}>
               Annuler
             </Button>
-            <Button onClick={handleRequestCertificate} disabled={certLoading || !certDomain.trim()}>
-              {certLoading && <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />}
+            <Button
+              onClick={handleRequestCertificate}
+              disabled={certLoading || !certDomain.trim()}
+            >
+              {certLoading && (
+                <SpinnerInfinity
+                  size={24}
+                  secondaryColor="rgba(128,128,128,0.2)"
+                  color="currentColor"
+                  speed={120}
+                  className="mr-2 h-4 w-4 "
+                />
+              )}
               Demander
             </Button>
           </DialogFooter>

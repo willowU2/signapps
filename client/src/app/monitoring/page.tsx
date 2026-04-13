@@ -1,23 +1,32 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { AppLayout } from '@/components/layout/app-layout';
-import { MonitoringAlertToTicket } from '@/components/interop/it-hr-compliance-bridge';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
-import { DataTableSkeleton, CardGridSkeleton } from '@/components/ui/skeleton-loader';
-import { Switch } from '@/components/ui/switch';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useEffect, useState } from "react";
+import { AppLayout } from "@/components/layout/app-layout";
+import { MonitoringAlertToTicket } from "@/components/interop/it-hr-compliance-bridge";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  DataTableSkeleton,
+  CardGridSkeleton,
+} from "@/components/ui/skeleton-loader";
+import { Switch } from "@/components/ui/switch";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from "@/components/ui/select";
 import {
   Cpu,
   MemoryStick,
@@ -35,7 +44,7 @@ import {
   Clock,
   Trash2,
   Eye,
-} from 'lucide-react';
+} from "lucide-react";
 import {
   LineChart,
   Line,
@@ -47,19 +56,75 @@ import {
   AreaChart,
   Area,
   Legend,
-} from 'recharts';
-import { useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
-import { AnomalyAlertPanel } from '@/components/monitoring/anomaly-alert-panel';
-import { AlertConfig, AlertSeverity } from '@/lib/api';
-import { AlertConfigDialog } from '@/components/monitoring/alert-config-dialog';
-import { ConfirmDialog } from '@/components/confirm-dialog';
-import { CustomMetricDashboard } from '@/components/monitoring/custom-dashboard';
-import { SloTracker } from '@/components/monitoring/slo-tracker';
-import { TrendAnalysis } from '@/components/monitoring/trend-analysis';
-import { MultiMetricCorrelation } from '@/components/monitoring/multi-metric-correlation';
-import { WeeklyMetricsReport } from '@/components/monitoring/weekly-report';
-import { RequestHeatmap } from '@/components/monitoring/request-heatmap';
+} from "recharts";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { AnomalyAlertPanel } from "@/components/monitoring/anomaly-alert-panel";
+import { AlertConfig, AlertSeverity } from "@/lib/api";
+import { AlertConfigDialog } from "@/components/monitoring/alert-config-dialog";
+import { ConfirmDialog } from "@/components/confirm-dialog";
+import dynamic from "next/dynamic";
+
+const CustomMetricDashboard = dynamic(
+  () =>
+    import("@/components/monitoring/custom-dashboard").then((m) => ({
+      default: m.CustomMetricDashboard,
+    })),
+  {
+    loading: () => <div className="h-64 animate-pulse rounded bg-muted" />,
+    ssr: false,
+  },
+);
+const SloTracker = dynamic(
+  () =>
+    import("@/components/monitoring/slo-tracker").then((m) => ({
+      default: m.SloTracker,
+    })),
+  {
+    loading: () => <div className="h-48 animate-pulse rounded bg-muted" />,
+    ssr: false,
+  },
+);
+const TrendAnalysis = dynamic(
+  () =>
+    import("@/components/monitoring/trend-analysis").then((m) => ({
+      default: m.TrendAnalysis,
+    })),
+  {
+    loading: () => <div className="h-64 animate-pulse rounded bg-muted" />,
+    ssr: false,
+  },
+);
+const MultiMetricCorrelation = dynamic(
+  () =>
+    import("@/components/monitoring/multi-metric-correlation").then((m) => ({
+      default: m.MultiMetricCorrelation,
+    })),
+  {
+    loading: () => <div className="h-64 animate-pulse rounded bg-muted" />,
+    ssr: false,
+  },
+);
+const WeeklyMetricsReport = dynamic(
+  () =>
+    import("@/components/monitoring/weekly-report").then((m) => ({
+      default: m.WeeklyMetricsReport,
+    })),
+  {
+    loading: () => <div className="h-48 animate-pulse rounded bg-muted" />,
+    ssr: false,
+  },
+);
+const RequestHeatmap = dynamic(
+  () =>
+    import("@/components/monitoring/request-heatmap").then((m) => ({
+      default: m.RequestHeatmap,
+    })),
+  {
+    loading: () => <div className="h-48 animate-pulse rounded bg-muted" />,
+    ssr: false,
+  },
+);
 import {
   useMetricsSummary,
   useMetricsStream,
@@ -70,21 +135,21 @@ import {
   useAcknowledgeAlert,
   useToggleAlertConfig,
   useDeleteAlertConfig,
-} from '@/hooks/use-monitoring';
-import { usePageTitle } from '@/hooks/use-page-title';
+} from "@/hooks/use-monitoring";
+import { usePageTitle } from "@/hooks/use-page-title";
 
 // ---- localStorage alert rules with client-side threshold checking ----
-const LOCAL_ALERT_RULES_KEY = 'signapps_monitoring_alert_rules';
-const LOCAL_ALERT_NOTIFICATIONS_KEY = 'signapps_monitoring_notifications';
+const LOCAL_ALERT_RULES_KEY = "signapps_monitoring_alert_rules";
+const LOCAL_ALERT_NOTIFICATIONS_KEY = "signapps_monitoring_notifications";
 
 interface LocalAlertRule {
   id: string;
   name: string;
-  metric: 'cpu' | 'memory' | 'disk' | 'service';
+  metric: "cpu" | "memory" | "disk" | "service";
   threshold: number;
   durationMinutes: number;
   enabled: boolean;
-  severity: 'warning' | 'critical';
+  severity: "warning" | "critical";
 }
 
 interface LocalNotification {
@@ -94,25 +159,62 @@ interface LocalNotification {
   metric: string;
   value: number;
   threshold: number;
-  severity: 'warning' | 'critical';
+  severity: "warning" | "critical";
   timestamp: string;
   acknowledged: boolean;
 }
 
 const DEFAULT_LOCAL_RULES: LocalAlertRule[] = [
-  { id: 'cpu-90', name: 'CPU > 90% for 5 min', metric: 'cpu', threshold: 90, durationMinutes: 5, enabled: true, severity: 'critical' },
-  { id: 'mem-85', name: 'Memory > 85%', metric: 'memory', threshold: 85, durationMinutes: 0, enabled: true, severity: 'warning' },
-  { id: 'disk-90', name: 'Disk > 90%', metric: 'disk', threshold: 90, durationMinutes: 0, enabled: true, severity: 'critical' },
-  { id: 'svc-down', name: 'Service down', metric: 'service', threshold: 0, durationMinutes: 0, enabled: true, severity: 'critical' },
+  {
+    id: "cpu-90",
+    name: "CPU > 90% for 5 min",
+    metric: "cpu",
+    threshold: 90,
+    durationMinutes: 5,
+    enabled: true,
+    severity: "critical",
+  },
+  {
+    id: "mem-85",
+    name: "Memory > 85%",
+    metric: "memory",
+    threshold: 85,
+    durationMinutes: 0,
+    enabled: true,
+    severity: "warning",
+  },
+  {
+    id: "disk-90",
+    name: "Disk > 90%",
+    metric: "disk",
+    threshold: 90,
+    durationMinutes: 0,
+    enabled: true,
+    severity: "critical",
+  },
+  {
+    id: "svc-down",
+    name: "Service down",
+    metric: "service",
+    threshold: 0,
+    durationMinutes: 0,
+    enabled: true,
+    severity: "critical",
+  },
 ];
 
 function getLocalRules(): LocalAlertRule[] {
-  if (typeof window === 'undefined') return DEFAULT_LOCAL_RULES;
+  if (typeof window === "undefined") return DEFAULT_LOCAL_RULES;
   try {
     const stored = localStorage.getItem(LOCAL_ALERT_RULES_KEY);
     if (stored) return JSON.parse(stored);
-  } catch { /* ignore */ }
-  localStorage.setItem(LOCAL_ALERT_RULES_KEY, JSON.stringify(DEFAULT_LOCAL_RULES));
+  } catch {
+    /* ignore */
+  }
+  localStorage.setItem(
+    LOCAL_ALERT_RULES_KEY,
+    JSON.stringify(DEFAULT_LOCAL_RULES),
+  );
   return DEFAULT_LOCAL_RULES;
 }
 
@@ -121,14 +223,21 @@ function saveLocalRules(rules: LocalAlertRule[]) {
 }
 
 function getLocalNotifications(): LocalNotification[] {
-  if (typeof window === 'undefined') return [];
+  if (typeof window === "undefined") return [];
   try {
-    return JSON.parse(localStorage.getItem(LOCAL_ALERT_NOTIFICATIONS_KEY) || '[]');
-  } catch { return []; }
+    return JSON.parse(
+      localStorage.getItem(LOCAL_ALERT_NOTIFICATIONS_KEY) || "[]",
+    );
+  } catch {
+    return [];
+  }
 }
 
 function saveLocalNotifications(notifs: LocalNotification[]) {
-  localStorage.setItem(LOCAL_ALERT_NOTIFICATIONS_KEY, JSON.stringify(notifs.slice(0, 50)));
+  localStorage.setItem(
+    LOCAL_ALERT_NOTIFICATIONS_KEY,
+    JSON.stringify(notifs.slice(0, 50)),
+  );
 }
 
 function checkThresholds(
@@ -146,13 +255,13 @@ function checkThresholds(
     let currentValue = 0;
     let triggered = false;
 
-    if (rule.metric === 'cpu') {
+    if (rule.metric === "cpu") {
       currentValue = cpu;
       triggered = cpu > rule.threshold;
-    } else if (rule.metric === 'memory') {
+    } else if (rule.metric === "memory") {
       currentValue = memory;
       triggered = memory > rule.threshold;
-    } else if (rule.metric === 'disk') {
+    } else if (rule.metric === "disk") {
       currentValue = disk;
       triggered = disk > rule.threshold;
     }
@@ -161,8 +270,10 @@ function checkThresholds(
     if (triggered) {
       // Only add if no un-acknowledged notification for this rule in the last 5 minutes
       const recentExists = existingNotifs.some(
-        n => n.ruleId === rule.id && !n.acknowledged &&
-          (Date.now() - new Date(n.timestamp).getTime()) < 300000
+        (n) =>
+          n.ruleId === rule.id &&
+          !n.acknowledged &&
+          Date.now() - new Date(n.timestamp).getTime() < 300000,
       );
       if (!recentExists) {
         newNotifs.push({
@@ -193,29 +304,30 @@ interface MetricPoint {
   networkTx: number;
 }
 
-type TimePeriod = '5m' | '15m' | '1h' | '24h';
+type TimePeriod = "5m" | "15m" | "1h" | "24h";
 
 const periodLabels: Record<TimePeriod, string> = {
-  '5m': '5 minutes',
-  '15m': '15 minutes',
-  '1h': '1 hour',
-  '24h': '24 hours',
+  "5m": "5 minutes",
+  "15m": "15 minutes",
+  "1h": "1 hour",
+  "24h": "24 hours",
 };
 
 const maxPointsByPeriod: Record<TimePeriod, number> = {
-  '5m': 60,    // 5 sec intervals
-  '15m': 90,   // 10 sec intervals
-  '1h': 120,   // 30 sec intervals
-  '24h': 288,  // 5 min intervals
+  "5m": 60, // 5 sec intervals
+  "15m": 90, // 10 sec intervals
+  "1h": 120, // 30 sec intervals
+  "24h": 288, // 5 min intervals
 };
 
 export default function MonitoringPage() {
-  usePageTitle('Supervision');
+  usePageTitle("Supervision");
   const [refreshInterval, setRefreshInterval] = useState(5000);
   const [autoRefresh, setAutoRefresh] = useState(true);
-  const [timePeriod, setTimePeriod] = useState<TimePeriod>('5m');
+  const [timePeriod, setTimePeriod] = useState<TimePeriod>("5m");
   const [realtimeEnabled, setRealtimeEnabled] = useState(false);
-  const { metrics: streamMetrics, connected: streamConnecté } = useMetricsStream(realtimeEnabled);
+  const { metrics: streamMetrics, connected: streamConnecté } =
+    useMetricsStream(realtimeEnabled);
 
   // Alerts local state
   const [alertDialogOpen, setAlertDialogOpen] = useState(false);
@@ -224,21 +336,31 @@ export default function MonitoringPage() {
 
   // localStorage-based alert rules
   const [localRules, setLocalRules] = useState<LocalAlertRule[]>(getLocalRules);
-  const [localNotifications, setLocalNotifications] = useState<LocalNotification[]>(getLocalNotifications);
+  const [localNotifications, setLocalNotifications] = useState<
+    LocalNotification[]
+  >(getLocalNotifications);
 
   const queryClient = useQueryClient();
   const [history, setHistory] = useState<MetricPoint[]>([]);
 
   // React Query hooks
-  const { data: queryMetrics, isLoading: loading, isError: metricsError } = useMetricsSummary(autoRefresh ? refreshInterval : undefined);
-  const { data: disks = [] } = useDiskMetrics(autoRefresh ? refreshInterval : undefined);
+  const {
+    data: queryMetrics,
+    isLoading: loading,
+    isError: metricsError,
+  } = useMetricsSummary(autoRefresh ? refreshInterval : undefined);
+  const { data: disks = [] } = useDiskMetrics(
+    autoRefresh ? refreshInterval : undefined,
+  );
 
   useEffect(() => {
-    if (metricsError) toast.error('Impossible de charger les métriques système');
+    if (metricsError)
+      toast.error("Impossible de charger les métriques système");
   }, [metricsError]);
 
   // Use SSE metrics when real-time is enabled, otherwise use polling data
-  const metrics = realtimeEnabled && streamMetrics ? streamMetrics : queryMetrics;
+  const metrics =
+    realtimeEnabled && streamMetrics ? streamMetrics : queryMetrics;
   const { data: alertConfigs = [] } = useAlertConfigs();
   const { data: activeAlerts = [] } = useActiveAlerts();
   const { data: alertHistory = [] } = useAlertHistory(10);
@@ -263,25 +385,28 @@ export default function MonitoringPage() {
       setLocalNotifications(updated);
       // Show browser toast for each new notification
       for (const n of newNotifs) {
-        toast.warning(`${n.ruleName}: ${n.metric} at ${n.value.toFixed(1)}% (threshold: ${n.threshold}%)`, {
-          duration: 8000,
-        });
+        toast.warning(
+          `${n.ruleName}: ${n.metric} at ${n.value.toFixed(1)}% (threshold: ${n.threshold}%)`,
+          {
+            duration: 8000,
+          },
+        );
       }
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [metrics]);
 
   const handleToggleLocalRule = (ruleId: string) => {
-    const updated = localRules.map(r =>
-      r.id === ruleId ? { ...r, enabled: !r.enabled } : r
+    const updated = localRules.map((r) =>
+      r.id === ruleId ? { ...r, enabled: !r.enabled } : r,
     );
     setLocalRules(updated);
     saveLocalRules(updated);
   };
 
   const handleAcknowledgeLocalNotif = (notifId: string) => {
-    const updated = localNotifications.map(n =>
-      n.id === notifId ? { ...n, acknowledged: true } : n
+    const updated = localNotifications.map((n) =>
+      n.id === notifId ? { ...n, acknowledged: true } : n,
     );
     setLocalNotifications(updated);
     saveLocalNotifications(updated);
@@ -292,18 +417,20 @@ export default function MonitoringPage() {
     saveLocalNotifications([]);
   };
 
-  const unacknowledgedLocalNotifs = localNotifications.filter(n => !n.acknowledged);
+  const unacknowledgedLocalNotifs = localNotifications.filter(
+    (n) => !n.acknowledged,
+  );
 
   // Build history from metrics updates
   useEffect(() => {
     if (!metrics) return;
     const now = new Date();
-    const timeStr = now.toLocaleTimeString('fr-FR', {
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
+    const timeStr = now.toLocaleTimeString("fr-FR", {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
     });
-    
+
     setHistory((prev) => {
       const newPoint: MetricPoint = {
         time: timeStr,
@@ -320,7 +447,7 @@ export default function MonitoringPage() {
 
   // Reset history when period changes
   useEffect(() => {
-    setHistory([]); 
+    setHistory([]);
   }, [timePeriod]);
 
   const handleAcknowledgeAlert = (alertId: string) => {
@@ -336,11 +463,11 @@ export default function MonitoringPage() {
   };
 
   const formatBytes = (bytes: number) => {
-    if (bytes === 0) return '0 B';
+    if (bytes === 0) return "0 B";
     const k = 1024;
-    const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+    const sizes = ["B", "KB", "MB", "GB", "TB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
   };
 
   const formatUptime = (seconds: number) => {
@@ -357,7 +484,7 @@ export default function MonitoringPage() {
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
     const diffMins = Math.floor(diffMs / 60000);
-    if (diffMins < 1) return 'Just now';
+    if (diffMins < 1) return "Just now";
     if (diffMins < 60) return `${diffMins}m ago`;
     const diffHours = Math.floor(diffMins / 60);
     if (diffHours < 24) return `${diffHours}h ago`;
@@ -366,19 +493,23 @@ export default function MonitoringPage() {
   };
 
   const getStatusColor = (value: number) => {
-    if (value < 50) return 'text-green-500';
-    if (value < 80) return 'text-yellow-500';
-    return 'text-red-500';
+    if (value < 50) return "text-green-500";
+    if (value < 80) return "text-yellow-500";
+    return "text-red-500";
   };
 
   const getStatusBadge = (value: number) => {
-    if (value < 50) return <Badge className="bg-green-500/10 text-green-600">Normal</Badge>;
-    if (value < 80) return <Badge className="bg-yellow-500/10 text-yellow-600">Warning</Badge>;
+    if (value < 50)
+      return <Badge className="bg-green-500/10 text-green-600">Normal</Badge>;
+    if (value < 80)
+      return (
+        <Badge className="bg-yellow-500/10 text-yellow-600">Warning</Badge>
+      );
     return <Badge variant="destructive">Critical</Badge>;
   };
 
   const getAlertSeverityBadge = (severity: AlertSeverity) => {
-    if (severity === 'critical') {
+    if (severity === "critical") {
       return <Badge variant="destructive">Critical</Badge>;
     }
     return <Badge className="bg-yellow-500/10 text-yellow-600">Warning</Badge>;
@@ -386,13 +517,13 @@ export default function MonitoringPage() {
 
   const getMetricIcon = (metric: string) => {
     switch (metric) {
-      case 'cpu':
+      case "cpu":
         return <Cpu className="h-4 w-4" />;
-      case 'memory':
+      case "memory":
         return <MemoryStick className="h-4 w-4" />;
-      case 'disk':
+      case "disk":
         return <HardDrive className="h-4 w-4" />;
-      case 'network':
+      case "network":
         return <Network className="h-4 w-4" />;
       default:
         return <Activity className="h-4 w-4" />;
@@ -417,7 +548,13 @@ export default function MonitoringPage() {
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <h1 className="text-3xl font-bold">System Monitoring</h1>
-            <Button variant="outline" size="sm" onClick={() => queryClient.invalidateQueries({ queryKey: ['metrics'] })}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                queryClient.invalidateQueries({ queryKey: ["metrics"] })
+              }
+            >
               <RefreshCw className="mr-2 h-4 w-4" />
               Réessayer
             </Button>
@@ -427,9 +564,12 @@ export default function MonitoringPage() {
               <div className="flex h-16 w-16 items-center justify-center rounded-full bg-destructive/10 mb-4">
                 <Activity className="h-8 w-8 text-destructive" />
               </div>
-              <h3 className="text-lg font-semibold">Impossible de charger les métriques système</h3>
+              <h3 className="text-lg font-semibold">
+                Impossible de charger les métriques système
+              </h3>
               <p className="text-sm text-muted-foreground mt-1">
-                Le service de monitoring est peut-être indisponible. Vérifiez votre connexion et réessayez.
+                Le service de monitoring est peut-être indisponible. Vérifiez
+                votre connexion et réessayez.
               </p>
             </CardContent>
           </Card>
@@ -453,7 +593,8 @@ export default function MonitoringPage() {
           <div>
             <h1 className="text-3xl font-bold">System Monitoring</h1>
             <p className="text-muted-foreground">
-              {metrics?.hostname || 'Server'} - {metrics?.os_name || 'Unknown OS'}
+              {metrics?.hostname || "Server"} -{" "}
+              {metrics?.os_name || "Unknown OS"}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -491,14 +632,22 @@ export default function MonitoringPage() {
             </Select>
 
             <Button
-              variant={autoRefresh ? 'default' : 'outline'}
+              variant={autoRefresh ? "default" : "outline"}
               size="sm"
               onClick={() => setAutoRefresh(!autoRefresh)}
             >
-              <Activity className={`mr-2 h-4 w-4 ${autoRefresh ? 'animate-pulse' : ''}`} />
-              {autoRefresh ? 'Live' : 'Paused'}
+              <Activity
+                className={`mr-2 h-4 w-4 ${autoRefresh ? "animate-pulse" : ""}`}
+              />
+              {autoRefresh ? "Live" : "Paused"}
             </Button>
-            <Button variant="outline" size="sm" onClick={() => queryClient.invalidateQueries({ queryKey: ['metrics'] })}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                queryClient.invalidateQueries({ queryKey: ["metrics"] })
+              }
+            >
               <RefreshCw className="h-4 w-4" />
             </Button>
             <div className="flex items-center gap-2">
@@ -523,7 +672,8 @@ export default function MonitoringPage() {
                   <AlertTriangle className="h-5 w-5 text-destructive" />
                   <div>
                     <p className="font-medium text-destructive">
-                      {activeAlerts.length} Active Alert{activeAlerts.length > 1 ? 's' : ''}
+                      {activeAlerts.length} Active Alert
+                      {activeAlerts.length > 1 ? "s" : ""}
                     </p>
                     <p className="text-sm text-muted-foreground">
                       {activeAlerts[0]?.message}
@@ -551,24 +701,40 @@ export default function MonitoringPage() {
                 <div className="flex items-center gap-2">
                   <Bell className="h-5 w-5 text-yellow-600" />
                   <p className="font-medium text-yellow-700">
-                    {unacknowledgedLocalNotifs.length} Local Alert{unacknowledgedLocalNotifs.length > 1 ? 's' : ''}
+                    {unacknowledgedLocalNotifs.length} Local Alert
+                    {unacknowledgedLocalNotifs.length > 1 ? "s" : ""}
                   </p>
                 </div>
-                <Button variant="ghost" size="sm" onClick={handleClearLocalNotifications} className="text-xs">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleClearLocalNotifications}
+                  className="text-xs"
+                >
                   Clear All
                 </Button>
               </div>
               <div className="space-y-1.5">
-                {unacknowledgedLocalNotifs.slice(0, 5).map(n => (
-                  <div key={n.id} className="flex items-center justify-between text-sm rounded-md border border-yellow-500/20 p-2 bg-background/50">
+                {unacknowledgedLocalNotifs.slice(0, 5).map((n) => (
+                  <div
+                    key={n.id}
+                    className="flex items-center justify-between text-sm rounded-md border border-yellow-500/20 p-2 bg-background/50"
+                  >
                     <div className="flex items-center gap-2">
-                      {n.severity === 'critical' ? (
+                      {n.severity === "critical" ? (
                         <AlertTriangle className="h-4 w-4 text-red-500" />
                       ) : (
                         <AlertTriangle className="h-4 w-4 text-yellow-500" />
                       )}
                       <span>{n.ruleName}</span>
-                      <Badge variant={n.severity === 'critical' ? 'destructive' : 'secondary'} className="text-[10px] h-4 px-1.5">
+                      <Badge
+                        variant={
+                          n.severity === "critical"
+                            ? "destructive"
+                            : "secondary"
+                        }
+                        className="text-[10px] h-4 px-1.5"
+                      >
                         {n.value.toFixed(1)}%
                       </Badge>
                     </div>
@@ -594,32 +760,44 @@ export default function MonitoringPage() {
               <CardTitle className="flex items-center gap-2 text-sm">
                 <Settings className="h-4 w-4 text-primary" />
                 Threshold Alert Rules
-                <Badge variant="outline" className="text-[10px]">Local</Badge>
+                <Badge variant="outline" className="text-[10px]">
+                  Local
+                </Badge>
               </CardTitle>
             </div>
             <CardDescription className="text-xs">
-              Client-side alert rules stored in browser. Triggers notifications when thresholds are exceeded.
+              Client-side alert rules stored in browser. Triggers notifications
+              when thresholds are exceeded.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-              {localRules.map(rule => (
+              {localRules.map((rule) => (
                 <div
                   key={rule.id}
                   className={`flex items-center justify-between rounded-lg border p-3 transition-colors ${
-                    rule.enabled ? '' : 'opacity-50'
+                    rule.enabled ? "" : "opacity-50"
                   }`}
                 >
                   <div className="flex items-center gap-2">
-                    {rule.metric === 'cpu' && <Cpu className="h-4 w-4 text-blue-500" />}
-                    {rule.metric === 'memory' && <MemoryStick className="h-4 w-4 text-purple-500" />}
-                    {rule.metric === 'disk' && <HardDrive className="h-4 w-4 text-orange-500" />}
-                    {rule.metric === 'service' && <Server className="h-4 w-4 text-red-500" />}
+                    {rule.metric === "cpu" && (
+                      <Cpu className="h-4 w-4 text-blue-500" />
+                    )}
+                    {rule.metric === "memory" && (
+                      <MemoryStick className="h-4 w-4 text-purple-500" />
+                    )}
+                    {rule.metric === "disk" && (
+                      <HardDrive className="h-4 w-4 text-orange-500" />
+                    )}
+                    {rule.metric === "service" && (
+                      <Server className="h-4 w-4 text-red-500" />
+                    )}
                     <div>
                       <p className="text-xs font-medium">{rule.name}</p>
                       <p className="text-[10px] text-muted-foreground">
-                        {rule.severity === 'critical' ? 'Critical' : 'Warning'}
-                        {rule.durationMinutes > 0 && ` (${rule.durationMinutes}m)`}
+                        {rule.severity === "critical" ? "Critical" : "Warning"}
+                        {rule.durationMinutes > 0 &&
+                          ` (${rule.durationMinutes}m)`}
                       </p>
                     </div>
                   </div>
@@ -634,7 +812,7 @@ export default function MonitoringPage() {
         </Card>
 
         {/* Quick Stats */}
-        <div className="grid gap-4 md:grid-cols-4">
+        <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
@@ -644,7 +822,9 @@ export default function MonitoringPage() {
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">CPU</p>
-                    <p className={`text-2xl font-bold ${getStatusColor(cpuUsage)}`}>
+                    <p
+                      className={`text-2xl font-bold ${getStatusColor(cpuUsage)}`}
+                    >
                       {cpuUsage.toFixed(1)}%
                     </p>
                   </div>
@@ -652,7 +832,7 @@ export default function MonitoringPage() {
                 {getStatusBadge(cpuUsage)}
               </div>
               <p className="mt-2 text-xs text-muted-foreground">
-                {metrics?.cpu_cores || '-'} cores
+                {metrics?.cpu_cores || "-"} cores
               </p>
             </CardContent>
           </Card>
@@ -666,7 +846,9 @@ export default function MonitoringPage() {
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Memory</p>
-                    <p className={`text-2xl font-bold ${getStatusColor(memoryUsage)}`}>
+                    <p
+                      className={`text-2xl font-bold ${getStatusColor(memoryUsage)}`}
+                    >
                       {memoryUsage.toFixed(1)}%
                     </p>
                   </div>
@@ -674,7 +856,8 @@ export default function MonitoringPage() {
                 {getStatusBadge(memoryUsage)}
               </div>
               <p className="mt-2 text-xs text-muted-foreground">
-                {formatBytes(metrics?.memory_used_bytes || 0)} / {formatBytes(metrics?.memory_total_bytes || 0)}
+                {formatBytes(metrics?.memory_used_bytes || 0)} /{" "}
+                {formatBytes(metrics?.memory_total_bytes || 0)}
               </p>
             </CardContent>
           </Card>
@@ -688,7 +871,9 @@ export default function MonitoringPage() {
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Disk</p>
-                    <p className={`text-2xl font-bold ${getStatusColor(diskUsage)}`}>
+                    <p
+                      className={`text-2xl font-bold ${getStatusColor(diskUsage)}`}
+                    >
                       {diskUsage.toFixed(1)}%
                     </p>
                   </div>
@@ -696,7 +881,8 @@ export default function MonitoringPage() {
                 {getStatusBadge(diskUsage)}
               </div>
               <p className="mt-2 text-xs text-muted-foreground">
-                {formatBytes(metrics?.disk_used_bytes || 0)} / {formatBytes(metrics?.disk_total_bytes || 0)}
+                {formatBytes(metrics?.disk_used_bytes || 0)} /{" "}
+                {formatBytes(metrics?.disk_total_bytes || 0)}
               </p>
             </CardContent>
           </Card>
@@ -710,7 +896,9 @@ export default function MonitoringPage() {
                 <div>
                   <p className="text-sm text-muted-foreground">Uptime</p>
                   <p className="text-2xl font-bold">
-                    {formatUptime(metrics?.uptime_seconds || metrics?.uptime || 0)}
+                    {formatUptime(
+                      metrics?.uptime_seconds || metrics?.uptime || 0,
+                    )}
                   </p>
                 </div>
               </div>
@@ -727,15 +915,16 @@ export default function MonitoringPage() {
                 <Cpu className="h-5 w-5 text-blue-500" />
                 CPU Usage
               </CardTitle>
-              <CardDescription>
-                Last {periodLabels[timePeriod]}
-              </CardDescription>
+              <CardDescription>Last {periodLabels[timePeriod]}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={history}>
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      className="stroke-muted"
+                    />
                     <XAxis
                       dataKey="time"
                       tick={{ fontSize: 11 }}
@@ -750,11 +939,14 @@ export default function MonitoringPage() {
                     />
                     <Tooltip
                       contentStyle={{
-                        backgroundColor: 'hsl(var(--card))',
-                        border: '1px solid hsl(var(--border))',
-                        borderRadius: '8px',
+                        backgroundColor: "hsl(var(--card))",
+                        border: "1px solid hsl(var(--border))",
+                        borderRadius: "8px",
                       }}
-                      formatter={(value) => [`${(value as number)?.toFixed(1) ?? 0}%`, 'CPU']}
+                      formatter={(value) => [
+                        `${(value as number)?.toFixed(1) ?? 0}%`,
+                        "CPU",
+                      ]}
                     />
                     <Line
                       type="monotone"
@@ -777,15 +969,16 @@ export default function MonitoringPage() {
                 <MemoryStick className="h-5 w-5 text-purple-500" />
                 Memory Usage
               </CardTitle>
-              <CardDescription>
-                Last {periodLabels[timePeriod]}
-              </CardDescription>
+              <CardDescription>Last {periodLabels[timePeriod]}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={history}>
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      className="stroke-muted"
+                    />
                     <XAxis
                       dataKey="time"
                       tick={{ fontSize: 11 }}
@@ -800,11 +993,14 @@ export default function MonitoringPage() {
                     />
                     <Tooltip
                       contentStyle={{
-                        backgroundColor: 'hsl(var(--card))',
-                        border: '1px solid hsl(var(--border))',
-                        borderRadius: '8px',
+                        backgroundColor: "hsl(var(--card))",
+                        border: "1px solid hsl(var(--border))",
+                        borderRadius: "8px",
                       }}
-                      formatter={(value) => [`${(value as number)?.toFixed(1) ?? 0}%`, 'Memory']}
+                      formatter={(value) => [
+                        `${(value as number)?.toFixed(1) ?? 0}%`,
+                        "Memory",
+                      ]}
                     />
                     <Area
                       type="monotone"
@@ -836,7 +1032,10 @@ export default function MonitoringPage() {
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={history}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    className="stroke-muted"
+                  />
                   <XAxis
                     dataKey="time"
                     tick={{ fontSize: 11 }}
@@ -850,11 +1049,13 @@ export default function MonitoringPage() {
                   />
                   <Tooltip
                     contentStyle={{
-                      backgroundColor: 'hsl(var(--card))',
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px',
+                      backgroundColor: "hsl(var(--card))",
+                      border: "1px solid hsl(var(--border))",
+                      borderRadius: "8px",
                     }}
-                    formatter={(value) => [`${(value as number)?.toFixed(2) ?? 0} MB`]}
+                    formatter={(value) => [
+                      `${(value as number)?.toFixed(2) ?? 0} MB`,
+                    ]}
                   />
                   <Legend />
                   <Line
@@ -879,11 +1080,15 @@ export default function MonitoringPage() {
             <div className="mt-4 flex justify-center gap-6 text-sm">
               <div className="flex items-center gap-2">
                 <div className="h-3 w-3 rounded-full bg-green-500" />
-                <span>Total Received: {formatBytes(metrics?.network_rx_bytes || 0)}</span>
+                <span>
+                  Total Received: {formatBytes(metrics?.network_rx_bytes || 0)}
+                </span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="h-3 w-3 rounded-full bg-orange-500" />
-                <span>Total Sent: {formatBytes(metrics?.network_tx_bytes || 0)}</span>
+                <span>
+                  Total Sent: {formatBytes(metrics?.network_tx_bytes || 0)}
+                </span>
               </div>
             </div>
           </CardContent>
@@ -934,9 +1139,12 @@ export default function MonitoringPage() {
                   {alertConfigs.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-8 text-center">
                       <BellOff className="mb-2 h-10 w-10 text-muted-foreground" />
-                      <p className="text-muted-foreground">No alert configurations</p>
+                      <p className="text-muted-foreground">
+                        No alert configurations
+                      </p>
                       <p className="text-sm text-muted-foreground">
-                        Create an alert to get notified when thresholds are exceeded
+                        Create an alert to get notified when thresholds are
+                        exceeded
                       </p>
                     </div>
                   ) : (
@@ -949,12 +1157,20 @@ export default function MonitoringPage() {
                           >
                             <div className="flex items-center gap-3">
                               <div className="flex h-8 w-8 items-center justify-center rounded-md bg-muted">
-                                {getMetricIcon(config.metric || config.metric_type || '')}
+                                {getMetricIcon(
+                                  config.metric || config.metric_type || "",
+                                )}
                               </div>
                               <div>
                                 <p className="font-medium">{config.name}</p>
                                 <p className="text-sm text-muted-foreground">
-                                  {(config.metric || config.metric_type || '').toUpperCase()} {config.condition || config.operator} {config.threshold}%
+                                  {(
+                                    config.metric ||
+                                    config.metric_type ||
+                                    ""
+                                  ).toUpperCase()}{" "}
+                                  {config.condition || config.operator}{" "}
+                                  {config.threshold}%
                                 </p>
                               </div>
                             </div>
@@ -1017,7 +1233,9 @@ export default function MonitoringPage() {
                               </div>
                               <div>
                                 <div className="flex items-center gap-2">
-                                  <p className="font-medium">{alert.config_name}</p>
+                                  <p className="font-medium">
+                                    {alert.config_name}
+                                  </p>
                                   {getAlertSeverityBadge(alert.severity)}
                                 </div>
                                 <p className="text-sm text-muted-foreground">
@@ -1025,8 +1243,8 @@ export default function MonitoringPage() {
                                 </p>
                                 <p className="text-xs text-muted-foreground">
                                   {formatTimeAgo(alert.triggered_at)}
-                                  {alert.acknowledged_at && ' - Acknowledged'}
-                                  {alert.resolved_at && ' - Resolved'}
+                                  {alert.acknowledged_at && " - Acknowledged"}
+                                  {alert.resolved_at && " - Resolved"}
                                 </p>
                               </div>
                             </div>
@@ -1035,16 +1253,37 @@ export default function MonitoringPage() {
                               {!alert.resolved_at && (
                                 <MonitoringAlertToTicket
                                   alertId={alert.id}
-                                  alertTitle={alert.config_name || alert.message || 'Alerte'}
-                                  severity={(['low','medium','high','critical'].includes(alert.severity) ? alert.severity : 'medium') as 'low'|'medium'|'high'|'critical'}
-                                  serviceAffected={alert.config_name || 'unknown'}
+                                  alertTitle={
+                                    alert.config_name ||
+                                    alert.message ||
+                                    "Alerte"
+                                  }
+                                  severity={
+                                    ([
+                                      "low",
+                                      "medium",
+                                      "high",
+                                      "critical",
+                                    ].includes(alert.severity)
+                                      ? alert.severity
+                                      : "medium") as
+                                      | "low"
+                                      | "medium"
+                                      | "high"
+                                      | "critical"
+                                  }
+                                  serviceAffected={
+                                    alert.config_name || "unknown"
+                                  }
                                 />
                               )}
                               {!alert.acknowledged_at && !alert.resolved_at && (
                                 <Button
                                   variant="outline"
                                   size="sm"
-                                  onClick={() => handleAcknowledgeAlert(alert.id)}
+                                  onClick={() =>
+                                    handleAcknowledgeAlert(alert.id)
+                                  }
                                 >
                                   Acknowledge
                                 </Button>
@@ -1067,15 +1306,15 @@ export default function MonitoringPage() {
                 <HardDrive className="h-5 w-5" />
                 Disk Partitions
               </CardTitle>
-              <CardDescription>
-                Storage usage by partition
-              </CardDescription>
+              <CardDescription>Storage usage by partition</CardDescription>
             </CardHeader>
             <CardContent>
               {disks.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-8 text-center">
                   <HardDrive className="mb-2 h-10 w-10 text-muted-foreground" />
-                  <p className="text-muted-foreground">No disk information available</p>
+                  <p className="text-muted-foreground">
+                    No disk information available
+                  </p>
                 </div>
               ) : (
                 <ScrollArea className="h-64">
@@ -1083,26 +1322,31 @@ export default function MonitoringPage() {
                     {disks.map((disk, i) => (
                       <div key={i} className="space-y-2">
                         <div className="flex items-center justify-between">
-                          <span className="font-medium font-mono text-sm">{disk.mount_point ?? '/'}</span>
+                          <span className="font-medium font-mono text-sm">
+                            {disk.mount_point ?? "/"}
+                          </span>
                           <span className="text-sm text-muted-foreground">
-                            {formatBytes(disk.used ?? 0)} / {formatBytes(disk.total ?? 0)}
+                            {formatBytes(disk.used ?? 0)} /{" "}
+                            {formatBytes(disk.total ?? 0)}
                           </span>
                         </div>
                         <div className="relative h-2 overflow-hidden rounded-full bg-muted">
                           <div
                             className={`absolute inset-y-0 left-0 rounded-full transition-all ${
                               (disk.percent ?? 0) < 50
-                                ? 'bg-green-500'
+                                ? "bg-green-500"
                                 : (disk.percent ?? 0) < 80
-                                ? 'bg-yellow-500'
-                                : 'bg-red-500'
+                                  ? "bg-yellow-500"
+                                  : "bg-red-500"
                             }`}
                             style={{ width: `${disk.percent ?? 0}%` }}
                           />
                         </div>
                         <div className="flex justify-between text-xs text-muted-foreground">
                           <span>{(disk.percent ?? 0).toFixed(1)}% used</span>
-                          <span>{formatBytes(disk.available ?? 0)} available</span>
+                          <span>
+                            {formatBytes(disk.available ?? 0)} available
+                          </span>
                         </div>
                       </div>
                     ))}
@@ -1119,7 +1363,11 @@ export default function MonitoringPage() {
       <SloTracker />
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <TrendAnalysis metric="CPU Usage" data={history.map(h => ({ time: h.time, value: h.cpu }))} color="#3b82f6" />
+        <TrendAnalysis
+          metric="CPU Usage"
+          data={history.map((h) => ({ time: h.time, value: h.cpu }))}
+          color="#3b82f6"
+        />
         <MultiMetricCorrelation />
       </div>
 
@@ -1127,7 +1375,11 @@ export default function MonitoringPage() {
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2">
-          <TrendAnalysis metric="Memory Usage" data={history.map(h => ({ time: h.time, value: h.memory }))} color="#a855f7" />
+          <TrendAnalysis
+            metric="Memory Usage"
+            data={history.map((h) => ({ time: h.time, value: h.memory }))}
+            color="#a855f7"
+          />
         </div>
         <WeeklyMetricsReport />
       </div>
@@ -1137,13 +1389,17 @@ export default function MonitoringPage() {
         open={alertDialogOpen}
         onOpenChange={setAlertDialogOpen}
         config={editingConfig}
-        onSuccess={() => queryClient.invalidateQueries({ queryKey: ['alerts'] })}
+        onSuccess={() =>
+          queryClient.invalidateQueries({ queryKey: ["alerts"] })
+        }
       />
 
       {/* Delete Alert Config Confirmation */}
       <ConfirmDialog
         open={deleteConfigId !== null}
-        onOpenChange={(open) => { if (!open) setDeleteConfigId(null); }}
+        onOpenChange={(open) => {
+          if (!open) setDeleteConfigId(null);
+        }}
         title="Supprimer la configuration d'alerte"
         description="Êtes-vous sûr de vouloir supprimer cette configuration d'alerte ? Cette action est irréversible."
         onConfirm={() => {

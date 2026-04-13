@@ -1,18 +1,18 @@
-'use client';
+"use client";
 
-import { SpinnerInfinity } from 'spinners-react';
+import { SpinnerInfinity } from "spinners-react";
 
-import { useEffect, useState, useCallback, useRef } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
-import { AppLayout } from '@/components/layout/app-layout';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
-import { DataTableSkeleton } from '@/components/ui/skeleton-loader';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useEffect, useState, useCallback, useRef } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { AppLayout } from "@/components/layout/app-layout";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { DataTableSkeleton } from "@/components/ui/skeleton-loader";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,
   DialogContent,
@@ -20,21 +20,21 @@ import {
   DialogTitle,
   DialogFooter,
   DialogDescription,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from "@/components/ui/select";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from "@/components/ui/dropdown-menu";
 import {
   Table,
   TableBody,
@@ -42,7 +42,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
+} from "@/components/ui/table";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -52,8 +52,34 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import { Plus, Search, MoreVertical, Pencil, Trash2, Key, Shield, User as UserIcon, Users, Link as LinkIcon, Check, X, RefreshCw, Download, Upload, FileText, AlertCircle, CheckCircle, Clock, Filter, Calendar, ChevronLeft, ChevronRight, FileWarning, History } from 'lucide-react';
+} from "@/components/ui/alert-dialog";
+import {
+  Plus,
+  Search,
+  MoreVertical,
+  Pencil,
+  Trash2,
+  Key,
+  Shield,
+  User as UserIcon,
+  Users,
+  Link as LinkIcon,
+  Check,
+  X,
+  RefreshCw,
+  Download,
+  Upload,
+  FileText,
+  AlertCircle,
+  CheckCircle,
+  Clock,
+  Filter,
+  Calendar,
+  ChevronLeft,
+  ChevronRight,
+  FileWarning,
+  History,
+} from "lucide-react";
 import {
   usersApi,
   User,
@@ -65,88 +91,86 @@ import {
   AuditLogFilters,
   UserImportRow,
   UserImportResult,
-} from '@/lib/api';
-import { toast } from 'sonner';
-import { useUsers } from '@/hooks/use-users';
-import { DataTable } from '@/components/ui/data-table';
-import { ColumnDef } from '@tanstack/react-table';
-import { UserSheet } from '@/components/admin/user-sheet';
-import { usePageTitle } from '@/hooks/use-page-title';
-
-
+} from "@/lib/api";
+import { toast } from "sonner";
+import { useUsers } from "@/hooks/use-users";
+import { DataTable } from "@/components/ui/data-table";
+import { ColumnDef } from "@tanstack/react-table";
+import { UserSheet } from "@/components/admin/user-sheet";
+import { usePageTitle } from "@/hooks/use-page-title";
 
 const roleLabels: Record<number, string> = {
-  0: 'Admin',
-  1: 'User',
-  2: 'Viewer',
+  0: "Admin",
+  1: "User",
+  2: "Viewer",
 };
 
 const roleFromString = (role: string): number => {
   const lower = role.toLowerCase().trim();
-  if (lower === 'admin' || lower === '0') return 0;
-  if (lower === 'viewer' || lower === '2') return 2;
+  if (lower === "admin" || lower === "0") return 0;
+  if (lower === "viewer" || lower === "2") return 2;
   return 1; // Default to User
 };
 
 const actionLabels: Record<AuditAction, string> = {
-  login: 'Login',
-  logout: 'Logout',
-  login_failed: 'Login Failed',
-  mfa_enabled: 'MFA Enabled',
-  mfa_disabled: 'MFA Disabled',
-  password_changed: 'Password Changed',
-  password_reset: 'Password Reset',
-  user_created: 'User Created',
-  user_updated: 'User Updated',
-  user_deleted: 'User Supprimé',
-  role_changed: 'Role Changed',
-  group_created: 'Group Created',
-  group_updated: 'Group Updated',
-  group_deleted: 'Group Supprimé',
-  member_added: 'Member Added',
-  member_removed: 'Member Retiré',
-  permission_changed: 'Permission Changed',
-  api_key_created: 'API Key Created',
-  api_key_revoked: 'API Key Revoked',
+  login: "Login",
+  logout: "Logout",
+  login_failed: "Login Failed",
+  mfa_enabled: "MFA Enabled",
+  mfa_disabled: "MFA Disabled",
+  password_changed: "Password Changed",
+  password_reset: "Password Reset",
+  user_created: "User Created",
+  user_updated: "User Updated",
+  user_deleted: "User Supprimé",
+  role_changed: "Role Changed",
+  group_created: "Group Created",
+  group_updated: "Group Updated",
+  group_deleted: "Group Supprimé",
+  member_added: "Member Added",
+  member_removed: "Member Retiré",
+  permission_changed: "Permission Changed",
+  api_key_created: "API Key Created",
+  api_key_revoked: "API Key Revoked",
 };
 
 const allActions: AuditAction[] = [
-  'login',
-  'logout',
-  'login_failed',
-  'mfa_enabled',
-  'mfa_disabled',
-  'password_changed',
-  'password_reset',
-  'user_created',
-  'user_updated',
-  'user_deleted',
-  'role_changed',
-  'group_created',
-  'group_updated',
-  'group_deleted',
-  'member_added',
-  'member_removed',
-  'permission_changed',
-  'api_key_created',
-  'api_key_revoked',
+  "login",
+  "logout",
+  "login_failed",
+  "mfa_enabled",
+  "mfa_disabled",
+  "password_changed",
+  "password_reset",
+  "user_created",
+  "user_updated",
+  "user_deleted",
+  "role_changed",
+  "group_created",
+  "group_updated",
+  "group_deleted",
+  "member_added",
+  "member_removed",
+  "permission_changed",
+  "api_key_created",
+  "api_key_revoked",
 ];
 
 // CSV parsing helper
 function parseCSV(text: string): string[][] {
-  const lines = text.split('\n').filter((line) => line.trim());
+  const lines = text.split("\n").filter((line) => line.trim());
   return lines.map((line) => {
     const values: string[] = [];
-    let current = '';
+    let current = "";
     let inQuotes = false;
 
     for (let i = 0; i < line.length; i++) {
       const char = line[i];
       if (char === '"') {
         inQuotes = !inQuotes;
-      } else if (char === ',' && !inQuotes) {
+      } else if (char === "," && !inQuotes) {
         values.push(current.trim());
-        current = '';
+        current = "";
       } else {
         current += char;
       }
@@ -158,18 +182,19 @@ function parseCSV(text: string): string[][] {
 
 // CSV generation helper
 function generateCSV(users: User[]): string {
-  const headers = ['username', 'email', 'role', 'mfa_enabled', 'created_at'];
+  const headers = ["username", "email", "role", "mfa_enabled", "created_at"];
   const rows = users.map((user) => [
     user.username,
     user.email,
-    roleLabels[user.role] || 'User',
-    user.mfa_enabled ? 'true' : 'false',
+    roleLabels[user.role] || "User",
+    user.mfa_enabled ? "true" : "false",
     user.id, // Using ID as placeholder since User type doesn't have created_at
   ]);
 
-  return [headers.join(','), ...rows.map((row) => row.map((cell) => `"${cell}"`).join(','))].join(
-    '\n'
-  );
+  return [
+    headers.join(","),
+    ...rows.map((row) => row.map((cell) => `"${cell}"`).join(",")),
+  ].join("\n");
 }
 
 // Import Users Dialog Component
@@ -193,7 +218,9 @@ function ImportUsersDialog({
     { row: number; field: string; error: string }[]
   >([]);
   const [importing, setImporting] = useState(false);
-  const [importResult, setImportResult] = useState<UserImportResult | null>(null);
+  const [importResult, setImportResult] = useState<UserImportResult | null>(
+    null,
+  );
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -210,12 +237,12 @@ function ImportUsersDialog({
     e.preventDefault();
     setIsDragging(false);
     const droppedFile = e.dataTransfer.files[0];
-    if (droppedFile && droppedFile.name.endsWith('.csv')) {
+    if (droppedFile && droppedFile.name.endsWith(".csv")) {
       processFile(droppedFile);
     } else {
-      toast.error('Please upload a CSV file');
+      toast.error("Please upload a CSV file");
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -234,15 +261,17 @@ function ImportUsersDialog({
       const rows = parseCSV(text);
 
       if (rows.length < 2) {
-        toast.error('CSV file must have a header row and at least one data row');
+        toast.error(
+          "CSV file must have a header row and at least one data row",
+        );
         return;
       }
 
       const headers = rows[0].map((h) => h.toLowerCase().trim());
-      const usernameIdx = headers.indexOf('username');
-      const emailIdx = headers.indexOf('email');
-      const roleIdx = headers.indexOf('role');
-      const displayNameIdx = headers.indexOf('display_name');
+      const usernameIdx = headers.indexOf("username");
+      const emailIdx = headers.indexOf("email");
+      const roleIdx = headers.indexOf("role");
+      const displayNameIdx = headers.indexOf("display_name");
 
       if (usernameIdx === -1 || emailIdx === -1) {
         toast.error('CSV must have "username" and "email" columns');
@@ -251,43 +280,68 @@ function ImportUsersDialog({
 
       const users: UserImportRow[] = [];
       const errors: { row: number; field: string; error: string }[] = [];
-      const existingUsernames = new Set(existingUsers.map((u) => u.username.toLowerCase()));
-      const existingEmails = new Set(existingUsers.filter((u) => u.email).map((u) => u.email!.toLowerCase()));
+      const existingUsernames = new Set(
+        existingUsers.map((u) => u.username.toLowerCase()),
+      );
+      const existingEmails = new Set(
+        existingUsers.filter((u) => u.email).map((u) => u.email!.toLowerCase()),
+      );
       const seenUsernames = new Set<string>();
       const seenEmails = new Set<string>();
 
       for (let i = 1; i < rows.length; i++) {
         const row = rows[i];
-        const username = row[usernameIdx]?.trim() || '';
-        const email = row[emailIdx]?.trim() || '';
-        const role = roleIdx !== -1 ? row[roleIdx]?.trim() || 'User' : 'User';
-        const displayName = displayNameIdx !== -1 ? row[displayNameIdx]?.trim() : undefined;
+        const username = row[usernameIdx]?.trim() || "";
+        const email = row[emailIdx]?.trim() || "";
+        const role = roleIdx !== -1 ? row[roleIdx]?.trim() || "User" : "User";
+        const displayName =
+          displayNameIdx !== -1 ? row[displayNameIdx]?.trim() : undefined;
 
         // Validation
         if (!username) {
-          errors.push({ row: i + 1, field: 'username', error: 'Username is required' });
+          errors.push({
+            row: i + 1,
+            field: "username",
+            error: "Username is required",
+          });
         } else if (existingUsernames.has(username.toLowerCase())) {
           errors.push({
             row: i + 1,
-            field: 'username',
+            field: "username",
             error: `Username "${username}" already exists`,
           });
         } else if (seenUsernames.has(username.toLowerCase())) {
           errors.push({
             row: i + 1,
-            field: 'username',
+            field: "username",
             error: `Duplicate username "${username}" in file`,
           });
         }
 
         if (!email) {
-          errors.push({ row: i + 1, field: 'email', error: 'Email is required' });
+          errors.push({
+            row: i + 1,
+            field: "email",
+            error: "Email is required",
+          });
         } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-          errors.push({ row: i + 1, field: 'email', error: 'Email invalide format' });
+          errors.push({
+            row: i + 1,
+            field: "email",
+            error: "Email invalide format",
+          });
         } else if (existingEmails.has(email.toLowerCase())) {
-          errors.push({ row: i + 1, field: 'email', error: `Email "${email}" already exists` });
+          errors.push({
+            row: i + 1,
+            field: "email",
+            error: `Email "${email}" already exists`,
+          });
         } else if (seenEmails.has(email.toLowerCase())) {
-          errors.push({ row: i + 1, field: 'email', error: `Duplicate email "${email}" in file` });
+          errors.push({
+            row: i + 1,
+            field: "email",
+            error: `Duplicate email "${email}" in file`,
+          });
         }
 
         seenUsernames.add(username.toLowerCase());
@@ -304,13 +358,13 @@ function ImportUsersDialog({
       setParsedUsers(users);
       setValidationErrors(errors);
     } catch {
-      toast.error('Failed to parse CSV file');
+      toast.error("Failed to parse CSV file");
     }
   };
 
   const handleImport = async () => {
     if (validationErrors.length > 0) {
-      toast.error('Please fix validation errors before importing');
+      toast.error("Please fix validation errors before importing");
       return;
     }
 
@@ -341,9 +395,12 @@ function ImportUsersDialog({
         const errorMessage =
           error instanceof Error
             ? error.message
-            : (error as { response?: { data?: { message?: string } } })?.response?.data?.message ||
-              'Unknown error';
-        if (errorMessage.includes('duplicate') || errorMessage.includes('exists')) {
+            : (error as { response?: { data?: { message?: string } } })
+                ?.response?.data?.message || "Unknown error";
+        if (
+          errorMessage.includes("duplicate") ||
+          errorMessage.includes("exists")
+        ) {
           result.duplicates++;
         }
         result.errors.push({
@@ -372,7 +429,7 @@ function ImportUsersDialog({
   };
 
   const validUsers = parsedUsers.filter(
-    (_, i) => !validationErrors.some((e) => e.row === i + 2)
+    (_, i) => !validationErrors.some((e) => e.row === i + 2),
   ).length;
 
   return (
@@ -381,8 +438,8 @@ function ImportUsersDialog({
         <DialogHeader>
           <DialogTitle>Import Users from CSV</DialogTitle>
           <DialogDescription>
-            Upload a CSV file with columns: username, email, role (optional), display_name
-            (optional)
+            Upload a CSV file with columns: username, email, role (optional),
+            display_name (optional)
           </DialogDescription>
         </DialogHeader>
 
@@ -393,7 +450,7 @@ function ImportUsersDialog({
             onDrop={handleDrop}
             className={`
               border-2 border-dashed rounded-lg p-8 text-center transition-colors
-              ${isDragging ? 'border-primary bg-primary/5' : 'border-muted-foreground/25'}
+              ${isDragging ? "border-primary bg-primary/5" : "border-muted-foreground/25"}
             `}
           >
             <Upload className="h-10 w-10 mx-auto mb-4 text-muted-foreground" />
@@ -407,7 +464,11 @@ function ImportUsersDialog({
               className="hidden"
               onChange={handleFileSelect}
             />
-            <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => fileInputRef.current?.click()}
+            >
               Browse Files
             </Button>
             <p className="text-xs text-muted-foreground mt-4">
@@ -468,8 +529,8 @@ function ImportUsersDialog({
               <div
                 className={`rounded-lg border p-3 ${
                   importResult.failed > 0
-                    ? 'border-yellow-500/50 bg-yellow-500/10'
-                    : 'border-green-500/50 bg-green-500/10'
+                    ? "border-yellow-500/50 bg-yellow-500/10"
+                    : "border-green-500/50 bg-green-500/10"
                 }`}
               >
                 <div className="flex items-center gap-2 mb-2">
@@ -482,14 +543,21 @@ function ImportUsersDialog({
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
                   <div>
-                    <span className="text-green-600 font-medium">{importResult.success}</span>{' '}
+                    <span className="text-green-600 font-medium">
+                      {importResult.success}
+                    </span>{" "}
                     imported
                   </div>
                   <div>
-                    <span className="text-red-600 font-medium">{importResult.failed}</span> failed
+                    <span className="text-red-600 font-medium">
+                      {importResult.failed}
+                    </span>{" "}
+                    failed
                   </div>
                   <div>
-                    <span className="text-yellow-600 font-medium">{importResult.duplicates}</span>{' '}
+                    <span className="text-yellow-600 font-medium">
+                      {importResult.duplicates}
+                    </span>{" "}
                     duplicates
                   </div>
                 </div>
@@ -520,16 +588,27 @@ function ImportUsersDialog({
                   </TableHeader>
                   <TableBody>
                     {parsedUsers.slice(0, 50).map((user, i) => {
-                      const rowErrors = validationErrors.filter((e) => e.row === i + 2);
+                      const rowErrors = validationErrors.filter(
+                        (e) => e.row === i + 2,
+                      );
                       const hasError = rowErrors.length > 0;
                       return (
-                        <TableRow key={i} className={hasError ? 'bg-destructive/5' : ''}>
-                          <TableCell className="text-muted-foreground">{i + 1}</TableCell>
-                          <TableCell className={hasError ? 'text-destructive' : ''}>
-                            {user.username || '-'}
+                        <TableRow
+                          key={i}
+                          className={hasError ? "bg-destructive/5" : ""}
+                        >
+                          <TableCell className="text-muted-foreground">
+                            {i + 1}
                           </TableCell>
-                          <TableCell className={hasError ? 'text-destructive' : ''}>
-                            {user.email || '-'}
+                          <TableCell
+                            className={hasError ? "text-destructive" : ""}
+                          >
+                            {user.username || "-"}
+                          </TableCell>
+                          <TableCell
+                            className={hasError ? "text-destructive" : ""}
+                          >
+                            {user.email || "-"}
                           </TableCell>
                           <TableCell>{user.role}</TableCell>
                           <TableCell>
@@ -560,14 +639,22 @@ function ImportUsersDialog({
 
         <DialogFooter>
           <Button variant="outline" onClick={handleClose}>
-            {importResult ? 'Fermer' : 'Annuler'}
+            {importResult ? "Fermer" : "Annuler"}
           </Button>
           {!importResult && file && (
             <Button
               onClick={handleImport}
               disabled={importing || validUsers === 0}
             >
-              {importing && <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />}
+              {importing && (
+                <SpinnerInfinity
+                  size={24}
+                  secondaryColor="rgba(128,128,128,0.2)"
+                  color="currentColor"
+                  speed={120}
+                  className="mr-2 h-4 w-4 "
+                />
+              )}
               Import {validUsers} User(s)
             </Button>
           )}
@@ -585,20 +672,24 @@ interface ExportUsersButtonProps {
 function ExportUsersButton({ users }: ExportUsersButtonProps) {
   const handleExport = () => {
     const csv = generateCSV(users);
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
+    const link = document.createElement("a");
     link.href = url;
-    link.download = `users_export_${new Date().toISOString().split('T')[0]}.csv`;
+    link.download = `users_export_${new Date().toISOString().split("T")[0]}.csv`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
-    toast.success('Users exported successfully');
+    toast.success("Users exported successfully");
   };
 
   return (
-    <Button variant="outline" onClick={handleExport} disabled={users.length === 0}>
+    <Button
+      variant="outline"
+      onClick={handleExport}
+      disabled={users.length === 0}
+    >
       <Download className="mr-2 h-4 w-4" />
       Export CSV
     </Button>
@@ -622,7 +713,7 @@ function AuditLogTable({ users }: AuditLogTableProps) {
 
   useEffect(() => {
     fetchLogs();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters]);
 
   const fetchLogs = async () => {
@@ -644,7 +735,10 @@ function AuditLogTable({ users }: AuditLogTableProps) {
     setFilters((prev) => ({ ...prev, offset: newOffset }));
   };
 
-  const handleFilterChange = (key: keyof AuditLogFilters, value: string | undefined) => {
+  const handleFilterChange = (
+    key: keyof AuditLogFilters,
+    value: string | undefined,
+  ) => {
     setFilters((prev) => ({
       ...prev,
       [key]: value || undefined,
@@ -656,13 +750,15 @@ function AuditLogTable({ users }: AuditLogTableProps) {
     setFilters({ limit: 20, offset: 0 });
   };
 
-  const currentPage = Math.floor((filters.offset || 0) / (filters.limit || 20)) + 1;
+  const currentPage =
+    Math.floor((filters.offset || 0) / (filters.limit || 20)) + 1;
   const totalPages = Math.ceil(total / (filters.limit || 20));
 
   const getActionBadgeVariant = (action: AuditAction) => {
-    if (action.includes('failed') || action.includes('deleted')) return 'destructive';
-    if (action.includes('created') || action === 'login') return 'default';
-    return 'secondary';
+    if (action.includes("failed") || action.includes("deleted"))
+      return "destructive";
+    if (action.includes("created") || action === "login") return "default";
+    return "secondary";
   };
 
   const formatDate = (dateString: string) => {
@@ -677,12 +773,15 @@ function AuditLogTable({ users }: AuditLogTableProps) {
           variant="outline"
           size="sm"
           onClick={() => setShowFilters(!showFilters)}
-          className={showFilters ? 'bg-muted' : ''}
+          className={showFilters ? "bg-muted" : ""}
         >
           <Filter className="mr-2 h-4 w-4" />
           Filters
         </Button>
-        {(filters.username || filters.action || filters.start_date || filters.end_date) && (
+        {(filters.username ||
+          filters.action ||
+          filters.start_date ||
+          filters.end_date) && (
           <Button variant="ghost" size="sm" onClick={clearFilters}>
             Clear Filters
           </Button>
@@ -697,12 +796,14 @@ function AuditLogTable({ users }: AuditLogTableProps) {
       {showFilters && (
         <Card>
           <CardContent className="pt-4">
-            <div className="grid gap-4 md:grid-cols-4">
+            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-4">
               <div className="space-y-2">
                 <Label>User</Label>
                 <Select
-                  value={filters.username || 'all'}
-                  onValueChange={(v) => handleFilterChange('username', v === 'all' ? undefined : v)}
+                  value={filters.username || "all"}
+                  onValueChange={(v) =>
+                    handleFilterChange("username", v === "all" ? undefined : v)
+                  }
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="All users" />
@@ -720,9 +821,12 @@ function AuditLogTable({ users }: AuditLogTableProps) {
               <div className="space-y-2">
                 <Label>Action</Label>
                 <Select
-                  value={filters.action || 'all'}
+                  value={filters.action || "all"}
                   onValueChange={(v) =>
-                    handleFilterChange('action', v === 'all' ? undefined : (v as AuditAction))
+                    handleFilterChange(
+                      "action",
+                      v === "all" ? undefined : (v as AuditAction),
+                    )
                   }
                 >
                   <SelectTrigger>
@@ -742,16 +846,20 @@ function AuditLogTable({ users }: AuditLogTableProps) {
                 <Label>Start Date</Label>
                 <Input
                   type="date"
-                  value={filters.start_date || ''}
-                  onChange={(e) => handleFilterChange('start_date', e.target.value)}
+                  value={filters.start_date || ""}
+                  onChange={(e) =>
+                    handleFilterChange("start_date", e.target.value)
+                  }
                 />
               </div>
               <div className="space-y-2">
                 <Label>End Date</Label>
                 <Input
                   type="date"
-                  value={filters.end_date || ''}
-                  onChange={(e) => handleFilterChange('end_date', e.target.value)}
+                  value={filters.end_date || ""}
+                  onChange={(e) =>
+                    handleFilterChange("end_date", e.target.value)
+                  }
                 />
               </div>
             </div>
@@ -772,7 +880,10 @@ function AuditLogTable({ users }: AuditLogTableProps) {
             <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
               <History className="h-12 w-12 mb-4" />
               <p>No audit logs found</p>
-              {(filters.username || filters.action || filters.start_date || filters.end_date) && (
+              {(filters.username ||
+                filters.action ||
+                filters.start_date ||
+                filters.end_date) && (
                 <Button variant="link" onClick={clearFilters}>
                   Clear filters
                 </Button>
@@ -811,12 +922,14 @@ function AuditLogTable({ users }: AuditLogTableProps) {
                         {actionLabels[log.action] || log.action}
                       </Badge>
                     </TableCell>
-                    <TableCell className="font-mono text-sm">{log.ip_address}</TableCell>
+                    <TableCell className="font-mono text-sm">
+                      {log.ip_address}
+                    </TableCell>
                     <TableCell className="max-w-[200px]">
                       {log.details ? (
                         <span className="text-sm text-muted-foreground truncate block">
                           {JSON.stringify(log.details).slice(0, 50)}
-                          {JSON.stringify(log.details).length > 50 && '...'}
+                          {JSON.stringify(log.details).length > 50 && "..."}
                         </span>
                       ) : (
                         <span className="text-muted-foreground">-</span>
@@ -834,14 +947,17 @@ function AuditLogTable({ users }: AuditLogTableProps) {
       {totalPages > 1 && (
         <div className="flex items-center justify-between">
           <p className="text-sm text-muted-foreground">
-            Showing {(filters.offset || 0) + 1} to{' '}
-            {Math.min((filters.offset || 0) + (filters.limit || 20), total)} of {total} entries
+            Showing {(filters.offset || 0) + 1} to{" "}
+            {Math.min((filters.offset || 0) + (filters.limit || 20), total)} of{" "}
+            {total} entries
           </p>
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
               size="sm"
-              onClick={() => handlePageChange((filters.offset || 0) - (filters.limit || 20))}
+              onClick={() =>
+                handlePageChange((filters.offset || 0) - (filters.limit || 20))
+              }
               disabled={currentPage === 1}
             >
               <ChevronLeft className="h-4 w-4" />
@@ -852,7 +968,9 @@ function AuditLogTable({ users }: AuditLogTableProps) {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => handlePageChange((filters.offset || 0) + (filters.limit || 20))}
+              onClick={() =>
+                handlePageChange((filters.offset || 0) + (filters.limit || 20))
+              }
               disabled={currentPage === totalPages}
             >
               <ChevronRight className="h-4 w-4" />
@@ -865,14 +983,17 @@ function AuditLogTable({ users }: AuditLogTableProps) {
 }
 
 export default function UsersPage() {
-  usePageTitle('Utilisateurs');
+  usePageTitle("Utilisateurs");
   const queryClient = useQueryClient();
   const { data: users = [], isLoading: loading } = useUsers();
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState("");
   const [sheetOpen, setSheetOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [saving, setSaving] = useState(false);
-  const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; user: User | null }>({
+  const [deleteDialog, setDeleteDialog] = useState<{
+    open: boolean;
+    user: User | null;
+  }>({
     open: false,
     user: null,
   });
@@ -883,12 +1004,13 @@ export default function UsersPage() {
     open: false,
     user: null,
   });
-  const [newPassword, setNewPassword] = useState('');
+  const [newPassword, setNewPassword] = useState("");
   const [resettingPassword, setResettingPassword] = useState(false);
   const [importDialogOpen, setImportDialogOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState('users');
+  const [activeTab, setActiveTab] = useState("users");
 
-  const refreshUsers = () => queryClient.invalidateQueries({ queryKey: ['users'] });
+  const refreshUsers = () =>
+    queryClient.invalidateQueries({ queryKey: ["users"] });
 
   const handleCreate = () => {
     setEditingUser(null);
@@ -905,15 +1027,19 @@ export default function UsersPage() {
     try {
       if (editingUser) {
         await usersApi.update(editingUser.id, data as UpdateUserRequest);
-        toast.success('User updated successfully');
+        toast.success("User updated successfully");
       } else {
         await usersApi.create(data as CreateUserRequest);
-        toast.success('User created successfully');
+        toast.success("User created successfully");
       }
       setSheetOpen(false);
       refreshUsers();
     } catch {
-      toast.error(editingUser ? 'Impossible de mettre à jour user' : 'Impossible de créer user');
+      toast.error(
+        editingUser
+          ? "Impossible de mettre à jour user"
+          : "Impossible de créer user",
+      );
     } finally {
       setSaving(false);
     }
@@ -924,10 +1050,10 @@ export default function UsersPage() {
 
     try {
       await usersApi.delete(deleteDialog.user.id);
-      toast.success('User deleted successfully');
+      toast.success("User deleted successfully");
       refreshUsers();
     } catch {
-      toast.error('Impossible de supprimer user');
+      toast.error("Impossible de supprimer user");
     } finally {
       setDeleteDialog({ open: false, user: null });
     }
@@ -937,32 +1063,34 @@ export default function UsersPage() {
     if (!resetPasswordDialog.user || !newPassword) return;
 
     if (newPassword.length < 8) {
-      toast.error('Password must be at least 8 characters');
+      toast.error("Password must be at least 8 characters");
       return;
     }
 
     setResettingPassword(true);
     try {
-      await usersApi.update(resetPasswordDialog.user.id, { password: newPassword });
-      toast.success('Password reset successfully');
+      await usersApi.update(resetPasswordDialog.user.id, {
+        password: newPassword,
+      });
+      toast.success("Password reset successfully");
       setResetPasswordDialog({ open: false, user: null });
-      setNewPassword('');
+      setNewPassword("");
     } catch {
-      toast.error('Failed to reset password');
+      toast.error("Failed to reset password");
     } finally {
       setResettingPassword(false);
     }
   };
 
   const openResetPasswordDialog = (user: User) => {
-    setNewPassword('');
+    setNewPassword("");
     setResetPasswordDialog({ open: true, user });
   };
 
   const columns: ColumnDef<User>[] = [
     {
-      accessorKey: 'username',
-      header: 'User',
+      accessorKey: "username",
+      header: "User",
       cell: ({ row }) => {
         const user = row.original;
         return (
@@ -971,7 +1099,9 @@ export default function UsersPage() {
               <UserIcon className="h-4 w-4 text-primary" />
             </div>
             <div>
-              <p className="font-medium">{user.display_name || user.username}</p>
+              <p className="font-medium">
+                {user.display_name || user.username}
+              </p>
               <p className="text-xs text-muted-foreground">@{user.username}</p>
             </div>
           </div>
@@ -979,30 +1109,32 @@ export default function UsersPage() {
       },
     },
     {
-      accessorKey: 'email',
-      header: 'Email',
-      cell: ({ row }) => <span className="text-muted-foreground">{row.original.email}</span>,
+      accessorKey: "email",
+      header: "Email",
+      cell: ({ row }) => (
+        <span className="text-muted-foreground">{row.original.email}</span>
+      ),
     },
     {
-      accessorKey: 'role',
-      header: 'Role',
+      accessorKey: "role",
+      header: "Role",
       cell: ({ row }) => {
         const role = row.original.role;
         return (
           <Badge
-            variant={role === 0 ? 'default' : 'secondary'}
-            className={role === 0 ? 'bg-red-500/10 text-red-600' : ''}
+            variant={role === 0 ? "default" : "secondary"}
+            className={role === 0 ? "bg-red-500/10 text-red-600" : ""}
           >
-            {roleLabels[role] || 'Unknown'}
+            {roleLabels[role] || "Unknown"}
           </Badge>
         );
       },
     },
     {
-      accessorKey: 'auth_provider',
-      header: 'Provider',
+      accessorKey: "auth_provider",
+      header: "Provider",
       cell: ({ row }) => {
-        return row.original.auth_provider === 'ldap' ? (
+        return row.original.auth_provider === "ldap" ? (
           <Badge variant="outline" className="gap-1">
             <LinkIcon className="h-3 w-3" />
             LDAP
@@ -1013,8 +1145,8 @@ export default function UsersPage() {
       },
     },
     {
-      accessorKey: 'mfa_enabled',
-      header: 'MFA',
+      accessorKey: "mfa_enabled",
+      header: "MFA",
       cell: ({ row }) => {
         return row.original.mfa_enabled ? (
           <Check className="h-4 w-4 text-green-500" />
@@ -1024,7 +1156,7 @@ export default function UsersPage() {
       },
     },
     {
-      id: 'actions',
+      id: "actions",
       cell: ({ row }) => {
         const user = row.original;
         return (
@@ -1041,7 +1173,7 @@ export default function UsersPage() {
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => openResetPasswordDialog(user)}
-                disabled={user.auth_provider === 'ldap'}
+                disabled={user.auth_provider === "ldap"}
               >
                 <Key className="mr-2 h-4 w-4" />
                 Réinitialiser le mot de passe
@@ -1050,7 +1182,7 @@ export default function UsersPage() {
               <DropdownMenuItem
                 className="text-destructive"
                 onClick={() => setDeleteDialog({ open: true, user })}
-                disabled={user.username === 'admin'}
+                disabled={user.username === "admin"}
               >
                 <Trash2 className="mr-2 h-4 w-4" />
                 Supprimer
@@ -1066,7 +1198,7 @@ export default function UsersPage() {
     total: users.length,
     admins: users.filter((u) => u.role === 0).length,
     mfaEnabled: users.filter((u) => u.mfa_enabled).length,
-    ldapUsers: users.filter((u) => u.auth_provider === 'ldap').length,
+    ldapUsers: users.filter((u) => u.auth_provider === "ldap").length,
   };
 
   if (loading) {
@@ -1074,7 +1206,7 @@ export default function UsersPage() {
       <AppLayout>
         <div className="space-y-6">
           <h1 className="text-3xl font-bold">Users</h1>
-          <div className="grid gap-4 md:grid-cols-4">
+          <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
             {[...Array(4)].map((_, i) => (
               <Skeleton key={i} className="h-24 rounded-xl" />
             ))}
@@ -1088,9 +1220,9 @@ export default function UsersPage() {
   return (
     <AppLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <h1 className="text-3xl font-bold">Users</h1>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             <ExportUsersButton users={users} />
             <Button variant="outline" onClick={() => setImportDialogOpen(true)}>
               <Upload className="mr-2 h-4 w-4" />
@@ -1108,7 +1240,7 @@ export default function UsersPage() {
         </div>
 
         {/* Stats */}
-        <div className="grid gap-4 md:grid-cols-4">
+        <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
           <Card>
             <CardContent className="flex items-center gap-4 p-6">
               <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
@@ -1169,10 +1301,10 @@ export default function UsersPage() {
           </TabsList>
 
           <TabsContent value="users" className="space-y-4">
-            <DataTable 
-              columns={columns} 
-              data={users} 
-              searchKey="username" 
+            <DataTable
+              columns={columns}
+              data={users}
+              searchKey="username"
               searchPlaceholder="Search users by username..."
             />
           </TabsContent>
@@ -1209,7 +1341,9 @@ export default function UsersPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Supprimer l&apos;utilisateur</AlertDialogTitle>
             <AlertDialogDescription>
-              Êtes-vous sûr de vouloir supprimer l&apos;utilisateur &quot;{deleteDialog.user?.username}&quot; ? Cette action est irréversible.
+              Êtes-vous sûr de vouloir supprimer l&apos;utilisateur &quot;
+              {deleteDialog.user?.username}&quot; ? Cette action est
+              irréversible.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -1229,7 +1363,7 @@ export default function UsersPage() {
         open={resetPasswordDialog.open}
         onOpenChange={(open) => {
           setResetPasswordDialog({ open, user: null });
-          setNewPassword('');
+          setNewPassword("");
         }}
       >
         <DialogContent>
@@ -1238,7 +1372,8 @@ export default function UsersPage() {
           </DialogHeader>
           <div className="space-y-4 py-4">
             <p className="text-sm text-muted-foreground">
-              Définir un nouveau mot de passe pour l&apos;utilisateur <strong>{resetPasswordDialog.user?.username}</strong>
+              Définir un nouveau mot de passe pour l&apos;utilisateur{" "}
+              <strong>{resetPasswordDialog.user?.username}</strong>
             </p>
             <div className="space-y-2">
               <Label htmlFor="newPassword">Nouveau mot de passe</Label>
@@ -1259,7 +1394,7 @@ export default function UsersPage() {
               variant="outline"
               onClick={() => {
                 setResetPasswordDialog({ open: false, user: null });
-                setNewPassword('');
+                setNewPassword("");
               }}
             >
               Annuler
@@ -1268,7 +1403,15 @@ export default function UsersPage() {
               onClick={handleResetPassword}
               disabled={resettingPassword || newPassword.length < 8}
             >
-              {resettingPassword && <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />}
+              {resettingPassword && (
+                <SpinnerInfinity
+                  size={24}
+                  secondaryColor="rgba(128,128,128,0.2)"
+                  color="currentColor"
+                  speed={120}
+                  className="mr-2 h-4 w-4 "
+                />
+              )}
               Enregistrer
             </Button>
           </DialogFooter>
