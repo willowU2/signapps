@@ -49,6 +49,17 @@ else
 fi
 unset _ks_msg _ks_ok
 check "PostgreSQL (port 5432)" "curl -s --max-time 2 http://localhost:5432 2>&1 | grep -q '' || docker exec signapps-postgres pg_isready -U signapps"
+# OAuth token encryption — verifies no plaintext tokens remain in mail/calendar/social
+_oauth_msg=$(bash "$BASE_DIR/scripts/doctor-checks/oauth-encryption.sh" 2>&1) && _oauth_ok=0 || _oauth_ok=$?
+if [ "${_oauth_ok:-0}" -eq 0 ]; then
+    echo -e "  ${GREEN}[OK]${NC}   OAuth token encryption: 5/5 column pairs clean"
+    PASS=$((PASS+1))
+else
+    echo -e "  ${RED}[FAIL]${NC} OAuth token encryption:"
+    echo "${_oauth_msg}" | sed 's/^/    /'
+    FAIL=$((FAIL+1))
+fi
+unset _oauth_msg _oauth_ok
 
 echo ""
 echo "  Services:"
