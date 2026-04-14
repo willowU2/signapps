@@ -341,6 +341,7 @@ crates/
   signapps-db/        → Models, repositories, migrations, PgPool, pgvector
   signapps-cache/     → TTL cache (moka) — remplace Redis
   signapps-keystore/  → Master key management + per-usage DEK derivation (AES-256-GCM)
+  signapps-oauth/     → OAuth2/OIDC/SAML catalog, state machine, scope resolver
   signapps-runtime/   → PostgreSQL lifecycle, hardware detection, model manager
   signapps-service/   → Service bootstrap utilities
 services/
@@ -392,6 +393,8 @@ Chaque service Rust suit la même structure :
 **signapps-cache:** `CacheService` (moka TTL + DashMap counters) — rate limiting, JWT blacklist
 
 **signapps-keystore:** `Keystore` (master key + DEK cache), `MasterKey`, `DataEncryptionKey`, `KeystoreBackend` (EnvVar / File / Remote KMS). Loaded once at boot of each service that manipulates encrypted fields.
+
+**signapps-oauth:** `Catalog` (embedded JSON + DB overrides), `FlowState` (HMAC-signed stateless state), `ScopeResolver` (org-aware visibility + purpose + scope filtering), `ConfigStore` (async trait) + `PgConfigStore`, `OAuthError` (RFC 7807-ready). No HTTP engine yet — that's in Plan 3.
 
 **signapps-runtime:** `RuntimeManager::ensure_database()`, `HardwareProfile::detect()`, `ModelManager`
 
