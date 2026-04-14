@@ -64,6 +64,7 @@ pub use signapps_approval as approval;
 pub use signapps_audit as audit;
 pub mod auth;
 pub mod bootstrap;
+pub mod crypto;
 // bridge module extracted to signapps-bridge crate
 pub use signapps_bridge as bridge;
 // comments module extracted to signapps-comments crate

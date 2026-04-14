@@ -35,6 +35,10 @@ signapps-trust = { path = "../signapps-trust" }
 signapps-vault-types = { path = "../signapps-vault-types" }
 signapps-webhooks = { path = "../signapps-webhooks" }
 
+# Cryptography
+aes-gcm = { workspace = true }
+rand = { workspace = true }
+
 # Serialization
 serde = { workspace = true }
 serde_json = { workspace = true }
