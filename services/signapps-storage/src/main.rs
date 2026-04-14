@@ -109,8 +109,7 @@ async fn main() -> anyhow::Result<()> {
     let cache_service = signapps_cache::CacheService::default_config();
 
     // Initialize sharing engine — unified permission system replacing drive.acl
-    let sharing_engine =
-        SharingEngine::new(pool.inner().clone(), cache_service.clone());
+    let sharing_engine = SharingEngine::new(pool.inner().clone(), cache_service.clone());
     tracing::info!("Sharing engine initialized");
 
     // Create application state
@@ -538,10 +537,10 @@ fn create_router(state: AppState, sharing_engine: SharingEngine) -> Router {
 
     // Sharing sub-routers for files and folders (unified ACL via SharingEngine).
     // Routes produced by sharing_routes() already include the /api/v1/ prefix.
-    let files_sharing = sharing_routes("files", ResourceType::File)
-        .with_state(sharing_engine.clone());
-    let folders_sharing = sharing_routes("folders", ResourceType::Folder)
-        .with_state(sharing_engine.clone());
+    let files_sharing =
+        sharing_routes("files", ResourceType::File).with_state(sharing_engine.clone());
+    let folders_sharing =
+        sharing_routes("folders", ResourceType::Folder).with_state(sharing_engine.clone());
     let global_sharing = sharing_global_routes().with_state(sharing_engine);
 
     Router::new()

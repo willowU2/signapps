@@ -266,28 +266,37 @@ pub async fn download_node(
     .map_err(|e| Error::Database(e.to_string()))?
     .ok_or_else(|| Error::NotFound("Drive node not found".into()))?;
 
-    let owner_id: Uuid = node_row.try_get("owner_id").map_err(|e| Error::Database(e.to_string()))?;
+    let owner_id: Uuid = node_row
+        .try_get("owner_id")
+        .map_err(|e| Error::Database(e.to_string()))?;
     if owner_id != user_id {
         return Err(Error::Forbidden("Accès refusé".into()));
     }
 
-    let target_id: Option<Uuid> = node_row.try_get("target_id").map_err(|e| Error::Database(e.to_string()))?;
-    let node_name: String = node_row.try_get("name").map_err(|e| Error::Database(e.to_string()))?;
+    let target_id: Option<Uuid> = node_row
+        .try_get("target_id")
+        .map_err(|e| Error::Database(e.to_string()))?;
+    let node_name: String = node_row
+        .try_get("name")
+        .map_err(|e| Error::Database(e.to_string()))?;
 
-    let target_id = target_id.ok_or_else(|| Error::NotFound("Ce nœud n'a pas de fichier associé".into()))?;
+    let target_id =
+        target_id.ok_or_else(|| Error::NotFound("Ce nœud n'a pas de fichier associé".into()))?;
 
     // Look up the storage file record
-    let file_row = sqlx::query(
-        "SELECT bucket, key FROM storage.files WHERE id = $1 LIMIT 1",
-    )
-    .bind(target_id)
-    .fetch_optional(&*state.pool)
-    .await
-    .map_err(|e| Error::Database(e.to_string()))?
-    .ok_or_else(|| Error::NotFound("Fichier de stockage introuvable".into()))?;
+    let file_row = sqlx::query("SELECT bucket, key FROM storage.files WHERE id = $1 LIMIT 1")
+        .bind(target_id)
+        .fetch_optional(&*state.pool)
+        .await
+        .map_err(|e| Error::Database(e.to_string()))?
+        .ok_or_else(|| Error::NotFound("Fichier de stockage introuvable".into()))?;
 
-    let bucket: String = file_row.try_get("bucket").map_err(|e| Error::Database(e.to_string()))?;
-    let key: String = file_row.try_get("key").map_err(|e| Error::Database(e.to_string()))?;
+    let bucket: String = file_row
+        .try_get("bucket")
+        .map_err(|e| Error::Database(e.to_string()))?;
+    let key: String = file_row
+        .try_get("key")
+        .map_err(|e| Error::Database(e.to_string()))?;
 
     // Stream file from storage backend
     let object = state.storage.get_object(&bucket, &key).await?;

@@ -193,7 +193,7 @@ pub async fn download_version(
             ),
         )
         .body(Body::from(object.data))
-        .map_err(|e| internal_error(e))
+        .map_err(internal_error)
 }
 
 #[cfg(test)]
