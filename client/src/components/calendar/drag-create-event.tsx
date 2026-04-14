@@ -116,14 +116,26 @@ export function DragCreateLayer({
     [day, yToMinutes, onCreateEvent],
   );
 
+  // Escape cancels the in-progress drag-to-create: resets state without
+  // calling onCreateEvent, mimicking Google Calendar behaviour.
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    if (e.key !== "Escape") return;
+    if (!isDown.current && !draggingRef.current) return;
+    isDown.current = false;
+    draggingRef.current = false;
+    setDragging(false);
+  }, []);
+
   useEffect(() => {
     document.addEventListener("mousemove", handleMouseMove);
     document.addEventListener("mouseup", handleMouseUp);
+    document.addEventListener("keydown", handleKeyDown);
     return () => {
       document.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("mouseup", handleMouseUp);
+      document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [handleMouseMove, handleMouseUp]);
+  }, [handleMouseMove, handleMouseUp, handleKeyDown]);
 
   // Calculate selection box position
   const top = Math.min(startY, currentY);

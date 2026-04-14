@@ -1,29 +1,43 @@
 "use client";
 
-// IDEA-044: Resize event duration — drag bottom edge of event block to change end time
+// IDEA-044: Resize event duration — drag top or bottom edge of event block
+// to change start/end time. Pro-grade interaction matching Google Calendar:
+//  - Handle hit area: 8px at the bottom/top edge
+//  - Visual feedback: subtle hover ring on the whole card + handle reveal
+//  - Stops all pointer/drag propagation so @dnd-kit doesn't pick up the resize
+//  - Escape key cancels an in-progress resize without committing
 
 import { useRef, useCallback } from "react";
 import { addMinutes, differenceInMinutes } from "date-fns";
-import { GripHorizontal } from "lucide-react";
 import { Event } from "@/types/calendar";
 
 export interface ResizeResult {
   event: Event;
-  newEndTime: Date;
+  newStartTime?: Date;
+  newEndTime?: Date;
 }
+
+type ResizeEdge = "top" | "bottom";
 
 interface ResizeHandleProps {
   event: Event;
   hourHeight?: number; // px per hour
   onResizeCommit: (result: ResizeResult) => void;
   containerRef: React.RefObject<HTMLElement>;
+  edge?: ResizeEdge;
 }
 
+/**
+ * ResizeHandle — a thin (8 px) drag zone pinned to the top or bottom edge
+ * of an event card. Clicks and pointer events are swallowed so @dnd-kit's
+ * PointerSensor (distance: 8) does not steal the gesture.
+ */
 export function ResizeHandle({
   event,
   hourHeight = 60,
   onResizeCommit,
   containerRef,
+  edge = "bottom",
 }: ResizeHandleProps) {
   // Keep the latest handler/deps in refs so the drag-scoped closures we
   // create inside `handleMouseDown` always see up-to-date values even if
@@ -37,102 +51,176 @@ export function ResizeHandle({
   onResizeCommitRef.current = onResizeCommit;
   const containerEl = containerRef;
 
-  const handleMouseDown = useCallback(
-    (e: React.MouseEvent) => {
+  const handlePointerDown = useCallback(
+    (e: React.PointerEvent) => {
+      if (e.button !== 0) return;
+      // Stop everything — including @dnd-kit listeners on the same node and
+      // ancestor drag-create layer. Without the native immediate-stop, the
+      // dnd-kit PointerSensor would still activate after the 8 px threshold.
       e.preventDefault();
       e.stopPropagation();
+      e.nativeEvent.stopImmediatePropagation?.();
 
-      // All drag state lives in closure variables — refs would work too but
-      // locals make it unambiguous that they belong to this drag session only.
       const startY = e.clientY;
+      const originalStart = new Date(eventRef.current.start_time);
       const originalEnd = new Date(eventRef.current.end_time);
+      // Capture the initial CSS values so Escape can rollback the preview.
+      const initialTop = containerEl.current?.style.top ?? "";
+      const initialHeight = containerEl.current?.style.height ?? "";
       let dragged = false;
+      let cancelled = false;
 
       document.body.style.cursor = "ns-resize";
       document.body.style.userSelect = "none";
 
-      const onMove = (ev: MouseEvent) => {
+      const onMove = (ev: PointerEvent) => {
+        if (cancelled) return;
         dragged = true;
         const deltaY = ev.clientY - startY;
         const pxPerMin = hourHeightRef.current / 60;
-        const deltaMin = Math.round(deltaY / pxPerMin / 15) * 15; // snap 15min
-        const newEnd = addMinutes(originalEnd, deltaMin);
-        const startTime = new Date(eventRef.current.start_time);
-        const minEnd = addMinutes(startTime, 15);
-        const clampedEnd = newEnd < minEnd ? minEnd : newEnd;
+        const deltaMin = Math.round(deltaY / pxPerMin / 15) * 15;
 
-        // Visual feedback: update the parent card height directly.
-        if (containerEl.current) {
-          const durationMin = differenceInMinutes(clampedEnd, startTime);
-          const newHeight = (durationMin / 60) * hourHeightRef.current;
-          containerEl.current.style.height = `${Math.max(newHeight, hourHeightRef.current / 4)}px`;
+        if (edge === "bottom") {
+          const newEnd = addMinutes(originalEnd, deltaMin);
+          const minEnd = addMinutes(originalStart, 15);
+          const clampedEnd = newEnd < minEnd ? minEnd : newEnd;
+          if (containerEl.current) {
+            const durationMin = differenceInMinutes(clampedEnd, originalStart);
+            const newHeight = (durationMin / 60) * hourHeightRef.current;
+            containerEl.current.style.height = `${Math.max(newHeight, hourHeightRef.current / 4)}px`;
+          }
+        } else {
+          // Top edge: move start_time but clamp to at least 15 min before end.
+          const newStart = addMinutes(originalStart, deltaMin);
+          const maxStart = addMinutes(originalEnd, -15);
+          const clampedStart = newStart > maxStart ? maxStart : newStart;
+          if (containerEl.current) {
+            const durationMin = differenceInMinutes(originalEnd, clampedStart);
+            const newHeight = (durationMin / 60) * hourHeightRef.current;
+            // Shift top by the delta in px (relative to original position).
+            const shiftMin = differenceInMinutes(clampedStart, originalStart);
+            const shiftPx = (shiftMin / 60) * hourHeightRef.current;
+            containerEl.current.style.height = `${Math.max(newHeight, hourHeightRef.current / 4)}px`;
+            containerEl.current.style.transform = `translateY(${shiftPx}px)`;
+          }
         }
       };
 
-      const onUp = (ev: MouseEvent) => {
-        document.removeEventListener("mousemove", onMove);
-        document.removeEventListener("mouseup", onUp);
+      const cleanup = () => {
+        document.removeEventListener("pointermove", onMove);
+        document.removeEventListener("pointerup", onUp);
+        document.removeEventListener("keydown", onKey);
         document.body.style.cursor = "";
         document.body.style.userSelect = "";
+      };
 
-        if (!dragged) return;
+      const rollbackPreview = () => {
+        if (!containerEl.current) return;
+        containerEl.current.style.top = initialTop;
+        containerEl.current.style.height = initialHeight;
+        containerEl.current.style.transform = "";
+      };
+
+      const onKey = (ev: KeyboardEvent) => {
+        if (ev.key === "Escape") {
+          cancelled = true;
+          rollbackPreview();
+          cleanup();
+        }
+      };
+
+      const onUp = (ev: PointerEvent) => {
+        cleanup();
+        if (cancelled) return;
+        if (!dragged) {
+          rollbackPreview();
+          return;
+        }
 
         const deltaY = ev.clientY - startY;
         const pxPerMin = hourHeightRef.current / 60;
         const deltaMin = Math.round(deltaY / pxPerMin / 15) * 15;
-        const newEnd = addMinutes(originalEnd, deltaMin);
-        const startTime = new Date(eventRef.current.start_time);
-        const minEnd = addMinutes(startTime, 15);
-        const clampedEnd = newEnd < minEnd ? minEnd : newEnd;
 
-        onResizeCommitRef.current({
-          event: eventRef.current,
-          newEndTime: clampedEnd,
-        });
+        if (edge === "bottom") {
+          const newEnd = addMinutes(originalEnd, deltaMin);
+          const minEnd = addMinutes(originalStart, 15);
+          const clampedEnd = newEnd < minEnd ? minEnd : newEnd;
+          onResizeCommitRef.current({
+            event: eventRef.current,
+            newEndTime: clampedEnd,
+          });
+        } else {
+          const newStart = addMinutes(originalStart, deltaMin);
+          const maxStart = addMinutes(originalEnd, -15);
+          const clampedStart = newStart > maxStart ? maxStart : newStart;
+          // Clear transform so the parent re-render positions the card
+          // correctly via its style.top.
+          if (containerEl.current) containerEl.current.style.transform = "";
+          onResizeCommitRef.current({
+            event: eventRef.current,
+            newStartTime: clampedStart,
+          });
+        }
       };
 
-      document.addEventListener("mousemove", onMove);
-      document.addEventListener("mouseup", onUp);
+      document.addEventListener("pointermove", onMove);
+      document.addEventListener("pointerup", onUp);
+      document.addEventListener("keydown", onKey);
     },
-    [containerEl],
+    [containerEl, edge],
   );
+
+  const position = edge === "bottom" ? "bottom-0" : "top-0";
+  const rounded = edge === "bottom" ? "rounded-b" : "rounded-t";
 
   return (
     <div
-      data-testid="event-resize-handle"
-      className="absolute bottom-0 left-0 right-0 h-3 flex items-center justify-center cursor-ns-resize group/resize z-30 rounded-b"
-      onMouseDown={handleMouseDown}
-      // Stop the pointer event from bubbling to the parent
-      // DraggableEventCard, whose @dnd-kit listeners would otherwise
-      // interpret this as the start of a drag-and-drop.
-      onPointerDown={(e) => e.stopPropagation()}
-      title="Drag to resize"
+      data-testid={edge === "bottom" ? "event-resize-handle" : "event-resize-handle-top"}
+      data-no-dnd="true"
+      className={`absolute ${position} left-0 right-0 h-2 cursor-ns-resize z-30 ${rounded} group/resize`}
+      onPointerDown={handlePointerDown}
+      // Click on the thin zone should never select/open the event.
+      onClick={(e) => {
+        e.stopPropagation();
+        e.preventDefault();
+      }}
+      title={edge === "bottom" ? "Glisser pour redimensionner" : "Glisser pour changer l'heure de début"}
     >
-      <div className="w-8 h-1.5 rounded-full bg-card/50 group-hover/resize:bg-card/90 transition-colors">
-        <GripHorizontal className="h-1.5 w-1.5 text-inherit opacity-0 group-hover/resize:opacity-60" />
-      </div>
+      {/* Subtle visual affordance — line brightens on hover */}
+      <div
+        className={`absolute left-0 right-0 ${edge === "bottom" ? "bottom-0" : "top-0"} h-[3px] bg-primary/0 group-hover/resize:bg-primary/60 transition-colors`}
+      />
     </div>
   );
 }
 
-// Wrapper hook to use with useEvents. Passes `start_time` alongside
-// `end_time` so the backend update payload remains self-consistent even when
-// the API requires both to be present (avoids dropping the start while resizing).
+/**
+ * Hook that wires a ResizeResult into the `updateEvent` repo call,
+ * preserving `start_time` when resizing from the bottom and `end_time`
+ * when resizing from the top so the backend PATCH stays consistent.
+ */
 export function useEventResize(
   updateEvent: (
     id: string,
-    data: { start_time?: string; end_time: string },
+    data: { start_time?: string; end_time?: string },
   ) => Promise<Event>,
 ) {
   const handleResizeCommit = useCallback(
-    async ({ event, newEndTime }: ResizeResult) => {
+    async ({ event, newStartTime, newEndTime }: ResizeResult) => {
       try {
-        await updateEvent(event.id, {
-          start_time: event.start_time,
-          end_time: newEndTime.toISOString(),
-        });
+        if (newEndTime && !newStartTime) {
+          await updateEvent(event.id, {
+            start_time: event.start_time,
+            end_time: newEndTime.toISOString(),
+          });
+        } else if (newStartTime && !newEndTime) {
+          await updateEvent(event.id, {
+            start_time: newStartTime.toISOString(),
+            end_time: event.end_time,
+          });
+        }
       } catch {
-        // Revert handled by parent re-render
+        // Revert handled by parent re-render on next refetch.
       }
     },
     [updateEvent],

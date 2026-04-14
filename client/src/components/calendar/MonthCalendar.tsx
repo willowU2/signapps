@@ -12,6 +12,7 @@ import {
   startOfWeek,
   endOfWeek,
 } from "date-fns";
+import { fr } from "date-fns/locale";
 import {
   useCalendarStore,
   useCalendarSelection,
@@ -19,6 +20,20 @@ import {
 import { useEvents } from "@/hooks/use-events";
 import { Event } from "@/types/calendar";
 import { useDroppable, useDraggable } from "@dnd-kit/core";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuSeparator,
+  ContextMenuTrigger,
+} from "@/components/ui/context-menu";
+import { cn } from "@/lib/utils";
 
 // ────────────────────────────────────────────────────────────────────────────
 // DroppableDay — each cell in month grid is a DnD drop target
@@ -32,6 +47,10 @@ interface DroppableDayProps {
   selectedEventId: string | null;
   selectEvent: (id: string) => void;
   onCreateEvent?: (startTime?: Date, endTime?: Date) => void;
+  onEditEvent?: (id: string) => void;
+  onDeleteEvent?: (id: string) => void;
+  onDuplicateEvent?: (id: string) => void;
+  onShareEvent?: (id: string) => void;
 }
 
 function DroppableDay({
@@ -42,6 +61,10 @@ function DroppableDay({
   selectedEventId,
   selectEvent,
   onCreateEvent,
+  onEditEvent,
+  onDeleteEvent,
+  onDuplicateEvent,
+  onShareEvent,
 }: DroppableDayProps) {
   const dayStr = day.toDateString();
   const dayIso = format(day, "yyyy-MM-dd");
@@ -57,9 +80,12 @@ function DroppableDay({
     <div
       ref={setNodeRef}
       data-testid={`day-cell-${dayIso}`}
-      className={`border-r border-border p-1 flex flex-col relative transition-colors cursor-pointer ${
-        !isCurrentMonth ? "bg-muted/50" : "bg-background"
-      } ${isOver ? "bg-blue-50 ring-2 ring-blue-500 ring-inset z-10" : ""}`}
+      className={cn(
+        "border-r border-border p-1 flex flex-col relative transition-colors cursor-pointer",
+        !isCurrentMonth ? "bg-muted/50" : "bg-background",
+        isTodayDate && isCurrentMonth && "bg-primary/5",
+        isOver && "bg-blue-50 ring-2 ring-blue-500 ring-inset z-10",
+      )}
       onClick={() => onCreateEvent?.(startOfDay(day))}
     >
       {/* Day number */}
@@ -85,6 +111,10 @@ function DroppableDay({
             event={event}
             isSelected={selectedEventId === event.id}
             onSelect={() => selectEvent(event.id)}
+            onEdit={onEditEvent}
+            onDuplicate={onDuplicateEvent}
+            onDelete={onDeleteEvent}
+            onShare={onShareEvent}
           />
         ))}
         {dayEvents.length > 4 && (
@@ -106,19 +136,30 @@ interface DraggableMonthEventProps {
   event: Event;
   isSelected: boolean;
   onSelect: () => void;
+  onEdit?: (id: string) => void;
+  onDuplicate?: (id: string) => void;
+  onDelete?: (id: string) => void;
+  onShare?: (id: string) => void;
 }
 
 function DraggableMonthEvent({
   event,
   isSelected,
   onSelect,
+  onEdit,
+  onDuplicate,
+  onDelete,
+  onShare,
 }: DraggableMonthEventProps) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: event.id,
     data: { event },
   });
 
-  return (
+  const start = new Date(event.start_time);
+  const end = new Date(event.end_time);
+
+  const card = (
     <div
       ref={setNodeRef}
       data-testid="calendar-event"
@@ -128,16 +169,77 @@ function DraggableMonthEvent({
         e.stopPropagation();
         onSelect();
       }}
-      className={`text-[11px] px-2 py-[2px] rounded-sm cursor-pointer truncate font-medium leading-tight ${
+      onDoubleClick={(e) => {
+        e.stopPropagation();
+        if (onEdit) onEdit(event.id);
+        else onSelect();
+      }}
+      className={cn(
+        "text-[11px] px-2 py-[2px] rounded-sm truncate font-medium leading-tight",
         isDragging
-          ? "opacity-50"
+          ? "opacity-50 cursor-grabbing"
           : isSelected
-            ? "bg-blue-800 text-white ring-1 ring-blue-900"
-            : "bg-[#039be5] text-white hover:opacity-90"
-      }`}
+            ? "bg-blue-800 text-white ring-1 ring-blue-900 cursor-grab active:cursor-grabbing"
+            : "bg-[#039be5] text-white hover:opacity-90 cursor-grab active:cursor-grabbing",
+      )}
     >
       {event.title}
     </div>
+  );
+
+  return (
+    <ContextMenu>
+      <ContextMenuTrigger asChild>
+        <Tooltip>
+          <TooltipTrigger asChild>{card}</TooltipTrigger>
+          <TooltipContent side="top" align="start" className="max-w-xs">
+            <div className="font-semibold">{event.title}</div>
+            <div className="text-[11px] opacity-80">
+              {format(start, "EEEE d MMM", { locale: fr })} · {format(start, "HH:mm")} → {format(end, "HH:mm")}
+            </div>
+            {event.location && (
+              <div className="text-[11px] mt-1 opacity-80">{event.location}</div>
+            )}
+            {event.description && (
+              <div className="text-[11px] mt-1 opacity-80 line-clamp-3">
+                {event.description}
+              </div>
+            )}
+          </TooltipContent>
+        </Tooltip>
+      </ContextMenuTrigger>
+      <ContextMenuContent>
+        <ContextMenuItem
+          onClick={() => (onEdit ? onEdit(event.id) : onSelect())}
+        >
+          Modifier
+        </ContextMenuItem>
+        {onDuplicate && (
+          <ContextMenuItem onClick={() => onDuplicate(event.id)}>
+            Dupliquer
+          </ContextMenuItem>
+        )}
+        {onShare && (
+          <>
+            <ContextMenuSeparator />
+            <ContextMenuItem onClick={() => onShare(event.id)}>
+              Partager
+            </ContextMenuItem>
+          </>
+        )}
+        {onDelete && (
+          <>
+            <ContextMenuSeparator />
+            <ContextMenuItem
+              className="text-destructive"
+              onClick={() => onDelete(event.id)}
+            >
+              Supprimer
+            </ContextMenuItem>
+          </>
+        )}
+      </ContextMenuContent>
+    </ContextMenu>
   );
 }
 
@@ -148,11 +250,19 @@ function DraggableMonthEvent({
 interface MonthCalendarProps {
   selectedCalendarId?: string;
   onCreateEvent?: (startTime?: Date, endTime?: Date) => void;
+  onEditEvent?: (id: string) => void;
+  onDeleteEvent?: (id: string) => void;
+  onDuplicateEvent?: (id: string) => void;
+  onShareEvent?: (id: string) => void;
 }
 
 export function MonthCalendar({
   selectedCalendarId,
   onCreateEvent,
+  onEditEvent,
+  onDeleteEvent,
+  onDuplicateEvent,
+  onShareEvent,
 }: MonthCalendarProps) {
   const currentDate = useCalendarStore((state) => state.currentDate);
   const { selectedEventId, selectEvent } = useCalendarSelection();
@@ -206,6 +316,7 @@ export function MonthCalendar({
   );
 
   return (
+    <TooltipProvider delayDuration={350}>
     <div className="flex flex-col h-full bg-background relative">
       {/* Day headers */}
       <div className="grid grid-cols-7 border-b border-border">
@@ -242,6 +353,10 @@ export function MonthCalendar({
                   selectedEventId={selectedEventId}
                   selectEvent={selectEvent}
                   onCreateEvent={onCreateEvent}
+                  onEditEvent={onEditEvent}
+                  onDeleteEvent={onDeleteEvent}
+                  onDuplicateEvent={onDuplicateEvent}
+                  onShareEvent={onShareEvent}
                 />
               );
             })}
@@ -255,5 +370,6 @@ export function MonthCalendar({
         </div>
       )}
     </div>
+    </TooltipProvider>
   );
 }

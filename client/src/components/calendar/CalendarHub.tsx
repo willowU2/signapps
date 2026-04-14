@@ -356,10 +356,26 @@ export function CalendarHub() {
   // ── DnD sensors ──────────────────────────────────────────────────────────
   // PointerSensor with 8px activation distance so a plain click opens the
   // event instead of starting a drag. TouchSensor uses a long-press delay
-  // for mobile support.
+  // for mobile support. The custom activator skips pointer-downs that land
+  // on an element marked with `data-no-dnd="true"` (e.g. resize handles)
+  // so resize gestures are never intercepted as drags.
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: { distance: 8 },
+      activators: [
+        {
+          eventName: "onPointerDown",
+          handler: ({ nativeEvent: event }: React.PointerEvent) => {
+            if (event.button !== 0) return false;
+            let el: HTMLElement | null = event.target as HTMLElement | null;
+            while (el) {
+              if (el.dataset && el.dataset.noDnd === "true") return false;
+              el = el.parentElement;
+            }
+            return true;
+          },
+        },
+      ],
     }),
     useSensor(TouchSensor, {
       activationConstraint: { delay: 200, tolerance: 5 },
@@ -488,6 +504,59 @@ export function CalendarHub() {
       toast.error("Impossible de supprimer l'événement");
     }
   }, [selectedEventId, events, deleteEvent, pushUndo, selectEvent]);
+
+  // ── Context-menu actions on a specific event (not the selected one) ─────
+  const handleDeleteEventById = useCallback(
+    async (eventId: string) => {
+      const ev = events.find((e) => e.id === eventId);
+      if (!ev) return;
+      try {
+        await deleteEvent(eventId);
+        pushUndo({ type: "delete", event: ev });
+        toast.success("Événement supprimé — Ctrl+Z pour annuler");
+      } catch {
+        toast.error("Impossible de supprimer l'événement");
+      }
+    },
+    [events, deleteEvent, pushUndo],
+  );
+
+  /**
+   * Duplicate an event: clone payload, keep the same calendar day/time,
+   * and create via the API. The new event inherits every user-editable
+   * field except the server-generated id/created_at/updated_at.
+   */
+  const handleDuplicateEventById = useCallback(
+    async (eventId: string) => {
+      const ev = events.find((e) => e.id === eventId);
+      if (!ev) return;
+      try {
+        await createEvent({
+          title: `${ev.title} (copie)`,
+          start_time: ev.start_time,
+          end_time: ev.end_time,
+          description: ev.description ?? undefined,
+          location: ev.location ?? undefined,
+          is_all_day: ev.is_all_day ?? false,
+          timezone: ev.timezone,
+          event_type: ev.event_type,
+        });
+        toast.success("Événement dupliqué");
+      } catch {
+        toast.error("Impossible de dupliquer l'événement");
+      }
+    },
+    [events, createEvent],
+  );
+
+  /** Open the share dialog for a specific event (sets selection first). */
+  const handleShareEventById = useCallback(
+    (eventId: string) => {
+      selectEvent(eventId);
+      setShareDialogOpen(true);
+    },
+    [selectEvent],
+  );
 
   // ── Undo handler (Ctrl+Z / Meta+Z) ──────────────────────────────────────
   const handleUndo = useCallback(async () => {
@@ -1014,10 +1083,18 @@ export function CalendarHub() {
                 ViewComponent as React.ComponentType<{
                   selectedCalendarId?: string;
                   onCreateEvent?: (startTime?: Date, endTime?: Date) => void;
+                  onEditEvent?: (id: string) => void;
+                  onDeleteEvent?: (id: string) => void;
+                  onDuplicateEvent?: (id: string) => void;
+                  onShareEvent?: (id: string) => void;
                 }>,
                 {
                   selectedCalendarId,
                   onCreateEvent: handleCreateEvent,
+                  onEditEvent: handleEditEvent,
+                  onDeleteEvent: handleDeleteEventById,
+                  onDuplicateEvent: handleDuplicateEventById,
+                  onShareEvent: handleShareEventById,
                 },
               )}
             </Suspense>
