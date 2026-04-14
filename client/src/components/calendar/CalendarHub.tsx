@@ -387,12 +387,18 @@ export function CalendarHub() {
   // Close form — keeps `selectedEventId` intact so Delete key / Ctrl+Z still
   // have a target after the user cancels. `editingEvent` is cleared because
   // the dialog's internal state is scoped to a single open cycle.
-  const handleFormOpenChange = useCallback((open: boolean) => {
-    setFormOpen(open);
-    if (!open) {
-      setEditingEvent(undefined);
-    }
-  }, []);
+  const handleFormOpenChange = useCallback(
+    (open: boolean) => {
+      setFormOpen(open);
+      if (!open) {
+        setEditingEvent(undefined);
+        setFormDefaultStart(undefined);
+        setFormDefaultEnd(undefined);
+        selectEvent(null);
+      }
+    },
+    [selectEvent],
+  );
 
   // ── Drag-and-drop (month view) ───────────────────────────────────────────
   const handleDragEnd = useCallback(
@@ -414,9 +420,13 @@ export function CalendarHub() {
       const originalEnd = new Date(ev.end_time);
       const durationMs = originalEnd.getTime() - originalStart.getTime();
 
-      const newStart = new Date(overData.date);
-      // Preserve original time of day
-      newStart.setHours(
+      // Parse Y/M/D from the drop target as local components to preserve the
+      // user's timezone (ISO parsing would shift the date in UTC-ahead TZs).
+      const [y, m, d] = overData.date.split("T")[0].split("-").map(Number);
+      const newStart = new Date(
+        y,
+        m - 1,
+        d,
         originalStart.getHours(),
         originalStart.getMinutes(),
         0,
@@ -555,7 +565,9 @@ export function CalendarHub() {
         case "backspace":
           if (selectedEventId) {
             e.preventDefault();
-            handleDeleteSelectedEvent();
+            if (window.confirm("Supprimer cet événement ?")) {
+              handleDeleteSelectedEvent();
+            }
           }
           break;
       }

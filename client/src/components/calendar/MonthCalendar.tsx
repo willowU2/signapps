@@ -9,6 +9,8 @@ import {
   isSameMonth,
   isToday,
   startOfDay,
+  startOfWeek,
+  endOfWeek,
 } from "date-fns";
 import {
   useCalendarStore,
@@ -47,7 +49,7 @@ function DroppableDay({
     id: `calendar-day-${dayStr}`,
     data: {
       type: "calendar-slot",
-      date: day.toISOString(),
+      date: dayIso,
     },
   });
 
@@ -162,11 +164,9 @@ export function MonthCalendar({
 
     const start = startOfMonth(currentDate);
     const end = endOfMonth(currentDate);
-    // Expand range to include full weeks visible in the grid
-    const monthStart = new Date(start);
-    monthStart.setDate(monthStart.getDate() - monthStart.getDay());
-    const monthEnd = new Date(end);
-    monthEnd.setDate(monthEnd.getDate() + (6 - monthEnd.getDay()));
+    // Expand range to include full weeks visible in the grid (Monday-start)
+    const monthStart = startOfWeek(start, { weekStartsOn: 1 });
+    const monthEnd = endOfWeek(end, { weekStartsOn: 1 });
 
     fetchEvents(monthStart, monthEnd);
   }, [selectedCalendarId, currentDate, fetchEvents]);
@@ -174,30 +174,34 @@ export function MonthCalendar({
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
 
-  // Generate calendar grid (6 rows x 7 cols)
+  // Generate calendar grid (Monday-start weeks spanning the visible month)
   const calendarDays = useMemo(() => {
-    const start = new Date(monthStart);
-    start.setDate(start.getDate() - monthStart.getDay());
-    const end = new Date(monthEnd);
-    end.setDate(end.getDate() + (6 - monthEnd.getDay()));
-    return eachDayOfInterval({ start, end });
+    const gridStart = startOfWeek(monthStart, { weekStartsOn: 1 });
+    const gridEnd = endOfWeek(monthEnd, { weekStartsOn: 1 });
+    return eachDayOfInterval({ start: gridStart, end: gridEnd });
   }, [monthStart, monthEnd]);
 
-  // Group events by date
+  // Group events by date — multi-day events are added to every day they span.
   const eventsByDate = useMemo(() => {
     const grouped = new Map<string, Event[]>();
-    events.forEach((event) => {
-      const date = new Date(event.start_time).toDateString();
-      if (!grouped.has(date)) {
-        grouped.set(date, []);
+    for (const event of events) {
+      const start = new Date(event.start_time);
+      const end = new Date(event.end_time);
+      const cursor = new Date(start);
+      cursor.setHours(0, 0, 0, 0);
+      while (cursor <= end) {
+        const key = cursor.toDateString();
+        if (!grouped.has(key)) grouped.set(key, []);
+        grouped.get(key)!.push(event);
+        cursor.setDate(cursor.getDate() + 1);
       }
-      grouped.get(date)!.push(event);
-    });
+    }
     return grouped;
   }, [events]);
 
-  const weekDays = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"];
-  const weeks = Array.from({ length: 6 }, (_, i) =>
+  const weekDays = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
+  const numWeeks = Math.ceil(calendarDays.length / 7);
+  const weeks = Array.from({ length: numWeeks }, (_, i) =>
     calendarDays.slice(i * 7, (i + 1) * 7),
   );
 

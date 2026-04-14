@@ -555,7 +555,7 @@ export function EventForm({
       start_time: start.toISOString(),
       end_time: end.toISOString(),
       is_all_day: false,
-      timezone: "UTC",
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
     };
   }, [initialEvent, defaultStartDate, defaultEndDate]);
 
