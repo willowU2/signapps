@@ -7,6 +7,7 @@ members = [
     "crates/signapps-ldap-server",
     "crates/signapps-kerberos-kdc",
     "crates/signapps-keystore",
+    "crates/signapps-oauth",
     "crates/signapps-cache",
     "crates/signapps-audit",
     "crates/signapps-common",
