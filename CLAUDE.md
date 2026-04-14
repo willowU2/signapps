@@ -337,9 +337,10 @@ Avant de déclarer une tâche terminée, valider **chaque point** :
 
 ```
 crates/
-  signapps-common/    → JWT auth, middleware, AppError, value objects
+  signapps-common/    → JWT auth, middleware, AppError, value objects, crypto
   signapps-db/        → Models, repositories, migrations, PgPool, pgvector
   signapps-cache/     → TTL cache (moka) — remplace Redis
+  signapps-keystore/  → Master key management + per-usage DEK derivation (AES-256-GCM)
   signapps-runtime/   → PostgreSQL lifecycle, hardware detection, model manager
   signapps-service/   → Service bootstrap utilities
 services/
@@ -384,11 +385,13 @@ Chaque service Rust suit la même structure :
 
 ### Shared Crate Conventions
 
-**signapps-common:** `Claims`, `AppError` (RFC 7807), middleware (auth, admin, logging), value objects (`Email`, `Password`, `UserId`)
+**signapps-common:** `Claims`, `AppError` (RFC 7807), middleware (auth, admin, logging), value objects (`Email`, `Password`, `UserId`), `crypto::EncryptedField` trait (AES-256-GCM)
 
 **signapps-db:** Repository pattern (`*Repository` + `&PgPool`), models 1:1 PostgreSQL, `VectorRepository` (384d), `MultimodalVectorRepository` (1024d)
 
 **signapps-cache:** `CacheService` (moka TTL + DashMap counters) — rate limiting, JWT blacklist
+
+**signapps-keystore:** `Keystore` (master key + DEK cache), `MasterKey`, `DataEncryptionKey`, `KeystoreBackend` (EnvVar / File / Remote KMS). Loaded once at boot of each service that manipulates encrypted fields.
 
 **signapps-runtime:** `RuntimeManager::ensure_database()`, `HardwareProfile::detect()`, `ModelManager`
 
