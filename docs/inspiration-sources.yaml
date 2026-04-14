@@ -1,0 +1,75 @@
+# Sources d'inspiration externes — registre de veille
+#
+# Chaque entrée correspond à un projet open source qui sert de source
+# d'inspiration (patterns, architecture, idées de features) pour une
+# partie de SignApps Platform. On NE réutilise PAS le code (cf.
+# memory/feedback_license_policy.md) — uniquement les idées.
+#
+# Le skill `inspiration-watcher` parcourt ce fichier régulièrement,
+# interroge GitHub pour voir s'il y a eu des nouveautés depuis
+# `last_checked`, et produit un rapport avec suggestions d'intégration
+# dans les specs (docs/superpowers/specs/) et les skills de debug
+# (.claude/skills/*-debug/).
+#
+# Format :
+#   - key: <slug-unique>                    # identifiant pour le suivi
+#     repo: owner/name                      # slug GitHub
+#     url: https://github.com/...           # URL lisible
+#     license: MIT|Apache-2.0|BSD|...       # licence (doit être permissive)
+#     purpose: <description>                # à quoi on s'inspire
+#     spec: docs/superpowers/specs/...      # spec qu'on met à jour quand il y a du nouveau
+#     debug_skill: .claude/skills/<name>/   # skill qu'on enrichit avec nouveaux patterns de debug
+#     what_to_watch:                        # quoi surveiller en particulier
+#       - config/oauth.json
+#       - src/lib/flow.js
+#     check_frequency: monthly|weekly|...   # fréquence de check recommandée
+#     last_checked: YYYY-MM-DD              # mis à jour par le skill
+#     last_commit_sha: <sha>                # mis à jour par le skill
+#     last_release: <version|null>          # mis à jour par le skill
+#     changelog_url: <url|null>             # si disponible pour lecture facile
+
+version: "1.0"
+
+sources:
+
+  - key: simov-grant
+    repo: simov/grant
+    url: https://github.com/simov/grant
+    license: MIT
+    purpose: |
+      OAuth2/OIDC/OAuth1a proxy — catalogue de ~200 providers et patterns
+      de state machine stateless. Sert de base à l'architecture OAuth unifiée
+      de SignApps (crate signapps-oauth).
+    spec: docs/superpowers/specs/2026-04-14-oauth-unified-design.md
+    debug_skill: .claude/skills/oauth-debug/
+    what_to_watch:
+      - config/oauth.json                      # nouveaux providers dans le catalogue
+      - lib/flow/oauth2.js                     # évolutions du flow OAuth2
+      - lib/flow/oauth2-code.js                # PKCE, state, callback
+      - lib/flow/oidc.js                       # validation id_token
+      - CHANGELOG.md                           # releases + breaking changes
+    check_frequency: monthly
+    last_checked: 2026-04-14
+    last_commit_sha: null                      # à initialiser au premier run du watcher
+    last_release: null
+    changelog_url: https://github.com/simov/grant/blob/master/CHANGELOG.md
+
+  # ───────── Ajouter d'autres sources ici au fil du temps ─────────
+  #
+  # Quand on écrit une nouvelle spec qui s'inspire d'un projet externe,
+  # on ajoute une entrée ici. Exemples d'ajouts futurs :
+  #
+  # - key: tiptap-tiptap
+  #   repo: ueberdosis/tiptap
+  #   purpose: rich-text editor patterns (docs, wiki, mail, chat)
+  #   spec: docs/product-specs/02-docs.md
+  #
+  # - key: yjs-yjs
+  #   repo: yjs/yjs
+  #   purpose: CRDT patterns for real-time collab
+  #   spec: docs/product-specs/02-docs.md
+  #
+  # - key: dnd-kit
+  #   repo: clauderic/dnd-kit
+  #   purpose: drag-drop patterns (calendar, kanban, tasks)
+  #   spec: docs/product-specs/03-calendar.md

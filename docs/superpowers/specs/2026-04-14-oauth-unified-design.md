@@ -880,7 +880,19 @@ Aucune dépendance GPL/AGPL/LGPL/SSPL/BSL.
 - **Ne pas faire de `UPDATE ... SET client_secret = ''`** pour "désactiver" un provider — utiliser `enabled = false`
 - **Ne pas re-générer `catalog.json`** en CI — c'est un fichier versionné dans git, maintenu manuellement
 
-## 15. Roadmap d'implémentation
+## 15. Veille amont (inspiration watching)
+
+L'architecture s'inspire de `simov/grant` (MIT). Pour rester aligné avec les évolutions upstream sans jamais réutiliser de code, on maintient une **veille régulière** :
+
+- **Registre** : `docs/inspiration-sources.yaml` contient une entrée `simov-grant` avec SHA courant, `last_checked`, fichiers à watcher (`config/oauth.json`, `lib/flow/*.js`, `CHANGELOG.md`).
+- **Check mensuel** : skill `.claude/skills/inspiration-watcher/SKILL.md` interroge GitHub via `gh` CLI ou WebFetch, compare le SHA, classifie les commits depuis le dernier check.
+- **Classification** : nouveaux providers (→ à ajouter au catalogue embedded), nouveaux patterns de validation (→ à évaluer), bugfixes amont (→ vérifier si on a le même bug).
+- **Licence watch** : si la licence de grant passe à GPL/AGPL/SSPL/BSL, le watcher alerte immédiatement et on gèle toute nouvelle inspiration.
+- **Traçabilité** : toute mise à jour de spec liée à grant doit mentionner `inspired-by: simov/grant@{sha}` dans le message de commit.
+
+**Règle générale** (au-delà d'OAuth) : toute future spec SignApps qui s'inspire d'un projet open source doit ajouter une entrée dans `docs/inspiration-sources.yaml` avec `spec`, `debug_skill`, `what_to_watch`, `check_frequency`.
+
+## 16. Roadmap d'implémentation
 
 Les blocs suivants doivent être construits dans cet ordre pour permettre des tests incrémentaux :
 
