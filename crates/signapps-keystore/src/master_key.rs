@@ -1,7 +1,7 @@
 //! Master key type.
 
 use crate::KeystoreError;
-use zeroize::Zeroize;
+use zeroize::{Zeroize, Zeroizing};
 
 /// 32-byte AES-256 master key.
 ///
@@ -29,16 +29,28 @@ impl MasterKey {
     ///
     /// - [`KeystoreError::InvalidHex`] if the string contains non-hex characters.
     /// - [`KeystoreError::InvalidLength`] if the decoded bytes are not exactly 32.
+    #[must_use = "use the returned MasterKey or handle the error"]
     pub fn from_hex(s: &str) -> Result<Self, KeystoreError> {
         let trimmed = s.trim();
-        let bytes =
-            hex::decode(trimmed).map_err(|e| KeystoreError::InvalidHex(e.to_string()))?;
+        // Zeroizing wrapper ensures the heap allocation from hex::decode is
+        // zeroed when dropped, even on the error path below.
+        let bytes: Zeroizing<Vec<u8>> = Zeroizing::new(
+            hex::decode(trimmed).map_err(|e| KeystoreError::InvalidHex(e.to_string()))?,
+        );
         if bytes.len() != Self::LEN {
             return Err(KeystoreError::InvalidLength(bytes.len()));
         }
         let mut key = [0u8; 32];
         key.copy_from_slice(&bytes);
         Ok(Self(key))
+    }
+}
+
+impl std::str::FromStr for MasterKey {
+    type Err = KeystoreError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Self::from_hex(s)
     }
 }
 
