@@ -275,7 +275,8 @@ fn create_router(state: AppState, sharing_engine: SharingEngine) -> Router {
         .route("/search/quick", get(search::quick_search))
         .route("/search/recent", get(search::recent_files))
         .route("/search/suggest", get(search::suggest))
-        .route("/search/omni", get(search::omni_search));
+        .route("/search/omni", get(search::omni_search))
+        .route("/search/content", get(search::search_content));
 
     // Quota routes (user - accessible to authenticated users)
     let user_quota_routes = Router::new()
