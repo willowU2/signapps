@@ -354,6 +354,10 @@ fn create_router(state: AppState, sharing_engine: SharingEngine) -> Router {
         .route(
             "/files/:file_id/versions/:version_id/restore",
             post(handlers::versions::restore_version),
+        )
+        .route(
+            "/files/:file_id/versions/:version_id/download",
+            get(handlers::versions::download_version),
         );
 
     // Mount management routes

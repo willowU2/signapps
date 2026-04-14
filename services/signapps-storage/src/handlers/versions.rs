@@ -1,7 +1,9 @@
 use crate::AppState;
 use axum::{
+    body::Body,
     extract::{Path, State},
-    http::StatusCode,
+    http::{header, StatusCode},
+    response::Response,
     Json,
 };
 
@@ -126,6 +128,72 @@ pub async fn restore_version(
     // Note: Quotas logic shouldn't strictly require recalculation here because we just overwrote bytes, but storage quotas for the new archive version should ideally be incremented in a full prod app.
 
     Ok(StatusCode::OK)
+}
+
+/// Stream the raw content of a file version as an attachment download.
+#[utoipa::path(
+    get,
+    path = "/api/v1/files/{file_id}/versions/{version_id}/download",
+    params(
+        ("file_id" = Uuid, Path, description = "File ID"),
+        ("version_id" = Uuid, Path, description = "Version ID"),
+    ),
+    responses(
+        (status = 200, description = "Version payload streamed as attachment"),
+        (status = 400, description = "Version does not belong to this file"),
+        (status = 404, description = "File or version not found"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "versions"
+)]
+#[tracing::instrument(skip(state))]
+pub async fn download_version(
+    State(state): State<AppState>,
+    Path((file_id, version_id)): Path<(Uuid, Uuid)>,
+) -> Result<Response, (StatusCode, String)> {
+    let version = StorageTier2Repository::get_version(state.pool.inner(), version_id)
+        .await
+        .map_err(|_| (StatusCode::NOT_FOUND, "Version not found".into()))?;
+
+    if version.file_id != file_id {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            "Version does not belong to this file".into(),
+        ));
+    }
+
+    let (bucket, key, _active_size, _active_ct) =
+        StorageTier2Repository::get_file_info(state.pool.inner(), file_id)
+            .await
+            .map_err(|_| (StatusCode::NOT_FOUND, "File not found".into()))?;
+
+    let object = state
+        .storage
+        .get_object(&bucket, &version.storage_key)
+        .await
+        .map_err(internal_error)?;
+
+    let filename = key.split('/').next_back().unwrap_or(&key);
+    let content_type = version
+        .content_type
+        .clone()
+        .unwrap_or_else(|| "application/octet-stream".into());
+
+    Response::builder()
+        .status(StatusCode::OK)
+        .header(header::CONTENT_TYPE, content_type)
+        .header(header::CONTENT_LENGTH, object.content_length)
+        .header(
+            header::CONTENT_DISPOSITION,
+            format!(
+                "attachment; filename=\"{}.v{}\"",
+                filename,
+                &version_id.to_string()[..8]
+            ),
+        )
+        .body(Body::from(object.data))
+        .map_err(|e| internal_error(e))
 }
 
 #[cfg(test)]
