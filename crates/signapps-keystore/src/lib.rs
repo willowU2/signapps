@@ -43,11 +43,13 @@
 mod backend;
 mod dek;
 mod error;
+mod helpers;
 mod master_key;
 
 pub use backend::{KeystoreBackend, RemoteKeystoreClient};
 pub use dek::DataEncryptionKey;
-pub use error::KeystoreError;
+pub use error::{CryptoError, KeystoreError};
+pub use helpers::{decrypt_string, decrypt_string_arc, encrypt_string, encrypt_string_arc};
 pub use master_key::MasterKey;
 
 use dashmap::DashMap;
