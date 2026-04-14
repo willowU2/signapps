@@ -297,6 +297,13 @@ fn create_router(state: AppState) -> Router {
         .route(
             "/api/v1/oauth/:provider/callback",
             get(handlers::oauth::callback),
+        )
+        // POST /api/v1/oauth/internal/refresh — service-to-identity lazy refresh
+        // Auth via X-Internal-Token shared secret (OAUTH_INTERNAL_TOKEN env var),
+        // NOT JWT — intentionally on public_routes.
+        .route(
+            "/api/v1/oauth/internal/refresh",
+            post(handlers::oauth::internal_refresh::internal_refresh),
         );
 
     // Public routes (no auth required)

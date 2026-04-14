@@ -18,6 +18,7 @@
 
 pub mod creds;
 pub mod error;
+pub mod internal_refresh;
 
 use axum::{
     extract::{Path, Query, State},
