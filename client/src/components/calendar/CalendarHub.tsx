@@ -56,6 +56,7 @@ import {
   DragOverlay,
   PointerSensor,
   TouchSensor,
+  useDroppable,
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
@@ -76,7 +77,7 @@ import { ImportDialog } from "./ImportDialog";
 import { ExportDialog } from "./ExportDialog";
 import { FindSlot } from "./find-slot";
 import { calendarApi } from "@/lib/api/calendar";
-import { Calendar, Event } from "@/types/calendar";
+import { Calendar, Event, UpdateEvent } from "@/types/calendar";
 import { useEvents } from "@/hooks/use-events";
 import { toast } from "sonner";
 
@@ -229,6 +230,49 @@ function getDateTitle(view: ViewType, date: Date): string {
     default:
       return format(date, "MMMM yyyy", { locale });
   }
+}
+
+// ============================================================================
+// Droppable calendar entry — target for multi-calendar drag
+// ============================================================================
+
+/**
+ * Sidebar calendar entry wrapped with a `useDroppable` zone. Dropping an event
+ * here fires `handleDragEnd` in CalendarHub with `overData.type === "calendar"`,
+ * which moves the event to this calendar.
+ */
+function DroppableCalendarEntry({
+  calendar,
+  isSelected,
+  onSelect,
+}: {
+  calendar: Calendar;
+  isSelected: boolean;
+  onSelect: () => void;
+}) {
+  const { isOver, setNodeRef } = useDroppable({
+    id: `calendar-target-${calendar.id}`,
+    data: { type: "calendar", calendarId: calendar.id },
+  });
+  return (
+    <button
+      ref={setNodeRef}
+      onClick={onSelect}
+      className={cn(
+        "w-full flex items-center gap-2 px-2 py-1 rounded-md text-xs text-left transition-colors",
+        isSelected
+          ? "bg-primary/10 text-primary font-medium"
+          : "text-foreground hover:bg-muted",
+        isOver && "ring-2 ring-primary/60 bg-primary/5",
+      )}
+    >
+      <span
+        className="w-2.5 h-2.5 rounded-full shrink-0"
+        style={{ backgroundColor: calendar.color || "#3b82f6" }}
+      />
+      <span className="truncate">{calendar.name}</span>
+    </button>
+  );
 }
 
 // ============================================================================
@@ -388,6 +432,12 @@ export function CalendarHub() {
     ? events.find((e) => e.id === activeEventId)
     : null;
 
+  // Clipboard for Ctrl+C / Ctrl+X / Ctrl+V on events.
+  // When `cut` is true, the original event is deleted after a successful paste.
+  const [clipboardEvent, setClipboardEvent] = useState<
+    { event: Event; cut: boolean } | null
+  >(null);
+
   /** Open form to create a new event (optionally with a preselected time slot) */
   const handleCreateEvent = useCallback(
     (startTime?: Date, endTime?: Date) => {
@@ -443,21 +493,148 @@ export function CalendarHub() {
     [selectEvent],
   );
 
-  // ── Drag-and-drop (month view) ───────────────────────────────────────────
+  // ── Drag-and-drop ────────────────────────────────────────────────────────
+  // Handles drops from multiple drag sources:
+  //  - Events (month/week/day/agenda) → calendar-slot, calendar entry
+  //  - TimeItems (kanban card, timeline bar) → kanban-column, calendar-slot
   const handleDragEnd = useCallback(
     async (dragEvent: DragEndEvent) => {
       const { active, over } = dragEvent;
       if (!over || !active) return;
 
-      const eventId = active.id as string;
+      const activeData = active.data?.current as
+        | {
+            type?: string;
+            event?: Event;
+            timeItem?: {
+              id: string;
+              startTime?: string | Date;
+              endTime?: string | Date;
+              deadline?: string | Date;
+            };
+          }
+        | undefined;
       const overData = over.data?.current as
-        | { type?: string; date?: string }
+        | {
+            type?: string;
+            date?: string;
+            calendarId?: string;
+            groupBy?: string;
+            columnId?: string;
+          }
         | undefined;
 
-      if (overData?.type !== "calendar-slot" || !overData.date) return;
+      // ── TimeItem dropped on a Kanban column ──────────────────────────────
+      if (
+        overData?.type === "kanban-column" &&
+        activeData?.type === "time-item" &&
+        activeData.timeItem &&
+        overData.columnId
+      ) {
+        const itemId = activeData.timeItem.id;
+        const store = useCalendarStore.getState();
+        try {
+          switch (overData.groupBy) {
+            case "status":
+              await store.updateTimeItem(itemId, {
+                status: overData.columnId as
+                  | "todo"
+                  | "in_progress"
+                  | "done"
+                  | "cancelled",
+              });
+              toast.success("Statut mis à jour");
+              break;
+            case "priority":
+              await store.updateTimeItem(itemId, {
+                priority: overData.columnId as
+                  | "low"
+                  | "medium"
+                  | "high"
+                  | "urgent",
+              });
+              toast.success("Priorité mise à jour");
+              break;
+            default:
+              // assignee / project would need richer logic; skip for now.
+              break;
+          }
+        } catch {
+          toast.error("Impossible de mettre à jour la tâche");
+        }
+        return;
+      }
 
+      // ── TimeItem dropped on a calendar day slot → reschedule ─────────────
+      if (
+        overData?.type === "calendar-slot" &&
+        overData.date &&
+        activeData?.type === "time-item" &&
+        activeData.timeItem
+      ) {
+        const ti = activeData.timeItem;
+        const originalStart = ti.startTime
+          ? typeof ti.startTime === "string"
+            ? new Date(ti.startTime)
+            : ti.startTime
+          : null;
+        const originalEnd = ti.endTime
+          ? typeof ti.endTime === "string"
+            ? new Date(ti.endTime)
+            : ti.endTime
+          : null;
+        const durationMs =
+          originalStart && originalEnd
+            ? originalEnd.getTime() - originalStart.getTime()
+            : 60 * 60 * 1000;
+
+        const [y, m, d] = overData.date.split("T")[0].split("-").map(Number);
+        const newStart = new Date(
+          y,
+          m - 1,
+          d,
+          originalStart?.getHours() ?? 9,
+          originalStart?.getMinutes() ?? 0,
+          0,
+          0,
+        );
+        const newEnd = new Date(newStart.getTime() + durationMs);
+
+        try {
+          await useCalendarStore.getState().updateTimeItem(ti.id, {
+            startTime: newStart.toISOString(),
+            endTime: newEnd.toISOString(),
+          });
+          toast.success("Tâche déplacée");
+        } catch {
+          toast.error("Impossible de déplacer la tâche");
+        }
+        return;
+      }
+
+      // ── Legacy path: Event drag (month/week/day/agenda) ──────────────────
+      const eventId = active.id as string;
       const ev = events.find((e) => e.id === eventId);
       if (!ev) return;
+
+      // Drop on a calendar entry in the sidebar → move the event to that
+      // calendar without altering its time. No-op if the target is the same
+      // calendar the event already belongs to.
+      if (overData?.type === "calendar" && overData.calendarId) {
+        if (overData.calendarId === ev.calendar_id) return;
+        try {
+          await updateEvent(
+            eventId,
+            { calendar_id: overData.calendarId } as unknown as UpdateEvent,
+          );
+          toast.success("Événement déplacé vers l'agenda");
+        } catch {
+          toast.error("Impossible de déplacer l'événement");
+        }
+        return;
+      }
+
+      if (overData?.type !== "calendar-slot" || !overData.date) return;
 
       const originalStart = new Date(ev.start_time);
       const originalEnd = new Date(ev.end_time);
@@ -549,6 +726,49 @@ export function CalendarHub() {
     [events, createEvent],
   );
 
+  /**
+   * Paste the clipboard event into the calendar. The new event starts at
+   * `now + 1h` and preserves the original duration. If the clipboard entry
+   * was created by a Ctrl+X (cut), the original is deleted after the paste.
+   */
+  const handlePasteEvent = useCallback(async () => {
+    if (!clipboardEvent || !selectedCalendarId) return;
+    const src = clipboardEvent.event;
+    const originalStart = new Date(src.start_time);
+    const originalEnd = new Date(src.end_time);
+    const durationMs = Math.max(
+      0,
+      originalEnd.getTime() - originalStart.getTime(),
+    );
+    const newStart = new Date(Date.now() + 60 * 60 * 1000);
+    const newEnd = new Date(newStart.getTime() + (durationMs || 60 * 60 * 1000));
+    try {
+      await createEvent({
+        title: clipboardEvent.cut ? src.title : `${src.title} (copie)`,
+        description: src.description ?? undefined,
+        location: src.location ?? undefined,
+        start_time: newStart.toISOString(),
+        end_time: newEnd.toISOString(),
+        is_all_day: src.is_all_day ?? false,
+        timezone: src.timezone,
+        event_type: src.event_type,
+      });
+      if (clipboardEvent.cut) {
+        try {
+          await deleteEvent(src.id);
+        } catch {
+          // Ignore — the paste already succeeded.
+        }
+      }
+      setClipboardEvent(null);
+      toast.success(
+        clipboardEvent.cut ? "Événement déplacé" : "Événement collé",
+      );
+    } catch {
+      toast.error("Impossible de coller l'événement");
+    }
+  }, [clipboardEvent, selectedCalendarId, createEvent, deleteEvent]);
+
   /** Open the share dialog for a specific event (sets selection first). */
   const handleShareEventById = useCallback(
     (eventId: string) => {
@@ -605,10 +825,92 @@ export function CalendarHub() {
         handleUndo();
         return;
       }
+
+      // Ctrl/Cmd + C → copy selected event
+      if (
+        (e.ctrlKey || e.metaKey) &&
+        !e.shiftKey &&
+        (e.key === "c" || e.key === "C")
+      ) {
+        if (!selectedEventId) return;
+        const ev = events.find((x) => x.id === selectedEventId);
+        if (!ev) return;
+        e.preventDefault();
+        setClipboardEvent({ event: ev, cut: false });
+        toast.success("Événement copié");
+        return;
+      }
+
+      // Ctrl/Cmd + X → cut selected event
+      if (
+        (e.ctrlKey || e.metaKey) &&
+        !e.shiftKey &&
+        (e.key === "x" || e.key === "X")
+      ) {
+        if (!selectedEventId) return;
+        const ev = events.find((x) => x.id === selectedEventId);
+        if (!ev) return;
+        e.preventDefault();
+        setClipboardEvent({ event: ev, cut: true });
+        toast.success("Événement coupé — Ctrl+V pour coller");
+        return;
+      }
+
+      // Ctrl/Cmd + V → paste clipboard event
+      if (
+        (e.ctrlKey || e.metaKey) &&
+        !e.shiftKey &&
+        (e.key === "v" || e.key === "V")
+      ) {
+        if (!clipboardEvent) return;
+        e.preventDefault();
+        handlePasteEvent();
+        return;
+      }
+
       // Other modifier combinations are ignored (don't interfere with browser shortcuts)
       if (e.ctrlKey || e.metaKey || e.altKey) return;
 
+      // Arrow key navigation — Left/Right follow the current view step (already
+      // encoded in navigateBack/navigateForward), Up/Down jump one week/month.
+      if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        navigateBack();
+        return;
+      }
+      if (e.key === "ArrowRight") {
+        e.preventDefault();
+        navigateForward();
+        return;
+      }
+      if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+        e.preventDefault();
+        const step = e.key === "ArrowUp" ? -1 : 1;
+        const next = new Date(currentDate);
+        // Up/Down = week step in day/week/timeline/roster/availability/presence,
+        // month step otherwise. Matches the semantics users expect from Google Calendar.
+        const weekViews: ViewType[] = [
+          "day",
+          "week",
+          "timeline",
+          "roster",
+          "availability",
+          "presence",
+        ];
+        if (weekViews.includes(view)) {
+          next.setDate(next.getDate() + 7 * step);
+        } else {
+          next.setMonth(next.getMonth() + step);
+        }
+        useCalendarStore.getState().setCurrentDate(next);
+        return;
+      }
+
       switch (e.key.toLowerCase()) {
+        case "n":
+          e.preventDefault();
+          handleCreateEvent();
+          break;
         case "c":
           e.preventDefault();
           handleCreateEvent();
@@ -617,7 +919,15 @@ export function CalendarHub() {
           e.preventDefault();
           setView("day");
           break;
+        case "d":
+          e.preventDefault();
+          setView("day");
+          break;
         case "s":
+          e.preventDefault();
+          setView("week");
+          break;
+        case "w":
           e.preventDefault();
           setView("week");
           break;
@@ -630,8 +940,9 @@ export function CalendarHub() {
           setView("agenda");
           break;
         case "t":
+          // T → Aujourd'hui (navigation rapide, cf. Google Calendar)
           e.preventDefault();
-          setView("timeline");
+          goToToday();
           break;
         case "k":
           e.preventDefault();
@@ -676,9 +987,16 @@ export function CalendarHub() {
     handleCreateEvent,
     handleDeleteSelectedEvent,
     handleUndo,
+    handlePasteEvent,
+    clipboardEvent,
+    events,
     selectedEventId,
     setView,
     goToToday,
+    navigateBack,
+    navigateForward,
+    currentDate,
+    view,
   ]);
 
   const ViewComponent = VIEW_MAP[view];
@@ -990,6 +1308,17 @@ export function CalendarHub() {
       </header>
 
       {/* ── Body ────────────────────────────────────────────────────────── */}
+      {/* DndContext wraps both the sidebar (droppable calendar targets) and
+          the main view area so events can be dragged across calendars. */}
+      <DndContext
+        sensors={sensors}
+        onDragStart={(e) => setActiveEventId(String(e.active.id))}
+        onDragEnd={(e) => {
+          setActiveEventId(null);
+          handleDragEnd(e);
+        }}
+        onDragCancel={() => setActiveEventId(null)}
+      >
       <div className="flex flex-1 min-h-0 overflow-hidden">
         {/* Left sidebar */}
         {sidebarOpen && (
@@ -1024,22 +1353,12 @@ export function CalendarHub() {
               {calendars.length > 0 ? (
                 <div className="space-y-1">
                   {calendars.map((cal) => (
-                    <button
+                    <DroppableCalendarEntry
                       key={cal.id}
-                      onClick={() => setSelectedCalendarId(cal.id)}
-                      className={cn(
-                        "w-full flex items-center gap-2 px-2 py-1 rounded-md text-xs text-left transition-colors",
-                        selectedCalendarId === cal.id
-                          ? "bg-primary/10 text-primary font-medium"
-                          : "text-foreground hover:bg-muted",
-                      )}
-                    >
-                      <span
-                        className="w-2.5 h-2.5 rounded-full shrink-0"
-                        style={{ backgroundColor: cal.color || "#3b82f6" }}
-                      />
-                      <span className="truncate">{cal.name}</span>
-                    </button>
+                      calendar={cal}
+                      isSelected={selectedCalendarId === cal.id}
+                      onSelect={() => setSelectedCalendarId(cal.id)}
+                    />
                   ))}
                 </div>
               ) : (
@@ -1066,46 +1385,30 @@ export function CalendarHub() {
           </aside>
         )}
 
-        {/* Main view area — wrapped in DndContext for drag-and-drop */}
+        {/* Main view area — inherits the outer DndContext, so drop targets
+            include both the date grid and the sidebar calendar list. */}
         <main className="flex-1 min-w-0 flex flex-col overflow-hidden">
-          <DndContext
-            sensors={sensors}
-            onDragStart={(e) => setActiveEventId(String(e.active.id))}
-            onDragEnd={(e) => {
-              setActiveEventId(null);
-              handleDragEnd(e);
-            }}
-            onDragCancel={() => setActiveEventId(null)}
-          >
-            <Suspense fallback={<ViewSkeleton />}>
-              {/* Cast to accept shared calendar props — views that don't use them simply ignore them */}
-              {React.createElement(
-                ViewComponent as React.ComponentType<{
-                  selectedCalendarId?: string;
-                  onCreateEvent?: (startTime?: Date, endTime?: Date) => void;
-                  onEditEvent?: (id: string) => void;
-                  onDeleteEvent?: (id: string) => void;
-                  onDuplicateEvent?: (id: string) => void;
-                  onShareEvent?: (id: string) => void;
-                }>,
-                {
-                  selectedCalendarId,
-                  onCreateEvent: handleCreateEvent,
-                  onEditEvent: handleEditEvent,
-                  onDeleteEvent: handleDeleteEventById,
-                  onDuplicateEvent: handleDuplicateEventById,
-                  onShareEvent: handleShareEventById,
-                },
-              )}
-            </Suspense>
-            <DragOverlay>
-              {activeEvent && (
-                <div className="rounded-md bg-primary text-primary-foreground px-2 py-1 text-xs font-medium shadow-lg opacity-90">
-                  {activeEvent.title}
-                </div>
-              )}
-            </DragOverlay>
-          </DndContext>
+          <Suspense fallback={<ViewSkeleton />}>
+            {/* Cast to accept shared calendar props — views that don't use them simply ignore them */}
+            {React.createElement(
+              ViewComponent as React.ComponentType<{
+                selectedCalendarId?: string;
+                onCreateEvent?: (startTime?: Date, endTime?: Date) => void;
+                onEditEvent?: (id: string) => void;
+                onDeleteEvent?: (id: string) => void;
+                onDuplicateEvent?: (id: string) => void;
+                onShareEvent?: (id: string) => void;
+              }>,
+              {
+                selectedCalendarId,
+                onCreateEvent: handleCreateEvent,
+                onEditEvent: handleEditEvent,
+                onDeleteEvent: handleDeleteEventById,
+                onDuplicateEvent: handleDuplicateEventById,
+                onShareEvent: handleShareEventById,
+              },
+            )}
+          </Suspense>
         </main>
 
         {/* Layer panel (overlay when sidebar is closed) */}
@@ -1115,6 +1418,14 @@ export function CalendarHub() {
           </aside>
         )}
       </div>
+      <DragOverlay>
+        {activeEvent && (
+          <div className="rounded-md bg-primary text-primary-foreground px-2 py-1 text-xs font-medium shadow-lg opacity-90">
+            {activeEvent.title}
+          </div>
+        )}
+      </DragOverlay>
+      </DndContext>
 
       {/* ── EventForm dialog ─────────────────────────────────────────────── */}
       {selectedCalendarId && (

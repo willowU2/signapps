@@ -13,27 +13,19 @@ import { SpinnerInfinity } from 'spinners-react';
 import * as React from 'react';
 import { format, parseISO, addDays } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { useDraggable, useDroppable } from '@dnd-kit/core';
 import { cn } from '@/lib/utils';
 import { useCalendarStore } from '@/stores/calendar-store';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import {
   Plus,
-  MoreHorizontal,
   Clock,
   Calendar,
   Flag,
-  User,
-  Tag,
   GripVertical,
 } from 'lucide-react';
 import type { TimeItem, Status, Priority } from '@/lib/scheduling/types';
@@ -97,7 +89,6 @@ export function KanbanView({
 }: KanbanViewProps) {
   const storeItems = useCalendarStore((state) => state.timeItems);
   const isLoading = useCalendarStore((state) => state.isLoading);
-  const updateTimeItem = useCalendarStore((state) => state.updateTimeItem);
   const fetchTimeItems = useCalendarStore((state) => state.fetchTimeItems);
   const currentDate = useCalendarStore((state) => state.currentDate);
 
@@ -214,55 +205,6 @@ export function KanbanView({
     }
   }, [tasks, groupBy]);
 
-  // Drag and drop state
-  const [draggedItem, setDraggedItem] = React.useState<TimeItem | null>(null);
-  const [dragOverColumn, setDragOverColumn] = React.useState<string | null>(null);
-
-  const handleDragStart = (e: React.DragEvent, item: TimeItem) => {
-    setDraggedItem(item);
-    e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/plain', item.id);
-  };
-
-  const handleDragOver = (e: React.DragEvent, columnId: string) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-    setDragOverColumn(columnId);
-  };
-
-  const handleDragLeave = () => {
-    setDragOverColumn(null);
-  };
-
-  const handleDrop = async (e: React.DragEvent, columnId: string) => {
-    e.preventDefault();
-    setDragOverColumn(null);
-
-    if (!draggedItem) return;
-
-    // Update based on groupBy
-    try {
-      switch (groupBy) {
-        case 'status':
-          await updateTimeItem(draggedItem.id, { status: columnId as Status });
-          break;
-        case 'priority':
-          await updateTimeItem(draggedItem.id, { priority: columnId as Priority });
-          break;
-        // For assignee and project, more complex logic would be needed
-      }
-    } catch (error) {
-      console.error('Failed to move item:', error);
-    }
-
-    setDraggedItem(null);
-  };
-
-  const handleDragEnd = () => {
-    setDraggedItem(null);
-    setDragOverColumn(null);
-  };
-
   if (isLoading && tasks.length === 0) {
     return (
       <div className={cn('flex h-full items-center justify-center', className)}>
@@ -279,72 +221,115 @@ export function KanbanView({
       <ScrollArea className="h-full w-full">
         <div className="flex gap-4 p-4" style={{ minWidth: columns.length * 300 }}>
           {columns.map((column) => (
-            <div
+            <KanbanColumnDroppable
               key={column.id}
-              className={cn(
-                'flex flex-col w-72 flex-shrink-0 rounded-lg border bg-muted/30',
-                dragOverColumn === column.id && 'ring-2 ring-primary'
-              )}
-              onDragOver={(e) => handleDragOver(e, column.id)}
-              onDragLeave={handleDragLeave}
-              onDrop={(e) => handleDrop(e, column.id)}
-            >
-              {/* Column Header */}
-              <div className="flex items-center justify-between p-3 border-b">
-                <div className="flex items-center gap-2">
-                  {column.color && (
-                    <div className={cn('w-3 h-3 rounded-full', column.color)} />
-                  )}
-                  <h3 className="font-medium text-sm">{column.title}</h3>
-                  <Badge variant="secondary" className="text-xs">
-                    {column.items.length}
-                  </Badge>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-6 w-6"
-                  onClick={() => onCreateEvent?.()}
-                >
-                  <Plus className="h-4 w-4" />
-                </Button>
-              </div>
-
-              {/* Column Content */}
-              <ScrollArea className="flex-1 p-2">
-                <div className="flex flex-col gap-2">
-                  {column.items.map((item) => (
-                    <KanbanCard
-                      key={item.id}
-                      item={item}
-                      onClick={() => onItemClick?.(item)}
-                      onDoubleClick={() => onItemDoubleClick?.(item)}
-                      onDragStart={(e) => handleDragStart(e, item)}
-                      onDragEnd={handleDragEnd}
-                      isDragging={draggedItem?.id === item.id}
-                    />
-                  ))}
-
-                  {column.items.length === 0 && (
-                    <div className="flex flex-col items-center justify-center py-8 text-center">
-                      <p className="text-sm text-muted-foreground">Aucune tâche</p>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="mt-2"
-                        onClick={() => onCreateEvent?.()}
-                      >
-                        <Plus className="mr-1 h-4 w-4" />
-                        Ajouter
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              </ScrollArea>
-            </div>
+              column={column}
+              groupBy={groupBy}
+              onCreateEvent={onCreateEvent}
+              onItemClick={onItemClick}
+              onItemDoubleClick={onItemDoubleClick}
+            />
           ))}
         </div>
         <ScrollBar orientation="horizontal" />
+      </ScrollArea>
+    </div>
+  );
+}
+
+// ============================================================================
+// KanbanColumnDroppable Component
+// ============================================================================
+
+interface KanbanColumnDroppableProps {
+  column: KanbanColumn;
+  groupBy: 'status' | 'priority' | 'assignee' | 'project';
+  onCreateEvent?: (startTime?: Date, endTime?: Date) => void;
+  onItemClick?: (item: TimeItem) => void;
+  onItemDoubleClick?: (item: TimeItem) => void;
+}
+
+/**
+ * Droppable column for the Kanban board.
+ *
+ * Registers a `kanban-column` drop target with `@dnd-kit/core` so that tasks
+ * dragged from any other calendar view (or from within the board itself)
+ * can be dropped here. The actual status/priority mutation is handled by
+ * `CalendarHub.handleDragEnd` via the `data` payload.
+ */
+function KanbanColumnDroppable({
+  column,
+  groupBy,
+  onCreateEvent,
+  onItemClick,
+  onItemDoubleClick,
+}: KanbanColumnDroppableProps) {
+  const { setNodeRef, isOver } = useDroppable({
+    id: `kanban-${groupBy}-${column.id}`,
+    data: {
+      type: 'kanban-column',
+      groupBy,
+      columnId: column.id,
+    },
+  });
+
+  return (
+    <div
+      ref={setNodeRef}
+      data-testid={`kanban-column-${column.id}`}
+      className={cn(
+        'flex flex-col w-72 flex-shrink-0 rounded-lg border bg-muted/30 transition-colors',
+        isOver && 'ring-2 ring-primary bg-primary/5',
+      )}
+    >
+      {/* Column Header */}
+      <div className="flex items-center justify-between p-3 border-b">
+        <div className="flex items-center gap-2">
+          {column.color && (
+            <div className={cn('w-3 h-3 rounded-full', column.color)} />
+          )}
+          <h3 className="font-medium text-sm">{column.title}</h3>
+          <Badge variant="secondary" className="text-xs">
+            {column.items.length}
+          </Badge>
+        </div>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-6 w-6"
+          onClick={() => onCreateEvent?.()}
+        >
+          <Plus className="h-4 w-4" />
+        </Button>
+      </div>
+
+      {/* Column Content */}
+      <ScrollArea className="flex-1 p-2">
+        <div className="flex flex-col gap-2">
+          {column.items.map((item) => (
+            <KanbanCard
+              key={item.id}
+              item={item}
+              onClick={() => onItemClick?.(item)}
+              onDoubleClick={() => onItemDoubleClick?.(item)}
+            />
+          ))}
+
+          {column.items.length === 0 && (
+            <div className="flex flex-col items-center justify-center py-8 text-center">
+              <p className="text-sm text-muted-foreground">Aucune tâche</p>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="mt-2"
+                onClick={() => onCreateEvent?.()}
+              >
+                <Plus className="mr-1 h-4 w-4" />
+                Ajouter
+              </Button>
+            </div>
+          )}
+        </div>
       </ScrollArea>
     </div>
   );
@@ -358,19 +343,25 @@ interface KanbanCardProps {
   item: TimeItem;
   onClick: () => void;
   onDoubleClick: () => void;
-  onDragStart: (e: React.DragEvent) => void;
-  onDragEnd: () => void;
-  isDragging: boolean;
 }
 
+/**
+ * Draggable Kanban card.
+ *
+ * Uses `@dnd-kit/core`'s {@link useDraggable} so the card integrates with the
+ * global DndContext from `CalendarHub`. Click & double-click stop propagation
+ * so they don't trigger a drag start.
+ */
 function KanbanCard({
   item,
   onClick,
   onDoubleClick,
-  onDragStart,
-  onDragEnd,
-  isDragging,
 }: KanbanCardProps) {
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+    id: item.id,
+    data: { timeItem: item, type: 'time-item' },
+  });
+
   const dueDate = item.deadline
     ? typeof item.deadline === 'string'
       ? parseISO(item.deadline)
@@ -381,15 +372,22 @@ function KanbanCard({
 
   return (
     <Card
+      ref={setNodeRef}
+      data-testid="kanban-card"
+      {...attributes}
+      {...listeners}
       className={cn(
-        'cursor-pointer transition-all hover:shadow-md',
-        isDragging && 'opacity-50 rotate-2 scale-105'
+        'cursor-grab active:cursor-grabbing transition-all hover:shadow-md',
+        isDragging && 'opacity-50 rotate-2 scale-105',
       )}
-      draggable
-      onDragStart={onDragStart}
-      onDragEnd={onDragEnd}
-      onClick={onClick}
-      onDoubleClick={onDoubleClick}
+      onClick={(e) => {
+        e.stopPropagation();
+        onClick();
+      }}
+      onDoubleClick={(e) => {
+        e.stopPropagation();
+        onDoubleClick();
+      }}
     >
       <CardContent className="p-3">
         {/* Drag handle + Title */}

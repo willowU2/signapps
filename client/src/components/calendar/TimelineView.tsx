@@ -26,6 +26,7 @@ import {
   parseISO,
 } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { useDraggable } from '@dnd-kit/core';
 import { cn } from '@/lib/utils';
 import { useCalendarStore } from '@/stores/calendar-store';
 import { Badge } from '@/components/ui/badge';
@@ -470,48 +471,12 @@ export function TimelineView({
 
                     {/* Bar */}
                     {barPos && (
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <div
-                            className={cn(
-                              'absolute top-1/2 -translate-y-1/2 h-6 rounded cursor-pointer',
-                              'transition-all hover:ring-2 hover:ring-primary',
-                              TYPE_COLORS[row.item.type] || 'bg-gray-500',
-                              PRIORITY_COLORS[row.item.priority || 'medium'],
-                              row.item.type === 'milestone' && 'w-4 h-4 rotate-45'
-                            )}
-                            style={{
-                              left: barPos.left,
-                              width: row.item.type === 'milestone' ? 16 : barPos.width,
-                              minWidth: row.item.type === 'milestone' ? 16 : 20,
-                            }}
-                            onClick={() => onItemClick?.(row.item)}
-                            onDoubleClick={() => onItemDoubleClick?.(row.item)}
-                          >
-                            {row.item.type !== 'milestone' && (
-                              <span className="absolute inset-x-1 truncate text-xs text-white leading-6">
-                                {row.item.title}
-                              </span>
-                            )}
-                          </div>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <div className="text-sm">
-                            <p className="font-medium">{row.item.title}</p>
-                            {row.item.startTime && (
-                              <p className="text-muted-foreground">
-                                {format(
-                                  typeof row.item.startTime === 'string'
-                                    ? parseISO(row.item.startTime)
-                                    : row.item.startTime,
-                                  'PPp',
-                                  { locale: fr }
-                                )}
-                              </p>
-                            )}
-                          </div>
-                        </TooltipContent>
-                      </Tooltip>
+                      <DraggableTimelineBar
+                        item={row.item}
+                        barPos={barPos}
+                        onClick={() => onItemClick?.(row.item)}
+                        onDoubleClick={() => onItemDoubleClick?.(row.item)}
+                      />
                     )}
 
                     {/* Dependencies (simplified) */}
@@ -548,6 +513,94 @@ export function TimelineView({
         </div>
       )}
     </div>
+  );
+}
+
+// ============================================================================
+// DraggableTimelineBar Component
+// ============================================================================
+
+interface DraggableTimelineBarProps {
+  item: TimeItem;
+  barPos: { left: string; width: string };
+  onClick: () => void;
+  onDoubleClick: () => void;
+}
+
+/**
+ * A Gantt-style bar that can be dragged out of the timeline.
+ *
+ * Integrates with the global `@dnd-kit/core` DndContext in `CalendarHub` so
+ * users can drag a task onto another view's droppable (mini-calendar day,
+ * week/month cell, or a kanban column) to reschedule or change status.
+ *
+ * Click & double-click stop propagation so they don't start a drag.
+ */
+function DraggableTimelineBar({
+  item,
+  barPos,
+  onClick,
+  onDoubleClick,
+}: DraggableTimelineBarProps) {
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+    id: item.id,
+    data: { timeItem: item, type: 'time-item' },
+  });
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <div
+          ref={setNodeRef}
+          data-testid="timeline-bar"
+          {...attributes}
+          {...listeners}
+          className={cn(
+            'absolute top-1/2 -translate-y-1/2 h-6 rounded cursor-grab active:cursor-grabbing',
+            'transition-all hover:ring-2 hover:ring-primary',
+            TYPE_COLORS[item.type] || 'bg-gray-500',
+            PRIORITY_COLORS[item.priority || 'medium'],
+            item.type === 'milestone' && 'w-4 h-4 rotate-45',
+            isDragging && 'opacity-50',
+          )}
+          style={{
+            left: barPos.left,
+            width: item.type === 'milestone' ? 16 : barPos.width,
+            minWidth: item.type === 'milestone' ? 16 : 20,
+          }}
+          onClick={(e) => {
+            e.stopPropagation();
+            onClick();
+          }}
+          onDoubleClick={(e) => {
+            e.stopPropagation();
+            onDoubleClick();
+          }}
+        >
+          {item.type !== 'milestone' && (
+            <span className="absolute inset-x-1 truncate text-xs text-white leading-6">
+              {item.title}
+            </span>
+          )}
+        </div>
+      </TooltipTrigger>
+      <TooltipContent>
+        <div className="text-sm">
+          <p className="font-medium">{item.title}</p>
+          {item.startTime && (
+            <p className="text-muted-foreground">
+              {format(
+                typeof item.startTime === 'string'
+                  ? parseISO(item.startTime)
+                  : item.startTime,
+                'PPp',
+                { locale: fr },
+              )}
+            </p>
+          )}
+        </div>
+      </TooltipContent>
+    </Tooltip>
   );
 }
 

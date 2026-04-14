@@ -4,6 +4,7 @@
 import React, { useMemo, useState, useEffect } from "react";
 import { format, addMonths, startOfDay } from "date-fns";
 import { fr } from "date-fns/locale";
+import { useDraggable } from "@dnd-kit/core";
 import {
   useCalendarStore,
   useCalendarSelection,
@@ -11,6 +12,7 @@ import {
 import { calendarApi } from "@/lib/api/calendar";
 import { MapPin, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 interface AgendaEvent {
   id: string;
@@ -26,6 +28,47 @@ interface AgendaEvent {
 interface AgendaViewProps {
   selectedCalendarId?: string;
   onCreateEvent?: (startTime?: Date, endTime?: Date) => void;
+}
+
+/**
+ * Wraps an agenda event row with dnd-kit draggable behavior.
+ *
+ * The event can be dragged out of the agenda list onto any droppable
+ * "calendar-slot" target (month/week/day views, mini-calendar). The
+ * drop handler lives in {@link CalendarHub.handleDragEnd}.
+ */
+function DraggableAgendaEvent({
+  event,
+  onSelect,
+  children,
+}: {
+  event: AgendaEvent;
+  onSelect: () => void;
+  children: React.ReactNode;
+}) {
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+    id: event.id,
+    data: { event },
+  });
+
+  return (
+    <div
+      ref={setNodeRef}
+      data-testid="agenda-event"
+      {...attributes}
+      {...listeners}
+      onClick={(e) => {
+        e.stopPropagation();
+        onSelect();
+      }}
+      className={cn(
+        "p-3 rounded-lg border border-border hover:bg-muted cursor-grab active:cursor-grabbing transition-colors",
+        isDragging && "opacity-50",
+      )}
+    >
+      {children}
+    </div>
+  );
 }
 
 export function AgendaView({ selectedCalendarId, onCreateEvent }: AgendaViewProps) {
@@ -144,10 +187,10 @@ export function AgendaView({ selectedCalendarId, onCreateEvent }: AgendaViewProp
             </div>
             <div className="space-y-2 py-3">
               {dayEvents.map((event) => (
-                <div
+                <DraggableAgendaEvent
                   key={event.id}
-                  onClick={() => selectEvent(event.id)}
-                  className="p-3 rounded-lg border border-border hover:bg-muted cursor-pointer transition-colors"
+                  event={event}
+                  onSelect={() => selectEvent(event.id)}
                 >
                   <div className="flex items-baseline justify-between mb-1">
                     <h4 className="font-medium text-sm">{event.title}</h4>
@@ -181,7 +224,7 @@ export function AgendaView({ selectedCalendarId, onCreateEvent }: AgendaViewProp
                       </span>
                     </div>
                   )}
-                </div>
+                </DraggableAgendaEvent>
               ))}
             </div>
           </div>
