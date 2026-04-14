@@ -80,6 +80,28 @@ impl Catalog {
     pub fn is_empty(&self) -> bool {
         self.providers.is_empty()
     }
+
+    /// Build a catalog from an explicit map of providers — useful for tests
+    /// and for custom tenant catalogs from the oauth_providers table.
+    #[must_use]
+    pub fn from_providers(providers: HashMap<String, ProviderDefinition>) -> Self {
+        Self { providers }
+    }
+
+    /// Return a new catalog with `additions` overlaid on top of the
+    /// embedded catalog (additions win on key collision).
+    ///
+    /// # Errors
+    ///
+    /// Returns [`CatalogError::Parse`] if the embedded catalog is malformed
+    /// (impossible if build.rs validation is in place).
+    pub fn with_overrides(
+        additions: HashMap<String, ProviderDefinition>,
+    ) -> Result<Self, CatalogError> {
+        let mut base = Self::load_embedded()?;
+        base.providers.extend(additions);
+        Ok(base)
+    }
 }
 
 #[cfg(test)]
@@ -114,5 +136,43 @@ mod tests {
         let cat = Catalog::load_embedded().unwrap();
         let ms = cat.get("microsoft").unwrap();
         assert!(ms.template_vars.contains(&"tenant".to_string()));
+    }
+
+    #[test]
+    fn override_replaces_embedded_provider() {
+        use crate::protocol::Protocol;
+
+        let mut overrides = HashMap::new();
+        overrides.insert(
+            "google".to_string(),
+            ProviderDefinition {
+                key: "google".into(),
+                display_name: "Google (test)".into(),
+                protocol: Protocol::OAuth2,
+                authorize_url: "https://test.example/authorize".into(),
+                access_url: "https://test.example/token".into(),
+                refresh_url: None,
+                profile_url: None,
+                revoke_url: None,
+                scope_delimiter: " ".into(),
+                default_scopes: vec![],
+                pkce_required: false,
+                supports_refresh: false,
+                token_placement: crate::protocol::TokenPlacement::Header,
+                user_id_field: "$.sub".into(),
+                user_email_field: None,
+                user_name_field: None,
+                categories: vec![],
+                template_vars: vec![],
+                extra_params_required: vec![],
+                notes: None,
+            },
+        );
+        let catalog = Catalog::with_overrides(overrides).unwrap();
+        let g = catalog.get("google").unwrap();
+        assert_eq!(g.display_name, "Google (test)");
+        assert_eq!(g.authorize_url, "https://test.example/authorize");
+        // microsoft is still from the embedded catalog
+        assert!(catalog.get("microsoft").is_ok());
     }
 }
