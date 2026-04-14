@@ -1,6 +1,6 @@
 //! Hook for calendar events data management
 
-import { useState, useCallback } from "react";
+import { useMemo, useState, useCallback } from "react";
 import { calendarApi } from "@/lib/api";
 import { Event, CreateEvent, UpdateEvent } from "@/types/calendar";
 import { useCalendarStore } from "@/stores/calendar-store";
@@ -8,7 +8,26 @@ import { useCalendarStore } from "@/stores/calendar-store";
 export function useEvents(calendarId?: string) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { events, setEvents } = useCalendarStore();
+  const { events: rawEvents, setEvents, searchQuery } = useCalendarStore();
+
+  // Apply the global search filter transparently: when a non-empty searchQuery
+  // is set in the store (wired by the header Search input in CalendarHub),
+  // every consumer of useEvents receives the filtered slice so all 11 calendar
+  // views honour the search without needing per-view changes.
+  const events = useMemo<Event[]>(() => {
+    const q = (searchQuery ?? "").trim().toLowerCase();
+    if (!q) return rawEvents;
+    return rawEvents.filter((e) => {
+      const title = (e.title ?? "").toLowerCase();
+      const description = (e.description ?? "").toLowerCase();
+      const location = (e.location ?? "").toLowerCase();
+      return (
+        title.includes(q) ||
+        description.includes(q) ||
+        location.includes(q)
+      );
+    });
+  }, [rawEvents, searchQuery]);
 
   // Fetch events for date range
   const fetchEvents = useCallback(

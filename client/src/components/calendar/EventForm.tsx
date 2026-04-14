@@ -587,6 +587,14 @@ export function EventForm({
   const [attendees, setAttendees] = useState<any[]>([]);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
 
+  // Recurring edit scope dialog — shown when editing an event that has an rrule.
+  // Lets the user choose whether to apply the update to the single occurrence,
+  // this-and-following occurrences, or the whole series.
+  type RecurringEditScope = "single" | "following" | "all";
+  const [recurringDialogOpen, setRecurringDialogOpen] = useState(false);
+  const [recurringEditScope, setRecurringEditScope] =
+    useState<RecurringEditScope>("all");
+
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
@@ -598,6 +606,33 @@ export function EventForm({
     setHasHardViolation(hasHard);
   }, []);
 
+  // Perform the actual update. When editing a recurring event, the caller
+  // passes a `scope` hint; for now the backend doesn't support partial scopes,
+  // so we emit a toast warning letting the user know the entire series was
+  // modified.
+  const performUpdate = async (scope?: RecurringEditScope) => {
+    if (!initialEvent) return;
+    const updateData: UpdateEvent = {
+      title: formData.title || undefined,
+      description: formData.description || undefined,
+      location: formData.location || undefined,
+      start_time: formData.start_time,
+      end_time: formData.end_time,
+      is_all_day: formData.is_all_day,
+      rrule: formData.rrule || undefined,
+      timezone: formData.timezone || initialEvent.timezone,
+      event_type: initialEvent.event_type,
+    };
+    await updateEvent(initialEvent.id, updateData);
+    if (scope && scope !== "all") {
+      toast.warning(
+        "Modifie toute la série — API backend limitée (portée « cet événement » / « suivants » non encore supportée).",
+      );
+    } else {
+      toast.success("Événement mis à jour");
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -608,23 +643,19 @@ export function EventForm({
       return;
     }
 
+    // Editing a recurring event — ask the user which occurrences to modify
+    // before saving. The actual save happens in handleConfirmRecurringEdit.
+    if (initialEvent && initialEvent.rrule) {
+      setRecurringEditScope("all");
+      setRecurringDialogOpen(true);
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
       if (initialEvent) {
-        const updateData: UpdateEvent = {
-          title: formData.title || undefined,
-          description: formData.description || undefined,
-          location: formData.location || undefined,
-          start_time: formData.start_time,
-          end_time: formData.end_time,
-          is_all_day: formData.is_all_day,
-          rrule: formData.rrule || undefined,
-          timezone: formData.timezone || initialEvent.timezone,
-          event_type: initialEvent.event_type,
-        };
-        await updateEvent(initialEvent.id, updateData);
-        toast.success("Événement mis à jour");
+        await performUpdate();
       } else {
         const titleDefault =
           eventType === "leave"
@@ -670,6 +701,21 @@ export function EventForm({
     try {
       await deleteEvent(initialEvent.id);
       toast.success("Événement supprimé");
+      onOpenChange(false);
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Une erreur est survenue",
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleConfirmRecurringEdit = async () => {
+    setRecurringDialogOpen(false);
+    setIsSubmitting(true);
+    try {
+      await performUpdate(recurringEditScope);
       onOpenChange(false);
     } catch (error) {
       toast.error(
@@ -1012,6 +1058,82 @@ export function EventForm({
         description={`Voulez-vous vraiment supprimer "${initialEvent?.title}" ? Cette action est irréversible.`}
         onConfirm={handleDeleteConfirmed}
       />
+
+      {/* Recurring-event edit scope dialog */}
+      <Dialog
+        open={recurringDialogOpen}
+        onOpenChange={setRecurringDialogOpen}
+      >
+        <DialogContent className="sm:max-w-[440px]">
+          <DialogHeader>
+            <DialogTitle>Modifier quel(s) événement(s) ?</DialogTitle>
+            <DialogDescription>
+              Cet événement fait partie d'une série récurrente.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3 py-2">
+            <label className="flex items-start gap-3 p-2 rounded-md hover:bg-muted cursor-pointer">
+              <input
+                type="radio"
+                name="recurring_scope"
+                value="single"
+                checked={recurringEditScope === "single"}
+                onChange={() => setRecurringEditScope("single")}
+                className="mt-0.5"
+              />
+              <span className="text-sm">Cet événement seulement</span>
+            </label>
+            <label className="flex items-start gap-3 p-2 rounded-md hover:bg-muted cursor-pointer">
+              <input
+                type="radio"
+                name="recurring_scope"
+                value="following"
+                checked={recurringEditScope === "following"}
+                onChange={() => setRecurringEditScope("following")}
+                className="mt-0.5"
+              />
+              <span className="text-sm">Cet événement et les suivants</span>
+            </label>
+            <label className="flex items-start gap-3 p-2 rounded-md hover:bg-muted cursor-pointer">
+              <input
+                type="radio"
+                name="recurring_scope"
+                value="all"
+                checked={recurringEditScope === "all"}
+                onChange={() => setRecurringEditScope("all")}
+                className="mt-0.5"
+              />
+              <span className="text-sm">Tous les événements de la série</span>
+            </label>
+          </div>
+
+          <DialogFooter className="gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setRecurringDialogOpen(false)}
+              disabled={isSubmitting}
+            >
+              Annuler
+            </Button>
+            <Button
+              type="button"
+              onClick={handleConfirmRecurringEdit}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Enregistrement…
+                </>
+              ) : (
+                "Confirmer"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
