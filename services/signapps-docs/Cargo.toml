@@ -5,6 +5,7 @@ edition = "2021"
 license.workspace = true
 
 [dependencies]
+mimalloc = { workspace = true }
 # Web framework
 axum = { version = "0.7", features = ["macros", "ws"] }
 tokio = { version = "1.36", features = ["full"] }

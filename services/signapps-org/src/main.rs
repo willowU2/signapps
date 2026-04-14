@@ -213,6 +213,9 @@ mod tests {
 // Entry point
 // ---------------------------------------------------------------------------
 
+#[global_allocator]
+static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
+
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     init_tracing("signapps_org");

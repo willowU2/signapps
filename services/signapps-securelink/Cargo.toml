@@ -19,6 +19,7 @@ mesh-vpn = ["signapps-db", "sqlx"]
 dhcp-server = ["signapps-db", "signapps-dns-server", "sqlx"]
 
 [dependencies]
+mimalloc = { workspace = true }
 # Common (error types, result)
 signapps-common = { path = "../../crates/signapps-common" }
 

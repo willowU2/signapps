@@ -16,6 +16,7 @@ name = "signapps_calendar"
 path = "src/lib.rs"
 
 [dependencies]
+mimalloc = { workspace = true }
 signapps-common = { path = "../../crates/signapps-common" }
 signapps-db = { path = "../../crates/signapps-db", features = ["openapi"] }
 signapps-sharing = { path = "../../crates/signapps-sharing" }
