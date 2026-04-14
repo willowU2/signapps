@@ -60,6 +60,16 @@ else
     FAIL=$((FAIL+1))
 fi
 unset _oauth_msg _oauth_ok
+# OAuth refresh queue health (informational)
+_orq_msg=$(bash "$BASE_DIR/scripts/doctor-checks/oauth-refresh-queue.sh" 2>&1) && _orq_ok=0 || _orq_ok=$?
+if [ "${_orq_ok:-0}" -eq 0 ]; then
+    echo -e "  ${GREEN}[OK]${NC}   ${_orq_msg}"
+    PASS=$((PASS+1))
+else
+    echo -e "  ${RED}[FAIL]${NC} ${_orq_msg}"
+    FAIL=$((FAIL+1))
+fi
+unset _orq_msg _orq_ok
 
 echo ""
 echo "  Services:"
