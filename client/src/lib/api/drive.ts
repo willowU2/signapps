@@ -125,4 +125,31 @@ export const driveApi = {
     const nodes: DriveNode[] = response.data;
     return nodes.find((n) => n.target_id === targetId) ?? null;
   },
+
+  // Create a public share link for a drive node. Resolves the underlying
+  // storage bucket/key on the backend and returns a tokenised URL.
+  createShareLink: async (
+    id: string,
+    options: CreateNodeShareOptions = {},
+  ): Promise<NodeShareLink> => {
+    const response = await storageClient.post<NodeShareLink>(
+      `/drive/nodes/${id}/share`,
+      options,
+    );
+    return response.data;
+  },
 };
+
+export interface CreateNodeShareOptions {
+  expires_in_hours?: number | null;
+  password?: string | null;
+  max_downloads?: number | null;
+  access_type?: "view" | "download" | "edit";
+}
+
+export interface NodeShareLink {
+  id: string;
+  token: string;
+  url: string;
+  expires_at: string | null;
+}

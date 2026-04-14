@@ -5,9 +5,12 @@ use axum::{
     response::Response,
     Extension, Json,
 };
+use chrono::{DateTime, Duration, Utc};
+use serde::{Deserialize, Serialize};
 use signapps_common::auth::Claims;
 use signapps_common::{Error, Result};
 use signapps_db::models::drive::{CreateDriveNodeRequest, DriveNode, UpdateDriveNodeRequest};
+use signapps_db::repositories::StorageTier3Repository;
 use uuid::Uuid;
 
 use crate::AppState;
@@ -305,6 +308,144 @@ pub async fn download_node(
         .map_err(|e| Error::Internal(e.to_string()))?;
 
     Ok(response)
+}
+
+/// Request body for creating a share link from a Drive node.
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
+pub struct CreateNodeShareRequest {
+    pub expires_in_hours: Option<i64>,
+    pub password: Option<String>,
+    pub max_downloads: Option<i32>,
+    #[serde(default)]
+    pub access_type: Option<String>,
+}
+
+/// Response returned after creating a share link for a Drive node.
+#[derive(Debug, Serialize, utoipa::ToSchema)]
+pub struct CreateNodeShareResponse {
+    pub id: Uuid,
+    pub token: String,
+    pub url: String,
+    pub expires_at: Option<DateTime<Utc>>,
+}
+
+/// Create a public share link for a Drive node.
+///
+/// Resolves the node's underlying storage location then creates a share
+/// row so the caller can expose a tokenised URL to external users.
+#[utoipa::path(
+    post,
+    path = "/api/v1/drive/nodes/{id}/share",
+    params(("id" = Uuid, Path, description = "Drive node ID")),
+    request_body = CreateNodeShareRequest,
+    responses(
+        (status = 200, description = "Share link created", body = CreateNodeShareResponse),
+        (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Forbidden"),
+        (status = 404, description = "Node not found"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "drive"
+)]
+#[tracing::instrument(skip(state, request))]
+pub async fn create_node_share(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+    Json(request): Json<CreateNodeShareRequest>,
+) -> Result<Json<CreateNodeShareResponse>> {
+    use sqlx::Row as _;
+
+    let user_id = claims.sub;
+
+    let node_row = sqlx::query(
+        r#"
+        SELECT owner_id, target_id
+        FROM drive.nodes
+        WHERE id = $1 AND deleted_at IS NULL
+        "#,
+    )
+    .bind(id)
+    .fetch_optional(&*state.pool)
+    .await
+    .map_err(|e| Error::Database(e.to_string()))?
+    .ok_or_else(|| Error::NotFound("Drive node not found".into()))?;
+
+    let owner_id: Uuid = node_row
+        .try_get("owner_id")
+        .map_err(|e| Error::Database(e.to_string()))?;
+    if owner_id != user_id {
+        return Err(Error::Forbidden("Accès refusé".into()));
+    }
+
+    let target_id: Option<Uuid> = node_row
+        .try_get("target_id")
+        .map_err(|e| Error::Database(e.to_string()))?;
+    let target_id = target_id
+        .ok_or_else(|| Error::BadRequest("Ce nœud n'a pas de fichier partageable".into()))?;
+
+    let file_row = sqlx::query("SELECT bucket, key FROM storage.files WHERE id = $1 LIMIT 1")
+        .bind(target_id)
+        .fetch_optional(&*state.pool)
+        .await
+        .map_err(|e| Error::Database(e.to_string()))?
+        .ok_or_else(|| Error::NotFound("Fichier de stockage introuvable".into()))?;
+
+    let bucket: String = file_row
+        .try_get("bucket")
+        .map_err(|e| Error::Database(e.to_string()))?;
+    let key: String = file_row
+        .try_get("key")
+        .map_err(|e| Error::Database(e.to_string()))?;
+
+    let token = uuid::Uuid::new_v4().to_string().replace('-', "");
+    let expires_at = request
+        .expires_in_hours
+        .map(|hours| Utc::now() + Duration::hours(hours));
+    let password_hash = match request.password.as_deref().filter(|s| !s.is_empty()) {
+        Some(pwd) => Some(
+            bcrypt::hash(pwd, bcrypt::DEFAULT_COST)
+                .map_err(|_| Error::Internal("Failed to hash password".into()))?,
+        ),
+        None => None,
+    };
+    let access_type = request.access_type.as_deref().unwrap_or("download");
+
+    let share = StorageTier3Repository::create_share(
+        state.pool.inner(),
+        user_id,
+        &bucket,
+        &key,
+        &token,
+        expires_at,
+        password_hash,
+        request.max_downloads,
+        access_type,
+    )
+    .await
+    .map_err(|e| Error::Internal(format!("Failed to create share: {}", e)))?;
+
+    let base_url =
+        std::env::var("NEXT_PUBLIC_STORAGE_URL").unwrap_or_else(|_| "http://localhost:3004".into());
+    let base = base_url
+        .trim_end_matches('/')
+        .trim_end_matches("/api/v1")
+        .trim_end_matches('/');
+    let url = format!("{}/api/v1/shares/{}/access", base, token);
+
+    tracing::info!(
+        share_id = %share.id,
+        node_id = %id,
+        bucket = %bucket,
+        "Drive node share link created"
+    );
+
+    Ok(Json(CreateNodeShareResponse {
+        id: share.id,
+        token,
+        url,
+        expires_at,
+    }))
 }
 
 #[cfg(test)]

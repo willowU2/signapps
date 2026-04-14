@@ -22,21 +22,11 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Link2, Copy, Check, Lock, Clock, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
-import type { DriveNode } from '@/lib/api';
+import { driveApi, type DriveNode, type NodeShareLink } from '@/lib/api';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export type ExpirationOption = '1h' | '1d' | '7d' | '30d' | 'never';
-
-export interface ShareLink {
-  id: string;
-  nodeId: string;
-  token: string;
-  expiration: ExpirationOption;
-  hasPassword: boolean;
-  createdAt: string;
-  expiresAt?: string;
-}
 
 const EXPIRATION_OPTIONS: Array<{ value: ExpirationOption; label: string }> = [
   { value: '1h', label: '1 heure' },
@@ -46,19 +36,18 @@ const EXPIRATION_OPTIONS: Array<{ value: ExpirationOption; label: string }> = [
   { value: 'never', label: 'Jamais' },
 ];
 
-function calcExpiry(opt: ExpirationOption): string | undefined {
-  if (opt === 'never') return undefined;
-  const map: Record<string, number> = { '1h': 3600, '1d': 86400, '7d': 604800, '30d': 2592000 };
-  return new Date(Date.now() + map[opt] * 1000).toISOString();
-}
+const EXPIRATION_HOURS: Record<ExpirationOption, number | null> = {
+  '1h': 1,
+  '1d': 24,
+  '7d': 24 * 7,
+  '30d': 24 * 30,
+  never: null,
+};
 
-function generateToken(): string {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  let token = '';
-  const arr = new Uint8Array(32);
-  crypto.getRandomValues(arr);
-  for (const byte of arr) token += chars[byte % chars.length];
-  return token;
+interface GeneratedShare {
+  link: NodeShareLink;
+  expiration: ExpirationOption;
+  hasPassword: boolean;
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -74,39 +63,33 @@ export function SecureShareDialog({ node, open, onOpenChange }: SecureShareDialo
   const [usePassword, setUsePassword] = useState(false);
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [generated, setGenerated] = useState<ShareLink | null>(null);
+  const [generated, setGenerated] = useState<GeneratedShare | null>(null);
   const [copied, setCopied] = useState(false);
   const [generating, setGenerating] = useState(false);
 
   const handleGenerate = useCallback(async () => {
     if (!node) return;
     setGenerating(true);
-    // Simulate API call — in production: POST /drive/nodes/:id/share
-    await new Promise(r => setTimeout(r, 500));
-
-    const link: ShareLink = {
-      id: crypto.randomUUID(),
-      nodeId: node.id,
-      token: generateToken(),
-      expiration,
-      hasPassword: usePassword && !!password,
-      createdAt: new Date().toISOString(),
-      expiresAt: calcExpiry(expiration),
-    };
-
-    // Store in node metadata (localStorage for now)
-    const storageKey = `signapps_share_${node.id}`;
-    const existing = JSON.parse(localStorage.getItem(storageKey) || '[]');
-    localStorage.setItem(storageKey, JSON.stringify([...existing, link]));
-
-    setGenerated(link);
-    setGenerating(false);
-    toast.success('Lien de partage généré !');
+    try {
+      const hasPassword = usePassword && !!password;
+      const link = await driveApi.createShareLink(node.id, {
+        expires_in_hours: EXPIRATION_HOURS[expiration],
+        password: hasPassword ? password : null,
+        access_type: 'download',
+      });
+      setGenerated({ link, expiration, hasPassword });
+      toast.success('Lien de partage généré');
+    } catch (err) {
+      const message =
+        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
+        'Impossible de générer le lien de partage';
+      toast.error(message);
+    } finally {
+      setGenerating(false);
+    }
   }, [node, expiration, usePassword, password]);
 
-  const shareUrl = generated
-    ? `${typeof window !== 'undefined' ? window.location.origin : ''}/f/${generated.token}`
-    : '';
+  const shareUrl = generated?.link.url ?? '';
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(shareUrl);
