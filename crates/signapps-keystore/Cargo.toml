@@ -1,0 +1,21 @@
+[package]
+name = "signapps-keystore"
+version.workspace = true
+edition = "2021"
+rust-version.workspace = true
+license.workspace = true
+description = "Master key management and per-usage DEK derivation for encryption at rest"
+publish = false
+
+[dependencies]
+aes-gcm = { workspace = true }
+hkdf = { workspace = true }
+sha2 = { workspace = true }
+rand = { workspace = true }
+dashmap = { workspace = true }
+hex = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+tokio = { workspace = true }
+async-trait = { workspace = true }
+signapps-common = { path = "../signapps-common" }

@@ -6,6 +6,7 @@ members = [
     "crates/signapps-smb-sysvol",
     "crates/signapps-ldap-server",
     "crates/signapps-kerberos-kdc",
+    "crates/signapps-keystore",
     "crates/signapps-cache",
     "crates/signapps-audit",
     "crates/signapps-common",
@@ -178,6 +179,7 @@ anyhow = "1.0"
 
 # Utilities
 uuid = { version = "1.7", features = ["v4", "v5", "v7", "serde"] }
+zeroize = { version = "1.8", features = ["derive"] }
 chrono = { version = "0.4", features = ["serde"] }
 dotenvy = "0.15"
 config = "0.14"
@@ -199,6 +201,7 @@ rand = "0.8"
 hmac = "0.12"
 sha2 = "0.10"
 hex = "0.4"
+hkdf = "0.12"
 aes-gcm = "0.10"
 
 # Utilities for singleton/lazy init
