@@ -6,6 +6,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { SearchInput } from "@/components/ui/search-input";
 import { LoadingState } from "@/components/ui/loading-state";
 import { ProviderCard } from "@/components/admin/oauth/ProviderCard";
+import { ProviderConfigDrawer } from "@/components/admin/oauth/ProviderConfigDrawer";
 import { listProviders } from "@/lib/api/oauth-providers";
 import type {
   ProviderConfigSummary,
@@ -39,6 +40,7 @@ export default function OAuthProvidersPage() {
   );
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState<ProviderCategory | "All">("All");
+  const [drawerKey, setDrawerKey] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -136,10 +138,7 @@ export default function OAuthProvidersPage() {
                     <ProviderCard
                       key={p.provider_key}
                       provider={p}
-                      onConfigure={(key) => {
-                        // Placeholder — drawer wired in Task 6
-                        console.warn("configure drawer not yet wired", key);
-                      }}
+                      onConfigure={(key) => setDrawerKey(key)}
                     />
                   ))}
                 </div>
@@ -148,6 +147,16 @@ export default function OAuthProvidersPage() {
           </div>
         )}
       </div>
+
+      <ProviderConfigDrawer
+        providerKey={drawerKey}
+        onClose={() => setDrawerKey(null)}
+        onUpdated={() =>
+          listProviders()
+            .then(setProviders)
+            .catch((err) => console.error("listProviders refresh failed", err))
+        }
+      />
     </AppLayout>
   );
 }
