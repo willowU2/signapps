@@ -39,44 +39,11 @@ else
     echo -e "  ${YELLOW}[!!]${NC}   No .env file found — services will use defaults"
 fi
 
-# ── Service registry ─────────────────────────────────────────────────────────
-# Format: "short_name:port:description"
-SERVICES=(
-    "identity:3001:Auth, LDAP/AD, MFA, RBAC"
-    "containers:3002:Docker container lifecycle"
-    "proxy:3003:Reverse proxy, TLS/ACME"
-    "storage:3004:File storage (OpenDAL)"
-    "ai:3005:AI Gateway (RAG, LLM, Vision)"
-    "securelink:3006:Web tunnels, DNS"
-    "scheduler:3007:CRON job management"
-    "metrics:3008:System monitoring, Prometheus"
-    "media:3009:STT/TTS/OCR processing"
-    "docs:3010:Document editing, real-time collaboration, and office conversion"
-    "calendar:3011:Calendar & scheduling"
-    "mail:3012:Email service"
-    "meet:3014:Video conferencing and remote desktop"
-    "forms:3015:Form builder & submissions"
-    "pxe:3016:PXE network boot"
-    # remote:3017 merged into meet:3014 (Refactor 35 Phase 2)
-    "social:3019:Social media management"
-    "chat:3020:Team messaging & channels"
-    "contacts:3021:Contact management"
-    "it-assets:3022:IT asset management"
-    "workforce:3024:HR & workforce"
-    "vault:3025:Password vault & credential store"
-    "org:3026:Organizational structure (nodes, trees, assignments)"
-    "webhooks:3027:Outbound webhook management and incoming webhook receiver"
-    "signatures:3028:Electronic signature workflow and user stamp management"
-    "tenant-config:3029:Tenant branding and CSS customization"
-    "integrations:3030:External integrations (Slack, Teams, Discord)"
-    "backup:3031:Database & file backup management"
-    "compliance:3032:Compliance, RGPD, data export, retention"
-    "gamification:3033:XP, badges, streaks, leaderboard"
-    "collaboration:3034:Mind maps, brainstorming boards"
-    "notifications:8095:Push notifications"
-    "billing:8096:Billing & invoicing"
-    "gateway:3099:API gateway (aggregator)"
-)
+# ── Service registry (loaded from scripts/ports.json) ───────────────────────
+# Source the canonical ports registry — single source of truth across all scripts.
+# Any port change or new service MUST update scripts/ports.json (not this file).
+# shellcheck disable=SC1091
+source "$BASE_DIR/scripts/ports.sh"
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
 RED='\033[0;31m'; GREEN='\033[0;32m'; CYAN='\033[0;36m'; YELLOW='\033[1;33m'

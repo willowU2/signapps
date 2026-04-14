@@ -1,0 +1,47 @@
+{
+  "_doc": "Source unique de vérité des ports SignApps. Tous les scripts (start-all.sh, start-all.ps1, doctor.sh, windows-services/config.ps1, CI) doivent lire ce fichier.",
+  "_rule": "Tout ajout/retrait de service ou changement de port DOIT mettre à jour ce fichier UNIQUEMENT. Les autres scripts lisent d'ici.",
+  "frontend": {
+    "port": 3000,
+    "description": "Next.js frontend (dev server or production)"
+  },
+  "services": [
+    { "name": "identity",       "port": 3001, "description": "Auth, LDAP/AD, MFA, RBAC",                     "health_path": "/health" },
+    { "name": "containers",     "port": 3002, "description": "Docker container lifecycle",                   "health_path": "/health" },
+    { "name": "proxy",          "port": 3003, "description": "Reverse proxy, TLS/ACME",                      "health_path": "/health" },
+    { "name": "storage",        "port": 3004, "description": "File storage (OpenDAL)",                       "health_path": "/health" },
+    { "name": "ai",             "port": 3005, "description": "AI Gateway (RAG, LLM, Vision)",                "health_path": "/api/v1/health" },
+    { "name": "securelink",     "port": 3006, "description": "Web tunnels, DNS",                             "health_path": "/health" },
+    { "name": "scheduler",      "port": 3007, "description": "CRON job management",                          "health_path": "/health" },
+    { "name": "metrics",        "port": 3008, "description": "System monitoring, Prometheus",                "health_path": "/health" },
+    { "name": "media",          "port": 3009, "description": "STT/TTS/OCR processing",                       "health_path": "/health" },
+    { "name": "docs",           "port": 3010, "description": "Document editing, real-time collaboration",    "health_path": "/health" },
+    { "name": "calendar",       "port": 3011, "description": "Calendar and scheduling",                      "health_path": "/health" },
+    { "name": "mail",           "port": 3012, "description": "Email service (IMAP/SMTP)",                    "health_path": "/health" },
+    { "name": "meet",           "port": 3014, "description": "Video conferencing and remote desktop",        "health_path": "/health" },
+    { "name": "forms",          "port": 3015, "description": "Form builder and submissions",                 "health_path": "/health" },
+    { "name": "pxe",            "port": 3016, "description": "PXE network boot",                             "health_path": "/health" },
+    { "name": "social",         "port": 3019, "description": "Social media management",                      "health_path": "/health" },
+    { "name": "chat",           "port": 3020, "description": "Team messaging and channels",                  "health_path": "/health" },
+    { "name": "contacts",       "port": 3021, "description": "Contact management",                           "health_path": "/health" },
+    { "name": "it-assets",      "port": 3022, "description": "IT asset management",                          "health_path": "/health" },
+    { "name": "workforce",      "port": 3024, "description": "HR and workforce",                             "health_path": "/health" },
+    { "name": "vault",          "port": 3025, "description": "Password vault and credential store",          "health_path": "/health" },
+    { "name": "org",            "port": 3026, "description": "Organizational structure",                     "health_path": "/health" },
+    { "name": "webhooks",       "port": 3027, "description": "Outbound and incoming webhooks",               "health_path": "/health" },
+    { "name": "signatures",     "port": 3028, "description": "Electronic signatures and stamps",             "health_path": "/health" },
+    { "name": "tenant-config",  "port": 3029, "description": "Tenant branding and CSS customization",        "health_path": "/health" },
+    { "name": "integrations",   "port": 3030, "description": "External integrations (Slack, Teams, etc.)",   "health_path": "/health" },
+    { "name": "backup",         "port": 3031, "description": "Database and file backup management",          "health_path": "/health" },
+    { "name": "compliance",     "port": 3032, "description": "Compliance, RGPD, data export, retention",     "health_path": "/health" },
+    { "name": "gamification",   "port": 3033, "description": "XP, badges, streaks, leaderboard",             "health_path": "/health" },
+    { "name": "collaboration",  "port": 3034, "description": "Mind maps, brainstorming boards",              "health_path": "/health" },
+    { "name": "notifications",  "port": 8095, "description": "Push notifications",                           "health_path": "/health" },
+    { "name": "billing",        "port": 8096, "description": "Billing and invoicing",                        "health_path": "/health" },
+    { "name": "gateway",        "port": 3099, "description": "API gateway (aggregator)",                     "health_path": "/health" }
+  ],
+  "infrastructure": {
+    "postgres": { "port": 5432, "container": "signapps-postgres" },
+    "livekit":  { "port": 7880, "description": "WebRTC signaling" }
+  }
+}

@@ -419,6 +419,7 @@ test.describe("Calendar — Direct manipulation", () => {
     await dialog.cancel();
 
     // selectedEventId is still set after cancel (we changed that intentionally).
+    // pressDelete() now patches window.confirm internally to auto-accept.
     await calendar.pressDelete();
     await calendar.expectEventHidden(title);
 

@@ -40,13 +40,19 @@ check "PostgreSQL (port 5432)" "curl -s --max-time 2 http://localhost:5432 2>&1 
 
 echo ""
 echo "  Services:"
-SERVICES="identity:3001 storage:3004 media:3009 calendar:3011 meet:3014 chat:3020"
-for entry in $SERVICES; do
-    name=$(echo "$entry" | cut -d: -f1)
-    port=$(echo "$entry" | cut -d: -f2)
-    check "signapps-$name (:$port)" "curl -sf --max-time 3 http://localhost:$port/health"
+# Load canonical port registry — single source of truth
+# shellcheck disable=SC1091
+source "$BASE_DIR/scripts/ports.sh"
+
+# Doctor checks a critical subset (one per major service group) for fast feedback.
+# To check ALL services, use just doctor-full.
+DOCTOR_SERVICES="identity storage media calendar meet chat"
+for name in $DOCTOR_SERVICES; do
+    port=$(get_service_port "$name")
+    health=$(get_service_health "$name")
+    check "signapps-$name (:$port)" "curl -sf --max-time 3 http://localhost:$port$health"
 done
-warn_check "frontend (:3000)" "curl -sf --max-time 3 -o /dev/null http://localhost:3000/"
+warn_check "frontend (:$FRONTEND_PORT)" "curl -sf --max-time 3 -o /dev/null http://localhost:$FRONTEND_PORT/"
 
 echo ""
 echo "  Cross-service auth:"
@@ -66,10 +72,9 @@ else
         -H "Authorization: Bearer $TOKEN" \
         -d "{\"context_id\":\"$CTX_ID\"}" | grep -o '"access_token":"[^"]*"' | cut -d'"' -f4)
 
-    for entry in $SERVICES; do
-        name=$(echo "$entry" | cut -d: -f1)
-        port=$(echo "$entry" | cut -d: -f2)
-        [ "$name" = "identity" ] && path="/api/v1/auth/me" || path="/health"
+    for name in $DOCTOR_SERVICES; do
+        port=$(get_service_port "$name")
+        [ "$name" = "identity" ] && path="/api/v1/auth/me" || path="$(get_service_health "$name")"
         code=$(curl -sf --max-time 3 -w '%{http_code}' -o /dev/null "http://localhost:$port$path" -H "Authorization: Bearer $FINAL" 2>/dev/null || echo "000")
         if [ "$code" = "200" ]; then
             echo -e "  ${GREEN}[OK]${NC}   JWT accepted by $name"

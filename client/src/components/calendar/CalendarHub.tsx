@@ -487,10 +487,13 @@ export function CalendarHub() {
         setEditingEvent(undefined);
         setFormDefaultStart(undefined);
         setFormDefaultEnd(undefined);
-        selectEvent(null);
+        // Note: keep selectedEventId set after closing the form so that:
+        // - Pressing Delete still works on the just-viewed event (with confirm)
+        // - Re-clicking the same event reopens the form (we use a useEffect
+        //   that tracks selectedEventId changes, see below)
       }
     },
-    [selectEvent],
+    [],
   );
 
   // ── Drag-and-drop ────────────────────────────────────────────────────────

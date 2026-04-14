@@ -184,6 +184,41 @@ test("reproduce bug", async ({ page }) => {
 **Root cause**: Missing role check in `services/signapps-calendar/src/handlers/leaves.rs` (happens when refactoring adds a new endpoint).
 **Fix**: All leave status transitions must go through `approve_leave` with manager role + audit log.
 
+### 5. EventForm shows stale date when reopening for a different slot (FIXED 2026-04-14)
+**Symptom**: Click slot 14h, close form, click slot 10h → form opens with 14h.
+**Root cause**: `useState(initializer)` runs once at mount, doesn't react to prop changes.
+**Fix**: `useEffect([open, initialEvent?.id, defaultStartDate?.getTime(), defaultEndDate?.getTime()])` resets formData via `buildInitialFormData()` on every open or default change.
+
+### 6. Drag-drop strips date timezone, events shift to wrong day (FIXED 2026-04-14)
+**Symptom**: Drag event onto Tuesday in Month view, lands on Monday (in Americas TZ).
+**Root cause**: `new Date(overData.date)` parses ISO string as UTC, then `setHours()` uses local components.
+**Fix**: Droppable data emits `yyyy-MM-dd` (no TZ); `handleDragEnd` parses with `new Date(y, m-1, d, h, min)` (local components).
+
+### 7. Resize handle invisible / not working (FIXED 2026-04-14)
+**Symptom**: Hover bottom of event, no visible handle, drag doesn't resize.
+**Root cause**: 3px handle (`h-3`) too small + @dnd-kit PointerSensor (distance:8) intercepts pointerdown.
+**Fix**: 8px hit zone with `data-no-dnd="true"` attribute; custom PointerSensor activator walks up DOM and refuses activation when ancestor has `data-no-dnd`.
+
+### 8. Click on event triggers slot create handler (FIXED 2026-04-14)
+**Symptom**: Click event in Month view, opens NEW event form on top of edit form.
+**Root cause**: Event click bubbles to parent slot's onClick.
+**Fix**: PointerSensor with `activationConstraint: { distance: 8 }` ensures clicks (no movement) never start drag and bubble correctly. Use `e.stopPropagation()` in event handlers.
+
+### 9. Delete key silently deletes event with no confirmation (FIXED 2026-04-14)
+**Symptom**: Press Backspace after closing form → event vanishes.
+**Root cause**: handleFormOpenChange didn't clear `selectedEventId`; Delete shortcut had no confirm.
+**Fix**: Clear `selectEvent(null)` on form close. Wrap delete shortcut in `window.confirm("Supprimer cet événement ?")`.
+
+### 10. Month view starts on Sunday but rest of app starts on Monday (FIXED 2026-04-14)
+**Symptom**: Week view starts Mon, Month view starts Sun → off-by-one week boundaries.
+**Root cause**: MonthCalendar used `monthStart.getDay()` (Sun=0).
+**Fix**: Use `startOfWeek(monthStart, { weekStartsOn: 1 })` and reorder header to `["Lun","Mar",...,"Dim"]`.
+
+### 11. Multi-day events only show on first day in Month view (FIXED 2026-04-14)
+**Symptom**: Friday-Sunday event visible only on Friday cell.
+**Root cause**: `eventsByDay` map keyed only by `start_time.toDateString()`.
+**Fix**: Iterate from start_time to end_time, push event into each day cell's bucket.
+
 ### 5. Drag on @dnd-kit intercepted by omni-AI overlay
 **Symptom**: Drag-to-move events in month view fails with "intercepts pointer events".
 **Root cause**: Same issue as spreadsheet sheet tabs — floating omni-AI `.glass-panel` covers the bottom of the calendar.

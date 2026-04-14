@@ -200,6 +200,9 @@ export class CalendarPage extends BasePage {
         const x = rect.left + rect.width / 2;
         const y = rect.top + rect.height / 2;
 
+        // ResizeHandle uses Pointer events (not Mouse events) so the @dnd-kit
+        // PointerSensor can be properly bypassed via stopImmediatePropagation
+        // on the React onPointerDown handler.
         const fire = (
           target: EventTarget,
           type: string,
@@ -207,7 +210,7 @@ export class CalendarPage extends BasePage {
           buttons = 1,
         ) => {
           target.dispatchEvent(
-            new MouseEvent(type, {
+            new PointerEvent(type, {
               bubbles: true,
               cancelable: true,
               composed: true,
@@ -218,18 +221,21 @@ export class CalendarPage extends BasePage {
               clientY: cy,
               screenX: x,
               screenY: cy,
+              pointerId: 1,
+              pointerType: "mouse",
+              isPrimary: true,
             }),
           );
         };
 
-        fire(el, "mousedown", y, 1);
+        fire(el, "pointerdown", y, 1);
         // Document-scoped move/up — the ResizeHandle attaches these listeners
-        // on `document` once mousedown triggers, so subsequent events must
+        // on `document` once pointerdown triggers, so subsequent events must
         // target document (not the element) to be caught.
-        fire(document, "mousemove", y + 5, 1);
-        fire(document, "mousemove", y + Math.floor(delta / 2), 1);
-        fire(document, "mousemove", y + delta, 1);
-        fire(document, "mouseup", y + delta, 0);
+        fire(document, "pointermove", y + 5, 1);
+        fire(document, "pointermove", y + Math.floor(delta / 2), 1);
+        fire(document, "pointermove", y + delta, 1);
+        fire(document, "pointerup", y + delta, 0);
       },
       { el: handleEl, delta: deltaPx },
     );
@@ -284,14 +290,25 @@ export class CalendarPage extends BasePage {
   }
 
   async pressDelete(): Promise<void> {
+    // The Delete shortcut now triggers a window.confirm() in production code.
+    // In Playwright, synthetic KeyboardEvent dispatch executes confirm() but
+    // it always returns false unless we patch it BEFORE the dispatch.
     await this.page.evaluate(() => {
-      document.dispatchEvent(
-        new KeyboardEvent("keydown", {
-          key: "Delete",
-          bubbles: true,
-          cancelable: true,
-        }),
-      );
+      // Auto-accept the confirm dialog so the delete proceeds.
+      const originalConfirm = window.confirm;
+      window.confirm = () => true;
+      try {
+        document.dispatchEvent(
+          new KeyboardEvent("keydown", {
+            key: "Delete",
+            bubbles: true,
+            cancelable: true,
+          }),
+        );
+      } finally {
+        // Restore after the synchronous handler finishes.
+        window.confirm = originalConfirm;
+      }
     });
   }
 

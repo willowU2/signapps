@@ -1497,4 +1497,34 @@ Le router est configure avec `DefaultBodyLimit::max(100 * 1024 * 1024)` (100MB) 
 - **Jamais utiliser Cal.com** (AGPL) ni ses composants.
 - **Pas de moment.js** -- remplacer par date-fns (deja utilise).
 - **Pas de copie de code** depuis FullCalendar Premium (commercial).
+
+## Historique
+
+- **2026-04-14** : Vague d'amélioration UX/interactions souris niveau Google Calendar / Outlook
+  - Form ouvre désormais à la bonne date/heure du slot cliqué (passage de `endTime` + `useEffect` reset)
+  - Drag-drop d'événements fluide avec `PointerSensor` (8px) + `TouchSensor` (200ms) — clicks distincts du drag
+  - DragOverlay avec preview visuelle du titre pendant le drag
+  - Drop zones dans Week/Day (en plus de Month) — drag entre slots horaires
+  - Resize bord BAS (changer fin) — handle 8px hit zone, `data-no-dnd` pour bloquer @dnd-kit
+  - Resize bord HAUT (changer début) — nouveau, snap 15min, clamp à end-15min
+  - Click sur slot vide → crée événement 1h à l'heure cliquée
+  - Right-click → menu Modifier/Dupliquer/Partager/Supprimer
+  - Hover → tooltip avec titre, date FR, heures, lieu, description
+  - Curseur grab → grabbing pendant drag
+  - Now line (barre rouge à l'heure actuelle, refresh 60s)
+  - Today highlight (colonne mise en valeur)
+  - Escape annule drag/resize en cours
+  - Drag-drop ajouté dans AgendaView, KanbanView, TimelineView
+  - Drag entre calendrier (sidebar A → sidebar B) fonctionnel
+  - Recurring edit dialog "Cet événement / Et les suivants / Toute la série"
+  - Ctrl+C / Ctrl+X / Ctrl+V sur événements (clipboard interne)
+  - Search filter wired (input dans header filtre les events sur title/description/location)
+  - Raccourcis clavier internes : ←/→ navigation, T (today), N (new), D/W/M (vue), A (agenda)
+  - Suppression demande confirmation
+  - Vue mois corrigée : semaine commence lundi, événements multi-jours visibles sur tous les jours
+  - Drag-drop préserve l'heure d'origine (TZ local au lieu de UTC)
+  - Timezone événement = TZ utilisateur (au lieu d'UTC hardcodé)
+  - Optimistic updates avec rollback sur erreur
+  - Locale française dans tous les headers
+- **2026-04-13** : Spec initial créé.
 - **Pas d'OAuth tokens en clair** -- stocker chiffres, rafraichis automatiquement.
