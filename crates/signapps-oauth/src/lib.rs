@@ -16,6 +16,7 @@ pub mod pkce;
 mod profile;
 mod protocol;
 mod provider;
+pub mod refresh;
 mod scope;
 mod state;
 pub mod token_table;
@@ -34,6 +35,7 @@ pub use protocol::{OAuthPurpose, Protocol, ProviderCategory, TokenPlacement};
 pub use provider::{ProviderConfig, ProviderDefinition, ProviderSummary};
 pub use scope::{ScopeResolver, UserContext};
 pub use state::{FlowState, StateError};
+pub use refresh::{try_refresh, RefreshOutcome};
 pub use token_table::{
     CalendarConnectionsTable, EncryptedTokens, MailAccountsTable, SocialAccountsTable, TokenTable,
 };
