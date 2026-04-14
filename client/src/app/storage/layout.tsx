@@ -10,11 +10,5 @@ interface StorageLayoutProps {
 }
 
 export default function StorageLayout({ children }: StorageLayoutProps) {
-  return (
-    <div className="space-y-6">
-      <div className="w-full">
-        {children}
-      </div>
-    </div>
-  );
+  return <>{children}</>;
 }

@@ -866,7 +866,7 @@ export default function StoragePage() {
     <AppLayout>
       <>
         {activeTab === "files" ? (
-          <div className="flex h-[calc(100vh-4rem)] -m-4 overflow-hidden bg-background dark:bg-[#1a1a1a]">
+          <div className="flex h-[calc(100vh-4rem)] overflow-hidden bg-background dark:bg-[#1a1a1a]">
             <DriveSidebar
               currentView={driveView}
               onViewChange={(view) => {

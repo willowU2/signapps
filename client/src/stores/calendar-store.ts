@@ -277,7 +277,7 @@ export const useCalendarStore = create<CalendarState>()(
       today: () => set({ currentDate: new Date() }),
 
       // ---- TimeItems (scheduling) ----
-      timeItems: [],
+      timeItems: [] as TimeItem[],
       isLoadingTimeItems: false,
       weekStartsOn: 1,
       scope: null,
@@ -306,7 +306,7 @@ export const useCalendarStore = create<CalendarState>()(
       },
 
       // ---- Undo stack ----
-      undoStack: [],
+      undoStack: [] as UndoAction[],
       pushUndo: (action) =>
         set((state) => ({
           // Cap the stack at 20 to avoid unbounded growth
