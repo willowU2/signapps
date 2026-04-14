@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useMemo, useState, useEffect } from "react";
-import { format, addMonths } from "date-fns";
+import { format, addMonths, startOfDay } from "date-fns";
 import { fr } from "date-fns/locale";
 import {
   useCalendarStore,
@@ -52,9 +52,12 @@ export function AgendaView({ selectedCalendarId, onCreateEvent }: AgendaViewProp
         }
 
         if (calId) {
-          const end = addMonths(currentDate, 3);
+          // Start at the beginning of today so earlier events of the current
+          // day (already passed) still appear in the agenda.
+          const start = startOfDay(currentDate);
+          const end = addMonths(start, 3);
           const eventsRes = await calendarApi
-            .listEvents(calId, currentDate, end)
+            .listEvents(calId, start, end)
             .catch(() => null);
           const data = eventsRes?.data;
           if (!cancelled) {

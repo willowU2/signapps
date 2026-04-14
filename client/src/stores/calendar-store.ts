@@ -331,6 +331,19 @@ export const useCalendarStore = create<CalendarState>()(
         selectedColleagues: state.selectedColleagues,
         selectedResources: state.selectedResources,
       }),
+      // JSON has no Set — after rehydration, anything that was serialised as
+      // an array must be reconstructed as a Set to preserve the expected type.
+      onRehydrateStorage: () => (state) => {
+        if (!state) return;
+        if (
+          state.selectedCalendarIds &&
+          !(state.selectedCalendarIds instanceof Set)
+        ) {
+          state.selectedCalendarIds = new Set(
+            state.selectedCalendarIds as unknown as string[],
+          );
+        }
+      },
     },
   ),
 );

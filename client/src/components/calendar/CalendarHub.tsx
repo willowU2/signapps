@@ -384,9 +384,9 @@ export function CalendarHub() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedEventId]);
 
-  // Close form — keeps `selectedEventId` intact so Delete key / Ctrl+Z still
-  // have a target after the user cancels. `editingEvent` is cleared because
-  // the dialog's internal state is scoped to a single open cycle.
+  // Close form — clears `selectedEventId` so clicking the same event again
+  // re-fires the open-form useEffect (otherwise a null→A→A transition would
+  // not trigger the dep change and the form would stay closed).
   const handleFormOpenChange = useCallback(
     (open: boolean) => {
       setFormOpen(open);

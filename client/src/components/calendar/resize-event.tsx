@@ -115,14 +115,22 @@ export function ResizeHandle({
   );
 }
 
-// Wrapper hook to use with useEvents
+// Wrapper hook to use with useEvents. Passes `start_time` alongside
+// `end_time` so the backend update payload remains self-consistent even when
+// the API requires both to be present (avoids dropping the start while resizing).
 export function useEventResize(
-  updateEvent: (id: string, data: { end_time: string }) => Promise<Event>,
+  updateEvent: (
+    id: string,
+    data: { start_time?: string; end_time: string },
+  ) => Promise<Event>,
 ) {
   const handleResizeCommit = useCallback(
     async ({ event, newEndTime }: ResizeResult) => {
       try {
-        await updateEvent(event.id, { end_time: newEndTime.toISOString() });
+        await updateEvent(event.id, {
+          start_time: event.start_time,
+          end_time: newEndTime.toISOString(),
+        });
       } catch {
         // Revert handled by parent re-render
       }

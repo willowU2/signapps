@@ -124,12 +124,13 @@ function LeaveSection({
   const [loadingConflicts, setLoadingConflicts] = useState(false);
   const [loadingValidation, setLoadingValidation] = useState(false);
 
-  // Compute business days between start and end
+  // Compute calendar days between start and end, inclusive.
+  // A leave from 2025-01-10 to 2025-01-10 is 1 day; 01-10 → 01-12 is 3 days.
   const computeDays = useCallback((): number => {
     if (!startTime || !endTime) return 0;
     const start = parseISO(startTime);
     const end = parseISO(endTime);
-    const diff = differenceInDays(end, start);
+    const diff = differenceInDays(end, start) + 1;
     return Math.max(1, diff);
   }, [startTime, endTime]);
 
@@ -561,14 +562,23 @@ export function EventForm({
 
   const [formData, setFormData] = useState<FormDataType>(buildInitialFormData);
 
-  // Reset form data whenever the dialog opens or the defaults change.
-  // Without this, opening the form for a new slot would show stale dates from
-  // the previous open since useState initializer runs only once.
+  // Stable primitive deps for the reset effect (ESLint react-hooks/exhaustive-deps
+  // forbids complex expressions like `?.id` directly inside the deps array).
+  const initialEventId = initialEvent?.id;
+  const defaultStartTime = defaultStartDate?.getTime();
+  const defaultEndTime = defaultEndDate?.getTime();
+
+  // Reset form data whenever the dialog opens, the parent swaps the event/slot
+  // data while the dialog stays mounted, or the defaults change. Without this,
+  // re-opening the form or having the parent change `initialEvent` would show
+  // stale dates from the previous open.
   useEffect(() => {
     if (open) {
       setFormData(buildInitialFormData());
     }
-  }, [open, buildInitialFormData]);
+    // Extract complex expressions into stable values for the deps array
+    // so eslint react-hooks/exhaustive-deps is satisfied.
+  }, [open, initialEventId, defaultStartTime, defaultEndTime, buildInitialFormData]);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedResourceIds, setSelectedResourceIds] = useState<string[]>([]);
@@ -610,6 +620,8 @@ export function EventForm({
           end_time: formData.end_time,
           is_all_day: formData.is_all_day,
           rrule: formData.rrule || undefined,
+          timezone: formData.timezone || initialEvent.timezone,
+          event_type: initialEvent.event_type,
         };
         await updateEvent(initialEvent.id, updateData);
         toast.success("Événement mis à jour");

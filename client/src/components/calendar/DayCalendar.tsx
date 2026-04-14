@@ -117,18 +117,21 @@ export function DayCalendar({
 
   const { handleResizeCommit } = useEventResize(
     useCallback(
-      async (id: string, data: { end_time: string }) => {
+      async (id: string, data: { start_time?: string; end_time: string }) => {
         return updateEvent(id, data);
       },
       [updateEvent],
     ),
   );
 
-  // Fetch events for current day
+  // Fetch events for current day — expand range by ±1 day so events near
+  // midnight aren't filtered out due to timezone shifts between local and UTC.
   useEffect(() => {
     if (!selectedCalendarId) return;
     const start = startOfDay(currentDate);
     const end = endOfDay(currentDate);
+    start.setDate(start.getDate() - 1);
+    end.setDate(end.getDate() + 1);
     fetchEvents(start, end);
   }, [selectedCalendarId, currentDate, fetchEvents]);
 

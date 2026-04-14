@@ -12,6 +12,7 @@ import {
   getMinutes,
   differenceInMinutes,
 } from "date-fns";
+import { fr } from "date-fns/locale";
 import { useDraggable } from "@dnd-kit/core";
 import {
   useCalendarStore,
@@ -120,7 +121,7 @@ export function WeekCalendar({
   const { events, fetchEvents, updateEvent } = useEvents(selectedCalendarId);
   const { handleResizeCommit } = useEventResize(
     useCallback(
-      async (id: string, data: { end_time: string }) => {
+      async (id: string, data: { start_time?: string; end_time: string }) => {
         return updateEvent(id, data);
       },
       [updateEvent],
@@ -131,10 +132,16 @@ export function WeekCalendar({
   const weekEnd = endOfWeek(currentDate, { weekStartsOn: 1 });
   const hourHeight = 60; // px per hour
 
-  // Fetch events for current week
+  // Fetch events for current week — expand range by ±1 day so events that fall
+  // near midnight don't disappear due to timezone shifts between the user's
+  // local time and UTC-stored event timestamps.
   useEffect(() => {
     if (!selectedCalendarId) return;
-    fetchEvents(weekStart, weekEnd);
+    const fetchStart = new Date(weekStart);
+    fetchStart.setDate(fetchStart.getDate() - 1);
+    const fetchEnd = new Date(weekEnd);
+    fetchEnd.setDate(fetchEnd.getDate() + 1);
+    fetchEvents(fetchStart, fetchEnd);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedCalendarId, currentDate, fetchEvents]);
 
@@ -197,8 +204,8 @@ export function WeekCalendar({
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-2 border-b shrink-0">
         <h2 className="text-base font-semibold">
-          {format(weekStart, "d MMM", { locale: undefined })} –{" "}
-          {format(weekEnd, "d MMM yyyy")}
+          {format(weekStart, "d MMM", { locale: fr })} –{" "}
+          {format(weekEnd, "d MMM yyyy", { locale: fr })}
         </h2>
         <div className="flex gap-2">
           <Button variant="outline" size="icon" onClick={handlePrevWeek}>
