@@ -1,5 +1,6 @@
 pub mod handlers;
 pub mod models;
+pub mod oauth_consumer;
 pub mod platforms;
 pub mod publisher;
 
@@ -12,6 +13,7 @@ use signapps_common::bootstrap::{env_or, init_tracing, load_env};
 use signapps_common::middleware::{auth_middleware, tenant_context_middleware, AuthState};
 use signapps_common::pg_events::PgEventBus;
 use signapps_common::JwtConfig;
+use signapps_keystore::{Keystore, KeystoreBackend, TokenColumnSpec};
 use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
 use tower_http::{
     cors::{AllowOrigin, CorsLayer},
@@ -361,6 +363,48 @@ async fn main() {
         jwt_config,
         event_bus,
     };
+
+    // ── Keystore + boot guardrail ────────────────────────────────────────────
+    // Load the master key from env (KEYSTORE_MASTER_KEY). If the env var is
+    // absent we log a warning and continue — this allows running in test/dev
+    // environments without a keystore.
+    let keystore = Keystore::init(KeystoreBackend::EnvVar).await;
+    if let Err(ref e) = keystore {
+        tracing::warn!(
+            "Keystore unavailable ({}); OAuth token guardrail skipped",
+            e
+        );
+    }
+    if keystore.is_ok() {
+        if let Err(e) = signapps_keystore::assert_tokens_encrypted(
+            &pool,
+            &[
+                TokenColumnSpec {
+                    table: "social.accounts",
+                    text_col: "access_token",
+                    enc_col: "access_token_enc",
+                },
+                TokenColumnSpec {
+                    table: "social.accounts",
+                    text_col: "refresh_token",
+                    enc_col: "refresh_token_enc",
+                },
+            ],
+        )
+        .await
+        {
+            tracing::error!("Plaintext OAuth token guardrail failed: {}", e);
+            std::process::exit(1);
+        }
+    }
+
+    // ── OAuth consumer ───────────────────────────────────────────────────────
+    // Subscribes to oauth.tokens.acquired events and upserts into
+    // social.accounts.
+    oauth_consumer::spawn_consumer(
+        pool.clone(),
+        std::sync::Arc::new(PgEventBus::new(pool.clone(), "signapps-social".to_string())),
+    );
 
     // Start background publisher
     tokio::spawn(publisher::start_publisher(pool.clone()));

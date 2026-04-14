@@ -28,5 +28,7 @@ hex = "0.4"
 urlencoding = "2.1"
 
 signapps-common = { path = "../../crates/signapps-common" }
+signapps-oauth = { path = "../../crates/signapps-oauth" }
+signapps-keystore = { path = "../../crates/signapps-keystore" }
 utoipa = { workspace = true }
 utoipa-swagger-ui = { workspace = true }

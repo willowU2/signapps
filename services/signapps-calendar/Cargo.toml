@@ -20,6 +20,8 @@ signapps-common = { path = "../../crates/signapps-common" }
 signapps-db = { path = "../../crates/signapps-db", features = ["openapi"] }
 signapps-sharing = { path = "../../crates/signapps-sharing" }
 signapps-cache = { path = "../../crates/signapps-cache" }
+signapps-oauth = { path = "../../crates/signapps-oauth" }
+signapps-keystore = { path = "../../crates/signapps-keystore" }
 axum = { workspace = true }
 tokio = { workspace = true }
 serde = { workspace = true }

@@ -10,6 +10,7 @@ use signapps_common::middleware::{auth_middleware, tenant_context_middleware, Au
 use signapps_common::pg_events::{PgEventBus, PlatformEvent};
 use signapps_common::JwtConfig;
 use signapps_db::DatabasePool;
+use signapps_keystore::{Keystore, KeystoreBackend, TokenColumnSpec};
 use signapps_sharing::routes::sharing_routes;
 use signapps_sharing::{ResourceType, SharingEngine};
 use std::sync::Arc;
@@ -26,6 +27,7 @@ mod error;
 pub use error::CalendarError;
 
 mod handlers;
+mod oauth_consumer;
 mod services;
 
 /// Application state shared across all handlers.
@@ -97,6 +99,51 @@ async fn main() -> anyhow::Result<()> {
         tracing::info!("Notification scheduler started");
         scheduler.run().await;
     });
+
+    // ── Keystore + boot guardrail ────────────────────────────────────────────
+    // Load the master key from env (KEYSTORE_MASTER_KEY). If the env var is
+    // absent we log a warning and continue — this allows running in test/dev
+    // environments without a keystore.
+    let keystore = Keystore::init(KeystoreBackend::EnvVar).await;
+    if let Err(ref e) = keystore {
+        tracing::warn!(
+            "Keystore unavailable ({}); OAuth token guardrail skipped",
+            e
+        );
+    }
+    if keystore.is_ok() {
+        if let Err(e) = signapps_keystore::assert_tokens_encrypted(
+            &pool.inner().clone(),
+            &[
+                TokenColumnSpec {
+                    table: "calendar.provider_connections",
+                    text_col: "access_token",
+                    enc_col: "access_token_enc",
+                },
+                TokenColumnSpec {
+                    table: "calendar.provider_connections",
+                    text_col: "refresh_token",
+                    enc_col: "refresh_token_enc",
+                },
+            ],
+        )
+        .await
+        {
+            tracing::error!("Plaintext OAuth token guardrail failed: {}", e);
+            std::process::exit(1);
+        }
+    }
+
+    // ── OAuth consumer ───────────────────────────────────────────────────────
+    // Subscribes to oauth.tokens.acquired events and upserts into
+    // calendar.provider_connections.
+    oauth_consumer::spawn_consumer(
+        pool.inner().clone(),
+        std::sync::Arc::new(PgEventBus::new(
+            pool.inner().clone(),
+            "signapps-calendar".to_string(),
+        )),
+    );
 
     // Spawn cross-service event listener (mail.received → auto ICS import)
     let cal_listener_pool = pool.inner().clone();
