@@ -495,6 +495,7 @@ interface EventFormProps {
   initialEvent?: Event;
   calendarId: string;
   defaultStartDate?: Date;
+  defaultEndDate?: Date;
 }
 
 const EVENT_TYPE_OPTIONS: { value: EventType; label: string }[] = [
@@ -511,6 +512,7 @@ export function EventForm({
   initialEvent,
   calendarId,
   defaultStartDate,
+  defaultEndDate,
 }: EventFormProps) {
   const { createEvent, updateEvent, deleteEvent } = useEvents(calendarId);
 
@@ -523,7 +525,7 @@ export function EventForm({
   const [leaveType, setLeaveType] = useState<LeaveType>("CP");
   const [hasHardViolation, setHasHardViolation] = useState(false);
 
-  const [formData, setFormData] = useState<FormDataType>(() => {
+  const buildInitialFormData = useCallback((): FormDataType => {
     if (initialEvent) {
       return {
         title: initialEvent.title,
@@ -538,8 +540,13 @@ export function EventForm({
     }
 
     const start = defaultStartDate || new Date();
-    const end = new Date(start);
-    end.setHours(end.getHours() + 1);
+    const end =
+      defaultEndDate ||
+      (() => {
+        const e = new Date(start);
+        e.setHours(e.getHours() + 1);
+        return e;
+      })();
 
     return {
       title: "",
@@ -550,7 +557,18 @@ export function EventForm({
       is_all_day: false,
       timezone: "UTC",
     };
-  });
+  }, [initialEvent, defaultStartDate, defaultEndDate]);
+
+  const [formData, setFormData] = useState<FormDataType>(buildInitialFormData);
+
+  // Reset form data whenever the dialog opens or the defaults change.
+  // Without this, opening the form for a new slot would show stale dates from
+  // the previous open since useState initializer runs only once.
+  useEffect(() => {
+    if (open) {
+      setFormData(buildInitialFormData());
+    }
+  }, [open, buildInitialFormData]);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedResourceIds, setSelectedResourceIds] = useState<string[]>([]);
@@ -904,11 +922,18 @@ export function EventForm({
 
             {attendees.length > 0 && (
               <div className="border-t pt-3">
-                <p className="text-xs text-muted-foreground mb-1.5">Liens croisés</p>
+                <p className="text-xs text-muted-foreground mb-1.5">
+                  Liens croisés
+                </p>
                 <CrossLinks
                   links={attendees
                     .filter((a: any) => a.email || a.name)
-                    .map((a: any) => crossLinkHelpers.toContact(a.id ?? a.email ?? "", a.name ?? a.email ?? "Participant"))}
+                    .map((a: any) =>
+                      crossLinkHelpers.toContact(
+                        a.id ?? a.email ?? "",
+                        a.name ?? a.email ?? "Participant",
+                      ),
+                    )}
                 />
               </div>
             )}

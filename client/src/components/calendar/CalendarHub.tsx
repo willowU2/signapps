@@ -275,7 +275,7 @@ export function CalendarHub() {
       .listCalendars()
       .then(async (res) => {
         let cals: Calendar[] = Array.isArray(res.data) ? res.data : [];
-        
+
         // Auto-create a default calendar if absolutely none exists
         if (cals.length === 0) {
           try {
@@ -284,12 +284,12 @@ export function CalendarHub() {
               color: "#3b82f6",
               timezone: "Europe/Paris",
             });
-            cals = [newCal.data || newCal as unknown as Calendar];
+            cals = [newCal.data || (newCal as unknown as Calendar)];
           } catch (e) {
             console.error("Failed to auto-create default calendar:", e);
           }
         }
-        
+
         setCalendars(cals);
         if (cals.length > 0 && !selectedCalendarId) {
           setSelectedCalendarId(cals[0].id);
@@ -309,19 +309,26 @@ export function CalendarHub() {
         color: "#3b82f6",
         timezone: "Europe/Paris",
       });
-      const newCal = res.data || res as unknown as Calendar;
+      const newCal = res.data || (res as unknown as Calendar);
       setCalendars((prev) => [...prev, newCal]);
       setSelectedCalendarId(newCal.id);
       toast.success("Agenda créé avec succès !", { id: toastId });
     } catch (e: any) {
       console.error("Failed to create calendar:", e);
-      toast.error(e?.response?.data?.message || "Impossible de créer l'agenda. Contactez le support.", { id: toastId });
+      toast.error(
+        e?.response?.data?.message ||
+          "Impossible de créer l'agenda. Contactez le support.",
+        { id: toastId },
+      );
     }
   }, []);
 
   // ── EventForm state ──────────────────────────────────────────────────────
   const [formOpen, setFormOpen] = useState(false);
   const [formDefaultStart, setFormDefaultStart] = useState<Date | undefined>(
+    undefined,
+  );
+  const [formDefaultEnd, setFormDefaultEnd] = useState<Date | undefined>(
     undefined,
   );
   const [editingEvent, setEditingEvent] = useState<Event | undefined>(
@@ -339,16 +346,21 @@ export function CalendarHub() {
     useEvents(selectedCalendarId);
 
   /** Open form to create a new event (optionally with a preselected time slot) */
-  const handleCreateEvent = useCallback((startTime?: Date, endTime?: Date) => {
-    if (!selectedCalendarId) {
-      toast.error("Veuillez d'abord sélectionner ou créer un agenda dans le panneau de gauche.");
-      return;
-    }
-    setEditingEvent(undefined);
-    setFormDefaultStart(startTime);
-    setFormOpen(true);
-  }, [selectedCalendarId]);
-
+  const handleCreateEvent = useCallback(
+    (startTime?: Date, endTime?: Date) => {
+      if (!selectedCalendarId) {
+        toast.error(
+          "Veuillez d'abord sélectionner ou créer un agenda dans le panneau de gauche.",
+        );
+        return;
+      }
+      setEditingEvent(undefined);
+      setFormDefaultStart(startTime);
+      setFormDefaultEnd(endTime);
+      setFormOpen(true);
+    },
+    [selectedCalendarId],
+  );
 
   /** Open form to edit an existing event */
   const handleEditEvent = useCallback(
@@ -890,17 +902,17 @@ export function CalendarHub() {
                 <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">
                   Mes agendas
                 </p>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="h-5 w-5" 
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-5 w-5"
                   onClick={handleCreateDefaultCalendar}
                   aria-label="Créer un agenda"
                 >
                   <Plus className="h-3 w-3" />
                 </Button>
               </div>
-              
+
               {calendars.length > 0 ? (
                 <div className="space-y-1">
                   {calendars.map((cal) => (
@@ -924,8 +936,15 @@ export function CalendarHub() {
                 </div>
               ) : (
                 <div className="text-center py-4 bg-muted/30 rounded-md border border-dashed flex flex-col items-center justify-center gap-2">
-                  <p className="text-[10px] text-muted-foreground italic px-2">Aucun agenda trouvé.</p>
-                  <Button variant="default" size="sm" className="h-7 text-xs px-2" onClick={handleCreateDefaultCalendar}>
+                  <p className="text-[10px] text-muted-foreground italic px-2">
+                    Aucun agenda trouvé.
+                  </p>
+                  <Button
+                    variant="default"
+                    size="sm"
+                    className="h-7 text-xs px-2"
+                    onClick={handleCreateDefaultCalendar}
+                  >
                     Créer mon agenda
                   </Button>
                 </div>
@@ -975,6 +994,7 @@ export function CalendarHub() {
           calendarId={selectedCalendarId}
           initialEvent={editingEvent}
           defaultStartDate={formDefaultStart}
+          defaultEndDate={formDefaultEnd}
         />
       )}
 
