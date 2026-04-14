@@ -162,7 +162,15 @@ mod tests {
     #[test]
     fn visibility_restricted_rejects_orphan_user() {
         let node = Uuid::new_v4();
-        let config = mk_config("restricted", vec![node], vec![], vec![], vec![], vec![], vec![]);
+        let config = mk_config(
+            "restricted",
+            vec![node],
+            vec![],
+            vec![],
+            vec![],
+            vec![],
+            vec![],
+        );
         let user = mk_user(vec![Uuid::new_v4()], vec![], vec![]);
         let err = ScopeResolver::check_user_access(&user, &config).unwrap_err();
         assert!(matches!(err, OAuthError::UserAccessDenied));
@@ -171,7 +179,15 @@ mod tests {
     #[test]
     fn visibility_restricted_accepts_matching_node() {
         let node = Uuid::new_v4();
-        let config = mk_config("restricted", vec![node], vec![], vec![], vec![], vec![], vec![]);
+        let config = mk_config(
+            "restricted",
+            vec![node],
+            vec![],
+            vec![],
+            vec![],
+            vec![],
+            vec![],
+        );
         let user = mk_user(vec![node], vec![], vec![]);
         ScopeResolver::check_user_access(&user, &config).unwrap();
     }
@@ -223,9 +239,12 @@ mod tests {
         let config = mk_config("all", vec![], vec![], vec![], vec![], vec!["login"], vec![]);
         ScopeResolver::check_purpose_allowed(&config, OAuthPurpose::Login).unwrap();
 
-        let err = ScopeResolver::check_purpose_allowed(&config, OAuthPurpose::Integration)
-            .unwrap_err();
-        assert!(matches!(err, OAuthError::PurposeNotAllowed(OAuthPurpose::Integration)));
+        let err =
+            ScopeResolver::check_purpose_allowed(&config, OAuthPurpose::Integration).unwrap_err();
+        assert!(matches!(
+            err,
+            OAuthError::PurposeNotAllowed(OAuthPurpose::Integration)
+        ));
     }
 
     #[test]

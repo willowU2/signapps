@@ -66,7 +66,13 @@ fn validate_provider(key: &str, def: &Value) {
     );
 
     // URLs must parse (allow {placeholders} for template_vars)
-    for field in ["authorize_url", "access_url", "refresh_url", "profile_url", "revoke_url"] {
+    for field in [
+        "authorize_url",
+        "access_url",
+        "refresh_url",
+        "profile_url",
+        "revoke_url",
+    ] {
         if let Some(u) = obj.get(field).and_then(|v| v.as_str()) {
             let cleaned = strip_template_vars(u);
             // After placeholder substitution the result may be a relative path
@@ -76,12 +82,17 @@ fn validate_provider(key: &str, def: &Value) {
             let to_parse = if cleaned.starts_with("http://") || cleaned.starts_with("https://") {
                 cleaned
             } else {
-                format!("https://placeholder.example{}", if cleaned.starts_with('/') { cleaned } else { format!("/{cleaned}") })
+                format!(
+                    "https://placeholder.example{}",
+                    if cleaned.starts_with('/') {
+                        cleaned
+                    } else {
+                        format!("/{cleaned}")
+                    }
+                )
             };
             if let Err(e) = url::Url::parse(&to_parse) {
-                panic!(
-                    "provider {key:?}: field {field:?} is not a valid URL ({e}): {u:?}"
-                );
+                panic!("provider {key:?}: field {field:?} is not a valid URL ({e}): {u:?}");
             }
         }
     }

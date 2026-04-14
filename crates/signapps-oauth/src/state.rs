@@ -184,12 +184,7 @@ mod tests {
 
     #[test]
     fn manually_expired_state_detected() {
-        let mut s = FlowState::new(
-            Uuid::new_v4(),
-            "x".into(),
-            OAuthPurpose::Login,
-            "n".into(),
-        );
+        let mut s = FlowState::new(Uuid::new_v4(), "x".into(), OAuthPurpose::Login, "n".into());
         s.expires_at = 0; // in the past
         assert!(s.is_expired());
     }

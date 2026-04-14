@@ -30,10 +30,7 @@ pub trait ConfigStore: Send + Sync {
     /// # Errors
     ///
     /// Returns [`OAuthError::Database`] on connection or query errors.
-    async fn list_for_tenant(
-        &self,
-        tenant_id: Uuid,
-    ) -> Result<Vec<ProviderConfig>, OAuthError>;
+    async fn list_for_tenant(&self, tenant_id: Uuid) -> Result<Vec<ProviderConfig>, OAuthError>;
 }
 
 /// Postgres-backed [`ConfigStore`] using sqlx.
@@ -80,10 +77,7 @@ impl ConfigStore for PgConfigStore {
     }
 
     #[instrument(skip(self))]
-    async fn list_for_tenant(
-        &self,
-        tenant_id: Uuid,
-    ) -> Result<Vec<ProviderConfig>, OAuthError> {
+    async fn list_for_tenant(&self, tenant_id: Uuid) -> Result<Vec<ProviderConfig>, OAuthError> {
         let rows = sqlx::query_as::<_, ProviderConfigRow>(
             r#"
             SELECT id, tenant_id, provider_key,

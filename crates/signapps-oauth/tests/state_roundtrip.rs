@@ -49,7 +49,7 @@ fn verify_rejects_tampered_signature() {
     let dot_pos = token.rfind('.').expect("token has separator");
     let (payload, sig) = token.split_at(dot_pos);
     let sig = &sig[1..]; // skip the '.'
-    // Flip the last character of the sig (still valid base64url chars, different bytes)
+                         // Flip the last character of the sig (still valid base64url chars, different bytes)
     let mut sig_bytes: Vec<u8> = sig.bytes().collect();
     let last = sig_bytes.len() - 1;
     sig_bytes[last] = if sig_bytes[last] == b'A' { b'B' } else { b'A' };
