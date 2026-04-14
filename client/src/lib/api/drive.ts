@@ -88,7 +88,7 @@ export const driveApi = {
       typeof window !== "undefined"
         ? localStorage.getItem("access_token")
         : null;
-    return `${STORAGE_URL}/drive/nodes/${id}/download${token ? `?token=${encodeURIComponent(token)}` : ""}`;
+    return `${STORAGE_URL}/api/v1/drive/nodes/${id}/download${token ? `?token=${encodeURIComponent(token)}` : ""}`;
   },
 
   // Upload a file into the drive (optionally under a parent folder).

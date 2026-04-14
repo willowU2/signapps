@@ -272,12 +272,14 @@ export const sharesApi = {
   delete: (id: string) => storageClient.delete(`/shares/${id}`),
   // Public access (no auth)
   access: (token: string, password?: string) =>
-    axios.post<ShareAccessResponse>(`${STORAGE_URL}/shares/${token}/access`, {
-      password,
-    }),
+    axios.post<ShareAccessResponse>(
+      `${STORAGE_URL}/api/v1/shares/${token}/access`,
+      { password },
+    ),
   download: (token: string) =>
     storageClient.get(`/shares/${token}/download`, { responseType: "blob" }),
-  downloadUrl: (token: string) => `${STORAGE_URL}/shares/${token}/download`,
+  downloadUrl: (token: string) =>
+    `${STORAGE_URL}/api/v1/shares/${token}/download`,
 };
 
 export interface ShareLink {
@@ -606,9 +608,9 @@ export const previewApi = {
     key: string,
     size?: "small" | "medium" | "large",
   ) =>
-    `${STORAGE_URL}/preview/thumbnail/${bucket}/${encodeURIComponent(key)}?size=${size || "medium"}`,
+    `${STORAGE_URL}/api/v1/preview/thumbnail/${bucket}/${encodeURIComponent(key)}?size=${size || "medium"}`,
   getPreviewUrl: (bucket: string, key: string) =>
-    `${STORAGE_URL}/preview/view/${bucket}/${encodeURIComponent(key)}`,
+    `${STORAGE_URL}/api/v1/preview/view/${bucket}/${encodeURIComponent(key)}`,
 
   getArchiveListing: (bucket: string, key: string) =>
     storageClient.get<any[]>(
