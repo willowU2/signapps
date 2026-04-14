@@ -7,6 +7,14 @@ license.workspace = true
 description = "OAuth2/OIDC/SAML unified state machine, catalog, and scope resolver"
 publish = false
 
+[[bin]]
+name = "oauth-migrate-encrypt"
+path = "src/bin/oauth_migrate_encrypt.rs"
+
+[[bin]]
+name = "oauth-migrate-verify"
+path = "src/bin/oauth_migrate_verify.rs"
+
 [dependencies]
 # Crypto primitives for HMAC state signing and PKCE verifier generation
 hmac = { workspace = true }
@@ -24,6 +32,10 @@ tracing = { workspace = true }
 sqlx = { workspace = true, features = ["postgres", "runtime-tokio-rustls", "uuid", "chrono", "json"] }
 uuid = { workspace = true }
 chrono = { workspace = true }
+# Error handling + CLI
+anyhow = { workspace = true }
+tokio = { workspace = true }
+tracing-subscriber = { workspace = true }
 # Shared
 signapps-common = { path = "../signapps-common" }
 signapps-keystore = { path = "../signapps-keystore" }
