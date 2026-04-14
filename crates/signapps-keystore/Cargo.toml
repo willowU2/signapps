@@ -23,3 +23,6 @@ tokio = { workspace = true }
 zeroize = { workspace = true }
 async-trait = { workspace = true }
 signapps-common = { path = "../signapps-common" }
+
+[dev-dependencies]
+tempfile = "3"

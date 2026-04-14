@@ -44,7 +44,7 @@ impl KeystoreBackend {
         match self {
             Self::EnvVar => load_env(DEFAULT_ENV_VAR),
             Self::EnvVarNamed(name) => load_env(name),
-            Self::File(_) => unimplemented!("filled in Task 4"),
+            Self::File(path) => load_file(path).await,
             Self::Remote(client) => client.fetch_master_key().await,
         }
     }
@@ -59,6 +59,22 @@ fn load_env(var_name: &str) -> Result<MasterKey, KeystoreError> {
     if hex.is_empty() {
         return Err(KeystoreError::EnvVarNotSet);
     }
+    MasterKey::from_hex(&hex)
+}
+
+/// Load the master key from a file at the given path.
+///
+/// Reads the whole file as UTF-8, trims whitespace, and delegates to
+/// [`MasterKey::from_hex`].
+///
+/// # Errors
+///
+/// - [`KeystoreError::FileRead`] wrapping the underlying [`std::io::Error`]
+///   if the file cannot be opened or read.
+/// - [`KeystoreError::InvalidHex`] or [`KeystoreError::InvalidLength`] if
+///   the file contents are not a valid 32-byte hex-encoded key.
+async fn load_file(path: &std::path::Path) -> Result<MasterKey, KeystoreError> {
+    let hex = tokio::fs::read_to_string(path).await?;
     MasterKey::from_hex(&hex)
 }
 
