@@ -50,7 +50,7 @@ export function DriveSidebar({
                 </Button>
             </div>
 
-            <div className="flex-1 space-y-0.5 overflow-y-auto w-full">
+            <div className="flex-1 space-y-0.5 overflow-y-auto overflow-x-hidden w-full">
                 <nav className="space-y-0.5">
                     <SidebarItem
                         icon={Home}
