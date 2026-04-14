@@ -6,6 +6,7 @@ pub mod handlers;
 pub mod imap;
 pub mod jmap;
 pub mod models;
+pub mod oauth_consumer;
 pub mod openapi;
 pub mod queue;
 pub mod sieve;
@@ -22,6 +23,7 @@ use signapps_sharing::{ResourceType, SharingEngine};
 use signapps_common::middleware::{auth_middleware, tenant_context_middleware, AuthState};
 use signapps_common::pg_events::{PgEventBus, PlatformEvent};
 use signapps_common::{AiIndexerClient, JwtConfig};
+use signapps_keystore::{Keystore, KeystoreBackend, TokenColumnSpec};
 use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
 use tokio::time::Duration;
 use tower_http::{
@@ -72,6 +74,37 @@ async fn main() {
     let jwt_config = JwtConfig::from_env();
 
     let event_bus = PgEventBus::new(pool.clone(), "signapps-mail".to_string());
+
+    // ── Keystore + boot guardrail ────────────────────────────────────────────
+    // Load the master key from env (KEYSTORE_MASTER_KEY). If the env var is
+    // absent we log a warning and continue — this allows running in test/dev
+    // environments without a keystore.
+    let keystore = Keystore::init(KeystoreBackend::EnvVar).await;
+    if let Err(ref e) = keystore {
+        tracing::warn!("Keystore unavailable ({}); OAuth token guardrail skipped", e);
+    }
+    if keystore.is_ok() {
+        if let Err(e) = signapps_keystore::assert_tokens_encrypted(
+            &pool,
+            &[TokenColumnSpec {
+                table: "mail.accounts",
+                text_col: "oauth_refresh_token",
+                enc_col: "oauth_refresh_token_enc",
+            }],
+        )
+        .await
+        {
+            tracing::error!("Plaintext OAuth token guardrail failed: {}", e);
+            std::process::exit(1);
+        }
+    }
+
+    // ── OAuth consumer ───────────────────────────────────────────────────────
+    // Subscribes to oauth.tokens.acquired events and upserts into mail.accounts.
+    oauth_consumer::spawn_consumer(
+        pool.clone(),
+        std::sync::Arc::new(PgEventBus::new(pool.clone(), "signapps-mail".to_string())),
+    );
 
     let state = AppState {
         pool: pool.clone(),

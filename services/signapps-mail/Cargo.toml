@@ -19,6 +19,9 @@ chrono = { version = "0.4", features = ["serde"] }
 
 # Authentication
 signapps-common = { path = "../../crates/signapps-common" }
+signapps-oauth = { path = "../../crates/signapps-oauth" }
+signapps-keystore = { path = "../../crates/signapps-keystore" }
+anyhow = { workspace = true }
 signapps-sharing = { path = "../../crates/signapps-sharing" }
 signapps-cache = { path = "../../crates/signapps-cache" }
 
