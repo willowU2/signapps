@@ -458,6 +458,131 @@ pub async fn delete_provider(
     Ok(Json(serde_json::json!({ "ok": true })))
 }
 
+// ── Test endpoint types ───────────────────────────────────────────────────────
+
+/// Body for `POST /api/v1/admin/oauth-providers/:key/test`.
+///
+/// Admins can supply transient credentials for an in-flight smoke test
+/// without saving them first. If `client_id` and `client_secret` are
+/// omitted the saved (encrypted) credentials are used instead.
+#[derive(Debug, Deserialize)]
+pub struct TestProviderBody {
+    /// Transient client ID — if absent, the saved encrypted one is used.
+    pub client_id: Option<String>,
+    /// Transient client secret — if absent, the saved encrypted one is used.
+    pub client_secret: Option<String>,
+    /// Extra provider params (e.g. `{"tenant": "common"}` for Microsoft).
+    pub extra_params: Option<serde_json::Value>,
+    /// OAuth purpose to test (e.g. `Login`, `Integration`).
+    pub purpose: signapps_oauth::OAuthPurpose,
+    /// Where the browser lands after the OAuth dance completes.
+    ///
+    /// Defaults to `/admin/oauth-providers?test=1`.
+    pub redirect_after: Option<String>,
+}
+
+/// Response for `POST /api/v1/admin/oauth-providers/:key/test`.
+#[derive(Debug, Serialize)]
+pub struct TestProviderResponse {
+    /// The provider's authorization URL — open this in a browser to run the flow.
+    pub authorization_url: String,
+    /// Internal flow ID for log correlation.
+    pub flow_id: uuid::Uuid,
+    /// Human-readable note for the caller.
+    pub note: String,
+}
+
+// ── Handlers (continued) ──────────────────────────────────────────────────────
+
+/// POST /api/v1/admin/oauth-providers/:key/test
+///
+/// Runs `EngineV2::start` with the supplied (or saved) credentials and returns
+/// the `authorization_url` so the admin can click through the flow manually.
+/// Nothing is persisted — this is a pure smoke test.
+///
+/// If `client_id` + `client_secret` are present in the body they are used
+/// as-is (no save). Otherwise the saved encrypted credentials are loaded and
+/// decrypted on the fly.
+///
+/// # Errors
+///
+/// - `Error::Forbidden` if the caller is not an admin or has no `tenant_id`.
+/// - `Error::NotFound` if the provider has no saved config and no credentials
+///   were supplied in the body.
+/// - `Error::BadRequest` / `Error::Forbidden` / `Error::ExternalService` for
+///   OAuth engine errors (purpose not allowed, provider disabled, etc.).
+/// - `Error::Internal` on unexpected failures.
+#[instrument(skip(state, claims, body), fields(user_id = %claims.sub, provider_key = %provider_key))]
+pub async fn test_provider(
+    Path(provider_key): Path<String>,
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Json(body): Json<TestProviderBody>,
+) -> Result<Json<TestProviderResponse>, Error> {
+    use signapps_oauth::{ResolvedCredentials, StartRequest};
+
+    require_admin(&claims)?;
+    let tenant_id = claims
+        .tenant_id
+        .ok_or_else(|| Error::Forbidden("no tenant_id in token".into()))?;
+
+    // Build resolved credentials: either inline from the body or decrypted from
+    // the saved config.
+    let creds: ResolvedCredentials = match (&body.client_id, &body.client_secret) {
+        (Some(id), Some(secret)) => ResolvedCredentials {
+            client_id: id.clone(),
+            client_secret: secret.clone(),
+            extra_params: body
+                .extra_params
+                .as_ref()
+                .and_then(|v| serde_json::from_value(v.clone()).ok())
+                .unwrap_or_default(),
+            override_id: None,
+        },
+        _ => {
+            // Fall back to saved + encrypted credentials.
+            let cfg = state
+                .oauth_engine_state
+                .configs
+                .get(tenant_id, &provider_key)
+                .await
+                .map_err(crate::handlers::oauth::error::oauth_error_to_app_error)?
+                .ok_or_else(|| {
+                    Error::NotFound("no saved credentials and none supplied in body".into())
+                })?;
+            crate::handlers::oauth::creds::resolve_credentials(&cfg, &state.keystore)
+                .map_err(crate::handlers::oauth::error::oauth_error_to_app_error)?
+        }
+    };
+
+    let req = StartRequest {
+        tenant_id,
+        provider_key: provider_key.clone(),
+        user_id: Some(claims.sub),
+        purpose: body.purpose,
+        redirect_after: body
+            .redirect_after
+            .or_else(|| Some("/admin/oauth-providers?test=1".into())),
+        requested_scopes: vec![],
+        override_client_id: None,
+    };
+
+    let resp = state
+        .oauth_engine_state
+        .engine
+        .start(req, creds)
+        .await
+        .map_err(crate::handlers::oauth::error::oauth_error_to_app_error)?;
+
+    Ok(Json(TestProviderResponse {
+        authorization_url: resp.authorization_url,
+        flow_id: resp.flow_id,
+        note: "Open this URL in a browser to complete the test flow. \
+               The result lands at the redirect_after URL."
+            .into(),
+    }))
+}
+
 // ── Private helpers ───────────────────────────────────────────────────────────
 
 /// Assert that the caller holds at least admin role (role >= 2).

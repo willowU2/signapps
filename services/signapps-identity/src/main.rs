@@ -644,6 +644,11 @@ fn create_router(state: AppState) -> Router {
             "/api/v1/admin/oauth-providers/:key",
             delete(handlers::admin::oauth_providers::delete_provider),
         )
+        // P6T2: smoke-test endpoint — runs engine.start, returns authorization_url, no persist
+        .route(
+            "/api/v1/admin/oauth-providers/:key/test",
+            post(handlers::admin::oauth_providers::test_provider),
+        )
         .layer(axum_middleware::from_fn(require_admin))
         .layer(axum_middleware::from_fn_with_state(
             state.clone(),
