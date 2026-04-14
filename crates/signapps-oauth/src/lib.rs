@@ -9,6 +9,7 @@
 mod catalog;
 mod config_store;
 mod error;
+pub mod pkce;
 mod protocol;
 mod provider;
 mod scope;

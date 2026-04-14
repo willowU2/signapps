@@ -8,11 +8,12 @@ description = "OAuth2/OIDC/SAML unified state machine, catalog, and scope resolv
 publish = false
 
 [dependencies]
-# Crypto primitives for HMAC state signing
+# Crypto primitives for HMAC state signing and PKCE verifier generation
 hmac = { workspace = true }
 sha2 = { workspace = true }
 subtle = { workspace = true }
 base64 = { workspace = true }
+rand = { workspace = true }
 # Catalog
 serde = { workspace = true }
 serde_json = { workspace = true }
