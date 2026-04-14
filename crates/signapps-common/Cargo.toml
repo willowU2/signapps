@@ -8,6 +8,9 @@ license.workspace = true
 description = "Shared utilities and types for SignApps Platform"
 
 [dependencies]
+# Keystore (cryptographic key management)
+signapps-keystore = { path = "../signapps-keystore" }
+
 # Extracted domain crates (re-exported for backward compat)
 signapps-audit = { path = "../signapps-audit" }
 signapps-accounting-fec = { path = "../signapps-accounting-fec" }

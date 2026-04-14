@@ -38,3 +38,125 @@ pub enum CryptoError {
     #[error("AES-GCM operation failed: {0}")]
     AesGcm(String),
 }
+
+/// Current ciphertext format version.
+///
+/// Format: `VERSION(1) || NONCE(12) || CIPHERTEXT_AND_TAG(...)`. The
+/// version byte enables future key rotation without downtime: deployers
+/// can run with multiple DEKs and attempt each one in order of version.
+pub const CURRENT_VERSION: u8 = 0x01;
+
+/// Size of the AES-GCM nonce in bytes.
+pub const NONCE_LEN: usize = 12;
+
+/// Size of the AES-GCM authentication tag in bytes.
+pub const TAG_LEN: usize = 16;
+
+/// Minimum valid ciphertext size: version + nonce + empty-plaintext tag.
+pub const MIN_CT_LEN: usize = 1 + NONCE_LEN + TAG_LEN;
+
+/// Trait for fields stored encrypted at rest.
+///
+/// Implemented for the unit type `()` as the default AES-256-GCM primitive.
+/// Tokens, secrets, and PII fields call `<()>::encrypt(&plaintext, dek)`
+/// before DB writes and `<()>::decrypt(&ciphertext, dek)` after DB reads.
+///
+/// # Examples
+///
+/// ```no_run
+/// # use signapps_common::crypto::{CryptoError, EncryptedField};
+/// # use signapps_keystore::DataEncryptionKey;
+/// fn store_token(token: &str, dek: &DataEncryptionKey) -> Result<Vec<u8>, CryptoError> {
+///     <()>::encrypt(token.as_bytes(), dek)
+/// }
+///
+/// fn read_token(ciphertext: &[u8], dek: &DataEncryptionKey) -> Result<String, CryptoError> {
+///     let plaintext = <()>::decrypt(ciphertext, dek)?;
+///     Ok(String::from_utf8(plaintext).expect("token was UTF-8 when encrypted"))
+/// }
+/// ```
+pub trait EncryptedField: Sized {
+    /// Encrypt a plaintext byte slice with the given DEK.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`CryptoError::AesGcm`] if the AES-GCM primitive fails
+    /// (extremely rare — implies a broken crypto library or an invalid
+    /// key size which this wrapper should statically prevent).
+    fn encrypt(
+        plaintext: &[u8],
+        dek: &signapps_keystore::DataEncryptionKey,
+    ) -> Result<Vec<u8>, CryptoError>;
+
+    /// Decrypt a ciphertext byte slice with the given DEK.
+    ///
+    /// # Errors
+    ///
+    /// - [`CryptoError::TooShort`] if `ciphertext.len() < MIN_CT_LEN`
+    /// - [`CryptoError::UnsupportedVersion`] if the version byte is not
+    ///   [`CURRENT_VERSION`] (`0x01`)
+    /// - [`CryptoError::AesGcm`] if the authentication tag does not verify
+    ///   (tampered ciphertext, wrong key, or wrong nonce)
+    fn decrypt(
+        ciphertext: &[u8],
+        dek: &signapps_keystore::DataEncryptionKey,
+    ) -> Result<Vec<u8>, CryptoError>;
+}
+
+impl EncryptedField for () {
+    fn encrypt(
+        plaintext: &[u8],
+        dek: &signapps_keystore::DataEncryptionKey,
+    ) -> Result<Vec<u8>, CryptoError> {
+        use aes_gcm::aead::{Aead, KeyInit};
+        use aes_gcm::{Aes256Gcm, Nonce};
+        use rand::RngCore;
+
+        let cipher = Aes256Gcm::new_from_slice(dek.expose_bytes())
+            .map_err(|e| CryptoError::AesGcm(e.to_string()))?;
+
+        let mut nonce_bytes = [0u8; NONCE_LEN];
+        rand::thread_rng().fill_bytes(&mut nonce_bytes);
+        let nonce = Nonce::from_slice(&nonce_bytes);
+
+        let ct_and_tag = cipher
+            .encrypt(nonce, plaintext)
+            .map_err(|e| CryptoError::AesGcm(e.to_string()))?;
+
+        let mut out = Vec::with_capacity(1 + NONCE_LEN + ct_and_tag.len());
+        out.push(CURRENT_VERSION);
+        out.extend_from_slice(&nonce_bytes);
+        out.extend_from_slice(&ct_and_tag);
+        Ok(out)
+    }
+
+    fn decrypt(
+        ciphertext: &[u8],
+        dek: &signapps_keystore::DataEncryptionKey,
+    ) -> Result<Vec<u8>, CryptoError> {
+        use aes_gcm::aead::{Aead, KeyInit};
+        use aes_gcm::{Aes256Gcm, Nonce};
+
+        if ciphertext.len() < MIN_CT_LEN {
+            return Err(CryptoError::TooShort(ciphertext.len()));
+        }
+        if ciphertext[0] != CURRENT_VERSION {
+            return Err(CryptoError::UnsupportedVersion(ciphertext[0]));
+        }
+
+        let nonce = Nonce::from_slice(&ciphertext[1..1 + NONCE_LEN]);
+        let ct_and_tag = &ciphertext[1 + NONCE_LEN..];
+
+        let cipher = Aes256Gcm::new_from_slice(dek.expose_bytes())
+            .map_err(|e| CryptoError::AesGcm(e.to_string()))?;
+
+        cipher
+            .decrypt(nonce, ct_and_tag)
+            .map_err(|e| CryptoError::AesGcm(e.to_string()))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    include!("crypto/tests.rs");
+}
