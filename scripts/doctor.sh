@@ -36,6 +36,18 @@ echo "  Prerequisites:"
 check ".env exists" "[ -f '$BASE_DIR/.env' ]"
 check ".env has JWT_SECRET" "grep -q '^JWT_SECRET=' '$BASE_DIR/.env'"
 check ".env has DATABASE_URL" "grep -q '^DATABASE_URL=' '$BASE_DIR/.env'"
+# Load .env so KEYSTORE_MASTER_KEY is available even when not exported in the shell
+# shellcheck disable=SC1091
+[ -f "$BASE_DIR/.env" ] && { set -a; source "$BASE_DIR/.env"; set +a; } 2>/dev/null || true
+_ks_msg=$(bash "$BASE_DIR/scripts/doctor-checks/keystore.sh" 2>&1) && _ks_ok=0 || _ks_ok=$?
+if [ "${_ks_ok:-0}" -eq 0 ]; then
+    echo -e "  ${GREEN}[OK]${NC}   ${_ks_msg}"
+    PASS=$((PASS+1))
+else
+    echo -e "  ${RED}[FAIL]${NC} ${_ks_msg}"
+    FAIL=$((FAIL+1))
+fi
+unset _ks_msg _ks_ok
 check "PostgreSQL (port 5432)" "curl -s --max-time 2 http://localhost:5432 2>&1 | grep -q '' || docker exec signapps-postgres pg_isready -U signapps"
 
 echo ""
