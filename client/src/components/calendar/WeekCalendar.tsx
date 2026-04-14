@@ -7,7 +7,6 @@ import {
   endOfWeek,
   eachDayOfInterval,
   isToday,
-  addDays,
   getHours,
   getMinutes,
   differenceInMinutes,
@@ -20,8 +19,6 @@ import {
 } from "@/stores/calendar-store";
 import { useEvents } from "@/hooks/use-events";
 import { Event } from "@/types/calendar";
-import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 import {
   DragCreateLayer,
   useDragCreate,
@@ -113,7 +110,6 @@ export function WeekCalendar({
   onCreateEvent,
 }: WeekCalendarProps) {
   const currentDate = useCalendarStore((state) => state.currentDate);
-  const setCurrentDate = useCalendarStore((state) => state.setCurrentDate);
   const { selectedEventId, selectEvent } = useCalendarSelection();
   const timezones = useCalendarTimezones();
 
@@ -161,13 +157,6 @@ export function WeekCalendar({
     return grouped;
   }, [singleDayEvents]);
 
-  const handlePrevWeek = () => {
-    setCurrentDate(addDays(currentDate, -7));
-  };
-
-  const handleNextWeek = () => {
-    setCurrentDate(addDays(currentDate, 7));
-  };
 
   // Drag-create handler: converts DragSelection to Date pair → opens EventForm
   const { handleCreate } = useDragCreate(
@@ -195,26 +184,11 @@ export function WeekCalendar({
   return (
     <div className="flex flex-col h-full overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-2 border-b shrink-0">
+      <div className="flex items-center px-4 py-2 border-b shrink-0">
         <h2 className="text-base font-semibold">
           {format(weekStart, "d MMM", { locale: undefined })} –{" "}
           {format(weekEnd, "d MMM yyyy")}
         </h2>
-        <div className="flex gap-2">
-          <Button variant="outline" size="icon" onClick={handlePrevWeek}>
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setCurrentDate(new Date())}
-          >
-            Aujourd'hui
-          </Button>
-          <Button variant="outline" size="icon" onClick={handleNextWeek}>
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
       </div>
 
       {/* Grid Header */}
