@@ -627,6 +627,23 @@ fn create_router(state: AppState) -> Router {
         .route("/api/v1/tenants/:id/branding", delete(handlers::branding::reset_branding))
         // Database backup moved to signapps-backup service (port 3031).
         // Gateway forwards /api/v1/admin/backup* → signapps-backup:3031.
+        // OAuth provider admin CRUD (P6T1)
+        .route(
+            "/api/v1/admin/oauth-providers",
+            get(handlers::admin::oauth_providers::list_providers),
+        )
+        .route(
+            "/api/v1/admin/oauth-providers/:key",
+            get(handlers::admin::oauth_providers::get_provider),
+        )
+        .route(
+            "/api/v1/admin/oauth-providers/:key",
+            post(handlers::admin::oauth_providers::upsert_provider),
+        )
+        .route(
+            "/api/v1/admin/oauth-providers/:key",
+            delete(handlers::admin::oauth_providers::delete_provider),
+        )
         .layer(axum_middleware::from_fn(require_admin))
         .layer(axum_middleware::from_fn_with_state(
             state.clone(),

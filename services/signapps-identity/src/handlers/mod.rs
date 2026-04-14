@@ -1,6 +1,7 @@
 //! HTTP handlers for the Identity service.
 
 // activities moved to signapps-compliance service (port 3032)
+pub mod admin;
 pub mod admin_security;
 pub mod api_keys;
 // audit_logs moved to signapps-compliance service (port 3032)
