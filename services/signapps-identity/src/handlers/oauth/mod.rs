@@ -16,6 +16,7 @@
 //! P3T10 wires in the credential resolver (keystore-backed decrypt of
 //! `client_id_enc` / `client_secret_enc` from `oauth_provider_configs`).
 
+pub mod creds;
 pub mod error;
 
 use axum::{
@@ -26,7 +27,7 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 use signapps_common::Error as AppError;
-use signapps_oauth::{OAuthPurpose, ProviderSummary};
+use signapps_oauth::{OAuthError, OAuthPurpose, ProviderSummary, StartRequest};
 use std::sync::Arc;
 use tracing::instrument;
 use uuid::Uuid;
@@ -147,48 +148,69 @@ pub struct StartFlowBody {
 
 /// Initiate an OAuth authorization flow.
 ///
+/// Loads the tenant's [`signapps_oauth::ProviderConfig`] from the config store,
+/// decrypts credentials via the keystore, and delegates to [`EngineV2::start`]
+/// which builds the full authorization URL (with PKCE, state, scope resolution).
+///
 /// # Errors
 ///
-/// Returns 503 until P3T10 wires in the credential resolver.
-/// After P3T10:
-/// - [`AppError::BadRequest`] — provider not configured / scope not allowed.
-/// - [`AppError::Forbidden`] — purpose not allowed / user access denied.
+/// - [`AppError::BadRequest`] — provider not configured for this tenant, disabled,
+///   requested scope not allowed, or required parameter missing.
+/// - [`AppError::Forbidden`] — purpose not allowed or user access denied.
 /// - [`AppError::NotFound`] — provider key not in catalog.
+/// - [`AppError::Internal`] — crypto failure (DEK unavailable or decryption error).
 /// - [`AppError::ExternalService`] — provider returned an error.
 ///
 /// # Panics
 ///
 /// No panics — all errors propagate via `Result`.
-#[instrument(skip(_state, body), fields(provider = %provider, tenant = ?body.tenant_id))]
+#[instrument(skip(state, body), fields(provider = %provider, tenant = ?body.tenant_id))]
 pub async fn start_flow(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Path(provider): Path<String>,
     Json(body): Json<StartFlowBody>,
-) -> Result<impl IntoResponse, AppError> {
-    tracing::warn!(
+) -> Result<Json<signapps_oauth::StartResponse>, AppError> {
+    // 1. Load tenant config from the config store.
+    let cfg_opt = state
+        .oauth_engine_state
+        .configs
+        .get(body.tenant_id, &provider)
+        .await
+        .map_err(error::oauth_error_to_app_error)?;
+    let cfg = cfg_opt
+        .ok_or_else(|| error::oauth_error_to_app_error(OAuthError::ProviderNotConfigured))?;
+
+    // 2. Decrypt credentials via keystore.
+    let resolved_creds = creds::resolve_credentials(&cfg, &state.keystore)
+        .map_err(error::oauth_error_to_app_error)?;
+
+    // 3. Build the StartRequest for the engine.
+    let req = StartRequest {
+        tenant_id: body.tenant_id,
+        provider_key: provider.clone(),
+        user_id: body.user_id,
+        purpose: body.purpose,
+        redirect_after: body.redirect_after,
+        requested_scopes: body.requested_scopes,
+        override_client_id: None,
+    };
+
+    // 4. Delegate to the engine — builds auth URL, signs FlowState, etc.
+    let resp = state
+        .oauth_engine_state
+        .engine
+        .start(req, resolved_creds)
+        .await
+        .map_err(error::oauth_error_to_app_error)?;
+
+    tracing::info!(
         provider = %provider,
         tenant_id = %body.tenant_id,
-        "start_flow called — credential resolver not yet wired (P3T10 pending)"
+        flow_id = %resp.flow_id,
+        "OAuth start_flow succeeded — authorization URL built"
     );
 
-    // P3T9 scaffold: return 503 with RFC 7807-like detail.
-    // P3T10 will:
-    //  1. Fetch ProviderConfig from state.oauth_engine_state.configs.get(tenant_id, &provider).
-    //  2. Decrypt client_id_enc / client_secret_enc via state.keystore.
-    //  3. Build ResolvedCredentials.
-    //  4. Call state.oauth_engine_state.engine.start(req, creds).await.
-    //  5. Return Json(StartResponse) or map OAuthError via oauth_error_to_app_error.
-    let body = serde_json::json!({
-        "type": "urn:signapps:error:service_unavailable",
-        "title": "Service Unavailable",
-        "status": 503,
-        "detail": "OAuth credential resolver is not yet wired (P3T10 pending). \
-                   The engine is functional but HTTP handlers need keystore \
-                   integration before they can issue real authorization URLs.",
-        "error_code": "OAUTH_NOT_WIRED"
-    });
-
-    Ok((StatusCode::SERVICE_UNAVAILABLE, Json(body)))
+    Ok(Json(resp))
 }
 
 // ---------------------------------------------------------------------------
@@ -254,25 +276,23 @@ pub async fn callback(
         "callback called — credential resolver not yet wired (P3T10 pending)"
     );
 
-    // P3T9 scaffold: return 503.
-    // P3T10 will:
-    //  1. Verify the `state` param is present (else 400).
+    // TODO(Plan 4): Wire full callback implementation.
+    //  1. Verify `state` param is present (else 400).
     //  2. Decrypt FlowState to recover tenant_id + provider_key.
     //  3. Fetch ProviderConfig + decrypt credentials via state.keystore.
-    //  4. Build ResolvedCredentials.
+    //  4. Build ResolvedCredentials via creds::resolve_credentials.
     //  5. Call state.oauth_engine_state.engine.callback(cb, creds, &http_client).await.
-    //  6. Re-encrypt tokens via state.keystore + persist to oauth_tokens table (Plan 4).
-    //  7. Emit oauth.tokens.acquired event on PgEventBus (Plan 4).
+    //  6. Re-encrypt tokens via state.keystore + persist to oauth_tokens table (Plan 4 token storage).
+    //  7. Emit oauth.tokens.acquired event on PgEventBus (Plan 4 event bus).
     //  8. Build session JWT if purpose == Login.
     //  9. Redirect to CallbackResponse.redirect_to.
     let body = serde_json::json!({
         "type": "urn:signapps:error:service_unavailable",
         "title": "Service Unavailable",
         "status": 503,
-        "detail": "OAuth credential resolver is not yet wired (P3T10 pending). \
-                   The callback route is registered and reachable, but token \
-                   exchange requires keystore integration.",
-        "error_code": "OAUTH_NOT_WIRED"
+        "detail": "OAuth callback handler not yet wired — token storage and event bus \
+                   integration are required (Plan 4).",
+        "error_code": "OAUTH_CALLBACK_NOT_WIRED"
     });
 
     Ok((StatusCode::SERVICE_UNAVAILABLE, Json(body)))
@@ -284,6 +304,6 @@ mod tests {
     fn module_compiles() {
         // Verify this handler module compiles correctly.
         // Integration tests require a running database and service.
-        assert!(true, "{} handler module loaded", module_path!());
+        let _ = module_path!();
     }
 }
