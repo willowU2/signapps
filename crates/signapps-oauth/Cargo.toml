@@ -42,3 +42,4 @@ url = "2"
 
 [dev-dependencies]
 tokio = { workspace = true }
+wiremock = "0.6"

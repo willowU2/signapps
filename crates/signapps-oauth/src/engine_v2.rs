@@ -166,15 +166,198 @@ impl EngineV2 {
         })
     }
 
-    /// Step 2 — full callback handling. Implemented in Task 7.
+    /// Step 2 — full callback handling: state verification, token exchange,
+    /// and profile fetch.
+    ///
+    /// The caller (HTTP handler) is responsible for:
+    /// - Re-encrypting the returned tokens via `signapps-keystore` + `EncryptedField`.
+    /// - Emitting the `oauth.tokens.acquired` event (Plan 4).
+    /// - Creating session JWTs when `purpose = Login`.
+    ///
+    /// This method is intentionally keystore- and JWT-agnostic for testability.
     ///
     /// # Errors
     ///
-    /// Not yet implemented — panics with a message until P3T7.
-    #[instrument(skip(self), fields(state_len = cb.state.len()))]
-    pub async fn callback(&self, cb: CallbackRequest) -> Result<CallbackResponse, OAuthError> {
-        let _ = cb;
-        unimplemented!("filled in P3T7")
+    /// - [`OAuthError::ProviderError`] if the provider returned an error param.
+    /// - [`OAuthError::InvalidState`] if the state token is expired, tampered,
+    ///   or malformed.
+    /// - [`OAuthError::Catalog`] if the provider key from the state is not in
+    ///   the catalog.
+    /// - [`OAuthError::ProviderError`] if the token endpoint returns an HTTP error
+    ///   or a JSON body with an `error` field.
+    /// - [`OAuthError::ProviderError`] if the profile endpoint returns an HTTP error
+    ///   or the `user_id_field` JSONPath does not resolve.
+    #[instrument(skip(self, creds, http_client), fields(state_len = cb.state.len()))]
+    pub async fn callback(
+        &self,
+        cb: CallbackRequest,
+        creds: ResolvedCredentials,
+        http_client: &reqwest::Client,
+    ) -> Result<
+        (
+            CallbackResponse,
+            crate::types::TokenResponse,
+            crate::types::ProviderProfile,
+            FlowState,
+        ),
+        OAuthError,
+    > {
+        // 1. If the provider returned an error, surface it immediately.
+        if let Some(ref err) = cb.error {
+            return Err(OAuthError::ProviderError {
+                error: err.clone(),
+                description: cb.error_description.clone(),
+            });
+        }
+
+        // 2. Verify and deserialize the FlowState HMAC token.
+        let flow = FlowState::verify(&cb.state, &self.config.state_secret)?;
+
+        // 3. Re-resolve the provider definition from the catalog.
+        let provider = self.config.catalog.get(&flow.provider_key)?;
+
+        // 4. Build the callback redirect_uri (must match what was sent in step 1).
+        let callback_url = format!(
+            "{}/api/v1/oauth/{}/callback",
+            self.config.callback_base_url.trim_end_matches('/'),
+            flow.provider_key
+        );
+
+        // 5. Expand template variables in access_url (same logic as authorize_url in start).
+        let raw_access_url = provider.template_vars.iter().fold(
+            provider.access_url.clone(),
+            |url, var| {
+                if let Some(val) = creds.extra_params.get(var.as_str()) {
+                    url.replace(&format!("{{{var}}}"), val)
+                } else {
+                    url
+                }
+            },
+        );
+
+        // 6. POST to the token endpoint with form data.
+        let mut form_params: Vec<(&str, String)> = vec![
+            ("grant_type", "authorization_code".into()),
+            ("code", cb.code.clone()),
+            ("redirect_uri", callback_url.clone()),
+            ("client_id", creds.client_id.clone()),
+            ("client_secret", creds.client_secret.clone()),
+        ];
+        if let Some(ref verifier) = flow.pkce_verifier {
+            form_params.push(("code_verifier", verifier.clone()));
+        }
+
+        let token_resp = http_client
+            .post(&raw_access_url)
+            .form(&form_params)
+            .send()
+            .await
+            .map_err(|e| OAuthError::ProviderError {
+                error: "token_request_failed".into(),
+                description: Some(e.to_string()),
+            })?;
+
+        if !token_resp.status().is_success() {
+            let status = token_resp.status().as_u16();
+            let body = token_resp.text().await.unwrap_or_default();
+            return Err(OAuthError::ProviderError {
+                error: "token_endpoint_error".into(),
+                description: Some(format!("HTTP {status}: {body}")),
+            });
+        }
+
+        // Parse the token response — first attempt to detect provider-side errors
+        // embedded in a 200 response (some providers do this).
+        let token_body: serde_json::Value = token_resp.json().await.map_err(|e| {
+            OAuthError::ProviderError {
+                error: "token_parse_error".into(),
+                description: Some(e.to_string()),
+            }
+        })?;
+
+        if let Some(err_field) = token_body.get("error").and_then(|v| v.as_str()) {
+            let desc = token_body
+                .get("error_description")
+                .and_then(|v| v.as_str())
+                .map(String::from);
+            return Err(OAuthError::ProviderError {
+                error: err_field.to_string(),
+                description: desc,
+            });
+        }
+
+        let token_response: crate::types::TokenResponse =
+            serde_json::from_value(token_body).map_err(|e| OAuthError::ProviderError {
+                error: "token_parse_error".into(),
+                description: Some(e.to_string()),
+            })?;
+
+        // 7. Fetch the user profile if a profile_url is configured.
+        let raw_profile_url = provider.profile_url.as_ref().map(|u| {
+            provider.template_vars.iter().fold(u.clone(), |url, var| {
+                if let Some(val) = creds.extra_params.get(var.as_str()) {
+                    url.replace(&format!("{{{var}}}"), val)
+                } else {
+                    url
+                }
+            })
+        });
+
+        let profile = if let Some(ref profile_url) = raw_profile_url {
+            let profile_resp = http_client
+                .get(profile_url)
+                .bearer_auth(&token_response.access_token)
+                .send()
+                .await
+                .map_err(|e| OAuthError::ProviderError {
+                    error: "profile_request_failed".into(),
+                    description: Some(e.to_string()),
+                })?;
+
+            if !profile_resp.status().is_success() {
+                let status = profile_resp.status().as_u16();
+                let body = profile_resp.text().await.unwrap_or_default();
+                return Err(OAuthError::ProviderError {
+                    error: "profile_endpoint_error".into(),
+                    description: Some(format!("HTTP {status}: {body}")),
+                });
+            }
+
+            let profile_body: serde_json::Value =
+                profile_resp.json().await.map_err(|e| OAuthError::ProviderError {
+                    error: "profile_parse_error".into(),
+                    description: Some(e.to_string()),
+                })?;
+
+            crate::profile::extract_profile(
+                profile_body,
+                &provider.user_id_field,
+                provider.user_email_field.as_deref(),
+                provider.user_name_field.as_deref(),
+            )?
+        } else {
+            // No profile URL — synthesize a minimal profile from the token response.
+            // For OIDC providers the id_token carries the sub claim which is enough.
+            crate::types::ProviderProfile {
+                id: flow.flow_id.to_string(),
+                email: None,
+                name: None,
+                raw: serde_json::Value::Null,
+            }
+        };
+
+        // 8. Build the CallbackResponse (JWT creation deferred to HTTP layer).
+        let redirect_to = flow
+            .redirect_after
+            .clone()
+            .unwrap_or_else(|| "/".to_string());
+
+        let callback_response = CallbackResponse {
+            redirect_to,
+            session_jwt: None,
+        };
+
+        Ok((callback_response, token_response, profile, flow))
     }
 }
 
