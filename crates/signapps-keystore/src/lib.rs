@@ -25,6 +25,11 @@ pub struct Keystore {
 
 impl Keystore {
     /// Initialize a keystore from a backend.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`KeystoreError`] if the backend cannot load the master key
+    /// (missing env var, unreadable file, or remote KMS failure).
     #[instrument(skip(backend))]
     pub async fn init(backend: KeystoreBackend) -> Result<Self, KeystoreError> {
         let master_key = backend.load().await?;
@@ -35,12 +40,16 @@ impl Keystore {
     }
 
     /// Return the DEK for a given usage info, deriving + caching if needed.
+    ///
+    /// The returned `Arc` is cheap to clone and shares the same underlying key
+    /// material for subsequent calls with the same `info` label.
+    #[must_use]
     pub fn dek(&self, info: &'static str) -> Arc<DataEncryptionKey> {
-        if let Some(dek) = self.deks.get(info) {
-            return dek.clone();
-        }
-        let dek = Arc::new(DataEncryptionKey::derive_from(&self.master_key, info));
-        self.deks.insert(info, dek.clone());
-        dek
+        // `entry().or_insert_with(...)` is atomic: at most one thread derives
+        // the DEK for a given info label, even under concurrent access.
+        self.deks
+            .entry(info)
+            .or_insert_with(|| Arc::new(DataEncryptionKey::derive_from(&self.master_key, info)))
+            .clone()
     }
 }

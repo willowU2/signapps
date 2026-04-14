@@ -5,6 +5,10 @@ use async_trait::async_trait;
 use std::path::PathBuf;
 
 /// Where the master key is loaded from at boot.
+///
+/// Choose `EnvVar` for local development, `File` for self-hosted
+/// production (store the key in a file chmoded 0600), and `Remote` for
+/// enterprise deployments backed by a KMS service.
 pub enum KeystoreBackend {
     /// Dev/test only: load from `KEYSTORE_MASTER_KEY` env var (hex-encoded 32 bytes).
     EnvVar,
@@ -16,14 +20,28 @@ pub enum KeystoreBackend {
 
 impl KeystoreBackend {
     /// Load the master key from the configured backend.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`KeystoreError`] describing why loading failed:
+    /// - [`KeystoreError::EnvVarNotSet`] for the EnvVar backend
+    /// - [`KeystoreError::FileRead`] for the File backend
+    /// - [`KeystoreError::Remote`] for Remote KMS backends
+    /// - [`KeystoreError::InvalidHex`] or [`KeystoreError::InvalidLength`]
+    ///   if the loaded bytes are not a valid 32-byte hex-encoded key
     pub async fn load(&self) -> Result<MasterKey, KeystoreError> {
         unimplemented!("filled in Task 3 / Task 4 / Task 5")
     }
 }
 
-/// Trait for remote KMS backends (HashiCorp Vault, AWS KMS, Azure Key Vault).
+/// Trait for remote KMS backends (`HashiCorp Vault`, `AWS KMS`, `Azure Key Vault`).
 #[async_trait]
 pub trait RemoteKeystoreClient {
     /// Fetch the master key from the remote backend.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`KeystoreError::Remote`] with a description of the remote
+    /// failure (network error, authentication failure, missing key, etc.).
     async fn fetch_master_key(&self) -> Result<MasterKey, KeystoreError>;
 }

@@ -7,6 +7,9 @@ license.workspace = true
 description = "Master key management and per-usage DEK derivation for encryption at rest"
 publish = false
 
+# NOTE: Several deps below are declared here in Task 1 (scaffold) but only
+# used from Task 2+ onward. Declared up-front to minimize Cargo.toml churn
+# across the foundation tasks.
 [dependencies]
 aes-gcm = { workspace = true }
 hkdf = { workspace = true }
