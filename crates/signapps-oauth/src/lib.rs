@@ -18,6 +18,7 @@ mod protocol;
 mod provider;
 mod scope;
 mod state;
+pub mod token_table;
 mod types;
 
 pub use catalog::{Catalog, CatalogError};
@@ -33,6 +34,9 @@ pub use protocol::{OAuthPurpose, Protocol, ProviderCategory, TokenPlacement};
 pub use provider::{ProviderConfig, ProviderDefinition, ProviderSummary};
 pub use scope::{ScopeResolver, UserContext};
 pub use state::{FlowState, StateError};
+pub use token_table::{
+    CalendarConnectionsTable, EncryptedTokens, MailAccountsTable, SocialAccountsTable, TokenTable,
+};
 pub use types::{
     CallbackRequest, CallbackResponse, ProviderProfile, ResolvedCredentials, StartRequest,
     StartResponse, TokenResponse,
