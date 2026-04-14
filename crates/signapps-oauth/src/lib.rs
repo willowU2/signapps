@@ -7,6 +7,7 @@
 #![warn(missing_docs)]
 
 mod catalog;
+pub mod checkout;
 mod config_store;
 mod engine_v2;
 mod error;
@@ -35,6 +36,7 @@ pub use protocol::{OAuthPurpose, Protocol, ProviderCategory, TokenPlacement};
 pub use provider::{ProviderConfig, ProviderDefinition, ProviderSummary};
 pub use scope::{ScopeResolver, UserContext};
 pub use state::{FlowState, StateError};
+pub use checkout::{checkout_token, TokenCheckout, FRESHNESS_MARGIN};
 pub use refresh::{try_refresh, RefreshOutcome};
 pub use token_table::{
     CalendarConnectionsTable, EncryptedTokens, MailAccountsTable, SocialAccountsTable, TokenTable,
