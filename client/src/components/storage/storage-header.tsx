@@ -49,6 +49,17 @@ export function StorageHeader({
         <div className="flex items-center text-[22px] font-normal text-[#1f1f1f] dark:text-[#e3e3e3] overflow-hidden">
           {currentBucket ? (
             <>
+              <div className="flex items-center shrink-0">
+                <Button
+                  variant="ghost" 
+                  className="h-auto font-normal text-[22px] px-3 py-1.5 hover:bg-[#f1f3f4] dark:hover:bg-[#303134] rounded-full"
+                  onClick={() => onPathClick(-1)}
+                  title="Retourner à la racine du Drive"
+                >
+                  Mon Drive
+                </Button>
+                <ChevronRight className="h-5 w-5 mx-1 text-[#5f6368] dark:text-[#9aa0a6]" />
+              </div>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="h-auto font-normal text-[22px] px-3 py-1.5 hover:bg-[#f1f3f4] dark:hover:bg-[#303134] rounded-full gap-1">

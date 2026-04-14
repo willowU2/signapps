@@ -185,9 +185,15 @@ export function Header() {
               <li key={item.url} className="inline-flex items-center gap-1.5">
                 <span className="text-muted-foreground/40">/</span>
                 {item.isLast ? (
-                  <span className="text-xs font-semibold text-foreground">
+                  <button
+                    onClick={() => {
+                      const event = new CustomEvent("reset-navigation", { detail: { path: item.url } });
+                      window.dispatchEvent(event);
+                    }}
+                    className="text-xs font-semibold text-foreground hover:text-muted-foreground transition-colors"
+                  >
                     {item.label}
-                  </span>
+                  </button>
                 ) : (
                   <Link
                     href={item.url}

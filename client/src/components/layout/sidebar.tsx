@@ -573,6 +573,12 @@ export function Sidebar({ portalMode }: SidebarProps = {}) {
         href={safeHref}
         title={item.label}
         data-active={isActive}
+        onClick={(e) => {
+          if (isActive && safeHref !== "/") {
+            const event = new CustomEvent("reset-navigation", { detail: { path: safeHref } });
+            window.dispatchEvent(event);
+          }
+        }}
         className={cn(
           "sidebar-indicator flex items-center gap-4 py-2.5 min-h-[44px] text-sm font-medium transition-all duration-150",
           !isExpanded
@@ -645,6 +651,12 @@ export function Sidebar({ portalMode }: SidebarProps = {}) {
           href={safeHref}
           title={app.label}
           data-active={isActive}
+          onClick={(e) => {
+            if (isActive && safeHref !== "/") {
+              const event = new CustomEvent("reset-navigation", { detail: { path: safeHref } });
+              window.dispatchEvent(event);
+            }
+          }}
           className={cn(
             "sidebar-indicator flex flex-1 items-center gap-4 py-2.5 min-h-[44px] text-sm font-medium transition-all duration-150",
             !isExpanded

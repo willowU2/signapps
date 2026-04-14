@@ -40,9 +40,9 @@ export function useSidebarBadges() {
         badges.routes = routesRes.value.data.length;
       }
 
-      if (storageRes.status === 'fulfilled' && storageRes.value.data) {
-        badges.storage = storageRes.value.data.length;
-      }
+      // if (storageRes.status === 'fulfilled' && storageRes.value.data) {
+      //   badges.storage = storageRes.value.data.length;
+      // }
 
       // Mail unread count (placeholder: uses API if available, otherwise 0)
       if (mailRes.status === 'fulfilled' && mailRes.value?.unread_count != null) {
