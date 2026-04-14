@@ -30,6 +30,8 @@ signapps-keystore = { path = "../signapps-keystore" }
 async-trait = { workspace = true }
 # JSONPath for userinfo profile field extraction
 jsonpath_lib = "0.3"
+# JWT validation for OIDC id_token
+jsonwebtoken = { workspace = true }
 
 [build-dependencies]
 serde_json = { workspace = true }
