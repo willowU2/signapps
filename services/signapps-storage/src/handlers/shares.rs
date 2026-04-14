@@ -200,8 +200,12 @@ pub async fn create_share(
     .map_err(|e| Error::Internal(format!("Failed to create share: {}", e)))?;
 
     let base_url = std::env::var("NEXT_PUBLIC_STORAGE_URL")
-        .unwrap_or_else(|_| "http://localhost:3000/api/v1".into());
-    let url = format!("{}/shares/{}/access", base_url, token);
+        .unwrap_or_else(|_| "http://localhost:3004".into());
+    let base = base_url
+        .trim_end_matches('/')
+        .trim_end_matches("/api/v1")
+        .trim_end_matches('/');
+    let url = format!("{}/api/v1/shares/{}/access", base, token);
 
     tracing::info!(
         id = %share.id,
