@@ -18,8 +18,10 @@ path = "src/bin/seed.rs"
 
 [dependencies]
 # Internal crates
+signapps-cache = { path = "../../crates/signapps-cache" }
 signapps-common = { path = "../../crates/signapps-common" }
 signapps-db = { path = "../../crates/signapps-db", features = ["openapi"] }
+signapps-keystore = { path = "../../crates/signapps-keystore" }
 
 # Web framework
 axum = { workspace = true }
@@ -37,9 +39,6 @@ serde_json = { workspace = true }
 
 # Database
 sqlx = { workspace = true }
-
-# In-process cache
-signapps-cache = { path = "../../crates/signapps-cache" }
 
 # Authentication
 jsonwebtoken = { workspace = true }

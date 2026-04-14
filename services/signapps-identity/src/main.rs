@@ -17,6 +17,10 @@ use axum::{
 };
 use handlers::admin_security;
 use handlers::openapi::IdentityApiDoc;
+use std::sync::Arc;
+
+use anyhow::Context as _;
+use signapps_keystore::{Keystore, KeystoreBackend};
 use signapps_common::bootstrap::{init_tracing, load_env, ServiceConfig};
 use signapps_common::middleware::{
     auth_middleware, logging_middleware, request_id_middleware, require_admin,
@@ -73,12 +77,21 @@ async fn main() -> anyhow::Result<()> {
 
     // NOTE: Retention purge job moved to signapps-compliance service (port 3032).
 
+    // Load the keystore from environment — fails fast if KEYSTORE_MASTER_KEY is absent.
+    let keystore = Arc::new(
+        Keystore::init(KeystoreBackend::EnvVar)
+            .await
+            .context("failed to initialize signapps-keystore — is KEYSTORE_MASTER_KEY set?")?,
+    );
+    tracing::info!("keystore initialized");
+
     // Create application state
     let state = AppState {
         pool,
         jwt_secret: config.jwt_secret.clone(),
         jwt_config,
         cache,
+        keystore,
         security_policies: handlers::admin_security::SecurityPoliciesStore::new(),
         active_sessions: handlers::admin_security::ActiveSessionsStore::new(),
         login_attempts: handlers::admin_security::LoginAttemptsStore::new(),
@@ -99,6 +112,10 @@ pub struct AppState {
     pub jwt_secret: String,
     pub jwt_config: JwtConfig,
     pub cache: signapps_cache::CacheService,
+    /// Master keystore — loaded at boot, consumed by OAuth token encryption in Plan 2.
+    // consumed in Plan 2 OAuth handlers
+    #[allow(dead_code)]
+    pub keystore: Arc<Keystore>,
     /// In-memory security policies store (admin-managed).
     pub security_policies: handlers::admin_security::SecurityPoliciesStore,
     /// In-memory active sessions store.
