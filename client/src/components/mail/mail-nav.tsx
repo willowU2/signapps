@@ -63,20 +63,20 @@ export function MailNav({ isCollapsed, links }: NavProps) {
                             onClick={link.onClick}
                             className={cn(
                                 buttonVariants({ variant: link.variant, size: "sm" }),
-                                "justify-start cursor-pointer transition-all duration-200 rounded-r-full h-8 px-4 font-medium mr-3",
+                                "justify-start cursor-pointer transition-all duration-200 rounded-md mx-2 h-8 px-3 font-medium",
                                 link.variant === "default"
-                                    ? "bg-primary/15 text-primary font-bold dark:bg-primary/25 hover:bg-primary/25"
-                                    : "text-foreground/80 font-normal hover:bg-muted"
+                                    ? "bg-accent text-accent-foreground font-medium"
+                                    : "text-muted-foreground font-normal hover:bg-muted"
                             )}
                         >
-                            <link.icon className="mr-2.5 h-4 w-4" />
+                            <link.icon className="mr-2 h-4 w-4" />
                             {link.title}
                             {link.label && (
                                 <span
                                     className={cn(
-                                        "ml-auto text-xs font-semibold px-2 py-0.5 rounded-full transition-colors",
+                                        "ml-auto text-[11px] font-semibold px-2 py-0.5 rounded-md transition-colors",
                                         link.variant === "default"
-                                            ? "text-primary"
+                                            ? "text-foreground"
                                             : "text-muted-foreground"
                                     )}
                                 >
