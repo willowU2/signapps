@@ -20,5 +20,6 @@ hex = { workspace = true }
 thiserror = { workspace = true }
 tracing = { workspace = true }
 tokio = { workspace = true }
+zeroize = { workspace = true }
 async-trait = { workspace = true }
 signapps-common = { path = "../signapps-common" }
