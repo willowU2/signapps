@@ -26,6 +26,10 @@ impl DataEncryptionKey {
     /// within the allowed parameter range (255 * 32 bytes max).
     #[must_use]
     pub fn derive_from(master_key: &MasterKey, info: &str) -> Self {
+        // SAFETY NOTE: hkdf 0.12 does not zeroize its PRK on drop. The PRK
+        // lives in the stack-local `hk` for the duration of this function
+        // and is overwritten by subsequent stack frames. Not a memory-safe
+        // zeroize guarantee, but acceptable risk for a tight-scoped call.
         let hk = Hkdf::<Sha256>::new(None, &master_key.0);
         let mut okm = [0u8; 32];
         hk.expand(info.as_bytes(), &mut okm)
@@ -36,9 +40,9 @@ impl DataEncryptionKey {
     /// Expose the raw 32-byte key material.
     ///
     /// **Do not use** unless you are a cryptographic primitive (AES-GCM,
-    /// ChaCha20-Poly1305, etc.). Call sites should go through
-    /// [`EncryptedField`](../signapps_common/crypto/trait.EncryptedField.html)
-    /// in `signapps-common::crypto` instead.
+    /// ChaCha20-Poly1305, etc.). Call sites should go through the
+    /// `EncryptedField` trait in `signapps-common::crypto` (implemented
+    /// in Task 8).
     #[must_use]
     pub fn expose_bytes(&self) -> &[u8; 32] {
         &self.0

@@ -48,21 +48,26 @@ fn dek_is_not_equal_to_master_key() {
 
 #[test]
 fn known_test_vector_is_stable() {
-    // Regression test: if anyone changes the HKDF info/IKM/salt usage,
-    // this test flags it. Keeps the derivation API stable over time.
+    // HKDF-SHA256 regression vector.
+    //
+    // Fixed inputs:
+    //   IKM  = 0x0000...0001 (32 bytes, last byte = 0x01)
+    //   salt = None (HKDF treats as 32 zero bytes per RFC 5869 §3.1)
+    //   info = b"oauth-tokens-v1"
+    //   L    = 32 bytes
+    //
+    // Expected output computed offline against RFC 5869 and pinned below.
+    // If this test fails after intentional crypto changes, update the
+    // expected bytes and bump any on-disk DEK version.
     let mk = MasterKey::from_hex(
         "0000000000000000000000000000000000000000000000000000000000000001",
     )
     .unwrap();
     let dek = DataEncryptionKey::derive_from(&mk, "oauth-tokens-v1");
-    let first_byte = dek.expose_bytes()[0];
-    let last_byte = dek.expose_bytes()[31];
-    // Values recorded on first green run. If this test fails after
-    // intentional crypto changes, update the expected bytes below.
-    assert_eq!(dek.expose_bytes().len(), 32);
-    // Non-zero first byte (statistical sanity — 1/256 chance of zero for
-    // a random-looking derivative).
-    assert_ne!(first_byte, 0x00, "first byte should be non-zero in practice");
-    // Pin the full output shape, not specific bytes, to avoid brittleness.
-    let _ = last_byte; // Value used only for future pinning.
+
+    // Expected 32-byte output (pinned on first green run).
+    let expected_hex = "2356128f06fb3b6774e5b9aee8cf7fe86e108a5312cdb0258c5b8967b2b47cc0";
+    let expected = hex::decode(expected_hex).expect("valid hex");
+    assert_eq!(dek.expose_bytes(), expected.as_slice(),
+        "HKDF output drifted from pinned regression vector");
 }
