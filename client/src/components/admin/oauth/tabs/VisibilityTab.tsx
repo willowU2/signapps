@@ -1,9 +1,13 @@
 "use client";
 
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { Badge } from "@/components/ui/badge";
+import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
 import { Info } from "lucide-react";
+import { Label } from "@/components/ui/label";
+import {
+  VisibilityPicker,
+  type VisibilitySelection,
+} from "@/components/shared/VisibilityPicker";
 import type { ProviderConfigDetail } from "@/types/oauth-providers";
 
 interface Props {
@@ -11,101 +15,134 @@ interface Props {
   onChange: (patch: Partial<ProviderConfigDetail>) => void;
 }
 
+/**
+ * Visibility tab for the ProviderConfigDrawer.
+ *
+ * Shows a toggle between "all" (everyone) and "restricted" (scoped to
+ * org_nodes / groups / roles / users). When restricted, delegates to the
+ * reusable VisibilityPicker. All state is propagated up immediately via
+ * onChange so the parent Drawer save button captures the latest values.
+ */
 export function VisibilityTab({ detail, onChange }: Props) {
-  const isRestricted = detail.visibility === "restricted";
-  const totalRestrictions =
-    detail.visible_to_org_nodes.length +
-    detail.visible_to_groups.length +
-    detail.visible_to_roles.length +
-    detail.visible_to_users.length;
+  const [visibility, setVisibility] = useState<"all" | "restricted">(
+    detail.visibility,
+  );
+  const [selection, setSelection] = useState<VisibilitySelection>({
+    org_nodes: detail.visible_to_org_nodes,
+    groups: detail.visible_to_groups,
+    roles: detail.visible_to_roles,
+    users: detail.visible_to_users,
+  });
+
+  // Re-sync local state when the drawer opens for a different provider.
+  useEffect(() => {
+    setVisibility(detail.visibility);
+    setSelection({
+      org_nodes: detail.visible_to_org_nodes,
+      groups: detail.visible_to_groups,
+      roles: detail.visible_to_roles,
+      users: detail.visible_to_users,
+    });
+  }, [
+    detail.visibility,
+    detail.visible_to_org_nodes,
+    detail.visible_to_groups,
+    detail.visible_to_roles,
+    detail.visible_to_users,
+  ]);
+
+  function handleVisibilityChange(next: "all" | "restricted") {
+    setVisibility(next);
+    if (next === "all") {
+      onChange({
+        visibility: "all",
+        visible_to_org_nodes: [],
+        visible_to_groups: [],
+        visible_to_roles: [],
+        visible_to_users: [],
+      });
+    } else {
+      onChange({ visibility: "restricted" });
+    }
+  }
+
+  function handleSelectionChange(next: VisibilitySelection) {
+    setSelection(next);
+    onChange({
+      visible_to_org_nodes: next.org_nodes,
+      visible_to_groups: next.groups,
+      visible_to_roles: next.roles,
+      visible_to_users: next.users,
+    });
+  }
 
   return (
     <div className="space-y-6">
-      {/* Visibility mode toggle */}
-      <div className="flex items-center justify-between rounded-lg border border-border bg-muted/20 p-4">
-        <div className="space-y-0.5">
-          <Label className="text-sm font-semibold text-foreground">
-            Accès restreint
-          </Label>
-          <p className="text-xs text-muted-foreground">
-            Lorsqu&apos;activé, seuls les utilisateurs des entités sélectionnées
-            ci-dessous peuvent utiliser ce provider.
-          </p>
-        </div>
-        <Switch
-          checked={isRestricted}
-          onCheckedChange={(checked) =>
-            onChange({ visibility: checked ? "restricted" : "all" })
-          }
-        />
+      {/* Explanation banner */}
+      <div className="flex items-start gap-3 rounded-lg border border-border bg-muted/20 p-4 text-sm text-muted-foreground">
+        <Info className="h-4 w-4 mt-0.5 shrink-0 text-primary" />
+        <p>
+          Choisissez si <strong className="text-foreground">tous</strong> les
+          utilisateurs voient ce provider, ou restreignez l&apos;accès.
+          Visibilité = OR entre (org_nodes ∪ groupes ∪ rôles). Les utilisateurs
+          nominaux sont une whitelist prioritaire.
+        </p>
       </div>
 
-      {/* Info banner when unrestricted */}
-      {!isRestricted && (
+      {/* Visibility toggle */}
+      <div className="space-y-2">
+        <Label>Visibilité</Label>
+        <div className="flex gap-2">
+          <Button
+            type="button"
+            variant={visibility === "all" ? "default" : "outline"}
+            onClick={() => handleVisibilityChange("all")}
+            size="sm"
+          >
+            Tous
+          </Button>
+          <Button
+            type="button"
+            variant={visibility === "restricted" ? "default" : "outline"}
+            onClick={() => handleVisibilityChange("restricted")}
+            size="sm"
+          >
+            Restreint
+          </Button>
+        </div>
+      </div>
+
+      {/* Picker — only when restricted */}
+      {visibility === "restricted" && (
+        <div className="space-y-4">
+          <VisibilityPicker
+            value={selection}
+            onChange={handleSelectionChange}
+          />
+
+          {selection.org_nodes.length === 0 &&
+            selection.groups.length === 0 &&
+            selection.roles.length === 0 &&
+            selection.users.length === 0 && (
+              <div className="rounded-lg border border-dashed border-amber-500/50 bg-amber-500/5 p-4 text-sm text-muted-foreground">
+                <Info className="inline-block h-3.5 w-3.5 mr-1.5 text-amber-500 align-text-bottom" />
+                En mode restreint sans entités sélectionnées, personne ne verra
+                ce provider.
+              </div>
+            )}
+        </div>
+      )}
+
+      {/* Unrestricted info */}
+      {visibility === "all" && (
         <div className="flex items-start gap-3 rounded-lg border border-border bg-blue-500/5 p-4 text-sm text-muted-foreground">
           <Info className="h-4 w-4 mt-0.5 shrink-0 text-blue-500" />
           <p>
             Ce provider est visible par{" "}
             <strong className="text-foreground">tous les utilisateurs</strong>{" "}
-            du tenant. Activez «&nbsp;Accès restreint&nbsp;» pour affiner la
+            du tenant. Activez «&nbsp;Restreint&nbsp;» pour affiner la
             visibilité par nœud org, groupe, rôle ou utilisateur individuel.
           </p>
-        </div>
-      )}
-
-      {/* Restriction summary when restricted */}
-      {isRestricted && (
-        <div className="space-y-4">
-          <div className="flex items-start gap-3 rounded-lg border border-border bg-amber-500/5 p-4 text-sm text-muted-foreground">
-            <Info className="h-4 w-4 mt-0.5 shrink-0 text-amber-500" />
-            <p>
-              Le sélecteur de visibilité avancé (nœuds org, groupes, rôles,
-              utilisateurs) sera disponible à la{" "}
-              <strong className="text-foreground">prochaine tâche</strong> (P6T7
-              — VisibilityPicker). Pour l&apos;instant vous pouvez enregistrer
-              la restriction globale.
-            </p>
-          </div>
-
-          {/* Current restrictions summary */}
-          {totalRestrictions > 0 ? (
-            <div className="space-y-3">
-              <Label className="text-sm font-semibold text-foreground">
-                Restrictions actuelles
-              </Label>
-              <div className="flex flex-wrap gap-2">
-                {detail.visible_to_org_nodes.map((id) => (
-                  <Badge key={id} variant="outline" className="text-xs">
-                    Nœud : {id.slice(0, 8)}…
-                  </Badge>
-                ))}
-                {detail.visible_to_groups.map((id) => (
-                  <Badge key={id} variant="outline" className="text-xs">
-                    Groupe : {id.slice(0, 8)}…
-                  </Badge>
-                ))}
-                {detail.visible_to_roles.map((id) => (
-                  <Badge key={id} variant="outline" className="text-xs">
-                    Rôle : {id}
-                  </Badge>
-                ))}
-                {detail.visible_to_users.map((id) => (
-                  <Badge key={id} variant="outline" className="text-xs">
-                    Utilisateur : {id.slice(0, 8)}…
-                  </Badge>
-                ))}
-              </div>
-            </div>
-          ) : (
-            <div className="rounded-lg border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
-              Aucune restriction définie.
-              <br />
-              <span className="text-xs">
-                En mode restreint sans entités sélectionnées, personne ne verra
-                ce provider.
-              </span>
-            </div>
-          )}
         </div>
       )}
     </div>
