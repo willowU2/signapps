@@ -16,6 +16,7 @@
 //! P3T10 wires in the credential resolver (keystore-backed decrypt of
 //! `client_id_enc` / `client_secret_enc` from `oauth_provider_configs`).
 
+pub mod account_connections;
 pub mod creds;
 pub mod error;
 pub mod internal_refresh;

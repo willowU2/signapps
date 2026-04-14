@@ -386,6 +386,15 @@ fn create_router(state: AppState) -> Router {
         .route("/api/v1/guest-tokens", post(handlers::guest_tokens::create_guest_token))
         .route("/api/v1/guest-tokens", get(handlers::guest_tokens::list_guest_tokens))
         .route("/api/v1/guest-tokens/:id", delete(handlers::guest_tokens::revoke_guest_token))
+        // P6T3: User OAuth connection list + disconnect (JWT only, no admin guard)
+        .route(
+            "/api/v1/account/oauth-connections",
+            get(handlers::oauth::account_connections::list_connections),
+        )
+        .route(
+            "/api/v1/account/oauth-connections/:source_table/:id/disconnect",
+            post(handlers::oauth::account_connections::disconnect),
+        )
         // CO1/CO2/CO4: Compliance endpoints moved to signapps-compliance service (port 3032).
         // Gateway forwards /api/v1/compliance/* and /api/v1/users/me/export/* → signapps-compliance:3032.
         // Persons moved to signapps-contacts service (port 3021).
@@ -648,6 +657,11 @@ fn create_router(state: AppState) -> Router {
         .route(
             "/api/v1/admin/oauth-providers/:key/test",
             post(handlers::admin::oauth_providers::test_provider),
+        )
+        // P6T3: per-provider queue counters
+        .route(
+            "/api/v1/admin/oauth-providers/:key/stats",
+            get(handlers::admin::oauth_providers::provider_stats),
         )
         .layer(axum_middleware::from_fn(require_admin))
         .layer(axum_middleware::from_fn_with_state(

@@ -603,6 +603,67 @@ fn require_admin(claims: &Claims) -> Result<(), Error> {
     }
 }
 
+// ── Stats ─────────────────────────────────────────────────────────────────────
+
+/// Per-provider queue counters returned by the stats endpoint.
+#[derive(Debug, Serialize)]
+pub struct ProviderStats {
+    /// Provider key (e.g. `"google"`, `"microsoft"`).
+    pub provider_key: String,
+    /// Number of active (not-disabled) queue entries for this provider.
+    pub total_in_queue: i64,
+    /// Number of entries that are disabled (too many consecutive failures).
+    pub disabled: i64,
+    /// Number of entries with 3–9 consecutive failures (warning threshold).
+    pub warning_count: i64,
+    /// Timestamp of the most recent disable event, if any.
+    pub last_disabled_at: Option<DateTime<Utc>>,
+}
+
+/// GET /api/v1/admin/oauth-providers/:key/stats
+///
+/// Returns per-provider queue counters from `identity.oauth_refresh_queue`.
+/// Useful for surfacing "N accounts need reconnection" in the admin UI.
+///
+/// # Errors
+///
+/// - `Error::Forbidden` if the caller is not an admin or has no `tenant_id`.
+/// - `Error::Internal` on database failures.
+#[instrument(skip(state, claims), fields(user_id = %claims.sub, provider_key = %provider_key))]
+pub async fn provider_stats(
+    Path(provider_key): Path<String>,
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+) -> Result<Json<ProviderStats>, Error> {
+    require_admin(&claims)?;
+    let tenant_id = claims
+        .tenant_id
+        .ok_or_else(|| Error::Forbidden("no tenant_id in token".into()))?;
+
+    let row: (i64, i64, i64, Option<DateTime<Utc>>) = sqlx::query_as(
+        "SELECT \
+            COUNT(*) FILTER (WHERE NOT disabled), \
+            COUNT(*) FILTER (WHERE disabled), \
+            COUNT(*) FILTER (WHERE consecutive_failures BETWEEN 3 AND 9), \
+            MAX(updated_at) FILTER (WHERE disabled) \
+         FROM identity.oauth_refresh_queue \
+         WHERE tenant_id = $1 AND provider_key = $2",
+    )
+    .bind(tenant_id)
+    .bind(&provider_key)
+    .fetch_one(state.pool.inner())
+    .await
+    .map_err(|e| Error::Internal(format!("stats query: {e}")))?;
+
+    Ok(Json(ProviderStats {
+        provider_key,
+        total_in_queue: row.0,
+        disabled: row.1,
+        warning_count: row.2,
+        last_disabled_at: row.3,
+    }))
+}
+
 // ── Private query row types ───────────────────────────────────────────────────
 
 #[derive(Debug, sqlx::FromRow)]
