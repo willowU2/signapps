@@ -32,6 +32,9 @@ async-trait = { workspace = true }
 jsonpath_lib = "0.3"
 # JWT validation for OIDC id_token
 jsonwebtoken = { workspace = true }
+# HTTP client for token exchange + profile fetch
+reqwest = { workspace = true }
+url = "2"
 
 [build-dependencies]
 serde_json = { workspace = true }
