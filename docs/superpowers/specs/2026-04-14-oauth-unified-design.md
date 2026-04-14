@@ -102,7 +102,7 @@ Unifier toute la logique OAuth/OIDC/SAML dans un crate unique réutilisé par to
 └─────────────────────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────────────────────┐
-│ signapps-vault                                                      │
+│ signapps-keystore                                                   │
 │  └─ MasterKey (AES-256, chargée au boot)                           │
 │     ├─ Backend EnvVar (dev)                                        │
 │     ├─ Backend File (prod self-hosted)                             │
@@ -117,7 +117,7 @@ Unifier toute la logique OAuth/OIDC/SAML dans un crate unique réutilisé par to
 |-----------|---------------|
 | `signapps-oauth` (crate) | State machine, catalogue, engines v2/v1a/saml, scope resolver |
 | `signapps-identity` (service) | Expose les endpoints HTTP, orchestre les flows, émet les events |
-| `signapps-vault` (crate + service) | Source de vérité pour la master key, dérive les DEKs |
+| `signapps-keystore` (crate + service) | Source de vérité pour la master key, dérive les DEKs |
 | `signapps-common::crypto` | Trait `EncryptedField` (AES-GCM), pas de dépendance vault |
 | `signapps-scheduler` (service) | Job de refresh toutes les 5min via la `oauth_refresh_queue` |
 | `mail/calendar/social/drive` | S'abonnent à `oauth.tokens.acquired`, stockent tokens chiffrés, utilisent `checkout_token()` pour les déchiffrer |
@@ -481,7 +481,7 @@ node scripts/convert-grant-catalog.js \
 ### 7.1 Architecture des clés
 
 ```
-VAULT_MASTER_KEY (32 octets, via signapps-vault)
+KEYSTORE_MASTER_KEY (32 octets, via signapps-keystore)
     │
     │ HKDF-SHA256 (info = "oauth-tokens-v1")
     ▼
@@ -494,20 +494,22 @@ Format : version(1) || nonce(12) || ciphertext || tag(16)
 
 Une DEK par usage (`oauth-tokens-v1`, `saml-assertions-v1`, `extra-params-v1`) — compromission d'une DEK n'expose pas les autres domaines.
 
-### 7.2 `signapps-vault`
+### 7.2 `signapps-keystore`
 
 ```rust
-pub struct Vault {
+pub struct Keystore {
     master_key: MasterKey,
     deks: DashMap<&'static str, DataEncryptionKey>,
 }
 
-pub enum VaultBackend {
+pub enum KeystoreBackend {
     EnvVar,                                      // Dev/test
     File(PathBuf),                               // Prod self-hosted
-    Remote(Box<dyn RemoteVaultClient>),          // HashiCorp Vault / KMS
+    Remote(Box<dyn RemoteKeystoreClient>),       // HashiCorp Vault / KMS
 }
 ```
+
+**Note sur le nommage** : le nom `signapps-vault` était initialement envisagé dans cette spec mais est déjà pris par un service existant (gestionnaire de mots de passe utilisateur, dans `services/signapps-vault/`). Le crate crypto est donc nommé `signapps-keystore` pour éviter la collision.
 
 ### 7.3 Trait `EncryptedField`
 
@@ -523,7 +525,7 @@ pub trait EncryptedField: Sized {
 ### 7.4 Pattern d'utilisation dans un service
 
 ```rust
-let dek = state.vault.dek("oauth-tokens-v1");
+let dek = state.keystore.dek("oauth-tokens-v1");
 let access_token = String::from_utf8(<()>::decrypt(&row.access_token, dek)?)?;
 // Use token...
 // Le plaintext est drop à la fin du scope
@@ -617,7 +619,7 @@ Ajouter un nouveau service qui consomme OAuth = implémenter `TokenTable` + enre
 #[instrument(skip(pool, vault, table))]
 pub async fn checkout_token<T: TokenTable>(
     pool: &PgPool,
-    vault: &Vault,
+    keystore: &Keystore,
     table: &T,
     id: Uuid,
     identity_api_url: &str,
@@ -896,7 +898,7 @@ L'architecture s'inspire de `simov/grant` (MIT). Pour rester aligné avec les é
 
 Les blocs suivants doivent être construits dans cet ordre pour permettre des tests incrémentaux :
 
-1. **Foundation** : `signapps-vault` + `EncryptedField` trait dans `signapps-common::crypto`
+1. **Foundation** : `signapps-keystore` + `EncryptedField` trait dans `signapps-common::crypto`
 2. **Crate OAuth** : `signapps-oauth` avec catalog + state + scope_resolver, sans engine
 3. **Engine v2** : OAuth2 + OIDC, handlers HTTP dans identity
 4. **Migration offline** : 3 binaires + script bash + rollback + tests sur dump
