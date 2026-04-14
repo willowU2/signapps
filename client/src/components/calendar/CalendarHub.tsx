@@ -18,15 +18,6 @@
 
 import React, { Suspense, lazy, useState, useEffect, useCallback } from "react";
 import {
-  format,
-  startOfWeek,
-  endOfWeek,
-  isSameMonth,
-  isSameYear,
-  isToday,
-} from "date-fns";
-import { fr } from "date-fns/locale";
-import {
   Calendar as CalendarIcon,
   CalendarRange,
   Grid3X3,
@@ -190,38 +181,6 @@ const VIEW_CONFIG: ViewConfig[] = [
     shortcut: "r",
   },
 ];
-
-// ============================================================================
-// Date title helper
-// ============================================================================
-
-function getDateTitle(view: ViewType, date: Date): string {
-  const locale = fr;
-  switch (view) {
-    case "day":
-      if (isToday(date)) return "Aujourd'hui";
-      return format(date, "EEEE d MMMM yyyy", { locale });
-    case "week":
-    case "roster":
-    case "heatmap":
-    case "availability":
-    case "presence": {
-      const start = startOfWeek(date, { weekStartsOn: 1 });
-      const end = endOfWeek(date, { weekStartsOn: 1 });
-      if (isSameMonth(start, end))
-        return format(start, "MMMM yyyy", { locale });
-      if (isSameYear(start, end))
-        return `${format(start, "MMM", { locale })} – ${format(end, "MMM yyyy", { locale })}`;
-      return `${format(start, "MMM yyyy", { locale })} – ${format(end, "MMM yyyy", { locale })}`;
-    }
-    case "timeline":
-    case "kanban":
-    case "tasks":
-      return format(date, "MMMM yyyy", { locale });
-    default:
-      return format(date, "MMMM yyyy", { locale });
-  }
-}
 
 // ============================================================================
 // Suspense fallback
@@ -562,7 +521,6 @@ export function CalendarHub() {
   ]);
 
   const ViewComponent = VIEW_MAP[view];
-  const dateTitle = getDateTitle(view, currentDate);
 
   return (
     <div
@@ -640,14 +598,6 @@ export function CalendarHub() {
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
-
-        {/* Date title */}
-        <span
-          data-testid="calendar-period-label"
-          className="text-sm font-semibold text-foreground min-w-0 truncate capitalize"
-        >
-          {dateTitle}
-        </span>
 
         {/* Spacer */}
         <div className="flex-1" />
