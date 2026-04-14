@@ -113,16 +113,17 @@ impl EngineV2 {
 
         // 7. Expand template variables in the authorize_url (e.g., keycloak's
         //    {base_url} and {realm} come from creds.extra_params).
-        let raw_url = provider.template_vars.iter().fold(
-            provider.authorize_url.clone(),
-            |url, var| {
-                if let Some(val) = creds.extra_params.get(var.as_str()) {
-                    url.replace(&format!("{{{var}}}"), val)
-                } else {
-                    url
-                }
-            },
-        );
+        let raw_url =
+            provider
+                .template_vars
+                .iter()
+                .fold(provider.authorize_url.clone(), |url, var| {
+                    if let Some(val) = creds.extra_params.get(var.as_str()) {
+                        url.replace(&format!("{{{var}}}"), val)
+                    } else {
+                        url
+                    }
+                });
 
         // 8. Build the authorization URL using the pre-resolved client_id.
         let mut authorize_url = Url::parse(&raw_url).map_err(|_| OAuthError::ProviderError {
@@ -155,9 +156,7 @@ impl EngineV2 {
         }
 
         if matches!(provider.protocol, Protocol::Oidc) {
-            authorize_url
-                .query_pairs_mut()
-                .append_pair("nonce", &nonce);
+            authorize_url.query_pairs_mut().append_pair("nonce", &nonce);
         }
 
         Ok(StartResponse {
@@ -224,16 +223,17 @@ impl EngineV2 {
         );
 
         // 5. Expand template variables in access_url (same logic as authorize_url in start).
-        let raw_access_url = provider.template_vars.iter().fold(
-            provider.access_url.clone(),
-            |url, var| {
-                if let Some(val) = creds.extra_params.get(var.as_str()) {
-                    url.replace(&format!("{{{var}}}"), val)
-                } else {
-                    url
-                }
-            },
-        );
+        let raw_access_url =
+            provider
+                .template_vars
+                .iter()
+                .fold(provider.access_url.clone(), |url, var| {
+                    if let Some(val) = creds.extra_params.get(var.as_str()) {
+                        url.replace(&format!("{{{var}}}"), val)
+                    } else {
+                        url
+                    }
+                });
 
         // 6. POST to the token endpoint with form data.
         let mut form_params: Vec<(&str, String)> = vec![
@@ -268,12 +268,14 @@ impl EngineV2 {
 
         // Parse the token response — first attempt to detect provider-side errors
         // embedded in a 200 response (some providers do this).
-        let token_body: serde_json::Value = token_resp.json().await.map_err(|e| {
-            OAuthError::ProviderError {
-                error: "token_parse_error".into(),
-                description: Some(e.to_string()),
-            }
-        })?;
+        let token_body: serde_json::Value =
+            token_resp
+                .json()
+                .await
+                .map_err(|e| OAuthError::ProviderError {
+                    error: "token_parse_error".into(),
+                    description: Some(e.to_string()),
+                })?;
 
         if let Some(err_field) = token_body.get("error").and_then(|v| v.as_str()) {
             let desc = token_body
@@ -286,8 +288,8 @@ impl EngineV2 {
             });
         }
 
-        let token_response: crate::types::TokenResponse =
-            serde_json::from_value(token_body).map_err(|e| OAuthError::ProviderError {
+        let token_response: crate::types::TokenResponse = serde_json::from_value(token_body)
+            .map_err(|e| OAuthError::ProviderError {
                 error: "token_parse_error".into(),
                 description: Some(e.to_string()),
             })?;
@@ -324,10 +326,13 @@ impl EngineV2 {
             }
 
             let profile_body: serde_json::Value =
-                profile_resp.json().await.map_err(|e| OAuthError::ProviderError {
-                    error: "profile_parse_error".into(),
-                    description: Some(e.to_string()),
-                })?;
+                profile_resp
+                    .json()
+                    .await
+                    .map_err(|e| OAuthError::ProviderError {
+                        error: "profile_parse_error".into(),
+                        description: Some(e.to_string()),
+                    })?;
 
             crate::profile::extract_profile(
                 profile_body,

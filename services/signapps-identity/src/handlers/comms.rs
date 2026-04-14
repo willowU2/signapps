@@ -287,12 +287,25 @@ pub async fn list_announcements(
 ) -> Result<Json<Vec<AnnouncementResponse>>> {
     tracing::Span::current().record("user_id", tracing::field::display(claims.sub));
 
-    let rows = sqlx::query_as::<_, (
-        Uuid, String, String, Uuid, bool, bool, String, bool,
-        Option<DateTime<Utc>>, Option<DateTime<Utc>>,
-        DateTime<Utc>, DateTime<Utc>,
-        Option<DateTime<Utc>>, Option<bool>,
-    )>(
+    let rows = sqlx::query_as::<
+        _,
+        (
+            Uuid,
+            String,
+            String,
+            Uuid,
+            bool,
+            bool,
+            String,
+            bool,
+            Option<DateTime<Utc>>,
+            Option<DateTime<Utc>>,
+            DateTime<Utc>,
+            DateTime<Utc>,
+            Option<DateTime<Utc>>,
+            Option<bool>,
+        ),
+    >(
         r#"SELECT
             a.id, a.title, a.content, a.author_id, a.pinned, a.published,
             a.target_audience, a.requires_ack, a.publish_at, a.expires_at,
@@ -358,11 +371,23 @@ pub async fn create_announcement(
 ) -> Result<(StatusCode, Json<AnnouncementResponse>)> {
     tracing::Span::current().record("user_id", tracing::field::display(claims.sub));
 
-    let row = sqlx::query_as::<_, (
-        Uuid, String, String, Uuid, bool, bool, String, bool,
-        Option<DateTime<Utc>>, Option<DateTime<Utc>>,
-        DateTime<Utc>, DateTime<Utc>,
-    )>(
+    let row = sqlx::query_as::<
+        _,
+        (
+            Uuid,
+            String,
+            String,
+            Uuid,
+            bool,
+            bool,
+            String,
+            bool,
+            Option<DateTime<Utc>>,
+            Option<DateTime<Utc>>,
+            DateTime<Utc>,
+            DateTime<Utc>,
+        ),
+    >(
         r#"INSERT INTO comms.announcements
             (title, content, author_id, pinned, published, target_audience,
              requires_ack, publish_at, expires_at)
@@ -540,10 +565,20 @@ pub async fn acknowledge(
 )]
 #[tracing::instrument(skip_all)]
 pub async fn list_polls(State(state): State<AppState>) -> Result<Json<Vec<PollResponse>>> {
-    let rows = sqlx::query_as::<_, (
-        Uuid, String, Value, bool, bool, Uuid,
-        Option<DateTime<Utc>>, String, DateTime<Utc>,
-    )>(
+    let rows = sqlx::query_as::<
+        _,
+        (
+            Uuid,
+            String,
+            Value,
+            bool,
+            bool,
+            Uuid,
+            Option<DateTime<Utc>>,
+            String,
+            DateTime<Utc>,
+        ),
+    >(
         r#"SELECT id, question, options, multiple_choice, anonymous,
                   author_id, deadline, status, created_at
            FROM comms.polls
@@ -597,10 +632,20 @@ pub async fn create_poll(
 ) -> Result<(StatusCode, Json<PollResponse>)> {
     tracing::Span::current().record("user_id", tracing::field::display(claims.sub));
 
-    let row = sqlx::query_as::<_, (
-        Uuid, String, Value, bool, bool, Uuid,
-        Option<DateTime<Utc>>, String, DateTime<Utc>,
-    )>(
+    let row = sqlx::query_as::<
+        _,
+        (
+            Uuid,
+            String,
+            Value,
+            bool,
+            bool,
+            Uuid,
+            Option<DateTime<Utc>>,
+            String,
+            DateTime<Utc>,
+        ),
+    >(
         r#"INSERT INTO comms.polls
             (question, options, multiple_choice, anonymous, author_id, deadline)
         VALUES ($1, $2, $3, $4, $5, $6)
@@ -747,10 +792,20 @@ pub async fn poll_results(
     Path(id): Path<Uuid>,
 ) -> Result<Json<PollResultsResponse>> {
     // Fetch the poll
-    let poll_row = sqlx::query_as::<_, (
-        Uuid, String, Value, bool, bool, Uuid,
-        Option<DateTime<Utc>>, String, DateTime<Utc>,
-    )>(
+    let poll_row = sqlx::query_as::<
+        _,
+        (
+            Uuid,
+            String,
+            Value,
+            bool,
+            bool,
+            Uuid,
+            Option<DateTime<Utc>>,
+            String,
+            DateTime<Utc>,
+        ),
+    >(
         r#"SELECT id, question, options, multiple_choice, anonymous,
                   author_id, deadline, status, created_at
            FROM comms.polls WHERE id = $1"#,

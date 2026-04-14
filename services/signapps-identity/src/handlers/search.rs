@@ -257,7 +257,9 @@ pub async fn global_search(
 
     let query = params.q.trim().to_string();
     if query.is_empty() {
-        return Err(Error::BadRequest("Search query cannot be empty".to_string()));
+        return Err(Error::BadRequest(
+            "Search query cannot be empty".to_string(),
+        ));
     }
 
     let limit = params.limit.clamp(1, 100);

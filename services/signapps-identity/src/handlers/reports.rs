@@ -41,9 +41,7 @@ const VALID_SOURCES: &[&str] = &[
 ];
 
 /// Valid chart types.
-const VALID_CHART_TYPES: &[&str] = &[
-    "table", "bar", "line", "pie", "donut", "area", "scatter",
-];
+const VALID_CHART_TYPES: &[&str] = &["table", "bar", "line", "pie", "donut", "area", "scatter"];
 
 /// Report definition returned to the client.
 #[derive(Debug, Serialize, utoipa::ToSchema)]
@@ -180,11 +178,24 @@ pub async fn list_reports(
 ) -> Result<Json<Vec<ReportResponse>>> {
     tracing::Span::current().record("user_id", tracing::field::display(claims.sub));
 
-    let rows = sqlx::query_as::<_, (
-        Uuid, String, Option<String>, String, Value, Value,
-        String, Value, Uuid, Vec<Uuid>, Option<String>,
-        DateTime<Utc>, DateTime<Utc>,
-    )>(
+    let rows = sqlx::query_as::<
+        _,
+        (
+            Uuid,
+            String,
+            Option<String>,
+            String,
+            Value,
+            Value,
+            String,
+            Value,
+            Uuid,
+            Vec<Uuid>,
+            Option<String>,
+            DateTime<Utc>,
+            DateTime<Utc>,
+        ),
+    >(
         r#"SELECT id, name, description, source, columns, filters,
                   chart_type, chart_config, owner_id, shared_with,
                   schedule_cron, created_at, updated_at
@@ -248,11 +259,24 @@ pub async fn create_report(
     tracing::Span::current().record("user_id", tracing::field::display(claims.sub));
     validate_report(&body)?;
 
-    let row = sqlx::query_as::<_, (
-        Uuid, String, Option<String>, String, Value, Value,
-        String, Value, Uuid, Vec<Uuid>, Option<String>,
-        DateTime<Utc>, DateTime<Utc>,
-    )>(
+    let row = sqlx::query_as::<
+        _,
+        (
+            Uuid,
+            String,
+            Option<String>,
+            String,
+            Value,
+            Value,
+            String,
+            Value,
+            Uuid,
+            Vec<Uuid>,
+            Option<String>,
+            DateTime<Utc>,
+            DateTime<Utc>,
+        ),
+    >(
         r#"INSERT INTO reports.definitions
             (name, description, source, columns, filters, chart_type,
              chart_config, owner_id, shared_with, schedule_cron)
@@ -330,11 +354,24 @@ pub async fn update_report(
     tracing::Span::current().record("user_id", tracing::field::display(claims.sub));
     validate_report(&body)?;
 
-    let row = sqlx::query_as::<_, (
-        Uuid, String, Option<String>, String, Value, Value,
-        String, Value, Uuid, Vec<Uuid>, Option<String>,
-        DateTime<Utc>, DateTime<Utc>,
-    )>(
+    let row = sqlx::query_as::<
+        _,
+        (
+            Uuid,
+            String,
+            Option<String>,
+            String,
+            Value,
+            Value,
+            String,
+            Value,
+            Uuid,
+            Vec<Uuid>,
+            Option<String>,
+            DateTime<Utc>,
+            DateTime<Utc>,
+        ),
+    >(
         r#"UPDATE reports.definitions SET
             name = $3, description = $4, source = $5, columns = $6,
             filters = $7, chart_type = $8, chart_config = $9,
@@ -412,13 +449,12 @@ pub async fn delete_report(
 ) -> Result<StatusCode> {
     tracing::Span::current().record("user_id", tracing::field::display(claims.sub));
 
-    let result =
-        sqlx::query("DELETE FROM reports.definitions WHERE id = $1 AND owner_id = $2")
-            .bind(id)
-            .bind(claims.sub)
-            .execute(&*state.pool)
-            .await
-            .map_err(|e| Error::Internal(format!("delete report: {e}")))?;
+    let result = sqlx::query("DELETE FROM reports.definitions WHERE id = $1 AND owner_id = $2")
+        .bind(id)
+        .bind(claims.sub)
+        .execute(&*state.pool)
+        .await
+        .map_err(|e| Error::Internal(format!("delete report: {e}")))?;
 
     if result.rows_affected() == 0 {
         return Err(Error::NotFound("Report not found".to_string()));
@@ -491,7 +527,18 @@ pub async fn execute_report(
     let execution_ms = start.elapsed().as_millis() as i32;
 
     // Store execution snapshot
-    let exec_row = sqlx::query_as::<_, (Uuid, Uuid, Value, i32, Option<i32>, Option<Uuid>, DateTime<Utc>)>(
+    let exec_row = sqlx::query_as::<
+        _,
+        (
+            Uuid,
+            Uuid,
+            Value,
+            i32,
+            Option<i32>,
+            Option<Uuid>,
+            DateTime<Utc>,
+        ),
+    >(
         r#"INSERT INTO reports.executions
             (report_id, result_data, row_count, execution_ms, executed_by)
         VALUES ($1, $2, $3, $4, $5)
@@ -566,7 +613,18 @@ pub async fn list_executions(
         return Err(Error::NotFound("Report not found".to_string()));
     }
 
-    let rows = sqlx::query_as::<_, (Uuid, Uuid, Value, i32, Option<i32>, Option<Uuid>, DateTime<Utc>)>(
+    let rows = sqlx::query_as::<
+        _,
+        (
+            Uuid,
+            Uuid,
+            Value,
+            i32,
+            Option<i32>,
+            Option<Uuid>,
+            DateTime<Utc>,
+        ),
+    >(
         r#"SELECT id, report_id, result_data, row_count, execution_ms,
                   executed_by, executed_at
            FROM reports.executions

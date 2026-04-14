@@ -74,11 +74,7 @@ async fn main() -> Result<()> {
 }
 
 /// Returns the number of inconsistencies found for this column pair.
-async fn check_column(
-    pool: &PgPool,
-    c: &ColumnCheck,
-    dek: &Arc<DataEncryptionKey>,
-) -> Result<i64> {
+async fn check_column(pool: &PgPool, c: &ColumnCheck, dek: &Arc<DataEncryptionKey>) -> Result<i64> {
     // Count rows that still have plaintext but no ciphertext.
     let unmigrated: i64 = sqlx::query_scalar(&format!(
         "SELECT COUNT(*) FROM {} \
@@ -111,8 +107,7 @@ async fn check_column(
     .with_context(|| format!("sample query for {}.{}", c.table, c.enc_col))?;
 
     if let Some((pt, ct)) = sample {
-        let decrypted =
-            decrypt_string(&ct, dek.as_ref()).context("decrypt sample")?;
+        let decrypted = decrypt_string(&ct, dek.as_ref()).context("decrypt sample")?;
         if decrypted != pt {
             eprintln!(
                 "  FAIL {}.{}: sample decrypt does not match plaintext",
@@ -125,10 +120,7 @@ async fn check_column(
             c.table, c.enc_col
         );
     } else {
-        println!(
-            "  ok {}.{}: 0 rows (nothing to check)",
-            c.table, c.enc_col
-        );
+        println!("  ok {}.{}: 0 rows (nothing to check)", c.table, c.enc_col);
     }
 
     Ok(0)

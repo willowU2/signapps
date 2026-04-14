@@ -178,7 +178,7 @@ fn build_encoding_key(config: &JwtConfig) -> Result<(Header, EncodingKey)> {
         JwtAlgorithm::Hs256 => {
             let key = EncodingKey::from_secret(config.secret.as_bytes());
             Ok((Header::default(), key)) // Header::default() → HS256
-        }
+        },
         JwtAlgorithm::Rs256 => {
             let pem = config.private_key_pem.as_deref().ok_or_else(|| {
                 Error::Internal(
@@ -188,7 +188,7 @@ fn build_encoding_key(config: &JwtConfig) -> Result<(Header, EncodingKey)> {
             let key = EncodingKey::from_rsa_pem(pem.as_bytes())
                 .map_err(|e| Error::Internal(format!("Invalid RSA private key PEM: {e}")))?;
             Ok((Header::new(Algorithm::RS256), key))
-        }
+        },
     }
 }
 
@@ -198,7 +198,7 @@ fn build_decoding_key(config: &JwtConfig) -> Result<(Algorithm, DecodingKey)> {
         JwtAlgorithm::Hs256 => {
             let key = DecodingKey::from_secret(config.secret.as_bytes());
             Ok((Algorithm::HS256, key))
-        }
+        },
         JwtAlgorithm::Rs256 => {
             let pem = config.public_key_pem.as_deref().ok_or_else(|| {
                 Error::Internal(
@@ -208,10 +208,9 @@ fn build_decoding_key(config: &JwtConfig) -> Result<(Algorithm, DecodingKey)> {
             let key = DecodingKey::from_rsa_pem(pem.as_bytes())
                 .map_err(|e| Error::Internal(format!("Invalid RSA public key PEM: {e}")))?;
             Ok((Algorithm::RS256, key))
-        }
+        },
     }
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -354,16 +353,8 @@ mod tests {
             company_id: Some(company_id),
             company_name: Some("Acme Corp".to_string()),
         };
-        let pair = create_tokens(
-            test_user_id(),
-            "grace",
-            1,
-            None,
-            None,
-            ctx,
-            &hs256_config(),
-        )
-        .expect("should succeed");
+        let pair = create_tokens(test_user_id(), "grace", 1, None, None, ctx, &hs256_config())
+            .expect("should succeed");
         let claims = verify_token(&pair.access_token, &hs256_config()).expect("should decode");
         assert_eq!(claims.context_id, Some(context_id));
         assert_eq!(claims.context_type.as_deref(), Some("employee"));

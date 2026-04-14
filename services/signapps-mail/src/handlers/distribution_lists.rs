@@ -115,7 +115,7 @@ pub async fn list_distribution_lists(
                 Json(serde_json::json!({ "error": "Database error" })),
             )
                 .into_response()
-        }
+        },
     }
 }
 
@@ -206,7 +206,7 @@ pub async fn get_distribution_list_members(
                 Json(serde_json::json!({ "error": "Distribution list not found" })),
             )
                 .into_response()
-        }
+        },
         Err(e) => {
             tracing::error!(?e, "Failed to fetch distribution list");
             return (
@@ -214,7 +214,7 @@ pub async fn get_distribution_list_members(
                 Json(serde_json::json!({ "error": "Database error" })),
             )
                 .into_response();
-        }
+        },
     };
 
     match sqlx::query_as::<_, DistributionListMember>(
@@ -240,7 +240,7 @@ pub async fn get_distribution_list_members(
                 Json(serde_json::json!({ "error": "Database error" })),
             )
                 .into_response()
-        }
+        },
     }
 }
 
@@ -296,7 +296,7 @@ pub async fn update_distribution_list(
                 Json(serde_json::json!({ "error": "Database error" })),
             )
                 .into_response()
-        }
+        },
     }
 }
 
@@ -337,6 +337,6 @@ pub async fn delete_distribution_list(
                 Json(serde_json::json!({ "error": "Database error" })),
             )
                 .into_response()
-        }
+        },
     }
 }

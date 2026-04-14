@@ -556,7 +556,7 @@ pub async fn restore_note(
         Some(r) => {
             tracing::info!("keep note restored");
             Ok(Json(NoteResponse::from(r)))
-        }
+        },
         None => Err(Error::NotFound("Note not found in trash".to_string())),
     }
 }
@@ -647,9 +647,7 @@ pub async fn create_label(
     .fetch_one(&*state.pool)
     .await
     .map_err(|e| {
-        if e.to_string().contains("duplicate key")
-            || e.to_string().contains("unique constraint")
-        {
+        if e.to_string().contains("duplicate key") || e.to_string().contains("unique constraint") {
             Error::BadRequest(format!("Label '{}' already exists", body.name))
         } else {
             Error::Internal(format!("create keep label: {e}"))
@@ -698,14 +696,12 @@ pub async fn delete_label(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode> {
-    let result = sqlx::query(
-        "DELETE FROM keep.labels WHERE id = $1 AND owner_id = $2",
-    )
-    .bind(id)
-    .bind(claims.sub)
-    .execute(&*state.pool)
-    .await
-    .map_err(|e| Error::Internal(format!("delete keep label: {e}")))?;
+    let result = sqlx::query("DELETE FROM keep.labels WHERE id = $1 AND owner_id = $2")
+        .bind(id)
+        .bind(claims.sub)
+        .execute(&*state.pool)
+        .await
+        .map_err(|e| Error::Internal(format!("delete keep label: {e}")))?;
 
     if result.rows_affected() == 0 {
         return Err(Error::NotFound("Label not found".to_string()));

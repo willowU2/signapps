@@ -9,8 +9,8 @@
 mod catalog;
 mod config_store;
 mod engine_v2;
-pub mod events;
 mod error;
+pub mod events;
 pub mod oidc;
 pub mod pkce;
 mod profile;
@@ -25,8 +25,8 @@ pub use config_store::{ConfigStore, PgConfigStore};
 pub use engine_v2::{EngineV2, EngineV2Config};
 pub use error::OAuthError;
 pub use events::{
-    OAuthTokenInvalidated, OAuthTokensAcquired, EVENT_OAUTH_TOKEN_INVALIDATED,
-    EVENT_OAUTH_TOKENS_ACQUIRED,
+    OAuthTokenInvalidated, OAuthTokensAcquired, EVENT_OAUTH_TOKENS_ACQUIRED,
+    EVENT_OAUTH_TOKEN_INVALIDATED,
 };
 pub use profile::extract_profile;
 pub use protocol::{OAuthPurpose, Protocol, ProviderCategory, TokenPlacement};
@@ -34,6 +34,6 @@ pub use provider::{ProviderConfig, ProviderDefinition, ProviderSummary};
 pub use scope::{ScopeResolver, UserContext};
 pub use state::{FlowState, StateError};
 pub use types::{
-    CallbackRequest, CallbackResponse, ProviderProfile, ResolvedCredentials,
-    StartRequest, StartResponse, TokenResponse,
+    CallbackRequest, CallbackResponse, ProviderProfile, ResolvedCredentials, StartRequest,
+    StartResponse, TokenResponse,
 };

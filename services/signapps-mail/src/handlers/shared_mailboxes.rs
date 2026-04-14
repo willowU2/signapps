@@ -129,7 +129,7 @@ pub async fn list_shared_mailboxes(
                 Json(serde_json::json!({ "error": "Database error" })),
             )
                 .into_response()
-        }
+        },
     }
 }
 
@@ -172,7 +172,7 @@ pub async fn create_shared_mailbox(
                 Json(serde_json::json!({ "error": "Database error" })),
             )
                 .into_response()
-        }
+        },
     }
 }
 
@@ -209,7 +209,7 @@ pub async fn get_shared_mailbox(
                 Json(serde_json::json!({ "error": "Shared mailbox not found" })),
             )
                 .into_response()
-        }
+        },
         Err(e) => {
             tracing::error!(?e, "Failed to fetch shared mailbox");
             return (
@@ -217,7 +217,7 @@ pub async fn get_shared_mailbox(
                 Json(serde_json::json!({ "error": "Database error" })),
             )
                 .into_response();
-        }
+        },
     };
 
     let members = match sqlx::query_as::<_, SharedMailboxMember>(
@@ -239,7 +239,7 @@ pub async fn get_shared_mailbox(
                 Json(serde_json::json!({ "error": "Database error" })),
             )
                 .into_response();
-        }
+        },
     };
 
     Json(SharedMailboxWithMembers { mailbox, members }).into_response()
@@ -297,7 +297,7 @@ pub async fn update_shared_mailbox(
                 Json(serde_json::json!({ "error": "Database error" })),
             )
                 .into_response()
-        }
+        },
     }
 }
 
@@ -338,7 +338,7 @@ pub async fn delete_shared_mailbox(
                 Json(serde_json::json!({ "error": "Database error" })),
             )
                 .into_response()
-        }
+        },
     }
 }
 
@@ -388,7 +388,7 @@ pub async fn add_shared_mailbox_member(
                 Json(serde_json::json!({ "error": "Database error" })),
             )
                 .into_response()
-        }
+        },
     }
 }
 
@@ -435,6 +435,6 @@ pub async fn remove_shared_mailbox_member(
                 Json(serde_json::json!({ "error": "Database error" })),
             )
                 .into_response()
-        }
+        },
     }
 }

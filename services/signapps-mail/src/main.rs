@@ -18,12 +18,12 @@ use chrono::{Datelike, Timelike, Weekday};
 use openapi::MailApiDoc;
 use signapps_cache::CacheService;
 use signapps_common::bootstrap::{env_or, env_required, init_tracing, load_env};
-use signapps_sharing::routes::sharing_routes;
-use signapps_sharing::{ResourceType, SharingEngine};
 use signapps_common::middleware::{auth_middleware, tenant_context_middleware, AuthState};
 use signapps_common::pg_events::{PgEventBus, PlatformEvent};
 use signapps_common::{AiIndexerClient, JwtConfig};
 use signapps_keystore::{Keystore, KeystoreBackend, TokenColumnSpec};
+use signapps_sharing::routes::sharing_routes;
+use signapps_sharing::{ResourceType, SharingEngine};
 use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
 use tokio::time::Duration;
 use tower_http::{
@@ -81,7 +81,10 @@ async fn main() {
     // environments without a keystore.
     let keystore = Keystore::init(KeystoreBackend::EnvVar).await;
     if let Err(ref e) = keystore {
-        tracing::warn!("Keystore unavailable ({}); OAuth token guardrail skipped", e);
+        tracing::warn!(
+            "Keystore unavailable ({}); OAuth token guardrail skipped",
+            e
+        );
     }
     if keystore.is_ok() {
         if let Err(e) = signapps_keystore::assert_tokens_encrypted(
@@ -311,8 +314,7 @@ async fn main() {
         ));
 
     // Sharing sub-router: State<SharingEngine> — separate from AppState.
-    let sharing_sub = sharing_routes("mail", ResourceType::Document)
-        .with_state(sharing_engine);
+    let sharing_sub = sharing_routes("mail", ResourceType::Document).with_state(sharing_engine);
 
     // Combine public + protected, then apply shared layers (CORS, tracing)
     let app = public_router

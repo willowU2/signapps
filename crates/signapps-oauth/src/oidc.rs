@@ -56,16 +56,14 @@ pub fn validate_id_token(
         Algorithm::RS256 | Algorithm::RS384 | Algorithm::RS512 => {
             DecodingKey::from_rsa_pem(public_key_pem.as_bytes())
                 .map_err(|e| OAuthError::IdTokenInvalid(format!("bad RSA key: {e}")))?
-        }
-        Algorithm::ES256 | Algorithm::ES384 => {
-            DecodingKey::from_ec_pem(public_key_pem.as_bytes())
-                .map_err(|e| OAuthError::IdTokenInvalid(format!("bad EC key: {e}")))?
-        }
+        },
+        Algorithm::ES256 | Algorithm::ES384 => DecodingKey::from_ec_pem(public_key_pem.as_bytes())
+            .map_err(|e| OAuthError::IdTokenInvalid(format!("bad EC key: {e}")))?,
         _ => {
             return Err(OAuthError::IdTokenInvalid(format!(
                 "unsupported algorithm: {algorithm:?}"
             )));
-        }
+        },
     };
 
     let mut validation = Validation::new(algorithm);
@@ -125,8 +123,8 @@ mod tests {
     fn rejects_invalid_jwt_format() {
         // Use a minimal 2048-bit RSA public key for the test (well-formed PEM)
         let pem = "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAyMV5oTlH2g5TBDVUm1mP\nU3R1S9wO+B+lLMAt1Cz3ujEWjZTTBtL+oyP8L/4tFb/I1H3aZHuMfVBkMzJTpcZv\nE8C5oMylyvJ+5K1aLBgkmcM8Y2HxgN7LX2VTW0RXl4N8eWlR2lFyYHC7BG8b1Vfx\nxiEmpPpiNcDdiSfCfyQXSPdUiQbpMnbuHbBTkUF+Bvyq7OTV5HXVCuYjMc0WQXEF\nIlJl0Vym2NexVCgaHOJ1MqFqJ9d8pEv3jVz0jh2WUz7LGhPQrVYpGjz5RYK2eRbC\nzdy8FJEIqeGKhxX8wpMXh/2hM6aZkKEN6r4cRJgJ2nN5KnxhpNd0RYx0+HGuYj9T\ndQIDAQAB\n-----END PUBLIC KEY-----\n";
-        let err = validate_id_token("not.a.jwt", pem, "aud", "nonce", Algorithm::RS256)
-            .unwrap_err();
+        let err =
+            validate_id_token("not.a.jwt", pem, "aud", "nonce", Algorithm::RS256).unwrap_err();
         assert!(matches!(err, OAuthError::IdTokenInvalid(_)));
     }
 }

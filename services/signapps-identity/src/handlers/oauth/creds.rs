@@ -183,7 +183,13 @@ mod tests {
         cfg.extra_params_enc = Some(extra_params_enc);
 
         let creds = resolve_credentials(&cfg, &ks).unwrap();
-        assert_eq!(creds.extra_params.get("key_id").map(|s| s.as_str()), Some("ABCD1234"));
-        assert_eq!(creds.extra_params.get("team_id").map(|s| s.as_str()), Some("T123"));
+        assert_eq!(
+            creds.extra_params.get("key_id").map(|s| s.as_str()),
+            Some("ABCD1234")
+        );
+        assert_eq!(
+            creds.extra_params.get("team_id").map(|s| s.as_str()),
+            Some("T123")
+        );
     }
 }

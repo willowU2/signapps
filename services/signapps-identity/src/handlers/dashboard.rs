@@ -121,7 +121,7 @@ pub async fn get_layout(
                 created_at,
                 updated_at,
             }))
-        }
+        },
         None => {
             // Return a default empty layout
             Ok(Json(DashboardLayoutResponse {
@@ -131,7 +131,7 @@ pub async fn get_layout(
                 created_at: Utc::now(),
                 updated_at: Utc::now(),
             }))
-        }
+        },
     }
 }
 
@@ -183,8 +183,7 @@ pub async fn save_layout(
 
     tracing::info!("dashboard layout saved");
 
-    let widgets: Vec<WidgetPlacement> =
-        serde_json::from_value(row.2).unwrap_or_default();
+    let widgets: Vec<WidgetPlacement> = serde_json::from_value(row.2).unwrap_or_default();
 
     Ok(Json(DashboardLayoutResponse {
         id: row.0,

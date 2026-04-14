@@ -245,11 +245,12 @@ pub async fn login(
 
     // Auto-assign default tenant for admin if none exists
     if user.role >= 2 && user.tenant_id.is_none() {
-        let tenant_opt: Option<Uuid> = sqlx::query_scalar("SELECT id FROM identity.tenants WHERE slug = 'default'")
-            .fetch_optional(&*state.pool)
-            .await
-            .unwrap_or(None);
-            
+        let tenant_opt: Option<Uuid> =
+            sqlx::query_scalar("SELECT id FROM identity.tenants WHERE slug = 'default'")
+                .fetch_optional(&*state.pool)
+                .await
+                .unwrap_or(None);
+
         let new_tenant_id = match tenant_opt {
             Some(id) => id,
             None => {
@@ -260,16 +261,16 @@ pub async fn login(
                     .await
                     .ok();
                 new_id
-            }
+            },
         };
-        
+
         sqlx::query("UPDATE identity.users SET tenant_id = $1 WHERE id = $2")
             .bind(new_tenant_id)
             .bind(user.id)
             .execute(&*state.pool)
             .await
             .ok();
-            
+
         user.tenant_id = Some(new_tenant_id);
     }
 
@@ -351,12 +352,11 @@ pub async fn login(
     // For super-admins (role=3) with no company-level contexts, offer tenant switching.
     // Synthesise one context per tenant so the frontend context picker works unchanged.
     if contexts.is_empty() && user.role >= 3 {
-        let tenants: Vec<(Uuid, String)> = sqlx::query_as(
-            "SELECT id, name FROM identity.tenants ORDER BY name",
-        )
-        .fetch_all(&*state.pool)
-        .await
-        .unwrap_or_default();
+        let tenants: Vec<(Uuid, String)> =
+            sqlx::query_as("SELECT id, name FROM identity.tenants ORDER BY name")
+                .fetch_all(&*state.pool)
+                .await
+                .unwrap_or_default();
 
         if tenants.len() > 1 {
             for (tid, tname) in &tenants {
@@ -381,8 +381,16 @@ pub async fn login(
         }
     }
 
-    let requires_context = if contexts.is_empty() { None } else { Some(true) };
-    let contexts_payload = if contexts.is_empty() { None } else { Some(contexts) };
+    let requires_context = if contexts.is_empty() {
+        None
+    } else {
+        Some(true)
+    };
+    let contexts_payload = if contexts.is_empty() {
+        None
+    } else {
+        Some(contexts)
+    };
 
     Ok((
         response_headers,
@@ -1120,16 +1128,14 @@ async fn issue_context_tokens(
         (tc, ctx)
     } else if user.role >= 3 {
         // Admin tenant switching: context_id is actually a tenant_id.
-        let tenant: Option<(Uuid, String)> = sqlx::query_as(
-            "SELECT id, name FROM identity.tenants WHERE id = $1",
-        )
-        .bind(context_id)
-        .fetch_optional(&*state.pool)
-        .await
-        .unwrap_or(None);
+        let tenant: Option<(Uuid, String)> =
+            sqlx::query_as("SELECT id, name FROM identity.tenants WHERE id = $1")
+                .bind(context_id)
+                .fetch_optional(&*state.pool)
+                .await
+                .unwrap_or(None);
 
-        let (tid, tname) = tenant
-            .ok_or_else(|| Error::NotFound(format!("Tenant {context_id}")))?;
+        let (tid, tname) = tenant.ok_or_else(|| Error::NotFound(format!("Tenant {context_id}")))?;
 
         // Switch the admin's tenant_id in the database so subsequent requests use it.
         sqlx::query("UPDATE identity.users SET tenant_id = $1 WHERE id = $2")

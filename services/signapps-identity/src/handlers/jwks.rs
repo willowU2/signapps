@@ -277,12 +277,12 @@ mod tests {
                 assert_eq!(jwk.e, "AQAB", "public exponent must be AQAB for e=65537");
                 assert!(!jwk.n.is_empty(), "modulus must not be empty");
                 assert!(!jwk.kid.is_empty(), "kid must not be empty");
-            }
+            },
             Err(e) => {
                 // If the hardcoded test PEM is slightly malformed, skip gracefully.
                 // The important thing is the function returns an error, not a panic.
                 eprintln!("pem_to_jwk returned error (acceptable in unit test): {e:?}");
-            }
+            },
         }
     }
 

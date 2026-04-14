@@ -289,9 +289,10 @@ pub async fn callback(
 
     // 2. Verify the state token to extract tenant_id and purpose.
     //    state is required — missing means a malformed redirect.
-    let state_token = query.state.as_deref().ok_or_else(|| {
-        AppError::BadRequest("oauth: missing `state` query parameter".into())
-    })?;
+    let state_token = query
+        .state
+        .as_deref()
+        .ok_or_else(|| AppError::BadRequest("oauth: missing `state` query parameter".into()))?;
     let flow_preview = FlowState::verify(state_token, &state.oauth_engine_state.state_secret)
         .map_err(|e| error::oauth_error_to_app_error(OAuthError::InvalidState(e)))?;
     let tenant_id = flow_preview.tenant_id;

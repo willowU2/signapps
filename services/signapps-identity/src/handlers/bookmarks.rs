@@ -259,15 +259,13 @@ pub async fn delete_bookmark(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode> {
-    let affected = sqlx::query(
-        "DELETE FROM identity.bookmarks WHERE id = $1 AND user_id = $2",
-    )
-    .bind(id)
-    .bind(claims.sub)
-    .execute(state.pool.inner())
-    .await
-    .map_err(|e| Error::Database(e.to_string()))?
-    .rows_affected();
+    let affected = sqlx::query("DELETE FROM identity.bookmarks WHERE id = $1 AND user_id = $2")
+        .bind(id)
+        .bind(claims.sub)
+        .execute(state.pool.inner())
+        .await
+        .map_err(|e| Error::Database(e.to_string()))?
+        .rows_affected();
 
     if affected == 0 {
         return Err(Error::NotFound("Bookmark not found".to_string()));
@@ -378,20 +376,17 @@ pub async fn delete_collection(
     .await
     .map_err(|e| Error::Database(e.to_string()))?;
 
-    let affected = sqlx::query(
-        "DELETE FROM identity.bookmark_collections WHERE id = $1 AND user_id = $2",
-    )
-    .bind(id)
-    .bind(claims.sub)
-    .execute(state.pool.inner())
-    .await
-    .map_err(|e| Error::Database(e.to_string()))?
-    .rows_affected();
+    let affected =
+        sqlx::query("DELETE FROM identity.bookmark_collections WHERE id = $1 AND user_id = $2")
+            .bind(id)
+            .bind(claims.sub)
+            .execute(state.pool.inner())
+            .await
+            .map_err(|e| Error::Database(e.to_string()))?
+            .rows_affected();
 
     if affected == 0 {
-        return Err(Error::NotFound(
-            "Bookmark collection not found".to_string(),
-        ));
+        return Err(Error::NotFound("Bookmark collection not found".to_string()));
     }
 
     Ok(StatusCode::NO_CONTENT)

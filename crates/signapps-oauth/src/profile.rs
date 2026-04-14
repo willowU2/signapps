@@ -91,7 +91,9 @@ mod tests {
     fn missing_user_id_is_provider_error() {
         let body = json!({ "email": "u@example.com" });
         let err = extract_profile(body, "$.sub", None, None).unwrap_err();
-        assert!(matches!(err, OAuthError::ProviderError { ref error, .. } if error == "missing_user_id"));
+        assert!(
+            matches!(err, OAuthError::ProviderError { ref error, .. } if error == "missing_user_id")
+        );
     }
 
     #[test]
@@ -109,6 +111,8 @@ mod tests {
         // as missing_user_id rather than panicking.
         let body = json!({ "id": 12345 });
         let err = extract_profile(body, "$.id", None, None).unwrap_err();
-        assert!(matches!(err, OAuthError::ProviderError { ref error, .. } if error == "missing_user_id"));
+        assert!(
+            matches!(err, OAuthError::ProviderError { ref error, .. } if error == "missing_user_id")
+        );
     }
 }

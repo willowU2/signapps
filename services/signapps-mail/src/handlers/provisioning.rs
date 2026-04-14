@@ -138,7 +138,7 @@ pub async fn provision_person(
                 Json(serde_json::json!({ "error": "Account already exists for this person" })),
             )
                 .into_response();
-        }
+        },
         Err(e) => {
             tracing::error!(?e, "Failed to check existing account");
             return (
@@ -146,8 +146,8 @@ pub async fn provision_person(
                 Json(serde_json::json!({ "error": "Database error" })),
             )
                 .into_response();
-        }
-        Ok(None) => {}
+        },
+        Ok(None) => {},
     }
 
     let resolved: ResolvedAddress = match resolve_address_internal(&state.pool, person_id).await {
@@ -156,13 +156,12 @@ pub async fn provision_person(
     };
 
     // Look up domain_id
-    let domain_id: Option<Uuid> = sqlx::query_scalar(
-        "SELECT id FROM mailserver.domains WHERE name = $1 LIMIT 1",
-    )
-    .bind(&resolved.domain)
-    .fetch_optional(&state.pool)
-    .await
-    .unwrap_or(None);
+    let domain_id: Option<Uuid> =
+        sqlx::query_scalar("SELECT id FROM mailserver.domains WHERE name = $1 LIMIT 1")
+            .bind(&resolved.domain)
+            .fetch_optional(&state.pool)
+            .await
+            .unwrap_or(None);
 
     match sqlx::query_as::<_, MailserverAccount>(
         r#"INSERT INTO mailserver.accounts
@@ -184,7 +183,7 @@ pub async fn provision_person(
                 Json(serde_json::json!({ "error": "Database error" })),
             )
                 .into_response()
-        }
+        },
     }
 }
 
@@ -281,7 +280,7 @@ pub async fn bulk_provision(
                 Json(serde_json::json!({ "error": "Database error" })),
             )
                 .into_response();
-        }
+        },
     };
 
     let mut provisioned = 0usize;
@@ -295,16 +294,15 @@ pub async fn bulk_provision(
             Err(_) => {
                 skipped += 1;
                 continue;
-            }
+            },
         };
 
-        let domain_id: Option<Uuid> = sqlx::query_scalar(
-            "SELECT id FROM mailserver.domains WHERE name = $1 LIMIT 1",
-        )
-        .bind(&resolved.domain)
-        .fetch_optional(&state.pool)
-        .await
-        .unwrap_or(None);
+        let domain_id: Option<Uuid> =
+            sqlx::query_scalar("SELECT id FROM mailserver.domains WHERE name = $1 LIMIT 1")
+                .bind(&resolved.domain)
+                .fetch_optional(&state.pool)
+                .await
+                .unwrap_or(None);
 
         match sqlx::query(
             r#"INSERT INTO mailserver.accounts
@@ -326,7 +324,7 @@ pub async fn bulk_provision(
                     person_id: pid,
                     message: e.to_string(),
                 });
-            }
+            },
         }
     }
 

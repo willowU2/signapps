@@ -77,28 +77,26 @@ async fn person_id_from_claims(
     pool: &sqlx::PgPool,
     user_id: Uuid,
 ) -> Result<Uuid, axum::response::Response> {
-    sqlx::query_as::<_, PersonRow>(
-        "SELECT id FROM core.persons WHERE user_id = $1 LIMIT 1",
-    )
-    .bind(user_id)
-    .fetch_optional(pool)
-    .await
-    .map_err(|e| {
-        tracing::error!(?e, "Failed to resolve person from user_id");
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(serde_json::json!({ "error": "Database error" })),
-        )
-            .into_response()
-    })?
-    .map(|r| r.id)
-    .ok_or_else(|| {
-        (
-            StatusCode::NOT_FOUND,
-            Json(serde_json::json!({ "error": "Person profile not found for current user" })),
-        )
-            .into_response()
-    })
+    sqlx::query_as::<_, PersonRow>("SELECT id FROM core.persons WHERE user_id = $1 LIMIT 1")
+        .bind(user_id)
+        .fetch_optional(pool)
+        .await
+        .map_err(|e| {
+            tracing::error!(?e, "Failed to resolve person from user_id");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({ "error": "Database error" })),
+            )
+                .into_response()
+        })?
+        .map(|r| r.id)
+        .ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(serde_json::json!({ "error": "Person profile not found for current user" })),
+            )
+                .into_response()
+        })
 }
 
 // ---------------------------------------------------------------------------
@@ -146,7 +144,7 @@ pub async fn list_portal_messages(
                 Json(serde_json::json!({ "error": "Database error" })),
             )
                 .into_response()
-        }
+        },
     }
 }
 
@@ -211,7 +209,7 @@ pub async fn send_portal_message(
                 Json(serde_json::json!({ "error": "Database error" })),
             )
                 .into_response()
-        }
+        },
     }
 }
 
@@ -261,7 +259,7 @@ pub async fn get_portal_message(
                 Json(serde_json::json!({ "error": "Database error" })),
             )
                 .into_response()
-        }
+        },
     }
 }
 
@@ -313,7 +311,7 @@ pub async fn mark_portal_read(
                 Json(serde_json::json!({ "error": "Database error" })),
             )
                 .into_response()
-        }
+        },
     }
 }
 
@@ -359,7 +357,7 @@ pub async fn get_portal_thread(
                 Json(serde_json::json!({ "error": "Database error" })),
             )
                 .into_response()
-        }
+        },
     }
 }
 
@@ -399,6 +397,6 @@ pub async fn portal_unread_count(
                 Json(serde_json::json!({ "error": "Database error" })),
             )
                 .into_response()
-        }
+        },
     }
 }

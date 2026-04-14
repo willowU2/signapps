@@ -23,10 +23,7 @@ impl ConfigStore for MockConfigStore {
         Ok(self.config.clone())
     }
 
-    async fn list_for_tenant(
-        &self,
-        _tenant_id: Uuid,
-    ) -> Result<Vec<ProviderConfig>, OAuthError> {
+    async fn list_for_tenant(&self, _tenant_id: Uuid) -> Result<Vec<ProviderConfig>, OAuthError> {
         Ok(self.config.clone().into_iter().collect())
     }
 }
@@ -94,7 +91,12 @@ fn mk_creds_keycloak() -> ResolvedCredentials {
 
 #[tokio::test]
 async fn start_builds_google_url_with_pkce() {
-    let engine = mk_engine("google", true, vec!["login"], vec!["openid", "email", "profile"]);
+    let engine = mk_engine(
+        "google",
+        true,
+        vec!["login"],
+        vec!["openid", "email", "profile"],
+    );
     let req = StartRequest {
         tenant_id: Uuid::new_v4(),
         provider_key: "google".into(),
@@ -147,7 +149,8 @@ async fn start_includes_pkce_for_gitlab() {
         "GitLab (pkce_required=true) should include code_challenge"
     );
     assert!(
-        resp.authorization_url.contains("code_challenge_method=S256"),
+        resp.authorization_url
+            .contains("code_challenge_method=S256"),
         "PKCE method should be S256"
     );
 }
@@ -186,7 +189,10 @@ async fn start_rejects_disallowed_purpose() {
     };
     let err = engine.start(req, mk_creds()).await.unwrap_err();
     assert!(
-        matches!(err, OAuthError::PurposeNotAllowed(OAuthPurpose::Integration)),
+        matches!(
+            err,
+            OAuthError::PurposeNotAllowed(OAuthPurpose::Integration)
+        ),
         "purpose not in config should yield PurposeNotAllowed(Integration)"
     );
 }

@@ -5,7 +5,7 @@
 //! Full token-exchange wiremock tests are deferred to P3T11 + Plan 4 E2E tests.
 
 use signapps_oauth::{
-    Catalog, CallbackRequest, ConfigStore, EngineV2, EngineV2Config, FlowState, OAuthError,
+    CallbackRequest, Catalog, ConfigStore, EngineV2, EngineV2Config, FlowState, OAuthError,
     OAuthPurpose, ProviderConfig, ResolvedCredentials,
 };
 use std::collections::HashMap;
@@ -27,10 +27,7 @@ impl ConfigStore for MockConfigStore {
         Ok(self.config.clone())
     }
 
-    async fn list_for_tenant(
-        &self,
-        _tenant_id: Uuid,
-    ) -> Result<Vec<ProviderConfig>, OAuthError> {
+    async fn list_for_tenant(&self, _tenant_id: Uuid) -> Result<Vec<ProviderConfig>, OAuthError> {
         Ok(self.config.clone().into_iter().collect())
     }
 }

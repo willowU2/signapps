@@ -121,7 +121,10 @@ pub async fn create_company(
 ) -> Result<(StatusCode, Json<serde_json::Value>)> {
     let tenant_id = claims.tenant_id.unwrap_or_default();
     let company = CompanyRepository::create(&state.pool, tenant_id, input).await?;
-    Ok((StatusCode::CREATED, Json(serde_json::json!({ "company": company }))))
+    Ok((
+        StatusCode::CREATED,
+        Json(serde_json::json!({ "company": company })),
+    ))
 }
 
 /// Get a company by ID.
@@ -332,7 +335,10 @@ pub async fn add_company_person(
     // Ensure the company_id in the body matches the path parameter
     input.company_id = company_id;
     let affiliation = CompanyRepository::create_affiliation(&state.pool, input).await?;
-    Ok((StatusCode::CREATED, Json(serde_json::json!({ "affiliation": affiliation }))))
+    Ok((
+        StatusCode::CREATED,
+        Json(serde_json::json!({ "affiliation": affiliation })),
+    ))
 }
 
 /// Remove a person-company affiliation.
@@ -411,8 +417,7 @@ pub async fn list_person_companies(
     Extension(claims): Extension<Claims>,
     Path(person_id): Path<Uuid>,
 ) -> Result<Json<serde_json::Value>> {
-    let affiliations =
-        CompanyRepository::list_companies_for_person(&state.pool, person_id).await?;
+    let affiliations = CompanyRepository::list_companies_for_person(&state.pool, person_id).await?;
     Ok(Json(serde_json::json!({ "affiliations": affiliations })))
 }
 

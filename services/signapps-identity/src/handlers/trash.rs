@@ -204,9 +204,7 @@ pub async fn create_trash(
         ));
     }
 
-    let metadata = payload
-        .metadata
-        .unwrap_or_else(|| serde_json::json!({}));
+    let metadata = payload.metadata.unwrap_or_else(|| serde_json::json!({}));
 
     let item = sqlx::query_as::<_, TrashItem>(
         "INSERT INTO identity.trash \
@@ -256,15 +254,13 @@ pub async fn restore_trash(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode> {
-    let affected = sqlx::query(
-        "DELETE FROM identity.trash WHERE id = $1 AND deleted_by = $2",
-    )
-    .bind(id)
-    .bind(claims.sub)
-    .execute(state.pool.inner())
-    .await
-    .map_err(|e| Error::Database(e.to_string()))?
-    .rows_affected();
+    let affected = sqlx::query("DELETE FROM identity.trash WHERE id = $1 AND deleted_by = $2")
+        .bind(id)
+        .bind(claims.sub)
+        .execute(state.pool.inner())
+        .await
+        .map_err(|e| Error::Database(e.to_string()))?
+        .rows_affected();
 
     if affected == 0 {
         return Err(Error::NotFound("Trash item not found".to_string()));
@@ -293,15 +289,13 @@ pub async fn delete_trash(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode> {
-    let affected = sqlx::query(
-        "DELETE FROM identity.trash WHERE id = $1 AND deleted_by = $2",
-    )
-    .bind(id)
-    .bind(claims.sub)
-    .execute(state.pool.inner())
-    .await
-    .map_err(|e| Error::Database(e.to_string()))?
-    .rows_affected();
+    let affected = sqlx::query("DELETE FROM identity.trash WHERE id = $1 AND deleted_by = $2")
+        .bind(id)
+        .bind(claims.sub)
+        .execute(state.pool.inner())
+        .await
+        .map_err(|e| Error::Database(e.to_string()))?
+        .rows_affected();
 
     if affected == 0 {
         return Err(Error::NotFound("Trash item not found".to_string()));
@@ -326,13 +320,12 @@ pub async fn purge_expired(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Result<Json<serde_json::Value>> {
-    let result = sqlx::query(
-        "DELETE FROM identity.trash WHERE deleted_by = $1 AND expires_at < NOW()",
-    )
-    .bind(claims.sub)
-    .execute(state.pool.inner())
-    .await
-    .map_err(|e| Error::Database(e.to_string()))?;
+    let result =
+        sqlx::query("DELETE FROM identity.trash WHERE deleted_by = $1 AND expires_at < NOW()")
+            .bind(claims.sub)
+            .execute(state.pool.inner())
+            .await
+            .map_err(|e| Error::Database(e.to_string()))?;
 
     Ok(Json(serde_json::json!({
         "purged": result.rows_affected()

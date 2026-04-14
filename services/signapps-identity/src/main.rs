@@ -21,16 +21,16 @@ use handlers::openapi::IdentityApiDoc;
 use std::sync::Arc;
 
 use anyhow::Context as _;
-use signapps_keystore::{Keystore, KeystoreBackend};
 use signapps_common::bootstrap::{init_tracing, load_env, ServiceConfig};
 use signapps_common::middleware::{
     auth_middleware, logging_middleware, request_id_middleware, require_admin,
     security_headers_middleware, tenant_context_middleware, AuthState,
 };
+use signapps_common::pg_events::PgEventBus;
 use signapps_common::rate_limit::{RateLimiter, RateLimiterConfig};
 use signapps_common::JwtConfig;
-use signapps_common::pg_events::PgEventBus;
 use signapps_db::{create_pool, run_migrations, DatabasePool};
+use signapps_keystore::{Keystore, KeystoreBackend};
 use signapps_oauth::{Catalog, EngineV2, EngineV2Config, PgConfigStore};
 use tower_http::{
     cors::{AllowOrigin, CorsLayer},
@@ -110,12 +110,11 @@ async fn main() -> anyhow::Result<()> {
                  NOT safe for production)"
             );
             vec![0u8; 32]
-        }
+        },
     };
 
     let catalog = Arc::new(
-        Catalog::load_embedded()
-            .context("failed to load embedded OAuth provider catalog")?,
+        Catalog::load_embedded().context("failed to load embedded OAuth provider catalog")?,
     );
     tracing::info!(providers = catalog.len(), "OAuth catalog loaded");
 

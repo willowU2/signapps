@@ -111,7 +111,7 @@ pub async fn list_naming_rules(
                 Json(serde_json::json!({ "error": "Database error" })),
             )
                 .into_response()
-        }
+        },
     }
 }
 
@@ -155,7 +155,7 @@ pub async fn create_naming_rule(
                 Json(serde_json::json!({ "error": "Database error" })),
             )
                 .into_response()
-        }
+        },
     }
 }
 
@@ -209,7 +209,7 @@ pub async fn update_naming_rule(
                 Json(serde_json::json!({ "error": "Database error" })),
             )
                 .into_response()
-        }
+        },
     }
 }
 
@@ -250,7 +250,7 @@ pub async fn delete_naming_rule(
                 Json(serde_json::json!({ "error": "Database error" })),
             )
                 .into_response()
-        }
+        },
     }
 }
 
@@ -378,21 +378,19 @@ pub async fn resolve_address_internal(
 
     // 4. Resolve domain: rule's domain_id or walk up for first domain
     let domain_name = if let Some(did) = rule.domain_id {
-        sqlx::query_as::<_, DomainRow>(
-            "SELECT name FROM mailserver.domains WHERE id = $1",
-        )
-        .bind(did)
-        .fetch_optional(pool)
-        .await
-        .map_err(|e| {
-            tracing::error!(?e, "Failed to fetch domain");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(serde_json::json!({ "error": "Database error" })),
-            )
-                .into_response()
-        })?
-        .map(|d| d.name)
+        sqlx::query_as::<_, DomainRow>("SELECT name FROM mailserver.domains WHERE id = $1")
+            .bind(did)
+            .fetch_optional(pool)
+            .await
+            .map_err(|e| {
+                tracing::error!(?e, "Failed to fetch domain");
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(serde_json::json!({ "error": "Database error" })),
+                )
+                    .into_response()
+            })?
+            .map(|d| d.name)
     } else {
         // Walk up for first domain attached to an org node
         sqlx::query_as::<_, DomainRow>(
