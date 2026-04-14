@@ -16,6 +16,7 @@ use axum::{
     Router,
 };
 use handlers::admin_security;
+use handlers::oauth::OAuthEngineState;
 use handlers::openapi::IdentityApiDoc;
 use std::sync::Arc;
 
@@ -29,6 +30,7 @@ use signapps_common::middleware::{
 use signapps_common::rate_limit::{RateLimiter, RateLimiterConfig};
 use signapps_common::JwtConfig;
 use signapps_db::{create_pool, run_migrations, DatabasePool};
+use signapps_oauth::{Catalog, EngineV2, EngineV2Config, PgConfigStore};
 use tower_http::{
     cors::{AllowOrigin, CorsLayer},
     trace::TraceLayer,
@@ -85,6 +87,58 @@ async fn main() -> anyhow::Result<()> {
     );
     tracing::info!("keystore initialized");
 
+    // ── OAuth Engine v2 (P3T9) ──────────────────────────────────────────────
+    //
+    // OAUTH_STATE_SECRET is a 32-byte hex-encoded HMAC key used to sign and
+    // verify FlowState tokens (anti-CSRF). In development, if the variable is
+    // absent we fall back to a zero-byte placeholder so the service still boots.
+    //
+    // WARNING: Never use the all-zero fallback in production. Set
+    // OAUTH_STATE_SECRET to `openssl rand -hex 32` in your .env.
+    let oauth_state_secret = match std::env::var("OAUTH_STATE_SECRET") {
+        Ok(hex_val) => hex::decode(&hex_val).unwrap_or_else(|e| {
+            tracing::warn!(
+                error = %e,
+                "OAUTH_STATE_SECRET is not valid hex — falling back to zero secret (dev only)"
+            );
+            vec![0u8; 32]
+        }),
+        Err(_) => {
+            tracing::warn!(
+                "OAUTH_STATE_SECRET not set — using zero-byte placeholder (dev only, \
+                 NOT safe for production)"
+            );
+            vec![0u8; 32]
+        }
+    };
+
+    let catalog = Arc::new(
+        Catalog::load_embedded()
+            .context("failed to load embedded OAuth provider catalog")?,
+    );
+    tracing::info!(providers = catalog.len(), "OAuth catalog loaded");
+
+    let configs: Arc<dyn signapps_oauth::ConfigStore> =
+        Arc::new(PgConfigStore::new(pool.inner().clone()));
+
+    let callback_base_url = std::env::var("OAUTH_CALLBACK_BASE_URL")
+        .unwrap_or_else(|_| "http://localhost:3001".to_string());
+
+    let engine = EngineV2::new(EngineV2Config {
+        catalog: Arc::clone(&catalog),
+        configs: Arc::clone(&configs),
+        state_secret: oauth_state_secret,
+        callback_base_url,
+    });
+
+    let oauth_engine_state = Arc::new(OAuthEngineState {
+        engine,
+        catalog,
+        configs,
+    });
+    tracing::info!("OAuth engine v2 initialized");
+    // ── End OAuth Engine v2 ─────────────────────────────────────────────────
+
     // Create application state
     let state = AppState {
         pool,
@@ -96,6 +150,7 @@ async fn main() -> anyhow::Result<()> {
         active_sessions: handlers::admin_security::ActiveSessionsStore::new(),
         login_attempts: handlers::admin_security::LoginAttemptsStore::new(),
         migration: handlers::migration::MigrationStore::new(),
+        oauth_engine_state,
     };
 
     // Build router
@@ -112,9 +167,7 @@ pub struct AppState {
     pub jwt_secret: String,
     pub jwt_config: JwtConfig,
     pub cache: signapps_cache::CacheService,
-    /// Master keystore — loaded at boot, consumed by OAuth token encryption in Plan 2.
-    // consumed in Plan 2 OAuth handlers
-    #[allow(dead_code)]
+    /// Master keystore — used by OAuth credential resolver (Plan 3 / P3T10).
     pub keystore: Arc<Keystore>,
     /// In-memory security policies store (admin-managed).
     pub security_policies: handlers::admin_security::SecurityPoliciesStore,
@@ -124,6 +177,8 @@ pub struct AppState {
     pub login_attempts: handlers::admin_security::LoginAttemptsStore,
     /// In-memory migration job store (V2-15).
     pub migration: handlers::migration::MigrationStore,
+    /// OAuth2/OIDC engine state — wired in P3T9, credential resolver added in P3T10.
+    pub oauth_engine_state: Arc<OAuthEngineState>,
     // data_export moved to signapps-compliance service (port 3032)
 }
 
@@ -211,9 +266,28 @@ fn create_router(state: AppState) -> Router {
     let openapi_routes =
         SwaggerUi::new("/swagger-ui").url("/api/v1/openapi.json", IdentityApiDoc::openapi());
 
+    // OAuth routes — public (browser redirect flows must be reachable without auth)
+    let oauth_routes = Router::new()
+        // GET /api/v1/oauth/providers — list embedded catalog
+        .route(
+            "/api/v1/oauth/providers",
+            get(handlers::oauth::list_providers),
+        )
+        // POST /api/v1/oauth/{provider}/start — initiate authorization flow
+        .route(
+            "/api/v1/oauth/:provider/start",
+            post(handlers::oauth::start_flow),
+        )
+        // GET /api/v1/oauth/{provider}/callback — handle provider redirect
+        .route(
+            "/api/v1/oauth/:provider/callback",
+            get(handlers::oauth::callback),
+        );
+
     // Public routes (no auth required)
     let public_routes = Router::new()
         .merge(openapi_routes)
+        .merge(oauth_routes)
         .route("/health", get(handlers::health::health_check))
         // JWKS endpoint — public, no auth required.
         // Exposes the RS256 public key(s) so other services can validate tokens

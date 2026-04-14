@@ -22,6 +22,7 @@ signapps-cache = { path = "../../crates/signapps-cache" }
 signapps-common = { path = "../../crates/signapps-common" }
 signapps-db = { path = "../../crates/signapps-db", features = ["openapi"] }
 signapps-keystore = { path = "../../crates/signapps-keystore" }
+signapps-oauth = { path = "../../crates/signapps-oauth" }
 
 # Web framework
 axum = { workspace = true }

@@ -26,6 +26,7 @@ pub mod keep;
 pub mod ldap;
 pub mod mfa;
 pub mod migration;
+pub mod oauth;
 pub mod openapi;
 pub mod preferences;
 pub mod reports;
