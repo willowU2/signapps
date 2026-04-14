@@ -21,8 +21,6 @@ pub mod error;
 
 use axum::{
     extract::{Path, Query, State},
-    http::StatusCode,
-    response::IntoResponse,
     Json,
 };
 use serde::{Deserialize, Serialize};
@@ -51,6 +49,9 @@ pub struct OAuthEngineState {
     pub catalog: Arc<signapps_oauth::Catalog>,
     /// Tenant-scoped provider config store.
     pub configs: Arc<dyn signapps_oauth::ConfigStore>,
+    /// HMAC key for verifying FlowState tokens (anti-CSRF).
+    /// Populated from `OAUTH_STATE_SECRET` at boot.
+    pub state_secret: Vec<u8>,
 }
 
 // ---------------------------------------------------------------------------
@@ -236,66 +237,171 @@ pub struct CallbackQuery {
 
 /// Handle the OAuth provider callback (redirect URI).
 ///
+/// Full pipeline (Plan 4 / P4T8):
+/// 1. If the provider returned an error, surface it immediately.
+/// 2. Verify the HMAC-signed `state` token to extract `tenant_id` and `purpose`.
+/// 3. Load the tenant's `ProviderConfig` and decrypt credentials via the keystore.
+/// 4. Call `EngineV2::callback` — token exchange + profile fetch.
+/// 5. Encrypt `access_token` and `refresh_token` with DEK `oauth-tokens-v1`.
+/// 6. Resolve the provider's primary category from the catalog.
+/// 7. Publish `oauth.tokens.acquired` via `PgEventBus`.
+/// 8. Redirect — for `Login` flows, appends `provider` + `email` to the redirect URL
+///    so the frontend can finalize the session.  Full JWT issuance is a follow-up task.
+///
 /// # Errors
 ///
-/// Returns 503 until P3T10 wires in the credential resolver.
-/// After P3T10:
-/// - [`AppError::Unauthorized`] — invalid/expired state token.
-/// - [`AppError::ExternalService`] — provider returned an error or token
-///   exchange failed.
-/// - Redirects to `flow.redirect_after` on success.
+/// - [`AppError::BadRequest`] — `state` query param missing or provider not configured.
+/// - [`AppError::Unauthorized`] — state token expired, tampered, or malformed.
+/// - [`AppError::ExternalService`] — provider returned an error or token exchange failed.
+/// - [`AppError::Internal`] — crypto failure or event-bus publish error.
 ///
 /// # Panics
 ///
 /// No panics — all errors propagate via `Result`.
-#[instrument(skip(_state, query), fields(provider = %provider))]
+#[instrument(skip(state, query), fields(provider = %provider_key))]
 pub async fn callback(
-    State(_state): State<AppState>,
-    Path(provider): Path<String>,
+    State(state): State<AppState>,
+    Path(provider_key): Path<String>,
     Query(query): Query<CallbackQuery>,
-) -> Result<impl IntoResponse, AppError> {
-    // If the provider returned an error, surface it immediately even in scaffold mode.
+) -> Result<axum::response::Redirect, AppError> {
+    use signapps_common::crypto::EncryptedField;
+    use signapps_common::pg_events::NewEvent;
+    use signapps_oauth::{
+        CallbackRequest, FlowState, OAuthTokensAcquired, EVENT_OAUTH_TOKENS_ACQUIRED,
+    };
+
+    // 1. If the provider returned an error, surface it immediately.
     if let Some(ref err) = query.error {
         let description = query
             .error_description
             .as_deref()
             .unwrap_or("no description");
         tracing::warn!(
-            provider = %provider,
+            provider = %provider_key,
             error = %err,
             description = %description,
             "OAuth provider returned error on callback"
         );
         return Err(AppError::ExternalService(format!(
-            "oauth:{provider}: provider returned error '{err}': {description}"
+            "oauth:{provider_key}: provider returned error '{err}': {description}"
         )));
     }
 
-    tracing::warn!(
-        provider = %provider,
-        "callback called — credential resolver not yet wired (P3T10 pending)"
+    // 2. Verify the state token to extract tenant_id and purpose.
+    //    state is required — missing means a malformed redirect.
+    let state_token = query.state.as_deref().ok_or_else(|| {
+        AppError::BadRequest("oauth: missing `state` query parameter".into())
+    })?;
+    let flow_preview = FlowState::verify(state_token, &state.oauth_engine_state.state_secret)
+        .map_err(|e| error::oauth_error_to_app_error(OAuthError::InvalidState(e)))?;
+    let tenant_id = flow_preview.tenant_id;
+    let purpose = flow_preview.purpose;
+
+    // 3. Load tenant ProviderConfig + decrypt credentials.
+    let cfg = state
+        .oauth_engine_state
+        .configs
+        .get(tenant_id, &provider_key)
+        .await
+        .map_err(error::oauth_error_to_app_error)?
+        .ok_or_else(|| error::oauth_error_to_app_error(OAuthError::ProviderNotConfigured))?;
+    let creds = creds::resolve_credentials(&cfg, &state.keystore)
+        .map_err(error::oauth_error_to_app_error)?;
+
+    // 4. Build CallbackRequest and call EngineV2::callback.
+    let cb_req = CallbackRequest {
+        code: query.code.clone().unwrap_or_default(),
+        state: state_token.to_string(),
+        error: query.error.clone(),
+        error_description: query.error_description.clone(),
+    };
+    let http = reqwest::Client::new();
+    let (cb_resp, tokens, profile, flow) = state
+        .oauth_engine_state
+        .engine
+        .callback(cb_req, creds, &http)
+        .await
+        .map_err(error::oauth_error_to_app_error)?;
+
+    // 5. Encrypt tokens with DEK 'oauth-tokens-v1'.
+    let dek = state.keystore.dek("oauth-tokens-v1");
+    let access_token_enc = <()>::encrypt(tokens.access_token.as_bytes(), &dek)
+        .map_err(|e| AppError::Internal(format!("encrypt access_token: {e}")))?;
+    let refresh_token_enc = tokens
+        .refresh_token
+        .as_ref()
+        .map(|rt| <()>::encrypt(rt.as_bytes(), &dek))
+        .transpose()
+        .map_err(|e| AppError::Internal(format!("encrypt refresh_token: {e}")))?;
+    let expires_at = tokens
+        .expires_in
+        .map(|s| chrono::Utc::now() + chrono::Duration::seconds(s));
+
+    // 6. Resolve the provider's primary category from the catalog.
+    let provider_def = state
+        .oauth_engine_state
+        .catalog
+        .get(&provider_key)
+        .map_err(|_| AppError::Internal("provider vanished from catalog after callback".into()))?;
+    let category = provider_def
+        .categories
+        .first()
+        .copied()
+        .unwrap_or(signapps_oauth::ProviderCategory::Other);
+
+    // 7. Publish oauth.tokens.acquired event.
+    let event = OAuthTokensAcquired {
+        user_id: flow.user_id,
+        tenant_id,
+        provider_key: provider_key.clone(),
+        purpose,
+        category,
+        access_token_enc,
+        refresh_token_enc,
+        expires_at,
+        scopes_granted: tokens
+            .scope
+            .as_deref()
+            .map(|s| s.split(' ').map(String::from).collect())
+            .unwrap_or_default(),
+        provider_user_id: profile.id.clone(),
+        provider_user_email: profile.email.clone(),
+    };
+    let payload = serde_json::to_value(&event)
+        .map_err(|e| AppError::Internal(format!("serialize oauth event: {e}")))?;
+    state
+        .event_bus
+        .publish(NewEvent {
+            event_type: EVENT_OAUTH_TOKENS_ACQUIRED.to_string(),
+            aggregate_id: flow.user_id,
+            payload,
+        })
+        .await
+        .map_err(|e| AppError::Internal(format!("publish oauth.tokens.acquired: {e}")))?;
+
+    tracing::info!(
+        provider = %provider_key,
+        tenant_id = %tenant_id,
+        purpose = ?purpose,
+        provider_user_id = %profile.id,
+        "OAuth callback completed — tokens encrypted and event published"
     );
 
-    // TODO(Plan 4): Wire full callback implementation.
-    //  1. Verify `state` param is present (else 400).
-    //  2. Decrypt FlowState to recover tenant_id + provider_key.
-    //  3. Fetch ProviderConfig + decrypt credentials via state.keystore.
-    //  4. Build ResolvedCredentials via creds::resolve_credentials.
-    //  5. Call state.oauth_engine_state.engine.callback(cb, creds, &http_client).await.
-    //  6. Re-encrypt tokens via state.keystore + persist to oauth_tokens table (Plan 4 token storage).
-    //  7. Emit oauth.tokens.acquired event on PgEventBus (Plan 4 event bus).
-    //  8. Build session JWT if purpose == Login.
-    //  9. Redirect to CallbackResponse.redirect_to.
-    let body = serde_json::json!({
-        "type": "urn:signapps:error:service_unavailable",
-        "title": "Service Unavailable",
-        "status": 503,
-        "detail": "OAuth callback handler not yet wired — token storage and event bus \
-                   integration are required (Plan 4).",
-        "error_code": "OAUTH_CALLBACK_NOT_WIRED"
-    });
+    // 8. Build redirect URL.
+    //    For Login flows, append provider + email so the frontend can finalize the session.
+    //    Full JWT issuance (user provision → create_jwt) is a follow-up task.
+    let redirect_to = if matches!(purpose, OAuthPurpose::Login) {
+        format!(
+            "{}?provider={}&email={}",
+            cb_resp.redirect_to,
+            urlencoding::encode(&provider_key),
+            urlencoding::encode(profile.email.as_deref().unwrap_or(""))
+        )
+    } else {
+        cb_resp.redirect_to
+    };
 
-    Ok((StatusCode::SERVICE_UNAVAILABLE, Json(body)))
+    Ok(axum::response::Redirect::to(&redirect_to))
 }
 
 #[cfg(test)]

@@ -29,6 +29,7 @@ use signapps_common::middleware::{
 };
 use signapps_common::rate_limit::{RateLimiter, RateLimiterConfig};
 use signapps_common::JwtConfig;
+use signapps_common::pg_events::PgEventBus;
 use signapps_db::{create_pool, run_migrations, DatabasePool};
 use signapps_oauth::{Catalog, EngineV2, EngineV2Config, PgConfigStore};
 use tower_http::{
@@ -127,7 +128,7 @@ async fn main() -> anyhow::Result<()> {
     let engine = EngineV2::new(EngineV2Config {
         catalog: Arc::clone(&catalog),
         configs: Arc::clone(&configs),
-        state_secret: oauth_state_secret,
+        state_secret: oauth_state_secret.clone(),
         callback_base_url,
     });
 
@@ -135,9 +136,16 @@ async fn main() -> anyhow::Result<()> {
         engine,
         catalog,
         configs,
+        state_secret: oauth_state_secret,
     });
     tracing::info!("OAuth engine v2 initialized");
     // ── End OAuth Engine v2 ─────────────────────────────────────────────────
+
+    // Initialize the event bus for publishing OAuth events (Plan 4 / P4T8).
+    let event_bus = Arc::new(PgEventBus::new(
+        pool.inner().clone(),
+        "signapps-identity".to_string(),
+    ));
 
     // Create application state
     let state = AppState {
@@ -151,6 +159,7 @@ async fn main() -> anyhow::Result<()> {
         login_attempts: handlers::admin_security::LoginAttemptsStore::new(),
         migration: handlers::migration::MigrationStore::new(),
         oauth_engine_state,
+        event_bus,
     };
 
     // Build router
@@ -179,6 +188,8 @@ pub struct AppState {
     pub migration: handlers::migration::MigrationStore,
     /// OAuth2/OIDC engine state — wired in P3T9, credential resolver added in P3T10.
     pub oauth_engine_state: Arc<OAuthEngineState>,
+    /// Event bus for publishing platform events (Plan 4 / P4T8).
+    pub event_bus: Arc<PgEventBus>,
     // data_export moved to signapps-compliance service (port 3032)
 }
 
