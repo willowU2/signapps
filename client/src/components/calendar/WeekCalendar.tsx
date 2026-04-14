@@ -13,7 +13,8 @@ import {
   differenceInMinutes,
 } from "date-fns";
 import { fr } from "date-fns/locale";
-import { useDraggable } from "@dnd-kit/core";
+import { useDraggable, useDroppable } from "@dnd-kit/core";
+import { cn } from "@/lib/utils";
 import {
   useCalendarStore,
   useCalendarSelection,
@@ -96,6 +97,40 @@ function DraggableEventCard({
         onResizeCommit={onResizeCommit}
         containerRef={containerRef as React.RefObject<HTMLElement>}
       />
+    </div>
+  );
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// Droppable day column — highlights when an event is dragged over it so the
+// user gets visual feedback. The drop data (`type: "calendar-slot"`, `date`)
+// is picked up by CalendarHub.handleDragEnd to reschedule the event.
+// ────────────────────────────────────────────────────────────────────────────
+
+function DroppableDayColumn({
+  date,
+  children,
+  className,
+  hourHeight,
+}: {
+  date: Date;
+  children: React.ReactNode;
+  className?: string;
+  hourHeight?: number;
+}) {
+  const dateStr = format(date, "yyyy-MM-dd");
+  const { setNodeRef, isOver } = useDroppable({
+    id: `slot-${dateStr}`,
+    data: { type: "calendar-slot", date: dateStr },
+  });
+  return (
+    <div
+      ref={setNodeRef}
+      data-testid={`day-column-${dateStr}`}
+      data-hour-height={hourHeight}
+      className={cn(className, isOver && "bg-primary/5")}
+    >
+      {children}
     </div>
   );
 }
@@ -320,10 +355,10 @@ export function WeekCalendar({
 
           {/* Days Columns */}
           {weekDays.map((day) => (
-            <div
+            <DroppableDayColumn
               key={day.toString()}
-              data-testid={`day-column-${format(day, "yyyy-MM-dd")}`}
-              data-hour-height={hourHeight}
+              date={day}
+              hourHeight={hourHeight}
               className="border-r relative h-[1440px] flex-1 min-w-[100px]"
             >
               {/* Hour lines */}
@@ -353,7 +388,7 @@ export function WeekCalendar({
                   hourHeight={hourHeight}
                 />
               ))}
-            </div>
+            </DroppableDayColumn>
           ))}
         </div>
       </div>

@@ -11,7 +11,8 @@ import {
   differenceInMinutes,
   isToday,
 } from "date-fns";
-import { useDraggable } from "@dnd-kit/core";
+import { useDraggable, useDroppable } from "@dnd-kit/core";
+import { cn } from "@/lib/utils";
 import {
   useCalendarStore,
   useCalendarSelection,
@@ -91,6 +92,40 @@ function DraggableEventCard({
         onResizeCommit={onResizeCommit}
         containerRef={containerRef as React.RefObject<HTMLElement>}
       />
+    </div>
+  );
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// Droppable day column — receives drags from other views and highlights when
+// an event is dragged over it. Drop data is consumed by CalendarHub's
+// handleDragEnd to reschedule the event to the new day (time-of-day preserved).
+// ────────────────────────────────────────────────────────────────────────────
+
+function DroppableDayColumn({
+  date,
+  children,
+  className,
+  hourHeight,
+}: {
+  date: Date;
+  children: React.ReactNode;
+  className?: string;
+  hourHeight?: number;
+}) {
+  const dateStr = format(date, "yyyy-MM-dd");
+  const { setNodeRef, isOver } = useDroppable({
+    id: `slot-${dateStr}`,
+    data: { type: "calendar-slot", date: dateStr },
+  });
+  return (
+    <div
+      ref={setNodeRef}
+      data-testid={`day-column-${dateStr}`}
+      data-hour-height={hourHeight}
+      className={cn(className, isOver && "bg-primary/5")}
+    >
+      {children}
     </div>
   );
 }
@@ -261,7 +296,11 @@ export function DayCalendar({
           </div>
 
           {/* Day Column */}
-          <div className="flex-1 relative h-[1440px] border-r">
+          <DroppableDayColumn
+            date={currentDate}
+            hourHeight={hourHeight}
+            className="flex-1 relative h-[1440px] border-r"
+          >
             {/* Hour lines */}
             {hours.map((hour) => (
               <div
@@ -289,7 +328,7 @@ export function DayCalendar({
                 hourHeight={hourHeight}
               />
             ))}
-          </div>
+          </DroppableDayColumn>
         </div>
       </div>
     </div>

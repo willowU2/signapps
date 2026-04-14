@@ -50,7 +50,15 @@ import {
   Download,
   CalendarClock,
 } from "lucide-react";
-import { DndContext, DragEndEvent, DragOverlay } from "@dnd-kit/core";
+import {
+  DndContext,
+  DragEndEvent,
+  DragOverlay,
+  PointerSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -344,6 +352,25 @@ export function CalendarHub() {
   // Events hook — exposes CRUD for drag-drop, delete-key, and undo.
   const { events, updateEvent, deleteEvent, createEvent } =
     useEvents(selectedCalendarId);
+
+  // ── DnD sensors ──────────────────────────────────────────────────────────
+  // PointerSensor with 8px activation distance so a plain click opens the
+  // event instead of starting a drag. TouchSensor uses a long-press delay
+  // for mobile support.
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 8 },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: { delay: 200, tolerance: 5 },
+    }),
+  );
+
+  // Active event being dragged — used to render DragOverlay content.
+  const [activeEventId, setActiveEventId] = useState<string | null>(null);
+  const activeEvent = activeEventId
+    ? events.find((e) => e.id === activeEventId)
+    : null;
 
   /** Open form to create a new event (optionally with a preselected time slot) */
   const handleCreateEvent = useCallback(
@@ -972,7 +999,15 @@ export function CalendarHub() {
 
         {/* Main view area — wrapped in DndContext for drag-and-drop */}
         <main className="flex-1 min-w-0 flex flex-col overflow-hidden">
-          <DndContext onDragEnd={handleDragEnd}>
+          <DndContext
+            sensors={sensors}
+            onDragStart={(e) => setActiveEventId(String(e.active.id))}
+            onDragEnd={(e) => {
+              setActiveEventId(null);
+              handleDragEnd(e);
+            }}
+            onDragCancel={() => setActiveEventId(null)}
+          >
             <Suspense fallback={<ViewSkeleton />}>
               {/* Cast to accept shared calendar props — views that don't use them simply ignore them */}
               {React.createElement(
@@ -986,7 +1021,13 @@ export function CalendarHub() {
                 },
               )}
             </Suspense>
-            <DragOverlay />
+            <DragOverlay>
+              {activeEvent && (
+                <div className="rounded-md bg-primary text-primary-foreground px-2 py-1 text-xs font-medium shadow-lg opacity-90">
+                  {activeEvent.title}
+                </div>
+              )}
+            </DragOverlay>
           </DndContext>
         </main>
 

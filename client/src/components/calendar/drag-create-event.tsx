@@ -84,7 +84,19 @@ export function DragCreateLayer({
       const rect = getRect();
       const wasDragging = draggingRef.current;
       draggingRef.current = false;
-      if (!rect || !wasDragging) {
+      if (!rect) {
+        setDragging(false);
+        return;
+      }
+      if (!wasDragging) {
+        // Pure click — create default 1-hour event at clicked Y position
+        const startMin = yToMinutes(startYRef.current);
+        const endMin = Math.min(1440, startMin + 60);
+        onCreateEvent({
+          day,
+          startMinutes: startMin,
+          endMinutes: endMin,
+        });
         setDragging(false);
         return;
       }
@@ -122,7 +134,7 @@ export function DragCreateLayer({
   return (
     <div
       ref={containerRef}
-      className="absolute inset-0 z-20 cursor-crosshair select-none"
+      className={`absolute inset-0 z-0 select-none ${dragging ? "cursor-crosshair" : ""}`}
       onMouseDown={handleMouseDown}
     >
       {dragging && height > 8 && (
