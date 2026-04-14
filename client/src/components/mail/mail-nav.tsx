@@ -63,7 +63,7 @@ export function MailNav({ isCollapsed, links }: NavProps) {
                             onClick={link.onClick}
                             className={cn(
                                 buttonVariants({ variant: link.variant, size: "sm" }),
-                                "justify-start cursor-pointer transition-all duration-200 rounded-md mx-2 h-8 px-3 font-medium",
+                                "justify-start cursor-pointer transition-all duration-200 rounded-[8px] mx-2 h-8 px-3 font-medium",
                                 link.variant === "default"
                                     ? "bg-accent text-accent-foreground font-medium"
                                     : "text-muted-foreground font-normal hover:bg-muted"

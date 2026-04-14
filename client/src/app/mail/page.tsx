@@ -1196,6 +1196,8 @@ export default function MailPage() {
     <div data-testid="mail-root">
       <TooltipProvider delayDuration={0}>
         <WorkspaceShell
+          hideGlobalSidebar={true}
+          hideRightSidebar={true}
           className="bg-background text-foreground font-sans"
           header={<WorkspaceHeader />}
           sidebar={
@@ -1262,16 +1264,16 @@ export default function MailPage() {
               {!sidebarCollapsed ? (
                 <div className="flex flex-col gap-1 mx-2 mb-2">
                   <Button
-                    className="w-[calc(100%-8px)] mx-auto gap-2 rounded-md h-10 font-medium justify-start px-3 text-[13px] border shadow-sm"
+                    className="w-[calc(100%-8px)] mx-auto gap-2 rounded-[8px] h-10 font-medium justify-start px-3 text-[13px] border shadow-sm"
                     onClick={() => setComposeRichOpen(true)}
                     data-testid="mail-compose-button"
                   >
                     <Pencil className="h-4 w-4" />
-                    Nouveau message
+                    ÉCRIRE UN MAIL
                   </Button>
                   <Button
                     variant="ghost"
-                    className="w-[calc(100%-8px)] mx-auto gap-2 rounded-md h-8 text-[13px] text-muted-foreground hover:text-foreground justify-start px-3"
+                    className="w-[calc(100%-8px)] mx-auto gap-2 rounded-[8px] h-8 text-[13px] text-muted-foreground hover:text-foreground justify-start px-3"
                     onClick={() => setComposeAiOpen(true)}
                     data-testid="mail-compose-ai-button"
                   >
