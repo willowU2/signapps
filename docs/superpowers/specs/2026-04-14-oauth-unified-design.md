@@ -172,7 +172,9 @@ CREATE TABLE oauth_provider_configs (
 
     -- Activation
     enabled       BOOLEAN NOT NULL DEFAULT false,
-    purposes      TEXT[] NOT NULL DEFAULT '{}', -- ['login', 'integration']
+    -- purposes : subset of {'login', 'integration'} — sérialisé depuis l'enum Rust OAuthPurpose
+    -- Un provider peut avoir les deux activés ; les restrictions par purpose vont dans oauth_provider_purpose_overrides.
+    purposes      TEXT[] NOT NULL DEFAULT '{}' CHECK (purposes <@ ARRAY['login','integration']),
 
     -- Scopes autorisés
     allowed_scopes TEXT[] NOT NULL DEFAULT '{}',
@@ -365,7 +367,7 @@ Trois endpoints (`request_token` → `authorize` → `access_token`), chaque req
 
 ### 5.4 Engine SAML
 
-Utilise la crate `samael` (MIT) pour parsing + signature XML.
+Utilise la crate `samael` (MIT) pour parsing + signature XML. Le module `engine_saml.rs` encapsule `samael` derrière une interface identique aux autres engines (`start` / `callback`), de sorte que le handler HTTP unifié puisse dispatcher dynamiquement sans connaître les spécificités SAML.
 
 **Flow** :
 1. `start` : construire `AuthnRequest` XML, encoder base64+deflate, redirect vers l'IdP avec `SAMLRequest` + `RelayState` signé (équivalent du `state`)
@@ -450,6 +452,7 @@ let url = provider.authorize_url.replace("{tenant}", &extra.get("tenant")?);
 - **Drive** (6) : google, microsoft (onedrive), dropbox, box, pcloud, mega
 - **SSO Entreprise** (11) : okta, auth0, keycloak, authentik, azure_ad, google_workspace, onelogin, ping_identity, jumpcloud, saml_generic, oidc_generic
 - **SSO Consumer** (8) : google, apple, microsoft, facebook, github, gitlab, discord, twitter
+  _Note : certains providers (google, microsoft) apparaissent dans plusieurs catégories car ils servent à la fois en mail/calendar/drive ET en SSO. Le `categories` array dans `catalog.json` est inclusif._
 - **Social** (11) : twitter, linkedin, facebook, instagram, reddit, mastodon, bluesky, threads, tiktok, youtube, pinterest
 - **Dev** (6) : github, gitlab, bitbucket, atlassian, gitea, codeberg
 - **Chat** (5) : slack, discord, microsoft (teams), zoom, webex
