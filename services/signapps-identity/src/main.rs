@@ -7,6 +7,7 @@ mod auth;
 mod handlers;
 mod ldap;
 mod middleware;
+mod refresh_job;
 mod services;
 mod webhook_dispatcher;
 
@@ -160,6 +161,10 @@ async fn main() -> anyhow::Result<()> {
         oauth_engine_state,
         event_bus,
     };
+
+    // Spawn periodic OAuth token refresh job (Plan 5 / P5T4).
+    refresh_job::spawn(state.clone());
+    tracing::info!("oauth refresh job spawned");
 
     // Build router
     let app = create_router(state);

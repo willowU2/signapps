@@ -33,6 +33,7 @@ tower-http = { workspace = true }
 # Async
 tokio = { workspace = true }
 async-trait = { workspace = true }
+futures = { workspace = true }
 
 # Serialization
 serde = { workspace = true }
