@@ -39,8 +39,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import {
-  ChevronLeft,
-  ChevronRight,
   ZoomIn,
   ZoomOut,
   Milestone,
@@ -164,7 +162,6 @@ export function TimelineView({
   onItemDoubleClick,
 }: TimelineViewProps) {
   const currentDate = useCalendarStore((state) => state.currentDate);
-  const setCurrentDate = useCalendarStore((state) => state.setCurrentDate);
 
   const storeItems = useCalendarStore((state) => state.timeItems);
   const isLoading = useCalendarStore((state) => state.isLoading);
@@ -267,35 +264,6 @@ export function TimelineView({
     };
   };
 
-  // Navigation
-  const handlePrev = () => {
-    switch (timeScale) {
-      case 'day':
-        setCurrentDate(addDays(currentDate, -7));
-        break;
-      case 'week':
-        setCurrentDate(addDays(currentDate, -28));
-        break;
-      case 'month':
-        setCurrentDate(addDays(currentDate, -30));
-        break;
-    }
-  };
-
-  const handleNext = () => {
-    switch (timeScale) {
-      case 'day':
-        setCurrentDate(addDays(currentDate, 7));
-        break;
-      case 'week':
-        setCurrentDate(addDays(currentDate, 28));
-        break;
-      case 'month':
-        setCurrentDate(addDays(currentDate, 30));
-        break;
-    }
-  };
-
   if (isLoading && items.length === 0) {
     return (
       <div className={cn('flex h-full items-center justify-center', className)}>
@@ -311,17 +279,9 @@ export function TimelineView({
     <div className={cn('flex h-full flex-col', className)}>
       {/* Toolbar */}
       <div className="flex items-center justify-between border-b p-2">
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="icon" onClick={handlePrev}>
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <Button variant="outline" size="icon" onClick={handleNext}>
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-          <span className="text-sm font-medium">
-            {format(currentDate, 'MMMM yyyy', { locale: fr })}
-          </span>
-        </div>
+        <span className="text-sm font-medium">
+          {format(currentDate, 'MMMM yyyy', { locale: fr })}
+        </span>
 
         <div className="flex items-center gap-2">
           <Select value={timeScale} onValueChange={(v) => setTimeScale(v as TimeScale)}>

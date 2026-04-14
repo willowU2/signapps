@@ -4,7 +4,6 @@ import React, { useState, useCallback, useMemo } from "react";
 import {
   startOfWeek,
   endOfWeek,
-  addDays,
   format,
   isToday,
   startOfMonth,
@@ -13,8 +12,6 @@ import {
 } from "date-fns";
 import { fr } from "date-fns/locale";
 import {
-  ChevronLeft,
-  ChevronRight,
   RefreshCw,
   AlertTriangle,
   AlertCircle,
@@ -604,7 +601,7 @@ function SummaryRow({ days, employees }: SummaryRowProps) {
 // ============================================================================
 
 export default function PresenceTableView() {
-  const { currentDate, setCurrentDate } = useCalendarStore();
+  const { currentDate } = useCalendarStore();
   const [selectedTeam, setSelectedTeam] = useState<string>("all");
   const [viewMode, setViewMode] = useState<"week" | "month">("week");
   const [thresholds] = useState<{ role: string; min: number }[]>([]);
@@ -710,34 +707,6 @@ export default function PresenceTableView() {
 
   const loading = isLoadingEmployees || isFetchingEmployees;
 
-  // Navigation
-  const goPrev = () => {
-    setLocalOverrides({});
-    if (viewMode === "week") {
-      setCurrentDate(addDays(currentDate, -7));
-    } else {
-      const d = new Date(currentDate);
-      d.setMonth(d.getMonth() - 1);
-      setCurrentDate(d);
-    }
-  };
-
-  const goNext = () => {
-    setLocalOverrides({});
-    if (viewMode === "week") {
-      setCurrentDate(addDays(currentDate, 7));
-    } else {
-      const d = new Date(currentDate);
-      d.setMonth(d.getMonth() + 1);
-      setCurrentDate(d);
-    }
-  };
-
-  const goToday = () => {
-    setLocalOverrides({});
-    setCurrentDate(new Date());
-  };
-
   // Refresh all data
   const handleRefresh = useCallback(() => {
     setLocalOverrides({});
@@ -797,16 +766,7 @@ export default function PresenceTableView() {
       ================================================================ */}
       <div className="flex items-center justify-between px-4 py-2 border-b border-border bg-card shrink-0 flex-wrap gap-2">
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={goPrev}>
-            <ChevronLeft className="w-4 h-4" />
-          </Button>
-          <Button variant="outline" size="sm" onClick={goToday}>
-            Aujourd&apos;hui
-          </Button>
-          <Button variant="outline" size="sm" onClick={goNext}>
-            <ChevronRight className="w-4 h-4" />
-          </Button>
-          <span className="text-sm font-medium capitalize ml-1">
+          <span className="text-sm font-medium capitalize">
             {rangeLabel}
           </span>
           <RulesBadge rules={presenceRules} />

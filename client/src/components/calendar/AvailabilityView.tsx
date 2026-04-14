@@ -16,8 +16,6 @@ import {
   AlertTriangle,
   CheckCircle,
   RefreshCw,
-  ChevronLeft,
-  ChevronRight,
   Calendar,
   Info,
 } from "lucide-react";
@@ -644,10 +642,6 @@ export default function AvailabilityView() {
     return computeConflicts(entityBusySlots, rangeStart, rangeEnd);
   }, [entityBusySlots, showConflicts]);
 
-  const goPrev = () => setCurrentDate(addDays(selectedDay, -1));
-  const goNext = () => setCurrentDate(addDays(selectedDay, 1));
-  const goToday = () => setCurrentDate(new Date());
-
   // Empty state
   if (entities.length === 0) {
     return (
@@ -680,18 +674,7 @@ export default function AvailabilityView() {
     <div className="flex flex-col h-full bg-background">
       {/* Toolbar */}
       <div className="flex items-center justify-between px-4 py-2 border-b border-border bg-card shrink-0 flex-wrap gap-2">
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={goPrev}>
-            <ChevronLeft className="w-4 h-4" />
-          </Button>
-          <Button variant="outline" size="sm" onClick={goToday}>
-            Aujourd&apos;hui
-          </Button>
-          <Button variant="outline" size="sm" onClick={goNext}>
-            <ChevronRight className="w-4 h-4" />
-          </Button>
-          <span className="text-sm font-medium capitalize ml-2">{formattedDate}</span>
-        </div>
+        <span className="text-sm font-medium capitalize">{formattedDate}</span>
 
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">

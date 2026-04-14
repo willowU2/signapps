@@ -17,7 +17,6 @@ import {
   endOfWeek,
   eachDayOfInterval,
   addDays,
-  addWeeks,
   isSameDay,
   parseISO,
   differenceInMinutes,
@@ -43,8 +42,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
-  ChevronLeft,
-  ChevronRight,
   Plus,
   Copy,
   Trash2,
@@ -204,7 +201,6 @@ export function RosterView({
   onCopyWeek,
 }: RosterViewProps) {
   const currentDate = useCalendarStore((state) => state.currentDate);
-  const setCurrentDate = useCalendarStore((state) => state.setCurrentDate);
   const weekStartsOn = useCalendarStore((state) => state.weekStartsOn);
 
   const storeItems = useCalendarStore((state) => state.timeItems);
@@ -287,10 +283,6 @@ export function RosterView({
     });
   }, [employeeIds, days, shifts]);
 
-  // Navigation
-  const handlePrevWeek = () => setCurrentDate(addWeeks(currentDate, -1));
-  const handleNextWeek = () => setCurrentDate(addWeeks(currentDate, 1));
-
   if (isLoading && shifts.length === 0) {
     return (
       <div className={cn('flex h-full items-center justify-center', className)}>
@@ -306,17 +298,9 @@ export function RosterView({
     <div className={cn('flex h-full flex-col', className)}>
       {/* Toolbar */}
       <div className="flex items-center justify-between border-b p-3">
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="icon" onClick={handlePrevWeek}>
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <Button variant="outline" size="icon" onClick={handleNextWeek}>
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-          <span className="text-sm font-medium">
-            Semaine du {format(dateRange.start, 'd MMMM yyyy', { locale: fr })}
-          </span>
-        </div>
+        <span className="text-sm font-medium">
+          Semaine du {format(dateRange.start, 'd MMMM yyyy', { locale: fr })}
+        </span>
 
         <div className="flex items-center gap-2">
           <Button

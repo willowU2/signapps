@@ -5,7 +5,6 @@ import {
   format,
   startOfDay,
   endOfDay,
-  addDays,
   getHours,
   getMinutes,
   differenceInMinutes,
@@ -19,8 +18,6 @@ import {
 } from "@/stores/calendar-store";
 import { useEvents } from "@/hooks/use-events";
 import { Event } from "@/types/calendar";
-import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 import { DragCreateLayer, useDragCreate } from "./drag-create-event";
 import { ResizeHandle, useEventResize } from "./resize-event";
 
@@ -109,7 +106,6 @@ export function DayCalendar({
   onCreateEvent,
 }: DayCalendarProps) {
   const currentDate = useCalendarStore((state) => state.currentDate);
-  const setCurrentDate = useCalendarStore((state) => state.setCurrentDate);
   const { selectedEventId, selectEvent } = useCalendarSelection();
   const timezones = useCalendarTimezones();
   const { events, fetchEvents, updateEvent } = useEvents(selectedCalendarId);
@@ -131,9 +127,6 @@ export function DayCalendar({
     const end = endOfDay(currentDate);
     fetchEvents(start, end);
   }, [selectedCalendarId, currentDate, fetchEvents]);
-
-  const handlePrevDay = () => setCurrentDate(addDays(currentDate, -1));
-  const handleNextDay = () => setCurrentDate(addDays(currentDate, 1));
 
   const hours = Array.from({ length: 24 }, (_, i) => i);
 
@@ -162,27 +155,12 @@ export function DayCalendar({
   return (
     <div className="flex flex-col h-full overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-2 border-b shrink-0">
+      <div className="flex items-center px-4 py-2 border-b shrink-0">
         <h2 className="text-base font-semibold">
           {isToday(currentDate)
             ? "Aujourd'hui"
             : format(currentDate, "EEEE d MMMM yyyy")}
         </h2>
-        <div className="flex gap-2">
-          <Button variant="outline" size="icon" onClick={handlePrevDay}>
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setCurrentDate(new Date())}
-          >
-            Aujourd'hui
-          </Button>
-          <Button variant="outline" size="icon" onClick={handleNextDay}>
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
       </div>
 
       {/* Grid Header */}

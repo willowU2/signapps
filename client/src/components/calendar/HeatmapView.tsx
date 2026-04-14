@@ -28,7 +28,6 @@ import {
 import { fr } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { useCalendarStore } from '@/stores/calendar-store';
-import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import {
@@ -38,7 +37,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
 import type { TimeItem } from '@/lib/scheduling/types';
 
 // ============================================================================
@@ -157,7 +155,6 @@ export function HeatmapView({
   onSlotClick,
 }: HeatmapViewProps) {
   const currentDate = useCalendarStore((state) => state.currentDate);
-  const setCurrentDate = useCalendarStore((state) => state.setCurrentDate);
   const weekStartsOn = useCalendarStore((state) => state.weekStartsOn);
 
   const storeItems = useCalendarStore((state) => state.timeItems);
@@ -250,17 +247,6 @@ export function HeatmapView({
     });
   }, [userIds, days, hours, items, slotMode]);
 
-  // Navigation
-  const handlePrev = () => {
-    const offset = viewMode === 'week' ? -7 : -28;
-    setCurrentDate(addDays(currentDate, offset));
-  };
-
-  const handleNext = () => {
-    const offset = viewMode === 'week' ? 7 : 28;
-    setCurrentDate(addDays(currentDate, offset));
-  };
-
   if (isLoading && items.length === 0) {
     return (
       <div className={cn('flex h-full items-center justify-center', className)}>
@@ -276,18 +262,10 @@ export function HeatmapView({
     <div className={cn('flex h-full flex-col', className)}>
       {/* Toolbar */}
       <div className="flex items-center justify-between border-b p-3">
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="icon" onClick={handlePrev}>
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <Button variant="outline" size="icon" onClick={handleNext}>
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-          <span className="text-sm font-medium">
-            {format(dateRange.start, 'd MMM', { locale: fr })} -{' '}
-            {format(dateRange.end, 'd MMM yyyy', { locale: fr })}
-          </span>
-        </div>
+        <span className="text-sm font-medium">
+          {format(dateRange.start, 'd MMM', { locale: fr })} -{' '}
+          {format(dateRange.end, 'd MMM yyyy', { locale: fr })}
+        </span>
 
         <div className="flex items-center gap-2">
           <Select value={viewMode} onValueChange={(v) => setViewMode(v as ViewMode)}>
