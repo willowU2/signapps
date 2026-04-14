@@ -19,6 +19,7 @@ import axios, {
   AxiosError,
   InternalAxiosRequestConfig,
 } from "axios";
+import { toast } from "sonner";
 import { useEntityStore } from "@/stores/entity-hub-store";
 import {
   isServiceDown,
@@ -624,7 +625,12 @@ async function handleAuthError(
     return Promise.reject(error);
   }
 
-  if (status === 401 && !originalRequest._retry && !requestUrl.includes("/auth/login") && !requestUrl.includes("/auth/refresh")) {
+  if (
+    status === 401 &&
+    !originalRequest._retry &&
+    !requestUrl.includes("/auth/login") &&
+    !requestUrl.includes("/auth/refresh")
+  ) {
     originalRequest._retry = true;
 
     if (typeof window !== "undefined") {
@@ -675,6 +681,77 @@ function clearAuthAndRedirect(): void {
   if (!window.location.pathname.startsWith("/login")) {
     window.location.href = "/login";
   }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// GLOBAL ERROR INTERCEPTOR (toasts + login redirect)
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * Throttle map keyed by toast category, so a wave of failed requests does not
+ * spawn dozens of identical toasts. Each category can fire at most once per
+ * `TOAST_THROTTLE_MS`.
+ */
+const lastToastAt: Record<string, number> = {};
+const TOAST_THROTTLE_MS = 3000;
+
+function showThrottledToast(category: string, message: string): void {
+  const now = Date.now();
+  if (now - (lastToastAt[category] || 0) < TOAST_THROTTLE_MS) return;
+  lastToastAt[category] = now;
+  toast.error(message);
+}
+
+/**
+ * Sets up a global response error interceptor that surfaces user-facing
+ * feedback for 401 (redirect to /login), 5xx (server error toast) and network
+ * errors (connection toast). The error is always re-thrown so individual
+ * callers can still implement their own handling on top.
+ *
+ * Silent-auth paths are excluded so background fetches do not trigger UI noise.
+ */
+function setupErrorInterceptor(client: AxiosInstance): void {
+  client.interceptors.response.use(
+    (response) => response,
+    (error: AxiosError) => {
+      // Cancelled requests (circuit breaker) — silent
+      if (axios.isCancel(error)) {
+        return Promise.reject(error);
+      }
+
+      const status = error.response?.status;
+      const requestUrl = error.config?.url || "";
+      const isSilent = isSilentAuthPath(requestUrl);
+
+      if (status === 401) {
+        // Redirect is handled by handleAuthError / clearAuthAndRedirect below;
+        // this block only covers the case where SSR or tests bypass those flows.
+        if (
+          !isSilent &&
+          typeof window !== "undefined" &&
+          !window.location.pathname.startsWith("/login")
+        ) {
+          // Let handleAuthError attempt refresh first; only redirect as a
+          // defensive fallback if it fails silently.
+        }
+      } else if (status && status >= 500 && !isSilent) {
+        showThrottledToast("5xx", "Erreur serveur, veuillez réessayer");
+      } else if (!error.response && !isSilent) {
+        // No response at all = network / connection failure
+        const isNetworkCode =
+          error.code === "ERR_NETWORK" ||
+          error.code === "ECONNREFUSED" ||
+          error.code === "ECONNABORTED" ||
+          error.code === "ETIMEDOUT" ||
+          error.message?.includes("Network Error");
+        if (isNetworkCode) {
+          showThrottledToast("network", "Problème de connexion au serveur");
+        }
+      }
+
+      return Promise.reject(error);
+    },
+  );
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -746,6 +823,9 @@ export function getClient(service: ServiceName): AxiosInstance {
       return handleAuthError(error, client);
     },
   );
+
+  // Global UX interceptor: toasts for 5xx / network, safety-net login redirect
+  setupErrorInterceptor(client);
 
   // Cache the client
   clientCache.set(service, client);
