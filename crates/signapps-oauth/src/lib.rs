@@ -9,6 +9,7 @@
 mod catalog;
 mod config_store;
 mod engine_v2;
+pub mod events;
 mod error;
 pub mod oidc;
 pub mod pkce;
@@ -20,9 +21,13 @@ mod state;
 mod types;
 
 pub use catalog::{Catalog, CatalogError};
-pub use engine_v2::{EngineV2, EngineV2Config};
 pub use config_store::{ConfigStore, PgConfigStore};
+pub use engine_v2::{EngineV2, EngineV2Config};
 pub use error::OAuthError;
+pub use events::{
+    OAuthTokenInvalidated, OAuthTokensAcquired, EVENT_OAUTH_TOKEN_INVALIDATED,
+    EVENT_OAUTH_TOKENS_ACQUIRED,
+};
 pub use profile::extract_profile;
 pub use protocol::{OAuthPurpose, Protocol, ProviderCategory, TokenPlacement};
 pub use provider::{ProviderConfig, ProviderDefinition, ProviderSummary};
