@@ -36,7 +36,7 @@
     { "name": "compliance",     "port": 3032, "description": "Compliance, RGPD, data export, retention",     "health_path": "/health" },
     { "name": "gamification",   "port": 3033, "description": "XP, badges, streaks, leaderboard",             "health_path": "/health" },
     { "name": "collaboration",  "port": 3034, "description": "Mind maps, brainstorming boards",              "health_path": "/health" },
-    { "name": "deploy",         "port": 3033, "description": "Deployment orchestrator (CLI + dormant HTTP API, Phase 3)", "health_path": "/health" },
+    { "name": "deploy",         "port": 3035, "description": "Deployment orchestrator (CLI + dormant HTTP API, Phase 3)", "health_path": "/health" },
     { "name": "notifications",  "port": 8095, "description": "Push notifications",                           "health_path": "/health" },
     { "name": "billing",        "port": 8096, "description": "Billing and invoicing",                        "health_path": "/health" },
     { "name": "gateway",        "port": 3099, "description": "API gateway (aggregator)",                     "health_path": "/health" }
