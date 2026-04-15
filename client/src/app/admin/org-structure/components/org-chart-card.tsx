@@ -341,7 +341,7 @@ function OrgChartFlow({
       attributionPosition="bottom-right"
       nodesDraggable={false}
       nodesConnectable={false}
-      elementsSelectable={false}
+      elementsSelectable={true}
       className="[&_.react-flow__node]:!bg-transparent"
     >
       <Background
