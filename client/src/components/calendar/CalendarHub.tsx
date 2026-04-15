@@ -337,8 +337,8 @@ export function CalendarHub() {
               timezone: "Europe/Paris",
             });
             cals = [newCal.data || (newCal as unknown as Calendar)];
-          } catch (e) {
-            console.error("Failed to auto-create default calendar:", e);
+          } catch {
+            // Silent: user will see the "Create calendar" CTA if cals stays empty.
           }
         }
 
@@ -366,7 +366,6 @@ export function CalendarHub() {
       setSelectedCalendarId(newCal.id);
       toast.success("Agenda créé avec succès !", { id: toastId });
     } catch (e: any) {
-      console.error("Failed to create calendar:", e);
       toast.error(
         e?.response?.data?.message ||
           "Impossible de créer l'agenda. Contactez le support.",
@@ -1079,6 +1078,11 @@ export function CalendarHub() {
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
+
+        {/* Current period title (day / week / month depending on view) */}
+        <span className="text-sm font-medium text-foreground px-2 whitespace-nowrap">
+          {getDateTitle(view, currentDate)}
+        </span>
 
         {/* Spacer */}
         <div className="flex-1" />
