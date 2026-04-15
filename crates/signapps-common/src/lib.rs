@@ -116,6 +116,7 @@ pub use signapps_trust as trust_level;
 pub mod types;
 // ueba module extracted to signapps-ueba crate
 pub use signapps_ueba as ueba;
+pub mod version;
 // vault module extracted to signapps-vault-types crate
 pub use signapps_vault_types as vault;
 // webhooks module extracted to signapps-webhooks crate
