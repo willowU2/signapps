@@ -492,6 +492,116 @@ impl LiveKitClient {
     }
 }
 
+// --- Egress (recording) -------------------------------------------------------
+
+/// S3-compatible egress destination.
+#[derive(Debug, Clone)]
+pub struct S3EgressDest {
+    /// S3 access key.
+    pub access_key: String,
+    /// S3 secret key.
+    pub secret: String,
+    /// Optional S3 endpoint (for S3-compat like MinIO or signapps-storage).
+    pub endpoint: Option<String>,
+    /// Bucket name.
+    pub bucket: String,
+    /// Region (e.g. `us-east-1`).
+    pub region: String,
+    /// Object key (path inside the bucket).
+    pub key: String,
+}
+
+/// Info about an egress job as returned by LiveKit.
+#[derive(Debug, Clone, Deserialize)]
+pub struct EgressInfo {
+    /// Egress id (used with [`LiveKitClient::stop_egress`]).
+    #[serde(default, rename = "egressId")]
+    pub egress_id: String,
+    /// Room the egress is bound to.
+    #[serde(default, rename = "roomName")]
+    pub room_name: String,
+    /// Current status (`EGRESS_STARTING`, `EGRESS_ACTIVE`, `EGRESS_ENDING`, …).
+    #[serde(default)]
+    pub status: String,
+}
+
+#[derive(Serialize)]
+struct FileOutput<'a> {
+    filepath: &'a str,
+    #[serde(rename = "fileType")]
+    file_type: &'a str,
+    s3: S3Body<'a>,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct S3Body<'a> {
+    access_key: &'a str,
+    secret: &'a str,
+    bucket: &'a str,
+    region: &'a str,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    endpoint: Option<&'a str>,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct RoomCompositeEgressReq<'a> {
+    room_name: &'a str,
+    layout: &'a str,
+    file_outputs: Vec<FileOutput<'a>>,
+}
+
+#[derive(Serialize)]
+struct StopEgressReq<'a> {
+    #[serde(rename = "egressId")]
+    egress_id: &'a str,
+}
+
+impl LiveKitClient {
+    /// Start a RoomCompositeEgress writing an MP4 to S3 (or S3-compatible).
+    ///
+    /// # Errors
+    ///
+    /// Returns [`LiveKitError::Upstream`] if LiveKit rejects the egress
+    /// request (egress service unavailable, invalid credentials, …).
+    #[tracing::instrument(skip(self, dest), fields(lk_url = %self.base_url))]
+    pub async fn start_room_egress(&self, room: &str, dest: S3EgressDest) -> Result<EgressInfo> {
+        let body = RoomCompositeEgressReq {
+            room_name: room,
+            layout: "grid",
+            file_outputs: vec![FileOutput {
+                filepath: &dest.key,
+                file_type: "MP4",
+                s3: S3Body {
+                    access_key: &dest.access_key,
+                    secret: &dest.secret,
+                    bucket: &dest.bucket,
+                    region: &dest.region,
+                    endpoint: dest.endpoint.as_deref(),
+                },
+            }],
+        };
+        self.twirp("/twirp/livekit.Egress/StartRoomCompositeEgress", &body)
+            .await
+    }
+
+    /// Stop an in-progress egress.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`LiveKitError::Upstream`] if the egress id is unknown or
+    /// already stopped.
+    #[tracing::instrument(skip(self), fields(lk_url = %self.base_url))]
+    pub async fn stop_egress(&self, egress_id: &str) -> Result<EgressInfo> {
+        self.twirp(
+            "/twirp/livekit.Egress/StopEgress",
+            &StopEgressReq { egress_id },
+        )
+        .await
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
