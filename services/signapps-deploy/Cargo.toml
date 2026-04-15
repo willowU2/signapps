@@ -68,6 +68,9 @@ utoipa-swagger-ui = { workspace = true }
 anyhow = { workspace = true }
 thiserror = { workspace = true }
 
+# Async trait
+async-trait = { workspace = true }
+
 [dev-dependencies]
 tempfile = { workspace = true }
 wiremock = "0.6"
