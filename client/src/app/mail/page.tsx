@@ -49,7 +49,6 @@ import { MailAddons } from "@/components/mail/mail-addons";
 import { AccountSwitcher } from "@/components/mail/account-switcher";
 import { EmailToEventDialog } from "@/components/interop/EmailToEventDialog";
 
-import { WorkspaceHeader } from "@/components/mail/workspace-header";
 import { UnifiedInbox } from "@/components/mail/unified-inbox";
 import type { Mail } from "@/lib/data/mail";
 import {
@@ -1199,7 +1198,7 @@ export default function MailPage() {
           hideGlobalSidebar={true}
           hideRightSidebar={true}
           className="bg-background text-foreground font-sans"
-          header={<WorkspaceHeader />}
+          header={null}
           sidebar={
             <nav
               role="navigation"
