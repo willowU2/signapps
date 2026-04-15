@@ -12,16 +12,23 @@ function variantSlug(weight: number, style: string): string {
   return style === "italic" ? `${w}-italic` : w;
 }
 
+// Escape characters that could break out of a CSS string literal.
+// family.name is server-controlled today but defense-in-depth is cheap.
+function cssStringEscape(value: string): string {
+  return value.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+}
+
 function injectFontFace(family: FontFamily) {
   if (typeof document === "undefined") return;
   const baseUrl = `${getServiceBaseUrl(ServiceName.DOCS)}/api/v1/fonts/files`;
+  const safeName = cssStringEscape(family.name);
   const styleEl = document.createElement("style");
   styleEl.dataset.signappsFont = family.id;
   styleEl.textContent = family.variants
     .map((v) => {
       const slug = variantSlug(v.weight, v.style);
       return `@font-face {
-        font-family: "${family.name}";
+        font-family: "${safeName}";
         font-weight: ${v.weight};
         font-style: ${v.style};
         font-display: swap;
