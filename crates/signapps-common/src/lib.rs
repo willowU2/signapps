@@ -7,6 +7,7 @@
 //!
 //! ## Modules
 //!
+//! - [`active_stack`] - Active stack lookup + swap for Blue/Green deployments
 //! - [`alerts`] - Custom alerts system with rule-based conditions and multi-channel notifications
 //! - [`approval`] - Document approval workflow (multi-approver, status tracking, comments)
 //! - [`accounting`] - FEC (Fichier des Écritures Comptables) export for DGFiP compliance
@@ -56,6 +57,7 @@
 
 // accounting module extracted to signapps-accounting-fec crate
 pub use signapps_accounting_fec as accounting;
+pub mod active_stack;
 // alerts module extracted to signapps-alerts crate
 pub use signapps_alerts as alerts;
 // approval module extracted to signapps-approval crate
