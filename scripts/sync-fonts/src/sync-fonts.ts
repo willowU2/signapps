@@ -1,4 +1,6 @@
 #!/usr/bin/env tsx
+import { execSync } from "node:child_process";
+import { existsSync } from "node:fs";
 import { mkdir } from "node:fs/promises";
 import { resolve } from "node:path";
 
@@ -11,10 +13,25 @@ if (!ADMIN_TOKEN) {
   process.exit(1);
 }
 
+function cloneShallow(repo: string, dest: string) {
+  if (existsSync(dest)) {
+    console.log(`  cached: ${dest}`);
+    return;
+  }
+  console.log(`  cloning ${repo} → ${dest}`);
+  execSync(`git clone --depth 1 ${repo} ${dest}`, { stdio: "inherit" });
+}
+
 async function main() {
   await mkdir(WORK_DIR, { recursive: true });
   console.log(`Working in ${WORK_DIR}`);
-  // TODO: clone, parse, convert, upload
+
+  console.log("Step 1/4 — clone sources");
+  cloneShallow("https://github.com/google/fonts.git", `${WORK_DIR}/google-fonts`);
+  cloneShallow("https://github.com/ryanoasis/nerd-fonts.git", `${WORK_DIR}/nerd-fonts`);
+  cloneShallow("https://github.com/brabadu/awesome-fonts.git", `${WORK_DIR}/awesome-fonts`);
+
+  // TODO: parse, convert, upload
 }
 
 main().catch((err) => {
