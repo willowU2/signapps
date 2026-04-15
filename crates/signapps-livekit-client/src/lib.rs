@@ -11,6 +11,7 @@
 use std::time::Duration;
 
 use reqwest::redirect::Policy;
+use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
 /// Errors emitted by the LiveKit client.
@@ -101,9 +102,191 @@ impl LiveKitClient {
     }
 }
 
+// --- Token issuance -----------------------------------------------------------
+
+/// Grant payload requested for an access token.
+#[derive(Debug, Clone)]
+pub struct TokenGrants {
+    /// Room name the token is scoped to.
+    pub room: String,
+    /// Participant identity (must be unique per room).
+    pub identity: String,
+    /// Optional human-readable display name.
+    pub name: Option<String>,
+    /// Whether the participant can publish tracks.
+    pub can_publish: bool,
+    /// Whether the participant can subscribe to other tracks.
+    pub can_subscribe: bool,
+    /// Whether the participant can publish data messages.
+    pub can_publish_data: bool,
+    /// Whether the participant has room-admin privileges (kick, mute, …).
+    pub room_admin: bool,
+}
+
+#[derive(Debug, Serialize, Deserialize, Default)]
+struct VideoGrant {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    room: Option<String>,
+    #[serde(rename = "roomJoin", skip_serializing_if = "Option::is_none")]
+    room_join: Option<bool>,
+    #[serde(rename = "roomCreate", skip_serializing_if = "Option::is_none")]
+    room_create: Option<bool>,
+    #[serde(rename = "roomList", skip_serializing_if = "Option::is_none")]
+    room_list: Option<bool>,
+    #[serde(rename = "roomAdmin", skip_serializing_if = "Option::is_none")]
+    room_admin: Option<bool>,
+    #[serde(rename = "roomRecord", skip_serializing_if = "Option::is_none")]
+    room_record: Option<bool>,
+    #[serde(rename = "canPublish", skip_serializing_if = "Option::is_none")]
+    can_publish: Option<bool>,
+    #[serde(rename = "canSubscribe", skip_serializing_if = "Option::is_none")]
+    can_subscribe: Option<bool>,
+    #[serde(rename = "canPublishData", skip_serializing_if = "Option::is_none")]
+    can_publish_data: Option<bool>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct LiveKitClaims {
+    sub: String,
+    iss: String,
+    iat: i64,
+    exp: i64,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    name: Option<String>,
+    video: VideoGrant,
+}
+
+impl LiveKitClient {
+    /// Generate a LiveKit access token (JWT HS256) with the given grants.
+    ///
+    /// The resulting token is valid for 6 hours.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`LiveKitError::Jwt`] if the JWT cannot be signed.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// # fn demo() -> signapps_livekit_client::Result<()> {
+    /// use signapps_livekit_client::{LiveKitClient, TokenGrants};
+    /// let c = LiveKitClient::new("http://localhost:7880", "k", "s")?;
+    /// let token = c.generate_token(TokenGrants {
+    ///     room: "abc".into(), identity: "alice".into(), name: None,
+    ///     can_publish: true, can_subscribe: true, can_publish_data: true,
+    ///     room_admin: false,
+    /// })?;
+    /// assert_eq!(token.split('.').count(), 3);
+    /// # Ok(()) }
+    /// ```
+    pub fn generate_token(&self, grants: TokenGrants) -> Result<String> {
+        let now = chrono::Utc::now().timestamp();
+        let exp = now + 6 * 3600; // 6h
+
+        let video = VideoGrant {
+            room: Some(grants.room.clone()),
+            room_join: Some(true),
+            room_admin: if grants.room_admin { Some(true) } else { None },
+            room_record: if grants.room_admin { Some(true) } else { None },
+            can_publish: Some(grants.can_publish),
+            can_subscribe: Some(grants.can_subscribe),
+            can_publish_data: Some(grants.can_publish_data),
+            ..Default::default()
+        };
+
+        let claims = LiveKitClaims {
+            sub: grants.identity,
+            iss: self.api_key.clone(),
+            iat: now,
+            exp,
+            name: grants.name,
+            video,
+        };
+
+        let header = jsonwebtoken::Header::new(jsonwebtoken::Algorithm::HS256);
+        let key = jsonwebtoken::EncodingKey::from_secret(self.api_secret.as_bytes());
+        let token = jsonwebtoken::encode(&header, &claims, &key)?;
+        Ok(token)
+    }
+
+    /// Generate a short-lived service token with `roomAdmin`/`roomCreate`
+    /// grants, used to authenticate outbound calls to LiveKit's RoomService
+    /// and Egress service.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`LiveKitError::Jwt`] if the JWT cannot be signed.
+    #[allow(dead_code)]
+    pub(crate) fn service_token(&self) -> Result<String> {
+        let now = chrono::Utc::now().timestamp();
+        let exp = now + 600; // 10 min
+
+        let video = VideoGrant {
+            room_create: Some(true),
+            room_list: Some(true),
+            room_admin: Some(true),
+            room_record: Some(true),
+            ..Default::default()
+        };
+        let claims = LiveKitClaims {
+            sub: "signapps-meet-service".into(),
+            iss: self.api_key.clone(),
+            iat: now,
+            exp,
+            name: None,
+            video,
+        };
+        let header = jsonwebtoken::Header::new(jsonwebtoken::Algorithm::HS256);
+        let key = jsonwebtoken::EncodingKey::from_secret(self.api_secret.as_bytes());
+        Ok(jsonwebtoken::encode(&header, &claims, &key)?)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+    use jsonwebtoken::{decode, DecodingKey, Validation};
+
+    fn test_client() -> LiveKitClient {
+        LiveKitClient::new("http://localhost:7880", "test-key", "test-secret-key").expect("builds")
+    }
+
+    #[derive(Debug, Deserialize)]
+    struct DecodedClaims {
+        sub: String,
+        iss: String,
+        iat: i64,
+        exp: i64,
+        name: Option<String>,
+        video: DecodedVideo,
+    }
+
+    #[derive(Debug, Deserialize)]
+    struct DecodedVideo {
+        room: Option<String>,
+        #[serde(rename = "roomJoin")]
+        room_join: Option<bool>,
+        #[serde(rename = "roomAdmin")]
+        room_admin: Option<bool>,
+        #[serde(rename = "canPublish")]
+        can_publish: Option<bool>,
+        #[serde(rename = "canSubscribe")]
+        can_subscribe: Option<bool>,
+        #[serde(rename = "canPublishData")]
+        can_publish_data: Option<bool>,
+    }
+
+    fn decode_token(client: &LiveKitClient, token: &str) -> DecodedClaims {
+        let mut validation = Validation::new(jsonwebtoken::Algorithm::HS256);
+        validation.required_spec_claims.clear();
+        decode::<DecodedClaims>(
+            token,
+            &DecodingKey::from_secret(client.api_secret.as_bytes()),
+            &validation,
+        )
+        .expect("decodes")
+        .claims
+    }
 
     #[test]
     fn client_builds_with_explicit_params() {
@@ -111,5 +294,41 @@ mod tests {
         assert_eq!(c.base_url, "http://localhost:7880");
         assert_eq!(c.api_key, "k");
         assert_eq!(c.api_secret, "s");
+    }
+
+    #[test]
+    fn token_is_generated_with_valid_claims() {
+        let client = test_client();
+        let grants = TokenGrants {
+            room: "room-42".into(),
+            identity: "alice".into(),
+            name: Some("Alice".into()),
+            can_publish: true,
+            can_subscribe: true,
+            can_publish_data: true,
+            room_admin: false,
+        };
+        let token = client.generate_token(grants).expect("token");
+        assert_eq!(token.split('.').count(), 3, "should be a JWS");
+
+        let c = decode_token(&client, &token);
+        assert_eq!(c.sub, "alice");
+        assert_eq!(c.iss, "test-key");
+        assert!(c.exp > c.iat, "exp must be in the future");
+        assert_eq!(c.name.as_deref(), Some("Alice"));
+        assert_eq!(c.video.room.as_deref(), Some("room-42"));
+        assert_eq!(c.video.room_join, Some(true));
+        assert!(c.video.room_admin.is_none(), "non-admin");
+        assert_eq!(c.video.can_publish, Some(true));
+        assert_eq!(c.video.can_subscribe, Some(true));
+        assert_eq!(c.video.can_publish_data, Some(true));
+    }
+
+    #[test]
+    fn service_token_has_admin_grants() {
+        let client = test_client();
+        let token = client.service_token().expect("service token");
+        let c = decode_token(&client, &token);
+        assert_eq!(c.video.room_admin, Some(true), "service token must be admin");
     }
 }
