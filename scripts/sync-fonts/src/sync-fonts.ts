@@ -142,13 +142,26 @@ async function uploadManifest(families: FontFamilyOut[]): Promise<void> {
   console.log(`Manifest uploaded — ${families.length} families`);
 }
 
-function cloneShallow(repo: string, dest: string) {
+function cloneShallow(repo: string, dest: string, sparsePaths?: string[]) {
   if (existsSync(dest)) {
     console.log(`  cached: ${dest}`);
     return;
   }
   console.log(`  cloning ${repo} → ${dest}`);
-  execSync(`git clone --depth 1 ${repo} ${dest}`, { stdio: "inherit" });
+  if (sparsePaths && sparsePaths.length > 0) {
+    // Sparse-checkout — only fetch the directories we actually parse.
+    // Avoids Windows path-length blow-ups on auxiliary doc folders.
+    execSync(`git clone --depth 1 --filter=blob:none --no-checkout ${repo} ${dest}`, {
+      stdio: "inherit",
+    });
+    execSync(`git -C ${dest} sparse-checkout init --cone`, { stdio: "inherit" });
+    execSync(`git -C ${dest} sparse-checkout set ${sparsePaths.join(" ")}`, {
+      stdio: "inherit",
+    });
+    execSync(`git -C ${dest} checkout`, { stdio: "inherit" });
+  } else {
+    execSync(`git clone --depth 1 ${repo} ${dest}`, { stdio: "inherit" });
+  }
 }
 
 function parseGoogleMetadata(metadataPath: string): RawFamily | null {
@@ -226,7 +239,13 @@ async function main() {
   console.log(`Working in ${WORK_DIR}`);
 
   console.log("Step 1/4 — clone sources");
-  cloneShallow("https://github.com/google/fonts.git", `${WORK_DIR}/google-fonts`);
+  // google/fonts: only the actual font folders. The cc-by-sa/knowledge tree
+  // contains paths longer than the Windows 260-char limit, so skip it.
+  cloneShallow("https://github.com/google/fonts.git", `${WORK_DIR}/google-fonts`, [
+    "ofl",
+    "apache",
+    "ufl",
+  ]);
   cloneShallow("https://github.com/ryanoasis/nerd-fonts.git", `${WORK_DIR}/nerd-fonts`);
   cloneShallow("https://github.com/brabadu/awesome-fonts.git", `${WORK_DIR}/awesome-fonts`);
 
