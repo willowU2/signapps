@@ -23,6 +23,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { FontPicker } from '@/components/docs/font-picker/FontPicker';
 import {
     Bold,
     Italic,
@@ -92,17 +93,6 @@ interface EditorToolbarProps {
     onRejectChange?: (changeId: string) => void;
     onToggleTrackChangesSidebar?: () => void;
 }
-
-// Font families available in the editor
-const FONT_FAMILIES = [
-    { value: 'Arial', label: 'Arial' },
-    { value: 'Times New Roman', label: 'Times New Roman' },
-    { value: 'Georgia', label: 'Georgia' },
-    { value: 'Verdana', label: 'Verdana' },
-    { value: 'Courier New', label: 'Courier New' },
-    { value: 'Trebuchet MS', label: 'Trebuchet MS' },
-    { value: 'Palatino Linotype', label: 'Palatino' },
-];
 
 // Font sizes available in the editor (in pt)
 const FONT_SIZES = ['8', '10', '11', '12', '14', '18', '24', '36', '48', '72'];
@@ -348,18 +338,10 @@ export function EditorToolbar({
                 <Separator orientation="vertical" className="h-5 mx-0.5" />
 
                 <div className="toolbar-font-family">
-                <Select value={currentFontFamily} onValueChange={handleFontFamilyChange}>
-                    <SelectTrigger className="h-7 w-[120px] border-transparent bg-transparent hover:bg-muted focus:ring-0 text-sm font-medium text-[#444746] dark:text-[#e8eaed]">
-                        <SelectValue placeholder="Arial" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {FONT_FAMILIES.map((font) => (
-                            <SelectItem key={font.value} value={font.value} style={{ fontFamily: font.value }}>
-                                {font.label}
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
+                    <FontPicker
+                        value={currentFontFamily}
+                        onChange={handleFontFamilyChange}
+                    />
                 </div>
 
                 <Separator orientation="vertical" className="h-5 mx-0.5" />

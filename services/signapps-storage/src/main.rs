@@ -512,8 +512,18 @@ fn create_router(state: AppState, sharing_engine: SharingEngine) -> Router {
             auth_middleware::<AppState>,
         ));
 
-    // Combine all routes into a single v1 router to prevent path shadowing
+    // PUBLIC: read-only access to whitelisted system buckets (e.g. system-fonts).
+    // Defined separately so no JWT middleware is applied. Static-prefix
+    // (`system-fonts`) wins over the param route (`:bucket`) on the protected
+    // router thanks to axum/matchit's specificity rules — verified at startup.
+    let public_files_routes =
+        Router::new().route("/files/system-fonts/*key", get(files::download_public));
+
+    // Combine all routes into a single v1 router to prevent path shadowing.
+    // public_files_routes is merged BEFORE the protected ones so the static
+    // bucket route wins for `/files/system-fonts/*`.
     let v1_routes = public_routes
+        .merge(public_files_routes)
         .merge(public_share_routes)
         .merge(admin_routes)
         .merge(protected_routes)

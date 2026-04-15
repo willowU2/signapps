@@ -71,29 +71,6 @@ import { driveApi } from "@/lib/api";
 import { saveUserTemplate } from "@/lib/document-templates";
 import { ShareDialog } from "@/components/docs/share-dialog";
 
-// Utility to dynamically load Google Fonts without freezing the browser
-export const loadGoogleFont = (fontFamily: string) => {
-  if (!fontFamily || typeof window === "undefined") return;
-  const systemFonts = [
-    "Inter",
-    "Arial",
-    "Times New Roman",
-    "Georgia",
-    "Verdana",
-    "Courier New",
-    "Comic Sans MS",
-  ];
-  if (systemFonts.includes(fontFamily)) return;
-
-  const id = `font-${fontFamily.replace(/\s+/g, "-")}`;
-  if (!document.getElementById(id)) {
-    const link = document.createElement("link");
-    link.id = id;
-    link.rel = "stylesheet";
-    link.href = `https://fonts.googleapis.com/css2?family=${fontFamily.replace(/\s+/g, "+")}:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,700&display=swap`;
-    document.head.appendChild(link);
-  }
-};
 import {
   EditorMenu,
   MenuGroup,
@@ -3419,7 +3396,6 @@ ${html}
                                 (f) => f.toLowerCase() === currentValue,
                               ) || font;
                             setCurrentFont(originalFont);
-                            loadGoogleFont(originalFont);
                             setTimeout(() => {
                               editor
                                 .chain()

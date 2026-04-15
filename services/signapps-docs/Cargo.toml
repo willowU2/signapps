@@ -72,6 +72,8 @@ signapps-db = { path = "../../crates/signapps-db" }
 signapps-cache = { path = "../../crates/signapps-cache" }
 signapps-sharing = { path = "../../crates/signapps-sharing" }
 dotenvy.workspace = true
+reqwest = { workspace = true }
+url = "2"
 utoipa = { workspace = true }
 utoipa-swagger-ui = { workspace = true }
 
