@@ -279,3 +279,43 @@ rollback-prod:
 # Show deployment status
 deploy-status env="prod":
     cargo run --release -p signapps-deploy -- status --env {{env}}
+
+# ─── Staging env ────────────────────────────────────────
+
+# Bring up the staging stack side-by-side with prod
+staging-up:
+    ./scripts/init-staging-db.sh
+    docker compose -f docker-compose.staging.yml --env-file .env.dev up -d
+
+# Stop the staging stack
+staging-down:
+    docker compose -f docker-compose.staging.yml --env-file .env.dev down
+
+# Seed staging with demo data
+staging-seed:
+    ./scripts/seed-staging-data.sh
+
+# ─── Promotion ──────────────────────────────────────────
+
+# Promote last successful dev deployment to prod (with confirmation)
+promote-to-prod:
+    @[ -t 0 ] || { echo "Interactive terminal required." >&2; exit 1; }
+    @echo "Type 'PROMOTE TO PROD' to confirm:"
+    @read -r input && [ "$input" = "PROMOTE TO PROD" ] || { echo "Aborted."; exit 1; }
+    cargo run --release -p signapps-deploy -- promote
+
+# ─── Scheduled maintenance ──────────────────────────────
+
+# Schedule a maintenance window
+# Usage: just schedule-maintenance prod 2026-04-20T03:00:00Z 15 "DB reindex"
+schedule-maintenance env at duration message:
+    cargo run --release -p signapps-deploy -- schedule-maintenance \
+        --env {{env}} --at {{at}} --duration-minutes {{duration}} --message "{{message}}"
+
+# List upcoming maintenance windows
+list-maintenance env="prod":
+    cargo run --release -p signapps-deploy -- list-maintenance --env {{env}}
+
+# Run the scheduler worker in the foreground (typically managed as a service)
+scheduler-run:
+    cargo run --release --bin signapps-deploy-scheduler
