@@ -21,12 +21,19 @@ async fn last_successful_dev_is_visible_to_promote_logic() {
     cleanup(&pool).await;
 
     let dep = signapps_deploy::persistence::insert_pending(
-        &pool, "dev", "v0.0.0-promote-candidate", "sha1",
+        &pool,
+        "dev",
+        "v0.0.0-promote-candidate",
+        "sha1",
     )
     .await
     .expect("insert");
-    signapps_deploy::persistence::mark_running(&pool, dep.id).await.expect("running");
-    signapps_deploy::persistence::mark_success(&pool, dep.id, &[]).await.expect("success");
+    signapps_deploy::persistence::mark_running(&pool, dep.id)
+        .await
+        .expect("running");
+    signapps_deploy::persistence::mark_success(&pool, dep.id, &[])
+        .await
+        .expect("success");
 
     let got = signapps_deploy::persistence::last_successful(&pool, "dev")
         .await

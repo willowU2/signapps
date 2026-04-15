@@ -102,11 +102,11 @@ async fn tick(deps: &SchedulerDeps) -> Result<()> {
         match w.status.as_str() {
             "scheduled" if w.scheduled_at <= now => {
                 start_window(&deps.pool, &deps.cache, &w).await?;
-            }
+            },
             "active" if end <= now => {
                 end_window(&deps.pool, &deps.cache, &w).await?;
-            }
-            _ => { /* not time yet or already handled */ }
+            },
+            _ => { /* not time yet or already handled */ },
         }
     }
     Ok(())

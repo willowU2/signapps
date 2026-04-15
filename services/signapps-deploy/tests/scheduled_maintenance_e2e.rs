@@ -50,7 +50,9 @@ async fn window_transitions_scheduled_active_completed() {
 
     // Simulate what scheduler::start_window does
     let cache = Arc::new(CacheService::default_config());
-    signapps_deploy::maintenance::enable(&cache, env).await.expect("enable");
+    signapps_deploy::maintenance::enable(&cache, env)
+        .await
+        .expect("enable");
     sqlx::query(
         "UPDATE scheduled_maintenance SET status = 'active', started_at = now() WHERE id = $1",
     )
@@ -70,7 +72,9 @@ async fn window_transitions_scheduled_active_completed() {
     assert_eq!(status_active, "active");
 
     // Simulate end_window
-    signapps_deploy::maintenance::disable(&cache, env).await.expect("disable");
+    signapps_deploy::maintenance::disable(&cache, env)
+        .await
+        .expect("disable");
     sqlx::query(
         "UPDATE scheduled_maintenance SET status = 'completed', completed_at = now() WHERE id = $1",
     )
