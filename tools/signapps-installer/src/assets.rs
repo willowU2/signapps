@@ -11,5 +11,9 @@ pub const ENV_EXAMPLE: &str = include_str!("../assets/env.example");
 
 /// Installer version (from vergen).
 pub const INSTALLER_VERSION: &str = env!("CARGO_PKG_VERSION");
+/// Git commit SHA at build time. Reserved for future `info` subcommand.
+#[allow(dead_code)]
 pub const GIT_SHA: &str = env!("VERGEN_GIT_SHA");
+/// Build timestamp. Reserved for future `info` subcommand.
+#[allow(dead_code)]
 pub const BUILD_TIME: &str = env!("VERGEN_BUILD_TIMESTAMP");
