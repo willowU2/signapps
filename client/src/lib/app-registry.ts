@@ -403,6 +403,15 @@ export const APP_REGISTRY: AppEntry[] = [
     category: "Administration",
     color: "text-violet-500",
   },
+  {
+    id: "deploy",
+    href: "/admin/deploy",
+    icon: "Rocket",
+    label: "Déploiement",
+    description: "Environnements, versions, feature flags et maintenance",
+    category: "Administration",
+    color: "text-sky-500",
+  },
 
   // Productivité — Wiki
   {
@@ -603,7 +612,7 @@ export async function fetchAppRegistry(): Promise<AppEntry[]> {
     return apps;
   } catch {
     // Fallback to static registry on error
-    return APP_REGISTRY; 
+    return APP_REGISTRY;
   }
 }
 
