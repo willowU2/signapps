@@ -52,7 +52,9 @@ pub async fn rollback(
             tracing::error!(error = %e, env = %env_clone, "background rollback failed");
         }
     });
-    Ok(Json(RollbackResponse { status: "started".into() }))
+    Ok(Json(RollbackResponse {
+        status: "started".into(),
+    }))
 }
 
 /// Build the router for rollback endpoints.

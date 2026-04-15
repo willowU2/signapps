@@ -25,9 +25,7 @@ fn make_test_jwt_config() -> signapps_common::JwtConfig {
     // `hs256()` is public and accepts any secret — the auth layer is bypassed
     // in these smoke tests anyway, but we still need a valid config to build
     // the `AppState`.
-    signapps_common::JwtConfig::hs256(
-        "test-secret-at-least-32-chars-ok-12345".to_string(),
-    )
+    signapps_common::JwtConfig::hs256("test-secret-at-least-32-chars-ok-12345".to_string())
 }
 
 async fn spawn_router_without_auth() -> String {

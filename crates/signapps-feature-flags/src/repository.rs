@@ -54,21 +54,25 @@ impl PgFeatureFlagRepository {
     /// Returns an error on DB failure.
     pub async fn list(&self, env: Option<&str>) -> Result<Vec<FeatureFlag>> {
         let rows: Vec<FeatureFlag> = match env {
-            Some(e) => sqlx::query_as(
-                "SELECT id, key, env, enabled, rollout_percent, target_orgs, \
+            Some(e) => {
+                sqlx::query_as(
+                    "SELECT id, key, env, enabled, rollout_percent, target_orgs, \
                  target_users, description, created_by, created_at, updated_at \
                  FROM feature_flags WHERE env = $1 ORDER BY key",
-            )
-            .bind(e)
-            .fetch_all(&self.pool)
-            .await?,
-            None => sqlx::query_as(
-                "SELECT id, key, env, enabled, rollout_percent, target_orgs, \
+                )
+                .bind(e)
+                .fetch_all(&self.pool)
+                .await?
+            },
+            None => {
+                sqlx::query_as(
+                    "SELECT id, key, env, enabled, rollout_percent, target_orgs, \
                  target_users, description, created_by, created_at, updated_at \
                  FROM feature_flags ORDER BY key, env",
-            )
-            .fetch_all(&self.pool)
-            .await?,
+                )
+                .fetch_all(&self.pool)
+                .await?
+            },
         };
         Ok(rows)
     }

@@ -48,7 +48,10 @@ pub async fn toggle_maintenance(
             .await
             .map_err(|e| AppError::Internal(format!("disable: {e:#}")))?;
     }
-    Ok(Json(MaintenanceResponse { env, enabled: req.enable }))
+    Ok(Json(MaintenanceResponse {
+        env,
+        enabled: req.enable,
+    }))
 }
 
 /// Build the router for maintenance mode endpoints.

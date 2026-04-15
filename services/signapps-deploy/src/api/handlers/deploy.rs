@@ -59,7 +59,9 @@ pub async fn deploy(
             tracing::error!(error = %e, env = %env_clone, version = %version, "background deploy failed");
         }
     });
-    Ok(Json(DeployResponse { status: "started".into() }))
+    Ok(Json(DeployResponse {
+        status: "started".into(),
+    }))
 }
 
 /// Build the router for deploy mutation endpoints.

@@ -61,26 +61,30 @@ pub async fn list_history(
 ) -> Result<Json<Vec<DeploymentEntry>>, AppError> {
     let limit = q.limit.unwrap_or(50).clamp(1, 500);
     let rows: Vec<DeploymentEntry> = match q.env {
-        Some(env) => sqlx::query_as(
-            "SELECT id, env, version, status, triggered_at, completed_at, \
+        Some(env) => {
+            sqlx::query_as(
+                "SELECT id, env, version, status, triggered_at, completed_at, \
                     duration_seconds, error_message \
              FROM deployments \
              WHERE env = $1 \
              ORDER BY triggered_at DESC LIMIT $2",
-        )
-        .bind(env)
-        .bind(limit)
-        .fetch_all(&state.pool)
-        .await,
-        None => sqlx::query_as(
-            "SELECT id, env, version, status, triggered_at, completed_at, \
+            )
+            .bind(env)
+            .bind(limit)
+            .fetch_all(&state.pool)
+            .await
+        },
+        None => {
+            sqlx::query_as(
+                "SELECT id, env, version, status, triggered_at, completed_at, \
                     duration_seconds, error_message \
              FROM deployments \
              ORDER BY triggered_at DESC LIMIT $1",
-        )
-        .bind(limit)
-        .fetch_all(&state.pool)
-        .await,
+            )
+            .bind(limit)
+            .fetch_all(&state.pool)
+            .await
+        },
     }
     .map_err(|e| AppError::Internal(format!("query: {e:#}")))?;
     Ok(Json(rows))

@@ -40,7 +40,9 @@ pub async fn promote(
             tracing::error!(error = %e, "background promote failed");
         }
     });
-    Ok(Json(PromoteResponse { status: "started".into() }))
+    Ok(Json(PromoteResponse {
+        status: "started".into(),
+    }))
 }
 
 /// Build the router for environment promotion endpoints.

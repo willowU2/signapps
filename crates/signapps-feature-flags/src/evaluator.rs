@@ -78,7 +78,11 @@ mod tests {
     }
 
     fn ctx(uid: Option<Uuid>) -> RolloutContext {
-        RolloutContext { env: "prod".into(), user_id: uid, org_id: None }
+        RolloutContext {
+            env: "prod".into(),
+            user_id: uid,
+            org_id: None,
+        }
     }
 
     #[test]
@@ -89,14 +93,20 @@ mod tests {
     #[test]
     fn full_rollout_always_fires_when_enabled() {
         for _ in 0..10 {
-            assert!(Evaluator::is_enabled(&flag(true, 100), &ctx(Some(Uuid::new_v4()))));
+            assert!(Evaluator::is_enabled(
+                &flag(true, 100),
+                &ctx(Some(Uuid::new_v4()))
+            ));
         }
     }
 
     #[test]
     fn zero_rollout_never_fires_when_enabled() {
         for _ in 0..10 {
-            assert!(!Evaluator::is_enabled(&flag(true, 0), &ctx(Some(Uuid::new_v4()))));
+            assert!(!Evaluator::is_enabled(
+                &flag(true, 0),
+                &ctx(Some(Uuid::new_v4()))
+            ));
         }
     }
 

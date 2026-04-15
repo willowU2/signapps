@@ -37,18 +37,15 @@ pub fn build_router(state: AppState) -> Router {
     //   auth_middleware runs first (extracts Claims into extensions),
     //   require_superadmin runs next (403 if role not superadmin),
     //   then the handler.
-    let protected = api
-        .layer(middleware::from_fn(require_superadmin))
-        .layer(middleware::from_fn_with_state(
-            state.clone(),
-            auth_middleware::<AppState>,
-        ));
+    let protected =
+        api.layer(middleware::from_fn(require_superadmin))
+            .layer(middleware::from_fn_with_state(
+                state.clone(),
+                auth_middleware::<AppState>,
+            ));
 
     Router::new()
-        .merge(
-            SwaggerUi::new("/swagger-ui")
-                .url("/api-docs/openapi.json", ApiDoc::openapi()),
-        )
+        .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", ApiDoc::openapi()))
         .nest("/api/v1/deploy", protected)
         .with_state(state)
 }
