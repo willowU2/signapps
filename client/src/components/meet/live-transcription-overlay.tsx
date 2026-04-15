@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
 // IDEA-129: Real-time transcription overlay — whisper-rs via media service, live meeting
 
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { Button } from '@/components/ui/button';
+import { useState, useEffect, useRef, useCallback } from "react";
+import { Button } from "@/components/ui/button";
 import {
   Mic,
   MicOff,
@@ -12,10 +12,10 @@ import {
   ChevronDown,
   ChevronUp,
   Download,
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { getClient, ServiceName } from '@/lib/api/factory';
-import { toast } from 'sonner';
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { getClient, ServiceName } from "@/lib/api/factory";
+import { toast } from "sonner";
 
 interface TranscriptLine {
   id: string;
@@ -41,7 +41,7 @@ export function LiveTranscriptionOverlay({
 }: LiveTranscriptionOverlayProps) {
   const [isRecording, setIsRecording] = useState(false);
   const [lines, setLines] = useState<TranscriptLine[]>([]);
-  const [interim, setInterim] = useState('');
+  const [interim, setInterim] = useState("");
   const [collapsed, setCollapsed] = useState(false);
   const startTimeRef = useRef<number>(Date.now());
   const recognitionRef = useRef<unknown>(null);
@@ -49,7 +49,10 @@ export function LiveTranscriptionOverlay({
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
+    scrollRef.current?.scrollTo({
+      top: scrollRef.current.scrollHeight,
+      behavior: "smooth",
+    });
   }, [lines, interim]);
 
   // Cleanup on unmount
@@ -62,44 +65,49 @@ export function LiveTranscriptionOverlay({
 
   const formatTs = (ms: number) => {
     const s = Math.floor(ms / 1000);
-    return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+    return `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
   };
 
   const addFinalLine = useCallback((text: string) => {
     const ts = Date.now() - startTimeRef.current;
-    setLines((prev) => [...prev, {
-      id: `line_${Date.now()}_${Math.random()}`,
-      text: text.trim(),
-      timestamp: ts,
-      isFinal: true,
-    }]);
-    setInterim('');
+    setLines((prev) => [
+      ...prev,
+      {
+        id: `line_${Date.now()}_${Math.random()}`,
+        text: text.trim(),
+        timestamp: ts,
+        isFinal: true,
+      },
+    ]);
+    setInterim("");
   }, []);
 
   // ─── Whisper backend ──────────────────────────────────────────────────────
   const startWhisper = async () => {
     if (!navigator.mediaDevices?.getUserMedia) {
-      toast.error('Microphone non disponible');
+      toast.error("Microphone non disponible");
       return;
     }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const recorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+      const recorder = new MediaRecorder(stream, { mimeType: "audio/webm" });
       const chunks: Blob[] = [];
 
-      recorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) chunks.push(e.data);
+      };
 
       recorder.onstop = async () => {
-        const blob = new Blob(chunks, { type: 'audio/webm' });
+        const blob = new Blob(chunks, { type: "audio/webm" });
         chunks.length = 0;
         if (blob.size < 1000) return;
         const fd = new FormData();
-        fd.append('audio', blob, 'audio.webm');
-        fd.append('language', navigator.language?.split('-')[0] ?? 'fr');
+        fd.append("audio", blob, "audio.webm");
+        fd.append("language", navigator.language?.split("-")[0] ?? "fr");
         try {
           const client = getClient(ServiceName.AI);
-          const res = await client.post<{ text: string }>('/transcribe', fd, {
-            headers: { 'Content-Type': 'multipart/form-data' },
+          const res = await client.post<{ text: string }>("/transcribe", fd, {
+            headers: { "Content-Type": "multipart/form-data" },
           });
           const text = res.data?.text?.trim();
           if (text) addFinalLine(text);
@@ -110,7 +118,7 @@ export function LiveTranscriptionOverlay({
 
       recorder.start();
       const interval = setInterval(() => {
-        if (recorder.state === 'recording') {
+        if (recorder.state === "recording") {
           recorder.stop();
           recorder.start();
         } else {
@@ -122,7 +130,7 @@ export function LiveTranscriptionOverlay({
       setIsRecording(true);
       startTimeRef.current = Date.now();
     } catch {
-      toast.error('Impossible d\'accéder au microphone');
+      toast.error("Impossible d'accéder au microphone");
     }
   };
 
@@ -135,26 +143,46 @@ export function LiveTranscriptionOverlay({
 
   // ─── Web Speech API fallback ──────────────────────────────────────────────
   const startSpeechApi = () => {
-    const SR = (window as unknown as { SpeechRecognition?: unknown; webkitSpeechRecognition?: unknown }).SpeechRecognition
-      || (window as unknown as { webkitSpeechRecognition?: unknown }).webkitSpeechRecognition;
+    const SR =
+      (
+        window as unknown as {
+          SpeechRecognition?: unknown;
+          webkitSpeechRecognition?: unknown;
+        }
+      ).SpeechRecognition ||
+      (window as unknown as { webkitSpeechRecognition?: unknown })
+        .webkitSpeechRecognition;
     if (!SR) {
-      toast.error('Speech Recognition non supporté dans ce navigateur');
+      toast.error("Speech Recognition non supporté dans ce navigateur");
       return;
     }
 
     // Third-party Web Speech API — use unknown cast since SpeechRecognition global can conflict
-    const rec = new (SR as unknown as new () => { continuous: boolean; interimResults: boolean; lang: string; onstart: (() => void) | null; onresult: unknown; onerror: unknown; onend: (() => void) | null; start: () => void; stop: () => void })()
+    const rec = new (SR as unknown as new () => {
+      continuous: boolean;
+      interimResults: boolean;
+      lang: string;
+      onstart: (() => void) | null;
+      onresult: unknown;
+      onerror: unknown;
+      onend: (() => void) | null;
+      start: () => void;
+      stop: () => void;
+    })();
     rec.continuous = true;
     rec.interimResults = true;
-    rec.lang = navigator.language || 'fr-FR';
+    rec.lang = navigator.language || "fr-FR";
 
     rec.onstart = () => {
       setIsRecording(true);
       startTimeRef.current = Date.now();
     };
 
-    rec.onresult = (event: { resultIndex: number; results: SpeechRecognitionResultList }) => {
-      let interimText = '';
+    rec.onresult = (event: {
+      resultIndex: number;
+      results: SpeechRecognitionResultList;
+    }) => {
+      let interimText = "";
       for (let i = event.resultIndex; i < event.results.length; i++) {
         const r = event.results[i];
         if (r.isFinal) {
@@ -167,14 +195,18 @@ export function LiveTranscriptionOverlay({
     };
 
     rec.onerror = (e: { error: string }) => {
-      if (e.error !== 'no-speech' && e.error !== 'aborted') {
+      if (e.error !== "no-speech" && e.error !== "aborted") {
         toast.error(`Erreur transcription: ${e.error}`);
       }
     };
 
     rec.onend = () => {
       if (isRecording) {
-        try { rec.start(); } catch { setIsRecording(false); }
+        try {
+          rec.start();
+        } catch {
+          setIsRecording(false);
+        }
       }
     };
 
@@ -187,18 +219,21 @@ export function LiveTranscriptionOverlay({
     rec?.stop?.();
     recognitionRef.current = null;
     setIsRecording(false);
-    setInterim('');
+    setInterim("");
   };
 
-  const startRecording = () => useWhisper ? startWhisper() : startSpeechApi();
-  const stopRecording = () => useWhisper ? stopWhisper() : stopSpeechApi();
-  const toggleRecording = () => isRecording ? stopRecording() : startRecording();
+  const startRecording = () => (useWhisper ? startWhisper() : startSpeechApi());
+  const stopRecording = () => (useWhisper ? stopWhisper() : stopSpeechApi());
+  const toggleRecording = () =>
+    isRecording ? stopRecording() : startRecording();
 
   const handleExport = () => {
-    const text = lines.map((l) => `[${formatTs(l.timestamp)}] ${l.text}`).join('\n');
-    const blob = new Blob([text], { type: 'text/plain' });
+    const text = lines
+      .map((l) => `[${formatTs(l.timestamp)}] ${l.text}`)
+      .join("\n");
+    const blob = new Blob([text], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    const a = document.createElement("a");
     a.href = url;
     a.download = `transcript-${new Date().toISOString().slice(0, 10)}.txt`;
     a.click();
@@ -208,10 +243,12 @@ export function LiveTranscriptionOverlay({
   if (!visible) return null;
 
   return (
-    <div className={cn(
-      'absolute bottom-20 left-1/2 -translate-x-1/2 z-30 w-full max-w-xl rounded-xl border bg-black/80 text-white backdrop-blur-sm shadow-2xl',
-      className
-    )}>
+    <div
+      className={cn(
+        "absolute bottom-20 left-1/2 -translate-x-1/2 z-30 w-full max-w-xl rounded-xl border bg-black/80 text-white backdrop-blur-sm shadow-2xl",
+        className,
+      )}
+    >
       {/* Header */}
       <div className="flex items-center justify-between px-3 py-2 border-b border-white/10">
         <div className="flex items-center gap-2">
@@ -231,7 +268,11 @@ export function LiveTranscriptionOverlay({
             className="h-6 w-6 text-white hover:bg-card/10"
             onClick={() => setCollapsed(!collapsed)}
           >
-            {collapsed ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+            {collapsed ? (
+              <ChevronUp className="h-3.5 w-3.5" />
+            ) : (
+              <ChevronDown className="h-3.5 w-3.5" />
+            )}
           </Button>
           {lines.length > 0 && (
             <Button
@@ -248,7 +289,10 @@ export function LiveTranscriptionOverlay({
             size="icon"
             variant="ghost"
             className="h-6 w-6 text-white hover:bg-card/10"
-            onClick={() => { stopRecording(); onClose(); }}
+            onClick={() => {
+              stopRecording();
+              onClose();
+            }}
           >
             <X className="h-3.5 w-3.5" />
           </Button>
@@ -276,7 +320,9 @@ export function LiveTranscriptionOverlay({
           ))}
           {interim && (
             <div className="flex gap-2 text-sm text-white/60 italic">
-              <span className="text-white/30 text-xs font-mono shrink-0 mt-0.5">...</span>
+              <span className="text-white/30 text-xs font-mono shrink-0 mt-0.5">
+                ...
+              </span>
               <span>{interim}</span>
             </div>
           )}
@@ -287,14 +333,20 @@ export function LiveTranscriptionOverlay({
       <div className="flex items-center gap-2 px-3 py-2 border-t border-white/10">
         <Button
           size="sm"
-          variant={isRecording ? 'destructive' : 'default'}
+          variant={isRecording ? "destructive" : "default"}
           className="gap-2 h-7 text-xs"
           onClick={toggleRecording}
         >
           {isRecording ? (
-            <><MicOff className="h-3.5 w-3.5" />Arrêter</>
+            <>
+              <MicOff className="h-3.5 w-3.5" />
+              Arrêter
+            </>
           ) : (
-            <><Mic className="h-3.5 w-3.5" />Démarrer</>
+            <>
+              <Mic className="h-3.5 w-3.5" />
+              Démarrer
+            </>
           )}
         </Button>
         <span className="text-xs text-white/40 ml-auto">

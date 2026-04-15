@@ -1,32 +1,37 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
   SheetDescription,
-} from '@/components/ui/sheet';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
-import { Switch } from '@/components/ui/switch';
+} from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { orgApi } from '@/lib/api/org';
-import type { OrgNode, Assignment, Person, PermissionProfile } from '@/types/org';
-import { Save, UserPlus, Shield } from 'lucide-react';
-import { toast } from 'sonner';
+} from "@/components/ui/select";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { orgApi } from "@/lib/api/org";
+import type {
+  OrgNode,
+  Assignment,
+  Person,
+  PermissionProfile,
+} from "@/types/org";
+import { Save, UserPlus, Shield } from "lucide-react";
+import { toast } from "sonner";
 
 interface NodeDetailSheetProps {
   node: OrgNode | null;
@@ -38,22 +43,22 @@ interface NodeDetailSheetProps {
 type AssignmentWithPerson = Assignment & { person?: Person };
 
 const MODULE_LABELS: Record<string, string> = {
-  drive: 'Drive',
-  calendar: 'Calendrier',
-  mail: 'Messagerie',
-  chat: 'Chat',
-  billing: 'Facturation',
-  admin: 'Administration',
-  tasks: 'Tâches',
-  contacts: 'Contacts',
+  drive: "Drive",
+  calendar: "Calendrier",
+  mail: "Messagerie",
+  chat: "Chat",
+  billing: "Facturation",
+  admin: "Administration",
+  tasks: "Tâches",
+  contacts: "Contacts",
 };
 
 const ASSIGNMENT_TYPE_LABELS: Record<string, string> = {
-  holder: 'Titulaire',
-  interim: 'Intérimaire',
-  deputy: 'Adjoint',
-  intern: 'Stagiaire',
-  contractor: 'Prestataire',
+  holder: "Titulaire",
+  interim: "Intérimaire",
+  deputy: "Adjoint",
+  intern: "Stagiaire",
+  contractor: "Prestataire",
 };
 
 export function NodeDetailSheet({
@@ -62,20 +67,22 @@ export function NodeDetailSheet({
   onOpenChange,
   onNodeUpdated,
 }: NodeDetailSheetProps) {
-  const [name, setName] = useState('');
-  const [code, setCode] = useState('');
-  const [description, setDescription] = useState('');
+  const [name, setName] = useState("");
+  const [code, setCode] = useState("");
+  const [description, setDescription] = useState("");
   const [assignments, setAssignments] = useState<AssignmentWithPerson[]>([]);
-  const [permissions, setPermissions] = useState<PermissionProfile | null>(null);
+  const [permissions, setPermissions] = useState<PermissionProfile | null>(
+    null,
+  );
   const [saving, setSaving] = useState(false);
-  const [tab, setTab] = useState('details');
+  const [tab, setTab] = useState("details");
   const [assignmentsLoading, setAssignmentsLoading] = useState(false);
 
   useEffect(() => {
     if (node) {
       setName(node.name);
-      setCode(node.code ?? '');
-      setDescription(node.description ?? '');
+      setCode(node.code ?? "");
+      setDescription(node.description ?? "");
     }
   }, [node]);
 
@@ -104,8 +111,8 @@ export function NodeDetailSheet({
 
   useEffect(() => {
     if (open && node) {
-      if (tab === 'assignments') loadAssignments();
-      if (tab === 'permissions') loadPermissions();
+      if (tab === "assignments") loadAssignments();
+      if (tab === "permissions") loadPermissions();
     }
   }, [open, node, tab, loadAssignments, loadPermissions]);
 
@@ -113,11 +120,15 @@ export function NodeDetailSheet({
     if (!node) return;
     setSaving(true);
     try {
-      const res = await orgApi.nodes.update(node.id, { name, code: code || undefined, description: description || undefined });
-      toast.success('Noeud mis à jour');
+      const res = await orgApi.nodes.update(node.id, {
+        name,
+        code: code || undefined,
+        description: description || undefined,
+      });
+      toast.success("Noeud mis à jour");
       onNodeUpdated?.(res.data!);
     } catch {
-      toast.error('Erreur lors de la sauvegarde');
+      toast.error("Erreur lors de la sauvegarde");
     } finally {
       setSaving(false);
     }
@@ -125,26 +136,43 @@ export function NodeDetailSheet({
 
   const handleToggleModule = async (moduleKey: string, value: boolean) => {
     if (!node) return;
-    const current = permissions ?? { id: '', node_id: node.id, inherit: true, modules: {}, max_role: 'user', custom_permissions: {} };
-    const updated = { ...current, modules: { ...current.modules, [moduleKey]: value } };
+    const current = permissions ?? {
+      id: "",
+      node_id: node.id,
+      inherit: true,
+      modules: {},
+      max_role: "user",
+      custom_permissions: {},
+    };
+    const updated = {
+      ...current,
+      modules: { ...current.modules, [moduleKey]: value },
+    };
     setPermissions(updated);
     try {
       await orgApi.nodes.setPermissions(node.id, updated);
-      toast.success('Permissions mises à jour');
+      toast.success("Permissions mises à jour");
     } catch {
-      toast.error('Erreur lors de la mise à jour des permissions');
+      toast.error("Erreur lors de la mise à jour des permissions");
     }
   };
 
   const handleMaxRoleChange = async (value: string) => {
     if (!node) return;
-    const current = permissions ?? { id: '', node_id: node.id, inherit: true, modules: {}, max_role: 'user', custom_permissions: {} };
+    const current = permissions ?? {
+      id: "",
+      node_id: node.id,
+      inherit: true,
+      modules: {},
+      max_role: "user",
+      custom_permissions: {},
+    };
     const updated = { ...current, max_role: value };
     setPermissions(updated);
     try {
       await orgApi.nodes.setPermissions(node.id, updated);
     } catch {
-      toast.error('Erreur lors de la mise à jour');
+      toast.error("Erreur lors de la mise à jour");
     }
   };
 
@@ -156,15 +184,21 @@ export function NodeDetailSheet({
         <SheetHeader className="pb-4">
           <SheetTitle className="text-lg">{node.name}</SheetTitle>
           <SheetDescription className="text-xs font-mono text-muted-foreground">
-            {node.node_type} {node.code ? `· ${node.code}` : ''}
+            {node.node_type} {node.code ? `· ${node.code}` : ""}
           </SheetDescription>
         </SheetHeader>
 
         <Tabs value={tab} onValueChange={setTab}>
           <TabsList className="w-full mb-4">
-            <TabsTrigger value="details" className="flex-1">Détails</TabsTrigger>
-            <TabsTrigger value="assignments" className="flex-1">Affectations</TabsTrigger>
-            <TabsTrigger value="permissions" className="flex-1">Permissions</TabsTrigger>
+            <TabsTrigger value="details" className="flex-1">
+              Détails
+            </TabsTrigger>
+            <TabsTrigger value="assignments" className="flex-1">
+              Affectations
+            </TabsTrigger>
+            <TabsTrigger value="permissions" className="flex-1">
+              Permissions
+            </TabsTrigger>
           </TabsList>
 
           {/* ── Détails ── */}
@@ -200,7 +234,7 @@ export function NodeDetailSheet({
             <div className="flex justify-end pt-2">
               <Button onClick={handleSave} disabled={saving} size="sm">
                 <Save className="h-4 w-4 mr-2" />
-                {saving ? 'Sauvegarde...' : 'Enregistrer'}
+                {saving ? "Sauvegarde..." : "Enregistrer"}
               </Button>
             </div>
           </TabsContent>
@@ -217,7 +251,9 @@ export function NodeDetailSheet({
               </Button>
             </div>
             {assignmentsLoading ? (
-              <p className="text-sm text-muted-foreground text-center py-6">Chargement...</p>
+              <p className="text-sm text-muted-foreground text-center py-6">
+                Chargement...
+              </p>
             ) : assignments.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground text-sm border border-dashed rounded-lg">
                 Aucune affectation pour ce noeud
@@ -225,12 +261,15 @@ export function NodeDetailSheet({
             ) : (
               <div className="space-y-2">
                 {assignments.map((a) => (
-                  <div key={a.id} className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+                  <div
+                    key={a.id}
+                    className="flex items-center gap-3 p-3 rounded-lg bg-muted/50"
+                  >
                     <Avatar className="h-8 w-8">
                       <AvatarFallback className="text-xs">
                         {a.person
                           ? `${a.person.first_name[0]}${a.person.last_name[0]}`
-                          : '?'}
+                          : "?"}
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1 min-w-0">
@@ -240,12 +279,15 @@ export function NodeDetailSheet({
                           : a.person_id}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        {new Date(a.start_date).toLocaleDateString('fr-FR')}
-                        {a.end_date ? ` → ${new Date(a.end_date).toLocaleDateString('fr-FR')}` : ' · En cours'}
+                        {new Date(a.start_date).toLocaleDateString("fr-FR")}
+                        {a.end_date
+                          ? ` → ${new Date(a.end_date).toLocaleDateString("fr-FR")}`
+                          : " · En cours"}
                       </p>
                     </div>
                     <Badge variant="outline" className="text-xs shrink-0">
-                      {ASSIGNMENT_TYPE_LABELS[a.assignment_type] ?? a.assignment_type}
+                      {ASSIGNMENT_TYPE_LABELS[a.assignment_type] ??
+                        a.assignment_type}
                     </Badge>
                   </div>
                 ))}
@@ -261,14 +303,22 @@ export function NodeDetailSheet({
             </div>
             <div className="space-y-3">
               {Object.entries(MODULE_LABELS).map(([key, label]) => (
-                <div key={key} className="flex items-center justify-between py-1">
-                  <Label htmlFor={`module-${key}`} className="text-sm cursor-pointer">
+                <div
+                  key={key}
+                  className="flex items-center justify-between py-1"
+                >
+                  <Label
+                    htmlFor={`module-${key}`}
+                    className="text-sm cursor-pointer"
+                  >
                     {label}
                   </Label>
                   <Switch
                     id={`module-${key}`}
                     checked={permissions?.modules?.[key] ?? false}
-                    onCheckedChange={(checked) => handleToggleModule(key, checked)}
+                    onCheckedChange={(checked) =>
+                      handleToggleModule(key, checked)
+                    }
                   />
                 </div>
               ))}
@@ -276,7 +326,7 @@ export function NodeDetailSheet({
             <div className="pt-2 space-y-2">
               <Label>Rôle maximum</Label>
               <Select
-                value={permissions?.max_role ?? 'user'}
+                value={permissions?.max_role ?? "user"}
                 onValueChange={handleMaxRoleChange}
               >
                 <SelectTrigger>
@@ -296,10 +346,13 @@ export function NodeDetailSheet({
                   id="inherit-perms"
                   checked={permissions.inherit}
                   onCheckedChange={(checked) =>
-                    setPermissions((p) => p ? { ...p, inherit: checked } : p)
+                    setPermissions((p) => (p ? { ...p, inherit: checked } : p))
                   }
                 />
-                <Label htmlFor="inherit-perms" className="text-sm cursor-pointer">
+                <Label
+                  htmlFor="inherit-perms"
+                  className="text-sm cursor-pointer"
+                >
                   Hériter des permissions du noeud parent
                 </Label>
               </div>

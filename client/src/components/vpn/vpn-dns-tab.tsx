@@ -1,11 +1,17 @@
-'use client';
+"use client";
 
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import {
   Table,
   TableBody,
@@ -13,9 +19,9 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import { Plus, Pencil, Trash2, X } from 'lucide-react';
-import { DnsConfig, DnsStats, Blocklist, CustomDnsRecord } from '@/lib/api';
+} from "@/components/ui/table";
+import { Plus, Pencil, Trash2, X } from "lucide-react";
+import { DnsConfig, DnsStats, Blocklist, CustomDnsRecord } from "@/lib/api";
 
 function formatNumber(num: number): string {
   return num.toLocaleString();
@@ -77,7 +83,7 @@ export function VpnDnsTab({
                   placeholder="e.g., 1.1.1.1 or 8.8.8.8"
                   value={upstreamInput}
                   onChange={(e) => onUpstreamInputChange(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && onAddUpstream()}
+                  onKeyDown={(e) => e.key === "Enter" && onAddUpstream()}
                   disabled={!dnsConfig?.enabled}
                 />
                 <Button
@@ -181,7 +187,7 @@ export function VpnDnsTab({
                   <TableCell className="text-muted-foreground">
                     {blocklist.last_updated
                       ? new Date(blocklist.last_updated).toLocaleDateString()
-                      : '-'}
+                      : "-"}
                   </TableCell>
                   <TableCell>
                     <Switch
@@ -202,7 +208,10 @@ export function VpnDnsTab({
               ))}
               {(dnsConfig?.blocklists || []).length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                  <TableCell
+                    colSpan={5}
+                    className="text-center py-8 text-muted-foreground"
+                  >
                     No blocklists configured.
                   </TableCell>
                 </TableRow>
@@ -247,9 +256,15 @@ export function VpnDnsTab({
                   <TableCell>
                     <Badge variant="outline">{record.type}</Badge>
                   </TableCell>
-                  <TableCell className="font-mono text-sm">{record.name}</TableCell>
-                  <TableCell className="font-mono text-sm">{record.value}</TableCell>
-                  <TableCell className="text-muted-foreground">{record.ttl || 3600}s</TableCell>
+                  <TableCell className="font-mono text-sm">
+                    {record.name}
+                  </TableCell>
+                  <TableCell className="font-mono text-sm">
+                    {record.value}
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {record.ttl || 3600}s
+                  </TableCell>
                   <TableCell>
                     <div className="flex gap-1">
                       <Button
@@ -272,7 +287,10 @@ export function VpnDnsTab({
               ))}
               {(dnsConfig?.custom_records || []).length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                  <TableCell
+                    colSpan={5}
+                    className="text-center py-8 text-muted-foreground"
+                  >
                     No custom DNS records.
                   </TableCell>
                 </TableRow>

@@ -68,7 +68,9 @@ export default function GreenITScore() {
       {/* Main Score Gauge */}
       <div className="p-4 bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg border border-green-200">
         <div className="text-center mb-4">
-          <p className="text-sm text-green-600 mb-1">Infrastructure Green Score</p>
+          <p className="text-sm text-green-600 mb-1">
+            Infrastructure Green Score
+          </p>
           <div className="flex items-baseline justify-center gap-2">
             <p className="text-5xl font-bold text-green-900">{greenScore}</p>
             <p className="text-2xl text-green-600">/100</p>
@@ -97,7 +99,9 @@ export default function GreenITScore() {
 
       {/* Metrics */}
       <div className="space-y-2">
-        <p className="font-semibold text-sm text-muted-foreground">Key Metrics</p>
+        <p className="font-semibold text-sm text-muted-foreground">
+          Key Metrics
+        </p>
         {metrics.map((metric) => (
           <div
             key={metric.name}
@@ -106,9 +110,13 @@ export default function GreenITScore() {
             <div className="flex items-start justify-between mb-2">
               <div>
                 <p className="font-medium text-sm">{metric.name}</p>
-                <p className="text-xs text-muted-foreground">{metric.benchmark}</p>
+                <p className="text-xs text-muted-foreground">
+                  {metric.benchmark}
+                </p>
               </div>
-              <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(metric.status)}`}>
+              <span
+                className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(metric.status)}`}
+              >
                 {metric.status === "good"
                   ? "✓ Good"
                   : metric.status === "fair"
@@ -117,7 +125,10 @@ export default function GreenITScore() {
               </span>
             </div>
             <p className="text-lg font-bold">
-              {metric.value} <span className="text-xs text-muted-foreground font-normal">{metric.unit}</span>
+              {metric.value}{" "}
+              <span className="text-xs text-muted-foreground font-normal">
+                {metric.unit}
+              </span>
             </p>
           </div>
         ))}
@@ -125,7 +136,9 @@ export default function GreenITScore() {
 
       {/* Recommendations */}
       <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
-        <p className="font-semibold text-sm text-blue-900 mb-2">Recommendations</p>
+        <p className="font-semibold text-sm text-blue-900 mb-2">
+          Recommendations
+        </p>
         <ul className="space-y-1 text-xs text-blue-900">
           {recommendations.map((rec, idx) => (
             <li key={idx} className="flex gap-2">

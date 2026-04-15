@@ -47,12 +47,15 @@ export function FinancialStatements({
   const totalAssets = balanceSheet.assets.reduce((s, l) => s + l.amount, 0);
   const totalLiabilities = balanceSheet.liabilities.reduce(
     (s, l) => s + l.amount,
-    0
+    0,
   );
-  const totalRevenue = incomeStatement.revenue.reduce((s, l) => s + l.amount, 0);
+  const totalRevenue = incomeStatement.revenue.reduce(
+    (s, l) => s + l.amount,
+    0,
+  );
   const totalExpenses = incomeStatement.expenses.reduce(
     (s, l) => s + l.amount,
-    0
+    0,
   );
   const netIncome = totalRevenue - totalExpenses;
 

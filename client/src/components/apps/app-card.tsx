@@ -1,19 +1,25 @@
-'use client';
+"use client";
 
-import { SpinnerInfinity } from 'spinners-react';
+import { SpinnerInfinity } from "spinners-react";
 
-
-import { useState } from 'react';
-import Image from 'next/image';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Download, Package, ArrowUpCircle, CheckCircle2, Layers, ExternalLink } from 'lucide-react';
-import type { StoreApp } from '@/lib/api';
-import { containersApi } from '@/lib/api';
-import { toast } from 'sonner';
-import SpotlightCard from '@/components/ui/spotlight-card';
-import { getAppLogo } from '@/lib/app-logos';
+import { useState } from "react";
+import Image from "next/image";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Download,
+  Package,
+  ArrowUpCircle,
+  CheckCircle2,
+  Layers,
+  ExternalLink,
+} from "lucide-react";
+import type { StoreApp } from "@/lib/api";
+import { containersApi } from "@/lib/api";
+import { toast } from "sonner";
+import SpotlightCard from "@/components/ui/spotlight-card";
+import { getAppLogo } from "@/lib/app-logos";
 
 interface AppCardProps {
   app: StoreApp;
@@ -24,7 +30,14 @@ interface AppCardProps {
   onUpdated?: () => void;
 }
 
-export function AppCard({ app, onInstall, onDetail, installedContainerId, containerUrl, onUpdated }: AppCardProps) {
+export function AppCard({
+  app,
+  onInstall,
+  onDetail,
+  installedContainerId,
+  containerUrl,
+  onUpdated,
+}: AppCardProps) {
   const [imgError, setImgError] = useState(false);
   const [updating, setUpdating] = useState(false);
 
@@ -71,9 +84,14 @@ export function AppCard({ app, onInstall, onDetail, installedContainerId, contai
           </div>
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
-              <h3 className="truncate font-semibold leading-tight">{app.name}</h3>
+              <h3 className="truncate font-semibold leading-tight">
+                {app.name}
+              </h3>
               {installedContainerId && (
-                <Badge variant="outline" className="shrink-0 text-xs bg-green-500/10 text-green-600 border-green-500/20">
+                <Badge
+                  variant="outline"
+                  className="shrink-0 text-xs bg-green-500/10 text-green-600 border-green-500/20"
+                >
                   <CheckCircle2 className="mr-1 h-3 w-3" />
                   Installed
                 </Badge>
@@ -112,12 +130,12 @@ export function AppCard({ app, onInstall, onDetail, installedContainerId, contai
           </div>
           <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
             {installedContainerId && containerUrl && (
-              <Button
-                size="sm"
-                variant="default"
-                asChild
-              >
-                <a href={containerUrl} target="_blank" rel="noopener noreferrer">
+              <Button size="sm" variant="default" asChild>
+                <a
+                  href={containerUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
                   <ExternalLink className="mr-1 h-3.5 w-3.5" />
                   Open
                 </a>
@@ -131,7 +149,13 @@ export function AppCard({ app, onInstall, onDetail, installedContainerId, contai
                 disabled={updating}
               >
                 {updating ? (
-                  <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-1 h-3.5 w-3.5 " />
+                  <SpinnerInfinity
+                    size={24}
+                    secondaryColor="rgba(128,128,128,0.2)"
+                    color="currentColor"
+                    speed={120}
+                    className="mr-1 h-3.5 w-3.5 "
+                  />
                 ) : (
                   <ArrowUpCircle className="mr-1 h-3.5 w-3.5" />
                 )}

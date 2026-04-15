@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { FileAudio, Copy, Download, Loader2, CheckCircle2 } from 'lucide-react';
-import { toast } from 'sonner';
-import { aiApi } from '@/lib/api';
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { FileAudio, Copy, Download, Loader2, CheckCircle2 } from "lucide-react";
+import { toast } from "sonner";
+import { aiApi } from "@/lib/api";
 
 interface SummaryResult {
   decisions: string[];
@@ -15,7 +15,7 @@ interface SummaryResult {
 }
 
 export function MeetingSummarizer() {
-  const [transcription, setTranscription] = useState('');
+  const [transcription, setTranscription] = useState("");
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [result, setResult] = useState<SummaryResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -28,7 +28,7 @@ export function MeetingSummarizer() {
 
   const handleGenerateSummary = async () => {
     if (!transcription.trim() && !audioFile) {
-      toast.error('Please provide transcription or upload audio file');
+      toast.error("Please provide transcription or upload audio file");
       return;
     }
 
@@ -48,18 +48,20 @@ Provide the response in JSON format with keys: decisions (array), actions (array
 
       try {
         const jsonMatch = response.data.answer.match(/\{[\s\S]*\}/);
-        const parsed = jsonMatch ? JSON.parse(jsonMatch[0]) : {
-          decisions: ['Unable to parse decisions'],
-          actions: ['Unable to parse actions'],
-          openPoints: ['Unable to parse open points']
-        };
+        const parsed = jsonMatch
+          ? JSON.parse(jsonMatch[0])
+          : {
+              decisions: ["Unable to parse decisions"],
+              actions: ["Unable to parse actions"],
+              openPoints: ["Unable to parse open points"],
+            };
         setResult(parsed);
-        toast.success('Summary generated successfully');
+        toast.success("Summary generated successfully");
       } catch {
-        toast.error('Failed to parse summary format');
+        toast.error("Failed to parse summary format");
       }
     } catch (error) {
-      toast.error('Failed to generate summary');
+      toast.error("Failed to generate summary");
     } finally {
       setIsLoading(false);
     }
@@ -67,24 +69,24 @@ Provide the response in JSON format with keys: decisions (array), actions (array
 
   const handleCopy = async () => {
     if (!result) return;
-    const text = `Meeting Summary\n\nDecisions:\n${result.decisions.join('\n')}\n\nActions:\n${result.actions.join('\n')}\n\nOpen Points:\n${result.openPoints.join('\n')}`;
+    const text = `Meeting Summary\n\nDecisions:\n${result.decisions.join("\n")}\n\nActions:\n${result.actions.join("\n")}\n\nOpen Points:\n${result.openPoints.join("\n")}`;
     await navigator.clipboard.writeText(text);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
-    toast.success('Copié dans le presse-papiers');
+    toast.success("Copié dans le presse-papiers");
   };
 
   const handleExport = async () => {
     if (!result) return;
-    const content = `Meeting Summary\n\n=== Decisions ===\n${result.decisions.join('\n')}\n\n=== Actions ===\n${result.actions.join('\n')}\n\n=== Open Points ===\n${result.openPoints.join('\n')}`;
-    const blob = new Blob([content], { type: 'text/plain' });
+    const content = `Meeting Summary\n\n=== Decisions ===\n${result.decisions.join("\n")}\n\n=== Actions ===\n${result.actions.join("\n")}\n\n=== Open Points ===\n${result.openPoints.join("\n")}`;
+    const blob = new Blob([content], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    const a = document.createElement("a");
     a.href = url;
-    a.download = 'meeting-summary.txt';
+    a.download = "meeting-summary.txt";
     a.click();
     URL.revokeObjectURL(url);
-    toast.success('Summary exported');
+    toast.success("Summary exported");
   };
 
   return (
@@ -102,14 +104,20 @@ Provide the response in JSON format with keys: decisions (array), actions (array
             <input
               type="file"
               accept="audio/*"
-              onChange={(e) => e.target.files && handleAudioUpload(e.target.files[0])}
+              onChange={(e) =>
+                e.target.files && handleAudioUpload(e.target.files[0])
+              }
               className="block w-full text-sm text-slate-500"
             />
-            {audioFile && <p className="text-xs text-green-600 mt-1">✓ {audioFile.name}</p>}
+            {audioFile && (
+              <p className="text-xs text-green-600 mt-1">✓ {audioFile.name}</p>
+            )}
           </div>
 
           <div>
-            <label className="text-sm font-medium mb-2 block">Meeting Transcription</label>
+            <label className="text-sm font-medium mb-2 block">
+              Meeting Transcription
+            </label>
             <Textarea
               placeholder="Paste the meeting transcription here or upload an audio file..."
               value={transcription}
@@ -129,7 +137,7 @@ Provide the response in JSON format with keys: decisions (array), actions (array
                 Generating Resume...
               </>
             ) : (
-              'Générer Résumé'
+              "Générer Résumé"
             )}
           </Button>
         </CardContent>
@@ -150,7 +158,7 @@ Provide the response in JSON format with keys: decisions (array), actions (array
                 className="gap-2"
               >
                 <Copy className="h-4 w-4" />
-                {copied ? 'Copied' : 'Copy'}
+                {copied ? "Copied" : "Copy"}
               </Button>
               <Button
                 onClick={handleExport}

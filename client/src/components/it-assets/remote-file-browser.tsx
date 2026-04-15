@@ -1,14 +1,14 @@
-"use client"
+"use client";
 
 /**
  * Feature 27: Remote File Browser
  * Tree view of a remote endpoint's filesystem, using agent file-transfer endpoints.
  */
 
-import { useState, useCallback } from "react"
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { useState, useCallback } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Folder,
   FolderOpen,
@@ -23,89 +23,96 @@ import {
   ChevronDown,
   Home,
   ArrowLeft,
-} from "lucide-react"
-import { itAssetsApi, FileTransfer } from "@/lib/api/it-assets"
-import { cn } from "@/lib/utils"
+} from "lucide-react";
+import { itAssetsApi, FileTransfer } from "@/lib/api/it-assets";
+import { cn } from "@/lib/utils";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 export interface RemoteFileEntry {
-  name: string
-  path: string
-  is_dir: boolean
-  size?: number
-  modified?: string
+  name: string;
+  path: string;
+  is_dir: boolean;
+  size?: number;
+  modified?: string;
 }
 
 interface BreadcrumbPart {
-  name: string
-  path: string
+  name: string;
+  path: string;
 }
 
 function formatSize(bytes?: number): string {
-  if (!bytes) return "—"
-  if (bytes > 1e9) return `${(bytes / 1e9).toFixed(1)} GB`
-  if (bytes > 1e6) return `${(bytes / 1e6).toFixed(1)} MB`
-  if (bytes > 1e3) return `${(bytes / 1e3).toFixed(1)} KB`
-  return `${bytes} B`
+  if (!bytes) return "—";
+  if (bytes > 1e9) return `${(bytes / 1e9).toFixed(1)} GB`;
+  if (bytes > 1e6) return `${(bytes / 1e6).toFixed(1)} MB`;
+  if (bytes > 1e3) return `${(bytes / 1e3).toFixed(1)} KB`;
+  return `${bytes} B`;
 }
 
 function buildBreadcrumb(path: string): BreadcrumbPart[] {
-  const parts = path.split("/").filter(Boolean)
-  const crumbs: BreadcrumbPart[] = [{ name: "Root", path: "/" }]
-  let built = ""
+  const parts = path.split("/").filter(Boolean);
+  const crumbs: BreadcrumbPart[] = [{ name: "Root", path: "/" }];
+  let built = "";
   for (const p of parts) {
-    built = `${built}/${p}`
-    crumbs.push({ name: p, path: built })
+    built = `${built}/${p}`;
+    crumbs.push({ name: p, path: built });
   }
-  return crumbs
+  return crumbs;
 }
 
 // ─── File browser component ───────────────────────────────────────────────────
 
 interface RemoteFileBrowserProps {
-  hardwareId: string
-  agentId: string
+  hardwareId: string;
+  agentId: string;
 }
 
-export function RemoteFileBrowser({ hardwareId, agentId }: RemoteFileBrowserProps) {
-  const qc = useQueryClient()
-  const [currentPath, setCurrentPath] = useState("/")
-  const [selected, setSelected] = useState<RemoteFileEntry | null>(null)
-  const [newFolderName, setNewFolderName] = useState("")
-  const [showNewFolder, setShowNewFolder] = useState(false)
-  const [uploadFile, setUploadFile] = useState<File | null>(null)
+export function RemoteFileBrowser({
+  hardwareId,
+  agentId,
+}: RemoteFileBrowserProps) {
+  const qc = useQueryClient();
+  const [currentPath, setCurrentPath] = useState("/");
+  const [selected, setSelected] = useState<RemoteFileEntry | null>(null);
+  const [newFolderName, setNewFolderName] = useState("");
+  const [showNewFolder, setShowNewFolder] = useState(false);
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
 
   // ─── Fetch directory listing ──────────────────────────────────────────────
 
-  const { data: entries = [], isLoading, refetch } = useQuery({
+  const {
+    data: entries = [],
+    isLoading,
+    refetch,
+  } = useQuery({
     queryKey: ["remote-files", agentId, currentPath],
     queryFn: async () => {
-      const resp = await itAssetsApi.listRemoteFiles(agentId, currentPath)
-      return resp.data
+      const resp = await itAssetsApi.listRemoteFiles(agentId, currentPath);
+      return resp.data;
     },
     retry: false,
-  })
+  });
 
   // ─── Navigate ────────────────────────────────────────────────────────────
 
   function navigate(entry: RemoteFileEntry) {
     if (entry.is_dir) {
-      setCurrentPath(entry.path)
-      setSelected(null)
+      setCurrentPath(entry.path);
+      setSelected(null);
     } else {
-      setSelected(selected?.path === entry.path ? null : entry)
+      setSelected(selected?.path === entry.path ? null : entry);
     }
   }
 
   function navigateTo(path: string) {
-    setCurrentPath(path)
-    setSelected(null)
+    setCurrentPath(path);
+    setSelected(null);
   }
 
   function goUp() {
-    const parent = currentPath.split("/").slice(0, -1).join("/") || "/"
-    navigateTo(parent)
+    const parent = currentPath.split("/").slice(0, -1).join("/") || "/";
+    navigateTo(parent);
   }
 
   // ─── Download file ────────────────────────────────────────────────────────
@@ -120,15 +127,15 @@ export function RemoteFileBrowser({ hardwareId, agentId }: RemoteFileBrowserProp
     onSuccess: () => {
       // In a real implementation this would trigger browser download
     },
-  })
+  });
 
   // ─── Upload file ──────────────────────────────────────────────────────────
 
   const uploadMut = useMutation({
     mutationFn: async (file: File) => {
-      const arrayBuf = await file.arrayBuffer()
-      const bytes = new Uint8Array(arrayBuf)
-      const b64 = btoa(String.fromCharCode(...bytes))
+      const arrayBuf = await file.arrayBuffer();
+      const bytes = new Uint8Array(arrayBuf);
+      const b64 = btoa(String.fromCharCode(...bytes));
       return itAssetsApi.pushFile({
         hardware_id: hardwareId,
         filename: file.name,
@@ -136,13 +143,13 @@ export function RemoteFileBrowser({ hardwareId, agentId }: RemoteFileBrowserProp
         content_base64: b64,
         size_bytes: file.size,
         mime_type: file.type || "application/octet-stream",
-      })
+      });
     },
     onSuccess: () => {
-      setUploadFile(null)
-      refetch()
+      setUploadFile(null);
+      refetch();
     },
-  })
+  });
 
   // ─── Create folder ────────────────────────────────────────────────────────
 
@@ -153,11 +160,11 @@ export function RemoteFileBrowser({ hardwareId, agentId }: RemoteFileBrowserProp
         path: `${currentPath}/${name}`.replace("//", "/"),
       }),
     onSuccess: () => {
-      setShowNewFolder(false)
-      setNewFolderName("")
-      refetch()
+      setShowNewFolder(false);
+      setNewFolderName("");
+      refetch();
     },
-  })
+  });
 
   // ─── Delete ───────────────────────────────────────────────────────────────
 
@@ -168,13 +175,13 @@ export function RemoteFileBrowser({ hardwareId, agentId }: RemoteFileBrowserProp
         path: entry.path,
       }),
     onSuccess: () => {
-      setSelected(null)
-      refetch()
+      setSelected(null);
+      refetch();
     },
-  })
+  });
 
-  const breadcrumb = buildBreadcrumb(currentPath)
-  const isRoot = currentPath === "/"
+  const breadcrumb = buildBreadcrumb(currentPath);
+  const isRoot = currentPath === "/";
 
   return (
     <div className="flex flex-col h-full min-h-96 border rounded-lg overflow-hidden bg-white">
@@ -222,7 +229,9 @@ export function RemoteFileBrowser({ hardwareId, agentId }: RemoteFileBrowserProp
           onClick={() => refetch()}
           title="Refresh"
         >
-          <RefreshCw className={cn("h-3.5 w-3.5", isLoading && "animate-spin")} />
+          <RefreshCw
+            className={cn("h-3.5 w-3.5", isLoading && "animate-spin")}
+          />
         </Button>
 
         <Button
@@ -244,10 +253,10 @@ export function RemoteFileBrowser({ hardwareId, agentId }: RemoteFileBrowserProp
             type="file"
             className="hidden"
             onChange={(e) => {
-              const f = e.target.files?.[0]
+              const f = e.target.files?.[0];
               if (f) {
-                setUploadFile(f)
-                uploadMut.mutate(f)
+                setUploadFile(f);
+                uploadMut.mutate(f);
               }
             }}
           />
@@ -264,14 +273,16 @@ export function RemoteFileBrowser({ hardwareId, agentId }: RemoteFileBrowserProp
             onChange={(e) => setNewFolderName(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === "Enter" && newFolderName.trim())
-                mkdirMut.mutate(newFolderName.trim())
-              if (e.key === "Escape") setShowNewFolder(false)
+                mkdirMut.mutate(newFolderName.trim());
+              if (e.key === "Escape") setShowNewFolder(false);
             }}
             autoFocus
           />
           <Button
             size="sm"
-            onClick={() => newFolderName.trim() && mkdirMut.mutate(newFolderName.trim())}
+            onClick={() =>
+              newFolderName.trim() && mkdirMut.mutate(newFolderName.trim())
+            }
             disabled={mkdirMut.isPending || !newFolderName.trim()}
           >
             Create
@@ -291,13 +302,13 @@ export function RemoteFileBrowser({ hardwareId, agentId }: RemoteFileBrowserProp
           </div>
         ) : (
           entries.map((entry) => {
-            const isSelected = selected?.path === entry.path
+            const isSelected = selected?.path === entry.path;
             return (
               <div
                 key={entry.path}
                 className={cn(
                   "flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-blue-50 transition-colors",
-                  isSelected && "bg-blue-100"
+                  isSelected && "bg-blue-100",
                 )}
                 onClick={() => navigate(entry)}
                 onDoubleClick={() => entry.is_dir && navigate(entry)}
@@ -334,8 +345,8 @@ export function RemoteFileBrowser({ hardwareId, agentId }: RemoteFileBrowserProp
                       size="icon"
                       className="h-6 w-6"
                       onClick={(e) => {
-                        e.stopPropagation()
-                        downloadMut.mutate(entry)
+                        e.stopPropagation();
+                        downloadMut.mutate(entry);
                       }}
                       title="Download"
                     >
@@ -346,8 +357,8 @@ export function RemoteFileBrowser({ hardwareId, agentId }: RemoteFileBrowserProp
                       size="icon"
                       className="h-6 w-6 text-red-500"
                       onClick={(e) => {
-                        e.stopPropagation()
-                        deleteMut.mutate(entry)
+                        e.stopPropagation();
+                        deleteMut.mutate(entry);
                       }}
                       title="Delete"
                     >
@@ -356,7 +367,7 @@ export function RemoteFileBrowser({ hardwareId, agentId }: RemoteFileBrowserProp
                   </div>
                 )}
               </div>
-            )
+            );
           })
         )}
       </div>
@@ -381,5 +392,5 @@ export function RemoteFileBrowser({ hardwareId, agentId }: RemoteFileBrowserProp
         )}
       </div>
     </div>
-  )
+  );
 }

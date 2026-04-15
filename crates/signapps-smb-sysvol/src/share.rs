@@ -3,8 +3,8 @@
 //! SYSVOL contains Group Policy objects and login scripts.
 //! NETLOGON contains login scripts (subset of SYSVOL).
 
-use std::path::PathBuf;
 use serde::{Deserialize, Serialize};
+use std::path::PathBuf;
 
 /// An SMB share definition.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -67,7 +67,10 @@ mod tests {
     fn sysvol_share_path() {
         let share = sysvol_share("example.com", "/data/storage");
         assert_eq!(share.name, "SYSVOL");
-        assert_eq!(share.path.to_str().unwrap(), "/data/storage/sysvol/example.com");
+        assert_eq!(
+            share.path.to_str().unwrap(),
+            "/data/storage/sysvol/example.com"
+        );
         assert!(!share.read_only);
     }
 

@@ -51,7 +51,15 @@ pub static BUILTIN_CLASSES: &[ObjectClassDef] = &[
         oid: "2.5.6.0",
         super_classes: &[],
         must_attributes: &["objectClass"],
-        may_attributes: &["description", "distinguishedName", "name", "objectGUID", "objectSid", "whenCreated", "whenChanged"],
+        may_attributes: &[
+            "description",
+            "distinguishedName",
+            "name",
+            "objectGUID",
+            "objectSid",
+            "whenCreated",
+            "whenChanged",
+        ],
         pg_source: PgSource::Virtual,
     },
     // ── Person chain ─────────────────────────────────────────────────────
@@ -68,7 +76,14 @@ pub static BUILTIN_CLASSES: &[ObjectClassDef] = &[
         oid: "2.5.6.7",
         super_classes: &["person"],
         must_attributes: &[],
-        may_attributes: &["title", "department", "givenName", "mail", "telephoneNumber", "displayName"],
+        may_attributes: &[
+            "title",
+            "department",
+            "givenName",
+            "mail",
+            "telephoneNumber",
+            "displayName",
+        ],
         pg_source: PgSource::Virtual,
     },
     ObjectClassDef {
@@ -194,7 +209,7 @@ pub fn class_hierarchy(name: &str) -> Vec<&'static str> {
                     Some(parent) => current = parent,
                     None => break,
                 }
-            }
+            },
         }
     }
 

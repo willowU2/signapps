@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * TimeItemBlock Component
@@ -8,9 +8,9 @@
  * Supports different display modes, types, colors, and interactions.
  */
 
-import * as React from 'react';
-import { format, differenceInMinutes } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import * as React from "react";
+import { format, differenceInMinutes } from "date-fns";
+import { fr } from "date-fns/locale";
 import {
   MapPin,
   Users,
@@ -30,10 +30,10 @@ import {
   Battery,
   BatteryLow,
   BatteryMedium,
-} from 'lucide-react';
-import { motion } from 'framer-motion';
-import { cn } from '@/lib/utils';
-import { useSchedulingStore } from '@/stores/scheduling/scheduling-store';
+} from "lucide-react";
+import { motion } from "framer-motion";
+import { cn } from "@/lib/utils";
+import { useSchedulingStore } from "@/stores/scheduling/scheduling-store";
 import type {
   TimeItem,
   TimeItemType,
@@ -41,8 +41,8 @@ import type {
   Status,
   EnergyRequired,
   FocusLevel,
-} from '@/lib/scheduling/types';
-import { PRIORITY_COLORS, TIME_ITEM_TYPE_ICONS } from '@/lib/scheduling/types';
+} from "@/lib/scheduling/types";
+import { PRIORITY_COLORS, TIME_ITEM_TYPE_ICONS } from "@/lib/scheduling/types";
 
 // ============================================================================
 // Types
@@ -61,17 +61,17 @@ interface TimeItemBlockProps {
   onContextMenu?: (item: TimeItem, e: React.MouseEvent) => void;
 }
 
-type DisplayMode = 'full' | 'compact' | 'minimal' | 'dot';
+type DisplayMode = "full" | "compact" | "minimal" | "dot";
 
 // ============================================================================
 // Helpers
 // ============================================================================
 
 function getDisplayMode(height: number): DisplayMode {
-  if (height < 20) return 'dot';
-  if (height < 32) return 'minimal';
-  if (height < 56) return 'compact';
-  return 'full';
+  if (height < 20) return "dot";
+  if (height < 32) return "minimal";
+  if (height < 56) return "compact";
+  return "full";
 }
 
 function getTypeIcon(type: TimeItemType): React.ElementType {
@@ -87,7 +87,11 @@ function getTypeIcon(type: TimeItemType): React.ElementType {
   return iconMap[type] || Calendar;
 }
 
-function getItemColor(item: TimeItem): { bg: string; border: string; text: string } {
+function getItemColor(item: TimeItem): {
+  bg: string;
+  border: string;
+  text: string;
+} {
   // Use custom color if provided
   if (item.color) {
     return {
@@ -99,16 +103,16 @@ function getItemColor(item: TimeItem): { bg: string; border: string; text: strin
 
   // Type-based colors
   const typeColors: Record<TimeItemType, string> = {
-    task: '#3b82f6', // blue
-    event: '#8b5cf6', // purple
-    booking: '#06b6d4', // cyan
-    shift: '#f59e0b', // amber
-    milestone: '#10b981', // emerald
-    reminder: '#f97316', // orange
-    blocker: '#ef4444', // red
+    task: "#3b82f6", // blue
+    event: "#8b5cf6", // purple
+    booking: "#06b6d4", // cyan
+    shift: "#f59e0b", // amber
+    milestone: "#10b981", // emerald
+    reminder: "#f97316", // orange
+    blocker: "#ef4444", // red
   };
 
-  const color = typeColors[item.type] || '#3b82f6';
+  const color = typeColors[item.type] || "#3b82f6";
 
   return {
     bg: `${color}15`,
@@ -119,22 +123,22 @@ function getItemColor(item: TimeItem): { bg: string; border: string; text: strin
 
 function getPriorityIndicator(priority: Priority): React.ReactNode {
   const colors: Record<Priority, string> = {
-    low: 'text-slate-400',
-    medium: 'text-blue-500',
-    high: 'text-orange-500',
-    urgent: 'text-red-500',
+    low: "text-slate-400",
+    medium: "text-blue-500",
+    high: "text-orange-500",
+    urgent: "text-red-500",
   };
 
-  return <Flag className={cn('h-3 w-3', colors[priority])} />;
+  return <Flag className={cn("h-3 w-3", colors[priority])} />;
 }
 
 function getStatusIcon(status: Status): React.ReactNode {
   switch (status) {
-    case 'done':
+    case "done":
       return <CheckCircle2 className="h-3 w-3 text-green-500" />;
-    case 'in_progress':
+    case "in_progress":
       return <Clock className="h-3 w-3 text-blue-500" />;
-    case 'cancelled':
+    case "cancelled":
       return <Ban className="h-3 w-3 text-red-500" />;
     default:
       return null;
@@ -143,11 +147,11 @@ function getStatusIcon(status: Status): React.ReactNode {
 
 function getEnergyIcon(energy: EnergyRequired): React.ReactNode {
   switch (energy) {
-    case 'high':
+    case "high":
       return <Battery className="h-3 w-3 text-green-500" />;
-    case 'medium':
+    case "medium":
       return <BatteryMedium className="h-3 w-3 text-yellow-500" />;
-    case 'low':
+    case "low":
       return <BatteryLow className="h-3 w-3 text-red-500" />;
     default:
       return null;
@@ -155,7 +159,7 @@ function getEnergyIcon(energy: EnergyRequired): React.ReactNode {
 }
 
 function getFocusIcon(focus: FocusLevel): React.ReactNode {
-  if (focus === 'deep') {
+  if (focus === "deep") {
     return <Target className="h-3 w-3 text-purple-500" />;
   }
   return null;
@@ -165,8 +169,14 @@ function getFocusIcon(focus: FocusLevel): React.ReactNode {
 // Sub-components
 // ============================================================================
 
-function ItemTitle({ title, className }: { title: string; className?: string }) {
-  return <span className={cn('font-medium truncate', className)}>{title}</span>;
+function ItemTitle({
+  title,
+  className,
+}: {
+  title: string;
+  className?: string;
+}) {
+  return <span className={cn("font-medium truncate", className)}>{title}</span>;
 }
 
 function ItemTime({
@@ -181,11 +191,11 @@ function ItemTime({
   if (!start) return null;
 
   const startDate = new Date(start);
-  const startStr = format(startDate, 'HH:mm', { locale: fr });
-  const endStr = end ? format(new Date(end), 'HH:mm', { locale: fr }) : null;
+  const startStr = format(startDate, "HH:mm", { locale: fr });
+  const endStr = end ? format(new Date(end), "HH:mm", { locale: fr }) : null;
 
   return (
-    <span className={cn('text-muted-foreground', className)}>
+    <span className={cn("text-muted-foreground", className)}>
       {startStr}
       {endStr && ` - ${endStr}`}
     </span>
@@ -203,13 +213,13 @@ function ItemIndicators({
   const isRecurring = item.recurrence;
 
   return (
-    <div className={cn('flex items-center gap-1', className)}>
+    <div className={cn("flex items-center gap-1", className)}>
       {item.focusLevel && getFocusIcon(item.focusLevel)}
       {item.energyRequired && getEnergyIcon(item.energyRequired)}
       {isRecurring && <Repeat className="h-3 w-3" />}
       {hasLocation && <MapPin className="h-3 w-3" />}
       {item.users.length > 0 && <Users className="h-3 w-3" />}
-      {item.priority !== 'medium' && getPriorityIndicator(item.priority)}
+      {item.priority !== "medium" && getPriorityIndicator(item.priority)}
       {getStatusIcon(item.status)}
     </div>
   );
@@ -251,20 +261,25 @@ function CompactDisplay({ item }: { item: TimeItem }) {
         <TypeIcon className="h-3 w-3 shrink-0" />
         <ItemTitle title={item.title} className="text-xs" />
       </div>
-      <ItemTime start={item.startTime} end={item.endTime} className="text-[10px]" />
+      <ItemTime
+        start={item.startTime}
+        end={item.endTime}
+        className="text-[10px]"
+      />
     </div>
   );
 }
 
 function FullDisplay({ item }: { item: TimeItem }) {
   const TypeIcon = getTypeIcon(item.type);
-  const duration = item.duration || (item.startTime && item.endTime
-    ? differenceInMinutes(new Date(item.endTime), new Date(item.startTime))
-    : 60);
+  const duration =
+    item.duration ||
+    (item.startTime && item.endTime
+      ? differenceInMinutes(new Date(item.endTime), new Date(item.startTime))
+      : 60);
 
-  const locationText = typeof item.location === 'string'
-    ? item.location
-    : item.location?.value;
+  const locationText =
+    typeof item.location === "string" ? item.location : item.location?.value;
 
   return (
     <div className="flex flex-col gap-0.5 overflow-hidden">
@@ -275,7 +290,11 @@ function FullDisplay({ item }: { item: TimeItem }) {
         </div>
         <ItemIndicators item={item} className="shrink-0" />
       </div>
-      <ItemTime start={item.startTime} end={item.endTime} className="text-[10px]" />
+      <ItemTime
+        start={item.startTime}
+        end={item.endTime}
+        className="text-[10px]"
+      />
       {locationText && (
         <div className="flex items-center gap-1 text-[10px] text-muted-foreground truncate">
           <MapPin className="h-2.5 w-2.5 shrink-0" />
@@ -285,7 +304,10 @@ function FullDisplay({ item }: { item: TimeItem }) {
       {item.estimatedPomodoros && (
         <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
           <Zap className="h-2.5 w-2.5 shrink-0" />
-          <span>{item.estimatedPomodoros} pomodoro{item.estimatedPomodoros > 1 ? 's' : ''}</span>
+          <span>
+            {item.estimatedPomodoros} pomodoro
+            {item.estimatedPomodoros > 1 ? "s" : ""}
+          </span>
         </div>
       )}
     </div>
@@ -312,39 +334,51 @@ export function TimeItemBlock({
   const selectItem = useSchedulingStore((state) => state.selectItem);
 
   const colors = getItemColor(item);
-  const displayMode = compact ? 'compact' : getDisplayMode(height);
+  const displayMode = compact ? "compact" : getDisplayMode(height);
   const isSelected = selectedItem?.id === item.id;
-  const isCancelled = item.status === 'cancelled';
-  const isDone = item.status === 'done';
+  const isCancelled = item.status === "cancelled";
+  const isDone = item.status === "done";
 
-  const handleClick = React.useCallback((e: React.MouseEvent) => {
-    e.stopPropagation();
-    selectItem(item);
-    onClick?.(item);
-  }, [item, selectItem, onClick]);
-
-  const handleDoubleClick = React.useCallback((e: React.MouseEvent) => {
-    e.stopPropagation();
-    onDoubleClick?.(item);
-  }, [item, onDoubleClick]);
-
-  const handleContextMenu = React.useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    onContextMenu?.(item, e);
-  }, [item, onContextMenu]);
-
-  const handleKeyDown = React.useCallback((e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
+  const handleClick = React.useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
       selectItem(item);
       onClick?.(item);
-    }
-  }, [item, selectItem, onClick]);
+    },
+    [item, selectItem, onClick],
+  );
+
+  const handleDoubleClick = React.useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      onDoubleClick?.(item);
+    },
+    [item, onDoubleClick],
+  );
+
+  const handleContextMenu = React.useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      onContextMenu?.(item, e);
+    },
+    [item, onContextMenu],
+  );
+
+  const handleKeyDown = React.useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        selectItem(item);
+        onClick?.(item);
+      }
+    },
+    [item, selectItem, onClick],
+  );
 
   const startTimeFormatted = item.startTime
-    ? format(new Date(item.startTime), 'EEEE d MMMM à HH:mm', { locale: fr })
-    : 'Non planifié';
+    ? format(new Date(item.startTime), "EEEE d MMMM à HH:mm", { locale: fr })
+    : "Non planifié";
 
   return (
     <motion.div
@@ -353,14 +387,14 @@ export function TimeItemBlock({
       exit={{ opacity: 0, scale: 0.95 }}
       transition={{ duration: 0.15 }}
       className={cn(
-        'absolute cursor-pointer overflow-hidden rounded-md',
-        'transition-shadow duration-150',
-        'hover:shadow-md hover:z-10',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
-        isSelected && 'ring-2 ring-primary ring-offset-1 z-20',
-        isCancelled && 'opacity-50',
-        isDone && 'opacity-75',
-        className
+        "absolute cursor-pointer overflow-hidden rounded-md",
+        "transition-shadow duration-150",
+        "hover:shadow-md hover:z-10",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
+        isSelected && "ring-2 ring-primary ring-offset-1 z-20",
+        isCancelled && "opacity-50",
+        isDone && "opacity-75",
+        className,
       )}
       style={{
         top,
@@ -381,17 +415,17 @@ export function TimeItemBlock({
     >
       <div
         className={cn(
-          'h-full p-1.5',
-          displayMode === 'dot' && 'flex items-center justify-center p-0',
-          isCancelled && 'line-through',
-          isDone && 'line-through opacity-75'
+          "h-full p-1.5",
+          displayMode === "dot" && "flex items-center justify-center p-0",
+          isCancelled && "line-through",
+          isDone && "line-through opacity-75",
         )}
         style={{ color: colors.text }}
       >
-        {displayMode === 'dot' && <DotDisplay item={item} />}
-        {displayMode === 'minimal' && <MinimalDisplay item={item} />}
-        {displayMode === 'compact' && <CompactDisplay item={item} />}
-        {displayMode === 'full' && <FullDisplay item={item} />}
+        {displayMode === "dot" && <DotDisplay item={item} />}
+        {displayMode === "minimal" && <MinimalDisplay item={item} />}
+        {displayMode === "compact" && <CompactDisplay item={item} />}
+        {displayMode === "full" && <FullDisplay item={item} />}
       </div>
     </motion.div>
   );
@@ -417,25 +451,28 @@ export function AllDayItemBlock({
   const isSelected = selectedItem?.id === item.id;
   const TypeIcon = getTypeIcon(item.type);
 
-  const handleClick = React.useCallback((e: React.MouseEvent) => {
-    e.stopPropagation();
-    selectItem(item);
-    onClick?.(item);
-  }, [item, selectItem, onClick]);
+  const handleClick = React.useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      selectItem(item);
+      onClick?.(item);
+    },
+    [item, selectItem, onClick],
+  );
 
   return (
     <button
       className={cn(
-        'w-full text-left text-xs px-2 py-1 rounded truncate',
-        'transition-all duration-150',
-        'hover:opacity-90 hover:shadow-sm',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-        isSelected && 'ring-2 ring-primary ring-offset-1',
-        className
+        "w-full text-left text-xs px-2 py-1 rounded truncate",
+        "transition-all duration-150",
+        "hover:opacity-90 hover:shadow-sm",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+        isSelected && "ring-2 ring-primary ring-offset-1",
+        className,
       )}
       style={{
         backgroundColor: colors.border,
-        color: 'white',
+        color: "white",
       }}
       onClick={handleClick}
     >
@@ -461,20 +498,21 @@ export function TimeItemPreview({
 }) {
   const colors = getItemColor(item);
   const TypeIcon = getTypeIcon(item.type);
-  const duration = item.duration || (item.startTime && item.endTime
-    ? differenceInMinutes(new Date(item.endTime), new Date(item.startTime))
-    : null);
+  const duration =
+    item.duration ||
+    (item.startTime && item.endTime
+      ? differenceInMinutes(new Date(item.endTime), new Date(item.startTime))
+      : null);
 
-  const locationText = typeof item.location === 'string'
-    ? item.location
-    : item.location?.value;
+  const locationText =
+    typeof item.location === "string" ? item.location : item.location?.value;
 
   return (
     <div
       className={cn(
-        'rounded-lg border bg-card p-4 shadow-lg',
-        'max-w-xs',
-        className
+        "rounded-lg border bg-card p-4 shadow-lg",
+        "max-w-xs",
+        className,
       )}
     >
       <div className="flex items-center gap-2 mb-2">
@@ -492,12 +530,13 @@ export function TimeItemPreview({
           <div className="flex items-center gap-2">
             <Clock className="h-3.5 w-3.5" />
             <span>
-              {format(new Date(item.startTime), 'EEEE d MMMM', { locale: fr })}
+              {format(new Date(item.startTime), "EEEE d MMMM", { locale: fr })}
               {!item.allDay && (
                 <>
                   <br />
-                  {format(new Date(item.startTime), 'HH:mm', { locale: fr })}
-                  {item.endTime && ` - ${format(new Date(item.endTime), 'HH:mm', { locale: fr })}`}
+                  {format(new Date(item.startTime), "HH:mm", { locale: fr })}
+                  {item.endTime &&
+                    ` - ${format(new Date(item.endTime), "HH:mm", { locale: fr })}`}
                   {duration && <span className="ml-1">({duration} min)</span>}
                 </>
               )}
@@ -515,14 +554,19 @@ export function TimeItemPreview({
         {item.users.length > 0 && (
           <div className="flex items-center gap-2">
             <Users className="h-3.5 w-3.5" />
-            <span>{item.users.length} participant{item.users.length > 1 ? 's' : ''}</span>
+            <span>
+              {item.users.length} participant{item.users.length > 1 ? "s" : ""}
+            </span>
           </div>
         )}
 
         {item.estimatedPomodoros && (
           <div className="flex items-center gap-2">
             <Zap className="h-3.5 w-3.5" />
-            <span>{item.estimatedPomodoros} pomodoro{item.estimatedPomodoros > 1 ? 's' : ''}</span>
+            <span>
+              {item.estimatedPomodoros} pomodoro
+              {item.estimatedPomodoros > 1 ? "s" : ""}
+            </span>
           </div>
         )}
 
@@ -552,36 +596,48 @@ export function UnscheduledTaskCard({
   const colors = getItemColor(item);
   const TypeIcon = getTypeIcon(item.type);
 
-  const handleClick = React.useCallback((e: React.MouseEvent) => {
-    e.stopPropagation();
-    onClick?.(item);
-  }, [item, onClick]);
+  const handleClick = React.useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      onClick?.(item);
+    },
+    [item, onClick],
+  );
 
-  const handleDragStart = React.useCallback((e: React.DragEvent) => {
-    e.dataTransfer.setData('application/json', JSON.stringify({
-      type: 'unscheduled-task',
-      item,
-    }));
-    e.dataTransfer.effectAllowed = 'move';
-    onDragStart?.(item);
-  }, [item, onDragStart]);
+  const handleDragStart = React.useCallback(
+    (e: React.DragEvent) => {
+      e.dataTransfer.setData(
+        "application/json",
+        JSON.stringify({
+          type: "unscheduled-task",
+          item,
+        }),
+      );
+      e.dataTransfer.effectAllowed = "move";
+      onDragStart?.(item);
+    },
+    [item, onDragStart],
+  );
 
   return (
     <div
       draggable
       className={cn(
-        'p-3 rounded-lg border bg-card cursor-grab',
-        'transition-all duration-150',
-        'hover:shadow-md hover:border-primary/50',
-        'active:cursor-grabbing',
-        className
+        "p-3 rounded-lg border bg-card cursor-grab",
+        "transition-all duration-150",
+        "hover:shadow-md hover:border-primary/50",
+        "active:cursor-grabbing",
+        className,
       )}
-      style={{ borderLeftColor: colors.border, borderLeftWidth: '3px' }}
+      style={{ borderLeftColor: colors.border, borderLeftWidth: "3px" }}
       onClick={handleClick}
       onDragStart={handleDragStart}
     >
       <div className="flex items-start gap-2">
-        <TypeIcon className="h-4 w-4 shrink-0 mt-0.5" style={{ color: colors.border }} />
+        <TypeIcon
+          className="h-4 w-4 shrink-0 mt-0.5"
+          style={{ color: colors.border }}
+        />
         <div className="flex-1 min-w-0">
           <h4 className="font-medium text-sm truncate">{item.title}</h4>
           <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
@@ -594,7 +650,7 @@ export function UnscheduledTaskCard({
             {item.deadline && (
               <span className="flex items-center gap-1">
                 <Clock className="h-3 w-3" />
-                {format(new Date(item.deadline), 'd MMM', { locale: fr })}
+                {format(new Date(item.deadline), "d MMM", { locale: fr })}
               </span>
             )}
             {getPriorityIndicator(item.priority)}

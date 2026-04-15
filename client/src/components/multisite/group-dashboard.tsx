@@ -22,17 +22,43 @@ export function GroupDashboard() {
 
   useEffect(() => {
     const siteData: SiteKPI[] = [
-      { siteName: "New York HQ", revenue: 2500000, employees: 450, activeUsers: 420, efficiency: 94 },
-      { siteName: "San Francisco Office", revenue: 1800000, employees: 280, activeUsers: 265, efficiency: 91 },
-      { siteName: "Chicago Branch", revenue: 950000, employees: 120, activeUsers: 108, efficiency: 88 },
-      { siteName: "Boston Tech Center", revenue: 750000, employees: 95, activeUsers: 89, efficiency: 92 },
+      {
+        siteName: "New York HQ",
+        revenue: 2500000,
+        employees: 450,
+        activeUsers: 420,
+        efficiency: 94,
+      },
+      {
+        siteName: "San Francisco Office",
+        revenue: 1800000,
+        employees: 280,
+        activeUsers: 265,
+        efficiency: 91,
+      },
+      {
+        siteName: "Chicago Branch",
+        revenue: 950000,
+        employees: 120,
+        activeUsers: 108,
+        efficiency: 88,
+      },
+      {
+        siteName: "Boston Tech Center",
+        revenue: 750000,
+        employees: 95,
+        activeUsers: 89,
+        efficiency: 92,
+      },
     ];
     setSites(siteData);
 
     const totalRev = siteData.reduce((sum, s) => sum + s.revenue, 0);
     const totalEmp = siteData.reduce((sum, s) => sum + s.employees, 0);
     const totalActive = siteData.reduce((sum, s) => sum + s.activeUsers, 0);
-    const avgEff = (siteData.reduce((sum, s) => sum + s.efficiency, 0) / siteData.length).toFixed(1);
+    const avgEff = (
+      siteData.reduce((sum, s) => sum + s.efficiency, 0) / siteData.length
+    ).toFixed(1);
 
     setConsolidated({
       totalRevenue: totalRev,
@@ -55,19 +81,27 @@ export function GroupDashboard() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="border rounded-lg p-4 bg-blue-50">
           <p className="text-sm text-muted-foreground mb-1">Total Revenue</p>
-          <p className="text-2xl font-bold text-blue-700">{formatCurrency(consolidated.totalRevenue)}</p>
+          <p className="text-2xl font-bold text-blue-700">
+            {formatCurrency(consolidated.totalRevenue)}
+          </p>
         </div>
         <div className="border rounded-lg p-4 bg-green-50">
           <p className="text-sm text-muted-foreground mb-1">Total Employees</p>
-          <p className="text-2xl font-bold text-green-700">{consolidated.totalEmployees}</p>
+          <p className="text-2xl font-bold text-green-700">
+            {consolidated.totalEmployees}
+          </p>
         </div>
         <div className="border rounded-lg p-4 bg-purple-50">
           <p className="text-sm text-muted-foreground mb-1">Active Users</p>
-          <p className="text-2xl font-bold text-purple-700">{consolidated.totalActiveUsers}</p>
+          <p className="text-2xl font-bold text-purple-700">
+            {consolidated.totalActiveUsers}
+          </p>
         </div>
         <div className="border rounded-lg p-4 bg-orange-50">
           <p className="text-sm text-muted-foreground mb-1">Avg Efficiency</p>
-          <p className="text-2xl font-bold text-orange-700">{consolidated.avgEfficiency}%</p>
+          <p className="text-2xl font-bold text-orange-700">
+            {consolidated.avgEfficiency}%
+          </p>
         </div>
       </div>
 
@@ -77,7 +111,9 @@ export function GroupDashboard() {
           <h3 className="font-semibold">KPI Comparison Chart</h3>
         </div>
         <div className="bg-muted rounded h-64 flex items-center justify-center">
-          <p className="text-muted-foreground">Chart visualization would render here</p>
+          <p className="text-muted-foreground">
+            Chart visualization would render here
+          </p>
         </div>
       </div>
 
@@ -103,7 +139,9 @@ export function GroupDashboard() {
                 </div>
                 <div>
                   <p className="text-muted-foreground">Active</p>
-                  <p className="font-medium">{site.activeUsers}/{site.employees}</p>
+                  <p className="font-medium">
+                    {site.activeUsers}/{site.employees}
+                  </p>
                 </div>
               </div>
             </div>

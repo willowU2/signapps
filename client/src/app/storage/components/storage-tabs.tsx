@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   LayoutDashboard,
   HardDrive,
@@ -8,7 +8,7 @@ import {
   Usb,
   Share2,
   Database,
-} from 'lucide-react';
+} from "lucide-react";
 
 interface StorageTabsProps {
   activeTab: string;
@@ -17,17 +17,21 @@ interface StorageTabsProps {
 }
 
 export const STORAGE_TABS = [
-  { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { id: 'disks', label: 'Disques', icon: HardDrive },
-  { id: 'mounts', label: 'Montages', icon: FolderOpen },
-  { id: 'external', label: 'Externes', icon: Usb },
-  { id: 'shares', label: 'Partages', icon: Share2 },
-  { id: 'raid', label: 'RAID', icon: Database },
+  { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { id: "disks", label: "Disques", icon: HardDrive },
+  { id: "mounts", label: "Montages", icon: FolderOpen },
+  { id: "external", label: "Externes", icon: Usb },
+  { id: "shares", label: "Partages", icon: Share2 },
+  { id: "raid", label: "RAID", icon: Database },
 ] as const;
 
-export type StorageTabId = typeof STORAGE_TABS[number]['id'];
+export type StorageTabId = (typeof STORAGE_TABS)[number]["id"];
 
-export function StorageTabs({ activeTab, onTabChange, children }: StorageTabsProps) {
+export function StorageTabs({
+  activeTab,
+  onTabChange,
+  children,
+}: StorageTabsProps) {
   return (
     <Tabs value={activeTab} onValueChange={onTabChange} className="w-full">
       <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6 lg:w-auto lg:inline-flex">

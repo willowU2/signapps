@@ -14,10 +14,12 @@ interface DesignTextStylesProps {
   fabricCanvasRef: React.MutableRefObject<fabric.Canvas | null>;
 }
 
-export default function DesignTextStyles({ fabricCanvasRef }: DesignTextStylesProps) {
+export default function DesignTextStyles({
+  fabricCanvasRef,
+}: DesignTextStylesProps) {
   const { addObject, pushUndo } = useDesignStore();
 
-  const handleAddText = async (style: typeof TEXT_STYLES[0]) => {
+  const handleAddText = async (style: (typeof TEXT_STYLES)[0]) => {
     const fabricModule = await import("fabric");
     const canvas = fabricCanvasRef.current;
     if (!canvas) return;
@@ -51,7 +53,9 @@ export default function DesignTextStyles({ fabricCanvasRef }: DesignTextStylesPr
 
   return (
     <div className="space-y-3">
-      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Text Styles</p>
+      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+        Text Styles
+      </p>
       <div className="space-y-1.5">
         {TEXT_STYLES.map((style) => (
           <button
@@ -62,7 +66,8 @@ export default function DesignTextStyles({ fabricCanvasRef }: DesignTextStylesPr
             <span
               style={{
                 fontSize: Math.min(style.fontSize / 3, 22),
-                fontWeight: style.fontWeight as React.CSSProperties["fontWeight"],
+                fontWeight:
+                  style.fontWeight as React.CSSProperties["fontWeight"],
                 fontFamily: style.fontFamily,
               }}
               className="block truncate group-hover:text-primary transition-colors"

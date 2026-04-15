@@ -1,25 +1,30 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Plus } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { StickyNote, type StickyNoteData } from './sticky-note';
+import { useState } from "react";
+import { Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { StickyNote, type StickyNoteData } from "./sticky-note";
 
-const colors: Array<'yellow' | 'green' | 'blue' | 'pink'> = ['yellow', 'green', 'blue', 'pink'];
+const colors: Array<"yellow" | "green" | "blue" | "pink"> = [
+  "yellow",
+  "green",
+  "blue",
+  "pink",
+];
 
 export function NotesBoard() {
   const [notes, setNotes] = useState<StickyNoteData[]>([
     {
-      id: '1',
-      text: 'Welcome to Sticky Notes!\nClick to edit.',
-      color: 'yellow',
+      id: "1",
+      text: "Welcome to Sticky Notes!\nClick to edit.",
+      color: "yellow",
     },
   ]);
 
   const handleAddNote = () => {
     const newNote: StickyNoteData = {
       id: Date.now().toString(),
-      text: '',
+      text: "",
       color: colors[Math.floor(Math.random() * colors.length)],
     };
     setNotes([...notes, newNote]);
@@ -39,7 +44,9 @@ export function NotesBoard() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-foreground">Sticky Notes</h1>
-          <p className="mt-1 text-sm text-muted-foreground">{notes.length} note{notes.length !== 1 ? 's' : ''}</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {notes.length} note{notes.length !== 1 ? "s" : ""}
+          </p>
         </div>
         <Button
           onClick={handleAddNote}
@@ -66,7 +73,9 @@ export function NotesBoard() {
       {/* Empty State */}
       {notes.length === 0 && (
         <div className="flex flex-col items-center justify-center py-12 text-center">
-          <p className="text-lg text-muted-foreground">No notes yet. Create one to get started!</p>
+          <p className="text-lg text-muted-foreground">
+            No notes yet. Create one to get started!
+          </p>
         </div>
       )}
     </div>

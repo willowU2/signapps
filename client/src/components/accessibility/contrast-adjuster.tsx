@@ -14,7 +14,9 @@ interface ContrastPreset {
 
 export default function ContrastAdjuster() {
   const [contrastLevel, setContrastLevel] = useState(4.5);
-  const [currentPreset, setCurrentPreset] = useState<ContrastPreset | null>(null);
+  const [currentPreset, setCurrentPreset] = useState<ContrastPreset | null>(
+    null,
+  );
 
   const presets: ContrastPreset[] = [
     {
@@ -67,7 +69,11 @@ export default function ContrastAdjuster() {
           </Button>
         </div>
         <p className="text-xs text-muted-foreground mt-2">
-          {contrastLevel >= 7 ? "✓ AAA Compliant (Best)" : contrastLevel >= 4.5 ? "✓ AA Compliant" : "✗ Below WCAG AA"}
+          {contrastLevel >= 7
+            ? "✓ AAA Compliant (Best)"
+            : contrastLevel >= 4.5
+              ? "✓ AA Compliant"
+              : "✗ Below WCAG AA"}
         </p>
       </div>
 
@@ -79,17 +85,18 @@ export default function ContrastAdjuster() {
             className="p-4 rounded-lg border-2 cursor-pointer transition-all hover:border-blue-400"
             style={{
               backgroundColor: preset.background,
-              borderColor: currentPreset?.name === preset.name ? "#3b82f6" : "#e5e7eb",
+              borderColor:
+                currentPreset?.name === preset.name ? "#3b82f6" : "#e5e7eb",
             }}
             onClick={() => setCurrentPreset(preset)}
           >
-            <p
-              style={{ color: preset.foreground }}
-              className="font-medium"
-            >
+            <p style={{ color: preset.foreground }} className="font-medium">
               {preset.name} ({preset.ratio}:1)
             </p>
-            <p style={{ color: preset.foreground }} className="text-sm opacity-80">
+            <p
+              style={{ color: preset.foreground }}
+              className="text-sm opacity-80"
+            >
               Sample text for contrast preview
             </p>
           </div>
@@ -98,7 +105,9 @@ export default function ContrastAdjuster() {
 
       {currentPreset && (
         <div className="p-3 bg-green-50 rounded-lg text-sm border border-green-200">
-          <p className="font-medium text-green-900">✓ {currentPreset.name} preset selected</p>
+          <p className="font-medium text-green-900">
+            ✓ {currentPreset.name} preset selected
+          </p>
         </div>
       )}
     </div>

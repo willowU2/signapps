@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * WL3: Per-tenant feature flag hook.
@@ -15,9 +15,9 @@
  *   if (!mailEnabled) return null;
  */
 
-import { useCallback, useEffect, useState } from 'react';
-import { isFeatureEnabled } from '@/lib/feature-flags';
-import { FEATURES } from '@/lib/features';
+import { useCallback, useEffect, useState } from "react";
+import { isFeatureEnabled } from "@/lib/feature-flags";
+import { FEATURES } from "@/lib/features";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -56,8 +56,8 @@ async function fetchTenantFeatures(): Promise<TenantFeatureConfig> {
   tenantFeaturesFetching = true;
 
   try {
-    const res = await fetch('/api/v1/workspace/features', {
-      credentials: 'include',
+    const res = await fetch("/api/v1/workspace/features", {
+      credentials: "include",
     });
 
     if (res.ok) {
@@ -95,7 +95,7 @@ export function invalidateTenantFeatureCache(): void {
  */
 export function useFeatureFlag(feature: FeatureKey): boolean {
   const [tenantFeatures, setTenantFeatures] = useState<TenantFeatureConfig>(
-    tenantFeaturesCache ?? {}
+    tenantFeaturesCache ?? {},
   );
 
   useEffect(() => {
@@ -133,10 +133,10 @@ export function useFeatureFlag(feature: FeatureKey): boolean {
  * @returns Record<FeatureKey, boolean>
  */
 export function useFeatureFlags(
-  features: FeatureKey[]
+  features: FeatureKey[],
 ): Record<string, boolean> {
   const [tenantFeatures, setTenantFeatures] = useState<TenantFeatureConfig>(
-    tenantFeaturesCache ?? {}
+    tenantFeaturesCache ?? {},
   );
 
   useEffect(() => {
@@ -152,7 +152,7 @@ export function useFeatureFlags(
         key in tenantFeatures ? Boolean(tenantFeatures[key]) : globalDefault;
 
       return [feature, value];
-    })
+    }),
   );
 }
 
@@ -167,7 +167,10 @@ export function useFeatureFlags(
  *   const { enabled } = useIsFeatureEnabled('BILLING');
  *   if (!enabled) return <UpgradePrompt />;
  */
-export function useIsFeatureEnabled(feature: FeatureKey): { enabled: boolean; loading: boolean } {
+export function useIsFeatureEnabled(feature: FeatureKey): {
+  enabled: boolean;
+  loading: boolean;
+} {
   const [loading, setLoading] = useState(!tenantFeaturesCache);
   const [enabled, setEnabled] = useState(() => isFeatureEnabled(feature));
 

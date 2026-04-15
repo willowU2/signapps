@@ -37,7 +37,6 @@ export function useSidebarBadges() {
       const badges: SidebarBadges = {};
 
       if (containersRes.status === "fulfilled" && containersRes.value.data) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         badges.containers = containersRes.value.data.filter(
           (c: any) =>
             c.docker_info?.state === "running" || c.state === "running",

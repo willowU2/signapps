@@ -74,12 +74,11 @@ impl ResourceBookingRepository {
 
     /// Find a resource item by ID.
     pub async fn find_item_by_id(pool: &PgPool, id: Uuid) -> Result<Option<ResourceItem>> {
-        let item =
-            sqlx::query_as::<_, ResourceItem>("SELECT * FROM resources.items WHERE id = $1")
-                .bind(id)
-                .fetch_optional(pool)
-                .await
-                .map_err(|e| Error::Database(e.to_string()))?;
+        let item = sqlx::query_as::<_, ResourceItem>("SELECT * FROM resources.items WHERE id = $1")
+            .bind(id)
+            .fetch_optional(pool)
+            .await
+            .map_err(|e| Error::Database(e.to_string()))?;
         Ok(item)
     }
 

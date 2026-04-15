@@ -90,7 +90,7 @@ export function savePoll(poll: SchedulePoll): void {
     calendarApi.put(`/polls/${poll.id}`, poll).catch(() => {});
   } else {
     polls.push(poll);
-    calendarApi.post('/polls', poll).catch(() => {});
+    calendarApi.post("/polls", poll).catch(() => {});
   }
   localStorage.setItem(POLLS_KEY, JSON.stringify(polls));
 }
@@ -103,7 +103,11 @@ interface CreatePollDialogProps {
   onCreated?: (poll: SchedulePoll) => void;
 }
 
-export function CreatePollDialog({ open, onOpenChange, onCreated }: CreatePollDialogProps) {
+export function CreatePollDialog({
+  open,
+  onOpenChange,
+  onCreated,
+}: CreatePollDialogProps) {
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -112,7 +116,9 @@ export function CreatePollDialog({ open, onOpenChange, onCreated }: CreatePollDi
   const [slots, setSlots] = useState<TimeSlot[]>([]);
   const [participantEmail, setParticipantEmail] = useState("");
   const [participants, setParticipants] = useState<string[]>([]);
-  const [newSlotDate, setNewSlotDate] = useState(format(new Date(), "yyyy-MM-dd"));
+  const [newSlotDate, setNewSlotDate] = useState(
+    format(new Date(), "yyyy-MM-dd"),
+  );
   const [newSlotStart, setNewSlotStart] = useState("09:00");
   const [newSlotEnd, setNewSlotEnd] = useState("10:00");
 
@@ -131,11 +137,17 @@ export function CreatePollDialog({ open, onOpenChange, onCreated }: CreatePollDi
     if (!newSlotDate || !newSlotStart || !newSlotEnd) return;
     setSlots((prev) => [
       ...prev,
-      { id: uuidv4().slice(0, 8), date: newSlotDate, startTime: newSlotStart, endTime: newSlotEnd },
+      {
+        id: uuidv4().slice(0, 8),
+        date: newSlotDate,
+        startTime: newSlotStart,
+        endTime: newSlotEnd,
+      },
     ]);
   };
 
-  const removeSlot = (id: string) => setSlots((prev) => prev.filter((s) => s.id !== id));
+  const removeSlot = (id: string) =>
+    setSlots((prev) => prev.filter((s) => s.id !== id));
 
   const addParticipant = () => {
     const email = participantEmail.trim().toLowerCase();
@@ -169,7 +181,8 @@ export function CreatePollDialog({ open, onOpenChange, onCreated }: CreatePollDi
     onOpenChange(false);
   };
 
-  const canProceedStep1 = title.trim().length > 0 && organizerName.trim().length > 0;
+  const canProceedStep1 =
+    title.trim().length > 0 && organizerName.trim().length > 0;
   const canProceedStep2 = slots.length >= 2;
 
   return (
@@ -188,7 +201,11 @@ export function CreatePollDialog({ open, onOpenChange, onCreated }: CreatePollDi
           </DialogTitle>
           <DialogDescription>
             Step {step} of 3 &mdash;{" "}
-            {step === 1 ? "Details" : step === 2 ? "Time Slots" : "Participants"}
+            {step === 1
+              ? "Details"
+              : step === 2
+                ? "Time Slots"
+                : "Participants"}
           </DialogDescription>
         </DialogHeader>
 
@@ -199,7 +216,7 @@ export function CreatePollDialog({ open, onOpenChange, onCreated }: CreatePollDi
               key={s}
               className={cn(
                 "h-1.5 flex-1 rounded-full transition-colors",
-                s <= step ? "bg-primary" : "bg-muted"
+                s <= step ? "bg-primary" : "bg-muted",
               )}
             />
           ))}
@@ -279,7 +296,12 @@ export function CreatePollDialog({ open, onOpenChange, onCreated }: CreatePollDi
                   onChange={(e) => setNewSlotEnd(e.target.value)}
                 />
               </div>
-              <Button type="button" size="icon" variant="outline" onClick={addSlot}>
+              <Button
+                type="button"
+                size="icon"
+                variant="outline"
+                onClick={addSlot}
+              >
                 <Plus className="h-4 w-4" />
               </Button>
             </div>
@@ -328,10 +350,17 @@ export function CreatePollDialog({ open, onOpenChange, onCreated }: CreatePollDi
                   placeholder="bob@company.com"
                   value={participantEmail}
                   onChange={(e) => setParticipantEmail(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addParticipant())}
+                  onKeyDown={(e) =>
+                    e.key === "Enter" && (e.preventDefault(), addParticipant())
+                  }
                 />
               </div>
-              <Button type="button" variant="outline" size="sm" onClick={addParticipant}>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={addParticipant}
+              >
                 <Plus className="h-4 w-4 mr-1" /> Add
               </Button>
             </div>
@@ -351,7 +380,8 @@ export function CreatePollDialog({ open, onOpenChange, onCreated }: CreatePollDi
               ))}
               {participants.length === 0 && (
                 <p className="text-sm text-muted-foreground">
-                  Optionally add participant emails. Anyone with the link can also vote.
+                  Optionally add participant emails. Anyone with the link can
+                  also vote.
                 </p>
               )}
             </div>
@@ -360,7 +390,11 @@ export function CreatePollDialog({ open, onOpenChange, onCreated }: CreatePollDi
 
         <DialogFooter className="gap-2">
           {step > 1 && (
-            <Button type="button" variant="outline" onClick={() => setStep((s) => (s - 1) as 1 | 2 | 3)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setStep((s) => (s - 1) as 1 | 2 | 3)}
+            >
               Back
             </Button>
           )}
@@ -399,7 +433,8 @@ export function PollVoteView({ pollId }: PollVoteViewProps) {
   const toggleVote = (slotId: string) => {
     setVotes((prev) => {
       const current = prev[slotId] || "no";
-      const next: VoteValue = current === "no" ? "yes" : current === "yes" ? "maybe" : "no";
+      const next: VoteValue =
+        current === "no" ? "yes" : current === "yes" ? "maybe" : "no";
       return { ...prev, [slotId]: next };
     });
   };
@@ -426,7 +461,11 @@ export function PollVoteView({ pollId }: PollVoteViewProps) {
 
   const handleConfirm = async (slotId: string) => {
     if (!poll) return;
-    const updated = { ...poll, confirmedSlotId: slotId, status: "confirmed" as const };
+    const updated = {
+      ...poll,
+      confirmedSlotId: slotId,
+      status: "confirmed" as const,
+    };
     savePoll(updated);
     setPoll(updated);
     toast.success("Créneau confirmé");
@@ -470,7 +509,9 @@ export function PollVoteView({ pollId }: PollVoteViewProps) {
       <div className="flex flex-col items-center justify-center min-h-[400px] text-muted-foreground">
         <CalendarDays className="h-12 w-12 mb-4" />
         <p className="text-lg font-medium">Poll not found</p>
-        <p className="text-sm">This poll may have been deleted or the link is invalid.</p>
+        <p className="text-sm">
+          This poll may have been deleted or the link is invalid.
+        </p>
       </div>
     );
   }
@@ -482,7 +523,8 @@ export function PollVoteView({ pollId }: PollVoteViewProps) {
 
   const voteIcon = (val: VoteValue | undefined) => {
     if (val === "yes") return <Check className="h-4 w-4 text-green-600" />;
-    if (val === "maybe") return <HelpCircle className="h-4 w-4 text-amber-500" />;
+    if (val === "maybe")
+      return <HelpCircle className="h-4 w-4 text-amber-500" />;
     return <X className="h-4 w-4 text-red-400" />;
   };
 
@@ -502,7 +544,9 @@ export function PollVoteView({ pollId }: PollVoteViewProps) {
             <Badge className="bg-green-600 text-white">Confirmed</Badge>
           )}
         </div>
-        {poll.description && <p className="text-muted-foreground">{poll.description}</p>}
+        {poll.description && (
+          <p className="text-muted-foreground">{poll.description}</p>
+        )}
         <div className="flex items-center gap-4 text-sm text-muted-foreground">
           <span className="flex items-center gap-1">
             <Crown className="h-3.5 w-3.5" /> {poll.organizerName}
@@ -510,7 +554,12 @@ export function PollVoteView({ pollId }: PollVoteViewProps) {
           <span className="flex items-center gap-1">
             <Users className="h-3.5 w-3.5" /> {poll.votes.length} vote(s)
           </span>
-          <Button variant="ghost" size="sm" className="gap-1 h-7" onClick={copyLink}>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="gap-1 h-7"
+            onClick={copyLink}
+          >
             <Link2 className="h-3.5 w-3.5" /> Copy link
           </Button>
         </div>
@@ -521,22 +570,30 @@ export function PollVoteView({ pollId }: PollVoteViewProps) {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b bg-muted/50">
-              <th className="text-left px-3 py-2 font-medium min-w-[140px]">Participant</th>
+              <th className="text-left px-3 py-2 font-medium min-w-[140px]">
+                Participant
+              </th>
               {poll.slots.map((slot) => (
                 <th
                   key={slot.id}
                   className={cn(
                     "text-center px-3 py-2 font-medium min-w-[100px]",
-                    bestSlotId === slot.id && "bg-green-100 dark:bg-green-900/30",
-                    poll.confirmedSlotId === slot.id && "bg-primary/10"
+                    bestSlotId === slot.id &&
+                      "bg-green-100 dark:bg-green-900/30",
+                    poll.confirmedSlotId === slot.id && "bg-primary/10",
                   )}
                 >
-                  <div>{format(new Date(slot.date), "EEE dd/MM", { locale: fr })}</div>
+                  <div>
+                    {format(new Date(slot.date), "EEE dd/MM", { locale: fr })}
+                  </div>
                   <div className="text-xs text-muted-foreground font-normal">
                     {slot.startTime}&ndash;{slot.endTime}
                   </div>
                   {bestSlotId === slot.id && poll.votes.length > 0 && (
-                    <Badge variant="outline" className="text-[10px] mt-1 text-green-700 border-green-300">
+                    <Badge
+                      variant="outline"
+                      className="text-[10px] mt-1 text-green-700 border-green-300"
+                    >
                       Best
                     </Badge>
                   )}
@@ -547,11 +604,16 @@ export function PollVoteView({ pollId }: PollVoteViewProps) {
           <tbody>
             {poll.votes.map((vote, idx) => (
               <tr key={idx} className="border-b last:border-0">
-                <td className="px-3 py-2 font-medium">{vote.participantName}</td>
+                <td className="px-3 py-2 font-medium">
+                  {vote.participantName}
+                </td>
                 {poll.slots.map((slot) => (
                   <td
                     key={slot.id}
-                    className={cn("text-center px-3 py-2", voteBg(vote.votes[slot.id]))}
+                    className={cn(
+                      "text-center px-3 py-2",
+                      voteBg(vote.votes[slot.id]),
+                    )}
                   >
                     {voteIcon(vote.votes[slot.id])}
                   </td>
@@ -576,7 +638,7 @@ export function PollVoteView({ pollId }: PollVoteViewProps) {
                       type="button"
                       className={cn(
                         "h-8 w-8 rounded-full mx-auto flex items-center justify-center transition-colors",
-                        voteBg(votes[slot.id])
+                        voteBg(votes[slot.id]),
                       )}
                       onClick={() => toggleVote(slot.id)}
                     >
@@ -607,13 +669,17 @@ export function PollVoteView({ pollId }: PollVoteViewProps) {
       )}
 
       {submitted && (
-        <p className="text-sm text-green-600 font-medium">Your vote has been recorded.</p>
+        <p className="text-sm text-green-600 font-medium">
+          Your vote has been recorded.
+        </p>
       )}
 
       {/* Organizer: Confirm a slot */}
       {poll.status === "open" && poll.votes.length > 0 && (
         <div className="border-t pt-4 space-y-2">
-          <h3 className="font-semibold text-sm">Organizer: Confirm a time slot</h3>
+          <h3 className="font-semibold text-sm">
+            Organizer: Confirm a time slot
+          </h3>
           <div className="flex flex-wrap gap-2">
             {poll.slots.map((slot) => (
               <Button
@@ -636,7 +702,9 @@ export function PollVoteView({ pollId }: PollVoteViewProps) {
           <p className="font-semibold text-green-800 dark:text-green-300">
             Confirmed:{" "}
             {(() => {
-              const slot = poll.slots.find((s) => s.id === poll.confirmedSlotId);
+              const slot = poll.slots.find(
+                (s) => s.id === poll.confirmedSlotId,
+              );
               if (!slot) return "Unknown";
               return `${format(new Date(slot.date), "EEEE dd MMMM", { locale: fr })} ${slot.startTime} - ${slot.endTime}`;
             })()}

@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * TasksView Component
@@ -7,15 +7,15 @@
  * Integrates with tasks API for data management.
  */
 
-import * as React from 'react';
-import { TaskKanban } from '../tasks';
+import * as React from "react";
+import { TaskKanban } from "../tasks";
 import {
   useTasks,
   useCreateTask,
   useUpdateTask,
   useDeleteTask,
-} from '@/lib/scheduling/api/tasks';
-import type { Task } from '@/lib/scheduling/types/scheduling';
+} from "@/lib/scheduling/api/tasks";
+import type { Task } from "@/lib/scheduling/types/scheduling";
 
 // ============================================================================
 // Types
@@ -39,7 +39,9 @@ export function TasksView({ className }: TasksViewProps) {
     updateTask.mutate({ id: taskId, updates });
   };
 
-  const handleTaskCreate = (task: Omit<Task, 'id' | 'createdAt' | 'updatedAt'>) => {
+  const handleTaskCreate = (
+    task: Omit<Task, "id" | "createdAt" | "updatedAt">,
+  ) => {
     createTask.mutate(task);
   };
 

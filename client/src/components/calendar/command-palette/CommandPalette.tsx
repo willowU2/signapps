@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * CommandPalette Component
@@ -8,11 +8,11 @@
  * Supports fuzzy search, keyboard navigation, and categorized commands.
  */
 
-import * as React from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Search, X } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { CommandList, CommandListEmpty } from './CommandList';
+import * as React from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Search, X } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { CommandList, CommandListEmpty } from "./CommandList";
 
 // Simplified command interface (scheduling registry removed)
 interface Command {
@@ -24,8 +24,12 @@ interface Command {
 }
 
 // Stub hooks until command registry is rebuilt in calendar context
-function useCommands(): Command[] { return []; }
-function useFilteredCommands(_query: string): Command[] { return []; }
+function useCommands(): Command[] {
+  return [];
+}
+function useFilteredCommands(_query: string): Command[] {
+  return [];
+}
 
 // ============================================================================
 // Types
@@ -78,8 +82,8 @@ function SearchInput({
         onChange={(e) => onChange(e.target.value)}
         placeholder="Rechercher une commande..."
         className={cn(
-          'flex-1 bg-transparent text-sm outline-none',
-          'placeholder:text-muted-foreground'
+          "flex-1 bg-transparent text-sm outline-none",
+          "placeholder:text-muted-foreground",
         )}
         autoComplete="off"
         autoCorrect="off"
@@ -130,7 +134,7 @@ export function CommandPalette({ className }: CommandPaletteProps) {
   // NOTE: Could be connected to calendar store command palette state for cross-component control
   const [isCommandPaletteOpen, setOpen] = React.useState(false);
   const closeCommandPalette = () => setOpen(false);
-  const [query, setQuery] = React.useState('');
+  const [query, setQuery] = React.useState("");
   const [selectedIndex, setSelectedIndex] = React.useState(0);
   const inputRef = React.useRef<HTMLInputElement>(null);
 
@@ -146,7 +150,7 @@ export function CommandPalette({ className }: CommandPaletteProps) {
   // Focus input when opened
   React.useEffect(() => {
     if (isCommandPaletteOpen) {
-      setQuery('');
+      setQuery("");
       setSelectedIndex(0);
       setTimeout(() => inputRef.current?.focus(), 50);
     }
@@ -158,38 +162,43 @@ export function CommandPalette({ className }: CommandPaletteProps) {
 
     const handleKeyDown = (e: KeyboardEvent) => {
       switch (e.key) {
-        case 'ArrowDown':
+        case "ArrowDown":
           e.preventDefault();
           setSelectedIndex((prev) =>
-            prev < filteredCommands.length - 1 ? prev + 1 : 0
+            prev < filteredCommands.length - 1 ? prev + 1 : 0,
           );
           break;
 
-        case 'ArrowUp':
+        case "ArrowUp":
           e.preventDefault();
           setSelectedIndex((prev) =>
-            prev > 0 ? prev - 1 : filteredCommands.length - 1
+            prev > 0 ? prev - 1 : filteredCommands.length - 1,
           );
           break;
 
-        case 'Enter':
+        case "Enter":
           e.preventDefault();
           if (filteredCommands[selectedIndex]) {
             executeCommand(filteredCommands[selectedIndex]);
           }
           break;
 
-        case 'Escape':
+        case "Escape":
           e.preventDefault();
           closeCommandPalette();
           break;
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isCommandPaletteOpen, filteredCommands, selectedIndex, closeCommandPalette]);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    isCommandPaletteOpen,
+    filteredCommands,
+    selectedIndex,
+    closeCommandPalette,
+  ]);
 
   const executeCommand = (command: Command) => {
     closeCommandPalette();
@@ -215,13 +224,13 @@ export function CommandPalette({ className }: CommandPaletteProps) {
             initial={{ opacity: 0, scale: 0.95, y: -20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: -20 }}
-            transition={{ duration: 0.15, ease: 'easeOut' }}
+            transition={{ duration: 0.15, ease: "easeOut" }}
             className={cn(
-              'fixed left-1/2 top-[20%] -translate-x-1/2 z-50',
-              'w-full max-w-lg',
-              'rounded-xl border bg-background shadow-2xl',
-              'overflow-hidden',
-              className
+              "fixed left-1/2 top-[20%] -translate-x-1/2 z-50",
+              "w-full max-w-lg",
+              "rounded-xl border bg-background shadow-2xl",
+              "overflow-hidden",
+              className,
             )}
             role="dialog"
             aria-modal="true"
@@ -231,7 +240,7 @@ export function CommandPalette({ className }: CommandPaletteProps) {
             <SearchInput
               value={query}
               onChange={setQuery}
-              onClear={() => setQuery('')}
+              onClear={() => setQuery("")}
               inputRef={inputRef}
             />
 

@@ -14,9 +14,27 @@ interface Project {
 
 export default function AutoStaffing() {
   const [projects, setProjects] = useState<Project[]>([
-    { id: "1", name: "Mobile App Redesign", requiredSkills: ["React", "UI/UX"], teamSize: 4, skillMatchPercent: 85 },
-    { id: "2", name: "Backend Migration", requiredSkills: ["Rust", "PostgreSQL"], teamSize: 3, skillMatchPercent: 92 },
-    { id: "3", name: "Data Analytics Dashboard", requiredSkills: ["Python", "Data Viz"], teamSize: 2, skillMatchPercent: 78 },
+    {
+      id: "1",
+      name: "Mobile App Redesign",
+      requiredSkills: ["React", "UI/UX"],
+      teamSize: 4,
+      skillMatchPercent: 85,
+    },
+    {
+      id: "2",
+      name: "Backend Migration",
+      requiredSkills: ["Rust", "PostgreSQL"],
+      teamSize: 3,
+      skillMatchPercent: 92,
+    },
+    {
+      id: "3",
+      name: "Data Analytics Dashboard",
+      requiredSkills: ["Python", "Data Viz"],
+      teamSize: 2,
+      skillMatchPercent: 78,
+    },
   ]);
 
   const [assigned, setAssigned] = useState<string[]>([]);
@@ -31,21 +49,31 @@ export default function AutoStaffing() {
 
       <div className="space-y-3">
         {projects.map((project) => (
-          <div key={project.id} className="p-4 border rounded-lg hover:shadow-md transition-shadow">
+          <div
+            key={project.id}
+            className="p-4 border rounded-lg hover:shadow-md transition-shadow"
+          >
             <div className="flex justify-between items-start mb-3">
               <div>
                 <p className="font-bold text-lg">{project.name}</p>
-                <p className="text-xs text-muted-foreground">Team size: {project.teamSize}</p>
+                <p className="text-xs text-muted-foreground">
+                  Team size: {project.teamSize}
+                </p>
               </div>
               <div className="text-right">
-                <p className="text-2xl font-bold text-blue-600">{project.skillMatchPercent}%</p>
+                <p className="text-2xl font-bold text-blue-600">
+                  {project.skillMatchPercent}%
+                </p>
                 <p className="text-xs text-muted-foreground">Match</p>
               </div>
             </div>
 
             <div className="flex flex-wrap gap-2 mb-3">
               {project.requiredSkills.map((skill) => (
-                <span key={skill} className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">
+                <span
+                  key={skill}
+                  className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full"
+                >
                   {skill}
                 </span>
               ))}

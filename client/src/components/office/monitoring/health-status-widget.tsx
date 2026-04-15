@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * HealthStatusWidget
@@ -6,7 +6,7 @@
  * Widget showing Office Suite system health.
  */
 
-import React, { useEffect } from 'react';
+import React, { useEffect } from "react";
 import {
   Activity,
   CheckCircle2,
@@ -18,15 +18,15 @@ import {
   Cloud,
   RefreshCw,
   FileText,
-} from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { cn } from '@/lib/utils';
-import { useMonitoringStore } from '@/stores/monitoring-store';
-import type { HealthStatus, HealthCheck } from '@/lib/office/monitoring/types';
+} from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
+import { useMonitoringStore } from "@/stores/monitoring-store";
+import type { HealthStatus, HealthCheck } from "@/lib/office/monitoring/types";
 import {
   HEALTH_STATUS_LABELS,
   HEALTH_STATUS_COLORS,
-} from '@/lib/office/monitoring/types';
+} from "@/lib/office/monitoring/types";
 
 // ============================================================================
 // Helpers
@@ -34,28 +34,28 @@ import {
 
 function getStatusIcon(status: HealthStatus) {
   switch (status) {
-    case 'healthy':
+    case "healthy":
       return <CheckCircle2 className="h-4 w-4 text-green-500" />;
-    case 'degraded':
+    case "degraded":
       return <AlertTriangle className="h-4 w-4 text-yellow-500" />;
-    case 'unhealthy':
+    case "unhealthy":
       return <XCircle className="h-4 w-4 text-red-500" />;
   }
 }
 
 function getComponentIcon(component: string) {
   switch (component) {
-    case 'editor':
+    case "editor":
       return <FileText className="h-4 w-4" />;
-    case 'converter':
+    case "converter":
       return <RefreshCw className="h-4 w-4" />;
-    case 'cache':
+    case "cache":
       return <HardDrive className="h-4 w-4" />;
-    case 'storage':
+    case "storage":
       return <Server className="h-4 w-4" />;
-    case 'sync':
+    case "sync":
       return <Cloud className="h-4 w-4" />;
-    case 'database':
+    case "database":
       return <Database className="h-4 w-4" />;
     default:
       return <Activity className="h-4 w-4" />;
@@ -73,12 +73,12 @@ function formatUptime(seconds: number): string {
 }
 
 const componentLabels: Record<string, string> = {
-  editor: 'Éditeur',
-  converter: 'Convertisseur',
-  cache: 'Cache',
-  storage: 'Stockage',
-  sync: 'Synchronisation',
-  database: 'Base de données',
+  editor: "Éditeur",
+  converter: "Convertisseur",
+  cache: "Cache",
+  storage: "Stockage",
+  sync: "Synchronisation",
+  database: "Base de données",
 };
 
 // ============================================================================
@@ -99,7 +99,9 @@ function ComponentHealthItem({ name, check }: ComponentHealthItemProps) {
       </div>
       <div className="flex items-center gap-2">
         {check.latency !== undefined && (
-          <span className="text-xs text-muted-foreground">{check.latency}ms</span>
+          <span className="text-xs text-muted-foreground">
+            {check.latency}ms
+          </span>
         )}
         {getStatusIcon(check.status)}
       </div>
@@ -112,12 +114,12 @@ function ComponentHealthItem({ name, check }: ComponentHealthItemProps) {
 // ============================================================================
 
 interface HealthStatusWidgetProps {
-  variant?: 'compact' | 'detailed';
+  variant?: "compact" | "detailed";
   className?: string;
 }
 
 export function HealthStatusWidget({
-  variant = 'compact',
+  variant = "compact",
   className,
 }: HealthStatusWidgetProps) {
   const { health, isLoadingHealth, loadHealth } = useMonitoringStore();
@@ -132,22 +134,27 @@ export function HealthStatusWidget({
 
   if (!health) {
     return (
-      <div className={cn('p-4 rounded-lg border animate-pulse', className)}>
+      <div className={cn("p-4 rounded-lg border animate-pulse", className)}>
         <div className="h-4 w-24 bg-muted rounded mb-2" />
         <div className="h-8 w-full bg-muted rounded" />
       </div>
     );
   }
 
-  if (variant === 'compact') {
+  if (variant === "compact") {
     return (
-      <div className={cn('flex items-center gap-3 p-3 rounded-lg border', className)}>
+      <div
+        className={cn(
+          "flex items-center gap-3 p-3 rounded-lg border",
+          className,
+        )}
+      >
         {getStatusIcon(health.overall)}
         <div className="flex-1">
           <span className="text-sm font-medium">Système Office</span>
           <Badge
             variant="outline"
-            className={cn('ml-2 text-xs', HEALTH_STATUS_COLORS[health.overall])}
+            className={cn("ml-2 text-xs", HEALTH_STATUS_COLORS[health.overall])}
           >
             {HEALTH_STATUS_LABELS[health.overall]}
           </Badge>
@@ -161,7 +168,7 @@ export function HealthStatusWidget({
 
   // Detailed variant
   return (
-    <div className={cn('p-4 rounded-lg border space-y-4', className)}>
+    <div className={cn("p-4 rounded-lg border space-y-4", className)}>
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
@@ -179,27 +186,27 @@ export function HealthStatusWidget({
       {/* Overall Status */}
       <div
         className={cn(
-          'p-4 rounded-lg text-center',
-          health.overall === 'healthy' && 'bg-green-50 dark:bg-green-900/20',
-          health.overall === 'degraded' && 'bg-yellow-50 dark:bg-yellow-900/20',
-          health.overall === 'unhealthy' && 'bg-red-50 dark:bg-red-900/20'
+          "p-4 rounded-lg text-center",
+          health.overall === "healthy" && "bg-green-50 dark:bg-green-900/20",
+          health.overall === "degraded" && "bg-yellow-50 dark:bg-yellow-900/20",
+          health.overall === "unhealthy" && "bg-red-50 dark:bg-red-900/20",
         )}
       >
         <div className="flex justify-center mb-2">
-          {health.overall === 'healthy' && (
+          {health.overall === "healthy" && (
             <CheckCircle2 className="h-8 w-8 text-green-500" />
           )}
-          {health.overall === 'degraded' && (
+          {health.overall === "degraded" && (
             <AlertTriangle className="h-8 w-8 text-yellow-500" />
           )}
-          {health.overall === 'unhealthy' && (
+          {health.overall === "unhealthy" && (
             <XCircle className="h-8 w-8 text-red-500" />
           )}
         </div>
         <p className="font-medium">
-          {health.overall === 'healthy' && 'Tous les systèmes opérationnels'}
-          {health.overall === 'degraded' && 'Performance dégradée'}
-          {health.overall === 'unhealthy' && 'Problème détecté'}
+          {health.overall === "healthy" && "Tous les systèmes opérationnels"}
+          {health.overall === "degraded" && "Performance dégradée"}
+          {health.overall === "unhealthy" && "Problème détecté"}
         </p>
         <p className="text-sm text-muted-foreground mt-1">
           Uptime: {formatUptime(health.uptime)}
@@ -223,7 +230,7 @@ export function HealthStatusWidget({
         <div className="p-3 rounded-lg bg-muted/50 text-sm">
           <p className="text-muted-foreground">Dernier incident:</p>
           <p className="font-medium">
-            {new Date(health.lastIncident).toLocaleString('fr-FR')}
+            {new Date(health.lastIncident).toLocaleString("fr-FR")}
           </p>
         </div>
       )}

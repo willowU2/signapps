@@ -21,16 +21,16 @@ import type { TenantBranding, TenantColors } from "./types";
  */
 function sanitizeCss(css: string): string {
   return css
-    .replace(/@import\b[^;]*;/gi, '/* blocked @import */')
-    .replace(/expression\s*\(/gi, '/* blocked expression */(')
-    .replace(/url\s*\(\s*['"]?\s*(?:javascript|data):/gi, 'url(blocked:');
+    .replace(/@import\b[^;]*;/gi, "/* blocked @import */")
+    .replace(/expression\s*\(/gi, "/* blocked expression */(")
+    .replace(/url\s*\(\s*['"]?\s*(?:javascript|data):/gi, "url(blocked:");
 }
 
 /**
  * Sanitize font-family values to only allow safe characters.
  */
 function sanitizeFontFamily(font: string): string {
-  return font.replace(/[^a-zA-Z0-9\s,\-'"]/g, '');
+  return font.replace(/[^a-zA-Z0-9\s,\-'"]/g, "");
 }
 
 // ============================================================================
@@ -90,7 +90,9 @@ function generateColorVariables(colors: TenantColors): string {
       variables.push(`--primary: ${hsl.h} ${hsl.s}% ${hsl.l}%;`);
       // Generate foreground color (white or black based on lightness)
       const foregroundL = hsl.l > 50 ? 10 : 98;
-      variables.push(`--primary-foreground: ${hsl.h} ${Math.max(0, hsl.s - 20)}% ${foregroundL}%;`);
+      variables.push(
+        `--primary-foreground: ${hsl.h} ${Math.max(0, hsl.s - 20)}% ${foregroundL}%;`,
+      );
     }
   }
 
@@ -100,7 +102,9 @@ function generateColorVariables(colors: TenantColors): string {
     if (hsl) {
       variables.push(`--secondary: ${hsl.h} ${hsl.s}% ${hsl.l}%;`);
       const foregroundL = hsl.l > 50 ? 10 : 98;
-      variables.push(`--secondary-foreground: ${hsl.h} ${Math.max(0, hsl.s - 20)}% ${foregroundL}%;`);
+      variables.push(
+        `--secondary-foreground: ${hsl.h} ${Math.max(0, hsl.s - 20)}% ${foregroundL}%;`,
+      );
     }
   }
 
@@ -139,7 +143,9 @@ interface BrandingStylesProps {
   branding?: TenantBranding;
 }
 
-export function BrandingStyles({ branding: propBranding }: BrandingStylesProps) {
+export function BrandingStyles({
+  branding: propBranding,
+}: BrandingStylesProps) {
   const contextBranding = useTenantBranding();
   const branding = propBranding || contextBranding;
 
@@ -168,10 +174,14 @@ export function BrandingStyles({ branding: propBranding }: BrandingStylesProps) 
     if (branding.typography) {
       const fontVars: string[] = [];
       if (branding.typography.fontFamily) {
-        fontVars.push(`--font-sans: ${sanitizeFontFamily(branding.typography.fontFamily)};`);
+        fontVars.push(
+          `--font-sans: ${sanitizeFontFamily(branding.typography.fontFamily)};`,
+        );
       }
       if (branding.typography.headingFontFamily) {
-        fontVars.push(`--font-heading: ${sanitizeFontFamily(branding.typography.headingFontFamily)};`);
+        fontVars.push(
+          `--font-heading: ${sanitizeFontFamily(branding.typography.headingFontFamily)};`,
+        );
       }
       if (branding.typography.baseFontSize) {
         fontVars.push(`font-size: ${branding.typography.baseFontSize}px;`);
@@ -239,13 +249,15 @@ export function TenantLogo({
   // Determine which logo to use
   let logoUrl: string;
   if (variant === "primary") {
-    logoUrl = isDark && branding.logo.primaryDark
-      ? branding.logo.primaryDark
-      : branding.logo.primary;
+    logoUrl =
+      isDark && branding.logo.primaryDark
+        ? branding.logo.primaryDark
+        : branding.logo.primary;
   } else {
-    logoUrl = isDark && branding.logo.secondaryDark
-      ? branding.logo.secondaryDark
-      : branding.logo.secondary || branding.logo.primary;
+    logoUrl =
+      isDark && branding.logo.secondaryDark
+        ? branding.logo.secondaryDark
+        : branding.logo.secondary || branding.logo.primary;
   }
 
   return (
@@ -295,9 +307,7 @@ export function TenantTitle({ suffix }: TenantTitleProps) {
   const branding = useTenantBranding();
 
   React.useEffect(() => {
-    document.title = suffix
-      ? `${suffix} | ${branding.name}`
-      : branding.name;
+    document.title = suffix ? `${suffix} | ${branding.name}` : branding.name;
   }, [branding.name, suffix]);
 
   return null;

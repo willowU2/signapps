@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { AlertTriangle, AlertCircle, Info, CheckCircle } from 'lucide-react';
-import type { RaidEvent } from '@/lib/api';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { AlertTriangle, AlertCircle, Info, CheckCircle } from "lucide-react";
+import type { RaidEvent } from "@/lib/api";
 
 interface AlertsPanelProps {
   events: RaidEvent[];
@@ -13,33 +13,35 @@ interface AlertsPanelProps {
 export function AlertsPanel({ events, loading }: AlertsPanelProps) {
   const getIcon = (severity: string) => {
     switch (severity) {
-      case 'critical':
+      case "critical":
         return <AlertCircle className="h-4 w-4 text-red-500" />;
-      case 'warning':
+      case "warning":
         return <AlertTriangle className="h-4 w-4 text-yellow-500" />;
       default:
         return <Info className="h-4 w-4 text-blue-500" />;
     }
   };
 
-  const getBadgeVariant = (severity: string): 'destructive' | 'default' | 'secondary' => {
+  const getBadgeVariant = (
+    severity: string,
+  ): "destructive" | "default" | "secondary" => {
     switch (severity) {
-      case 'critical':
-        return 'destructive';
-      case 'warning':
-        return 'default';
+      case "critical":
+        return "destructive";
+      case "warning":
+        return "default";
       default:
-        return 'secondary';
+        return "secondary";
     }
   };
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('fr-FR', {
-      day: '2-digit',
-      month: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
+    return date.toLocaleDateString("fr-FR", {
+      day: "2-digit",
+      month: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
     });
   };
 
@@ -91,7 +93,10 @@ export function AlertsPanel({ events, loading }: AlertsPanelProps) {
               {getIcon(event.severity)}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <Badge variant={getBadgeVariant(event.severity)} className="text-xs">
+                  <Badge
+                    variant={getBadgeVariant(event.severity)}
+                    className="text-xs"
+                  >
                     {event.event_type}
                   </Badge>
                   <span className="text-xs text-muted-foreground">

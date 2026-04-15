@@ -1,15 +1,21 @@
-'use client';
+"use client";
 
 export interface FileItem {
-    key: string;
-    name: string;
-    type: 'folder' | 'file';
-    size?: number;
-    lastModified?: string;
-    contentType?: string;
-    id?: string;
-    bucket?: string;
-    originalPath?: string;
+  key: string;
+  name: string;
+  type: "folder" | "file";
+  size?: number;
+  lastModified?: string;
+  contentType?: string;
+  id?: string;
+  bucket?: string;
+  originalPath?: string;
 }
 
-export type DriveView = 'home' | 'my-drive' | 'shared' | 'recent' | 'starred' | 'trash';
+export type DriveView =
+  | "home"
+  | "my-drive"
+  | "shared"
+  | "recent"
+  | "starred"
+  | "trash";

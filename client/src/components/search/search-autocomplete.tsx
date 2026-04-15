@@ -1,23 +1,23 @@
-'use client';
+"use client";
 
 // IDEA-118: Search autocomplete — suggest completions as user types
 // IDEA-119: Recent searches history — persist and show last 10 searches
 
-import { useState, useEffect, useRef, KeyboardEvent } from 'react';
-import { Search, Clock, TrendingUp, X } from 'lucide-react';
-import { useOmniStore } from '@/stores/omni-store';
-import { cn } from '@/lib/utils';
+import { useState, useEffect, useRef, KeyboardEvent } from "react";
+import { Search, Clock, TrendingUp, X } from "lucide-react";
+import { useOmniStore } from "@/stores/omni-store";
+import { cn } from "@/lib/utils";
 
-const RECENT_KEY = 'omni_recent_searches';
+const RECENT_KEY = "omni_recent_searches";
 const MAX_RECENT = 10;
 
 // Popular queries — hardcoded suggestions as fallback
 const POPULAR_QUERIES = [
-  'emails non lus',
-  'tâches en cours',
-  'calendrier aujourd\'hui',
-  'documents récents',
-  'membres de l\'équipe',
+  "emails non lus",
+  "tâches en cours",
+  "calendrier aujourd'hui",
+  "documents récents",
+  "membres de l'équipe",
 ];
 
 export function loadRecentSearches(): string[] {
@@ -33,7 +33,10 @@ export function saveRecentSearch(query: string) {
   if (!query.trim()) return;
   try {
     const prev = loadRecentSearches();
-    const next = [query, ...prev.filter((q) => q !== query)].slice(0, MAX_RECENT);
+    const next = [query, ...prev.filter((q) => q !== query)].slice(
+      0,
+      MAX_RECENT,
+    );
     localStorage.setItem(RECENT_KEY, JSON.stringify(next));
   } catch {
     // Silently fail
@@ -56,7 +59,7 @@ export function SearchAutocomplete({
   value,
   onChange,
   onSubmit,
-  placeholder = 'Rechercher…',
+  placeholder = "Rechercher…",
   className,
 }: SearchAutocompleteProps) {
   const [open, setOpen] = useState(false);
@@ -72,13 +75,13 @@ export function SearchAutocomplete({
   // Autocomplete suggestions — filter recents + popular by current query
   const suggestions = value.trim()
     ? [
-        ...recents.filter((r) =>
-          r.toLowerCase().includes(value.toLowerCase()) && r !== value
+        ...recents.filter(
+          (r) => r.toLowerCase().includes(value.toLowerCase()) && r !== value,
         ),
         ...POPULAR_QUERIES.filter(
           (p) =>
             p.toLowerCase().includes(value.toLowerCase()) &&
-            !recents.includes(p)
+            !recents.includes(p),
         ),
       ].slice(0, 8)
     : recents.slice(0, 5);
@@ -94,13 +97,13 @@ export function SearchAutocomplete({
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (!open) return;
-    if (e.key === 'ArrowDown') {
+    if (e.key === "ArrowDown") {
       e.preventDefault();
       setHighlighted((h) => Math.min(h + 1, suggestions.length - 1));
-    } else if (e.key === 'ArrowUp') {
+    } else if (e.key === "ArrowUp") {
       e.preventDefault();
       setHighlighted((h) => Math.max(h - 1, -1));
-    } else if (e.key === 'Enter') {
+    } else if (e.key === "Enter") {
       if (highlighted >= 0 && suggestions[highlighted]) {
         e.preventDefault();
         handleSelect(suggestions[highlighted]);
@@ -112,7 +115,7 @@ export function SearchAutocomplete({
         onSubmit(value);
         setOpen(false);
       }
-    } else if (e.key === 'Escape') {
+    } else if (e.key === "Escape") {
       setOpen(false);
     }
   };
@@ -125,7 +128,7 @@ export function SearchAutocomplete({
   };
 
   return (
-    <div className={cn('relative', className)}>
+    <div className={cn("relative", className)}>
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
         <input
@@ -182,8 +185,8 @@ export function SearchAutocomplete({
                 onMouseDown={() => handleSelect(s)}
                 onMouseEnter={() => setHighlighted(i)}
                 className={cn(
-                  'w-full flex items-center gap-2 px-3 py-2 text-sm transition-colors text-left',
-                  highlighted === i ? 'bg-accent' : 'hover:bg-accent/50'
+                  "w-full flex items-center gap-2 px-3 py-2 text-sm transition-colors text-left",
+                  highlighted === i ? "bg-accent" : "hover:bg-accent/50",
                 )}
               >
                 {isRecent ? (

@@ -31,7 +31,13 @@ const TYPE_COLOR: Record<CalendarEvent["type"], string> = {
 };
 
 const DEMO_MEMBERS: TeamMember[] = [
-  { id: "1", name: "Alice Martin", role: "Lead Dev", department: "Tech", reports: ["2", "8"] },
+  {
+    id: "1",
+    name: "Alice Martin",
+    role: "Lead Dev",
+    department: "Tech",
+    reports: ["2", "8"],
+  },
   { id: "2", name: "Bob Dupont", role: "DevOps", department: "Tech" },
   { id: "8", name: "Marc Dubois", role: "Backend Dev", department: "Tech" },
 ];
@@ -62,11 +68,19 @@ export function OrgChartTeamCalendar() {
 
   const dayLabels = days.map((d) => {
     const date = new Date(d);
-    return { key: d, label: date.toLocaleDateString("fr-FR", { weekday: "short", day: "numeric" }) };
+    return {
+      key: d,
+      label: date.toLocaleDateString("fr-FR", {
+        weekday: "short",
+        day: "numeric",
+      }),
+    };
   });
 
   function getEvents(memberId: string, date: string) {
-    return DEMO_EVENTS.filter((e) => e.memberId === memberId && e.date === date);
+    return DEMO_EVENTS.filter(
+      (e) => e.memberId === memberId && e.date === date,
+    );
   }
 
   return (
@@ -78,13 +92,27 @@ export function OrgChartTeamCalendar() {
             Calendrier équipe
           </CardTitle>
           <div className="flex items-center gap-1">
-            <button onClick={() => setWeekOffset((w) => w - 1)} className="rounded p-1 hover:bg-muted">
+            <button
+              onClick={() => setWeekOffset((w) => w - 1)}
+              className="rounded p-1 hover:bg-muted"
+            >
               <ChevronLeft className="size-4" />
             </button>
             <span className="text-xs text-muted-foreground">
-              {new Date(days[0]).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })} — {new Date(days[4]).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}
+              {new Date(days[0]).toLocaleDateString("fr-FR", {
+                day: "numeric",
+                month: "short",
+              })}{" "}
+              —{" "}
+              {new Date(days[4]).toLocaleDateString("fr-FR", {
+                day: "numeric",
+                month: "short",
+              })}
             </span>
-            <button onClick={() => setWeekOffset((w) => w + 1)} className="rounded p-1 hover:bg-muted">
+            <button
+              onClick={() => setWeekOffset((w) => w + 1)}
+              className="rounded p-1 hover:bg-muted"
+            >
               <ChevronRight className="size-4" />
             </button>
           </div>
@@ -96,10 +124,18 @@ export function OrgChartTeamCalendar() {
             <thead>
               <tr>
                 <th className="w-28 text-left pb-2 font-medium text-muted-foreground">
-                  <span className="flex items-center gap-1"><Users className="size-3" /> Membre</span>
+                  <span className="flex items-center gap-1">
+                    <Users className="size-3" /> Membre
+                  </span>
                 </th>
                 {dayLabels.map((d) => (
-                  <th key={d.key} className={cn("text-center pb-2 font-medium text-muted-foreground px-1", d.key === TODAY && "text-primary")}>
+                  <th
+                    key={d.key}
+                    className={cn(
+                      "text-center pb-2 font-medium text-muted-foreground px-1",
+                      d.key === TODAY && "text-primary",
+                    )}
+                  >
                     {d.label}
                   </th>
                 ))}
@@ -109,19 +145,37 @@ export function OrgChartTeamCalendar() {
               {DEMO_MEMBERS.map((member) => (
                 <tr key={member.id}>
                   <td className="py-1.5 pr-2">
-                    <div className="font-medium truncate">{member.name.split(" ")[0]}</div>
-                    <div className="text-muted-foreground truncate">{member.role}</div>
+                    <div className="font-medium truncate">
+                      {member.name.split(" ")[0]}
+                    </div>
+                    <div className="text-muted-foreground truncate">
+                      {member.role}
+                    </div>
                   </td>
                   {days.map((day) => {
                     const events = getEvents(member.id, day);
                     return (
-                      <td key={day} className={cn("py-1.5 px-1 text-center align-top", day === TODAY && "bg-primary/5 rounded")}>
+                      <td
+                        key={day}
+                        className={cn(
+                          "py-1.5 px-1 text-center align-top",
+                          day === TODAY && "bg-primary/5 rounded",
+                        )}
+                      >
                         {events.map((ev, i) => (
-                          <span key={i} className={cn("block rounded px-1 py-0.5 text-[10px] leading-tight mb-0.5", TYPE_COLOR[ev.type])}>
+                          <span
+                            key={i}
+                            className={cn(
+                              "block rounded px-1 py-0.5 text-[10px] leading-tight mb-0.5",
+                              TYPE_COLOR[ev.type],
+                            )}
+                          >
                             {ev.label}
                           </span>
                         ))}
-                        {events.length === 0 && <span className="text-muted-foreground/40">—</span>}
+                        {events.length === 0 && (
+                          <span className="text-muted-foreground/40">—</span>
+                        )}
                       </td>
                     );
                   })}
@@ -131,9 +185,20 @@ export function OrgChartTeamCalendar() {
           </table>
         </div>
         <div className="mt-2 flex flex-wrap gap-2">
-          {(Object.entries(TYPE_COLOR) as [CalendarEvent["type"], string][]).map(([type, cls]) => (
-            <span key={type} className={cn("rounded px-1.5 py-0.5 text-[10px]", cls)}>
-              {type === "leave" ? "Congé" : type === "meeting" ? "Réunion" : type === "ooo" ? "Absent" : "Projet"}
+          {(
+            Object.entries(TYPE_COLOR) as [CalendarEvent["type"], string][]
+          ).map(([type, cls]) => (
+            <span
+              key={type}
+              className={cn("rounded px-1.5 py-0.5 text-[10px]", cls)}
+            >
+              {type === "leave"
+                ? "Congé"
+                : type === "meeting"
+                  ? "Réunion"
+                  : type === "ooo"
+                    ? "Absent"
+                    : "Projet"}
             </span>
           ))}
         </div>

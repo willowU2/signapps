@@ -1,15 +1,15 @@
-'use client';
+"use client";
 
-import { useState, useRef, useCallback, useEffect } from 'react';
-import { toast } from 'sonner';
-import { getVoiceWebSocketUrl } from '@/lib/api';
+import { useState, useRef, useCallback, useEffect } from "react";
+import { toast } from "sonner";
+import { getVoiceWebSocketUrl } from "@/lib/api";
 
 export type VoiceState =
-  | 'idle'
-  | 'listening'
-  | 'transcribing'
-  | 'thinking'
-  | 'speaking';
+  | "idle"
+  | "listening"
+  | "transcribing"
+  | "thinking"
+  | "speaking";
 
 interface UseVoiceChatOptions {
   onTranscript: (text: string) => void;
@@ -36,16 +36,13 @@ class AudioPlaybackQueue {
   private onStartPlaying?: () => void;
   private onStopPlaying?: () => void;
 
-  constructor(
-    onStartPlaying?: () => void,
-    onStopPlaying?: () => void
-  ) {
+  constructor(onStartPlaying?: () => void, onStopPlaying?: () => void) {
     this.onStartPlaying = onStartPlaying;
     this.onStopPlaying = onStopPlaying;
   }
 
   private getContext(): AudioContext {
-    if (!this.audioContext || this.audioContext.state === 'closed') {
+    if (!this.audioContext || this.audioContext.state === "closed") {
       this.audioContext = new AudioContext();
     }
     return this.audioContext;
@@ -117,7 +114,7 @@ class AudioPlaybackQueue {
 
   async destroy() {
     this.stop();
-    if (this.audioContext && this.audioContext.state !== 'closed') {
+    if (this.audioContext && this.audioContext.state !== "closed") {
       await this.audioContext.close();
     }
     this.audioContext = null;
@@ -133,15 +130,15 @@ export function useVoiceChat({
   systemPrompt,
 }: UseVoiceChatOptions): UseVoiceChatReturn {
   const [voiceEnabled, setVoiceEnabled] = useState(false);
-  const [voiceState, setVoiceState] = useState<VoiceState>('idle');
-  const [transcript, setTranscript] = useState('');
+  const [voiceState, setVoiceState] = useState<VoiceState>("idle");
+  const [transcript, setTranscript] = useState("");
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const vadRef = useRef<any>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const playbackQueueRef = useRef<AudioPlaybackQueue | null>(null);
   const enabledRef = useRef(false);
-  const accumulatedTextRef = useRef('');
+  const accumulatedTextRef = useRef("");
 
   // Keep enabledRef in sync
   useEffect(() => {
@@ -152,7 +149,7 @@ export function useVoiceChat({
   const interrupt = useCallback(() => {
     playbackQueueRef.current?.stop();
     if (wsRef.current?.readyState === WebSocket.OPEN) {
-      wsRef.current.send(JSON.stringify({ type: 'interrupt' }));
+      wsRef.current.send(JSON.stringify({ type: "interrupt" }));
     }
   }, []);
 
@@ -170,7 +167,7 @@ export function useVoiceChat({
       }
       playbackQueueRef.current?.destroy();
       playbackQueueRef.current = null;
-      setVoiceState('idle');
+      setVoiceState("idle");
       return;
     }
 
@@ -178,34 +175,36 @@ export function useVoiceChat({
 
     async function initVoice() {
       try {
-        const { MicVAD } = await import('@ricky0123/vad-web');
+        const { MicVAD } = await import("@ricky0123/vad-web");
 
         if (cancelled) return;
 
         // Create playback queue
         playbackQueueRef.current = new AudioPlaybackQueue(
           () => {
-            if (enabledRef.current) setVoiceState('speaking');
+            if (enabledRef.current) setVoiceState("speaking");
           },
           () => {
-            if (enabledRef.current) setVoiceState('listening');
-          }
+            if (enabledRef.current) setVoiceState("listening");
+          },
         );
 
         // Open WebSocket
         const wsUrl = getVoiceWebSocketUrl();
         const ws = new WebSocket(wsUrl);
-        ws.binaryType = 'arraybuffer';
+        ws.binaryType = "arraybuffer";
 
         ws.onopen = () => {
           // Send config message
-          ws.send(JSON.stringify({
-            type: 'config',
-            provider: provider || undefined,
-            model: model || undefined,
-            language: language || undefined,
-            system_prompt: systemPrompt || undefined,
-          }));
+          ws.send(
+            JSON.stringify({
+              type: "config",
+              provider: provider || undefined,
+              model: model || undefined,
+              language: language || undefined,
+              system_prompt: systemPrompt || undefined,
+            }),
+          );
         };
 
         ws.onmessage = (event) => {
@@ -221,30 +220,30 @@ export function useVoiceChat({
           try {
             const msg = JSON.parse(event.data);
             switch (msg.type) {
-              case 'transcript':
-                setTranscript(msg.text || '');
-                onTranscript(msg.text || '');
-                setVoiceState('thinking');
+              case "transcript":
+                setTranscript(msg.text || "");
+                onTranscript(msg.text || "");
+                setVoiceState("thinking");
                 break;
-              case 'llm_token':
-                accumulatedTextRef.current += msg.content || '';
+              case "llm_token":
+                accumulatedTextRef.current += msg.content || "";
                 break;
-              case 'tts_start':
-                setVoiceState('speaking');
+              case "tts_start":
+                setVoiceState("speaking");
                 break;
-              case 'done':
+              case "done":
                 if (accumulatedTextRef.current) {
                   onAssistantMessage(accumulatedTextRef.current);
-                  accumulatedTextRef.current = '';
+                  accumulatedTextRef.current = "";
                 }
                 if (!playbackQueueRef.current?.isPlaying()) {
-                  setVoiceState('listening');
+                  setVoiceState("listening");
                 }
                 break;
-              case 'error':
-                toast.error(msg.message || 'Erreur du pipeline vocal');
-                setVoiceState('listening');
-                accumulatedTextRef.current = '';
+              case "error":
+                toast.error(msg.message || "Erreur du pipeline vocal");
+                setVoiceState("listening");
+                accumulatedTextRef.current = "";
                 break;
             }
           } catch {
@@ -258,7 +257,7 @@ export function useVoiceChat({
 
         ws.onclose = () => {
           if (enabledRef.current && !cancelled) {
-            toast.error('Connexion vocale perdue');
+            toast.error("Connexion vocale perdue");
             setVoiceEnabled(false);
           }
         };
@@ -272,9 +271,9 @@ export function useVoiceChat({
 
         // Initialize VAD
         const vad = await MicVAD.new({
-          baseAssetPath: '/vad/',
-          onnxWASMBasePath: '/vad/',
-          model: 'v5',
+          baseAssetPath: "/vad/",
+          onnxWASMBasePath: "/vad/",
+          model: "v5",
           startOnLoad: true,
 
           onSpeechStart: () => {
@@ -285,10 +284,13 @@ export function useVoiceChat({
               interrupt();
             }
 
-            setVoiceState('listening');
+            setVoiceState("listening");
           },
 
-          onFrameProcessed: (probs: { isSpeech: number }, frame: Float32Array) => {
+          onFrameProcessed: (
+            probs: { isSpeech: number },
+            frame: Float32Array,
+          ) => {
             if (!enabledRef.current) return;
             if (probs.isSpeech < 0.5) return;
 
@@ -301,17 +303,17 @@ export function useVoiceChat({
           onSpeechEnd: () => {
             if (!enabledRef.current) return;
 
-            setVoiceState('transcribing');
+            setVoiceState("transcribing");
 
             // Signal end of speech to server
             if (wsRef.current?.readyState === WebSocket.OPEN) {
-              wsRef.current.send(JSON.stringify({ type: 'speech_end' }));
+              wsRef.current.send(JSON.stringify({ type: "speech_end" }));
             }
           },
 
           onVADMisfire: () => {
             if (enabledRef.current) {
-              setVoiceState('listening');
+              setVoiceState("listening");
             }
           },
         });
@@ -323,15 +325,15 @@ export function useVoiceChat({
         }
 
         vadRef.current = vad;
-        setVoiceState('listening');
-        toast.success('Mode vocal active');
+        setVoiceState("listening");
+        toast.success("Mode vocal active");
       } catch (err) {
         toast.error(
-          'Impossible d\'activer le micro : ' +
-            (err instanceof Error ? err.message : String(err))
+          "Impossible d'activer le micro : " +
+            (err instanceof Error ? err.message : String(err)),
         );
         setVoiceEnabled(false);
-        setVoiceState('idle');
+        setVoiceState("idle");
       }
     }
 

@@ -547,12 +547,13 @@ pub async fn delete_ticket(
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, String)> {
     // Only allow deletion of closed or resolved tickets
-    let ticket: Option<(String,)> = sqlx::query_as("SELECT status FROM it.tickets WHERE id = $1 AND tenant_id = $2")
-        .bind(id)
-        .bind(claims.tenant_id)
-        .fetch_optional(pool.inner())
-        .await
-        .map_err(internal_err)?;
+    let ticket: Option<(String,)> =
+        sqlx::query_as("SELECT status FROM it.tickets WHERE id = $1 AND tenant_id = $2")
+            .bind(id)
+            .bind(claims.tenant_id)
+            .fetch_optional(pool.inner())
+            .await
+            .map_err(internal_err)?;
 
     match ticket {
         None => Err((StatusCode::NOT_FOUND, "Ticket not found".to_string())),

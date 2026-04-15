@@ -1,16 +1,20 @@
-"use client"
+"use client";
 
-import React, { useState, useMemo } from "react"
-import { useQuery, useQueryClient } from "@tanstack/react-query"
-import { AppLayout } from "@/components/layout/app-layout"
-import { usePageTitle } from "@/hooks/use-page-title"
-import { mailApi, type MailTemplate, type CreateMailTemplateRequest } from "@/lib/api/mail"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import React, { useState, useMemo } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { AppLayout } from "@/components/layout/app-layout";
+import { usePageTitle } from "@/hooks/use-page-title";
+import {
+  mailApi,
+  type MailTemplate,
+  type CreateMailTemplateRequest,
+} from "@/lib/api/mail";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,7 +24,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
+} from "@/components/ui/alert-dialog";
 import {
   Dialog,
   DialogContent,
@@ -28,155 +32,189 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
-import { Skeleton } from "@/components/ui/skeleton"
-import { toast } from "sonner"
-import { Plus, Search, Pencil, Trash2, Eye, X, Variable, FileText, ArrowLeft } from "lucide-react"
-import Link from "next/link"
+} from "@/components/ui/dialog";
+import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
+import {
+  Plus,
+  Search,
+  Pencil,
+  Trash2,
+  Eye,
+  X,
+  Variable,
+  FileText,
+  ArrowLeft,
+} from "lucide-react";
+import Link from "next/link";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function parseVariables(raw: unknown): string[] {
-  if (Array.isArray(raw)) return raw.filter((v): v is string => typeof v === "string")
+  if (Array.isArray(raw))
+    return raw.filter((v): v is string => typeof v === "string");
   if (typeof raw === "string") {
-    try { return JSON.parse(raw) } catch { return [] }
+    try {
+      return JSON.parse(raw);
+    } catch {
+      return [];
+    }
   }
-  return []
+  return [];
 }
 
-function substituteVariables(template: string, values: Record<string, string>): string {
-  return template.replace(/\{\{(\w+)\}\}/g, (_, key) => values[key] ?? `{{${key}}}`)
+function substituteVariables(
+  template: string,
+  values: Record<string, string>,
+): string {
+  return template.replace(
+    /\{\{(\w+)\}\}/g,
+    (_, key) => values[key] ?? `{{${key}}}`,
+  );
 }
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function MailTemplatesPage() {
-  usePageTitle("Modèles d'email")
-  const queryClient = useQueryClient()
+  usePageTitle("Modèles d'email");
+  const queryClient = useQueryClient();
 
-  const [search, setSearch] = useState("")
-  const [isFormOpen, setIsFormOpen] = useState(false)
-  const [editingTemplate, setEditingTemplate] = useState<MailTemplate | null>(null)
-  const [deleteTarget, setDeleteTarget] = useState<MailTemplate | null>(null)
-  const [previewTemplate, setPreviewTemplate] = useState<MailTemplate | null>(null)
-  const [previewValues, setPreviewValues] = useState<Record<string, string>>({})
+  const [search, setSearch] = useState("");
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingTemplate, setEditingTemplate] = useState<MailTemplate | null>(
+    null,
+  );
+  const [deleteTarget, setDeleteTarget] = useState<MailTemplate | null>(null);
+  const [previewTemplate, setPreviewTemplate] = useState<MailTemplate | null>(
+    null,
+  );
+  const [previewValues, setPreviewValues] = useState<Record<string, string>>(
+    {},
+  );
 
   // Form state
-  const [formName, setFormName] = useState("")
-  const [formSubject, setFormSubject] = useState("")
-  const [formBody, setFormBody] = useState("")
-  const [formVariables, setFormVariables] = useState("")
-  const [formAccountId, setFormAccountId] = useState("")
-  const [isSaving, setIsSaving] = useState(false)
+  const [formName, setFormName] = useState("");
+  const [formSubject, setFormSubject] = useState("");
+  const [formBody, setFormBody] = useState("");
+  const [formVariables, setFormVariables] = useState("");
+  const [formAccountId, setFormAccountId] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
 
   // ── Data ────────────────────────────────────────────────────────────────────
 
-  const { data: templates = [], isLoading, isError } = useQuery<MailTemplate[]>({
+  const {
+    data: templates = [],
+    isLoading,
+    isError,
+  } = useQuery<MailTemplate[]>({
     queryKey: ["mail", "templates"],
     queryFn: async () => {
-      const res = await mailApi.listTemplates({ limit: 200 })
-      return (res.data as MailTemplate[] | null) ?? []
+      const res = await mailApi.listTemplates({ limit: 200 });
+      return (res.data as MailTemplate[] | null) ?? [];
     },
     retry: 1,
-  })
+  });
 
   const filtered = useMemo(() => {
-    const q = search.toLowerCase()
-    if (!q) return templates
+    const q = search.toLowerCase();
+    if (!q) return templates;
     return templates.filter(
-      t =>
-        t.name.toLowerCase().includes(q) ||
-        t.subject.toLowerCase().includes(q)
-    )
-  }, [templates, search])
+      (t) =>
+        t.name.toLowerCase().includes(q) || t.subject.toLowerCase().includes(q),
+    );
+  }, [templates, search]);
 
   // ── Form helpers ────────────────────────────────────────────────────────────
 
   const resetForm = () => {
-    setFormName("")
-    setFormSubject("")
-    setFormBody("")
-    setFormVariables("")
-    setFormAccountId("")
-    setEditingTemplate(null)
-  }
+    setFormName("");
+    setFormSubject("");
+    setFormBody("");
+    setFormVariables("");
+    setFormAccountId("");
+    setEditingTemplate(null);
+  };
 
   const openCreate = () => {
-    resetForm()
-    setIsFormOpen(true)
-  }
+    resetForm();
+    setIsFormOpen(true);
+  };
 
   const openEdit = (t: MailTemplate) => {
-    setEditingTemplate(t)
-    setFormName(t.name)
-    setFormSubject(t.subject ?? "")
-    setFormBody(t.body_html ?? "")
-    setFormVariables(parseVariables(t.variables).join(", "))
-    setFormAccountId(t.account_id)
-    setIsFormOpen(true)
-  }
+    setEditingTemplate(t);
+    setFormName(t.name);
+    setFormSubject(t.subject ?? "");
+    setFormBody(t.body_html ?? "");
+    setFormVariables(parseVariables(t.variables).join(", "));
+    setFormAccountId(t.account_id);
+    setIsFormOpen(true);
+  };
 
   const openPreview = (t: MailTemplate) => {
-    const vars = parseVariables(t.variables)
-    const initial: Record<string, string> = {}
-    vars.forEach(v => { initial[v] = "" })
-    setPreviewValues(initial)
-    setPreviewTemplate(t)
-  }
+    const vars = parseVariables(t.variables);
+    const initial: Record<string, string> = {};
+    vars.forEach((v) => {
+      initial[v] = "";
+    });
+    setPreviewValues(initial);
+    setPreviewTemplate(t);
+  };
 
   const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!formName.trim()) return
-    setIsSaving(true)
+    e.preventDefault();
+    if (!formName.trim()) return;
+    setIsSaving(true);
     const variables = formVariables
       .split(",")
-      .map(v => v.trim())
-      .filter(Boolean)
+      .map((v) => v.trim())
+      .filter(Boolean);
     const payload: CreateMailTemplateRequest = {
       account_id: formAccountId || "default",
       name: formName.trim(),
       subject: formSubject.trim(),
       body_html: formBody,
       variables,
-    }
+    };
     try {
       if (editingTemplate) {
-        await mailApi.updateTemplate(editingTemplate.id, payload)
-        toast.success("Modèle mis à jour.")
+        await mailApi.updateTemplate(editingTemplate.id, payload);
+        toast.success("Modèle mis à jour.");
       } else {
-        await mailApi.createTemplate(payload)
-        toast.success("Modèle créé.")
+        await mailApi.createTemplate(payload);
+        toast.success("Modèle créé.");
       }
-      queryClient.invalidateQueries({ queryKey: ["mail", "templates"] })
-      setIsFormOpen(false)
-      resetForm()
+      queryClient.invalidateQueries({ queryKey: ["mail", "templates"] });
+      setIsFormOpen(false);
+      resetForm();
     } catch {
-      toast.error("Impossible d'enregistrer le modèle.")
+      toast.error("Impossible d'enregistrer le modèle.");
     } finally {
-      setIsSaving(false)
+      setIsSaving(false);
     }
-  }
+  };
 
   const handleDelete = async () => {
-    if (!deleteTarget) return
-    const id = deleteTarget.id
-    setDeleteTarget(null)
+    if (!deleteTarget) return;
+    const id = deleteTarget.id;
+    setDeleteTarget(null);
     try {
-      await mailApi.deleteTemplate(id)
-      queryClient.invalidateQueries({ queryKey: ["mail", "templates"] })
-      toast.success("Modèle supprimé.")
+      await mailApi.deleteTemplate(id);
+      queryClient.invalidateQueries({ queryKey: ["mail", "templates"] });
+      toast.success("Modèle supprimé.");
     } catch {
-      toast.error("Impossible de supprimer le modèle.")
+      toast.error("Impossible de supprimer le modèle.");
     }
-  }
+  };
 
   // ── Preview variable detection ───────────────────────────────────────────────
   const detectedVars = useMemo(() => {
-    if (!previewTemplate) return []
-    const fromVars = parseVariables(previewTemplate.variables)
-    const fromBody = [...(previewTemplate.body_html ?? "").matchAll(/\{\{(\w+)\}\}/g)].map(m => m[1])
-    return [...new Set([...fromVars, ...fromBody])]
-  }, [previewTemplate])
+    if (!previewTemplate) return [];
+    const fromVars = parseVariables(previewTemplate.variables);
+    const fromBody = [
+      ...(previewTemplate.body_html ?? "").matchAll(/\{\{(\w+)\}\}/g),
+    ].map((m) => m[1]);
+    return [...new Set([...fromVars, ...fromBody])];
+  }, [previewTemplate]);
 
   // ── Render ──────────────────────────────────────────────────────────────────
 
@@ -197,7 +235,8 @@ export default function MailTemplatesPage() {
                 Modèles d&apos;email
               </h1>
               <p className="text-sm text-muted-foreground">
-                Gérez vos modèles d&apos;email réutilisables avec variables dynamiques.
+                Gérez vos modèles d&apos;email réutilisables avec variables
+                dynamiques.
               </p>
             </div>
           </div>
@@ -214,7 +253,7 @@ export default function MailTemplatesPage() {
             className="pl-8"
             placeholder="Rechercher un modèle..."
             value={search}
-            onChange={e => setSearch(e.target.value)}
+            onChange={(e) => setSearch(e.target.value)}
           />
         </div>
 
@@ -241,7 +280,9 @@ export default function MailTemplatesPage() {
               <div className="flex flex-col items-center justify-center py-16 text-center">
                 <FileText className="h-12 w-12 text-muted-foreground/40 mb-3" />
                 <p className="text-base font-medium">
-                  {search ? `Aucun modèle pour « ${search} »` : "Aucun modèle créé"}
+                  {search
+                    ? `Aucun modèle pour « ${search} »`
+                    : "Aucun modèle créé"}
                 </p>
                 {!search && (
                   <p className="text-sm text-muted-foreground mt-1">
@@ -257,8 +298,8 @@ export default function MailTemplatesPage() {
               </div>
             ) : (
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {filtered.map(t => {
-                  const vars = parseVariables(t.variables)
+                {filtered.map((t) => {
+                  const vars = parseVariables(t.variables);
                   return (
                     <Card key={t.id} className="border-border/50 group">
                       <CardHeader className="pb-2">
@@ -300,7 +341,9 @@ export default function MailTemplatesPage() {
                       <CardContent className="space-y-2">
                         {t.subject && (
                           <p className="text-xs text-muted-foreground truncate">
-                            <span className="font-medium text-foreground">Objet : </span>
+                            <span className="font-medium text-foreground">
+                              Objet :{" "}
+                            </span>
                             {t.subject}
                           </p>
                         )}
@@ -309,8 +352,12 @@ export default function MailTemplatesPage() {
                         </p>
                         {vars.length > 0 && (
                           <div className="flex flex-wrap gap-1 pt-1">
-                            {vars.map(v => (
-                              <Badge key={v} variant="outline" className="h-5 gap-1 px-1.5 text-xs">
+                            {vars.map((v) => (
+                              <Badge
+                                key={v}
+                                variant="outline"
+                                className="h-5 gap-1 px-1.5 text-xs"
+                              >
                                 <Variable className="h-2.5 w-2.5" />
                                 {v}
                               </Badge>
@@ -319,7 +366,7 @@ export default function MailTemplatesPage() {
                         )}
                       </CardContent>
                     </Card>
-                  )
+                  );
                 })}
               </div>
             )}
@@ -328,27 +375,40 @@ export default function MailTemplatesPage() {
       </div>
 
       {/* Create / Edit dialog */}
-      <Dialog open={isFormOpen} onOpenChange={open => { if (!open) { setIsFormOpen(false); resetForm() } }}>
+      <Dialog
+        open={isFormOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            setIsFormOpen(false);
+            resetForm();
+          }
+        }}
+      >
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              {editingTemplate ? "Modifier le modèle" : "Nouveau modèle d'email"}
+              {editingTemplate
+                ? "Modifier le modèle"
+                : "Nouveau modèle d'email"}
             </DialogTitle>
             <DialogDescription>
-              Utilisez {`{{variable}}`} dans l&apos;objet ou le corps pour créer des variables dynamiques.
+              Utilisez {`{{variable}}`} dans l&apos;objet ou le corps pour créer
+              des variables dynamiques.
             </DialogDescription>
           </DialogHeader>
 
           <form id="template-form" onSubmit={handleSave} className="space-y-4">
             <div className="space-y-1.5">
-              <Label htmlFor="tpl-name">Nom du modèle <span className="text-destructive">*</span></Label>
+              <Label htmlFor="tpl-name">
+                Nom du modèle <span className="text-destructive">*</span>
+              </Label>
               <Input
                 id="tpl-name"
                 required
                 autoFocus
                 placeholder="Ex : Relance prospect"
                 value={formName}
-                onChange={e => setFormName(e.target.value)}
+                onChange={(e) => setFormName(e.target.value)}
               />
             </div>
 
@@ -358,7 +418,7 @@ export default function MailTemplatesPage() {
                 id="tpl-subject"
                 placeholder="Ex : Suivi de votre demande — {{entreprise}}"
                 value={formSubject}
-                onChange={e => setFormSubject(e.target.value)}
+                onChange={(e) => setFormSubject(e.target.value)}
               />
             </div>
 
@@ -367,9 +427,11 @@ export default function MailTemplatesPage() {
               <Textarea
                 id="tpl-body"
                 rows={8}
-                placeholder={"Bonjour {{prenom}},\n\nMerci pour votre intérêt..."}
+                placeholder={
+                  "Bonjour {{prenom}},\n\nMerci pour votre intérêt..."
+                }
                 value={formBody}
-                onChange={e => setFormBody(e.target.value)}
+                onChange={(e) => setFormBody(e.target.value)}
                 className="font-mono text-sm"
               />
             </div>
@@ -383,27 +445,48 @@ export default function MailTemplatesPage() {
                 id="tpl-vars"
                 placeholder="Ex : prenom, entreprise, date"
                 value={formVariables}
-                onChange={e => setFormVariables(e.target.value)}
+                onChange={(e) => setFormVariables(e.target.value)}
               />
               <p className="text-xs text-muted-foreground">
-                Ces variables peuvent être substituées lors de l&apos;envoi. Syntaxe dans le corps : {`{{variable}}`}
+                Ces variables peuvent être substituées lors de l&apos;envoi.
+                Syntaxe dans le corps : {`{{variable}}`}
               </p>
             </div>
           </form>
 
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => { setIsFormOpen(false); resetForm() }}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setIsFormOpen(false);
+                resetForm();
+              }}
+            >
               Annuler
             </Button>
-            <Button type="submit" form="template-form" disabled={isSaving || !formName.trim()}>
-              {isSaving ? "Enregistrement..." : editingTemplate ? "Enregistrer" : "Créer"}
+            <Button
+              type="submit"
+              form="template-form"
+              disabled={isSaving || !formName.trim()}
+            >
+              {isSaving
+                ? "Enregistrement..."
+                : editingTemplate
+                  ? "Enregistrer"
+                  : "Créer"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* Preview dialog */}
-      <Dialog open={previewTemplate !== null} onOpenChange={open => { if (!open) setPreviewTemplate(null) }}>
+      <Dialog
+        open={previewTemplate !== null}
+        onOpenChange={(open) => {
+          if (!open) setPreviewTemplate(null);
+        }}
+      >
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -417,17 +500,26 @@ export default function MailTemplatesPage() {
 
           {detectedVars.length > 0 && (
             <div className="rounded-md border bg-muted/30 p-3 space-y-2">
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Variables</p>
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                Variables
+              </p>
               <div className="grid gap-2 sm:grid-cols-2">
-                {detectedVars.map(v => (
+                {detectedVars.map((v) => (
                   <div key={v} className="flex items-center gap-2">
-                    <Label htmlFor={`prev-${v}`} className="w-24 shrink-0 text-xs">{v}</Label>
+                    <Label
+                      htmlFor={`prev-${v}`}
+                      className="w-24 shrink-0 text-xs"
+                    >
+                      {v}
+                    </Label>
                     <Input
                       id={`prev-${v}`}
                       className="h-7 text-xs"
                       placeholder={`{{${v}}}`}
                       value={previewValues[v] ?? ""}
-                      onChange={e => setPreviewValues(p => ({ ...p, [v]: e.target.value }))}
+                      onChange={(e) =>
+                        setPreviewValues((p) => ({ ...p, [v]: e.target.value }))
+                      }
                     />
                   </div>
                 ))}
@@ -446,16 +538,27 @@ export default function MailTemplatesPage() {
               <div
                 className="p-4 text-sm whitespace-pre-wrap"
                 dangerouslySetInnerHTML={{
-                  __html: substituteVariables(previewTemplate.body_html ?? "", previewValues),
+                  __html: substituteVariables(
+                    previewTemplate.body_html ?? "",
+                    previewValues,
+                  ),
                 }}
               />
             </div>
           )}
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setPreviewTemplate(null)}>Fermer</Button>
+            <Button variant="outline" onClick={() => setPreviewTemplate(null)}>
+              Fermer
+            </Button>
             {previewTemplate && (
-              <Button variant="secondary" onClick={() => { setPreviewTemplate(null); openEdit(previewTemplate) }}>
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setPreviewTemplate(null);
+                  openEdit(previewTemplate);
+                }}
+              >
                 <Pencil className="h-4 w-4 mr-2" />
                 Modifier
               </Button>
@@ -465,22 +568,32 @@ export default function MailTemplatesPage() {
       </Dialog>
 
       {/* Delete confirmation */}
-      <AlertDialog open={deleteTarget !== null} onOpenChange={open => { if (!open) setDeleteTarget(null) }}>
+      <AlertDialog
+        open={deleteTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null);
+        }}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Supprimer ce modèle ?</AlertDialogTitle>
             <AlertDialogDescription>
               {deleteTarget && (
-                <>Supprimer <strong>{deleteTarget.name}</strong> ? Cette action est irréversible.</>
+                <>
+                  Supprimer <strong>{deleteTarget.name}</strong> ? Cette action
+                  est irréversible.
+                </>
               )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete}>Supprimer</AlertDialogAction>
+            <AlertDialogAction onClick={handleDelete}>
+              Supprimer
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
     </AppLayout>
-  )
+  );
 }

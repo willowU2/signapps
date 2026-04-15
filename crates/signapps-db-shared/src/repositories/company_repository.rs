@@ -488,13 +488,11 @@ impl CompanyRepository {
     ///
     /// No panics possible -- all errors are propagated via `Result`.
     pub async fn touch_context(pool: &PgPool, context_id: Uuid) -> Result<()> {
-        sqlx::query(
-            "UPDATE identity.login_contexts SET last_used_at = NOW() WHERE id = $1",
-        )
-        .bind(context_id)
-        .execute(pool)
-        .await
-        .map_err(|e| Error::Database(e.to_string()))?;
+        sqlx::query("UPDATE identity.login_contexts SET last_used_at = NOW() WHERE id = $1")
+            .bind(context_id)
+            .execute(pool)
+            .await
+            .map_err(|e| Error::Database(e.to_string()))?;
         Ok(())
     }
 

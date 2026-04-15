@@ -1,10 +1,16 @@
-"use client"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { Label } from "@/components/ui/label"
-import { Trash2, Plus } from "lucide-react"
-import type { FormField } from "@/lib/api/forms"
+"use client";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Trash2, Plus } from "lucide-react";
+import type { FormField } from "@/lib/api/forms";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -17,42 +23,42 @@ export type Operator =
   | "greater_than"
   | "less_than"
   | "is_empty"
-  | "is_not_empty"
+  | "is_not_empty";
 
-export type LogicalOperator = "and" | "or"
+export type LogicalOperator = "and" | "or";
 
 export type ConditionAction =
   | { type: "show" }
   | { type: "hide" }
-  | { type: "skip_to_page"; page: number }
+  | { type: "skip_to_page"; page: number };
 
 export interface SingleCondition {
-  field_id: string
-  operator: Operator
-  value: string
+  field_id: string;
+  operator: Operator;
+  value: string;
 }
 
 export interface ConditionGroup {
-  logical: LogicalOperator
-  conditions: SingleCondition[]
-  action: ConditionAction
+  logical: LogicalOperator;
+  conditions: SingleCondition[];
+  action: ConditionAction;
 }
 
 // Legacy flat condition shape (backward compat)
 interface LegacyCondition {
-  field_id: string
-  operator: "equals" | "not_equals" | "contains"
-  value: string
+  field_id: string;
+  operator: "equals" | "not_equals" | "contains";
+  value: string;
 }
 
 /** Extended field type that may carry conditional logic data */
-type ConditionalFormField = FormField & { show_if?: unknown }
+type ConditionalFormField = FormField & { show_if?: unknown };
 
 interface Props {
-  field: ConditionalFormField
-  allFields: FormField[]
-  totalPages?: number
-  onChange: (group: ConditionGroup | undefined) => void
+  field: ConditionalFormField;
+  allFields: FormField[];
+  totalPages?: number;
+  onChange: (group: ConditionGroup | undefined) => void;
 }
 
 // ---------------------------------------------------------------------------
@@ -67,18 +73,24 @@ const OPERATOR_LABELS: Record<Operator, string> = {
   less_than: "inférieur à",
   is_empty: "est vide",
   is_not_empty: "n'est pas vide",
-}
+};
 
 /** Operators that don't need a value input */
-const NO_VALUE_OPERATORS: Operator[] = ["is_empty", "is_not_empty"]
+const NO_VALUE_OPERATORS: Operator[] = ["is_empty", "is_not_empty"];
 
 const ELIGIBLE_FIELD_TYPES = [
-  "SingleChoice", "MultipleChoice", "Text", "Email",
-  "Number", "LongText", "Rating", "Date",
-]
+  "SingleChoice",
+  "MultipleChoice",
+  "Text",
+  "Email",
+  "Number",
+  "LongText",
+  "Rating",
+  "Date",
+];
 
 function defaultCondition(): SingleCondition {
-  return { field_id: "", operator: "equals", value: "" }
+  return { field_id: "", operator: "equals", value: "" };
 }
 
 function defaultGroup(): ConditionGroup {
@@ -86,70 +98,77 @@ function defaultGroup(): ConditionGroup {
     logical: "and",
     conditions: [defaultCondition()],
     action: { type: "show" },
-  }
+  };
 }
 
 /** Migrate a legacy flat condition into the new group format */
 function migrateCondition(raw: unknown): ConditionGroup | undefined {
-  if (!raw) return undefined
-  const r = raw as LegacyCondition | ConditionGroup
-  if ("conditions" in r) return r as ConditionGroup
-  const legacy = r as LegacyCondition
+  if (!raw) return undefined;
+  const r = raw as LegacyCondition | ConditionGroup;
+  if ("conditions" in r) return r as ConditionGroup;
+  const legacy = r as LegacyCondition;
   return {
     logical: "and",
     conditions: [{ ...legacy }],
     action: { type: "show" },
-  }
+  };
 }
 
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
 
-export function ConditionalLogicEditor({ field, allFields, totalPages = 1, onChange }: Props) {
-  const raw: unknown = field.show_if
-  const group: ConditionGroup | undefined = migrateCondition(raw)
+export function ConditionalLogicEditor({
+  field,
+  allFields,
+  totalPages = 1,
+  onChange,
+}: Props) {
+  const raw: unknown = field.show_if;
+  const group: ConditionGroup | undefined = migrateCondition(raw);
 
   const eligible = allFields.filter(
-    f => f.id !== field.id && ELIGIBLE_FIELD_TYPES.includes(f.field_type)
-  )
+    (f) => f.id !== field.id && ELIGIBLE_FIELD_TYPES.includes(f.field_type),
+  );
 
   // ── Group-level helpers ──────────────────────────────────────────────────
 
   const updateGroup = (patch: Partial<ConditionGroup>) => {
-    const base = group ?? defaultGroup()
-    onChange({ ...base, ...patch })
-  }
+    const base = group ?? defaultGroup();
+    onChange({ ...base, ...patch });
+  };
 
   const updateCondition = (idx: number, patch: Partial<SingleCondition>) => {
-    const base = group ?? defaultGroup()
+    const base = group ?? defaultGroup();
     const conditions = base.conditions.map((c, i) =>
-      i === idx ? { ...c, ...patch } : c
-    )
-    onChange({ ...base, conditions })
-  }
+      i === idx ? { ...c, ...patch } : c,
+    );
+    onChange({ ...base, conditions });
+  };
 
   const addCondition = () => {
-    const base = group ?? defaultGroup()
-    onChange({ ...base, conditions: [...base.conditions, defaultCondition()] })
-  }
+    const base = group ?? defaultGroup();
+    onChange({ ...base, conditions: [...base.conditions, defaultCondition()] });
+  };
 
   const removeCondition = (idx: number) => {
-    if (!group) return
-    const conditions = group.conditions.filter((_, i) => i !== idx)
+    if (!group) return;
+    const conditions = group.conditions.filter((_, i) => i !== idx);
     if (conditions.length === 0) {
-      onChange(undefined)
+      onChange(undefined);
     } else {
-      onChange({ ...group, conditions })
+      onChange({ ...group, conditions });
     }
-  }
+  };
 
-  const updateAction = (patch: Partial<ConditionAction> & { type?: string }) => {
-    const base = group ?? defaultGroup()
-    const current = base.action
-    const merged = { ...current, ...patch } as ConditionAction
-    onChange({ ...base, action: merged })
-  }
+  const updateAction = (
+    patch: Partial<ConditionAction> & { type?: string },
+  ) => {
+    const base = group ?? defaultGroup();
+    const current = base.action;
+    const merged = { ...current, ...patch } as ConditionAction;
+    onChange({ ...base, action: merged });
+  };
 
   // ── Initialise from scratch ──────────────────────────────────────────────
 
@@ -158,9 +177,9 @@ export function ConditionalLogicEditor({ field, allFields, totalPages = 1, onCha
       <p className="text-xs text-muted-foreground">
         Aucun champ éligible pour une condition.
       </p>
-    )
+    );
 
-  const g = group ?? defaultGroup()
+  const g = group ?? defaultGroup();
 
   return (
     <div className="space-y-3 border rounded-md p-3 bg-muted/20">
@@ -172,7 +191,9 @@ export function ConditionalLogicEditor({ field, allFields, totalPages = 1, onCha
           {g.conditions.length > 1 && (
             <Select
               value={g.logical}
-              onValueChange={v => updateGroup({ logical: v as LogicalOperator })}
+              onValueChange={(v) =>
+                updateGroup({ logical: v as LogicalOperator })
+              }
             >
               <SelectTrigger className="h-6 text-xs w-16">
                 <SelectValue />
@@ -198,18 +219,23 @@ export function ConditionalLogicEditor({ field, allFields, totalPages = 1, onCha
 
       {/* Condition rows */}
       {g.conditions.map((cond, idx) => (
-        <div key={idx} className="grid grid-cols-[1fr_1fr_1fr_auto] gap-2 items-center">
+        <div
+          key={idx}
+          className="grid grid-cols-[1fr_1fr_1fr_auto] gap-2 items-center"
+        >
           {/* Field selector */}
           <Select
             value={cond.field_id}
-            onValueChange={v => updateCondition(idx, { field_id: v })}
+            onValueChange={(v) => updateCondition(idx, { field_id: v })}
           >
             <SelectTrigger className="h-8 text-xs">
               <SelectValue placeholder="Champ" />
             </SelectTrigger>
             <SelectContent>
-              {eligible.map(f => (
-                <SelectItem key={f.id} value={f.id}>{f.label}</SelectItem>
+              {eligible.map((f) => (
+                <SelectItem key={f.id} value={f.id}>
+                  {f.label}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -217,14 +243,18 @@ export function ConditionalLogicEditor({ field, allFields, totalPages = 1, onCha
           {/* Operator selector */}
           <Select
             value={cond.operator}
-            onValueChange={v => updateCondition(idx, { operator: v as Operator })}
+            onValueChange={(v) =>
+              updateCondition(idx, { operator: v as Operator })
+            }
           >
             <SelectTrigger className="h-8 text-xs">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
               {Object.entries(OPERATOR_LABELS).map(([op, label]) => (
-                <SelectItem key={op} value={op}>{label}</SelectItem>
+                <SelectItem key={op} value={op}>
+                  {label}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -237,7 +267,7 @@ export function ConditionalLogicEditor({ field, allFields, totalPages = 1, onCha
               className="h-8 text-xs"
               value={cond.value}
               placeholder="Valeur"
-              onChange={e => updateCondition(idx, { value: e.target.value })}
+              onChange={(e) => updateCondition(idx, { value: e.target.value })}
             />
           )}
 
@@ -271,7 +301,9 @@ export function ConditionalLogicEditor({ field, allFields, totalPages = 1, onCha
         <div className="flex items-center gap-2">
           <Select
             value={g.action.type}
-            onValueChange={v => updateAction({ type: v as ConditionAction["type"] })}
+            onValueChange={(v) =>
+              updateAction({ type: v as ConditionAction["type"] })
+            }
           >
             <SelectTrigger className="h-8 text-xs w-40">
               <SelectValue />
@@ -288,7 +320,7 @@ export function ConditionalLogicEditor({ field, allFields, totalPages = 1, onCha
           {g.action.type === "skip_to_page" && totalPages > 1 && (
             <Select
               value={String(g.action.page ?? 2)}
-              onValueChange={v =>
+              onValueChange={(v) =>
                 updateAction({ type: "skip_to_page", page: Number(v) })
               }
             >
@@ -297,9 +329,11 @@ export function ConditionalLogicEditor({ field, allFields, totalPages = 1, onCha
               </SelectTrigger>
               <SelectContent>
                 {Array.from({ length: totalPages }, (_, i) => i + 1)
-                  .filter(p => p > 1)
-                  .map(p => (
-                    <SelectItem key={p} value={String(p)}>Page {p}</SelectItem>
+                  .filter((p) => p > 1)
+                  .map((p) => (
+                    <SelectItem key={p} value={String(p)}>
+                      Page {p}
+                    </SelectItem>
                   ))}
               </SelectContent>
             </Select>
@@ -307,5 +341,5 @@ export function ConditionalLogicEditor({ field, allFields, totalPages = 1, onCha
         </div>
       </div>
     </div>
-  )
+  );
 }

@@ -29,9 +29,19 @@ interface HashtagEvolutionChartProps {
   defaultRange?: 30 | 90;
 }
 
-const COLORS = ["#6366f1", "#22c55e", "#f59e0b", "#ec4899", "#06b6d4", "#8b5cf6"];
+const COLORS = [
+  "#6366f1",
+  "#22c55e",
+  "#f59e0b",
+  "#ec4899",
+  "#06b6d4",
+  "#8b5cf6",
+];
 
-function generateDemoData(hashtags: string[], days: number): HashtagDataPoint[] {
+function generateDemoData(
+  hashtags: string[],
+  days: number,
+): HashtagDataPoint[] {
   const points: HashtagDataPoint[] = [];
   const bases = hashtags.reduce<Record<string, number>>((acc, tag, i) => {
     acc[tag] = 30 + i * 10 + Math.random() * 20;
@@ -52,7 +62,13 @@ function generateDemoData(hashtags: string[], days: number): HashtagDataPoint[] 
   return points;
 }
 
-const DEFAULT_HASHTAGS = ["SignApps", "productivity", "openSource", "innovation", "Rust"];
+const DEFAULT_HASHTAGS = [
+  "SignApps",
+  "productivity",
+  "openSource",
+  "innovation",
+  "Rust",
+];
 
 export function HashtagEvolutionChart({
   hashtags = DEFAULT_HASHTAGS,
@@ -60,16 +76,18 @@ export function HashtagEvolutionChart({
   defaultRange = 30,
 }: HashtagEvolutionChartProps) {
   const [range, setRange] = useState<30 | 90>(defaultRange);
-  const [activeHashtags, setActiveHashtags] = useState<string[]>(hashtags.slice(0, 3));
+  const [activeHashtags, setActiveHashtags] = useState<string[]>(
+    hashtags.slice(0, 3),
+  );
 
   const chartData = useMemo(
     () => data?.slice(-range) ?? generateDemoData(hashtags, range),
-    [data, hashtags, range]
+    [data, hashtags, range],
   );
 
   const toggleHashtag = (tag: string) => {
     setActiveHashtags((prev) =>
-      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
+      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag],
     );
   };
 
@@ -105,7 +123,10 @@ export function HashtagEvolutionChart({
                 className="text-xs gap-1 cursor-pointer"
                 style={
                   activeHashtags.includes(tag)
-                    ? { backgroundColor: COLORS[i % COLORS.length], border: "none" }
+                    ? {
+                        backgroundColor: COLORS[i % COLORS.length],
+                        border: "none",
+                      }
                     : {}
                 }
               >
@@ -122,7 +143,10 @@ export function HashtagEvolutionChart({
           </div>
         ) : (
           <ResponsiveContainer width="100%" height={200}>
-            <LineChart data={chartData} margin={{ top: 5, right: 10, bottom: 5, left: 0 }}>
+            <LineChart
+              data={chartData}
+              margin={{ top: 5, right: 10, bottom: 5, left: 0 }}
+            >
               <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
               <XAxis
                 dataKey="date"

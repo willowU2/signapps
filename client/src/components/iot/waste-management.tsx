@@ -136,7 +136,10 @@ export default function WasteManagement() {
         </h3>
         <div className="space-y-3">
           {pickupSchedule.map((schedule, idx) => (
-            <div key={idx} className="flex items-center justify-between border-b pb-3 last:border-b-0">
+            <div
+              key={idx}
+              className="flex items-center justify-between border-b pb-3 last:border-b-0"
+            >
               <p className="font-medium text-sm">{schedule.day}</p>
               <div className="flex gap-2">
                 {schedule.bins.map((binNum) => (

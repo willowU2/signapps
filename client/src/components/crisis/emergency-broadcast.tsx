@@ -49,7 +49,8 @@ const DEFAULT_MESSAGES: BroadcastMessage[] = [
 ];
 
 export function EmergencyBroadcast() {
-  const [messages, setMessages] = useState<BroadcastMessage[]>(DEFAULT_MESSAGES);
+  const [messages, setMessages] =
+    useState<BroadcastMessage[]>(DEFAULT_MESSAGES);
   const [messageContent, setMessageContent] = useState("");
   const [selectedGroups, setSelectedGroups] = useState<Set<string>>(new Set());
   const [channels, setChannels] = useState({
@@ -96,7 +97,7 @@ export function EmergencyBroadcast() {
   const recipientCount = Array.from(selectedGroups).reduce(
     (sum, groupId) =>
       sum + (DEFAULT_GROUPS.find((g) => g.id === groupId)?.memberCount || 0),
-    0
+    0,
   );
 
   return (
@@ -104,8 +105,12 @@ export function EmergencyBroadcast() {
       <div className="flex items-center gap-3">
         <AlertCircle className="w-6 h-6 text-red-600" />
         <div>
-          <h2 className="text-2xl font-bold text-foreground">Emergency Broadcast</h2>
-          <p className="text-muted-foreground">Send urgent messages to staff across all channels</p>
+          <h2 className="text-2xl font-bold text-foreground">
+            Emergency Broadcast
+          </h2>
+          <p className="text-muted-foreground">
+            Send urgent messages to staff across all channels
+          </p>
         </div>
       </div>
 
@@ -129,14 +134,19 @@ export function EmergencyBroadcast() {
           </label>
           <div className="space-y-2">
             {DEFAULT_GROUPS.map((group) => (
-              <label key={group.id} className="flex items-center gap-3 cursor-pointer">
+              <label
+                key={group.id}
+                className="flex items-center gap-3 cursor-pointer"
+              >
                 <input
                   type="checkbox"
                   checked={selectedGroups.has(group.id)}
                   onChange={() => handleGroupToggle(group.id)}
                   className="rounded"
                 />
-                <span className="text-foreground font-medium">{group.name}</span>
+                <span className="text-foreground font-medium">
+                  {group.name}
+                </span>
                 <span className="text-xs text-muted-foreground">
                   ({group.memberCount} members)
                 </span>
@@ -194,7 +204,9 @@ export function EmergencyBroadcast() {
       </div>
 
       <div className="space-y-3">
-        <h3 className="text-lg font-semibold text-foreground">Recent Broadcasts</h3>
+        <h3 className="text-lg font-semibold text-foreground">
+          Recent Broadcasts
+        </h3>
         {messages.map((msg) => (
           <div key={msg.id} className="border rounded-lg p-4 bg-muted">
             <div className="flex items-start justify-between mb-2">
@@ -205,7 +217,9 @@ export function EmergencyBroadcast() {
             </div>
             <p className="text-xs text-muted-foreground">
               {new Date(msg.createdAt).toLocaleString()} •{" "}
-              {msg.recipients.map((r) => DEFAULT_GROUPS.find((g) => g.id === r)?.name).join(", ")}
+              {msg.recipients
+                .map((r) => DEFAULT_GROUPS.find((g) => g.id === r)?.name)
+                .join(", ")}
             </p>
           </div>
         ))}

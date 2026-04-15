@@ -55,7 +55,7 @@ export default function SprintRetro() {
     setRetro((prev) => ({
       ...prev,
       [column]: prev[column].map((card) =>
-        card.id === cardId ? { ...card, votes: card.votes + 1 } : card
+        card.id === cardId ? { ...card, votes: card.votes + 1 } : card,
       ),
     }));
   };
@@ -67,7 +67,12 @@ export default function SprintRetro() {
     }));
   };
 
-  const renderColumn = (title: string, column: "keep" | "stop" | "start", cards: RetroCard[], bgColor: string) => {
+  const renderColumn = (
+    title: string,
+    column: "keep" | "stop" | "start",
+    cards: RetroCard[],
+    bgColor: string,
+  ) => {
     return (
       <div className={`flex-1 ${bgColor} p-4 rounded-lg`}>
         <h3 className="font-bold text-lg mb-4">{title}</h3>
@@ -75,7 +80,10 @@ export default function SprintRetro() {
           {cards
             .sort((a, b) => b.votes - a.votes)
             .map((card) => (
-              <div key={card.id} className="bg-card p-3 rounded-lg shadow-sm border hover:shadow-md transition-shadow">
+              <div
+                key={card.id}
+                className="bg-card p-3 rounded-lg shadow-sm border hover:shadow-md transition-shadow"
+              >
                 <div className="flex justify-between items-start gap-2 mb-2">
                   <p className="text-sm font-medium flex-1">{card.content}</p>
                   <button
@@ -106,7 +114,9 @@ export default function SprintRetro() {
             type="text"
             placeholder="Add a card..."
             value={newCards[column]}
-            onChange={(e) => setNewCards((prev) => ({ ...prev, [column]: e.target.value }))}
+            onChange={(e) =>
+              setNewCards((prev) => ({ ...prev, [column]: e.target.value }))
+            }
             onKeyPress={(e) => {
               if (e.key === "Enter") addCard(column, newCards[column]);
             }}
@@ -136,7 +146,8 @@ export default function SprintRetro() {
 
       <div className="p-3 bg-muted rounded-lg text-sm border">
         <p className="font-medium">
-          Total cards: {retro.keep.length + retro.stop.length + retro.start.length}
+          Total cards:{" "}
+          {retro.keep.length + retro.stop.length + retro.start.length}
         </p>
         <p className="text-xs text-muted-foreground mt-1">
           Anonymous voting enabled • Team members can vote on actions

@@ -55,7 +55,7 @@ export const ImmutableAudit: React.FC<ImmutableAuditProps> = ({
   };
 
   const getIntegrityBadgeVariant = (
-    integrity: ImmutableAuditProps["chainIntegrity"]
+    integrity: ImmutableAuditProps["chainIntegrity"],
   ) => {
     switch (integrity) {
       case "valid":
@@ -68,7 +68,7 @@ export const ImmutableAudit: React.FC<ImmutableAuditProps> = ({
   };
 
   const getIntegrityLabel = (
-    integrity: ImmutableAuditProps["chainIntegrity"]
+    integrity: ImmutableAuditProps["chainIntegrity"],
   ) => {
     switch (integrity) {
       case "valid":

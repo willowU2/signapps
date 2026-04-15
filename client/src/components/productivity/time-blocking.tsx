@@ -106,7 +106,9 @@ export function TimeBlocking() {
 
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
         <p className="text-sm text-blue-700 font-medium">Focus Time Today</p>
-        <p className="text-2xl font-bold text-blue-900">{focusHours.toFixed(1)}h</p>
+        <p className="text-2xl font-bold text-blue-900">
+          {focusHours.toFixed(1)}h
+        </p>
       </div>
 
       <div className="border rounded-lg overflow-hidden bg-card">

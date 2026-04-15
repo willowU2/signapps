@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
 // IDEA-126: Document approval circuit — submit doc for review, reviewer approves/rejects
 
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -11,14 +11,19 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
-import { CheckCircle, XCircle, Clock, Send, MessageSquare } from 'lucide-react';
-import { toast } from 'sonner';
-import { getClient, ServiceName } from '@/lib/api/factory';
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { CheckCircle, XCircle, Clock, Send, MessageSquare } from "lucide-react";
+import { toast } from "sonner";
+import { getClient, ServiceName } from "@/lib/api/factory";
 
-export type ApprovalStatus = 'draft' | 'pending' | 'approved' | 'rejected' | 'revision';
+export type ApprovalStatus =
+  | "draft"
+  | "pending"
+  | "approved"
+  | "rejected"
+  | "revision";
 
 export interface ApprovalRecord {
   id: string;
@@ -31,12 +36,35 @@ export interface ApprovalRecord {
   updatedAt: string;
 }
 
-const STATUS_META: Record<ApprovalStatus, { label: string; color: string; icon: React.ReactNode }> = {
-  draft: { label: 'Brouillon', color: 'bg-muted text-muted-foreground', icon: <Clock className="h-3.5 w-3.5" /> },
-  pending: { label: 'En attente', color: 'bg-yellow-100 text-yellow-700', icon: <Clock className="h-3.5 w-3.5" /> },
-  approved: { label: 'Approuvé', color: 'bg-green-100 text-green-700', icon: <CheckCircle className="h-3.5 w-3.5" /> },
-  rejected: { label: 'Rejeté', color: 'bg-red-100 text-red-700', icon: <XCircle className="h-3.5 w-3.5" /> },
-  revision: { label: 'Révision demandée', color: 'bg-orange-100 text-orange-700', icon: <MessageSquare className="h-3.5 w-3.5" /> },
+const STATUS_META: Record<
+  ApprovalStatus,
+  { label: string; color: string; icon: React.ReactNode }
+> = {
+  draft: {
+    label: "Brouillon",
+    color: "bg-muted text-muted-foreground",
+    icon: <Clock className="h-3.5 w-3.5" />,
+  },
+  pending: {
+    label: "En attente",
+    color: "bg-yellow-100 text-yellow-700",
+    icon: <Clock className="h-3.5 w-3.5" />,
+  },
+  approved: {
+    label: "Approuvé",
+    color: "bg-green-100 text-green-700",
+    icon: <CheckCircle className="h-3.5 w-3.5" />,
+  },
+  rejected: {
+    label: "Rejeté",
+    color: "bg-red-100 text-red-700",
+    icon: <XCircle className="h-3.5 w-3.5" />,
+  },
+  revision: {
+    label: "Révision demandée",
+    color: "bg-orange-100 text-orange-700",
+    icon: <MessageSquare className="h-3.5 w-3.5" />,
+  },
 };
 
 // ─── Submit for Review ─────────────────────────────────────────────────────────
@@ -56,28 +84,28 @@ export function SubmitApprovalDialog({
   onOpenChange,
   onSubmitted,
 }: SubmitApprovalDialogProps) {
-  const [reviewer, setReviewer] = useState('');
-  const [message, setMessage] = useState('');
+  const [reviewer, setReviewer] = useState("");
+  const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async () => {
     if (!reviewer.trim()) {
-      toast.error('Veuillez saisir l\'email du relecteur');
+      toast.error("Veuillez saisir l'email du relecteur");
       return;
     }
     setLoading(true);
     try {
       const client = getClient(ServiceName.DOCS);
-      await client.post('/approvals', {
+      await client.post("/approvals", {
         document_id: documentId,
         reviewer_email: reviewer.trim(),
         message: message.trim() || undefined,
       });
-      toast.success('Demande d\'approbation envoyée');
+      toast.success("Demande d'approbation envoyée");
       onOpenChange(false);
       onSubmitted?.();
     } catch {
-      toast.error('Impossible d\'envoyer la demande');
+      toast.error("Impossible d'envoyer la demande");
     } finally {
       setLoading(false);
     }
@@ -92,7 +120,8 @@ export function SubmitApprovalDialog({
             Soumettre pour révision
           </DialogTitle>
           <DialogDescription>
-            Le document &ldquo;{documentTitle}&rdquo; sera envoyé au relecteur pour approbation.
+            Le document &ldquo;{documentTitle}&rdquo; sera envoyé au relecteur
+            pour approbation.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-2">
@@ -117,10 +146,12 @@ export function SubmitApprovalDialog({
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Annuler</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Annuler
+          </Button>
           <Button onClick={handleSubmit} disabled={loading} className="gap-2">
             <Send className="h-4 w-4" />
-            {loading ? 'Envoi…' : 'Soumettre'}
+            {loading ? "Envoi…" : "Soumettre"}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -143,10 +174,10 @@ export function ApprovalActionDialog({
   onOpenChange,
   onActioned,
 }: ApprovalActionDialogProps) {
-  const [comment, setComment] = useState('');
+  const [comment, setComment] = useState("");
   const [loading, setLoading] = useState<ApprovalStatus | null>(null);
 
-  const handleAction = async (status: 'approved' | 'rejected' | 'revision') => {
+  const handleAction = async (status: "approved" | "rejected" | "revision") => {
     setLoading(status);
     try {
       const client = getClient(ServiceName.DOCS);
@@ -155,14 +186,16 @@ export function ApprovalActionDialog({
         comment: comment.trim() || undefined,
       });
       toast.success(
-        status === 'approved' ? 'Document approuvé' :
-        status === 'rejected' ? 'Document rejeté' :
-        'Révision demandée'
+        status === "approved"
+          ? "Document approuvé"
+          : status === "rejected"
+            ? "Document rejeté"
+            : "Révision demandée",
       );
       onOpenChange(false);
       onActioned?.();
     } catch {
-      toast.error('Impossible d\'effectuer cette action');
+      toast.error("Impossible d'effectuer cette action");
     } finally {
       setLoading(null);
     }
@@ -175,13 +208,13 @@ export function ApprovalActionDialog({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Révision du document</DialogTitle>
-          <DialogDescription>
-            {approval.documentTitle}
-          </DialogDescription>
+          <DialogDescription>{approval.documentTitle}</DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-2">
           <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">Statut actuel :</span>
+            <span className="text-sm text-muted-foreground">
+              Statut actuel :
+            </span>
             <Badge className={`gap-1 ${meta.color}`}>
               {meta.icon}
               {meta.label}
@@ -201,7 +234,7 @@ export function ApprovalActionDialog({
           <Button
             variant="outline"
             className="gap-2 text-orange-600 hover:text-orange-700"
-            onClick={() => handleAction('revision')}
+            onClick={() => handleAction("revision")}
             disabled={loading !== null}
           >
             <MessageSquare className="h-4 w-4" />
@@ -210,7 +243,7 @@ export function ApprovalActionDialog({
           <Button
             variant="destructive"
             className="gap-2"
-            onClick={() => handleAction('rejected')}
+            onClick={() => handleAction("rejected")}
             disabled={loading !== null}
           >
             <XCircle className="h-4 w-4" />
@@ -218,7 +251,7 @@ export function ApprovalActionDialog({
           </Button>
           <Button
             className="gap-2 bg-green-600 hover:bg-green-700"
-            onClick={() => handleAction('approved')}
+            onClick={() => handleAction("approved")}
             disabled={loading !== null}
           >
             <CheckCircle className="h-4 w-4" />

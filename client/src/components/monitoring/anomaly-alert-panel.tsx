@@ -1,10 +1,16 @@
-'use client';
+"use client";
 
-import { useEffect, useRef, useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { AlertTriangle, TrendingUp, CheckCircle, RefreshCw, Activity } from 'lucide-react';
+import { useEffect, useRef, useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  AlertTriangle,
+  TrendingUp,
+  CheckCircle,
+  RefreshCw,
+  Activity,
+} from "lucide-react";
 
 interface MetricSample {
   name: string;
@@ -20,7 +26,7 @@ interface Anomaly {
   value: number;
   baseline: number;
   deviation: number; // %
-  severity: 'low' | 'medium' | 'high';
+  severity: "low" | "medium" | "high";
   detectedAt: Date;
   acknowledged: boolean;
 }
@@ -42,17 +48,17 @@ function detectAnomalies(samples: MetricSample[]): Anomaly[] {
         value: s.value,
         baseline: s.baseline,
         deviation,
-        severity: absDev > 100 ? 'high' : absDev > 50 ? 'medium' : 'low',
+        severity: absDev > 100 ? "high" : absDev > 50 ? "medium" : "low",
         detectedAt: new Date(),
         acknowledged: false,
       };
     });
 }
 
-const SEVERITY_COLOR: Record<Anomaly['severity'], string> = {
-  low: 'bg-yellow-500/10 text-yellow-600 border-yellow-500/20',
-  medium: 'bg-orange-500/10 text-orange-600 border-orange-500/20',
-  high: 'bg-red-500/10 text-red-600 border-red-500/20',
+const SEVERITY_COLOR: Record<Anomaly["severity"], string> = {
+  low: "bg-yellow-500/10 text-yellow-600 border-yellow-500/20",
+  medium: "bg-orange-500/10 text-orange-600 border-orange-500/20",
+  high: "bg-red-500/10 text-red-600 border-red-500/20",
 };
 
 /**
@@ -70,40 +76,40 @@ export function AnomalyAlertPanel() {
     setLoading(true);
     try {
       // Fetch current metric snapshot from signapps-metrics
-      const res = await fetch('/api/metrics/summary', {
-        headers: { 'Content-Type': 'application/json' },
+      const res = await fetch("/api/metrics/summary", {
+        headers: { "Content-Type": "application/json" },
       });
       const data = res.ok ? await res.json() : null;
 
       // Build metric samples (use API data or last known values)
       const samples: MetricSample[] = [
         {
-          name: 'CPU Usage',
+          name: "CPU Usage",
           value: data?.cpu?.usage ?? Math.random() * 40 + 10,
           baseline: 0,
           threshold: 80,
-          unit: '%',
+          unit: "%",
         },
         {
-          name: 'Memory Usage',
+          name: "Memory Usage",
           value: data?.memory?.percent ?? Math.random() * 40 + 30,
           baseline: 0,
           threshold: 60,
-          unit: '%',
+          unit: "%",
         },
         {
-          name: 'Request Errors',
+          name: "Request Errors",
           value: data?.requests?.error_rate ?? Math.random() * 3,
           baseline: 0,
           threshold: 200,
-          unit: '%',
+          unit: "%",
         },
         {
-          name: 'Response Time (ms)',
+          name: "Response Time (ms)",
           value: data?.requests?.avg_response_ms ?? Math.random() * 200 + 80,
           baseline: 0,
           threshold: 100,
-          unit: 'ms',
+          unit: "ms",
         },
       ];
 
@@ -113,8 +119,7 @@ export function AnomalyAlertPanel() {
         bl[s.name] = bl[s.name] ?? [];
         bl[s.name].push(s.value);
         if (bl[s.name].length > 10) bl[s.name].shift();
-        const avg =
-          bl[s.name].reduce((a, b) => a + b, 0) / bl[s.name].length;
+        const avg = bl[s.name].reduce((a, b) => a + b, 0) / bl[s.name].length;
         s.baseline = avg;
       }
 
@@ -169,7 +174,7 @@ export function AnomalyAlertPanel() {
             aria-label="Rafraîchir"
           >
             <RefreshCw
-              className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`}
+              className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`}
             />
           </Button>
         </CardTitle>
@@ -200,9 +205,9 @@ export function AnomalyAlertPanel() {
                 <div className="flex items-center gap-1 mt-0.5 text-xs">
                   <TrendingUp className="h-3 w-3" />
                   <span>
-                    {a.value.toFixed(1)} vs baseline{' '}
-                    {a.baseline.toFixed(1)}{' '}
-                    ({a.deviation > 0 ? '+' : ''}{a.deviation.toFixed(0)}%)
+                    {a.value.toFixed(1)} vs baseline {a.baseline.toFixed(1)} (
+                    {a.deviation > 0 ? "+" : ""}
+                    {a.deviation.toFixed(0)}%)
                   </span>
                 </div>
                 <span className="text-[10px] opacity-70">

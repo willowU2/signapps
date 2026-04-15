@@ -5,8 +5,8 @@
  */
 
 // Components
-export { VersionHistoryPanel } from './version-history-panel';
-export { VersionDiffViewer } from './version-diff-viewer';
+export { VersionHistoryPanel } from "./version-history-panel";
+export { VersionDiffViewer } from "./version-diff-viewer";
 
 // Types
 export type {
@@ -18,17 +18,17 @@ export type {
   DiffChangeType,
   VersionCollaborator,
   VersionHistorySettings,
-} from '@/lib/office/versions/types';
+} from "@/lib/office/versions/types";
 
 // Constants
 export {
   VERSION_TYPE_LABELS,
   VERSION_TYPE_COLORS,
   DEFAULT_VERSION_SETTINGS,
-} from '@/lib/office/versions/types';
+} from "@/lib/office/versions/types";
 
 // API
-export { versionsApi } from '@/lib/office/versions/api';
+export { versionsApi } from "@/lib/office/versions/api";
 
 // Store
-export { useVersionsStore } from '@/stores/versions-store';
+export { useVersionsStore } from "@/stores/versions-store";

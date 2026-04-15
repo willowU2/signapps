@@ -297,7 +297,10 @@ export interface TenantConfig {
 // Default Configuration
 // ============================================================================
 
-export const DEFAULT_TENANT_CONFIG: Omit<TenantConfig, "id" | "slug" | "createdAt" | "updatedAt"> = {
+export const DEFAULT_TENANT_CONFIG: Omit<
+  TenantConfig,
+  "id" | "slug" | "createdAt" | "updatedAt"
+> = {
   branding: {
     name: "SignApps",
     tagline: "Your Digital Workspace",
@@ -355,7 +358,10 @@ export const DEFAULT_TENANT_CONFIG: Omit<TenantConfig, "id" | "slug" | "createdA
 // Utility Types
 // ============================================================================
 
-export type TenantConfigSection = keyof Omit<TenantConfig, "id" | "slug" | "createdAt" | "updatedAt">;
+export type TenantConfigSection = keyof Omit<
+  TenantConfig,
+  "id" | "slug" | "createdAt" | "updatedAt"
+>;
 
 export interface TenantConfigUpdate {
   section: TenantConfigSection;

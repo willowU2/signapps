@@ -150,7 +150,11 @@ pub async fn compute_user_mail_aliases(
     if let Some((domain_id, dns_name)) = default_domain {
         let mail_address = format!("{}@{}", sam_account_name, dns_name);
         upsert_mail_alias(pool, user_account_id, &mail_address, domain_id, true).await?;
-        entries.push(MailAliasEntry { mail_address, domain_id, is_default: true });
+        entries.push(MailAliasEntry {
+            mail_address,
+            domain_id,
+            is_default: true,
+        });
         default_domain_id = Some(domain_id);
     }
 
@@ -164,7 +168,11 @@ pub async fn compute_user_mail_aliases(
         }
         let mail_address = format!("{}@{}", sam_account_name, dns_name);
         upsert_mail_alias(pool, user_account_id, &mail_address, domain_id, false).await?;
-        entries.push(MailAliasEntry { mail_address, domain_id, is_default: false });
+        entries.push(MailAliasEntry {
+            mail_address,
+            domain_id,
+            is_default: false,
+        });
     }
 
     tracing::info!(
@@ -207,13 +215,12 @@ pub async fn provision_ou_shared_mailbox(
     dns_name: &str,
 ) -> Result<Option<Uuid>> {
     // Check whether mail distribution is enabled on the OU.
-    let mail_dist_enabled: Option<bool> = sqlx::query_scalar(
-        "SELECT mail_distribution_enabled FROM ad_ous WHERE id = $1",
-    )
-    .bind(ou_id)
-    .fetch_optional(pool)
-    .await
-    .map_err(|e| signapps_common::Error::Database(e.to_string()))?;
+    let mail_dist_enabled: Option<bool> =
+        sqlx::query_scalar("SELECT mail_distribution_enabled FROM ad_ous WHERE id = $1")
+            .bind(ou_id)
+            .fetch_optional(pool)
+            .await
+            .map_err(|e| signapps_common::Error::Database(e.to_string()))?;
 
     let enabled = mail_dist_enabled.unwrap_or(true);
     if !enabled {
@@ -337,8 +344,9 @@ pub async fn compute_user_subscriptions(
         // Check visibility for children (skip ancestor mailboxes that are not
         // visible to descendants, unless this is the user's own node).
         if !is_own_node {
-            let visible_to_children =
-                config["shared_mailbox_visible_to_children"].as_bool().unwrap_or(true);
+            let visible_to_children = config["shared_mailbox_visible_to_children"]
+                .as_bool()
+                .unwrap_or(true);
             if !visible_to_children {
                 continue;
             }
@@ -348,7 +356,9 @@ pub async fn compute_user_subscriptions(
         let folder_path = format!("[Shared]/{}", path_parts.join("/"));
 
         // Determine can_send_as from send_as policy.
-        let send_as_policy = config["shared_mailbox_send_as"].as_str().unwrap_or("members");
+        let send_as_policy = config["shared_mailbox_send_as"]
+            .as_str()
+            .unwrap_or("members");
         let can_send_as = match send_as_policy {
             "members" => true,
             "managers" => is_user_board_member(pool, user_account_id, *ancestor_id).await?,
@@ -356,7 +366,11 @@ pub async fn compute_user_subscriptions(
         };
 
         upsert_subscription(pool, mailbox_id, user_account_id, &folder_path, can_send_as).await?;
-        subscriptions.push(SubscriptionEntry { mailbox_id, imap_folder_path: folder_path, can_send_as });
+        subscriptions.push(SubscriptionEntry {
+            mailbox_id,
+            imap_folder_path: folder_path,
+            can_send_as,
+        });
     }
 
     // ── 3. Cross-functional group mailboxes ───────────────────────────────
@@ -388,7 +402,10 @@ pub async fn compute_user_subscriptions(
         });
     }
 
-    tracing::info!(subscription_count = subscriptions.len(), "IMAP subscriptions computed");
+    tracing::info!(
+        subscription_count = subscriptions.len(),
+        "IMAP subscriptions computed"
+    );
     Ok(subscriptions)
 }
 

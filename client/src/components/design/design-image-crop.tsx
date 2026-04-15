@@ -38,8 +38,12 @@ const ASPECT_PRESETS: AspectPreset[] = [
   { label: "9:16", ratio: 9 / 16 },
 ];
 
-export default function DesignImageCrop({ fabricCanvasRef }: ImageCropToolProps) {
-  const [selectedPreset, setSelectedPreset] = useState<AspectPreset>(ASPECT_PRESETS[1]);
+export default function DesignImageCrop({
+  fabricCanvasRef,
+}: ImageCropToolProps) {
+  const [selectedPreset, setSelectedPreset] = useState<AspectPreset>(
+    ASPECT_PRESETS[1],
+  );
   const [isCropping, setIsCropping] = useState(false);
   const [hasImageSelected, setHasImageSelected] = useState(false);
   const [cropRect, setCropRect] = useState({ x: 10, y: 10, w: 80, h: 80 }); // % of image
@@ -50,7 +54,9 @@ export default function DesignImageCrop({ fabricCanvasRef }: ImageCropToolProps)
     if (!canvas) return;
     const check = () => {
       const obj = canvas.getActiveObject();
-      setHasImageSelected(!!(obj && (obj.type === "image" || obj.type === "Image")));
+      setHasImageSelected(
+        !!(obj && (obj.type === "image" || obj.type === "Image")),
+      );
     };
     canvas.on("selection:created", check);
     canvas.on("selection:updated", check);
@@ -90,12 +96,12 @@ export default function DesignImageCrop({ fabricCanvasRef }: ImageCropToolProps)
     const sh = (cropRect.h / 100) * natH;
 
     // Use fabric clipPath
-    const fab = await import("fabric") as unknown as FabricModuleWithRect;
+    const fab = (await import("fabric")) as unknown as FabricModuleWithRect;
     const clipRect = new fab.Rect({
-      left: -(obj.width! * (obj.scaleX ?? 1)) / 2 + sx * ((obj.scaleX ?? 1)),
-      top: -(obj.height! * (obj.scaleY ?? 1)) / 2 + sy * ((obj.scaleY ?? 1)),
-      width: sw * ((obj.scaleX ?? 1)),
-      height: sh * ((obj.scaleY ?? 1)),
+      left: -(obj.width! * (obj.scaleX ?? 1)) / 2 + sx * (obj.scaleX ?? 1),
+      top: -(obj.height! * (obj.scaleY ?? 1)) / 2 + sy * (obj.scaleY ?? 1),
+      width: sw * (obj.scaleX ?? 1),
+      height: sh * (obj.scaleY ?? 1),
       absolutePositioned: false,
     });
 
@@ -129,7 +135,9 @@ export default function DesignImageCrop({ fabricCanvasRef }: ImageCropToolProps)
     <div className="p-3 space-y-3">
       <div className="flex items-center gap-1.5">
         <Crop className="w-3.5 h-3.5 text-green-500" />
-        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Crop Image</span>
+        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+          Crop Image
+        </span>
       </div>
 
       {/* Aspect ratio presets */}
@@ -144,7 +152,7 @@ export default function DesignImageCrop({ fabricCanvasRef }: ImageCropToolProps)
                 "text-[10px] px-2 py-1 rounded border transition-all",
                 selectedPreset.label === preset.label
                   ? "border-primary bg-primary/10 text-primary"
-                  : "border-border hover:border-muted-foreground/40"
+                  : "border-border hover:border-muted-foreground/40",
               )}
             >
               {preset.label}
@@ -155,7 +163,9 @@ export default function DesignImageCrop({ fabricCanvasRef }: ImageCropToolProps)
 
       {/* Crop region sliders */}
       <div className="space-y-2 bg-muted/20 rounded-md p-2">
-        <Label className="text-[10px] text-muted-foreground">Crop Region (% of image)</Label>
+        <Label className="text-[10px] text-muted-foreground">
+          Crop Region (% of image)
+        </Label>
         {[
           { key: "x" as const, label: "Left" },
           { key: "y" as const, label: "Top" },
@@ -173,7 +183,10 @@ export default function DesignImageCrop({ fabricCanvasRef }: ImageCropToolProps)
                 const val = Number(e.target.value);
                 setCropRect((prev) => {
                   const next = { ...prev, [key]: val };
-                  if (selectedPreset.ratio !== null && (key === "w" || key === "h")) {
+                  if (
+                    selectedPreset.ratio !== null &&
+                    (key === "w" || key === "h")
+                  ) {
                     if (key === "w") next.h = val / selectedPreset.ratio;
                     else next.w = val * selectedPreset.ratio;
                   }
@@ -182,7 +195,9 @@ export default function DesignImageCrop({ fabricCanvasRef }: ImageCropToolProps)
               }}
               className="flex-1 h-1.5 accent-primary"
             />
-            <span className="text-[10px] tabular-nums w-6 text-right">{Math.round(cropRect[key])}</span>
+            <span className="text-[10px] tabular-nums w-6 text-right">
+              {Math.round(cropRect[key])}
+            </span>
           </div>
         ))}
       </div>
@@ -214,11 +229,7 @@ export default function DesignImageCrop({ fabricCanvasRef }: ImageCropToolProps)
           <RotateCcw className="w-3 h-3 mr-1" />
           Reset
         </Button>
-        <Button
-          size="sm"
-          className="flex-1 h-7 text-xs"
-          onClick={applyCrop}
-        >
+        <Button size="sm" className="flex-1 h-7 text-xs" onClick={applyCrop}>
           <Check className="w-3 h-3 mr-1" />
           Apply Crop
         </Button>

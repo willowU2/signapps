@@ -1,4 +1,4 @@
-'use client'
+"use client";
 
 /**
  * AM2 — AI document understanding
@@ -7,13 +7,13 @@
  * Structured cards view + conversational Q&A on the document.
  */
 
-import React, { useState, useRef, useCallback } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Badge } from '@/components/ui/badge'
-import { Separator } from '@/components/ui/separator'
-import { Skeleton } from '@/components/ui/skeleton'
+import React, { useState, useRef, useCallback } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   FileText,
   Upload,
@@ -27,82 +27,82 @@ import {
   DollarSign,
   Building2,
   X,
-} from 'lucide-react'
-import { toast } from 'sonner'
-import { aiApi } from '@/lib/api'
-import type { ChatResponse } from '@/lib/api/ai'
+} from "lucide-react";
+import { toast } from "sonner";
+import { aiApi } from "@/lib/api";
+import type { ChatResponse } from "@/lib/api/ai";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface ExtractedData {
-  summary: string
-  keyPoints: string[]
+  summary: string;
+  keyPoints: string[];
   entities: {
-    people: string[]
-    dates: string[]
-    amounts: string[]
-    organizations: string[]
-  }
+    people: string[];
+    dates: string[];
+    amounts: string[];
+    organizations: string[];
+  };
 }
 
 interface ChatMessage {
-  role: 'user' | 'assistant'
-  content: string
+  role: "user" | "assistant";
+  content: string;
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 const ACCEPTED_TYPES = [
-  'application/pdf',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-  'application/msword',
-  'text/plain',
-  'text/markdown',
-]
+  "application/pdf",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/msword",
+  "text/plain",
+  "text/markdown",
+];
 
 async function readFileAsText(file: File): Promise<string> {
-  if (file.type === 'application/pdf' || file.type.includes('word')) {
-    return `[Fichier binaire: ${file.name}, type: ${file.type}, taille: ${(file.size / 1024).toFixed(1)} Ko]\nContenu extrait par OCR IA.`
+  if (file.type === "application/pdf" || file.type.includes("word")) {
+    return `[Fichier binaire: ${file.name}, type: ${file.type}, taille: ${(file.size / 1024).toFixed(1)} Ko]\nContenu extrait par OCR IA.`;
   }
-  return file.text()
+  return file.text();
 }
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export function DocumentAnalyzer() {
-  const fileRef = useRef<HTMLInputElement>(null)
-  const chatEndRef = useRef<HTMLDivElement>(null)
+  const fileRef = useRef<HTMLInputElement>(null);
+  const chatEndRef = useRef<HTMLDivElement>(null);
 
-  const [file, setFile] = useState<File | null>(null)
-  const [fileContent, setFileContent] = useState<string>('')
-  const [loading, setLoading] = useState(false)
-  const [extracted, setExtracted] = useState<ExtractedData | null>(null)
+  const [file, setFile] = useState<File | null>(null);
+  const [fileContent, setFileContent] = useState<string>("");
+  const [loading, setLoading] = useState(false);
+  const [extracted, setExtracted] = useState<ExtractedData | null>(null);
 
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([])
-  const [chatInput, setChatInput] = useState('')
-  const [chatLoading, setChatLoading] = useState(false)
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [chatInput, setChatInput] = useState("");
+  const [chatLoading, setChatLoading] = useState(false);
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const f = e.target.files?.[0]
-    if (!f) return
-    if (!ACCEPTED_TYPES.includes(f.type) && !f.name.endsWith('.md')) {
-      toast.error('Format non supporté. Utilisez PDF, DOCX, TXT ou Markdown.')
-      return
+    const f = e.target.files?.[0];
+    if (!f) return;
+    if (!ACCEPTED_TYPES.includes(f.type) && !f.name.endsWith(".md")) {
+      toast.error("Format non supporté. Utilisez PDF, DOCX, TXT ou Markdown.");
+      return;
     }
-    setFile(f)
-    setExtracted(null)
-    setChatMessages([])
-    const text = await readFileAsText(f)
-    setFileContent(text)
-  }
+    setFile(f);
+    setExtracted(null);
+    setChatMessages([]);
+    const text = await readFileAsText(f);
+    setFileContent(text);
+  };
 
   const handleAnalyze = useCallback(async () => {
     if (!file || !fileContent) {
-      toast.error('Veuillez sélectionner un document')
-      return
+      toast.error("Veuillez sélectionner un document");
+      return;
     }
-    setLoading(true)
-    setExtracted(null)
+    setLoading(true);
+    setExtracted(null);
     try {
       const prompt = `Tu es un assistant d'analyse de documents. Analyse ce document et retourne UNIQUEMENT un JSON valide sans markdown.
 Format attendu:
@@ -117,39 +117,45 @@ Format attendu:
   }
 }
 
-Document: ${fileContent.slice(0, 6000)}`
+Document: ${fileContent.slice(0, 6000)}`;
 
-      const res = await aiApi.chat(prompt, { enableTools: false, includesSources: false })
-      const answer: string = (res.data as ChatResponse)?.answer ?? ''
+      const res = await aiApi.chat(prompt, {
+        enableTools: false,
+        includesSources: false,
+      });
+      const answer: string = (res.data as ChatResponse)?.answer ?? "";
 
-      const match = answer.match(/\{[\s\S]*\}/)
-      if (!match) throw new Error('Réponse IA invalide')
+      const match = answer.match(/\{[\s\S]*\}/);
+      if (!match) throw new Error("Réponse IA invalide");
 
-      const parsed: ExtractedData = JSON.parse(match[0])
-      setExtracted(parsed)
+      const parsed: ExtractedData = JSON.parse(match[0]);
+      setExtracted(parsed);
 
       // Seed the chat with a system message
       setChatMessages([
         {
-          role: 'assistant',
+          role: "assistant",
           content: `Document "${file.name}" analysé. Posez vos questions sur son contenu.`,
         },
-      ])
+      ]);
     } catch (err) {
-      toast.error("Échec de l'analyse du document")
+      toast.error("Échec de l'analyse du document");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }, [file, fileContent])
+  }, [file, fileContent]);
 
   const handleChat = async () => {
-    const question = chatInput.trim()
-    if (!question || !fileContent) return
+    const question = chatInput.trim();
+    if (!question || !fileContent) return;
 
-    const newMessages: ChatMessage[] = [...chatMessages, { role: 'user', content: question }]
-    setChatMessages(newMessages)
-    setChatInput('')
-    setChatLoading(true)
+    const newMessages: ChatMessage[] = [
+      ...chatMessages,
+      { role: "user", content: question },
+    ];
+    setChatMessages(newMessages);
+    setChatInput("");
+    setChatLoading(true);
 
     try {
       const context = `Tu es un assistant qui répond aux questions sur le document suivant.
@@ -158,26 +164,35 @@ ${fileContent.slice(0, 5000)}
 """
 
 Question: ${question}
-Réponds en français de manière concise et précise.`
+Réponds en français de manière concise et précise.`;
 
-      const res = await aiApi.chat(context, { enableTools: false, includesSources: false })
-      const answer: string = (res.data as ChatResponse)?.answer ?? ''
+      const res = await aiApi.chat(context, {
+        enableTools: false,
+        includesSources: false,
+      });
+      const answer: string = (res.data as ChatResponse)?.answer ?? "";
 
-      setChatMessages((prev) => [...prev, { role: 'assistant', content: answer }])
-      setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100)
+      setChatMessages((prev) => [
+        ...prev,
+        { role: "assistant", content: answer },
+      ]);
+      setTimeout(
+        () => chatEndRef.current?.scrollIntoView({ behavior: "smooth" }),
+        100,
+      );
     } catch {
-      toast.error('Erreur de conversation IA')
+      toast.error("Erreur de conversation IA");
     } finally {
-      setChatLoading(false)
+      setChatLoading(false);
     }
-  }
+  };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault()
-      handleChat()
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleChat();
     }
-  }
+  };
 
   return (
     <div className="space-y-4">
@@ -200,32 +215,40 @@ Réponds en français de manière concise et précise.`
             >
               <Upload className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
               <p className="text-sm font-medium">Déposez un PDF ou DOCX</p>
-              <p className="text-xs text-muted-foreground mt-1">PDF, DOCX, TXT, Markdown</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                PDF, DOCX, TXT, Markdown
+              </p>
             </button>
           ) : (
             <div className="flex items-center gap-3">
               <FileText className="w-8 h-8 text-primary shrink-0" />
               <div className="flex-1 min-w-0">
                 <p className="font-medium truncate">{file.name}</p>
-                <p className="text-xs text-muted-foreground">{(file.size / 1024).toFixed(1)} Ko</p>
+                <p className="text-xs text-muted-foreground">
+                  {(file.size / 1024).toFixed(1)} Ko
+                </p>
               </div>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => {
-                  setFile(null)
-                  setFileContent('')
-                  setExtracted(null)
-                  setChatMessages([])
+                  setFile(null);
+                  setFileContent("");
+                  setExtracted(null);
+                  setChatMessages([]);
                 }}
               >
                 <X className="w-4 h-4" />
               </Button>
               <Button onClick={handleAnalyze} disabled={loading}>
                 {loading ? (
-                  <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Analyse…</>
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Analyse…
+                  </>
                 ) : (
-                  <><Sparkles className="w-4 h-4 mr-2" /> Analyser</>
+                  <>
+                    <Sparkles className="w-4 h-4 mr-2" /> Analyser
+                  </>
                 )}
               </Button>
             </div>
@@ -255,7 +278,9 @@ Réponds en français de manière concise et précise.`
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-muted-foreground">{extracted.summary}</p>
+              <p className="text-sm text-muted-foreground">
+                {extracted.summary}
+              </p>
             </CardContent>
           </Card>
 
@@ -291,7 +316,9 @@ Réponds en français de manière concise et précise.`
                 </CardHeader>
                 <CardContent className="flex flex-wrap gap-1.5">
                   {extracted.entities.people.map((p) => (
-                    <Badge key={p} variant="secondary" className="text-xs">{p}</Badge>
+                    <Badge key={p} variant="secondary" className="text-xs">
+                      {p}
+                    </Badge>
                   ))}
                 </CardContent>
               </Card>
@@ -305,7 +332,9 @@ Réponds en français de manière concise et précise.`
                 </CardHeader>
                 <CardContent className="flex flex-wrap gap-1.5">
                   {extracted.entities.dates.map((d) => (
-                    <Badge key={d} variant="outline" className="text-xs">{d}</Badge>
+                    <Badge key={d} variant="outline" className="text-xs">
+                      {d}
+                    </Badge>
                   ))}
                 </CardContent>
               </Card>
@@ -319,7 +348,12 @@ Réponds en français de manière concise et précise.`
                 </CardHeader>
                 <CardContent className="flex flex-wrap gap-1.5">
                   {extracted.entities.amounts.map((a) => (
-                    <Badge key={a} className="bg-green-100 text-green-700 text-xs">{a}</Badge>
+                    <Badge
+                      key={a}
+                      className="bg-green-100 text-green-700 text-xs"
+                    >
+                      {a}
+                    </Badge>
                   ))}
                 </CardContent>
               </Card>
@@ -333,7 +367,9 @@ Réponds en français de manière concise et précise.`
                 </CardHeader>
                 <CardContent className="flex flex-wrap gap-1.5">
                   {extracted.entities.organizations.map((o) => (
-                    <Badge key={o} variant="outline" className="text-xs">{o}</Badge>
+                    <Badge key={o} variant="outline" className="text-xs">
+                      {o}
+                    </Badge>
                   ))}
                 </CardContent>
               </Card>
@@ -356,21 +392,21 @@ Réponds en français de manière concise et précise.`
                 {chatMessages.map((msg, i) => (
                   <div
                     key={i}
-                    className={`flex gap-2 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                    className={`flex gap-2 ${msg.role === "user" ? "justify-end" : "justify-start"}`}
                   >
-                    {msg.role === 'assistant' && (
+                    {msg.role === "assistant" && (
                       <Bot className="w-5 h-5 text-primary shrink-0 mt-0.5" />
                     )}
                     <div
                       className={`rounded-lg px-3 py-2 text-sm max-w-[80%] ${
-                        msg.role === 'user'
-                          ? 'bg-primary text-primary-foreground'
-                          : 'bg-muted text-foreground'
+                        msg.role === "user"
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted text-foreground"
                       }`}
                     >
                       {msg.content}
                     </div>
-                    {msg.role === 'user' && (
+                    {msg.role === "user" && (
                       <User className="w-5 h-5 text-muted-foreground shrink-0 mt-0.5" />
                     )}
                   </div>
@@ -408,5 +444,5 @@ Réponds en français de manière concise et précise.`
         </div>
       )}
     </div>
-  )
+  );
 }

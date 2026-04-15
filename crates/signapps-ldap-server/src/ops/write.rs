@@ -3,7 +3,7 @@
 //! These operations modify directory objects in PostgreSQL via ad-core.
 //! All write operations require admin privileges (checked via ACL).
 
-use signapps_ad_core::{AclDecision, AclOperation, acl::check_access};
+use signapps_ad_core::{acl::check_access, AclDecision, AclOperation};
 
 /// Result of a write operation.
 #[derive(Debug)]
@@ -31,7 +31,10 @@ impl WriteResult {
     ///
     /// Never panics.
     pub fn ok() -> Self {
-        Self { success: true, error_message: String::new() }
+        Self {
+            success: true,
+            error_message: String::new(),
+        }
     }
 
     /// Returns a denied [`WriteResult`] with the given message.
@@ -50,7 +53,10 @@ impl WriteResult {
     ///
     /// Never panics.
     pub fn denied(msg: &str) -> Self {
-        Self { success: false, error_message: msg.to_string() }
+        Self {
+            success: false,
+            error_message: msg.to_string(),
+        }
     }
 }
 
@@ -127,13 +133,13 @@ pub async fn handle_add(
                 Ok(_) => {
                     tracing::info!(dn = dn, object_class = "computer", "Object created");
                     WriteResult::ok()
-                }
+                },
                 Err(e) => {
                     tracing::error!(dn = dn, "Failed to create object: {}", e);
                     WriteResult::denied(&format!("Database error: {e}"))
-                }
+                },
             }
-        }
+        },
         "user" | "person" => {
             let id = uuid::Uuid::new_v4();
             let sam_account = attributes
@@ -158,13 +164,13 @@ pub async fn handle_add(
                 Ok(_) => {
                     tracing::info!(dn = dn, username = %sam_account, "User created via LDAP Add");
                     WriteResult::ok()
-                }
+                },
                 Err(e) => {
                     tracing::error!(dn = dn, "Failed to create user: {}", e);
                     WriteResult::denied(&format!("Database error: {e}"))
-                }
+                },
             }
-        }
+        },
         "organizationalunit" => {
             let id = uuid::Uuid::new_v4();
             let result = sqlx::query(
@@ -182,17 +188,17 @@ pub async fn handle_add(
                 Ok(_) => {
                     tracing::info!(dn = dn, "OU created via LDAP Add");
                     WriteResult::ok()
-                }
+                },
                 Err(e) => {
                     tracing::error!(dn = dn, "Failed to create OU: {}", e);
                     WriteResult::denied(&format!("Database error: {e}"))
-                }
+                },
             }
-        }
+        },
         _ => {
             tracing::info!(dn = dn, object_class = %object_class, "Add object (generic — no DB insert)");
             WriteResult::ok()
-        }
+        },
     }
 }
 
@@ -297,8 +303,11 @@ pub async fn handle_modify(
         };
 
         if let Some((query, val)) = sql {
-            if let Err(e) =
-                sqlx::query(query).bind(&val).bind(username).execute(pool).await
+            if let Err(e) = sqlx::query(query)
+                .bind(&val)
+                .bind(username)
+                .execute(pool)
+                .await
             {
                 tracing::error!(attr = %attr_name, "Failed to update: {}", e);
                 return WriteResult::denied(&format!("Failed to update {attr_name}: {e}"));
@@ -334,11 +343,7 @@ pub async fn handle_modify(
 ///
 /// Never panics.
 #[tracing::instrument(skip(pool), fields(dn = dn))]
-pub async fn handle_delete(
-    pool: &sqlx::PgPool,
-    user_role: i16,
-    dn: &str,
-) -> WriteResult {
+pub async fn handle_delete(pool: &sqlx::PgPool, user_role: i16, dn: &str) -> WriteResult {
     if check_access(user_role, AclOperation::Delete, None) == AclDecision::Deny {
         tracing::warn!(dn = dn, "Delete denied: insufficient access");
         return WriteResult::denied("Insufficient access rights");
@@ -363,30 +368,32 @@ pub async fn handle_delete(
         Ok(r) if r.rows_affected() > 0 => {
             tracing::info!(dn = dn, "Object tombstoned in workforce_org_nodes");
             return WriteResult::ok();
-        }
+        },
         Ok(_) => {
-            tracing::debug!(dn = dn, name = name, "No org node found, trying identity.users");
-        }
+            tracing::debug!(
+                dn = dn,
+                name = name,
+                "No org node found, trying identity.users"
+            );
+        },
         Err(e) => {
             tracing::error!(dn = dn, "workforce_org_nodes tombstone failed: {}", e);
-        }
+        },
     }
 
     // Fall back to identity.users (soft touch — no cascade delete).
-    let result = sqlx::query(
-        "UPDATE identity.users SET updated_at = now() WHERE username = $1",
-    )
-    .bind(name)
-    .execute(pool)
-    .await;
+    let result = sqlx::query("UPDATE identity.users SET updated_at = now() WHERE username = $1")
+        .bind(name)
+        .execute(pool)
+        .await;
 
     match result {
         Ok(_) => {
             tracing::info!(dn = dn, "Delete processed (identity.users soft-update)");
-        }
+        },
         Err(e) => {
             tracing::warn!(dn = dn, "identity.users soft-update failed: {}", e);
-        }
+        },
     }
 
     WriteResult::ok()
@@ -447,13 +454,12 @@ pub async fn handle_modify_dn(
     };
 
     // Update the node name in workforce_org_nodes.
-    let result = sqlx::query(
-        "UPDATE workforce_org_nodes SET name = $1, updated_at = now() WHERE name = $2",
-    )
-    .bind(new_name)
-    .bind(name)
-    .execute(pool)
-    .await;
+    let result =
+        sqlx::query("UPDATE workforce_org_nodes SET name = $1, updated_at = now() WHERE name = $2")
+            .bind(new_name)
+            .bind(name)
+            .execute(pool)
+            .await;
 
     match result {
         Ok(r) if r.rows_affected() > 0 => {
@@ -487,7 +493,7 @@ pub async fn handle_modify_dn(
 
             let _ = delete_old_rdn; // old RDN removal is implicit (name column replaced)
             WriteResult::ok()
-        }
+        },
         Ok(_) => {
             // No org node found — fall back to updating display_name in identity.users.
             let _ = sqlx::query(
@@ -497,9 +503,13 @@ pub async fn handle_modify_dn(
             .bind(name)
             .execute(pool)
             .await;
-            tracing::info!(dn = dn, new_name = new_name, "ModifyDN: identity.users fallback");
+            tracing::info!(
+                dn = dn,
+                new_name = new_name,
+                "ModifyDN: identity.users fallback"
+            );
             WriteResult::ok()
-        }
+        },
         Err(e) => WriteResult::denied(&format!("Failed: {e}")),
     }
 }
@@ -525,15 +535,36 @@ mod tests {
     #[test]
     fn acl_blocks_non_admin_writes() {
         // user_role = 1 → Deny for write operations
-        assert_eq!(check_access(1, AclOperation::Create, None), AclDecision::Deny);
-        assert_eq!(check_access(1, AclOperation::Write, None), AclDecision::Deny);
-        assert_eq!(check_access(1, AclOperation::Delete, None), AclDecision::Deny);
+        assert_eq!(
+            check_access(1, AclOperation::Create, None),
+            AclDecision::Deny
+        );
+        assert_eq!(
+            check_access(1, AclOperation::Write, None),
+            AclDecision::Deny
+        );
+        assert_eq!(
+            check_access(1, AclOperation::Delete, None),
+            AclDecision::Deny
+        );
         assert_eq!(check_access(1, AclOperation::Move, None), AclDecision::Deny);
         // user_role = 2 (admin) → Allow
-        assert_eq!(check_access(2, AclOperation::Create, None), AclDecision::Allow);
-        assert_eq!(check_access(2, AclOperation::Write, None), AclDecision::Allow);
-        assert_eq!(check_access(2, AclOperation::Delete, None), AclDecision::Allow);
-        assert_eq!(check_access(2, AclOperation::Move, None), AclDecision::Allow);
+        assert_eq!(
+            check_access(2, AclOperation::Create, None),
+            AclDecision::Allow
+        );
+        assert_eq!(
+            check_access(2, AclOperation::Write, None),
+            AclDecision::Allow
+        );
+        assert_eq!(
+            check_access(2, AclOperation::Delete, None),
+            AclDecision::Allow
+        );
+        assert_eq!(
+            check_access(2, AclOperation::Move, None),
+            AclDecision::Allow
+        );
     }
 
     #[test]

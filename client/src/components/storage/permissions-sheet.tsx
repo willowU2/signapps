@@ -1,6 +1,6 @@
 "use client";
 
-import { SpinnerInfinity } from 'spinners-react';
+import { SpinnerInfinity } from "spinners-react";
 
 import { useState, useEffect } from "react";
 import {
@@ -39,10 +39,26 @@ interface PermissionSet {
 }
 
 const COMMON_MODES = [
-  { label: "755 (rwxr-xr-x)", value: "755", description: "Owner: all, Group/Other: read+execute" },
-  { label: "644 (rw-r--r--)", value: "644", description: "Owner: read+write, Group/Other: read" },
-  { label: "700 (rwx------)", value: "700", description: "Owner only: all permissions" },
-  { label: "777 (rwxrwxrwx)", value: "777", description: "Everyone: all permissions" },
+  {
+    label: "755 (rwxr-xr-x)",
+    value: "755",
+    description: "Owner: all, Group/Other: read+execute",
+  },
+  {
+    label: "644 (rw-r--r--)",
+    value: "644",
+    description: "Owner: read+write, Group/Other: read",
+  },
+  {
+    label: "700 (rwx------)",
+    value: "700",
+    description: "Owner only: all permissions",
+  },
+  {
+    label: "777 (rwxrwxrwx)",
+    value: "777",
+    description: "Everyone: all permissions",
+  },
 ];
 
 export function PermissionsSheet({
@@ -76,7 +92,7 @@ export function PermissionsSheet({
     if (open && fileKey) {
       fetchPermissions();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, fileKey]);
 
   const fetchPermissions = async () => {
@@ -111,7 +127,7 @@ export function PermissionsSheet({
   const permissionsToMode = (
     ownerPerms: PermissionSet,
     groupPerms: PermissionSet,
-    otherPerms: PermissionSet
+    otherPerms: PermissionSet,
   ): number => {
     const calculateBits = (perms: PermissionSet) => {
       let bits = 0;
@@ -230,15 +246,25 @@ export function PermissionsSheet({
         <div className="flex-1 overflow-hidden mt-6 -mx-6 px-6 relative">
           {fetching ? (
             <div className="absolute inset-0 flex items-center justify-center">
-              <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-6 w-6  text-muted-foreground" />
+              <SpinnerInfinity
+                size={24}
+                secondaryColor="rgba(128,128,128,0.2)"
+                color="currentColor"
+                speed={120}
+                className="h-6 w-6  text-muted-foreground"
+              />
             </div>
           ) : (
             <ScrollArea className="h-full">
               <div className="space-y-6 pb-6">
                 {/* File info */}
                 <div className="p-3 bg-muted/30 rounded-md border text-sm">
-                  <span className="text-muted-foreground mr-2 font-medium">Fichier:</span>
-                  <span className="font-mono text-xs break-all break-words align-middle">{fileName}</span>
+                  <span className="text-muted-foreground mr-2 font-medium">
+                    Fichier:
+                  </span>
+                  <span className="font-mono text-xs break-all break-words align-middle">
+                    {fileName}
+                  </span>
                 </div>
 
                 {/* Quick mode selector */}
@@ -277,13 +303,16 @@ export function PermissionsSheet({
                     placeholder="644"
                   />
                   <p className="text-xs text-muted-foreground">
-                    Format octal: premier chiffre=propriétaire, deuxième=groupe, troisième=autres
+                    Format octal: premier chiffre=propriétaire, deuxième=groupe,
+                    troisième=autres
                   </p>
                 </div>
 
                 {/* Permission sections */}
                 <div className="space-y-4">
-                  <Label className="text-base font-semibold">Permissions détaillées</Label>
+                  <Label className="text-base font-semibold">
+                    Permissions détaillées
+                  </Label>
                   <PermissionSection
                     title="Propriétaire"
                     perms={owner}
@@ -322,7 +351,15 @@ export function PermissionsSheet({
             Annuler
           </Button>
           <Button onClick={handleSave} disabled={loading || fetching}>
-            {loading && <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />}
+            {loading && (
+              <SpinnerInfinity
+                size={24}
+                secondaryColor="rgba(128,128,128,0.2)"
+                color="currentColor"
+                speed={120}
+                className="mr-2 h-4 w-4 "
+              />
+            )}
             Appliquer
           </Button>
         </div>

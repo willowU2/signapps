@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { FileCheck, Loader2, AlertCircle } from 'lucide-react';
-import { toast } from 'sonner';
-import { aiApi } from '@/lib/api';
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { FileCheck, Loader2, AlertCircle } from "lucide-react";
+import { toast } from "sonner";
+import { aiApi } from "@/lib/api";
 
 interface ExtractedClause {
   type: string;
@@ -22,7 +22,7 @@ export function ContractExtractor() {
     const selectedFile = event.target.files?.[0];
     if (selectedFile) {
       if (selectedFile.size > 50 * 1024 * 1024) {
-        toast.error('La taille du fichier doit être inférieure à 50 Mo');
+        toast.error("La taille du fichier doit être inférieure à 50 Mo");
         return;
       }
       setFile(selectedFile);
@@ -33,13 +33,15 @@ export function ContractExtractor() {
 
   const handleExtract = async () => {
     if (!file) {
-      toast.error('Veuillez téléverser un contrat');
+      toast.error("Veuillez téléverser un contrat");
       return;
     }
 
     setIsLoading(true);
     try {
-      const fileText = await file.text().catch(() => `[Binary file: ${file.name}]`);
+      const fileText = await file
+        .text()
+        .catch(() => `[Binary file: ${file.name}]`);
       const prompt = `You are a contract analysis AI. Extract key clauses from the following contract and respond ONLY with a valid JSON array, no markdown, no explanation.
 
 Extract these clause types: Parties, Amount, Start Date, End Date, Penalties, Governing Law, Payment Terms, Termination.
@@ -53,8 +55,11 @@ ${fileText.slice(0, 6000)}
 
 Respond with only the JSON array.`;
 
-      const response = await aiApi.chat(prompt, { enableTools: false, includesSources: false });
-      const answer = response.data?.answer ?? '';
+      const response = await aiApi.chat(prompt, {
+        enableTools: false,
+        includesSources: false,
+      });
+      const answer = response.data?.answer ?? "";
 
       let extracted: ExtractedClause[] = [];
       const match = answer.match(/\[[\s\S]*\]/);
@@ -64,32 +69,32 @@ Respond with only the JSON array.`;
           extracted = parsed.filter(
             (c: unknown) =>
               c !== null &&
-              typeof c === 'object' &&
-              'type' in (c as object) &&
-              'value' in (c as object) &&
-              'confidence' in (c as object)
+              typeof c === "object" &&
+              "type" in (c as object) &&
+              "value" in (c as object) &&
+              "confidence" in (c as object),
           );
         }
       }
 
       if (extracted.length === 0) {
-        toast.error('AI could not extract clauses — check the file content');
+        toast.error("AI could not extract clauses — check the file content");
         return;
       }
 
       setClauses(extracted);
-      toast.success('Analyse du contrat terminée');
+      toast.success("Analyse du contrat terminée");
     } catch (error) {
-      toast.error('Extraction échouée');
+      toast.error("Extraction échouée");
     } finally {
       setIsLoading(false);
     }
   };
 
   const getConfidenceColor = (confidence: number) => {
-    if (confidence >= 90) return 'bg-green-100 text-green-800';
-    if (confidence >= 75) return 'bg-yellow-100 text-yellow-800';
-    return 'bg-orange-100 text-orange-800';
+    if (confidence >= 90) return "bg-green-100 text-green-800";
+    if (confidence >= 75) return "bg-yellow-100 text-yellow-800";
+    return "bg-orange-100 text-orange-800";
   };
 
   return (
@@ -103,7 +108,9 @@ Respond with only the JSON array.`;
         </CardHeader>
         <CardContent className="space-y-6">
           <div>
-            <label className="text-sm font-medium mb-3 block">Upload Contract</label>
+            <label className="text-sm font-medium mb-3 block">
+              Upload Contract
+            </label>
             <div className="border-2 border-dashed border-slate-300 rounded-lg p-8 text-center hover:border-blue-400 transition cursor-pointer">
               <input
                 type="file"
@@ -115,22 +122,28 @@ Respond with only the JSON array.`;
               <label htmlFor="contract-upload" className="cursor-pointer">
                 <FileCheck className="h-8 w-8 mx-auto mb-2 text-slate-400" />
                 <p className="text-sm font-medium text-foreground">
-                  {file ? file.name : 'Click to upload or drag file'}
+                  {file ? file.name : "Click to upload or drag file"}
                 </p>
-                <p className="text-xs text-slate-500 mt-1">Max 50MB (PDF, DOC, DOCX)</p>
+                <p className="text-xs text-slate-500 mt-1">
+                  Max 50MB (PDF, DOC, DOCX)
+                </p>
               </label>
             </div>
           </div>
 
           {clauses.length === 0 && (
-            <Button onClick={handleExtract} disabled={isLoading || !file} className="w-full">
+            <Button
+              onClick={handleExtract}
+              disabled={isLoading || !file}
+              className="w-full"
+            >
               {isLoading ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                   Analyzing Contract...
                 </>
               ) : (
-                'Extract Clauses'
+                "Extract Clauses"
               )}
             </Button>
           )}
@@ -143,17 +156,25 @@ Respond with only the JSON array.`;
                     <CardContent className="pt-4">
                       <div className="flex items-start justify-between gap-4 mb-2">
                         <div className="flex-1">
-                          <p className="text-sm font-semibold text-foreground">{clause.type}</p>
-                          <p className="text-sm text-slate-600 mt-1">{clause.value}</p>
+                          <p className="text-sm font-semibold text-foreground">
+                            {clause.type}
+                          </p>
+                          <p className="text-sm text-slate-600 mt-1">
+                            {clause.value}
+                          </p>
                         </div>
-                        <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap ${getConfidenceColor(clause.confidence)}`}>
+                        <span
+                          className={`inline-block px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap ${getConfidenceColor(clause.confidence)}`}
+                        >
                           {clause.confidence}%
                         </span>
                       </div>
                       {clause.confidence < 85 && (
                         <div className="flex items-center gap-2 mt-2 p-2 bg-amber-50 rounded border border-amber-200">
                           <AlertCircle className="h-3 w-3 text-amber-600 flex-shrink-0" />
-                          <p className="text-xs text-amber-700">Review recommended</p>
+                          <p className="text-xs text-amber-700">
+                            Review recommended
+                          </p>
                         </div>
                       )}
                     </CardContent>
@@ -161,7 +182,11 @@ Respond with only the JSON array.`;
                 ))}
               </div>
 
-              <Button onClick={handleExtract} variant="outline" className="w-full">
+              <Button
+                onClick={handleExtract}
+                variant="outline"
+                className="w-full"
+              >
                 Analyze Another Contract
               </Button>
             </div>

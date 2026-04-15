@@ -1,29 +1,41 @@
-'use client';
+"use client";
 
 // IDEA-117: Custom notification sounds — select different sounds per notification type
 
-import { useState, useEffect, useRef } from 'react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Volume2, VolumeX, Play } from 'lucide-react';
+import { useState, useEffect, useRef } from "react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import { Volume2, VolumeX, Play } from "lucide-react";
 
 // Sound definitions — all data URIs to avoid server dependency
 // Simple beep tones generated via AudioContext at runtime
 
-export type SoundId = 'default' | 'chime' | 'pop' | 'ding' | 'none';
+export type SoundId = "default" | "chime" | "pop" | "ding" | "none";
 
 export const SOUNDS: { id: SoundId; label: string }[] = [
-  { id: 'none', label: 'Silencieux' },
-  { id: 'default', label: 'Défaut (bip)' },
-  { id: 'chime', label: 'Carillon' },
-  { id: 'pop', label: 'Pop' },
-  { id: 'ding', label: 'Ding' },
+  { id: "none", label: "Silencieux" },
+  { id: "default", label: "Défaut (bip)" },
+  { id: "chime", label: "Carillon" },
+  { id: "pop", label: "Pop" },
+  { id: "ding", label: "Ding" },
 ];
 
 // AudioContext-based tone generator — no external files needed
 function playTone(soundId: SoundId) {
-  if (soundId === 'none') return;
+  if (soundId === "none") return;
   try {
     const ctx = new AudioContext();
     const osc = ctx.createOscillator();
@@ -31,17 +43,23 @@ function playTone(soundId: SoundId) {
     osc.connect(gain);
     gain.connect(ctx.destination);
 
-    const configs: Record<SoundId, { freq: number[]; duration: number; type: OscillatorType }> = {
-      default: { freq: [440], duration: 0.2, type: 'sine' },
-      chime: { freq: [523, 659, 784], duration: 0.15, type: 'sine' },
-      pop: { freq: [800, 400], duration: 0.1, type: 'square' },
-      ding: { freq: [880], duration: 0.4, type: 'triangle' },
-      none: { freq: [], duration: 0, type: 'sine' },
+    const configs: Record<
+      SoundId,
+      { freq: number[]; duration: number; type: OscillatorType }
+    > = {
+      default: { freq: [440], duration: 0.2, type: "sine" },
+      chime: { freq: [523, 659, 784], duration: 0.15, type: "sine" },
+      pop: { freq: [800, 400], duration: 0.1, type: "square" },
+      ding: { freq: [880], duration: 0.4, type: "triangle" },
+      none: { freq: [], duration: 0, type: "sine" },
     };
 
     const cfg = configs[soundId];
     gain.gain.setValueAtTime(0.3, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + cfg.duration);
+    gain.gain.exponentialRampToValueAtTime(
+      0.001,
+      ctx.currentTime + cfg.duration,
+    );
 
     let offset = 0;
     cfg.freq.forEach((f) => {
@@ -59,14 +77,14 @@ function playTone(soundId: SoundId) {
 }
 
 const NOTIFICATION_TYPES = [
-  { key: 'mail', label: 'Mail' },
-  { key: 'calendar', label: 'Calendrier' },
-  { key: 'tasks', label: 'Tâches' },
-  { key: 'alert', label: 'Alertes système' },
-  { key: 'mention', label: 'Mentions' },
+  { key: "mail", label: "Mail" },
+  { key: "calendar", label: "Calendrier" },
+  { key: "tasks", label: "Tâches" },
+  { key: "alert", label: "Alertes système" },
+  { key: "mention", label: "Mentions" },
 ];
 
-const STORAGE_KEY = 'notification_sounds';
+const STORAGE_KEY = "notification_sounds";
 
 type SoundMap = Record<string, SoundId>;
 
@@ -82,7 +100,7 @@ function loadSoundMap(): SoundMap {
 export function playNotificationSound(type: string) {
   try {
     const map = loadSoundMap();
-    const soundId: SoundId = (map[type] as SoundId) ?? 'default';
+    const soundId: SoundId = (map[type] as SoundId) ?? "default";
     playTone(soundId);
   } catch {
     // Silently fail
@@ -115,10 +133,12 @@ export function NotificationSounds() {
       </CardHeader>
       <CardContent className="space-y-3">
         {NOTIFICATION_TYPES.map(({ key, label }) => {
-          const current: SoundId = (soundMap[key] as SoundId) ?? 'default';
+          const current: SoundId = (soundMap[key] as SoundId) ?? "default";
           return (
             <div key={key} className="flex items-center gap-3">
-              <span className="text-sm text-muted-foreground w-32 flex-shrink-0">{label}</span>
+              <span className="text-sm text-muted-foreground w-32 flex-shrink-0">
+                {label}
+              </span>
               <Select
                 value={current}
                 onValueChange={(v) => updateSound(key, v as SoundId)}
@@ -129,7 +149,7 @@ export function NotificationSounds() {
                 <SelectContent>
                   {SOUNDS.map((s) => (
                     <SelectItem key={s.id} value={s.id}>
-                      {s.id === 'none' ? (
+                      {s.id === "none" ? (
                         <span className="flex items-center gap-2">
                           <VolumeX className="h-3.5 w-3.5" />
                           {s.label}
@@ -146,7 +166,7 @@ export function NotificationSounds() {
                 variant="ghost"
                 className="h-8 w-8 flex-shrink-0"
                 onClick={() => playTone(current)}
-                disabled={current === 'none'}
+                disabled={current === "none"}
                 title="Prévisualiser"
               >
                 <Play className="h-3.5 w-3.5" />

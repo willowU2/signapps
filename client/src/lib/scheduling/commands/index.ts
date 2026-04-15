@@ -12,4 +12,4 @@ export {
   getCommandsByCategory,
   useCommands,
   useFilteredCommands,
-} from './registry';
+} from "./registry";

@@ -1,17 +1,17 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import Image from 'next/image';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Package, ArrowUpRight, ExternalLink } from 'lucide-react';
-import Link from 'next/link';
-import { useContainers } from '@/hooks/use-containers';
-import { getContainerUrl } from '@/lib/utils';
-import { storeApi } from '@/lib/api';
-import type { StoreApp } from '@/lib/api';
-import TiltedCard from '@/components/ui/tilted-card';
+import { useEffect, useState } from "react";
+import Image from "next/image";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Package, ArrowUpRight, ExternalLink } from "lucide-react";
+import Link from "next/link";
+import { useContainers } from "@/hooks/use-containers";
+import { getContainerUrl } from "@/lib/utils";
+import { storeApi } from "@/lib/api";
+import type { StoreApp } from "@/lib/api";
+import TiltedCard from "@/components/ui/tilted-card";
 
 function AppIcon({ iconUrl, name }: { iconUrl?: string; name: string }) {
   const [error, setError] = useState(false);
@@ -39,22 +39,29 @@ export function WidgetInstalledApps() {
 
   // Load store apps to build app_name → icon mapping
   useEffect(() => {
-    storeApi.listApps().then((res) => {
-      const map = new Map<string, string>();
-      for (const app of (res.data || []) as StoreApp[]) {
-        if (app.icon) {
-          map.set(app.name.toLowerCase(), app.icon);
-          // Also map by image base name for fallback matching
-          const imgBase = app.image?.split(':')[0]?.split('/').pop()?.toLowerCase();
-          if (imgBase) map.set(imgBase, app.icon);
+    storeApi
+      .listApps()
+      .then((res) => {
+        const map = new Map<string, string>();
+        for (const app of (res.data || []) as StoreApp[]) {
+          if (app.icon) {
+            map.set(app.name.toLowerCase(), app.icon);
+            // Also map by image base name for fallback matching
+            const imgBase = app.image
+              ?.split(":")[0]
+              ?.split("/")
+              .pop()
+              ?.toLowerCase();
+            if (imgBase) map.set(imgBase, app.icon);
+          }
         }
-      }
-      setIconMap(map);
-    }).catch(() => {});
+        setIconMap(map);
+      })
+      .catch(() => {});
   }, []);
 
   const installedApps = containers.filter(
-    (c) => !c.is_system && c.state === 'running',
+    (c) => !c.is_system && c.state === "running",
   );
 
   // Find icon for a container by matching app_name or image name
@@ -64,7 +71,7 @@ export function WidgetInstalledApps() {
       if (icon) return icon;
     }
     if (image) {
-      const imgBase = image.split(':')[0].split('/').pop()?.toLowerCase();
+      const imgBase = image.split(":")[0].split("/").pop()?.toLowerCase();
       if (imgBase) return iconMap.get(imgBase);
     }
     return undefined;
@@ -96,9 +103,13 @@ export function WidgetInstalledApps() {
             {installedApps.map((app) => {
               const url = getContainerUrl(app.portMappings);
               const icon = getIcon(app.app_name, app.image);
-              const Wrapper = url ? 'a' : 'div';
+              const Wrapper = url ? "a" : "div";
               const linkProps = url
-                ? { href: url, target: '_blank' as const, rel: 'noopener noreferrer' }
+                ? {
+                    href: url,
+                    target: "_blank" as const,
+                    rel: "noopener noreferrer",
+                  }
                 : {};
               return (
                 <TiltedCard
@@ -119,10 +130,10 @@ export function WidgetInstalledApps() {
                     >
                       {/* Background base */}
                       <div className="absolute inset-0 bg-background/80 z-0 pointer-events-none" />
-                      
+
                       {/* Soft gradient */}
                       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent z-0 pointer-events-none" />
-                      
+
                       <div className="relative z-10 flex items-center gap-3 min-w-0 flex-1">
                         <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-primary/10 shadow-sm border border-primary/10">
                           <AppIcon iconUrl={icon} name={app.name} />
@@ -132,18 +143,21 @@ export function WidgetInstalledApps() {
                             {app.app_name || app.name}
                           </p>
                           <p className="truncate text-xs text-muted-foreground">
-                            {app.image.split(':')[0].split('/').pop()}
+                            {app.image.split(":")[0].split("/").pop()}
                           </p>
                         </div>
                       </div>
-                      
+
                       <div className="relative z-10 shrink-0">
                         {url ? (
                           <div className="bg-background/80 backdrop-blur-sm rounded-full p-1.5 border border-border/50 shadow-sm flex items-center gap-1 hover:bg-accent transition-colors">
                             <ExternalLink className="h-3.5 w-3.5 text-foreground" />
                           </div>
                         ) : (
-                          <Badge variant="outline" className="text-[10px] uppercase font-semibold text-muted-foreground bg-background/50">
+                          <Badge
+                            variant="outline"
+                            className="text-[10px] uppercase font-semibold text-muted-foreground bg-background/50"
+                          >
                             Internal
                           </Badge>
                         )}

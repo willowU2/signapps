@@ -6,7 +6,7 @@
  * and vCard import/export.
  */
 
-import { getClient, ServiceName } from './factory';
+import { getClient, ServiceName } from "./factory";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -20,7 +20,7 @@ export interface Contact {
   email?: string;
   phone?: string;
   organization?: string; // matches Rust backend field name
-  job_title?: string;    // matches Rust backend field name
+  job_title?: string; // matches Rust backend field name
   group_ids?: string[];
   created_at: string;
   updated_at: string;
@@ -49,32 +49,34 @@ const client = () => getClient(ServiceName.CONTACTS);
 
 export const contactsApi = {
   /** List all contacts */
-  list: () => client().get<Contact[]>('/contacts'),
+  list: () => client().get<Contact[]>("/contacts"),
 
   /** Get a contact by ID */
   get: (id: string) => client().get<Contact>(`/contacts/${id}`),
 
   /** Create a new contact */
-  create: (data: Partial<Contact>) => client().post<Contact>('/contacts', data),
+  create: (data: Partial<Contact>) => client().post<Contact>("/contacts", data),
 
   /** Update an existing contact */
-  update: (id: string, data: Partial<Contact>) => client().put<Contact>(`/contacts/${id}`, data),
+  update: (id: string, data: Partial<Contact>) =>
+    client().put<Contact>(`/contacts/${id}`, data),
 
   /** Delete a contact */
   delete: (id: string) => client().delete(`/contacts/${id}`),
 
   /** List all contact groups */
-  groups: () => client().get<ContactGroup[]>('/contacts/groups'),
+  groups: () => client().get<ContactGroup[]>("/contacts/groups"),
 
   /** Export contacts as vCard (.vcf) */
-  exportVcf: () => client().get('/contacts/export/vcf', { responseType: 'blob' }),
+  exportVcf: () =>
+    client().get("/contacts/export/vcf", { responseType: "blob" }),
 
   /** Import contacts from a vCard file */
   importVcf: (file: File) => {
     const formData = new FormData();
-    formData.append('file', file);
-    return client().post('/contacts/import/vcf', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
+    formData.append("file", file);
+    return client().post("/contacts/import/vcf", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
     });
   },
 };

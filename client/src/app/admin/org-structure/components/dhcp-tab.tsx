@@ -359,8 +359,8 @@ function filterScopesForNode(
   nodeType: string,
 ): DhcpScope[] {
   switch (nodeType) {
-    case "site": // Show scopes associated with this site, fall back to all if none tagged
-    {
+    case "site": {
+      // Show scopes associated with this site, fall back to all if none tagged
       const siteScopes = scopes.filter((s) => s.site_id === nodeId);
       return siteScopes.length > 0 ? siteScopes : scopes;
     }

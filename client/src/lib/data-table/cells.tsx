@@ -25,7 +25,9 @@ export function TextCell<TData>({
   row: TData;
   config: ColumnConfig<TData>;
 }) {
-  const displayValue = config.format ? config.format(value, row) : String(value ?? "");
+  const displayValue = config.format
+    ? config.format(value, row)
+    : String(value ?? "");
   return <span className="truncate">{displayValue}</span>;
 }
 
@@ -44,7 +46,7 @@ export function DateCell<TData>({
 }) {
   if (!value) return <span className="text-muted-foreground">—</span>;
 
-  const date = typeof value === "string" ? parseISO(value) : value as Date;
+  const date = typeof value === "string" ? parseISO(value) : (value as Date);
   if (!isValid(date)) return <span className="text-muted-foreground">—</span>;
 
   const displayValue = config.format
@@ -69,14 +71,17 @@ export function DateTimeCell<TData>({
 }) {
   if (!value) return <span className="text-muted-foreground">—</span>;
 
-  const date = typeof value === "string" ? parseISO(value) : value as Date;
+  const date = typeof value === "string" ? parseISO(value) : (value as Date);
   if (!isValid(date)) return <span className="text-muted-foreground">—</span>;
 
   const displayValue = config.format
     ? config.format(value, row)
     : format(date, "dd MMM yyyy HH:mm", { locale: fr });
 
-  const relativeTime = formatDistanceToNow(date, { addSuffix: true, locale: fr });
+  const relativeTime = formatDistanceToNow(date, {
+    addSuffix: true,
+    locale: fr,
+  });
 
   return (
     <div className="flex flex-col">
@@ -99,7 +104,9 @@ export function BadgeCell<TData>({
   row: TData;
   config: ColumnConfig<TData>;
 }) {
-  const displayValue = config.format ? config.format(value, row) : String(value ?? "");
+  const displayValue = config.format
+    ? config.format(value, row)
+    : String(value ?? "");
   const variant = config.badgeVariants?.[String(value)] ?? "outline";
 
   return <Badge variant={variant}>{displayValue}</Badge>;
@@ -145,7 +152,7 @@ export function AvatarCell<TData>({
 export function renderCell<TData>(
   value: unknown,
   row: TData,
-  config: ColumnConfig<TData>
+  config: ColumnConfig<TData>,
 ): React.ReactNode {
   // Custom renderer takes priority
   if (config.cell) {

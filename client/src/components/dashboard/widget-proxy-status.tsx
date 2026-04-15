@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Globe, Lock, Shield, Activity } from 'lucide-react';
-import Link from 'next/link';
-import { useProxyStatus } from '@/hooks/use-proxy-status';
-import { useRoutes } from '@/hooks/use-routes';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Globe, Lock, Shield, Activity } from "lucide-react";
+import Link from "next/link";
+import { useProxyStatus } from "@/hooks/use-proxy-status";
+import { useRoutes } from "@/hooks/use-routes";
 
 export function WidgetProxyStatus() {
   const { data: proxyStatus } = useProxyStatus();
@@ -30,10 +30,12 @@ export function WidgetProxyStatus() {
             <div className="flex items-center justify-between">
               <span className="text-xs text-muted-foreground">HTTP</span>
               <Badge
-                variant={proxyStatus?.http_listener.active ? 'default' : 'secondary'}
+                variant={
+                  proxyStatus?.http_listener.active ? "default" : "secondary"
+                }
                 className="text-[10px] px-1.5 py-0"
               >
-                {proxyStatus?.http_listener.active ? 'Active' : 'Off'}
+                {proxyStatus?.http_listener.active ? "Active" : "Off"}
               </Badge>
             </div>
             <p className="text-lg font-semibold">
@@ -44,10 +46,12 @@ export function WidgetProxyStatus() {
             <div className="flex items-center justify-between">
               <span className="text-xs text-muted-foreground">HTTPS</span>
               <Badge
-                variant={proxyStatus?.https_listener.active ? 'default' : 'secondary'}
+                variant={
+                  proxyStatus?.https_listener.active ? "default" : "secondary"
+                }
                 className="text-[10px] px-1.5 py-0"
               >
-                {proxyStatus?.https_listener.active ? 'Active' : 'Off'}
+                {proxyStatus?.https_listener.active ? "Active" : "Off"}
               </Badge>
             </div>
             <p className="text-lg font-semibold">
@@ -58,14 +62,19 @@ export function WidgetProxyStatus() {
 
         {/* Stats */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-center">
-          <Link href="/routes" className="rounded-lg border p-2 hover:border-primary/50 transition-colors">
+          <Link
+            href="/routes"
+            className="rounded-lg border p-2 hover:border-primary/50 transition-colors"
+          >
             <p className="text-lg font-bold">{activeRoutes}</p>
             <p className="text-[10px] text-muted-foreground">Routes</p>
           </Link>
           <div className="rounded-lg border p-2">
             <div className="flex items-center justify-center gap-1">
               <Lock className="h-3 w-3 text-green-500" />
-              <p className="text-lg font-bold">{proxyStatus?.certificates_loaded ?? tlsRoutes}</p>
+              <p className="text-lg font-bold">
+                {proxyStatus?.certificates_loaded ?? tlsRoutes}
+              </p>
             </div>
             <p className="text-[10px] text-muted-foreground">Certs</p>
           </div>

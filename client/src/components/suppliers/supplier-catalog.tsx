@@ -77,7 +77,10 @@ export default function SupplierCatalog() {
     <div className="space-y-6 p-6">
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-2">
         {suppliers.map((supplier) => (
-          <div key={supplier.id} className="rounded-lg border hover:shadow-lg transition-shadow">
+          <div
+            key={supplier.id}
+            className="rounded-lg border hover:shadow-lg transition-shadow"
+          >
             <div className="border-b bg-gradient-to-r from-blue-50 to-indigo-50 p-4">
               <h3 className="text-lg font-bold">{supplier.name}</h3>
               <p className="text-sm text-muted-foreground">{supplier.sector}</p>
@@ -86,8 +89,12 @@ export default function SupplierCatalog() {
             <div className="p-4 space-y-4">
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-semibold text-muted-foreground">Rating</span>
-                  <span className="text-sm font-bold text-blue-600">{supplier.rating}/5.0</span>
+                  <span className="text-sm font-semibold text-muted-foreground">
+                    Rating
+                  </span>
+                  <span className="text-sm font-bold text-blue-600">
+                    {supplier.rating}/5.0
+                  </span>
                 </div>
                 {renderStars(supplier.rating)}
               </div>
@@ -95,26 +102,36 @@ export default function SupplierCatalog() {
               <div className="border-t pt-3 space-y-3">
                 <div className="flex items-start gap-3">
                   <MapPin className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
-                  <div className="text-sm text-muted-foreground">{supplier.country}</div>
+                  <div className="text-sm text-muted-foreground">
+                    {supplier.country}
+                  </div>
                 </div>
 
                 <div className="flex items-start gap-3">
                   <Mail className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
-                  <a href={`mailto:${supplier.email}`} className="text-sm text-blue-600 hover:underline">
+                  <a
+                    href={`mailto:${supplier.email}`}
+                    className="text-sm text-blue-600 hover:underline"
+                  >
                     {supplier.email}
                   </a>
                 </div>
 
                 <div className="flex items-start gap-3">
                   <Phone className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
-                  <a href={`tel:${supplier.phone}`} className="text-sm text-blue-600 hover:underline">
+                  <a
+                    href={`tel:${supplier.phone}`}
+                    className="text-sm text-blue-600 hover:underline"
+                  >
                     {supplier.phone}
                   </a>
                 </div>
 
                 {supplier.website && (
                   <div className="flex items-start gap-3">
-                    <span className="text-sm font-medium text-muted-foreground">Web:</span>
+                    <span className="text-sm font-medium text-muted-foreground">
+                      Web:
+                    </span>
                     <a
                       href={`https://${supplier.website}`}
                       target="_blank"

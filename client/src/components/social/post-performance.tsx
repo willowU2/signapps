@@ -1,6 +1,15 @@
 "use client";
 
-import { Eye, Heart, MessageCircle, Share2, MousePointer, Users, TrendingUp, TrendingDown } from "lucide-react";
+import {
+  Eye,
+  Heart,
+  MessageCircle,
+  Share2,
+  MousePointer,
+  Users,
+  TrendingUp,
+  TrendingDown,
+} from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -60,7 +69,8 @@ function MetricChip({
   value: number;
   avg?: number;
 }) {
-  const { pct, up } = avg !== undefined ? delta(value, avg) : { pct: 0, up: true };
+  const { pct, up } =
+    avg !== undefined ? delta(value, avg) : { pct: 0, up: true };
   return (
     <div className="flex flex-col gap-0.5 p-2 rounded-md bg-muted/40 min-w-[72px]">
       <div className="flex items-center gap-1 text-muted-foreground">
@@ -69,8 +79,14 @@ function MetricChip({
       </div>
       <span className="text-sm font-semibold">{value.toLocaleString()}</span>
       {avg !== undefined && (
-        <span className={`text-xs flex items-center gap-0.5 ${up ? "text-green-600" : "text-red-500"}`}>
-          {up ? <TrendingUp className="w-2.5 h-2.5" /> : <TrendingDown className="w-2.5 h-2.5" />}
+        <span
+          className={`text-xs flex items-center gap-0.5 ${up ? "text-green-600" : "text-red-500"}`}
+        >
+          {up ? (
+            <TrendingUp className="w-2.5 h-2.5" />
+          ) : (
+            <TrendingDown className="w-2.5 h-2.5" />
+          )}
           {pct}%
         </span>
       )}
@@ -78,10 +94,13 @@ function MetricChip({
   );
 }
 
-const DEFAULT_TIMELINE: EngagementPoint[] = Array.from({ length: 12 }, (_, i) => ({
-  time: `${i * 2}h`,
-  value: Math.floor(Math.random() * 50 + 5 * (12 - i)),
-}));
+const DEFAULT_TIMELINE: EngagementPoint[] = Array.from(
+  { length: 12 },
+  (_, i) => ({
+    time: `${i * 2}h`,
+    value: Math.floor(Math.random() * 50 + 5 * (12 - i)),
+  }),
+);
 
 export function PostPerformance({
   postId,
@@ -103,7 +122,9 @@ export function PostPerformance({
               className="w-2.5 h-2.5 rounded-full shrink-0 mt-0.5"
               style={{ backgroundColor: color }}
             />
-            <p className="text-xs line-clamp-2 text-muted-foreground">{content}</p>
+            <p className="text-xs line-clamp-2 text-muted-foreground">
+              {content}
+            </p>
           </div>
           <Badge
             variant="outline"
@@ -123,7 +144,13 @@ export function PostPerformance({
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={engagementTimeline}>
               <defs>
-                <linearGradient id={`grad-${postId}`} x1="0" y1="0" x2="0" y2="1">
+                <linearGradient
+                  id={`grad-${postId}`}
+                  x1="0"
+                  y1="0"
+                  x2="0"
+                  y2="1"
+                >
                   <stop offset="5%" stopColor={color} stopOpacity={0.3} />
                   <stop offset="95%" stopColor={color} stopOpacity={0} />
                 </linearGradient>

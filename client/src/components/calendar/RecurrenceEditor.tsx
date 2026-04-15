@@ -97,16 +97,18 @@ export function RecurrenceEditor({ value, onChange }: RecurrenceEditorProps) {
   };
 
   const handleCountChange = (count: number) => {
-    const newConfig = { ...config, count: count || undefined, until: undefined };
+    const newConfig = {
+      ...config,
+      count: count || undefined,
+      until: undefined,
+    };
     setConfig(newConfig);
     onChange(buildRRule(newConfig));
   };
 
   const handleDayChange = (day: string, checked: boolean) => {
     const byDay = config.byDay || [];
-    const newByDay = checked
-      ? [...byDay, day]
-      : byDay.filter((d) => d !== day);
+    const newByDay = checked ? [...byDay, day] : byDay.filter((d) => d !== day);
 
     const newConfig = {
       ...config,
@@ -141,7 +143,10 @@ export function RecurrenceEditor({ value, onChange }: RecurrenceEditorProps) {
           {/* Frequency */}
           <div className="space-y-2">
             <Label htmlFor="frequency">Repeat every</Label>
-            <Select value={config.frequency} onValueChange={handleFrequencyChange}>
+            <Select
+              value={config.frequency}
+              onValueChange={handleFrequencyChange}
+            >
               <SelectTrigger id="frequency">
                 <SelectValue />
               </SelectTrigger>

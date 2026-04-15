@@ -25,7 +25,6 @@ import { LoadingButton } from "@/components/ui/loading-button";
 import { Switch } from "@/components/ui/switch";
 import { WebhookTemplatesDialog, WebhookTemplate } from "./webhook-templates";
 
-
 const WEBHOOK_EVENTS = [
   "user.login",
   "user.logout",
@@ -67,7 +66,12 @@ interface WebhookSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   webhook: WebhookConfig | null;
-  onSubmit: (data: Omit<WebhookConfig, "id" | "enabled" | "last_triggered" | "last_status" | "created_at">) => Promise<void>;
+  onSubmit: (
+    data: Omit<
+      WebhookConfig,
+      "id" | "enabled" | "last_triggered" | "last_status" | "created_at"
+    >,
+  ) => Promise<void>;
   isLoading: boolean;
 }
 
@@ -117,7 +121,11 @@ export function WebhookSheet({
     }
   }, [open, webhook, form]);
 
-  const toggleEvent = (event: string, currentEvents: string[], onChange: (val: string[]) => void) => {
+  const toggleEvent = (
+    event: string,
+    currentEvents: string[],
+    onChange: (val: string[]) => void,
+  ) => {
     if (currentEvents.includes(event)) {
       onChange(currentEvents.filter((e) => e !== event));
     } else {
@@ -138,7 +146,9 @@ export function WebhookSheet({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="overflow-y-auto">
         <SheetHeader>
-          <SheetTitle>{isEditing ? "Edit Webhook" : "Create Webhook"}</SheetTitle>
+          <SheetTitle>
+            {isEditing ? "Edit Webhook" : "Create Webhook"}
+          </SheetTitle>
           <SheetDescription>
             {isEditing
               ? "Modify the webhook's endpoint and subscribed events."
@@ -165,7 +175,10 @@ export function WebhookSheet({
         )}
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6 mt-6">
+          <form
+            onSubmit={form.handleSubmit(handleSubmit)}
+            className="space-y-6 mt-6"
+          >
             <FormField
               control={form.control}
               name="name"
@@ -173,7 +186,11 @@ export function WebhookSheet({
                 <FormItem>
                   <FormLabel>Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g., Slack Notification" disabled={isLoading} {...field} />
+                    <Input
+                      placeholder="e.g., Slack Notification"
+                      disabled={isLoading}
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -187,7 +204,11 @@ export function WebhookSheet({
                 <FormItem>
                   <FormLabel>URL</FormLabel>
                   <FormControl>
-                    <Input placeholder="https://example.com/webhook" disabled={isLoading} {...field} />
+                    <Input
+                      placeholder="https://example.com/webhook"
+                      disabled={isLoading}
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -201,7 +222,12 @@ export function WebhookSheet({
                 <FormItem>
                   <FormLabel>Secret (Optional)</FormLabel>
                   <FormControl>
-                    <Input type="password" placeholder="HMAC signing secret" disabled={isLoading} {...field} />
+                    <Input
+                      type="password"
+                      placeholder="HMAC signing secret"
+                      disabled={isLoading}
+                      {...field}
+                    />
                   </FormControl>
                   <p className="text-xs text-muted-foreground mt-2">
                     Used to sign requests with HMAC-SHA256
@@ -223,17 +249,23 @@ export function WebhookSheet({
                         <Switch
                           id={`event-${event}`}
                           checked={field.value.includes(event)}
-                          onCheckedChange={() => toggleEvent(event, field.value, field.onChange)}
+                          onCheckedChange={() =>
+                            toggleEvent(event, field.value, field.onChange)
+                          }
                           disabled={isLoading}
                         />
-                        <FormLabel htmlFor={`event-${event}`} className="text-sm font-normal cursor-pointer select-none">
+                        <FormLabel
+                          htmlFor={`event-${event}`}
+                          className="text-sm font-normal cursor-pointer select-none"
+                        >
                           {event}
                         </FormLabel>
                       </div>
                     ))}
                   </div>
                   <p className="text-xs text-muted-foreground mt-2">
-                    {field.value.length} event{field.value.length !== 1 ? "s" : ""} selected
+                    {field.value.length} event
+                    {field.value.length !== 1 ? "s" : ""} selected
                   </p>
                   <FormMessage />
                 </FormItem>
@@ -241,7 +273,11 @@ export function WebhookSheet({
             />
 
             <div className="flex justify-end pt-4">
-              <LoadingButton type="submit" loading={isLoading} loadingText="Enregistrement...">
+              <LoadingButton
+                type="submit"
+                loading={isLoading}
+                loadingText="Enregistrement..."
+              >
                 {isEditing ? "Enregistrer" : "Créer le webhook"}
               </LoadingButton>
             </div>

@@ -1,19 +1,19 @@
-'use client';
+"use client";
 
-import { useEffect, useState, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
+import { useEffect, useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,18 +23,18 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+} from "@/components/ui/alert-dialog";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { Package, Plus, Trash2, Edit, Send, Loader2 } from 'lucide-react';
-import { toast } from 'sonner';
-import { socialApi } from '@/lib/api/social';
-import type { ContentSet } from '@/lib/api/social';
-import { useSocialStore } from '@/stores/social-store';
+} from "@/components/ui/tooltip";
+import { Package, Plus, Trash2, Edit, Send, Loader2 } from "lucide-react";
+import { toast } from "sonner";
+import { socialApi } from "@/lib/api/social";
+import type { ContentSet } from "@/lib/api/social";
+import { useSocialStore } from "@/stores/social-store";
 
 // --- Create/Edit Dialog ---
 
@@ -47,17 +47,19 @@ function ContentSetDialog({
 }: {
   open: boolean;
   onClose: () => void;
-  onSave: (data: Pick<ContentSet, 'name' | 'postIds'> & Partial<ContentSet>) => void;
+  onSave: (
+    data: Pick<ContentSet, "name" | "postIds"> & Partial<ContentSet>,
+  ) => void;
   initial?: ContentSet;
   saving: boolean;
 }) {
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
 
   useEffect(() => {
     if (open) {
-      setName(initial?.name ?? '');
-      setDescription(initial?.description ?? '');
+      setName(initial?.name ?? "");
+      setDescription(initial?.description ?? "");
     }
   }, [open, initial]);
 
@@ -74,7 +76,9 @@ function ContentSetDialog({
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{initial ? 'Edit Content Set' : 'Create Content Set'}</DialogTitle>
+          <DialogTitle>
+            {initial ? "Edit Content Set" : "Create Content Set"}
+          </DialogTitle>
         </DialogHeader>
         <div className="space-y-4 pt-2">
           <div className="space-y-1">
@@ -102,7 +106,7 @@ function ContentSetDialog({
               disabled={!name.trim() || saving}
             >
               {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              {initial ? 'Save Changes' : 'Create Content Set'}
+              {initial ? "Save Changes" : "Create Content Set"}
             </Button>
             <Button variant="outline" onClick={onClose} disabled={saving}>
               Cancel
@@ -133,7 +137,7 @@ export function ContentSetManager() {
       const res = await socialApi.contentSets.list();
       setContentSets(res.data);
     } catch {
-      toast.error('Failed to load content sets');
+      toast.error("Failed to load content sets");
     } finally {
       setLoading(false);
     }
@@ -144,34 +148,38 @@ export function ContentSetManager() {
     if (accounts.length === 0) fetchAccounts();
   }, [fetchContentSets, accounts.length, fetchAccounts]);
 
-  const handleCreate = async (data: Pick<ContentSet, 'name' | 'postIds'> & Partial<ContentSet>) => {
+  const handleCreate = async (
+    data: Pick<ContentSet, "name" | "postIds"> & Partial<ContentSet>,
+  ) => {
     try {
       setSaving(true);
-      await socialApi.contentSets.create({ content: '', ...data });
-      toast.success('Content set created');
+      await socialApi.contentSets.create({ content: "", ...data });
+      toast.success("Content set created");
       setIsDialogOpen(false);
       setEditingSet(undefined);
       await fetchContentSets();
     } catch {
-      toast.error('Impossible de créer content set');
+      toast.error("Impossible de créer content set");
     } finally {
       setSaving(false);
     }
   };
 
-  const handleUpdate = async (data: Pick<ContentSet, 'name' | 'postIds'> & Partial<ContentSet>) => {
+  const handleUpdate = async (
+    data: Pick<ContentSet, "name" | "postIds"> & Partial<ContentSet>,
+  ) => {
     if (!editingSet) return;
     try {
       setSaving(true);
       // Use create as a workaround since API may not have update; delete + re-create
       await socialApi.contentSets.delete(editingSet.id);
-      await socialApi.contentSets.create({ content: '', ...data });
-      toast.success('Content set updated');
+      await socialApi.contentSets.create({ content: "", ...data });
+      toast.success("Content set updated");
       setIsDialogOpen(false);
       setEditingSet(undefined);
       await fetchContentSets();
     } catch {
-      toast.error('Impossible de mettre à jour content set');
+      toast.error("Impossible de mettre à jour content set");
     } finally {
       setSaving(false);
     }
@@ -181,11 +189,11 @@ export function ContentSetManager() {
     if (!deleteId) return;
     try {
       await socialApi.contentSets.delete(deleteId);
-      toast.success('Content set deleted');
+      toast.success("Content set deleted");
       setDeleteId(null);
       await fetchContentSets();
     } catch {
-      toast.error('Impossible de supprimer content set');
+      toast.error("Impossible de supprimer content set");
     }
   };
 
@@ -201,8 +209,8 @@ export function ContentSetManager() {
 
   const handleUse = (set: ContentSet) => {
     const params = new URLSearchParams();
-    params.set('contentSetId', set.id);
-    if (set.name) params.set('name', set.name);
+    params.set("contentSetId", set.id);
+    if (set.name) params.set("name", set.name);
     router.push(`/social/compose?${params.toString()}`);
   };
 
@@ -305,7 +313,8 @@ export function ContentSetManager() {
                     <div className="flex items-center gap-2 flex-wrap">
                       {set.postIds.length > 0 && (
                         <Badge variant="outline" className="text-xs">
-                          {set.postIds.length} post{set.postIds.length !== 1 ? 's' : ''}
+                          {set.postIds.length} post
+                          {set.postIds.length !== 1 ? "s" : ""}
                         </Badge>
                       )}
                     </div>
@@ -327,17 +336,24 @@ export function ContentSetManager() {
           saving={saving}
         />
 
-        <AlertDialog open={!!deleteId} onOpenChange={(o) => !o && setDeleteId(null)}>
+        <AlertDialog
+          open={!!deleteId}
+          onOpenChange={(o) => !o && setDeleteId(null)}
+        >
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>Delete Content Set</AlertDialogTitle>
               <AlertDialogDescription>
-                This will permanently remove this content set. This action cannot be undone.
+                This will permanently remove this content set. This action
+                cannot be undone.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>Annuler</AlertDialogCancel>
-              <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              <AlertDialogAction
+                onClick={handleDelete}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
                 Delete
               </AlertDialogAction>
             </AlertDialogFooter>

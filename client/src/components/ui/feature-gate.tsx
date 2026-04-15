@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { type ReactNode } from 'react';
-import { isFeatureEnabled } from '@/lib/feature-flags';
-import { FEATURES } from '@/lib/features';
+import { type ReactNode } from "react";
+import { isFeatureEnabled } from "@/lib/feature-flags";
+import { FEATURES } from "@/lib/features";
 
 interface FeatureGateProps {
   /** The feature flag key to check */
@@ -29,7 +29,11 @@ interface FeatureGateProps {
  *   <RemoteDesktop />
  * </FeatureGate>
  */
-export function FeatureGate({ feature, children, fallback = null }: FeatureGateProps) {
+export function FeatureGate({
+  feature,
+  children,
+  fallback = null,
+}: FeatureGateProps) {
   const enabled = isFeatureEnabled(feature);
   return enabled ? <>{children}</> : <>{fallback}</>;
 }

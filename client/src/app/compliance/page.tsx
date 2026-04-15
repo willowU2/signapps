@@ -1,22 +1,31 @@
-"use client"
+"use client";
 
 // Compliance hub page — 277–284
 
-import { AppLayout } from "@/components/layout/app-layout"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Shield, Timer, UserCheck, Cookie, FileText, ClipboardList, Lock, Calendar } from "lucide-react"
-import { DpiaGenerator } from "@/components/compliance/dpia-generator"
-import { DataRetentionPolicies } from "@/components/compliance/data-retention-policies"
-import { ConsentDashboard } from "@/components/compliance/consent-dashboard"
-import { CookieBannerConfig } from "@/components/compliance/cookie-banner-config"
-import { PrivacyPolicyGenerator } from "@/components/compliance/privacy-policy-generator"
-import { DsarWorkflow } from "@/components/compliance/dsar-workflow"
-import { ComplianceAuditTrail } from "@/components/compliance/compliance-audit-trail"
-import { RegulatoryCalendar } from "@/components/compliance/regulatory-calendar"
-import { usePageTitle } from '@/hooks/use-page-title';
+import { AppLayout } from "@/components/layout/app-layout";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Shield,
+  Timer,
+  UserCheck,
+  Cookie,
+  FileText,
+  ClipboardList,
+  Lock,
+  Calendar,
+} from "lucide-react";
+import { DpiaGenerator } from "@/components/compliance/dpia-generator";
+import { DataRetentionPolicies } from "@/components/compliance/data-retention-policies";
+import { ConsentDashboard } from "@/components/compliance/consent-dashboard";
+import { CookieBannerConfig } from "@/components/compliance/cookie-banner-config";
+import { PrivacyPolicyGenerator } from "@/components/compliance/privacy-policy-generator";
+import { DsarWorkflow } from "@/components/compliance/dsar-workflow";
+import { ComplianceAuditTrail } from "@/components/compliance/compliance-audit-trail";
+import { RegulatoryCalendar } from "@/components/compliance/regulatory-calendar";
+import { usePageTitle } from "@/hooks/use-page-title";
 
 export default function CompliancePage() {
-  usePageTitle('Conformite');
+  usePageTitle("Conformite");
   return (
     <AppLayout>
       <div className="w-full space-y-6 p-6">
@@ -25,7 +34,8 @@ export default function CompliancePage() {
             <Shield className="h-6 w-6 text-blue-500" /> Compliance & Legal
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            DPIA, data retention, consent management, cookie banner, privacy policy, DSAR, audit trail, and regulatory calendar.
+            DPIA, data retention, consent management, cookie banner, privacy
+            policy, DSAR, audit trail, and regulatory calendar.
           </p>
         </div>
 
@@ -93,5 +103,5 @@ export default function CompliancePage() {
         </Tabs>
       </div>
     </AppLayout>
-  )
+  );
 }

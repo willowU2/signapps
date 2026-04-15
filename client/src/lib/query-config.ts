@@ -10,6 +10,6 @@
  *   import { STALE_LIST } from '@/lib/query-config';
  *   useQuery({ queryKey: [...], queryFn: ..., staleTime: STALE_LIST });
  */
-export const STALE_LIST = 30_000;        // 30 seconds
+export const STALE_LIST = 30_000; // 30 seconds
 export const STALE_STATIC = 5 * 60_000; // 5 minutes
-export const STALE_REALTIME = 0;         // always refetch
+export const STALE_REALTIME = 0; // always refetch

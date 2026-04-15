@@ -19,8 +19,8 @@ import {
   differenceInMinutes,
   eachDayOfInterval,
   format,
-} from 'date-fns';
-import { fr } from 'date-fns/locale';
+} from "date-fns";
+import { fr } from "date-fns/locale";
 import type {
   Task,
   ScheduleBlock,
@@ -30,8 +30,8 @@ import type {
   AutoSchedulePreferences,
   DateRange,
   ConflictInfo,
-} from '../types/scheduling';
-import { analyzePatterns, type PatternAnalysis } from './suggestions';
+} from "../types/scheduling";
+import { analyzePatterns, type PatternAnalysis } from "./suggestions";
 
 // ============================================================================
 // Types
@@ -87,7 +87,7 @@ const PRIORITY_WEIGHTS = {
 export function autoScheduleTasks(
   request: AutoScheduleRequest,
   existingEvents: ScheduleBlock[],
-  patterns?: PatternAnalysis
+  patterns?: PatternAnalysis,
 ): AutoScheduleResult {
   const constraints = { ...DEFAULT_CONSTRAINTS, ...request.constraints };
   const preferences = { ...DEFAULT_PREFERENCES, ...request.preferences };
@@ -114,7 +114,7 @@ export function autoScheduleTasks(
       availableSlots,
       constraints,
       preferences,
-      scheduled
+      scheduled,
     );
 
     if (result.success && result.slot) {
@@ -125,11 +125,15 @@ export function autoScheduleTasks(
       });
 
       // Remove used slot from available slots
-      availableSlots = removeUsedSlot(availableSlots, result.slot, preferences.bufferBetweenTasks ?? 0);
+      availableSlots = removeUsedSlot(
+        availableSlots,
+        result.slot,
+        preferences.bufferBetweenTasks ?? 0,
+      );
     } else {
       unscheduled.push({
         task,
-        reason: result.reason || 'Aucun cr\u00e9neau disponible',
+        reason: result.reason || "Aucun cr\u00e9neau disponible",
       });
 
       // Check for deadline conflicts
@@ -140,10 +144,10 @@ export function autoScheduleTasks(
       ) {
         conflicts.push({
           id: `deadline-${task.id}`,
-          type: 'deadline',
-          severity: 'high',
+          type: "deadline",
+          severity: "high",
           blocks: [],
-          description: `La t\u00e2che "${task.title}" ne peut pas \u00eatre planifi\u00e9e avant sa deadline (${format(task.dueDate, 'dd/MM/yyyy')})`,
+          description: `La t\u00e2che "${task.title}" ne peut pas \u00eatre planifi\u00e9e avant sa deadline (${format(task.dueDate, "dd/MM/yyyy")})`,
           suggestions: [],
         });
       }
@@ -173,14 +177,14 @@ export function autoScheduleTasks(
 
 function sortTasksForScheduling(
   tasks: Task[],
-  preferences: AutoSchedulePreferences
+  preferences: AutoSchedulePreferences,
 ): Task[] {
   return [...tasks].sort((a, b) => {
     // Prioritize by urgency if enabled
     if (preferences.prioritizeUrgent) {
       const priorityDiff =
-        PRIORITY_WEIGHTS[b.priority || 'medium'] -
-        PRIORITY_WEIGHTS[a.priority || 'medium'];
+        PRIORITY_WEIGHTS[b.priority || "medium"] -
+        PRIORITY_WEIGHTS[a.priority || "medium"];
       if (priorityDiff !== 0) return priorityDiff;
     }
 
@@ -204,7 +208,7 @@ function sortTasksForScheduling(
 
 function findAvailableSlots(
   constraints: AutoScheduleConstraints,
-  existingEvents: ScheduleBlock[]
+  existingEvents: ScheduleBlock[],
 ): TimeSlot[] {
   const slots: TimeSlot[] = [];
   const days = eachDayOfInterval(constraints.dateRange);
@@ -216,16 +220,16 @@ function findAvailableSlots(
     if (constraints.excludeDays?.includes(dayOfWeek)) continue;
 
     // Get working hours for this day
-    const dayStart = setMinutes(setHours(day, constraints.workingHours.start), 0);
+    const dayStart = setMinutes(
+      setHours(day, constraints.workingHours.start),
+      0,
+    );
     const dayEnd = setMinutes(setHours(day, constraints.workingHours.end), 0);
 
     // Get events for this day
     const dayEvents = existingEvents
       .filter(
-        (e) =>
-          e.start >= startOfDay(day) &&
-          e.start < endOfDay(day) &&
-          e.end
+        (e) => e.start >= startOfDay(day) && e.start < endOfDay(day) && e.end,
       )
       .sort((a, b) => a.start.getTime() - b.start.getTime());
 
@@ -278,7 +282,7 @@ function findAvailableSlots(
 function scoreSlots(
   slots: TimeSlot[],
   patterns: PatternAnalysis,
-  preferences: AutoSchedulePreferences
+  preferences: AutoSchedulePreferences,
 ): TimeSlot[] {
   return slots.map((slot) => {
     let score = 0.5; // Base score
@@ -287,7 +291,7 @@ function scoreSlots(
 
     // Prefer focus times (from patterns)
     const focusTimeScore = patterns.preferredFocusTimes.find(
-      (ft) => ft.hour === hour
+      (ft) => ft.hour === hour,
     )?.score;
     if (focusTimeScore) {
       score += focusTimeScore * 0.3;
@@ -331,14 +335,14 @@ function scheduleTask(
   availableSlots: TimeSlot[],
   constraints: AutoScheduleConstraints,
   preferences: AutoSchedulePreferences,
-  alreadyScheduled: ScheduledTask[]
+  alreadyScheduled: ScheduledTask[],
 ): ScheduleTaskResult {
   const estimatedMinutes = task.estimatedMinutes || 60;
 
   // Respect max block size
   const maxDuration = Math.min(
     estimatedMinutes,
-    constraints.maxBlockSize || 180
+    constraints.maxBlockSize || 180,
   );
 
   // Find slots that can fit this task
@@ -363,8 +367,8 @@ function scheduleTask(
       success: false,
       confidence: 0,
       reason: task.dueDate
-        ? `Aucun cr\u00e9neau disponible avant la deadline (${format(task.dueDate, 'dd/MM/yyyy')})`
-        : 'Aucun cr\u00e9neau disponible de dur\u00e9e suffisante',
+        ? `Aucun cr\u00e9neau disponible avant la deadline (${format(task.dueDate, "dd/MM/yyyy")})`
+        : "Aucun cr\u00e9neau disponible de dur\u00e9e suffisante",
     };
   }
 
@@ -375,7 +379,7 @@ function scheduleTask(
   // Group similar tasks if preference enabled
   if (preferences.groupSimilarTasks && task.projectId) {
     const sameProjectTask = alreadyScheduled.find(
-      (s) => s.task.projectId === task.projectId
+      (s) => s.task.projectId === task.projectId,
     );
     if (sameProjectTask) {
       // Try to schedule near the same project task
@@ -414,7 +418,7 @@ function scheduleTask(
 function removeUsedSlot(
   slots: TimeSlot[],
   usedSlot: DateRange,
-  bufferMinutes: number
+  bufferMinutes: number,
 ): TimeSlot[] {
   const result: TimeSlot[] = [];
 
@@ -478,13 +482,13 @@ function removeUsedSlot(
 
 function checkWorkloadConflict(
   scheduled: ScheduledTask[],
-  constraints: AutoScheduleConstraints
+  constraints: AutoScheduleConstraints,
 ): ConflictInfo | null {
   // Group scheduled tasks by day
   const tasksByDay: Record<string, ScheduledTask[]> = {};
 
   scheduled.forEach((s) => {
-    const dayKey = format(s.slot.start, 'yyyy-MM-dd');
+    const dayKey = format(s.slot.start, "yyyy-MM-dd");
     if (!tasksByDay[dayKey]) tasksByDay[dayKey] = [];
     tasksByDay[dayKey].push(s);
   });
@@ -496,7 +500,7 @@ function checkWorkloadConflict(
   for (const [dayKey, tasks] of Object.entries(tasksByDay)) {
     const totalMinutes = tasks.reduce(
       (sum, t) => sum + differenceInMinutes(t.slot.end, t.slot.start),
-      0
+      0,
     );
 
     const utilizationPercent = (totalMinutes / workingHoursPerDay) * 100;
@@ -504,10 +508,10 @@ function checkWorkloadConflict(
     if (utilizationPercent > 80) {
       return {
         id: `overload-${dayKey}`,
-        type: 'overload',
-        severity: utilizationPercent > 100 ? 'high' : 'medium',
+        type: "overload",
+        severity: utilizationPercent > 100 ? "high" : "medium",
         blocks: tasks.map((t) => t.task as unknown as ScheduleBlock),
-        description: `Le ${format(new Date(dayKey), 'EEEE d MMMM', { locale: fr })} est tr\u00e8s charg\u00e9 (${Math.round(utilizationPercent)}% d'occupation)`,
+        description: `Le ${format(new Date(dayKey), "EEEE d MMMM", { locale: fr })} est tr\u00e8s charg\u00e9 (${Math.round(utilizationPercent)}% d'occupation)`,
         suggestions: [],
       };
     }
@@ -522,7 +526,7 @@ function checkWorkloadConflict(
 
 export function previewAutoSchedule(
   request: AutoScheduleRequest,
-  existingEvents: ScheduleBlock[]
+  existingEvents: ScheduleBlock[],
 ): {
   preview: Array<{ task: Task; slot: DateRange }>;
   stats: {
@@ -554,7 +558,7 @@ export function findBestSlotForTask(
   task: Task,
   existingEvents: ScheduleBlock[],
   constraints?: Partial<AutoScheduleConstraints>,
-  patterns?: PatternAnalysis
+  patterns?: PatternAnalysis,
 ): DateRange | null {
   const fullConstraints = { ...DEFAULT_CONSTRAINTS, ...constraints };
 
@@ -564,7 +568,13 @@ export function findBestSlotForTask(
     slots = scoreSlots(slots, patterns, DEFAULT_PREFERENCES);
   }
 
-  const result = scheduleTask(task, slots, fullConstraints, DEFAULT_PREFERENCES, []);
+  const result = scheduleTask(
+    task,
+    slots,
+    fullConstraints,
+    DEFAULT_PREFERENCES,
+    [],
+  );
 
   return result.success && result.slot ? result.slot : null;
 }

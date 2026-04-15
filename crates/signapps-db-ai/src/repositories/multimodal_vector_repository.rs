@@ -1,9 +1,9 @@
 //! Repository for multimodal vector operations using pgvector (1024-dim SigLIP).
 
 use crate::models::multimodal_vector::{MultimodalChunkInput, MultimodalSearchResult};
-use signapps_db_shared::DatabasePool;
 use pgvector::Vector;
 use signapps_common::{Error, Result};
+use signapps_db_shared::DatabasePool;
 use uuid::Uuid;
 
 /// Repository for multimodal vector operations.

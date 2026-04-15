@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { useEffect, type ReactNode } from 'react';
-import { setLocale, type Locale } from './index';
-import { SUPPORTED_LANGUAGES } from '@/components/i18n/language-switcher';
+import { useEffect, type ReactNode } from "react";
+import { setLocale, type Locale } from "./index";
+import { SUPPORTED_LANGUAGES } from "@/components/i18n/language-switcher";
 
-const STORAGE_KEY = 'signapps-locale';
+const STORAGE_KEY = "signapps-locale";
 
 /**
  * I18nProvider — mounts at app root to:
@@ -14,17 +14,17 @@ const STORAGE_KEY = 'signapps-locale';
  */
 export function I18nProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === "undefined") return;
 
     const stored = localStorage.getItem(STORAGE_KEY) as Locale | null;
 
-    if (stored === 'fr' || stored === 'en') {
+    if (stored === "fr" || stored === "en") {
       setLocale(stored);
       applyDir(stored);
     } else {
       // First visit: detect browser language
-      const browserLang = navigator.language.split('-')[0] as Locale;
-      const detectedLocale: Locale = browserLang === 'en' ? 'en' : 'fr';
+      const browserLang = navigator.language.split("-")[0] as Locale;
+      const detectedLocale: Locale = browserLang === "en" ? "en" : "fr";
       setLocale(detectedLocale);
       localStorage.setItem(STORAGE_KEY, detectedLocale);
       applyDir(detectedLocale);
@@ -39,9 +39,9 @@ function applyDir(locale: Locale) {
   const lang = SUPPORTED_LANGUAGES.find((l) => l.code === locale);
   if (lang) {
     document.documentElement.lang = locale;
-    document.documentElement.dir = lang.dir as 'ltr' | 'rtl';
+    document.documentElement.dir = lang.dir as "ltr" | "rtl";
   } else {
     document.documentElement.lang = locale;
-    document.documentElement.dir = 'ltr';
+    document.documentElement.dir = "ltr";
   }
 }

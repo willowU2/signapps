@@ -1,22 +1,22 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { Star } from 'lucide-react';
+import { useEffect, useState } from "react";
+import { Star } from "lucide-react";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from '@/components/ui/popover';
-import { Progress } from '@/components/ui/progress';
-import { Button } from '@/components/ui/button';
+} from "@/components/ui/popover";
+import { Progress } from "@/components/ui/progress";
+import { Button } from "@/components/ui/button";
 import {
   loadPoints,
   getEarnedBadges,
   getBadgeProgress,
   BADGE_DEFINITIONS,
   type PointsState,
-} from '@/lib/gamification/points';
-import { cn } from '@/lib/utils';
+} from "@/lib/gamification/points";
+import { cn } from "@/lib/utils";
 
 /**
  * PointsDisplay — small star icon in the header that opens a popover
@@ -30,16 +30,18 @@ export function PointsDisplay() {
 
     // Refresh whenever localStorage changes (other tabs / awardPoints calls)
     const handler = (e: StorageEvent) => {
-      if (e.key === 'signapps-points') setPts(loadPoints());
+      if (e.key === "signapps-points") setPts(loadPoints());
     };
-    window.addEventListener('storage', handler);
-    return () => window.removeEventListener('storage', handler);
+    window.addEventListener("storage", handler);
+    return () => window.removeEventListener("storage", handler);
   }, []);
 
   if (!pts) return null;
 
   const earned = getEarnedBadges(pts);
-  const unearned = BADGE_DEFINITIONS.filter((b) => !earned.some((e) => e.id === b.id));
+  const unearned = BADGE_DEFINITIONS.filter(
+    (b) => !earned.some((e) => e.id === b.id),
+  );
 
   return (
     <Popover>
@@ -54,7 +56,7 @@ export function PointsDisplay() {
           <Star className="h-4 w-4 text-yellow-500" aria-hidden="true" />
           {pts.totalPoints > 0 && (
             <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-0.5 rounded-full bg-yellow-500 text-white text-[9px] font-bold flex items-center justify-center">
-              {pts.totalPoints > 9999 ? '9k+' : pts.totalPoints}
+              {pts.totalPoints > 9999 ? "9k+" : pts.totalPoints}
             </span>
           )}
         </Button>
@@ -67,7 +69,9 @@ export function PointsDisplay() {
             <p className="text-sm font-semibold">Your Points</p>
             <p className="text-2xl font-bold text-yellow-500">
               {pts.totalPoints.toLocaleString()}
-              <span className="text-sm font-normal text-muted-foreground ml-1">pts</span>
+              <span className="text-sm font-normal text-muted-foreground ml-1">
+                pts
+              </span>
             </p>
           </div>
           <Star className="h-8 w-8 text-yellow-400" />
@@ -115,7 +119,7 @@ export function PointsDisplay() {
                         {count}/{b.trigger.threshold}
                       </span>
                     </div>
-                    <Progress value={progress * 100} className={cn('h-1.5')} />
+                    <Progress value={progress * 100} className={cn("h-1.5")} />
                   </div>
                 );
               })}

@@ -71,12 +71,12 @@ export function InvoiceEditor({
   const [clientName, setClientName] = useState(initialData?.clientName ?? "");
   const [number] = useState(initialData?.number ?? nextNumber);
   const [date, setDate] = useState(
-    initialData?.date ?? new Date().toISOString().split("T")[0]
+    initialData?.date ?? new Date().toISOString().split("T")[0],
   );
   const [lineItems, setLineItems] = useState<LineItem[]>(
     initialData?.lineItems ?? [
       { id: generateId(), description: "", quantity: 1, unitPrice: 0 },
-    ]
+    ],
   );
   const [tvaRate, setTvaRate] = useState<TvaRate>(initialData?.tvaRate ?? 20);
   const [notes, setNotes] = useState(initialData?.notes ?? "");
@@ -96,9 +96,13 @@ export function InvoiceEditor({
     setLineItems((prev) => prev.filter((l) => l.id !== id));
   }
 
-  function updateLine(id: string, field: keyof LineItem, value: string | number) {
+  function updateLine(
+    id: string,
+    field: keyof LineItem,
+    value: string | number,
+  ) {
     setLineItems((prev) =>
-      prev.map((l) => (l.id === id ? { ...l, [field]: value } : l))
+      prev.map((l) => (l.id === id ? { ...l, [field]: value } : l)),
     );
   }
 
@@ -187,7 +191,11 @@ export function InvoiceEditor({
                     step={1}
                     value={line.quantity}
                     onChange={(e) =>
-                      updateLine(line.id, "quantity", parseFloat(e.target.value) || 0)
+                      updateLine(
+                        line.id,
+                        "quantity",
+                        parseFloat(e.target.value) || 0,
+                      )
                     }
                     className="text-right"
                   />
@@ -199,7 +207,11 @@ export function InvoiceEditor({
                     step={0.01}
                     value={line.unitPrice}
                     onChange={(e) =>
-                      updateLine(line.id, "unitPrice", parseFloat(e.target.value) || 0)
+                      updateLine(
+                        line.id,
+                        "unitPrice",
+                        parseFloat(e.target.value) || 0,
+                      )
                     }
                     className="text-right"
                   />

@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * CommentsSidebar
@@ -6,9 +6,9 @@
  * Enhanced comments panel with filtering, threading, and actions.
  */
 
-import React, { useState, useMemo, useCallback } from 'react';
-import { formatDistanceToNow } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import React, { useState, useMemo, useCallback } from "react";
+import { formatDistanceToNow } from "date-fns";
+import { fr } from "date-fns/locale";
 import {
   MessageSquare,
   Check,
@@ -23,30 +23,30 @@ import {
   Clock,
   Trash2,
   Edit2,
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from "@/components/ui/dropdown-menu";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
-import { cn } from '@/lib/utils';
-import { motion, AnimatePresence } from 'framer-motion';
+} from "@/components/ui/select";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
+import { motion, AnimatePresence } from "framer-motion";
 
 // ============================================================================
 // Types
@@ -79,8 +79,8 @@ export interface Comment {
   anchorPosition?: { from: number; to: number };
 }
 
-type FilterStatus = 'all' | 'open' | 'resolved';
-type SortBy = 'newest' | 'oldest' | 'position';
+type FilterStatus = "all" | "open" | "resolved";
+type SortBy = "newest" | "oldest" | "position";
 
 interface CommentsSidebarProps {
   comments: Comment[];
@@ -122,7 +122,7 @@ function CommentThread({
   const [isExpanded, setIsExpanded] = useState(!comment.resolved);
   const [isReplying, setIsReplying] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [replyContent, setReplyContent] = useState('');
+  const [replyContent, setReplyContent] = useState("");
   const [editContent, setEditContent] = useState(comment.content);
 
   const isOwner = comment.authorId === currentUserId;
@@ -130,7 +130,7 @@ function CommentThread({
   const handleSubmitReply = () => {
     if (replyContent.trim()) {
       onReply(replyContent.trim());
-      setReplyContent('');
+      setReplyContent("");
       setIsReplying(false);
     }
   };
@@ -149,9 +149,11 @@ function CommentThread({
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -10 }}
       className={cn(
-        'group rounded-lg border bg-card transition-colors',
-        comment.resolved ? 'border-muted bg-muted/30' : 'border-border hover:border-primary/50',
-        'cursor-pointer'
+        "group rounded-lg border bg-card transition-colors",
+        comment.resolved
+          ? "border-muted bg-muted/30"
+          : "border-border hover:border-primary/50",
+        "cursor-pointer",
       )}
       onClick={onClick}
     >
@@ -268,7 +270,7 @@ function CommentThread({
         {isExpanded && (
           <motion.div
             initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
+            animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.2 }}
           >
@@ -359,7 +361,7 @@ function CommentThread({
                       onClick={(e) => {
                         e.stopPropagation();
                         setIsReplying(false);
-                        setReplyContent('');
+                        setReplyContent("");
                       }}
                     >
                       Annuler
@@ -400,18 +402,18 @@ export function CommentsSidebar({
   onCommentClick,
   className,
 }: CommentsSidebarProps) {
-  const [filterStatus, setFilterStatus] = useState<FilterStatus>('all');
-  const [sortBy, setSortBy] = useState<SortBy>('newest');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [filterStatus, setFilterStatus] = useState<FilterStatus>("all");
+  const [sortBy, setSortBy] = useState<SortBy>("newest");
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Filter and sort comments
   const filteredComments = useMemo(() => {
     let result = [...comments];
 
     // Filter by status
-    if (filterStatus === 'open') {
+    if (filterStatus === "open") {
       result = result.filter((c) => !c.resolved);
-    } else if (filterStatus === 'resolved') {
+    } else if (filterStatus === "resolved") {
       result = result.filter((c) => c.resolved);
     }
 
@@ -422,20 +424,29 @@ export function CommentsSidebar({
         (c) =>
           c.content.toLowerCase().includes(query) ||
           c.authorName.toLowerCase().includes(query) ||
-          c.anchorText?.toLowerCase().includes(query)
+          c.anchorText?.toLowerCase().includes(query),
       );
     }
 
     // Sort
     switch (sortBy) {
-      case 'newest':
-        result.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      case "newest":
+        result.sort(
+          (a, b) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+        );
         break;
-      case 'oldest':
-        result.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+      case "oldest":
+        result.sort(
+          (a, b) =>
+            new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+        );
         break;
-      case 'position':
-        result.sort((a, b) => (a.anchorPosition?.from || 0) - (b.anchorPosition?.from || 0));
+      case "position":
+        result.sort(
+          (a, b) =>
+            (a.anchorPosition?.from || 0) - (b.anchorPosition?.from || 0),
+        );
         break;
     }
 
@@ -446,7 +457,7 @@ export function CommentsSidebar({
   const resolvedCount = comments.filter((c) => c.resolved).length;
 
   return (
-    <div className={cn('flex h-full flex-col', className)}>
+    <div className={cn("flex h-full flex-col", className)}>
       {/* Header */}
       <div className="flex items-center justify-between border-b p-4">
         <div className="flex items-center gap-2">
@@ -466,14 +477,19 @@ export function CommentsSidebar({
         />
 
         <div className="flex gap-2">
-          <Select value={filterStatus} onValueChange={(v) => setFilterStatus(v as FilterStatus)}>
+          <Select
+            value={filterStatus}
+            onValueChange={(v) => setFilterStatus(v as FilterStatus)}
+          >
             <SelectTrigger className="h-8 flex-1">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Tous ({comments.length})</SelectItem>
               <SelectItem value="open">Ouverts ({openCount})</SelectItem>
-              <SelectItem value="resolved">Résolus ({resolvedCount})</SelectItem>
+              <SelectItem value="resolved">
+                Résolus ({resolvedCount})
+              </SelectItem>
             </SelectContent>
           </Select>
 

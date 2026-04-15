@@ -3,9 +3,9 @@
 use crate::models::document_vector::{
     Collection, CollectionStatsDetail, CollectionWithStats, VectorSearchResult, VectorStats,
 };
-use signapps_db_shared::DatabasePool;
 use pgvector::Vector;
 use signapps_common::{Error, Result};
+use signapps_db_shared::DatabasePool;
 use uuid::Uuid;
 
 /// Repository for vector operations using pgvector.

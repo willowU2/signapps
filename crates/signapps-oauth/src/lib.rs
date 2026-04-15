@@ -24,6 +24,7 @@ pub mod token_table;
 mod types;
 
 pub use catalog::{Catalog, CatalogError};
+pub use checkout::{checkout_token, TokenCheckout, FRESHNESS_MARGIN};
 pub use config_store::{ConfigStore, PgConfigStore};
 pub use engine_v2::{EngineV2, EngineV2Config};
 pub use error::OAuthError;
@@ -34,10 +35,9 @@ pub use events::{
 pub use profile::extract_profile;
 pub use protocol::{OAuthPurpose, Protocol, ProviderCategory, TokenPlacement};
 pub use provider::{ProviderConfig, ProviderDefinition, ProviderSummary};
+pub use refresh::{try_refresh, RefreshOutcome};
 pub use scope::{ScopeResolver, UserContext};
 pub use state::{FlowState, StateError};
-pub use checkout::{checkout_token, TokenCheckout, FRESHNESS_MARGIN};
-pub use refresh::{try_refresh, RefreshOutcome};
 pub use token_table::{
     CalendarConnectionsTable, EncryptedTokens, MailAccountsTable, SocialAccountsTable, TokenTable,
 };

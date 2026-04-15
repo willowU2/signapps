@@ -245,11 +245,10 @@ pub async fn list_accounts(State(state): State<AppState>) -> Result<Json<Vec<Acc
         tracing::warn!("ensure_schema failed: {e}");
     }
 
-    let rows: Vec<Account> =
-        sqlx::query_as("SELECT * FROM accounting.accounts ORDER BY code ASC")
-            .fetch_all(&state.pool)
-            .await
-            .map_err(|e| Error::Internal(format!("list accounts: {e}")))?;
+    let rows: Vec<Account> = sqlx::query_as("SELECT * FROM accounting.accounts ORDER BY code ASC")
+        .fetch_all(&state.pool)
+        .await
+        .map_err(|e| Error::Internal(format!("list accounts: {e}")))?;
 
     Ok(Json(rows))
 }
@@ -318,9 +317,9 @@ pub async fn create_account(
         tracing::warn!("ensure_schema failed: {e}");
     }
 
-    let owner_id = body
-        .owner_id
-        .unwrap_or_else(|| Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap_or_default());
+    let owner_id = body.owner_id.unwrap_or_else(|| {
+        Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap_or_default()
+    });
 
     let row: Account = sqlx::query_as(
         "INSERT INTO accounting.accounts (parent_id, code, name, account_type, balance, currency, owner_id)
@@ -643,9 +642,7 @@ pub async fn post_entry(
     responses((status = 200, description = "Balance sheet report"))
 )]
 #[tracing::instrument(skip_all)]
-pub async fn get_balance_sheet(
-    State(state): State<AppState>,
-) -> Result<Json<serde_json::Value>> {
+pub async fn get_balance_sheet(State(state): State<AppState>) -> Result<Json<serde_json::Value>> {
     let rows = get_type_totals(&state.pool).await?;
     let mut assets: i64 = 0;
     let mut liabilities: i64 = 0;
@@ -655,7 +652,7 @@ pub async fn get_balance_sheet(
             "asset" => assets = r.total,
             "liability" => liabilities = r.total,
             "equity" => equity = r.total,
-            _ => {}
+            _ => {},
         }
     }
     Ok(Json(serde_json::json!({
@@ -685,9 +682,7 @@ pub async fn get_balance_sheet(
     responses((status = 200, description = "Profit & loss report"))
 )]
 #[tracing::instrument(skip_all)]
-pub async fn get_profit_loss(
-    State(state): State<AppState>,
-) -> Result<Json<serde_json::Value>> {
+pub async fn get_profit_loss(State(state): State<AppState>) -> Result<Json<serde_json::Value>> {
     let rows = get_type_totals(&state.pool).await?;
     let mut revenue: i64 = 0;
     let mut expenses: i64 = 0;
@@ -695,7 +690,7 @@ pub async fn get_profit_loss(
         match r.account_type.as_str() {
             "revenue" => revenue = r.total,
             "expense" => expenses = r.total,
-            _ => {}
+            _ => {},
         }
     }
     Ok(Json(serde_json::json!({
@@ -724,9 +719,7 @@ pub async fn get_profit_loss(
     responses((status = 200, description = "Trial balance report"))
 )]
 #[tracing::instrument(skip_all)]
-pub async fn get_trial_balance(
-    State(state): State<AppState>,
-) -> Result<Json<serde_json::Value>> {
+pub async fn get_trial_balance(State(state): State<AppState>) -> Result<Json<serde_json::Value>> {
     let rows = get_type_totals(&state.pool).await?;
     Ok(Json(serde_json::json!({
         "report_type": "trial_balance",
@@ -834,11 +827,10 @@ pub async fn seed_default_coa(
     }
 
     // Check if accounts already exist
-    let count: (i64,) =
-        sqlx::query_as("SELECT COUNT(*) FROM accounting.accounts")
-            .fetch_one(&state.pool)
-            .await
-            .map_err(|e| Error::Internal(format!("count accounts: {e}")))?;
+    let count: (i64,) = sqlx::query_as("SELECT COUNT(*) FROM accounting.accounts")
+        .fetch_one(&state.pool)
+        .await
+        .map_err(|e| Error::Internal(format!("count accounts: {e}")))?;
 
     if count.0 > 0 {
         let existing: Vec<Account> =
@@ -856,17 +848,53 @@ pub async fn seed_default_coa(
         ("1", "Assets", "asset", None, 0),
         ("1.1", "Current Assets", "asset", Some("1"), 0),
         ("1.1.1", "Cash", "asset", Some("1.1"), 2_500_000),
-        ("1.1.2", "Accounts Receivable", "asset", Some("1.1"), 1_500_000),
+        (
+            "1.1.2",
+            "Accounts Receivable",
+            "asset",
+            Some("1.1"),
+            1_500_000,
+        ),
         ("1.1.3", "Inventory", "asset", Some("1.1"), 800_000),
         ("1.2", "Fixed Assets", "asset", Some("1"), 0),
-        ("1.2.1", "Property & Equipment", "asset", Some("1.2"), 5_000_000),
-        ("1.2.2", "Accumulated Depreciation", "asset", Some("1.2"), -1_000_000),
+        (
+            "1.2.1",
+            "Property & Equipment",
+            "asset",
+            Some("1.2"),
+            5_000_000,
+        ),
+        (
+            "1.2.2",
+            "Accumulated Depreciation",
+            "asset",
+            Some("1.2"),
+            -1_000_000,
+        ),
         ("2", "Liabilities", "liability", None, 0),
         ("2.1", "Current Liabilities", "liability", Some("2"), 0),
-        ("2.1.1", "Accounts Payable", "liability", Some("2.1"), 500_000),
-        ("2.1.2", "Short-term Debt", "liability", Some("2.1"), 1_000_000),
+        (
+            "2.1.1",
+            "Accounts Payable",
+            "liability",
+            Some("2.1"),
+            500_000,
+        ),
+        (
+            "2.1.2",
+            "Short-term Debt",
+            "liability",
+            Some("2.1"),
+            1_000_000,
+        ),
         ("2.2", "Long-term Liabilities", "liability", Some("2"), 0),
-        ("2.2.1", "Long-term Debt", "liability", Some("2.2"), 2_500_000),
+        (
+            "2.2.1",
+            "Long-term Debt",
+            "liability",
+            Some("2.2"),
+            2_500_000,
+        ),
         ("3", "Equity", "equity", None, 0),
         ("3.1", "Capital Stock", "equity", Some("3"), 5_000_000),
         ("3.2", "Retained Earnings", "equity", Some("3"), 800_000),
@@ -875,14 +903,19 @@ pub async fn seed_default_coa(
         ("4.2", "Product Sales", "revenue", Some("4"), 8_000_000),
         ("5", "Expenses", "expense", None, 0),
         ("5.1", "Operating Expenses", "expense", Some("5"), 0),
-        ("5.1.1", "Salaries & Wages", "expense", Some("5.1"), 6_000_000),
+        (
+            "5.1.1",
+            "Salaries & Wages",
+            "expense",
+            Some("5.1"),
+            6_000_000,
+        ),
         ("5.1.2", "Rent", "expense", Some("5.1"), 1_200_000),
         ("5.1.3", "Utilities", "expense", Some("5.1"), 240_000),
         ("5.2", "COGS", "expense", Some("5"), 4_000_000),
     ];
 
-    let mut code_to_id: std::collections::HashMap<String, Uuid> =
-        std::collections::HashMap::new();
+    let mut code_to_id: std::collections::HashMap<String, Uuid> = std::collections::HashMap::new();
     let mut created: Vec<Account> = Vec::new();
 
     for (code, name, account_type, parent_code, balance) in &seed_accounts {

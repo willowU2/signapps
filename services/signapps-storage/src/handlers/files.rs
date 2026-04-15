@@ -68,11 +68,7 @@ async fn find_duplicate_by_hash(
 /// Returns `None` when the file exists in `storage.files` but has no
 /// corresponding drive node (raw upload, not via Drive VFS).
 /// Returns `(node_id, owner_id)` when a node is found.
-async fn resolve_file_node(
-    pool: &sqlx::PgPool,
-    bucket: &str,
-    key: &str,
-) -> Option<(Uuid, Uuid)> {
+async fn resolve_file_node(pool: &sqlx::PgPool, bucket: &str, key: &str) -> Option<(Uuid, Uuid)> {
     use sqlx::Row;
     let row = sqlx::query(
         r#"
@@ -123,7 +119,12 @@ async fn check_file_permission(
         let user_ctx = state.sharing.build_user_context(claims).await?;
         return state
             .sharing
-            .check(&user_ctx, ResourceRef::file(node_id), action, Some(owner_id))
+            .check(
+                &user_ctx,
+                ResourceRef::file(node_id),
+                action,
+                Some(owner_id),
+            )
             .await;
     }
 

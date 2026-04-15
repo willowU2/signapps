@@ -50,7 +50,12 @@ pub async fn handle_compare(
         tracing::warn!(dn = dn, "Compare denied: unauthenticated");
         return CompareResult::Error("Insufficient access".to_string());
     }
-    tracing::debug!(dn = dn, attr = attribute, value_len = value.len(), "Compare operation");
+    tracing::debug!(
+        dn = dn,
+        attr = attribute,
+        value_len = value.len(),
+        "Compare operation"
+    );
     // Will be implemented when DirectoryEntry loading is wired to PostgreSQL.
     CompareResult::NoSuchObject
 }

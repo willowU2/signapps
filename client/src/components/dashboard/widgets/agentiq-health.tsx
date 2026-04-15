@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * AgentIQ Health Widget
@@ -6,13 +6,13 @@
  * Session uptime, crash count, Golden Rules compliance chips, sprint info.
  */
 
-import { useQuery } from '@tanstack/react-query';
-import { Activity, WifiOff } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
-import { agentiqApi } from '@/lib/api/agentiq';
-import type { WidgetRenderProps } from '@/lib/dashboard/types';
+import { useQuery } from "@tanstack/react-query";
+import { Activity, WifiOff } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { agentiqApi } from "@/lib/api/agentiq";
+import type { WidgetRenderProps } from "@/lib/dashboard/types";
 
 interface GoldenRule {
   label: string;
@@ -35,12 +35,14 @@ function formatUptime(seconds: number): string {
   if (seconds < 3600) return `${Math.floor(seconds / 60)}m`;
   const h = Math.floor(seconds / 3600);
   const m = Math.floor((seconds % 3600) / 60);
-  return `${h}h${m.toString().padStart(2, '0')}m`;
+  return `${h}h${m.toString().padStart(2, "0")}m`;
 }
 
-export function AgentiqHealthWidget({ widget }: Partial<WidgetRenderProps> = {}) {
+export function AgentiqHealthWidget({
+  widget,
+}: Partial<WidgetRenderProps> = {}) {
   const { data, isLoading, isError } = useQuery({
-    queryKey: ['agentiq-health'],
+    queryKey: ["agentiq-health"],
     queryFn: () => agentiqApi.dashboard(),
     refetchInterval: 5000,
     retry: false,
@@ -78,12 +80,14 @@ export function AgentiqHealthWidget({ widget }: Partial<WidgetRenderProps> = {})
                 <p className="text-lg font-bold leading-tight">
                   {health.sessionUptime !== undefined
                     ? formatUptime(health.sessionUptime)
-                    : '—'}
+                    : "—"}
                 </p>
               </div>
               <div className="flex-1 rounded-lg bg-muted/40 p-2 text-center">
                 <p className="text-xs text-muted-foreground">Crashes</p>
-                <p className={`text-lg font-bold leading-tight ${(health.crashCount ?? 0) > 0 ? 'text-red-500' : 'text-green-600'}`}>
+                <p
+                  className={`text-lg font-bold leading-tight ${(health.crashCount ?? 0) > 0 ? "text-red-500" : "text-green-600"}`}
+                >
                   {health.crashCount ?? 0}
                 </p>
               </div>
@@ -92,10 +96,13 @@ export function AgentiqHealthWidget({ widget }: Partial<WidgetRenderProps> = {})
             {/* Sprint info */}
             {health.sprint && (
               <div className="rounded-lg bg-muted/40 p-2">
-                <p className="text-xs font-medium">{health.sprint.name ?? 'Sprint actif'}</p>
+                <p className="text-xs font-medium">
+                  {health.sprint.name ?? "Sprint actif"}
+                </p>
                 {health.sprint.tasksTotal !== undefined && (
                   <p className="text-xs text-muted-foreground">
-                    {health.sprint.tasksCompleted ?? 0} / {health.sprint.tasksTotal} tâches
+                    {health.sprint.tasksCompleted ?? 0} /{" "}
+                    {health.sprint.tasksTotal} tâches
                   </p>
                 )}
               </div>
@@ -104,7 +111,9 @@ export function AgentiqHealthWidget({ widget }: Partial<WidgetRenderProps> = {})
             {/* Golden Rules compliance */}
             {health.goldenRules && health.goldenRules.length > 0 && (
               <div>
-                <p className="text-xs font-medium text-muted-foreground mb-1.5">Golden Rules</p>
+                <p className="text-xs font-medium text-muted-foreground mb-1.5">
+                  Golden Rules
+                </p>
                 <div className="flex flex-wrap gap-1">
                   {health.goldenRules.map((rule, idx) => (
                     <Badge
@@ -112,12 +121,12 @@ export function AgentiqHealthWidget({ widget }: Partial<WidgetRenderProps> = {})
                       variant="secondary"
                       className={`text-[9px] h-4 px-1.5 ${
                         rule.ok
-                          ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
-                          : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
+                          ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
+                          : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300"
                       }`}
                       title={rule.label}
                     >
-                      {rule.ok ? '✓' : '✗'} {rule.label}
+                      {rule.ok ? "✓" : "✗"} {rule.label}
                     </Badge>
                   ))}
                 </div>

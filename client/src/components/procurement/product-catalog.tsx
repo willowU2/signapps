@@ -112,7 +112,9 @@ export function ProductCatalog({ onAddToCart }: ProductCatalogProps) {
                     product.stock > 0 ? "text-green-600" : "text-red-600"
                   }`}
                 >
-                  {product.stock > 0 ? `${product.stock} in stock` : "Rupture de stock"}
+                  {product.stock > 0
+                    ? `${product.stock} in stock`
+                    : "Rupture de stock"}
                 </span>
               </div>
 

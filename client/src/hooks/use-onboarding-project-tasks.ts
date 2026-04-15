@@ -9,7 +9,11 @@ export interface OnboardingRole {
   department: string;
   projectId: string;
   projectName: string;
-  templateTasks: { title: string; daysFromStart: number; priority: "low" | "medium" | "high" }[];
+  templateTasks: {
+    title: string;
+    daysFromStart: number;
+    priority: "low" | "medium" | "high";
+  }[];
 }
 
 export interface CreatedOnboardingTask {
@@ -33,9 +37,21 @@ const ROLE_TEMPLATES: OnboardingRole[] = [
     projectName: "Refonte Backend Auth",
     templateTasks: [
       { title: "Setup environnement dev", daysFromStart: 1, priority: "high" },
-      { title: "Lire documentation architecture", daysFromStart: 2, priority: "high" },
-      { title: "Pair programming avec le lead", daysFromStart: 3, priority: "medium" },
-      { title: "Premier PR de correction", daysFromStart: 7, priority: "medium" },
+      {
+        title: "Lire documentation architecture",
+        daysFromStart: 2,
+        priority: "high",
+      },
+      {
+        title: "Pair programming avec le lead",
+        daysFromStart: 3,
+        priority: "medium",
+      },
+      {
+        title: "Premier PR de correction",
+        daysFromStart: 7,
+        priority: "medium",
+      },
     ],
   },
   {
@@ -46,8 +62,16 @@ const ROLE_TEMPLATES: OnboardingRole[] = [
     projectName: "Dashboard Analytics",
     templateTasks: [
       { title: "Revue du design system", daysFromStart: 1, priority: "high" },
-      { title: "Audit UX de la page principale", daysFromStart: 3, priority: "medium" },
-      { title: "Maquettes onboarding flow", daysFromStart: 5, priority: "high" },
+      {
+        title: "Audit UX de la page principale",
+        daysFromStart: 3,
+        priority: "medium",
+      },
+      {
+        title: "Maquettes onboarding flow",
+        daysFromStart: 5,
+        priority: "high",
+      },
     ],
   },
 ];
@@ -62,42 +86,47 @@ export function useOnboardingProjectTasks() {
   const [tasks, setTasks] = useState<CreatedOnboardingTask[]>([]);
   const [creating, setCreating] = useState(false);
 
-  const createTasksForNewHire = useCallback(async (params: {
-    employeeId: string;
-    employeeName: string;
-    roleId: string;
-    startDate: string;
-  }) => {
-    const template = ROLE_TEMPLATES.find((t) => t.roleId === params.roleId);
-    if (!template) {
-      toast.error("Aucun template de tâches pour ce rôle.");
-      return [];
-    }
+  const createTasksForNewHire = useCallback(
+    async (params: {
+      employeeId: string;
+      employeeName: string;
+      roleId: string;
+      startDate: string;
+    }) => {
+      const template = ROLE_TEMPLATES.find((t) => t.roleId === params.roleId);
+      if (!template) {
+        toast.error("Aucun template de tâches pour ce rôle.");
+        return [];
+      }
 
-    setCreating(true);
-    await new Promise((resolve) => setTimeout(resolve, 600));
+      setCreating(true);
+      await new Promise((resolve) => setTimeout(resolve, 600));
 
-    const created: CreatedOnboardingTask[] = template.templateTasks.map((tt, i) => ({
-      id: `onb-${params.employeeId}-${Date.now()}-${i}`,
-      projectId: template.projectId,
-      title: tt.title,
-      assigneeId: params.employeeId,
-      assigneeName: params.employeeName,
-      dueDate: addDays(params.startDate, tt.daysFromStart),
-      priority: tt.priority,
-      source: "onboarding" as const,
-      status: "pending" as const,
-    }));
+      const created: CreatedOnboardingTask[] = template.templateTasks.map(
+        (tt, i) => ({
+          id: `onb-${params.employeeId}-${Date.now()}-${i}`,
+          projectId: template.projectId,
+          title: tt.title,
+          assigneeId: params.employeeId,
+          assigneeName: params.employeeName,
+          dueDate: addDays(params.startDate, tt.daysFromStart),
+          priority: tt.priority,
+          source: "onboarding" as const,
+          status: "pending" as const,
+        }),
+      );
 
-    setTasks((prev) => [...prev, ...created]);
-    setCreating(false);
+      setTasks((prev) => [...prev, ...created]);
+      setCreating(false);
 
-    toast.success(`${created.length} tâches d'onboarding créées`, {
-      description: `Assignées à ${params.employeeName} sur ${template.projectName}.`,
-    });
+      toast.success(`${created.length} tâches d'onboarding créées`, {
+        description: `Assignées à ${params.employeeName} sur ${template.projectName}.`,
+      });
 
-    return created;
-  }, []);
+      return created;
+    },
+    [],
+  );
 
   const getRoleTemplates = useCallback(() => ROLE_TEMPLATES, []);
 

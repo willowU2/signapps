@@ -1,6 +1,6 @@
 "use client";
 
-import { SpinnerInfinity } from 'spinners-react';
+import { SpinnerInfinity } from "spinners-react";
 
 import { useState, useEffect } from "react";
 import {
@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { storageApi } from "@/lib/api";
-import { Tag, Trash2, Edit2, Check, X } from 'lucide-react';
+import { Tag, Trash2, Edit2, Check, X } from "lucide-react";
 import { toast } from "sonner";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
@@ -198,10 +198,18 @@ export function ManageTagsSheet({
                   </div>
                 </div>
                 <div className="flex justify-end gap-2 pt-2">
-                  <Button size="sm" variant="ghost" onClick={() => setIsCreating(false)}>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setIsCreating(false)}
+                  >
                     Cancel
                   </Button>
-                  <Button size="sm" onClick={handleCreateTag} disabled={!newName.trim()}>
+                  <Button
+                    size="sm"
+                    onClick={handleCreateTag}
+                    disabled={!newName.trim()}
+                  >
                     Create
                   </Button>
                 </div>
@@ -213,7 +221,13 @@ export function ManageTagsSheet({
           <div className="flex-1 border rounded-md overflow-hidden bg-muted/10">
             {loading ? (
               <div className="h-full flex items-center justify-center p-4">
-                <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-6 w-6  text-muted-foreground" />
+                <SpinnerInfinity
+                  size={24}
+                  secondaryColor="rgba(128,128,128,0.2)"
+                  color="currentColor"
+                  speed={120}
+                  className="h-6 w-6  text-muted-foreground"
+                />
               </div>
             ) : tags.length === 0 && !isCreating ? (
               <div className="h-full flex flex-col items-center justify-center p-8 text-center">
@@ -224,8 +238,8 @@ export function ManageTagsSheet({
                 </p>
               </div>
             ) : (
-               <ScrollArea className="h-full p-3">
-                 <div className="space-y-2">
+              <ScrollArea className="h-full p-3">
+                <div className="space-y-2">
                   {tags.map((tag) => (
                     <div
                       key={tag.id}
@@ -295,7 +309,7 @@ export function ManageTagsSheet({
                       )}
                     </div>
                   ))}
-                 </div>
+                </div>
               </ScrollArea>
             )}
           </div>

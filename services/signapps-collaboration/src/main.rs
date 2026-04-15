@@ -10,7 +10,7 @@ use axum::{
     http::StatusCode,
     middleware,
     response::IntoResponse,
-    routing::{get, post},
+    routing::get,
     Extension, Json, Router,
 };
 use chrono::Utc;
@@ -127,7 +127,10 @@ async fn list_boards(
     .await;
 
     match result {
-        Ok(rows) => (StatusCode::OK, Json(serde_json::to_value(rows).unwrap_or_default())),
+        Ok(rows) => (
+            StatusCode::OK,
+            Json(serde_json::to_value(rows).unwrap_or_default()),
+        ),
         Err(e) => {
             tracing::error!(?e, "Failed to list boards");
             (
@@ -182,7 +185,10 @@ async fn create_board(
     match result {
         Ok(row) => {
             tracing::info!(id = %row.id, "Board created");
-            (StatusCode::CREATED, Json(serde_json::to_value(row).unwrap_or_default()))
+            (
+                StatusCode::CREATED,
+                Json(serde_json::to_value(row).unwrap_or_default()),
+            )
         },
         Err(e) => {
             tracing::error!(?e, "Failed to create board");
@@ -221,15 +227,16 @@ async fn get_board(
     Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> impl IntoResponse {
-    let result = sqlx::query_as::<_, BoardRow>(
-        "SELECT * FROM collaboration.boards WHERE id = $1",
-    )
-    .bind(id)
-    .fetch_optional(&state.pool)
-    .await;
+    let result = sqlx::query_as::<_, BoardRow>("SELECT * FROM collaboration.boards WHERE id = $1")
+        .bind(id)
+        .fetch_optional(&state.pool)
+        .await;
 
     match result {
-        Ok(Some(row)) => (StatusCode::OK, Json(serde_json::to_value(row).unwrap_or_default())),
+        Ok(Some(row)) => (
+            StatusCode::OK,
+            Json(serde_json::to_value(row).unwrap_or_default()),
+        ),
         Ok(None) => (
             StatusCode::NOT_FOUND,
             Json(serde_json::json!({ "error": "Board not found" })),
@@ -275,12 +282,11 @@ async fn update_board(
     Json(payload): Json<UpdateBoardRequest>,
 ) -> impl IntoResponse {
     // Check ownership
-    let existing = sqlx::query_as::<_, BoardRow>(
-        "SELECT * FROM collaboration.boards WHERE id = $1",
-    )
-    .bind(id)
-    .fetch_optional(&state.pool)
-    .await;
+    let existing =
+        sqlx::query_as::<_, BoardRow>("SELECT * FROM collaboration.boards WHERE id = $1")
+            .bind(id)
+            .fetch_optional(&state.pool)
+            .await;
 
     match existing {
         Ok(Some(board)) => {
@@ -323,7 +329,10 @@ async fn update_board(
     match result {
         Ok(row) => {
             tracing::info!(id = %id, "Board updated");
-            (StatusCode::OK, Json(serde_json::to_value(row).unwrap_or_default()))
+            (
+                StatusCode::OK,
+                Json(serde_json::to_value(row).unwrap_or_default()),
+            )
         },
         Err(e) => {
             tracing::error!(?e, "Failed to update board");
@@ -364,12 +373,11 @@ async fn delete_board(
     Path(id): Path<Uuid>,
 ) -> impl IntoResponse {
     // Check ownership
-    let existing = sqlx::query_as::<_, BoardRow>(
-        "SELECT * FROM collaboration.boards WHERE id = $1",
-    )
-    .bind(id)
-    .fetch_optional(&state.pool)
-    .await;
+    let existing =
+        sqlx::query_as::<_, BoardRow>("SELECT * FROM collaboration.boards WHERE id = $1")
+            .bind(id)
+            .fetch_optional(&state.pool)
+            .await;
 
     match existing {
         Ok(Some(board)) => {
@@ -511,7 +519,10 @@ async fn main() -> anyhow::Result<()> {
     let db_pool = signapps_db::create_pool(&config.database_url).await?;
 
     if let Err(e) = signapps_db::run_migrations(&db_pool).await {
-        tracing::warn!("Failed to apply database migrations for Collaboration: {}", e);
+        tracing::warn!(
+            "Failed to apply database migrations for Collaboration: {}",
+            e
+        );
     }
 
     tracing::info!("Running fallback SQL creation for collaboration schema...");

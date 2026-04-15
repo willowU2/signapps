@@ -75,7 +75,9 @@ export function CostAlerts({
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {alerts.map((alert) => {
           const status = getStatus(alert.current, alert.threshold);
-          const percentage = Math.round((alert.current / alert.threshold) * 100);
+          const percentage = Math.round(
+            (alert.current / alert.threshold) * 100,
+          );
 
           return (
             <Card key={alert.id} className="p-5">

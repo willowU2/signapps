@@ -51,14 +51,16 @@ export function InnovationChallenge() {
     {
       id: "1",
       title: "AI-Powered Knowledge Base",
-      description: "Build an intelligent search and recommendation system for our documentation",
+      description:
+        "Build an intelligent search and recommendation system for our documentation",
       deadline: new Date(Date.now() + 7776000000), // 90 days
       prize: "Free premium access for 1 year",
       submissions: [
         {
           id: "s1",
           title: "ML-based semantic search",
-          description: "Uses embeddings to understand context and provide better results",
+          description:
+            "Uses embeddings to understand context and provide better results",
           link: "https://example.com/submission1",
           author: "Alex Chen",
           votes: 12,
@@ -68,7 +70,9 @@ export function InnovationChallenge() {
     },
   ]);
 
-  const [selectedChallenge, setSelectedChallenge] = useState<string | null>(challenges[0]?.id);
+  const [selectedChallenge, setSelectedChallenge] = useState<string | null>(
+    challenges[0]?.id,
+  );
   const [userVotes, setUserVotes] = useState<Record<string, boolean>>({});
 
   const form = useForm<SubmissionValues>({
@@ -84,7 +88,7 @@ export function InnovationChallenge() {
   if (!currentChallenge) return null;
 
   const daysRemaining = Math.ceil(
-    (currentChallenge.deadline.getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+    (currentChallenge.deadline.getTime() - Date.now()) / (1000 * 60 * 60 * 24),
   );
 
   const onSubmit = (values: SubmissionValues) => {
@@ -102,8 +106,8 @@ export function InnovationChallenge() {
       challenges.map((c) =>
         c.id === selectedChallenge
           ? { ...c, submissions: [newSubmission, ...c.submissions] }
-          : c
-      )
+          : c,
+      ),
     );
 
     form.reset();
@@ -122,11 +126,11 @@ export function InnovationChallenge() {
               submissions: c.submissions.map((s) =>
                 s.id === submissionId
                   ? { ...s, votes: s.votes + (hasVoted ? -1 : 1) }
-                  : s
+                  : s,
               ),
             }
-          : c
-      )
+          : c,
+      ),
     );
 
     setUserVotes({
@@ -144,7 +148,9 @@ export function InnovationChallenge() {
             <h2 className="text-2xl font-bold text-foreground mb-2">
               {currentChallenge.title}
             </h2>
-            <p className="text-muted-foreground mb-4">{currentChallenge.description}</p>
+            <p className="text-muted-foreground mb-4">
+              {currentChallenge.description}
+            </p>
           </div>
         </div>
 
@@ -160,23 +166,31 @@ export function InnovationChallenge() {
           </div>
           <div>
             <p className="text-sm text-muted-foreground">Prize</p>
-            <p className="font-semibold text-foreground">{currentChallenge.prize}</p>
+            <p className="font-semibold text-foreground">
+              {currentChallenge.prize}
+            </p>
           </div>
         </div>
 
         <div className="mt-4 pt-4 border-t">
           <Badge variant="secondary">
-            {currentChallenge.submissions.length} submission{currentChallenge.submissions.length !== 1 ? "s" : ""}
+            {currentChallenge.submissions.length} submission
+            {currentChallenge.submissions.length !== 1 ? "s" : ""}
           </Badge>
         </div>
       </div>
 
       {/* Submission Form */}
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="border rounded-lg p-6 bg-blue-50 space-y-4">
+        <form
+          onSubmit={form.handleSubmit(onSubmit)}
+          className="border rounded-lg p-6 bg-blue-50 space-y-4"
+        >
           <div className="flex items-center gap-2 mb-4">
             <Plus className="w-5 h-5 text-blue-600" />
-            <h3 className="font-semibold text-blue-900">Submit Your Solution</h3>
+            <h3 className="font-semibold text-blue-900">
+              Submit Your Solution
+            </h3>
           </div>
 
           <FormField
@@ -186,7 +200,10 @@ export function InnovationChallenge() {
               <FormItem>
                 <FormLabel>Submission Title</FormLabel>
                 <FormControl>
-                  <Input placeholder="Give your submission a catchy title..." {...field} />
+                  <Input
+                    placeholder="Give your submission a catchy title..."
+                    {...field}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -277,7 +294,8 @@ export function InnovationChallenge() {
 
                   <div className="flex items-center justify-between text-sm text-muted-foreground mt-3">
                     <span>
-                      {submission.author} · {submission.date.toLocaleDateString()}
+                      {submission.author} ·{" "}
+                      {submission.date.toLocaleDateString()}
                     </span>
                     <Button
                       size="sm"

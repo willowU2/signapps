@@ -3,9 +3,9 @@
  * Fetches and polls for unread notification count
  */
 
-import { useEffect, useState, useCallback } from 'react';
-import { calendarApiClient } from '@/lib/api/core';
-import { useAuthStore } from '@/lib/store';
+import { useEffect, useState, useCallback } from "react";
+import { calendarApiClient } from "@/lib/api/core";
+import { useAuthStore } from "@/lib/store";
 
 // Access token checks are obsolete with HttpOnly cookies
 
@@ -22,7 +22,9 @@ export interface UseUnreadCountReturn {
  * Only polls when user is authenticated
  * @param initialInterval - Polling interval in milliseconds (default: 30000ms = 30s)
  */
-export function useUnreadCount(initialInterval: number = 30000): UseUnreadCountReturn {
+export function useUnreadCount(
+  initialInterval: number = 30000,
+): UseUnreadCountReturn {
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -36,13 +38,13 @@ export function useUnreadCount(initialInterval: number = 30000): UseUnreadCountR
       setError(null);
 
       const response = await calendarApiClient.get(
-        '/notifications/unread-count'
+        "/notifications/unread-count",
       );
 
       setUnreadCount(response.data?.count || 0);
       setLoading(false);
     } catch {
-      setError('Failed to load unread count');
+      setError("Failed to load unread count");
       setLoading(false);
     }
   }, [isAuthenticated]);

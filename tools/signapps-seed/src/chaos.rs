@@ -136,7 +136,10 @@ async fn seed_chaos_users(
         ("back\\slash", "pipe|name"),
         ("percent%20", "ampersand&"),
         ("quote\"double", "quote'single"),
-        ("very-long-name-that-exceeds", "normal-length-expectations-significantly"),
+        (
+            "very-long-name-that-exceeds",
+            "normal-length-expectations-significantly",
+        ),
         ("zero-width-space", "normal"),
         ("at@sign", "hash#tag"),
         ("plus+sign", "equals=sign"),
@@ -255,7 +258,10 @@ async fn seed_volume_tasks(
             .await?;
     }
 
-    info!(tasks = 2000, "volume tasks seeded into scheduling.time_items");
+    info!(
+        tasks = 2000,
+        "volume tasks seeded into scheduling.time_items"
+    );
     Ok(())
 }
 
@@ -300,7 +306,7 @@ async fn seed_volume_events(
                     format!("'{date}T09:00:00Z'::timestamptz"),
                     format!("'{date}T10:00:00Z'::timestamptz"),
                 )
-            }
+            },
         };
 
         let sql = format!(
@@ -383,7 +389,16 @@ async fn seed_deep_org_tree(
         .bind(depth as i32)
         .execute(pool)
         .await?;
-        mirror_to_workforce(pool, node_id, tenant_id, parent_id, "department", &node_name, depth as i32).await?;
+        mirror_to_workforce(
+            pool,
+            node_id,
+            tenant_id,
+            parent_id,
+            "department",
+            &node_name,
+            depth as i32,
+        )
+        .await?;
 
         parent_id = Some(node_id);
     }
@@ -402,7 +417,16 @@ async fn seed_deep_org_tree(
     .bind(tree_id)
     .execute(pool)
     .await?;
-    mirror_to_workforce(pool, root_id, tenant_id, None, "division", "Wide Root Node", 0).await?;
+    mirror_to_workforce(
+        pool,
+        root_id,
+        tenant_id,
+        None,
+        "division",
+        "Wide Root Node",
+        0,
+    )
+    .await?;
 
     for child_i in 0..100usize {
         let child_id = Uuid::new_v4();
@@ -421,7 +445,16 @@ async fn seed_deep_org_tree(
         .bind(child_i as i32)
         .execute(pool)
         .await?;
-        mirror_to_workforce(pool, child_id, tenant_id, Some(root_id), "team", &child_name, child_i as i32).await?;
+        mirror_to_workforce(
+            pool,
+            child_id,
+            tenant_id,
+            Some(root_id),
+            "team",
+            &child_name,
+            child_i as i32,
+        )
+        .await?;
     }
 
     info!("org tree seeded (25 deep + 100 wide)");
@@ -567,7 +600,10 @@ async fn seed_chaos_drive(
     for (i, filename) in chaos_filenames.iter().enumerate() {
         let file_id = Uuid::new_v4();
         let target_id = Uuid::new_v4();
-        let owner = user_ids.get(i % user_ids.len()).copied().unwrap_or(owner_id);
+        let owner = user_ids
+            .get(i % user_ids.len())
+            .copied()
+            .unwrap_or(owner_id);
         let size: i64 = if i % 5 == 0 { 0 } else { (i as i64 + 1) * 1024 };
 
         sqlx::query(
@@ -651,7 +687,10 @@ async fn seed_chaos_chat(
 
     for (i, content) in chaos_messages.iter().enumerate() {
         let channel_id = channel_ids.get(i % channel_ids.len()).copied().unwrap();
-        let user_id = user_ids.get(i % user_ids.len()).copied().unwrap_or(owner_id);
+        let user_id = user_ids
+            .get(i % user_ids.len())
+            .copied()
+            .unwrap_or(owner_id);
         let username = format!("chaos_user_{:03}", i % user_ids.len());
 
         sqlx::query(

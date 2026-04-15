@@ -60,7 +60,10 @@ impl RdnComponent {
     /// assert_eq!(rdn.value, "John Doe");
     /// ```
     pub fn new(attr_type: impl Into<String>, value: impl Into<String>) -> Self {
-        Self { attr_type: attr_type.into(), value: value.into() }
+        Self {
+            attr_type: attr_type.into(),
+            value: value.into(),
+        }
     }
 }
 
@@ -121,7 +124,9 @@ impl DistinguishedName {
     pub fn parse(input: &str) -> Result<Self, DnError> {
         let input = input.trim();
         if input.is_empty() {
-            return Ok(Self { components: Vec::new() });
+            return Ok(Self {
+                components: Vec::new(),
+            });
         }
 
         let raw_rdns = split_rdns(input)?;
@@ -282,7 +287,9 @@ impl DistinguishedName {
         if self.components.len() <= 1 {
             return None;
         }
-        Some(Self { components: self.components[1..].to_vec() })
+        Some(Self {
+            components: self.components[1..].to_vec(),
+        })
     }
 
     /// Returns `true` if `self` is a descendant of `ancestor` (case-insensitive).
@@ -318,8 +325,7 @@ impl DistinguishedName {
         // The tail of self's components must equal ancestor's components.
         let tail = &self.components[self_len - anc_len..];
         tail.iter().zip(ancestor.components.iter()).all(|(a, b)| {
-            a.attr_type.eq_ignore_ascii_case(&b.attr_type)
-                && a.value.eq_ignore_ascii_case(&b.value)
+            a.attr_type.eq_ignore_ascii_case(&b.attr_type) && a.value.eq_ignore_ascii_case(&b.value)
         })
     }
 
@@ -361,10 +367,13 @@ impl PartialEq for DistinguishedName {
         if self.components.len() != other.components.len() {
             return false;
         }
-        self.components.iter().zip(other.components.iter()).all(|(a, b)| {
-            a.attr_type.eq_ignore_ascii_case(&b.attr_type)
-                && a.value.eq_ignore_ascii_case(&b.value)
-        })
+        self.components
+            .iter()
+            .zip(other.components.iter())
+            .all(|(a, b)| {
+                a.attr_type.eq_ignore_ascii_case(&b.attr_type)
+                    && a.value.eq_ignore_ascii_case(&b.value)
+            })
     }
 }
 
@@ -397,7 +406,9 @@ pub struct DnBuilder {
 impl DnBuilder {
     /// Creates a new, empty [`DnBuilder`].
     pub fn new() -> Self {
-        Self { components: Vec::new() }
+        Self {
+            components: Vec::new(),
+        }
     }
 
     /// Appends a `CN` component.
@@ -436,7 +447,9 @@ impl DnBuilder {
     ///
     /// Never panics.
     pub fn finish(self) -> DistinguishedName {
-        DistinguishedName { components: self.components }
+        DistinguishedName {
+            components: self.components,
+        }
     }
 }
 
@@ -454,7 +467,7 @@ fn split_rdns(input: &str) -> Result<Vec<&str>, DnError> {
             b'\\' => {
                 // Skip the next character (escaped).
                 i += 2;
-            }
+            },
             b',' => {
                 let rdn = input[start..i].trim();
                 if rdn.is_empty() {
@@ -465,10 +478,10 @@ fn split_rdns(input: &str) -> Result<Vec<&str>, DnError> {
                 rdns.push(rdn);
                 start = i + 1;
                 i += 1;
-            }
+            },
             _ => {
                 i += 1;
-            }
+            },
         }
     }
 
@@ -483,9 +496,9 @@ fn split_rdns(input: &str) -> Result<Vec<&str>, DnError> {
 
 /// Parses a single `attr=value` token into an [`RdnComponent`].
 fn parse_rdn(raw: &str) -> Result<RdnComponent, DnError> {
-    let eq_pos = raw.find('=').ok_or_else(|| {
-        DnError::InvalidSyntax(format!("missing '=' in RDN: {raw}"))
-    })?;
+    let eq_pos = raw
+        .find('=')
+        .ok_or_else(|| DnError::InvalidSyntax(format!("missing '=' in RDN: {raw}")))?;
 
     let attr = raw[..eq_pos].trim().to_string();
     if attr.is_empty() {
@@ -497,7 +510,10 @@ fn parse_rdn(raw: &str) -> Result<RdnComponent, DnError> {
     let raw_value = raw[eq_pos + 1..].trim();
     let value = unescape_dn_value(raw_value)?;
 
-    Ok(RdnComponent { attr_type: attr, value })
+    Ok(RdnComponent {
+        attr_type: attr,
+        value,
+    })
 }
 
 /// Unescapes RFC 4514 escape sequences from a DN value.
@@ -520,7 +536,7 @@ fn unescape_dn_value(input: &str) -> Result<String, DnError> {
                 ',' | '+' | '"' | '\\' | '<' | '>' | ';' | '=' | '#' | ' ' => {
                     result.push(next);
                     i += 2;
-                }
+                },
                 _ => {
                     // Expect two hex digits: \XX
                     if i + 2 >= chars.len() {
@@ -530,13 +546,11 @@ fn unescape_dn_value(input: &str) -> Result<String, DnError> {
                     }
                     let hex: String = [chars[i + 1], chars[i + 2]].iter().collect();
                     let byte = u8::from_str_radix(&hex, 16).map_err(|_| {
-                        DnError::InvalidSyntax(format!(
-                            "invalid hex escape \\{hex}"
-                        ))
+                        DnError::InvalidSyntax(format!("invalid hex escape \\{hex}"))
                     })?;
                     result.push(byte as char);
                     i += 3;
-                }
+                },
             }
         } else {
             result.push(chars[i]);
@@ -557,17 +571,17 @@ fn escape_dn_value(input: &str) -> String {
             ',' | '+' | '"' | '\\' | '<' | '>' | ';' => {
                 result.push('\\');
                 result.push(ch);
-            }
+            },
             ' ' if idx == 0 || idx == chars.len() - 1 => {
                 // Leading and trailing spaces must be escaped.
                 result.push('\\');
                 result.push(' ');
-            }
+            },
             '#' if idx == 0 => {
                 // Leading '#' must be escaped.
                 result.push('\\');
                 result.push('#');
-            }
+            },
             _ => result.push(ch),
         }
     }
@@ -583,8 +597,7 @@ mod tests {
 
     #[test]
     fn parse_simple_dn() {
-        let dn =
-            DistinguishedName::parse("CN=John Doe,OU=Users,DC=example,DC=com").unwrap();
+        let dn = DistinguishedName::parse("CN=John Doe,OU=Users,DC=example,DC=com").unwrap();
         assert_eq!(dn.components().len(), 4);
         assert_eq!(dn.rdn(), "CN=John Doe");
         let parent = dn.parent().unwrap();
@@ -593,8 +606,7 @@ mod tests {
 
     #[test]
     fn parse_escaped_characters() {
-        let dn =
-            DistinguishedName::parse(r"CN=Before\,After,DC=example,DC=com").unwrap();
+        let dn = DistinguishedName::parse(r"CN=Before\,After,DC=example,DC=com").unwrap();
         assert_eq!(dn.components().len(), 3);
         assert_eq!(dn.rdn_value(), "Before,After");
     }
@@ -632,21 +644,22 @@ mod tests {
 
     #[test]
     fn dn_is_descendant_of() {
-        let child =
-            DistinguishedName::parse("CN=Bob,OU=Users,DC=corp,DC=local").unwrap();
+        let child = DistinguishedName::parse("CN=Bob,OU=Users,DC=corp,DC=local").unwrap();
         let parent = DistinguishedName::parse("OU=Users,DC=corp,DC=local").unwrap();
         let root = DistinguishedName::parse("DC=corp,DC=local").unwrap();
 
         assert!(child.is_descendant_of(&parent));
         assert!(child.is_descendant_of(&root));
         assert!(!parent.is_descendant_of(&child));
-        assert!(!child.is_descendant_of(&child), "a DN is not a descendant of itself");
+        assert!(
+            !child.is_descendant_of(&child),
+            "a DN is not a descendant of itself"
+        );
     }
 
     #[test]
     fn dn_domain_suffix() {
-        let dn =
-            DistinguishedName::parse("CN=Alice,OU=HR,DC=example,DC=com").unwrap();
+        let dn = DistinguishedName::parse("CN=Alice,OU=HR,DC=example,DC=com").unwrap();
         assert_eq!(dn.domain_suffix(), "example.com");
     }
 

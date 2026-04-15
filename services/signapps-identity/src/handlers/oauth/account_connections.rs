@@ -170,7 +170,7 @@ pub async fn disconnect(
                  oauth_provider_key = NULL, \
                  updated_at = NOW() \
              WHERE id = $1 AND user_id = $2"
-        }
+        },
         "calendar.provider_connections" => {
             "UPDATE calendar.provider_connections \
              SET access_token_enc = NULL, \
@@ -178,7 +178,7 @@ pub async fn disconnect(
                  token_expires_at = NULL, \
                  updated_at = NOW() \
              WHERE id = $1 AND user_id = $2"
-        }
+        },
         "social.accounts" => {
             "UPDATE social.accounts \
              SET access_token_enc = NULL, \
@@ -186,12 +186,12 @@ pub async fn disconnect(
                  token_expires_at = NULL, \
                  updated_at = NOW() \
              WHERE id = $1 AND user_id = $2"
-        }
+        },
         _ => {
             return Err(Error::BadRequest(format!(
                 "unknown source_table: {source_table:?}"
             )))
-        }
+        },
     };
 
     sqlx::query(sql)
@@ -253,7 +253,10 @@ async fn lookup_queue_row(
     .await
     .ok()
     .flatten()
-    .map(|(disabled, last_error)| QueueState { disabled, last_error })
+    .map(|(disabled, last_error)| QueueState {
+        disabled,
+        last_error,
+    })
 }
 
 /// Map a `QueueState` to a human-readable connection status string.

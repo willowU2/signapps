@@ -4,8 +4,8 @@
 //! security identity: SIDs, group memberships, domain info. Windows
 //! uses this to determine authorization without querying LDAP.
 
-use signapps_ad_core::SecurityIdentifier;
 use serde::{Deserialize, Serialize};
+use signapps_ad_core::SecurityIdentifier;
 
 /// A group membership entry in the PAC.
 #[derive(Debug, Clone, Serialize, Deserialize)]

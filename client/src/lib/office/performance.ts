@@ -39,7 +39,7 @@ interface PerformanceMetrics {
 export async function processInChunks<T, R>(
   items: T[],
   processor: (chunk: T[], index: number) => Promise<R[]>,
-  options: Partial<ChunkOptions> = {}
+  options: Partial<ChunkOptions> = {},
 ): Promise<R[]> {
   const { chunkSize = 100, onProgress, signal } = options;
   const results: R[] = [];
@@ -47,7 +47,7 @@ export async function processInChunks<T, R>(
 
   for (let i = 0; i < items.length; i += chunkSize) {
     if (signal?.aborted) {
-      throw new Error('Operation cancelled');
+      throw new Error("Operation cancelled");
     }
 
     const chunk = items.slice(i, i + chunkSize);
@@ -74,8 +74,10 @@ export async function processInChunks<T, R>(
  */
 export function yieldToMain(): Promise<void> {
   return new Promise((resolve) => {
-    const g = globalThis as typeof globalThis & { scheduler?: { yield: () => Promise<void> } };
-    if ('scheduler' in globalThis && g.scheduler && 'yield' in g.scheduler) {
+    const g = globalThis as typeof globalThis & {
+      scheduler?: { yield: () => Promise<void> };
+    };
+    if ("scheduler" in globalThis && g.scheduler && "yield" in g.scheduler) {
       g.scheduler.yield().then(resolve);
     } else {
       setTimeout(resolve, 0);
@@ -92,7 +94,7 @@ export function yieldToMain(): Promise<void> {
  */
 export async function* streamContent<T>(
   items: T[],
-  chunkSize = 1000
+  chunkSize = 1000,
 ): AsyncGenerator<T[], void, unknown> {
   for (let i = 0; i < items.length; i += chunkSize) {
     yield items.slice(i, i + chunkSize);
@@ -105,7 +107,7 @@ export async function* streamContent<T>(
  */
 export function createReadableStream<T>(
   generator: AsyncGenerator<T[], void, unknown>,
-  serializer: (items: T[]) => string
+  serializer: (items: T[]) => string,
 ): ReadableStream<Uint8Array> {
   const encoder = new TextEncoder();
 
@@ -132,11 +134,11 @@ export function createReadableStream<T>(
  * Estimate document size in bytes for progress calculation
  */
 export function estimateDocumentSize(content: unknown): number {
-  if (typeof content === 'string') {
+  if (typeof content === "string") {
     return new Blob([content]).size;
   }
 
-  if (typeof content === 'object' && content !== null) {
+  if (typeof content === "object" && content !== null) {
     return new Blob([JSON.stringify(content)]).size;
   }
 
@@ -168,9 +170,9 @@ class ConversionCache {
   private generateKey(
     documentId: string,
     format: string,
-    options?: Record<string, unknown>
+    options?: Record<string, unknown>,
   ): string {
-    const optionsStr = options ? JSON.stringify(options) : '';
+    const optionsStr = options ? JSON.stringify(options) : "";
     return `${documentId}:${format}:${optionsStr}`;
   }
 
@@ -180,7 +182,7 @@ class ConversionCache {
   get(
     documentId: string,
     format: string,
-    options?: Record<string, unknown>
+    options?: Record<string, unknown>,
   ): ArrayBuffer | null {
     const key = this.generateKey(documentId, format, options);
     const entry = this.cache.get(key);
@@ -203,7 +205,7 @@ class ConversionCache {
     documentId: string,
     format: string,
     data: ArrayBuffer,
-    options?: Record<string, unknown>
+    options?: Record<string, unknown>,
   ): void {
     const key = this.generateKey(documentId, format, options);
     const size = data.byteLength;
@@ -237,7 +239,7 @@ class ConversionCache {
   delete(
     documentId: string,
     format: string,
-    options?: Record<string, unknown>
+    options?: Record<string, unknown>,
   ): void {
     const key = this.generateKey(documentId, format, options);
     const entry = this.cache.get(key);
@@ -318,7 +320,7 @@ export function startMetric(operation: string): PerformanceMetrics {
  */
 export function endMetric(
   metric: PerformanceMetrics,
-  size?: number
+  size?: number,
 ): PerformanceMetrics {
   metric.endTime = performance.now();
   metric.duration = metric.endTime - metric.startTime;
@@ -326,7 +328,7 @@ export function endMetric(
 
   if (size && metric.duration) {
     // Throughput in KB/s
-    metric.throughput = (size / 1024) / (metric.duration / 1000);
+    metric.throughput = size / 1024 / (metric.duration / 1000);
   }
 
   return metric;
@@ -379,7 +381,7 @@ export function getPerformanceStats(operation?: string): {
  */
 export function debounce<T extends (...args: unknown[]) => unknown>(
   fn: T,
-  delay: number
+  delay: number,
 ): (...args: Parameters<T>) => void {
   let timeoutId: ReturnType<typeof setTimeout>;
 
@@ -394,7 +396,7 @@ export function debounce<T extends (...args: unknown[]) => unknown>(
  */
 export function throttle<T extends (...args: unknown[]) => unknown>(
   fn: T,
-  limit: number
+  limit: number,
 ): (...args: Parameters<T>) => void {
   let lastCall = 0;
 
@@ -417,12 +419,12 @@ export function throttle<T extends (...args: unknown[]) => unknown>(
 export async function compressImage(
   file: File,
   maxWidth = 1920,
-  quality = 0.8
+  quality = 0.8,
 ): Promise<Blob> {
   return new Promise((resolve, reject) => {
     const img = new Image();
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
 
     img.onload = () => {
       let { width, height } = img;
@@ -444,18 +446,18 @@ export async function compressImage(
             if (blob) {
               resolve(blob);
             } else {
-              reject(new Error('Failed to compress image'));
+              reject(new Error("Failed to compress image"));
             }
           },
-          file.type === 'image/png' ? 'image/png' : 'image/jpeg',
-          quality
+          file.type === "image/png" ? "image/png" : "image/jpeg",
+          quality,
         );
       } else {
-        reject(new Error('Failed to get canvas context'));
+        reject(new Error("Failed to get canvas context"));
       }
     };
 
-    img.onerror = () => reject(new Error('Failed to load image'));
+    img.onerror = () => reject(new Error("Failed to load image"));
     img.src = URL.createObjectURL(file);
   });
 }
@@ -469,7 +471,7 @@ export async function compressImage(
  */
 export function createLazyLoader(
   callback: (entry: IntersectionObserverEntry) => void,
-  options?: IntersectionObserverInit
+  options?: IntersectionObserverInit,
 ): IntersectionObserver {
   return new IntersectionObserver((entries) => {
     entries.forEach((entry) => {
@@ -484,11 +486,13 @@ export function createLazyLoader(
  * Preload resources in idle time
  */
 export function preloadInIdle(urls: string[]): void {
-  if ('requestIdleCallback' in window) {
-    (window as Window & { requestIdleCallback: (cb: () => void) => void }).requestIdleCallback(() => {
+  if ("requestIdleCallback" in window) {
+    (
+      window as Window & { requestIdleCallback: (cb: () => void) => void }
+    ).requestIdleCallback(() => {
       urls.forEach((url) => {
-        const link = document.createElement('link');
-        link.rel = 'prefetch';
+        const link = document.createElement("link");
+        link.rel = "prefetch";
         link.href = url;
         document.head.appendChild(link);
       });

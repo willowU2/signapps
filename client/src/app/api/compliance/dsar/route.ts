@@ -1,15 +1,20 @@
 // CO1: Next.js proxy → identity service /api/v1/compliance/dsar
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from "next/server";
 
-const IDENTITY = process.env.IDENTITY_URL ?? 'http://localhost:3001';
+const IDENTITY = process.env.IDENTITY_URL ?? "http://localhost:3001";
 
-async function proxy(req: NextRequest, method: string, path = '', body?: unknown) {
+async function proxy(
+  req: NextRequest,
+  method: string,
+  path = "",
+  body?: unknown,
+) {
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   };
-  const authHeader = req.headers.get('authorization');
-  if (authHeader) headers['Authorization'] = authHeader;
+  const authHeader = req.headers.get("authorization");
+  if (authHeader) headers["Authorization"] = authHeader;
 
   const res = await fetch(`${IDENTITY}/api/v1/compliance/dsar${path}`, {
     method,
@@ -22,10 +27,10 @@ async function proxy(req: NextRequest, method: string, path = '', body?: unknown
 }
 
 export async function GET(req: NextRequest) {
-  return proxy(req, 'GET');
+  return proxy(req, "GET");
 }
 
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}));
-  return proxy(req, 'POST', '', body);
+  return proxy(req, "POST", "", body);
 }

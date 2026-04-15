@@ -24,31 +24,51 @@ function drawRuler(
   docLength: number, // document length in design px
   scale: number, // how many display px = 1 design px
   offset: number, // scroll offset in display px
-  size: number
+  size: number,
 ) {
-  ctx.clearRect(0, 0, orientation === "horizontal" ? canvasLength : size, orientation === "horizontal" ? size : canvasLength);
+  ctx.clearRect(
+    0,
+    0,
+    orientation === "horizontal" ? canvasLength : size,
+    orientation === "horizontal" ? size : canvasLength,
+  );
 
   const bg = "#f8f8f8";
   ctx.fillStyle = bg;
-  ctx.fillRect(0, 0, orientation === "horizontal" ? canvasLength : size, orientation === "horizontal" ? size : canvasLength);
+  ctx.fillRect(
+    0,
+    0,
+    orientation === "horizontal" ? canvasLength : size,
+    orientation === "horizontal" ? size : canvasLength,
+  );
 
   ctx.strokeStyle = "rgba(200,200,200,0.8)";
   ctx.lineWidth = 0.5;
   if (orientation === "horizontal") {
-    ctx.beginPath(); ctx.moveTo(0, size - 0.5); ctx.lineTo(canvasLength, size - 0.5); ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(0, size - 0.5);
+    ctx.lineTo(canvasLength, size - 0.5);
+    ctx.stroke();
   } else {
-    ctx.beginPath(); ctx.moveTo(size - 0.5, 0); ctx.lineTo(size - 0.5, canvasLength); ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(size - 0.5, 0);
+    ctx.lineTo(size - 0.5, canvasLength);
+    ctx.stroke();
   }
 
   // Determine tick spacing based on scale
   let step = 10; // in design px
   const candidates = [1, 2, 5, 10, 20, 25, 50, 100, 200, 250, 500, 1000];
   for (const c of candidates) {
-    if (c * scale >= 40) { step = c; break; }
+    if (c * scale >= 40) {
+      step = c;
+      break;
+    }
   }
 
   const startDesignPx = Math.floor(-offset / scale / step) * step;
-  const endDesignPx = Math.ceil((canvasLength - offset) / scale / step) * step + step;
+  const endDesignPx =
+    Math.ceil((canvasLength - offset) / scale / step) * step + step;
 
   ctx.fillStyle = TEXT_COLOR;
   ctx.strokeStyle = TICK_COLOR;
@@ -91,7 +111,13 @@ function drawRuler(
   }
 }
 
-export function DesignRuler({ orientation, length, scale, offset, size = RULER_SIZE }: RulerProps) {
+export function DesignRuler({
+  orientation,
+  length,
+  scale,
+  offset,
+  size = RULER_SIZE,
+}: RulerProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -116,7 +142,15 @@ export function DesignRuler({ orientation, length, scale, offset, size = RULER_S
     }
 
     ctx.scale(dpr, dpr);
-    drawRuler(ctx, orientation, displayLength, length / scale, scale, offset, size);
+    drawRuler(
+      ctx,
+      orientation,
+      displayLength,
+      length / scale,
+      scale,
+      offset,
+      size,
+    );
   }, [orientation, length, scale, offset, size]);
 
   return (

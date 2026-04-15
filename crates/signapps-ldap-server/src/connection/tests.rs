@@ -2,7 +2,10 @@ use super::message_decoder::{decode_ldap_message, decode_search_filter};
 use super::message_encoder::encode_ldap_message;
 use crate::codec::ber::{self, BerData, BerElement, BerTag};
 use crate::codec::ber::{encode, encode_integer, encode_octet_string, encode_sequence};
-use crate::codec::ldap_msg::{LdapMessage, LdapOperation, LdapResult, PartialAttribute, ResultCode, SearchFilter, SearchResultEntry};
+use crate::codec::ldap_msg::{
+    LdapMessage, LdapOperation, LdapResult, PartialAttribute, ResultCode, SearchFilter,
+    SearchResultEntry,
+};
 
 use super::filter_utils::search_filter_to_string;
 
@@ -10,7 +13,10 @@ use super::filter_utils::search_filter_to_string;
 fn bind_request_bytes(message_id: i32, dn: &str, password: &[u8]) -> Vec<u8> {
     // authentication [0] PRIMITIVE (simple)
     let auth = BerElement {
-        tag: BerTag::Context { number: 0, constructed: false },
+        tag: BerTag::Context {
+            number: 0,
+            constructed: false,
+        },
         data: BerData::Primitive(password.to_vec()),
     };
     // BindRequest [APPLICATION 0] CONSTRUCTED { version, name, auth }
@@ -42,12 +48,12 @@ fn decode_bind_request_roundtrip() {
             match &req.authentication {
                 crate::codec::ldap_msg::BindAuthentication::Simple(pw) => {
                     assert_eq!(pw, b"secret")
-                }
+                },
                 crate::codec::ldap_msg::BindAuthentication::Sasl(_) => {
                     panic!("expected simple auth")
-                }
+                },
             }
-        }
+        },
         op => panic!("unexpected operation: {op:?}"),
     }
 }
@@ -85,7 +91,10 @@ fn encode_bind_error_response() {
 fn decode_unbind_request() {
     // UnbindRequest [APPLICATION 2] NULL (length 0)
     let unbind = BerElement {
-        tag: BerTag::Application { number: 2, constructed: false },
+        tag: BerTag::Application {
+            number: 2,
+            constructed: false,
+        },
         data: BerData::Primitive(vec![]),
     };
     let msg_elem = encode_sequence(vec![encode_integer(5), unbind]);

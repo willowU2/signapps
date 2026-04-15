@@ -39,8 +39,24 @@ const DEMO_BUDGET: ProjectBudget = {
   invoiced: 18000,
   currency: "EUR",
   invoices: [
-    { id: "inv1", number: "INV-2026-042", amount: 9000, status: "paid", issuedDate: "2026-02-01", dueDate: "2026-03-01", client: "Acme Corp" },
-    { id: "inv2", number: "INV-2026-058", amount: 9000, status: "pending", issuedDate: "2026-03-01", dueDate: "2026-04-01", client: "Acme Corp" },
+    {
+      id: "inv1",
+      number: "INV-2026-042",
+      amount: 9000,
+      status: "paid",
+      issuedDate: "2026-02-01",
+      dueDate: "2026-03-01",
+      client: "Acme Corp",
+    },
+    {
+      id: "inv2",
+      number: "INV-2026-058",
+      amount: 9000,
+      status: "pending",
+      issuedDate: "2026-03-01",
+      dueDate: "2026-04-01",
+      client: "Acme Corp",
+    },
   ],
 };
 
@@ -49,9 +65,16 @@ interface ProjectBillingLinkProps {
   budget?: ProjectBudget;
 }
 
-export function ProjectBillingLink({ projectName = "Refonte Backend Auth", budget = DEMO_BUDGET }: ProjectBillingLinkProps) {
+export function ProjectBillingLink({
+  projectName = "Refonte Backend Auth",
+  budget = DEMO_BUDGET,
+}: ProjectBillingLinkProps) {
   const [expanded, setExpanded] = useState(false);
-  const fmt = (n: number) => new Intl.NumberFormat("fr-FR", { style: "currency", currency: budget.currency }).format(n);
+  const fmt = (n: number) =>
+    new Intl.NumberFormat("fr-FR", {
+      style: "currency",
+      currency: budget.currency,
+    }).format(n);
 
   const spentPct = Math.round((budget.spent / budget.total) * 100);
   const invoicedPct = Math.round((budget.invoiced / budget.total) * 100);
@@ -72,26 +95,39 @@ export function ProjectBillingLink({ projectName = "Refonte Backend Auth", budge
           </div>
           <div>
             <p className="text-[10px] text-muted-foreground">Consommé</p>
-            <p className="text-sm font-bold text-orange-600">{fmt(budget.spent)}</p>
+            <p className="text-sm font-bold text-orange-600">
+              {fmt(budget.spent)}
+            </p>
           </div>
           <div>
             <p className="text-[10px] text-muted-foreground">Facturé</p>
-            <p className="text-sm font-bold text-blue-600">{fmt(budget.invoiced)}</p>
+            <p className="text-sm font-bold text-blue-600">
+              {fmt(budget.invoiced)}
+            </p>
           </div>
         </div>
 
         <div className="space-y-1.5">
           <div className="flex justify-between text-[10px] text-muted-foreground">
-            <span>Consommation</span><span>{spentPct}%</span>
+            <span>Consommation</span>
+            <span>{spentPct}%</span>
           </div>
           <Progress value={spentPct} className="h-2" />
           <div className="flex justify-between text-[10px] text-muted-foreground">
-            <span className="flex items-center gap-0.5"><TrendingUp className="size-3" /> Facturation</span><span>{invoicedPct}%</span>
+            <span className="flex items-center gap-0.5">
+              <TrendingUp className="size-3" /> Facturation
+            </span>
+            <span>{invoicedPct}%</span>
           </div>
           <Progress value={invoicedPct} className="h-2 [&>div]:bg-blue-500" />
         </div>
 
-        <Button variant="outline" size="sm" className="w-full gap-1 text-xs h-7" onClick={() => setExpanded(!expanded)}>
+        <Button
+          variant="outline"
+          size="sm"
+          className="w-full gap-1 text-xs h-7"
+          onClick={() => setExpanded(!expanded)}
+        >
           <FileText className="size-3.5" />
           {budget.invoices.length} factures liées
         </Button>
@@ -99,13 +135,20 @@ export function ProjectBillingLink({ projectName = "Refonte Backend Auth", budge
         {expanded && (
           <div className="space-y-1.5">
             {budget.invoices.map((inv) => (
-              <div key={inv.id} className="flex items-center justify-between rounded border px-2 py-1.5 text-xs">
+              <div
+                key={inv.id}
+                className="flex items-center justify-between rounded border px-2 py-1.5 text-xs"
+              >
                 <div>
                   <p className="font-medium">{inv.number}</p>
-                  <p className="text-muted-foreground">{inv.client} · {fmt(inv.amount)}</p>
+                  <p className="text-muted-foreground">
+                    {inv.client} · {fmt(inv.amount)}
+                  </p>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <span className={`rounded-full px-1.5 py-0.5 text-[10px] ${STATUS_CONFIG[inv.status].class}`}>
+                  <span
+                    className={`rounded-full px-1.5 py-0.5 text-[10px] ${STATUS_CONFIG[inv.status].class}`}
+                  >
                     {STATUS_CONFIG[inv.status].label}
                   </span>
                   <Button variant="ghost" size="icon" className="size-6">

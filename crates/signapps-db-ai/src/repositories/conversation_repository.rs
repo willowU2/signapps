@@ -1,8 +1,8 @@
 //! Repository for AI conversation and message persistence.
 
 use crate::models::conversation::{Conversation, ConversationMessage};
-use signapps_db_shared::DatabasePool;
 use signapps_common::{Error, Result};
+use signapps_db_shared::DatabasePool;
 use uuid::Uuid;
 
 /// Repository for conversation CRUD operations.

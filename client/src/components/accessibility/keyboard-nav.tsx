@@ -17,13 +17,41 @@ export default function KeyboardNav() {
 
   const shortcuts: Shortcut[] = [
     { key: "Tab", description: "Navigate forward", category: "Navigation" },
-    { key: "Shift + Tab", description: "Navigate backward", category: "Navigation" },
-    { key: "Enter", description: "Activate button/link", category: "Interaction" },
-    { key: "Space", description: "Toggle checkbox/radio", category: "Interaction" },
-    { key: "Escape", description: "Close dialog/menu", category: "Interaction" },
-    { key: "Arrow Keys", description: "Navigate within components", category: "Navigation" },
-    { key: "Alt + A", description: "Toggle accessibility options", category: "Accessibility" },
-    { key: "Alt + S", description: "Skip to main content", category: "Navigation" },
+    {
+      key: "Shift + Tab",
+      description: "Navigate backward",
+      category: "Navigation",
+    },
+    {
+      key: "Enter",
+      description: "Activate button/link",
+      category: "Interaction",
+    },
+    {
+      key: "Space",
+      description: "Toggle checkbox/radio",
+      category: "Interaction",
+    },
+    {
+      key: "Escape",
+      description: "Close dialog/menu",
+      category: "Interaction",
+    },
+    {
+      key: "Arrow Keys",
+      description: "Navigate within components",
+      category: "Navigation",
+    },
+    {
+      key: "Alt + A",
+      description: "Toggle accessibility options",
+      category: "Accessibility",
+    },
+    {
+      key: "Alt + S",
+      description: "Skip to main content",
+      category: "Navigation",
+    },
   ];
 
   useEffect(() => {
@@ -51,7 +79,9 @@ export default function KeyboardNav() {
         >
           <Eye className="w-5 h-5 mb-1" />
           <p className="text-sm font-medium">Focus Indicator</p>
-          <p className="text-xs text-muted-foreground">{focusIndicatorVisible ? "Visible" : "Hidden"}</p>
+          <p className="text-xs text-muted-foreground">
+            {focusIndicatorVisible ? "Visible" : "Hidden"}
+          </p>
         </button>
 
         <button
@@ -64,7 +94,9 @@ export default function KeyboardNav() {
         >
           <List className="w-5 h-5 mb-1" />
           <p className="text-sm font-medium">Tab Order</p>
-          <p className="text-xs text-muted-foreground">{tabOrderVisible ? "Visible" : "Hidden"}</p>
+          <p className="text-xs text-muted-foreground">
+            {tabOrderVisible ? "Visible" : "Hidden"}
+          </p>
         </button>
       </div>
 
@@ -81,7 +113,9 @@ export default function KeyboardNav() {
         <div className="space-y-2">
           {["Navigation", "Interaction", "Accessibility"].map((category) => (
             <div key={category}>
-              <p className="text-sm font-medium text-muted-foreground mb-2">{category}</p>
+              <p className="text-sm font-medium text-muted-foreground mb-2">
+                {category}
+              </p>
               <div className="space-y-1">
                 {shortcuts
                   .filter((s) => s.category === category)

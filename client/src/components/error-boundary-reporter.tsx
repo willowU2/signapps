@@ -1,8 +1,17 @@
-'use client';
+"use client";
 
-import React, { ReactNode } from 'react';
-import { AlertTriangle, RefreshCw, AlertCircle, Copy, Check, ChevronDown, ChevronUp, Home } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import React, { ReactNode } from "react";
+import {
+  AlertTriangle,
+  RefreshCw,
+  AlertCircle,
+  Copy,
+  Check,
+  ChevronDown,
+  ChevronUp,
+  Home,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface ErrorBoundaryState {
   hasError: boolean;
@@ -42,7 +51,7 @@ export class ErrorBoundaryReporter extends React.Component<
     const timestamp = new Date().toISOString();
     const componentStack = errorInfo.componentStack || null;
 
-    console.error('[ErrorBoundary]', {
+    console.error("[ErrorBoundary]", {
       message: error.message,
       pathname,
       timestamp,
@@ -68,24 +77,26 @@ export class ErrorBoundaryReporter extends React.Component<
   handleCopyError = async () => {
     const { error, componentStack } = this.state;
     const errorText = [
-      `Error: ${error?.message || 'Unknown error'}`,
-      '',
+      `Error: ${error?.message || "Unknown error"}`,
+      "",
       `URL: ${window.location.href}`,
       `Time: ${new Date().toISOString()}`,
       `User-Agent: ${navigator.userAgent}`,
-      '',
-      error?.stack ? `Stack trace:\n${error.stack}` : '',
-      componentStack ? `Component stack:\n${componentStack}` : '',
-    ].filter(Boolean).join('\n');
+      "",
+      error?.stack ? `Stack trace:\n${error.stack}` : "",
+      componentStack ? `Component stack:\n${componentStack}` : "",
+    ]
+      .filter(Boolean)
+      .join("\n");
 
     try {
       await navigator.clipboard.writeText(errorText);
     } catch {
-      const textarea = document.createElement('textarea');
+      const textarea = document.createElement("textarea");
       textarea.value = errorText;
       document.body.appendChild(textarea);
       textarea.select();
-      document.execCommand('copy');
+      document.execCommand("copy");
       document.body.removeChild(textarea);
     }
     this.setState({ copied: true });
@@ -105,9 +116,9 @@ export class ErrorBoundaryReporter extends React.Component<
     };
 
     try {
-      const response = await fetch('/api/v1/system/errors', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/v1/system/errors", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
 
@@ -115,7 +126,7 @@ export class ErrorBoundaryReporter extends React.Component<
         this.setState({ reported: true });
       }
     } catch (err) {
-      console.error('[ErrorBoundary] Failed to report error:', err);
+      console.error("[ErrorBoundary] Failed to report error:", err);
     }
   };
 
@@ -142,7 +153,8 @@ export class ErrorBoundaryReporter extends React.Component<
               Erreur detectee
             </h2>
             <p className="text-sm text-muted-foreground">
-              Une erreur inattendue s&apos;est produite. Veuillez reessayer ou copier les details pour le support.
+              Une erreur inattendue s&apos;est produite. Veuillez reessayer ou
+              copier les details pour le support.
             </p>
           </div>
 
@@ -165,15 +177,21 @@ export class ErrorBoundaryReporter extends React.Component<
               className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
             >
               {showDetails ? (
-                <><ChevronUp className="h-3.5 w-3.5" /> Masquer les details techniques</>
+                <>
+                  <ChevronUp className="h-3.5 w-3.5" /> Masquer les details
+                  techniques
+                </>
               ) : (
-                <><ChevronDown className="h-3.5 w-3.5" /> Afficher les details techniques</>
+                <>
+                  <ChevronDown className="h-3.5 w-3.5" /> Afficher les details
+                  techniques
+                </>
               )}
             </button>
             {showDetails && (
               <div className="mt-2 rounded-lg bg-muted/50 border p-3 max-h-48 overflow-y-auto">
                 <pre className="text-[10px] text-muted-foreground whitespace-pre-wrap break-all font-mono">
-                  {error?.stack || 'No stack trace available'}
+                  {error?.stack || "No stack trace available"}
                   {componentStack && `\n\nComponent stack:\n${componentStack}`}
                 </pre>
               </div>
@@ -182,11 +200,7 @@ export class ErrorBoundaryReporter extends React.Component<
 
           {/* Actions */}
           <div className="flex flex-col gap-3">
-            <Button
-              onClick={this.handleRetry}
-              className="w-full"
-              size="sm"
-            >
+            <Button onClick={this.handleRetry} className="w-full" size="sm">
               <RefreshCw className="mr-2 h-4 w-4" />
               Reessayer
             </Button>
@@ -198,9 +212,13 @@ export class ErrorBoundaryReporter extends React.Component<
                 size="sm"
               >
                 {copied ? (
-                  <><Check className="mr-2 h-4 w-4" /> Copie !</>
+                  <>
+                    <Check className="mr-2 h-4 w-4" /> Copie !
+                  </>
                 ) : (
-                  <><Copy className="mr-2 h-4 w-4" /> Copier l&apos;erreur</>
+                  <>
+                    <Copy className="mr-2 h-4 w-4" /> Copier l&apos;erreur
+                  </>
                 )}
               </Button>
               <Button
@@ -211,9 +229,13 @@ export class ErrorBoundaryReporter extends React.Component<
                 disabled={reported}
               >
                 {reported ? (
-                  <><Check className="mr-2 h-4 w-4" /> Signale</>
+                  <>
+                    <Check className="mr-2 h-4 w-4" /> Signale
+                  </>
                 ) : (
-                  <><AlertCircle className="mr-2 h-4 w-4" /> Signaler</>
+                  <>
+                    <AlertCircle className="mr-2 h-4 w-4" /> Signaler
+                  </>
                 )}
               </Button>
             </div>

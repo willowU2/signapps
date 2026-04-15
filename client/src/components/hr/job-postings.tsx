@@ -83,7 +83,7 @@ export function JobPostings({
     const end = new Date(deadline);
     const today = new Date();
     const days = Math.ceil(
-      (end.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+      (end.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
     );
     return days;
   };

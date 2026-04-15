@@ -9,7 +9,12 @@ interface FormulaBarProps {
   onSubmit: () => void;
 }
 
-export function FormulaBar({ cellRef, value, onChange, onSubmit }: FormulaBarProps) {
+export function FormulaBar({
+  cellRef,
+  value,
+  onChange,
+  onSubmit,
+}: FormulaBarProps) {
   const [focused, setFocused] = useState(false);
 
   return (
@@ -22,10 +27,12 @@ export function FormulaBar({ cellRef, value, onChange, onSubmit }: FormulaBarPro
       <input
         type="text"
         value={value}
-        onChange={e => onChange(e.target.value)}
+        onChange={(e) => onChange(e.target.value)}
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
-        onKeyDown={e => { if (e.key === "Enter") onSubmit(); }}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") onSubmit();
+        }}
         className={`flex-1 text-sm bg-transparent outline-none font-mono ${focused ? "text-foreground" : "text-muted-foreground"}`}
         placeholder="Entrez une valeur ou formule..."
       />

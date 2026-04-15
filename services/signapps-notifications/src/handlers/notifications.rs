@@ -476,14 +476,12 @@ pub async fn delete_notification(
 ) -> Result<StatusCode> {
     tracing::Span::current().record("user_id", tracing::field::display(claims.sub));
 
-    let result = sqlx::query(
-        "DELETE FROM notifications.items WHERE id = $1 AND user_id = $2",
-    )
-    .bind(id)
-    .bind(claims.sub)
-    .execute(&state.pool)
-    .await
-    .map_err(|e| Error::Internal(format!("delete notification: {e}")))?;
+    let result = sqlx::query("DELETE FROM notifications.items WHERE id = $1 AND user_id = $2")
+        .bind(id)
+        .bind(claims.sub)
+        .execute(&state.pool)
+        .await
+        .map_err(|e| Error::Internal(format!("delete notification: {e}")))?;
 
     if result.rows_affected() == 0 {
         return Err(Error::NotFound("Notification not found".to_string()));
@@ -627,8 +625,7 @@ mod tests {
             "body": "In #general",
             "deep_link": "/chat/general"
         });
-        let req: CreateNotificationRequest =
-            serde_json::from_value(json).expect("deserialize");
+        let req: CreateNotificationRequest = serde_json::from_value(json).expect("deserialize");
         assert_eq!(req.notification_type, "mention");
         assert_eq!(req.module, "chat");
     }
@@ -638,8 +635,7 @@ mod tests {
         let json = serde_json::json!({
             "digest_frequency": "daily"
         });
-        let req: UpdatePreferencesRequest =
-            serde_json::from_value(json).expect("deserialize");
+        let req: UpdatePreferencesRequest = serde_json::from_value(json).expect("deserialize");
         assert_eq!(req.digest_frequency.as_deref(), Some("daily"));
         assert!(req.channels.is_none());
         assert!(req.muted_modules.is_none());

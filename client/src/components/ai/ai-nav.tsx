@@ -1,20 +1,15 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { cn } from '@/lib/utils';
-import {
-  LayoutDashboard,
-  Palette,
-  Search,
-  Settings,
-} from 'lucide-react';
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { cn } from "@/lib/utils";
+import { LayoutDashboard, Palette, Search, Settings } from "lucide-react";
 
 const NAV_ITEMS = [
-  { href: '/ai', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/ai/studio', label: 'Studio', icon: Palette },
-  { href: '/ai/search', label: 'Search', icon: Search },
-  { href: '/ai/settings', label: 'Settings', icon: Settings },
+  { href: "/ai", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/ai/studio", label: "Studio", icon: Palette },
+  { href: "/ai/search", label: "Search", icon: Search },
+  { href: "/ai/settings", label: "Settings", icon: Settings },
 ] as const;
 
 export function AiNav() {
@@ -26,8 +21,8 @@ export function AiNav() {
         {NAV_ITEMS.map((item) => {
           const Icon = item.icon;
           const isActive =
-            item.href === '/ai'
-              ? pathname === '/ai'
+            item.href === "/ai"
+              ? pathname === "/ai"
               : pathname.startsWith(item.href);
 
           return (
@@ -35,10 +30,10 @@ export function AiNav() {
               key={item.href}
               href={item.href}
               className={cn(
-                'flex items-center gap-1.5 px-3 py-2.5 text-sm font-medium whitespace-nowrap transition-colors border-b-2 -mb-px',
+                "flex items-center gap-1.5 px-3 py-2.5 text-sm font-medium whitespace-nowrap transition-colors border-b-2 -mb-px",
                 isActive
-                  ? 'border-primary text-primary'
-                  : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
+                  ? "border-primary text-primary"
+                  : "border-transparent text-muted-foreground hover:text-foreground hover:border-border",
               )}
             >
               <Icon className="h-4 w-4" />

@@ -19,14 +19,18 @@ export default function VelocityTracker() {
     { sprint: "Sprint 12", completed: 45 },
   ];
 
-  const average = Math.round(velocityData.reduce((sum, d) => sum + d.completed, 0) / velocityData.length);
+  const average = Math.round(
+    velocityData.reduce((sum, d) => sum + d.completed, 0) / velocityData.length,
+  );
   const maxVelocity = Math.max(...velocityData.map((d) => d.completed));
   const forecastSprints = [
     { sprint: "Sprint 13", velocity: average },
     { sprint: "Sprint 14", velocity: average },
   ];
 
-  const allData = showForecast ? [...velocityData, ...forecastSprints] : velocityData;
+  const allData = showForecast
+    ? [...velocityData, ...forecastSprints]
+    : velocityData;
   const chartHeight = 180;
   const barWidth = 100 / allData.length;
   const scale = chartHeight / (maxVelocity + 5);
@@ -47,9 +51,14 @@ export default function VelocityTracker() {
       </div>
 
       <div className="bg-card p-4 rounded-lg border">
-        <svg width="100%" height={chartHeight + 50} viewBox={`0 0 ${allData.length * 50 + 50} ${chartHeight + 50}`}>
+        <svg
+          width="100%"
+          height={chartHeight + 50}
+          viewBox={`0 0 ${allData.length * 50 + 50} ${chartHeight + 50}`}
+        >
           {allData.map((data, idx) => {
-            const velocity = "velocity" in data ? data.velocity : data.completed;
+            const velocity =
+              "velocity" in data ? data.velocity : data.completed;
             const barHeight = velocity * scale;
             const x = idx * 50 + 25;
             const y = chartHeight - barHeight;
@@ -65,10 +74,22 @@ export default function VelocityTracker() {
                   fill={isForecast ? "#d1d5db" : "#3b82f6"}
                   opacity={isForecast ? 0.6 : 1}
                 />
-                <text x={x + 20} y={y - 5} textAnchor="middle" fontSize="12" fontWeight="bold">
+                <text
+                  x={x + 20}
+                  y={y - 5}
+                  textAnchor="middle"
+                  fontSize="12"
+                  fontWeight="bold"
+                >
                   {"velocity" in data ? data.velocity : data.completed}
                 </text>
-                <text x={x + 20} y={chartHeight + 15} textAnchor="middle" fontSize="11" fill="#666">
+                <text
+                  x={x + 20}
+                  y={chartHeight + 15}
+                  textAnchor="middle"
+                  fontSize="11"
+                  fill="#666"
+                >
                   {data.sprint}
                 </text>
               </g>
@@ -76,8 +97,22 @@ export default function VelocityTracker() {
           })}
 
           {/* Average line */}
-          <line x1="0" y1={chartHeight - average * scale} x2={allData.length * 50 + 50} y2={chartHeight - average * scale} stroke="#f59e0b" strokeWidth="2" strokeDasharray="5,5" />
-          <text x="5" y={chartHeight - average * scale - 5} fontSize="11" fill="#f59e0b" fontWeight="bold">
+          <line
+            x1="0"
+            y1={chartHeight - average * scale}
+            x2={allData.length * 50 + 50}
+            y2={chartHeight - average * scale}
+            stroke="#f59e0b"
+            strokeWidth="2"
+            strokeDasharray="5,5"
+          />
+          <text
+            x="5"
+            y={chartHeight - average * scale - 5}
+            fontSize="11"
+            fill="#f59e0b"
+            fontWeight="bold"
+          >
             Avg: {average}
           </text>
         </svg>
@@ -86,7 +121,9 @@ export default function VelocityTracker() {
       <div className="grid grid-cols-3 gap-3 text-sm">
         <div className="p-3 bg-blue-50 rounded">
           <p className="text-xs text-muted-foreground">Current</p>
-          <p className="text-xl font-bold text-blue-600">{velocityData[velocityData.length - 1].completed}</p>
+          <p className="text-xl font-bold text-blue-600">
+            {velocityData[velocityData.length - 1].completed}
+          </p>
         </div>
         <div className="p-3 bg-orange-50 rounded">
           <p className="text-xs text-muted-foreground">Average</p>

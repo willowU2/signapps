@@ -30,15 +30,18 @@ export function usePullToRefresh({
   const startY = useRef<number | null>(null);
   const isPulling = useRef(false);
 
-  const handleTouchStart = useCallback((e: TouchEvent) => {
-    const el = scrollContainerRef?.current;
-    // Only trigger when scrolled to the very top
-    if (el && el.scrollTop > 0) return;
-    const touch = e.touches[0];
-    if (!touch) return;
-    startY.current = touch.clientY;
-    isPulling.current = true;
-  }, [scrollContainerRef]);
+  const handleTouchStart = useCallback(
+    (e: TouchEvent) => {
+      const el = scrollContainerRef?.current;
+      // Only trigger when scrolled to the very top
+      if (el && el.scrollTop > 0) return;
+      const touch = e.touches[0];
+      if (!touch) return;
+      startY.current = touch.clientY;
+      isPulling.current = true;
+    },
+    [scrollContainerRef],
+  );
 
   const handleTouchEnd = useCallback(
     (e: TouchEvent) => {
@@ -60,10 +63,17 @@ export function usePullToRefresh({
 
   useEffect(() => {
     const target = scrollContainerRef?.current ?? window;
-    target.addEventListener("touchstart", handleTouchStart as EventListener, { passive: true });
-    target.addEventListener("touchend", handleTouchEnd as EventListener, { passive: true });
+    target.addEventListener("touchstart", handleTouchStart as EventListener, {
+      passive: true,
+    });
+    target.addEventListener("touchend", handleTouchEnd as EventListener, {
+      passive: true,
+    });
     return () => {
-      target.removeEventListener("touchstart", handleTouchStart as EventListener);
+      target.removeEventListener(
+        "touchstart",
+        handleTouchStart as EventListener,
+      );
       target.removeEventListener("touchend", handleTouchEnd as EventListener);
     };
   }, [handleTouchStart, handleTouchEnd, scrollContainerRef]);

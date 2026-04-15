@@ -28,7 +28,10 @@ interface MailContextActionsProps {
   children: React.ReactNode;
 }
 
-export function MailContextActions({ mail, children }: MailContextActionsProps) {
+export function MailContextActions({
+  mail,
+  children,
+}: MailContextActionsProps) {
   const [taskOpen, setTaskOpen] = useState(false);
   const [eventOpen, setEventOpen] = useState(false);
   const [followUpOpen, setFollowUpOpen] = useState(false);

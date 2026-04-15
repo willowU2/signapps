@@ -1,26 +1,27 @@
-'use client';
+"use client";
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Image, Video, AudioLines, Eye } from 'lucide-react';
-import { ImageGenPanel } from '@/components/ai/image-gen-panel';
-import { VideoGenPanel } from '@/components/ai/video-gen-panel';
-import { AudioGenPanel } from '@/components/ai/audio-gen-panel';
-import { VisionAnalyzer } from '@/components/ai/vision-analyzer';
-import { usePageTitle } from '@/hooks/use-page-title';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Image, Video, AudioLines, Eye } from "lucide-react";
+import { ImageGenPanel } from "@/components/ai/image-gen-panel";
+import { VideoGenPanel } from "@/components/ai/video-gen-panel";
+import { AudioGenPanel } from "@/components/ai/audio-gen-panel";
+import { VisionAnalyzer } from "@/components/ai/vision-analyzer";
+import { usePageTitle } from "@/hooks/use-page-title";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // STUDIO PAGE
 // ═══════════════════════════════════════════════════════════════════════════
 
 export default function StudioPage() {
-  usePageTitle('Studio IA');
+  usePageTitle("Studio IA");
   return (
     <div className="w-full py-6 space-y-6">
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Media Studio</h1>
         <p className="text-muted-foreground">
-          Generation d&apos;images, videos, audio et analyse visuelle avec l&apos;IA
+          Generation d&apos;images, videos, audio et analyse visuelle avec
+          l&apos;IA
         </p>
       </div>
 

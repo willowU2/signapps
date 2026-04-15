@@ -1,31 +1,39 @@
-'use client';
+"use client";
 
 // IDEA-121: Advanced search filters — date range, type, author, module
 
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from '@/components/ui/popover';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import { SlidersHorizontal, X } from 'lucide-react';
-import { cn } from '@/lib/utils';
+} from "@/components/ui/popover";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { SlidersHorizontal, X } from "lucide-react";
+import { cn } from "@/lib/utils";
 
-export type ContentType = 'all' | 'doc' | 'sheet' | 'slide' | 'mail' | 'task' | 'event' | 'file';
+export type ContentType =
+  | "all"
+  | "doc"
+  | "sheet"
+  | "slide"
+  | "mail"
+  | "task"
+  | "event"
+  | "file";
 
 const CONTENT_TYPES: { value: ContentType; label: string }[] = [
-  { value: 'all', label: 'Tout' },
-  { value: 'doc', label: 'Documents' },
-  { value: 'sheet', label: 'Feuilles' },
-  { value: 'slide', label: 'Présentations' },
-  { value: 'mail', label: 'Emails' },
-  { value: 'task', label: 'Tâches' },
-  { value: 'event', label: 'Événements' },
-  { value: 'file', label: 'Fichiers' },
+  { value: "all", label: "Tout" },
+  { value: "doc", label: "Documents" },
+  { value: "sheet", label: "Feuilles" },
+  { value: "slide", label: "Présentations" },
+  { value: "mail", label: "Emails" },
+  { value: "task", label: "Tâches" },
+  { value: "event", label: "Événements" },
+  { value: "file", label: "Fichiers" },
 ];
 
 export interface AdvancedFilters {
@@ -37,17 +45,17 @@ export interface AdvancedFilters {
 }
 
 const EMPTY_FILTERS: AdvancedFilters = {
-  dateFrom: '',
-  dateTo: '',
-  type: 'all',
-  author: '',
-  module: '',
+  dateFrom: "",
+  dateTo: "",
+  type: "all",
+  author: "",
+  module: "",
 };
 
 function countActiveFilters(f: AdvancedFilters): number {
   let n = 0;
   if (f.dateFrom || f.dateTo) n++;
-  if (f.type !== 'all') n++;
+  if (f.type !== "all") n++;
   if (f.author) n++;
   if (f.module) n++;
   return n;
@@ -59,11 +67,18 @@ interface AdvancedSearchFiltersProps {
   className?: string;
 }
 
-export function AdvancedSearchFilters({ filters, onChange, className }: AdvancedSearchFiltersProps) {
+export function AdvancedSearchFilters({
+  filters,
+  onChange,
+  className,
+}: AdvancedSearchFiltersProps) {
   const [open, setOpen] = useState(false);
   const activeCount = countActiveFilters(filters);
 
-  const update = <K extends keyof AdvancedFilters>(key: K, value: AdvancedFilters[K]) => {
+  const update = <K extends keyof AdvancedFilters>(
+    key: K,
+    value: AdvancedFilters[K],
+  ) => {
     onChange({ ...filters, [key]: value });
   };
 
@@ -78,7 +93,7 @@ export function AdvancedSearchFilters({ filters, onChange, className }: Advanced
         <Button
           variant="outline"
           size="sm"
-          className={cn('gap-2 relative', className)}
+          className={cn("gap-2 relative", className)}
         >
           <SlidersHorizontal className="h-4 w-4" />
           Filtres
@@ -93,7 +108,12 @@ export function AdvancedSearchFilters({ filters, onChange, className }: Advanced
         <div className="flex items-center justify-between">
           <span className="font-semibold text-sm">Filtres avancés</span>
           {activeCount > 0 && (
-            <Button variant="ghost" size="sm" onClick={reset} className="h-7 px-2 text-xs gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={reset}
+              className="h-7 px-2 text-xs gap-1"
+            >
               <X className="h-3 w-3" />
               Réinitialiser
             </Button>
@@ -107,12 +127,12 @@ export function AdvancedSearchFilters({ filters, onChange, className }: Advanced
             {CONTENT_TYPES.map(({ value, label }) => (
               <button
                 key={value}
-                onClick={() => update('type', value)}
+                onClick={() => update("type", value)}
                 className={cn(
-                  'px-2.5 py-1 rounded-md text-xs font-medium transition-colors border',
+                  "px-2.5 py-1 rounded-md text-xs font-medium transition-colors border",
                   filters.type === value
-                    ? 'bg-primary text-primary-foreground border-primary'
-                    : 'bg-background text-muted-foreground border-border hover:bg-accent'
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "bg-background text-muted-foreground border-border hover:bg-accent",
                 )}
               >
                 {label}
@@ -130,16 +150,18 @@ export function AdvancedSearchFilters({ filters, onChange, className }: Advanced
               <Input
                 type="date"
                 value={filters.dateFrom}
-                onChange={(e) => update('dateFrom', e.target.value)}
+                onChange={(e) => update("dateFrom", e.target.value)}
                 className="h-8 text-xs"
               />
             </div>
             <div className="space-y-1">
-              <span className="text-[10px] text-muted-foreground">Jusqu&apos;à</span>
+              <span className="text-[10px] text-muted-foreground">
+                Jusqu&apos;à
+              </span>
               <Input
                 type="date"
                 value={filters.dateTo}
-                onChange={(e) => update('dateTo', e.target.value)}
+                onChange={(e) => update("dateTo", e.target.value)}
                 className="h-8 text-xs"
               />
             </div>
@@ -152,7 +174,7 @@ export function AdvancedSearchFilters({ filters, onChange, className }: Advanced
           <Input
             placeholder="Nom ou email…"
             value={filters.author}
-            onChange={(e) => update('author', e.target.value)}
+            onChange={(e) => update("author", e.target.value)}
             className="h-8 text-xs"
           />
         </div>
@@ -163,7 +185,7 @@ export function AdvancedSearchFilters({ filters, onChange, className }: Advanced
           <Input
             placeholder="Ex: mail, docs, tasks…"
             value={filters.module}
-            onChange={(e) => update('module', e.target.value)}
+            onChange={(e) => update("module", e.target.value)}
             className="h-8 text-xs"
           />
         </div>

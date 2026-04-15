@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * Availability Calendar Component
@@ -7,7 +7,7 @@
  * Displays busy/free times with color-coded overlays.
  */
 
-import * as React from 'react';
+import * as React from "react";
 import {
   format,
   addDays,
@@ -18,8 +18,8 @@ import {
   setMinutes,
   differenceInMinutes,
   areIntervalsOverlapping,
-} from 'date-fns';
-import { fr } from 'date-fns/locale';
+} from "date-fns";
+import { fr } from "date-fns/locale";
 import {
   ChevronLeft,
   ChevronRight,
@@ -27,23 +27,23 @@ import {
   Clock,
   Check,
   AlertCircle,
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+} from "@/components/ui/tooltip";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import type {
   AvailabilityResult,
   ParticipantAvailability,
   CommonSlot,
   BusySlot,
-} from '@/lib/scheduling/utils/availability-finder';
+} from "@/lib/scheduling/utils/availability-finder";
 
 // ============================================================================
 // Types
@@ -77,19 +77,19 @@ const DEFAULT_WORKING_HOURS = { start: 8, end: 19 };
 const DEFAULT_DAYS_TO_SHOW = 5;
 
 const AVAILABILITY_COLORS = {
-  allAvailable: 'bg-green-100 border-green-300 hover:bg-green-200',
-  partiallyAvailable: 'bg-yellow-100 border-yellow-300 hover:bg-yellow-200',
-  busy: 'bg-red-100/50 border-red-200',
+  allAvailable: "bg-green-100 border-green-300 hover:bg-green-200",
+  partiallyAvailable: "bg-yellow-100 border-yellow-300 hover:bg-yellow-200",
+  busy: "bg-red-100/50 border-red-200",
 };
 
 // Participant colors for visual distinction
 const PARTICIPANT_COLORS = [
-  'bg-blue-500',
-  'bg-purple-500',
-  'bg-orange-500',
-  'bg-pink-500',
-  'bg-cyan-500',
-  'bg-emerald-500',
+  "bg-blue-500",
+  "bg-purple-500",
+  "bg-orange-500",
+  "bg-pink-500",
+  "bg-cyan-500",
+  "bg-emerald-500",
 ];
 
 // ============================================================================
@@ -107,7 +107,7 @@ export function AvailabilityCalendar({
   className,
 }: AvailabilityCalendarProps) {
   const [currentStartDate, setCurrentStartDate] = React.useState(() =>
-    startOfWeek(startDate, { weekStartsOn: 1 })
+    startOfWeek(startDate, { weekStartsOn: 1 }),
   );
 
   // Generate days array
@@ -149,7 +149,7 @@ export function AvailabilityCalendar({
   // Get busy slots for a participant on a day
   const getBusySlotsForDay = (
     participant: ParticipantAvailability,
-    day: Date
+    day: Date,
   ): BusySlot[] => {
     return participant.busySlots.filter((slot) => isSameDay(slot.start, day));
   };
@@ -157,7 +157,7 @@ export function AvailabilityCalendar({
   // Calculate position for a time block
   const getBlockStyle = (
     start: Date,
-    end: Date
+    end: Date,
   ): { top: string; height: string } => {
     const startHour = start.getHours() + start.getMinutes() / 60;
     const endHour = end.getHours() + end.getMinutes() / 60;
@@ -172,7 +172,7 @@ export function AvailabilityCalendar({
   };
 
   return (
-    <div className={cn('flex flex-col', className)}>
+    <div className={cn("flex flex-col", className)}>
       {/* Header with navigation */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
@@ -188,7 +188,7 @@ export function AvailabilityCalendar({
         </div>
 
         <div className="text-sm font-medium">
-          {format(currentStartDate, 'MMMM yyyy', { locale: fr })}
+          {format(currentStartDate, "MMMM yyyy", { locale: fr })}
         </div>
 
         {/* Legend */}
@@ -216,10 +216,10 @@ export function AvailabilityCalendar({
             <Badge
               key={p.participantId}
               variant="outline"
-              className={cn('text-xs', 'border-l-4')}
+              className={cn("text-xs", "border-l-4")}
               style={{
                 borderLeftColor: `var(--color-${
-                  ['blue', 'purple', 'orange', 'pink', 'cyan', 'emerald'][
+                  ["blue", "purple", "orange", "pink", "cyan", "emerald"][
                     idx % 6
                   ]
                 }-500)`,
@@ -243,7 +243,7 @@ export function AvailabilityCalendar({
                 className="flex items-start justify-end pr-2 text-xs text-muted-foreground"
                 style={{ height: HOUR_HEIGHT }}
               >
-                {format(setHours(new Date(), hour), 'HH:mm')}
+                {format(setHours(new Date(), hour), "HH:mm")}
               </div>
             ))}
           </div>
@@ -279,7 +279,8 @@ export function AvailabilityCalendar({
           <div className="flex items-center gap-1 text-green-600">
             <Check className="h-4 w-4" />
             <span>
-              {availability.stats.slotsWithAllAvailable} où tous sont disponibles
+              {availability.stats.slotsWithAllAvailable} où tous sont
+              disponibles
             </span>
           </div>
         )}
@@ -306,7 +307,10 @@ interface DayColumnProps {
   participants: ParticipantAvailability[];
   selectedSlot?: CommonSlot;
   onSlotSelect: (slot: CommonSlot) => void;
-  getBusySlotsForDay: (participant: ParticipantAvailability, day: Date) => BusySlot[];
+  getBusySlotsForDay: (
+    participant: ParticipantAvailability,
+    day: Date,
+  ) => BusySlot[];
   getBlockStyle: (start: Date, end: Date) => { top: string; height: string };
 }
 
@@ -328,29 +332,26 @@ function DayColumn({
       {/* Day header */}
       <div
         className={cn(
-          'h-12 flex flex-col items-center justify-center border-b sticky top-0 bg-background z-10',
-          isCurrentDay && 'bg-primary/5'
+          "h-12 flex flex-col items-center justify-center border-b sticky top-0 bg-background z-10",
+          isCurrentDay && "bg-primary/5",
         )}
       >
         <span className="text-xs text-muted-foreground capitalize">
-          {format(day, 'EEE', { locale: fr })}
+          {format(day, "EEE", { locale: fr })}
         </span>
         <span
           className={cn(
-            'text-sm font-medium',
+            "text-sm font-medium",
             isCurrentDay &&
-              'w-7 h-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center'
+              "w-7 h-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center",
           )}
         >
-          {format(day, 'd')}
+          {format(day, "d")}
         </span>
       </div>
 
       {/* Time slots */}
-      <div
-        className="relative"
-        style={{ height: hours.length * HOUR_HEIGHT }}
-      >
+      <div className="relative" style={{ height: hours.length * HOUR_HEIGHT }}>
         {/* Hour grid lines */}
         {hours.map((hour) => (
           <div
@@ -374,8 +375,8 @@ function DayColumn({
                   <TooltipTrigger asChild>
                     <div
                       className={cn(
-                        'absolute rounded-sm opacity-60',
-                        PARTICIPANT_COLORS[pIdx % PARTICIPANT_COLORS.length]
+                        "absolute rounded-sm opacity-60",
+                        PARTICIPANT_COLORS[pIdx % PARTICIPANT_COLORS.length],
                       )}
                       style={{
                         ...style,
@@ -388,10 +389,11 @@ function DayColumn({
                     <div className="text-xs">
                       <p className="font-medium">{participant.name}</p>
                       <p className="text-muted-foreground">
-                        {busy.reason || 'Occupé'}
+                        {busy.reason || "Occupé"}
                       </p>
                       <p>
-                        {format(busy.start, 'HH:mm')} - {format(busy.end, 'HH:mm')}
+                        {format(busy.start, "HH:mm")} -{" "}
+                        {format(busy.end, "HH:mm")}
                       </p>
                     </div>
                   </TooltipContent>
@@ -415,26 +417,27 @@ function DayColumn({
                     type="button"
                     onClick={() => onSlotSelect(slot)}
                     className={cn(
-                      'absolute left-1 right-1 rounded border-2 transition-all cursor-pointer',
+                      "absolute left-1 right-1 rounded border-2 transition-all cursor-pointer",
                       slot.allAvailable
                         ? AVAILABILITY_COLORS.allAvailable
                         : AVAILABILITY_COLORS.partiallyAvailable,
-                      isSelected && 'ring-2 ring-primary ring-offset-1'
+                      isSelected && "ring-2 ring-primary ring-offset-1",
                     )}
                     style={style}
                   >
                     <div className="p-1 text-xs truncate">
-                      {format(slot.start, 'HH:mm')}
+                      {format(slot.start, "HH:mm")}
                     </div>
                   </button>
                 </TooltipTrigger>
                 <TooltipContent>
                   <div className="text-xs space-y-1">
                     <p className="font-medium">
-                      {format(slot.start, 'HH:mm')} - {format(slot.end, 'HH:mm')}
+                      {format(slot.start, "HH:mm")} -{" "}
+                      {format(slot.end, "HH:mm")}
                     </p>
                     <p>
-                      {slot.availableParticipants.length}/{participants.length}{' '}
+                      {slot.availableParticipants.length}/{participants.length}{" "}
                       disponibles
                     </p>
                     {slot.scoreReasons.length > 0 && (

@@ -1,20 +1,31 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useRef } from 'react';
-import { Upload, X, Building2, Save } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { toast } from 'sonner';
-import { getClient, ServiceName } from '@/lib/api/factory';
-import { useBrandingStore } from '@/stores/branding-store';
+import { useState, useEffect, useRef } from "react";
+import { Upload, X, Building2, Save } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { toast } from "sonner";
+import { getClient, ServiceName } from "@/lib/api/factory";
+import { useBrandingStore } from "@/stores/branding-store";
 
 const client = () => getClient(ServiceName.IDENTITY);
 
 export function InstanceBranding() {
-  const { logoUrl, appName, setLogoUrl: setBrandingLogo, setAppName: setBrandingName } = useBrandingStore();
+  const {
+    logoUrl,
+    appName,
+    setLogoUrl: setBrandingLogo,
+    setAppName: setBrandingName,
+  } = useBrandingStore();
   const [instanceName, setInstanceName] = useState(appName);
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -27,23 +38,31 @@ export function InstanceBranding() {
     document.title = name;
     // Update manifest name dynamically (for PWA)
     const el = document.querySelector('meta[name="application-name"]');
-    if (el) el.setAttribute('content', name);
+    if (el) el.setAttribute("content", name);
   }
 
   const saveName = async () => {
     setBrandingName(instanceName);
     applyName(instanceName);
     try {
-      await client().patch('/tenant', { name: instanceName });
-    } catch { /* persist locally */ }
-    toast.success('Nom mis à jour');
+      await client().patch("/tenant", { name: instanceName });
+    } catch {
+      /* persist locally */
+    }
+    toast.success("Nom mis à jour");
   };
 
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 2 * 1024 * 1024) { toast.error('Logo trop grand (max 2 Mo)'); return; }
-    if (!file.type.startsWith('image/')) { toast.error('Format invalide'); return; }
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("Logo trop grand (max 2 Mo)");
+      return;
+    }
+    if (!file.type.startsWith("image/")) {
+      toast.error("Format invalide");
+      return;
+    }
 
     setUploading(true);
     try {
@@ -52,16 +71,16 @@ export function InstanceBranding() {
       reader.onload = (ev) => {
         const dataUrl = ev.target?.result as string;
         setBrandingLogo(dataUrl);
-        toast.success('Logo mis à jour');
+        toast.success("Logo mis à jour");
         setUploading(false);
       };
       reader.readAsDataURL(file);
 
       // Also try uploading to server
       const formData = new FormData();
-      formData.append('logo', file);
-      await client().post('/tenant/logo', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
+      formData.append("logo", file);
+      await client().post("/tenant/logo", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
       });
     } catch {
       setUploading(false);
@@ -70,8 +89,10 @@ export function InstanceBranding() {
 
   const removeLogo = () => {
     setBrandingLogo(null);
-    try { client().delete('/tenant/logo'); } catch {}
-    toast.success('Logo supprimé');
+    try {
+      client().delete("/tenant/logo");
+    } catch {}
+    toast.success("Logo supprimé");
   };
 
   return (
@@ -106,7 +127,7 @@ export function InstanceBranding() {
                 disabled={uploading}
               >
                 <Upload className="w-3 h-3 mr-1" />
-                {uploading ? 'Upload...' : 'Logo'}
+                {uploading ? "Upload..." : "Logo"}
               </Button>
               {logoUrl && (
                 <Button
@@ -134,7 +155,7 @@ export function InstanceBranding() {
               <Input
                 id="instance-name"
                 value={instanceName}
-                onChange={e => setInstanceName(e.target.value)}
+                onChange={(e) => setInstanceName(e.target.value)}
                 placeholder="Nom de votre organisation"
                 maxLength={50}
               />

@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * Remote Work Planner Component
@@ -7,16 +7,16 @@
  * Includes team view to see colleague availability.
  */
 
-import * as React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { MapPin, Home, Users } from 'lucide-react';
+import * as React from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { MapPin, Home, Users } from "lucide-react";
 
-export type WorkLocation = 'office' | 'remote';
+export type WorkLocation = "office" | "remote";
 
 export interface DaySchedule {
-  day: 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday';
+  day: "Monday" | "Tuesday" | "Wednesday" | "Thursday" | "Friday";
   location: WorkLocation;
 }
 
@@ -30,16 +30,16 @@ export interface TeamMember {
 export interface RemoteWorkPlannerProps {
   currentSchedule: DaySchedule[];
   teamMembers?: TeamMember[];
-  onScheduleChange?: (day: DaySchedule['day'], location: WorkLocation) => void;
+  onScheduleChange?: (day: DaySchedule["day"], location: WorkLocation) => void;
 }
 
-const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'] as const;
+const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"] as const;
 
 function getInitials(name: string): string {
   return name
-    .split(' ')
+    .split(" ")
     .map((n) => n[0])
-    .join('')
+    .join("")
     .toUpperCase()
     .slice(0, 2);
 }
@@ -49,11 +49,11 @@ function DayCard({
   location,
   onToggle,
 }: {
-  day: DaySchedule['day'];
+  day: DaySchedule["day"];
   location: WorkLocation;
   onToggle: () => void;
 }) {
-  const isRemote = location === 'remote';
+  const isRemote = location === "remote";
   const shortDay = day.substring(0, 3);
 
   return (
@@ -61,8 +61,8 @@ function DayCard({
       onClick={onToggle}
       className={`p-4 rounded-lg border-2 transition-all text-center space-y-2 ${
         isRemote
-          ? 'bg-blue-50 border-blue-300 hover:border-blue-400'
-          : 'bg-orange-50 border-orange-300 hover:border-orange-400'
+          ? "bg-blue-50 border-blue-300 hover:border-blue-400"
+          : "bg-orange-50 border-orange-300 hover:border-orange-400"
       }`}
     >
       <p className="text-xs font-semibold text-muted-foreground">{shortDay}</p>
@@ -73,8 +73,12 @@ function DayCard({
           <MapPin className="w-6 h-6 text-orange-600" />
         )}
       </div>
-      <Badge className={isRemote ? 'bg-blue-600 text-white' : 'bg-orange-600 text-white'}>
-        {isRemote ? 'Remote' : 'Office'}
+      <Badge
+        className={
+          isRemote ? "bg-blue-600 text-white" : "bg-orange-600 text-white"
+        }
+      >
+        {isRemote ? "Remote" : "Office"}
       </Badge>
     </button>
   );
@@ -85,10 +89,10 @@ function TeamMemberAvailability({
   day,
 }: {
   member: TeamMember;
-  day: DaySchedule['day'];
+  day: DaySchedule["day"];
 }) {
   const daySchedule = member.schedule.find((s) => s.day === day);
-  const isRemote = daySchedule?.location === 'remote';
+  const isRemote = daySchedule?.location === "remote";
 
   return (
     <div className="flex items-center gap-2">
@@ -105,7 +109,7 @@ function TeamMemberAvailability({
           <MapPin className="w-4 h-4 text-orange-600" />
         )}
         <span className="text-xs font-medium text-muted-foreground">
-          {isRemote ? 'Remote' : 'Office'}
+          {isRemote ? "Remote" : "Office"}
         </span>
       </div>
     </div>
@@ -118,26 +122,29 @@ export function RemoteWorkPlanner({
   onScheduleChange,
 }: RemoteWorkPlannerProps) {
   const scheduleMap = Object.fromEntries(
-    currentSchedule.map((s) => [s.day, s.location])
+    currentSchedule.map((s) => [s.day, s.location]),
   );
 
-  const handleToggle = (day: DaySchedule['day']) => {
-    const currentLocation = scheduleMap[day] || 'office';
-    const newLocation: WorkLocation = currentLocation === 'remote' ? 'office' : 'remote';
+  const handleToggle = (day: DaySchedule["day"]) => {
+    const currentLocation = scheduleMap[day] || "office";
+    const newLocation: WorkLocation =
+      currentLocation === "remote" ? "office" : "remote";
     onScheduleChange?.(day, newLocation);
   };
 
-  const getTeamPresence = (day: DaySchedule['day']) => {
+  const getTeamPresence = (day: DaySchedule["day"]) => {
     return teamMembers.filter(
       (member) =>
-        member.schedule.find((s) => s.day === day)?.location === 'office'
+        member.schedule.find((s) => s.day === day)?.location === "office",
     ).length;
   };
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold tracking-tight">Planificateur Télétravail</h2>
+        <h2 className="text-2xl font-bold tracking-tight">
+          Planificateur Télétravail
+        </h2>
       </div>
 
       <Card>
@@ -150,7 +157,7 @@ export function RemoteWorkPlanner({
               <DayCard
                 key={day}
                 day={day}
-                location={scheduleMap[day] || 'office'}
+                location={scheduleMap[day] || "office"}
                 onToggle={() => handleToggle(day)}
               />
             ))}
@@ -194,7 +201,8 @@ export function RemoteWorkPlanner({
 
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
         <p className="text-xs text-blue-900">
-          💡 Cliquez sur un jour pour basculer entre travail au bureau et télétravail.
+          💡 Cliquez sur un jour pour basculer entre travail au bureau et
+          télétravail.
         </p>
       </div>
     </div>

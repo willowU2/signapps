@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { SpinnerInfinity } from 'spinners-react';
+import { SpinnerInfinity } from "spinners-react";
 
 /**
  * Org Node Sheet Component
@@ -8,13 +8,13 @@ import { SpinnerInfinity } from 'spinners-react';
  * Side sheet for creating/editing organizational nodes.
  */
 
-import * as React from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import * as React from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { Button } from '@/components/ui/button';
+import { Button } from "@/components/ui/button";
 import {
   Sheet,
   SheetContent,
@@ -22,7 +22,7 @@ import {
   SheetFooter,
   SheetHeader,
   SheetTitle,
-} from '@/components/ui/sheet';
+} from "@/components/ui/sheet";
 import {
   Form,
   FormControl,
@@ -31,25 +31,29 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
-import { toast } from 'sonner';
-import { orgNodesApi, orgNodeTypesApi } from '@/lib/api/workforce';
-import type { OrgNodeWithStats, CreateOrgNode, UpdateOrgNode } from '@/types/workforce';
+} from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { toast } from "sonner";
+import { orgNodesApi, orgNodeTypesApi } from "@/lib/api/workforce";
+import type {
+  OrgNodeWithStats,
+  CreateOrgNode,
+  UpdateOrgNode,
+} from "@/types/workforce";
 
 // Validation schema
 const orgNodeSchema = z.object({
-  node_type: z.string().min(1, 'Le type est requis'),
-  name: z.string().min(1, 'Le nom est requis').max(100),
+  node_type: z.string().min(1, "Le type est requis"),
+  name: z.string().min(1, "Le nom est requis").max(100),
   code: z.string().max(50).optional(),
   description: z.string().max(500).optional(),
   is_active: z.boolean(),
@@ -76,7 +80,7 @@ export function OrgNodeSheet({
 
   // Fetch node types
   const { data: nodeTypesData } = useQuery({
-    queryKey: ['workforce', 'node-types'],
+    queryKey: ["workforce", "node-types"],
     queryFn: () => orgNodeTypesApi.list(),
   });
 
@@ -86,10 +90,10 @@ export function OrgNodeSheet({
   const form = useForm<OrgNodeFormValues>({
     resolver: zodResolver(orgNodeSchema),
     defaultValues: {
-      node_type: node?.node_type || '',
-      name: node?.name || '',
-      code: node?.code || '',
-      description: node?.description || '',
+      node_type: node?.node_type || "",
+      name: node?.name || "",
+      code: node?.code || "",
+      description: node?.description || "",
       is_active: node?.is_active ?? true,
       sort_order: node?.sort_order || 0,
     },
@@ -99,10 +103,10 @@ export function OrgNodeSheet({
   React.useEffect(() => {
     if (isOpen) {
       form.reset({
-        node_type: node?.node_type || '',
-        name: node?.name || '',
-        code: node?.code || '',
-        description: node?.description || '',
+        node_type: node?.node_type || "",
+        name: node?.name || "",
+        code: node?.code || "",
+        description: node?.description || "",
         is_active: node?.is_active ?? true,
         sort_order: node?.sort_order || 0,
       });
@@ -113,12 +117,12 @@ export function OrgNodeSheet({
   const createMutation = useMutation({
     mutationFn: (data: CreateOrgNode) => orgNodesApi.create(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['workforce', 'tree'] });
-      toast.success('Nœud créé avec succès');
+      queryClient.invalidateQueries({ queryKey: ["workforce", "tree"] });
+      toast.success("Nœud créé avec succès");
       onClose();
     },
     onError: () => {
-      toast.error('Erreur lors de la création');
+      toast.error("Erreur lors de la création");
     },
   });
 
@@ -127,12 +131,12 @@ export function OrgNodeSheet({
     mutationFn: ({ id, data }: { id: string; data: UpdateOrgNode }) =>
       orgNodesApi.update(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['workforce', 'tree'] });
-      toast.success('Nœud mis à jour avec succès');
+      queryClient.invalidateQueries({ queryKey: ["workforce", "tree"] });
+      toast.success("Nœud mis à jour avec succès");
       onClose();
     },
     onError: () => {
-      toast.error('Erreur lors de la mise à jour');
+      toast.error("Erreur lors de la mise à jour");
     },
   });
 
@@ -168,19 +172,22 @@ export function OrgNodeSheet({
       <SheetContent className="w-full sm:max-w-lg">
         <SheetHeader>
           <SheetTitle>
-            {isEditing ? 'Modifier le nœud' : 'Nouveau nœud'}
+            {isEditing ? "Modifier le nœud" : "Nouveau nœud"}
           </SheetTitle>
           <SheetDescription>
             {isEditing
-              ? 'Modifiez les informations du nœud organisationnel'
+              ? "Modifiez les informations du nœud organisationnel"
               : parentId
-              ? 'Créez un nouveau nœud enfant'
-              : 'Créez un nouveau nœud racine'}
+                ? "Créez un nouveau nœud enfant"
+                : "Créez un nouveau nœud racine"}
           </SheetDescription>
         </SheetHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 py-6">
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="space-y-6 py-6"
+          >
             <FormField
               control={form.control}
               name="node_type"
@@ -270,7 +277,9 @@ export function OrgNodeSheet({
                       type="number"
                       min={0}
                       {...field}
-                      onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                      onChange={(e) =>
+                        field.onChange(parseInt(e.target.value) || 0)
+                      }
                     />
                   </FormControl>
                   <FormDescription>
@@ -309,8 +318,16 @@ export function OrgNodeSheet({
                 Annuler
               </Button>
               <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting && <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />}
-                {isEditing ? 'Mettre à jour' : 'Créer'}
+                {isSubmitting && (
+                  <SpinnerInfinity
+                    size={24}
+                    secondaryColor="rgba(128,128,128,0.2)"
+                    color="currentColor"
+                    speed={120}
+                    className="mr-2 h-4 w-4 "
+                  />
+                )}
+                {isEditing ? "Mettre à jour" : "Créer"}
               </Button>
             </SheetFooter>
           </form>

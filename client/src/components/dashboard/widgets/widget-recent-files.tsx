@@ -171,7 +171,9 @@ export function WidgetRecentFiles({ widget }: WidgetRenderProps) {
                     {isImage ? (
                       <div
                         className="w-8 h-8 rounded bg-cover bg-center shrink-0"
-                        style={{ backgroundImage: `url(${file.thumbnail_url})` }}
+                        style={{
+                          backgroundImage: `url(${file.thumbnail_url})`,
+                        }}
                       />
                     ) : (
                       <div className="w-8 h-8 rounded bg-muted flex items-center justify-center shrink-0">

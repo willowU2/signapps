@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * TaskCard Component
@@ -7,11 +7,11 @@
  * Shows task title, priority, due date, assignee, and subtask progress.
  */
 
-import * as React from 'react';
-import { useSortable } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
-import { format, isPast, isToday, isTomorrow } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import * as React from "react";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { format, isPast, isToday, isTomorrow } from "date-fns";
+import { fr } from "date-fns/locale";
 import {
   Calendar,
   CheckCircle2,
@@ -21,19 +21,19 @@ import {
   GripVertical,
   MoreHorizontal,
   User,
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import type { Task, Priority } from '@/lib/scheduling/types/scheduling';
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import type { Task, Priority } from "@/lib/scheduling/types/scheduling";
 
 // ============================================================================
 // Types
@@ -54,10 +54,10 @@ interface TaskCardProps {
 // ============================================================================
 
 const priorityConfig: Record<Priority, { color: string; label: string }> = {
-  low: { color: 'bg-slate-100 text-slate-600', label: 'Basse' },
-  medium: { color: 'bg-blue-100 text-blue-600', label: 'Moyenne' },
-  high: { color: 'bg-orange-100 text-orange-600', label: 'Haute' },
-  urgent: { color: 'bg-red-100 text-red-600', label: 'Urgente' },
+  low: { color: "bg-slate-100 text-slate-600", label: "Basse" },
+  medium: { color: "bg-blue-100 text-blue-600", label: "Moyenne" },
+  high: { color: "bg-orange-100 text-orange-600", label: "Haute" },
+  urgent: { color: "bg-red-100 text-red-600", label: "Urgente" },
 };
 
 function PriorityBadge({ priority }: { priority: Priority }) {
@@ -65,8 +65,8 @@ function PriorityBadge({ priority }: { priority: Priority }) {
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-medium',
-        config.color
+        "inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-medium",
+        config.color,
       )}
     >
       <Flag className="h-3 w-3" />
@@ -88,19 +88,22 @@ function DueDateBadge({ date }: { date: Date }) {
   if (isDueToday) {
     label = "Aujourd'hui";
   } else if (isDueTomorrow) {
-    label = 'Demain';
+    label = "Demain";
   } else {
-    label = format(date, 'd MMM', { locale: fr });
+    label = format(date, "d MMM", { locale: fr });
   }
 
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs',
-        isOverdue && 'bg-red-100 text-red-600',
-        isDueToday && 'bg-amber-100 text-amber-600',
-        isDueTomorrow && 'bg-blue-100 text-blue-600',
-        !isOverdue && !isDueToday && !isDueTomorrow && 'bg-muted text-muted-foreground'
+        "inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs",
+        isOverdue && "bg-red-100 text-red-600",
+        isDueToday && "bg-amber-100 text-amber-600",
+        isDueTomorrow && "bg-blue-100 text-blue-600",
+        !isOverdue &&
+          !isDueToday &&
+          !isDueTomorrow &&
+          "bg-muted text-muted-foreground",
       )}
     >
       <Calendar className="h-3 w-3" />
@@ -159,7 +162,7 @@ export function TaskCard({
     isDragging: isSortableDragging,
   } = useSortable({
     id: task.id,
-    data: { type: 'task', task },
+    data: { type: "task", task },
   });
 
   const style = {
@@ -167,8 +170,9 @@ export function TaskCard({
     transition,
   };
 
-  const isCompleted = task.status === 'done';
-  const completedSubtasks = task.subtasks?.filter((s) => s.completed).length ?? 0;
+  const isCompleted = task.status === "done";
+  const completedSubtasks =
+    task.subtasks?.filter((s) => s.completed).length ?? 0;
   const totalSubtasks = task.subtasks?.length ?? 0;
 
   const handleCheckboxChange = (checked: boolean) => {
@@ -190,11 +194,11 @@ export function TaskCard({
       ref={setNodeRef}
       style={style}
       className={cn(
-        'group relative rounded-lg border bg-card p-3 shadow-sm transition-all',
-        'hover:shadow-md hover:border-primary/20',
-        (isDragging || isSortableDragging) && 'opacity-50 shadow-lg rotate-2',
-        isOverlay && 'shadow-xl rotate-3 cursor-grabbing',
-        isCompleted && 'opacity-60'
+        "group relative rounded-lg border bg-card p-3 shadow-sm transition-all",
+        "hover:shadow-md hover:border-primary/20",
+        (isDragging || isSortableDragging) && "opacity-50 shadow-lg rotate-2",
+        isOverlay && "shadow-xl rotate-3 cursor-grabbing",
+        isCompleted && "opacity-60",
       )}
       onClick={handleCardClick}
     >
@@ -203,9 +207,9 @@ export function TaskCard({
         {...attributes}
         {...listeners}
         className={cn(
-          'absolute left-1 top-1/2 -translate-y-1/2 p-1 rounded cursor-grab',
-          'opacity-0 group-hover:opacity-100 transition-opacity',
-          'hover:bg-muted'
+          "absolute left-1 top-1/2 -translate-y-1/2 p-1 rounded cursor-grab",
+          "opacity-0 group-hover:opacity-100 transition-opacity",
+          "hover:bg-muted",
         )}
       >
         <GripVertical className="h-4 w-4 text-muted-foreground" />
@@ -223,8 +227,8 @@ export function TaskCard({
           <div className="flex-1 min-w-0">
             <h4
               className={cn(
-                'font-medium text-sm leading-tight',
-                isCompleted && 'line-through text-muted-foreground'
+                "font-medium text-sm leading-tight",
+                isCompleted && "line-through text-muted-foreground",
               )}
             >
               {task.title}
@@ -250,7 +254,7 @@ export function TaskCard({
                 Modifier
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => onComplete?.(task.id)}>
-                {isCompleted ? 'Marquer non terminée' : 'Marquer terminée'}
+                {isCompleted ? "Marquer non terminée" : "Marquer terminée"}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
@@ -265,7 +269,7 @@ export function TaskCard({
 
         {/* Metadata Row */}
         <div className="flex flex-wrap items-center gap-2 mt-3">
-          {task.priority && task.priority !== 'medium' && (
+          {task.priority && task.priority !== "medium" && (
             <PriorityBadge priority={task.priority} />
           )}
           {task.dueDate && <DueDateBadge date={new Date(task.dueDate)} />}
@@ -280,7 +284,10 @@ export function TaskCard({
         {/* Subtask Progress */}
         {totalSubtasks > 0 && (
           <div className="mt-3">
-            <SubtaskProgress completed={completedSubtasks} total={totalSubtasks} />
+            <SubtaskProgress
+              completed={completedSubtasks}
+              total={totalSubtasks}
+            />
           </div>
         )}
 
@@ -327,14 +334,14 @@ export function TaskCardCompact({
   task,
   onClick,
   onComplete,
-}: Pick<TaskCardProps, 'task' | 'onClick' | 'onComplete'>) {
-  const isCompleted = task.status === 'done';
+}: Pick<TaskCardProps, "task" | "onClick" | "onComplete">) {
+  const isCompleted = task.status === "done";
 
   return (
     <div
       className={cn(
-        'flex items-center gap-2 p-2 rounded-md hover:bg-muted/50 cursor-pointer transition-colors',
-        isCompleted && 'opacity-60'
+        "flex items-center gap-2 p-2 rounded-md hover:bg-muted/50 cursor-pointer transition-colors",
+        isCompleted && "opacity-60",
       )}
       onClick={() => onClick?.(task)}
     >
@@ -345,14 +352,14 @@ export function TaskCardCompact({
       />
       <span
         className={cn(
-          'flex-1 text-sm truncate',
-          isCompleted && 'line-through text-muted-foreground'
+          "flex-1 text-sm truncate",
+          isCompleted && "line-through text-muted-foreground",
         )}
       >
         {task.title}
       </span>
-      {task.priority === 'urgent' && <Flag className="h-3 w-3 text-red-500" />}
-      {task.priority === 'high' && <Flag className="h-3 w-3 text-orange-500" />}
+      {task.priority === "urgent" && <Flag className="h-3 w-3 text-red-500" />}
+      {task.priority === "high" && <Flag className="h-3 w-3 text-orange-500" />}
     </div>
   );
 }

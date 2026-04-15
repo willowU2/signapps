@@ -1,44 +1,44 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { TypeOutline } from 'lucide-react';
+import { useEffect, useState } from "react";
+import { TypeOutline } from "lucide-react";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Label } from '@/components/ui/label';
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 
-const STORAGE_KEY_LH = 'signapps-a11y-line-height';
-const STORAGE_KEY_LS = 'signapps-a11y-letter-spacing';
-const STORAGE_KEY_WS = 'signapps-a11y-word-spacing';
+const STORAGE_KEY_LH = "signapps-a11y-line-height";
+const STORAGE_KEY_LS = "signapps-a11y-letter-spacing";
+const STORAGE_KEY_WS = "signapps-a11y-word-spacing";
 
 export function ComfortableReadingConfig() {
-  const [lineHeight, setLineHeight] = useState('normal');
-  const [letterSpacing, setLetterSpacing] = useState('normal');
-  const [wordSpacing, setWordSpacing] = useState('normal');
+  const [lineHeight, setLineHeight] = useState("normal");
+  const [letterSpacing, setLetterSpacing] = useState("normal");
+  const [wordSpacing, setWordSpacing] = useState("normal");
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
-    const storedLh = localStorage.getItem(STORAGE_KEY_LH) || 'normal';
-    const storedLs = localStorage.getItem(STORAGE_KEY_LS) || 'normal';
-    const storedWs = localStorage.getItem(STORAGE_KEY_WS) || 'normal';
-    
+    const storedLh = localStorage.getItem(STORAGE_KEY_LH) || "normal";
+    const storedLs = localStorage.getItem(STORAGE_KEY_LS) || "normal";
+    const storedWs = localStorage.getItem(STORAGE_KEY_WS) || "normal";
+
     setLineHeight(storedLh);
     setLetterSpacing(storedLs);
     setWordSpacing(storedWs);
-    
+
     applySettings(storedLh, storedLs, storedWs);
   }, []);
 
   const applySettings = (lh: string, ls: string, ws: string) => {
     const root = document.documentElement;
-    root.style.setProperty('--a11y-line-height', lh);
-    root.style.setProperty('--a11y-letter-spacing', ls);
-    root.style.setProperty('--a11y-word-spacing', ws);
+    root.style.setProperty("--a11y-line-height", lh);
+    root.style.setProperty("--a11y-letter-spacing", ls);
+    root.style.setProperty("--a11y-word-spacing", ws);
   };
 
   const handleLhChange = (val: string) => {
@@ -69,7 +69,8 @@ export function ComfortableReadingConfig() {
           <Label className="font-medium">Confort Typographique</Label>
         </div>
         <p className="text-xs text-muted-foreground ml-6">
-          Aère les éléments de texte pour réduire la charge cognitive et faciliter le suivi des mots.
+          Aère les éléments de texte pour réduire la charge cognitive et
+          faciliter le suivi des mots.
         </p>
       </div>
 

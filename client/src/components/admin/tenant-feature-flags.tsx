@@ -1,22 +1,22 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Building2, RotateCcw, Save, Plus, Trash2 } from 'lucide-react';
-import { FEATURES } from '@/lib/features';
-import { toast } from 'sonner';
+} from "@/components/ui/select";
+import { Building2, RotateCcw, Save, Plus, Trash2 } from "lucide-react";
+import { FEATURES } from "@/lib/features";
+import { toast } from "sonner";
 
-const STORAGE_KEY = 'tenant_feature_flags';
+const STORAGE_KEY = "tenant_feature_flags";
 
 interface TenantOverride {
   tenantId: string;
@@ -25,13 +25,16 @@ interface TenantOverride {
 }
 
 function loadTenantOverrides(): TenantOverride[] {
-  if (typeof window === 'undefined') return [];
-  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
-  catch { return []; }
+  if (typeof window === "undefined") return [];
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+  } catch {
+    return [];
+  }
 }
 
 function saveTenantOverrides(list: TenantOverride[]) {
-  if (typeof window === 'undefined') return;
+  if (typeof window === "undefined") return;
   localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
 }
 
@@ -40,32 +43,35 @@ const FEATURE_KEYS = Object.keys(FEATURES) as (keyof typeof FEATURES)[];
 export function TenantFeatureFlags() {
   const [tenants, setTenants] = useState<TenantOverride[]>(loadTenantOverrides);
   const [selected, setSelected] = useState<string | null>(null);
-  const [newName, setNewName] = useState('');
+  const [newName, setNewName] = useState("");
 
-  const selectedTenant = tenants.find(t => t.tenantId === selected);
+  const selectedTenant = tenants.find((t) => t.tenantId === selected);
 
   const addTenant = () => {
     if (!newName.trim()) return;
     const id = `tenant_${Date.now()}`;
-    const updated = [...tenants, { tenantId: id, tenantName: newName.trim(), overrides: {} }];
+    const updated = [
+      ...tenants,
+      { tenantId: id, tenantName: newName.trim(), overrides: {} },
+    ];
     setTenants(updated);
     saveTenantOverrides(updated);
     setSelected(id);
-    setNewName('');
+    setNewName("");
     toast.success(`Tenant "${newName.trim()}" added`);
   };
 
   const removeTenant = (id: string) => {
-    const updated = tenants.filter(t => t.tenantId !== id);
+    const updated = tenants.filter((t) => t.tenantId !== id);
     setTenants(updated);
     saveTenantOverrides(updated);
     if (selected === id) setSelected(null);
-    toast.info('Tenant removed');
+    toast.info("Tenant removed");
   };
 
   const toggleFlag = (key: string, current: boolean | undefined) => {
     if (!selected) return;
-    const updated = tenants.map(t => {
+    const updated = tenants.map((t) => {
       if (t.tenantId !== selected) return t;
       const overrides = { ...t.overrides };
       if (current === undefined) overrides[key] = true;
@@ -91,12 +97,12 @@ export function TenantFeatureFlags() {
       <CardContent className="space-y-4">
         {/* Tenant selector + add */}
         <div className="flex gap-2">
-          <Select value={selected || ''} onValueChange={setSelected}>
+          <Select value={selected || ""} onValueChange={setSelected}>
             <SelectTrigger className="flex-1">
               <SelectValue placeholder="Select tenant..." />
             </SelectTrigger>
             <SelectContent>
-              {tenants.map(t => (
+              {tenants.map((t) => (
                 <SelectItem key={t.tenantId} value={t.tenantId}>
                   {t.tenantName}
                   {Object.keys(t.overrides).length > 0 && (
@@ -109,7 +115,12 @@ export function TenantFeatureFlags() {
             </SelectContent>
           </Select>
           {selected && (
-            <Button variant="ghost" size="icon" onClick={() => removeTenant(selected)} title="Remove tenant">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => removeTenant(selected)}
+              title="Remove tenant"
+            >
               <Trash2 className="h-4 w-4 text-destructive" />
             </Button>
           )}
@@ -119,11 +130,16 @@ export function TenantFeatureFlags() {
           <Input
             placeholder="New tenant name..."
             value={newName}
-            onChange={e => setNewName(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && addTenant()}
+            onChange={(e) => setNewName(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && addTenant()}
             className="flex-1"
           />
-          <Button size="sm" variant="outline" onClick={addTenant} disabled={!newName.trim()}>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={addTenant}
+            disabled={!newName.trim()}
+          >
             <Plus className="h-4 w-4" />
           </Button>
         </div>
@@ -131,11 +147,12 @@ export function TenantFeatureFlags() {
         {selectedTenant && (
           <div className="space-y-1.5 max-h-64 overflow-y-auto">
             <p className="text-xs text-muted-foreground pb-1">
-              Click flag to cycle: <span className="text-muted-foreground">inherit</span> →{' '}
-              <span className="text-green-600">on</span> →{' '}
+              Click flag to cycle:{" "}
+              <span className="text-muted-foreground">inherit</span> →{" "}
+              <span className="text-green-600">on</span> →{" "}
               <span className="text-red-500">off</span>
             </p>
-            {FEATURE_KEYS.map(key => {
+            {FEATURE_KEYS.map((key) => {
               const def = FEATURES[key];
               const ov = flagState(key as string);
               return (
@@ -144,22 +161,27 @@ export function TenantFeatureFlags() {
                   className="flex items-center justify-between p-2 rounded-md hover:bg-muted/40 cursor-pointer"
                   onClick={() => toggleFlag(key as string, ov)}
                 >
-                  <span className="font-mono text-xs truncate">{key as string}</span>
+                  <span className="font-mono text-xs truncate">
+                    {key as string}
+                  </span>
                   <div className="flex items-center gap-2 shrink-0">
                     <span className="text-xs text-muted-foreground">
-                      default: <span className={def ? 'text-green-600' : 'text-red-500'}>{def ? 'on' : 'off'}</span>
+                      default:{" "}
+                      <span className={def ? "text-green-600" : "text-red-500"}>
+                        {def ? "on" : "off"}
+                      </span>
                     </span>
                     <Badge
                       variant="outline"
                       className={
                         ov === undefined
-                          ? 'text-muted-foreground border-muted text-xs'
+                          ? "text-muted-foreground border-muted text-xs"
                           : ov
-                          ? 'text-green-700 border-green-500/40 bg-green-500/10 text-xs'
-                          : 'text-red-600 border-red-500/40 bg-red-500/10 text-xs'
+                            ? "text-green-700 border-green-500/40 bg-green-500/10 text-xs"
+                            : "text-red-600 border-red-500/40 bg-red-500/10 text-xs"
                       }
                     >
-                      {ov === undefined ? 'inherit' : ov ? 'on' : 'off'}
+                      {ov === undefined ? "inherit" : ov ? "on" : "off"}
                     </Badge>
                   </div>
                 </div>

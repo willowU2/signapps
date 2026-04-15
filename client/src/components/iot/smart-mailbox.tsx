@@ -77,22 +77,24 @@ export default function SmartMailbox() {
       prevMailboxes.map((mailbox) =>
         mailbox.id === id
           ? { ...mailbox, notificationSent: true, status: "notified" }
-          : mailbox
-      )
+          : mailbox,
+      ),
     );
   };
 
   const markCollected = (id: string) => {
     setMailboxes((prevMailboxes) =>
       prevMailboxes.map((mailbox) =>
-        mailbox.id === id ? { ...mailbox, status: "collected" } : mailbox
-      )
+        mailbox.id === id ? { ...mailbox, status: "collected" } : mailbox,
+      ),
     );
   };
 
   const pendingCount = mailboxes.filter((m) => m.status === "pending").length;
   const notifiedCount = mailboxes.filter((m) => m.status === "notified").length;
-  const collectedCount = mailboxes.filter((m) => m.status === "collected").length;
+  const collectedCount = mailboxes.filter(
+    (m) => m.status === "collected",
+  ).length;
 
   return (
     <div className="space-y-4">
@@ -121,8 +123,12 @@ export default function SmartMailbox() {
           <Card key={mailbox.id} className="p-4">
             <div className="flex items-start justify-between mb-3">
               <div>
-                <h3 className="font-semibold text-lg">{mailbox.lockerNumber}</h3>
-                <p className="text-sm text-muted-foreground">{mailbox.recipient}</p>
+                <h3 className="font-semibold text-lg">
+                  {mailbox.lockerNumber}
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  {mailbox.recipient}
+                </p>
                 <Badge className="mt-2 bg-gray-600">{mailbox.parcelType}</Badge>
               </div>
               <div className="text-right space-y-2">

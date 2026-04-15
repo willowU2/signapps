@@ -1,53 +1,58 @@
-import React from 'react';
-import { AlertTriangle, Zap, Calendar } from 'lucide-react';
+import React from "react";
+import { AlertTriangle, Zap, Calendar } from "lucide-react";
 
 interface Equipment {
   id: string;
   name: string;
   failureProbability: number;
   nextMaintenance: string;
-  riskLevel: 'low' | 'medium' | 'high' | 'critical';
+  riskLevel: "low" | "medium" | "high" | "critical";
 }
 
 export const EquipmentFailure: React.FC = () => {
   const equipment: Equipment[] = [
     {
-      id: '1',
-      name: 'Server Room HVAC',
+      id: "1",
+      name: "Server Room HVAC",
       failureProbability: 87,
-      nextMaintenance: '2026-03-25',
-      riskLevel: 'critical',
+      nextMaintenance: "2026-03-25",
+      riskLevel: "critical",
     },
     {
-      id: '2',
-      name: 'Backup Generator',
+      id: "2",
+      name: "Backup Generator",
       failureProbability: 64,
-      nextMaintenance: '2026-04-10',
-      riskLevel: 'high',
+      nextMaintenance: "2026-04-10",
+      riskLevel: "high",
     },
     {
-      id: '3',
-      name: 'Network Router A',
+      id: "3",
+      name: "Network Router A",
       failureProbability: 28,
-      nextMaintenance: '2026-05-15',
-      riskLevel: 'low',
+      nextMaintenance: "2026-05-15",
+      riskLevel: "low",
     },
     {
-      id: '4',
-      name: 'UPS System',
+      id: "4",
+      name: "UPS System",
       failureProbability: 45,
-      nextMaintenance: '2026-04-05',
-      riskLevel: 'medium',
+      nextMaintenance: "2026-04-05",
+      riskLevel: "medium",
     },
   ];
 
   const getRiskBadgeColor = (level: string): string => {
     switch (level) {
-      case 'critical': return 'bg-red-600 text-white';
-      case 'high': return 'bg-orange-500 text-white';
-      case 'medium': return 'bg-yellow-500 text-white';
-      case 'low': return 'bg-green-500 text-white';
-      default: return 'bg-gray-500 text-white';
+      case "critical":
+        return "bg-red-600 text-white";
+      case "high":
+        return "bg-orange-500 text-white";
+      case "medium":
+        return "bg-yellow-500 text-white";
+      case "low":
+        return "bg-green-500 text-white";
+      default:
+        return "bg-gray-500 text-white";
     }
   };
 
@@ -68,27 +73,33 @@ export const EquipmentFailure: React.FC = () => {
               <div className="flex-1">
                 <h3 className="font-semibold text-foreground">{item.name}</h3>
               </div>
-              <span className={`px-2 py-1 rounded text-xs font-bold ${getRiskBadgeColor(item.riskLevel)}`}>
+              <span
+                className={`px-2 py-1 rounded text-xs font-bold ${getRiskBadgeColor(item.riskLevel)}`}
+              >
                 {item.riskLevel.toUpperCase()}
               </span>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <p className="text-xs text-muted-foreground mb-1">Failure Probability</p>
+                <p className="text-xs text-muted-foreground mb-1">
+                  Failure Probability
+                </p>
                 <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
                   <div
                     className={`h-full ${
                       item.failureProbability > 70
-                        ? 'bg-red-500'
+                        ? "bg-red-500"
                         : item.failureProbability > 40
-                        ? 'bg-yellow-500'
-                        : 'bg-green-500'
+                          ? "bg-yellow-500"
+                          : "bg-green-500"
                     }`}
                     style={{ width: `${item.failureProbability}%` }}
                   />
                 </div>
-                <p className="text-sm font-bold text-foreground mt-1">{item.failureProbability}%</p>
+                <p className="text-sm font-bold text-foreground mt-1">
+                  {item.failureProbability}%
+                </p>
               </div>
 
               <div>
@@ -96,7 +107,9 @@ export const EquipmentFailure: React.FC = () => {
                   <Calendar className="w-3 h-3" />
                   Next Maintenance
                 </p>
-                <p className="text-sm font-medium text-foreground">{item.nextMaintenance}</p>
+                <p className="text-sm font-medium text-foreground">
+                  {item.nextMaintenance}
+                </p>
               </div>
             </div>
           </div>

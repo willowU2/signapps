@@ -56,7 +56,7 @@ function TreeNode({
           "flex items-center gap-2 px-2 py-1.5 rounded text-sm transition-colors",
           isCurrentPage
             ? "bg-accent text-accent-foreground font-medium"
-            : "text-muted-foreground hover:bg-muted hover:text-foreground"
+            : "text-muted-foreground hover:bg-muted hover:text-foreground",
         )}
         style={{ paddingLeft: `${level * 12 + 8}px` }}
       >
@@ -68,7 +68,7 @@ function TreeNode({
             }}
             className={cn(
               "flex items-center justify-center transition-transform",
-              expanded && "rotate-90"
+              expanded && "rotate-90",
             )}
             aria-label={expanded ? "Collapse" : "Expand"}
           >
@@ -93,7 +93,7 @@ function TreeNode({
             }}
             className={cn(
               "truncate transition-colors hover:text-foreground",
-              isCurrentPage && "font-medium"
+              isCurrentPage && "font-medium",
             )}
             title={item.title}
           >
@@ -129,7 +129,7 @@ export function WikiSidebar({
   onNavigate,
 }: WikiSidebarProps) {
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(
-    new Set(spaces.map((s) => s.id))
+    new Set(spaces.map((s) => s.id)),
   );
 
   const handleToggleExpand = (nodeId: string) => {

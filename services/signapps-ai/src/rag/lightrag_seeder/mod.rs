@@ -69,7 +69,10 @@ where
 {
     let mut results = Vec::new();
 
-    tracing::info!(collection = collection, "Starting LightRAG seeding from signapps data");
+    tracing::info!(
+        collection = collection,
+        "Starting LightRAG seeding from signapps data"
+    );
 
     // Tier 1: Identity & Org
     results.push(identity::seed_users(pool, collection, embed_fn.clone()).await?);

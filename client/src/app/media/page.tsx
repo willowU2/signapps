@@ -1,4 +1,4 @@
-'use client';
+"use client";
 /**
  * Media page — thin client-component shell.
  *
@@ -7,10 +7,10 @@
  * is split into media-content.tsx and loaded lazily via next/dynamic so
  * it is excluded from the initial JS payload.
  */
-import { MediaContent } from './media-wrapper';
-import { usePageTitle } from '@/hooks/use-page-title';
+import { MediaContent } from "./media-wrapper";
+import { usePageTitle } from "@/hooks/use-page-title";
 
 export default function MediaPage() {
-  usePageTitle('Media');
+  usePageTitle("Media");
   return <MediaContent />;
 }

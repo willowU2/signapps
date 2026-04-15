@@ -1,18 +1,18 @@
-'use client';
+"use client";
 
-import { useEffect, useState, useCallback } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
+import { useEffect, useState, useCallback } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,25 +22,37 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+} from "@/components/ui/alert-dialog";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { Key, Plus, Copy, Check, AlertTriangle, Loader2 } from 'lucide-react';
-import { formatDistanceToNow, format } from 'date-fns';
-import { toast } from 'sonner';
-import { socialApi } from '@/lib/api/social';
-import type { ApiKeyInfo } from '@/lib/api/social';
+} from "@/components/ui/tooltip";
+import { Key, Plus, Copy, Check, AlertTriangle, Loader2 } from "lucide-react";
+import { formatDistanceToNow, format } from "date-fns";
+import { toast } from "sonner";
+import { socialApi } from "@/lib/api/social";
+import type { ApiKeyInfo } from "@/lib/api/social";
 
 // --- Constants ---
 
 const SCOPES = [
-  { value: 'read', label: 'Read', description: 'Read posts, accounts, analytics' },
-  { value: 'write', label: 'Write', description: 'Create and update posts, manage accounts' },
-  { value: 'delete', label: 'Delete', description: 'Delete posts and other resources' },
+  {
+    value: "read",
+    label: "Read",
+    description: "Read posts, accounts, analytics",
+  },
+  {
+    value: "write",
+    label: "Write",
+    description: "Create and update posts, manage accounts",
+  },
+  {
+    value: "delete",
+    label: "Delete",
+    description: "Delete posts and other resources",
+  },
 ];
 
 // --- Create Key Dialog ---
@@ -53,18 +65,22 @@ function CreateKeyDialog({
 }: {
   open: boolean;
   onClose: () => void;
-  onCreate: (data: { name: string; scopes: string[]; expiresAt?: string }) => void;
+  onCreate: (data: {
+    name: string;
+    scopes: string[];
+    expiresAt?: string;
+  }) => void;
   saving: boolean;
 }) {
-  const [name, setName] = useState('');
-  const [scopes, setScopes] = useState<string[]>(['read']);
-  const [expiresAt, setExpiresAt] = useState('');
+  const [name, setName] = useState("");
+  const [scopes, setScopes] = useState<string[]>(["read"]);
+  const [expiresAt, setExpiresAt] = useState("");
 
   useEffect(() => {
     if (open) {
-      setName('');
-      setScopes(['read']);
-      setExpiresAt('');
+      setName("");
+      setScopes(["read"]);
+      setExpiresAt("");
     }
   }, [open]);
 
@@ -108,12 +124,14 @@ function CreateKeyDialog({
                   onClick={() => toggleScope(scope.value)}
                   className={`w-full text-left px-3 py-2 rounded-lg border text-sm transition-all ${
                     scopes.includes(scope.value)
-                      ? 'border-primary bg-primary/10 text-primary'
-                      : 'border-border hover:border-primary/50'
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-border hover:border-primary/50"
                   }`}
                 >
                   <div className="font-medium">{scope.label}</div>
-                  <div className="text-xs text-muted-foreground">{scope.description}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {scope.description}
+                  </div>
                 </button>
               ))}
             </div>
@@ -124,9 +142,11 @@ function CreateKeyDialog({
               type="date"
               value={expiresAt}
               onChange={(e) => setExpiresAt(e.target.value)}
-              min={new Date().toISOString().split('T')[0]}
+              min={new Date().toISOString().split("T")[0]}
             />
-            <p className="text-xs text-muted-foreground">Leave blank for no expiry</p>
+            <p className="text-xs text-muted-foreground">
+              Leave blank for no expiry
+            </p>
           </div>
           <Separator />
           <div className="flex gap-2">
@@ -164,7 +184,7 @@ function KeyRevealDialog({
   const handleCopy = async () => {
     await navigator.clipboard.writeText(fullKey);
     setCopied(true);
-    toast.success('Clé API copiée dans le presse-papiers');
+    toast.success("Clé API copiée dans le presse-papiers");
     setTimeout(() => setCopied(false), 2000);
   };
 
@@ -183,7 +203,8 @@ function KeyRevealDialog({
                   Save this key now
                 </p>
                 <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
-                  This is the only time the full key will be shown. Store it securely.
+                  This is the only time the full key will be shown. Store it
+                  securely.
                 </p>
               </div>
             </div>
@@ -230,7 +251,7 @@ export function ApiKeyManager() {
       const res = await socialApi.apiKeys.list();
       setApiKeys(res.data);
     } catch {
-      toast.error('Impossible de charger les clés API');
+      toast.error("Impossible de charger les clés API");
     } finally {
       setLoading(false);
     }
@@ -240,17 +261,21 @@ export function ApiKeyManager() {
     fetchApiKeys();
   }, [fetchApiKeys]);
 
-  const handleCreate = async (data: { name: string; scopes: string[]; expiresAt?: string }) => {
+  const handleCreate = async (data: {
+    name: string;
+    scopes: string[];
+    expiresAt?: string;
+  }) => {
     try {
       setSaving(true);
       const res = await socialApi.apiKeys.create(data);
       const rawKey = res.data.key;
-      toast.success('API key created');
+      toast.success("API key created");
       setIsCreateOpen(false);
       setRevealedKey(rawKey);
       await fetchApiKeys();
     } catch {
-      toast.error('Impossible de créer la clé API');
+      toast.error("Impossible de créer la clé API");
     } finally {
       setSaving(false);
     }
@@ -260,24 +285,24 @@ export function ApiKeyManager() {
     if (!revokeId) return;
     try {
       await socialApi.apiKeys.revoke(revokeId);
-      toast.success('Clé API révoquée');
+      toast.success("Clé API révoquée");
       setRevokeId(null);
       await fetchApiKeys();
     } catch {
-      toast.error('Impossible de révoquer API key');
+      toast.error("Impossible de révoquer API key");
     }
   };
 
   const scopeColor = (scope: string) => {
     switch (scope) {
-      case 'read':
-        return 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300';
-      case 'write':
-        return 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300';
-      case 'delete':
-        return 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300';
+      case "read":
+        return "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300";
+      case "write":
+        return "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300";
+      case "delete":
+        return "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300";
       default:
-        return '';
+        return "";
     }
   };
 
@@ -350,12 +375,17 @@ export function ApiKeyManager() {
                       <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
                         {key.lastUsedAt && (
                           <span>
-                            Last used{' '}
-                            {formatDistanceToNow(new Date(key.lastUsedAt), { addSuffix: true })}
+                            Last used{" "}
+                            {formatDistanceToNow(new Date(key.lastUsedAt), {
+                              addSuffix: true,
+                            })}
                           </span>
                         )}
                         {key.expiresAt && (
-                          <span>Expires {format(new Date(key.expiresAt), 'MMM d, yyyy')}</span>
+                          <span>
+                            Expires{" "}
+                            {format(new Date(key.expiresAt), "MMM d, yyyy")}
+                          </span>
                         )}
                       </div>
                     </div>
@@ -377,7 +407,9 @@ export function ApiKeyManager() {
             {revokedKeys.length > 0 && (
               <>
                 <Separator />
-                <p className="text-sm font-medium text-muted-foreground">Revoked Keys</p>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Revoked Keys
+                </p>
                 {revokedKeys.map((key) => (
                   <Card key={key.id} className="opacity-60">
                     <CardContent className="py-3 px-4">
@@ -387,7 +419,9 @@ export function ApiKeyManager() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
-                            <span className="font-medium line-through">{key.name}</span>
+                            <span className="font-medium line-through">
+                              {key.name}
+                            </span>
                             <Badge variant="secondary">Revoked</Badge>
                           </div>
                           <p className="text-xs text-muted-foreground mt-0.5 font-mono">
@@ -418,17 +452,24 @@ export function ApiKeyManager() {
           />
         )}
 
-        <AlertDialog open={!!revokeId} onOpenChange={(o) => !o && setRevokeId(null)}>
+        <AlertDialog
+          open={!!revokeId}
+          onOpenChange={(o) => !o && setRevokeId(null)}
+        >
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>Revoke API Key</AlertDialogTitle>
               <AlertDialogDescription>
-                This will immediately invalidate this API key. Any integrations using it will stop working. This action cannot be undone.
+                This will immediately invalidate this API key. Any integrations
+                using it will stop working. This action cannot be undone.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>Annuler</AlertDialogCancel>
-              <AlertDialogAction onClick={handleRevoke} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              <AlertDialogAction
+                onClick={handleRevoke}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
                 Révoquer
               </AlertDialogAction>
             </AlertDialogFooter>

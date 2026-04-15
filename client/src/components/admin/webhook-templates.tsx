@@ -24,7 +24,10 @@ const WEBHOOK_TEMPLATES: WebhookTemplate[] = [
       blocks: [
         {
           type: "section",
-          text: { type: "mrkdwn", text: "*Document Updated*\nNew changes available" },
+          text: {
+            type: "mrkdwn",
+            text: "*Document Updated*\nNew changes available",
+          },
         },
       ],
     },
@@ -102,14 +105,20 @@ export function WebhookTemplates() {
             {/* Header */}
             <div className="flex items-start justify-between mb-3">
               <div>
-                <h4 className="font-semibold text-foreground">{template.name}</h4>
-                <p className="text-xs text-muted-foreground mt-1">{template.description}</p>
+                <h4 className="font-semibold text-foreground">
+                  {template.name}
+                </h4>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {template.description}
+                </p>
               </div>
             </div>
 
             {/* Payload Preview */}
             <div className="mb-4 space-y-2">
-              <p className="text-xs font-medium text-muted-foreground">Payload Preview</p>
+              <p className="text-xs font-medium text-muted-foreground">
+                Payload Preview
+              </p>
               <pre className="bg-muted rounded-md p-3 text-xs overflow-auto max-h-40 border border-border">
                 <code className="font-mono text-muted-foreground">
                   {JSON.stringify(template.payloadPreview, null, 2)}

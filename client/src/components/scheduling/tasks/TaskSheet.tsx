@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * TaskSheet Component
@@ -7,9 +7,9 @@
  * Full form with all task fields.
  */
 
-import * as React from 'react';
-import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import * as React from "react";
+import { format } from "date-fns";
+import { fr } from "date-fns/locale";
 import {
   Calendar as CalendarIcon,
   Clock,
@@ -19,12 +19,12 @@ import {
   Trash2,
   User,
   X,
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Sheet,
   SheetContent,
@@ -32,23 +32,28 @@ import {
   SheetFooter,
   SheetHeader,
   SheetTitle,
-} from '@/components/ui/sheet';
+} from "@/components/ui/sheet";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from "@/components/ui/select";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from '@/components/ui/popover';
-import { Calendar } from '@/components/ui/calendar';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Badge } from '@/components/ui/badge';
-import type { Task, TaskStatus, Priority, Subtask } from '@/lib/scheduling/types/scheduling';
+} from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
+import type {
+  Task,
+  TaskStatus,
+  Priority,
+  Subtask,
+} from "@/lib/scheduling/types/scheduling";
 
 // ============================================================================
 // Types
@@ -68,17 +73,17 @@ interface TaskSheetProps {
 // ============================================================================
 
 const priorityOptions: { value: Priority; label: string; color: string }[] = [
-  { value: 'low', label: 'Basse', color: 'text-slate-500' },
-  { value: 'medium', label: 'Moyenne', color: 'text-blue-500' },
-  { value: 'high', label: 'Haute', color: 'text-orange-500' },
-  { value: 'urgent', label: 'Urgente', color: 'text-red-500' },
+  { value: "low", label: "Basse", color: "text-slate-500" },
+  { value: "medium", label: "Moyenne", color: "text-blue-500" },
+  { value: "high", label: "Haute", color: "text-orange-500" },
+  { value: "urgent", label: "Urgente", color: "text-red-500" },
 ];
 
 const statusOptions: { value: TaskStatus; label: string }[] = [
-  { value: 'backlog', label: 'Backlog' },
-  { value: 'today', label: "Aujourd'hui" },
-  { value: 'in-progress', label: 'En cours' },
-  { value: 'done', label: 'Terminé' },
+  { value: "backlog", label: "Backlog" },
+  { value: "today", label: "Aujourd'hui" },
+  { value: "in-progress", label: "En cours" },
+  { value: "done", label: "Terminé" },
 ];
 
 // ============================================================================
@@ -96,36 +101,36 @@ export function TaskSheet({
   const isEditing = !!task;
 
   // Form state
-  const [title, setTitle] = React.useState('');
-  const [description, setDescription] = React.useState('');
-  const [status, setStatus] = React.useState<TaskStatus>('today');
-  const [priority, setPriority] = React.useState<Priority>('medium');
+  const [title, setTitle] = React.useState("");
+  const [description, setDescription] = React.useState("");
+  const [status, setStatus] = React.useState<TaskStatus>("today");
+  const [priority, setPriority] = React.useState<Priority>("medium");
   const [dueDate, setDueDate] = React.useState<Date | undefined>();
-  const [estimatedMinutes, setEstimatedMinutes] = React.useState<string>('');
+  const [estimatedMinutes, setEstimatedMinutes] = React.useState<string>("");
   const [tags, setTags] = React.useState<string[]>([]);
-  const [newTag, setNewTag] = React.useState('');
+  const [newTag, setNewTag] = React.useState("");
   const [subtasks, setSubtasks] = React.useState<Subtask[]>([]);
-  const [newSubtask, setNewSubtask] = React.useState('');
+  const [newSubtask, setNewSubtask] = React.useState("");
 
   // Initialize form when task changes
   React.useEffect(() => {
     if (task) {
       setTitle(task.title);
-      setDescription(task.description ?? '');
+      setDescription(task.description ?? "");
       setStatus(task.status);
-      setPriority(task.priority ?? 'medium');
+      setPriority(task.priority ?? "medium");
       setDueDate(task.dueDate ? new Date(task.dueDate) : undefined);
-      setEstimatedMinutes(task.estimatedMinutes?.toString() ?? '');
+      setEstimatedMinutes(task.estimatedMinutes?.toString() ?? "");
       setTags(task.tags ?? []);
       setSubtasks(task.subtasks ?? []);
     } else {
       // Reset form for new task
-      setTitle('');
-      setDescription('');
-      setStatus(defaultStatus ?? 'today');
-      setPriority('medium');
+      setTitle("");
+      setDescription("");
+      setStatus(defaultStatus ?? "today");
+      setPriority("medium");
       setDueDate(undefined);
-      setEstimatedMinutes('');
+      setEstimatedMinutes("");
       setTags([]);
       setSubtasks([]);
     }
@@ -135,7 +140,7 @@ export function TaskSheet({
   const handleAddTag = () => {
     if (newTag.trim() && !tags.includes(newTag.trim())) {
       setTags([...tags, newTag.trim()]);
-      setNewTag('');
+      setNewTag("");
     }
   };
 
@@ -153,15 +158,15 @@ export function TaskSheet({
           completed: false,
         },
       ]);
-      setNewSubtask('');
+      setNewSubtask("");
     }
   };
 
   const handleToggleSubtask = (subtaskId: string) => {
     setSubtasks(
       subtasks.map((s) =>
-        s.id === subtaskId ? { ...s, completed: !s.completed } : s
-      )
+        s.id === subtaskId ? { ...s, completed: !s.completed } : s,
+      ),
     );
   };
 
@@ -178,14 +183,16 @@ export function TaskSheet({
       status,
       priority,
       dueDate,
-      estimatedMinutes: estimatedMinutes ? parseInt(estimatedMinutes) : undefined,
+      estimatedMinutes: estimatedMinutes
+        ? parseInt(estimatedMinutes)
+        : undefined,
       tags: tags.length > 0 ? tags : undefined,
       subtasks: subtasks.length > 0 ? subtasks : undefined,
     });
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && e.metaKey) {
+    if (e.key === "Enter" && e.metaKey) {
       handleSave();
     }
   };
@@ -195,12 +202,12 @@ export function TaskSheet({
       <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
         <SheetHeader>
           <SheetTitle>
-            {isEditing ? 'Modifier la tâche' : 'Nouvelle tâche'}
+            {isEditing ? "Modifier la tâche" : "Nouvelle tâche"}
           </SheetTitle>
           <SheetDescription>
             {isEditing
-              ? 'Modifiez les détails de cette tâche.'
-              : 'Créez une nouvelle tâche pour votre projet.'}
+              ? "Modifiez les détails de cette tâche."
+              : "Créez une nouvelle tâche pour votre projet."}
           </SheetDescription>
         </SheetHeader>
 
@@ -233,7 +240,10 @@ export function TaskSheet({
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Statut</Label>
-              <Select value={status} onValueChange={(v) => setStatus(v as TaskStatus)}>
+              <Select
+                value={status}
+                onValueChange={(v) => setStatus(v as TaskStatus)}
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -249,7 +259,10 @@ export function TaskSheet({
 
             <div className="space-y-2">
               <Label>Priorité</Label>
-              <Select value={priority} onValueChange={(v) => setPriority(v as Priority)}>
+              <Select
+                value={priority}
+                onValueChange={(v) => setPriority(v as Priority)}
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -257,7 +270,7 @@ export function TaskSheet({
                   {priorityOptions.map((opt) => (
                     <SelectItem key={opt.value} value={opt.value}>
                       <span className="flex items-center gap-2">
-                        <Flag className={cn('h-3 w-3', opt.color)} />
+                        <Flag className={cn("h-3 w-3", opt.color)} />
                         {opt.label}
                       </span>
                     </SelectItem>
@@ -276,14 +289,14 @@ export function TaskSheet({
                   <Button
                     variant="outline"
                     className={cn(
-                      'w-full justify-start text-left font-normal',
-                      !dueDate && 'text-muted-foreground'
+                      "w-full justify-start text-left font-normal",
+                      !dueDate && "text-muted-foreground",
                     )}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
                     {dueDate
-                      ? format(dueDate, 'PPP', { locale: fr })
-                      : 'Sélectionner'}
+                      ? format(dueDate, "PPP", { locale: fr })
+                      : "Sélectionner"}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
@@ -350,11 +363,18 @@ export function TaskSheet({
                   placeholder="Ajouter un tag..."
                   value={newTag}
                   onChange={(e) => setNewTag(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddTag())}
+                  onKeyDown={(e) =>
+                    e.key === "Enter" && (e.preventDefault(), handleAddTag())
+                  }
                   className="pl-9"
                 />
               </div>
-              <Button type="button" variant="outline" size="icon" onClick={handleAddTag}>
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={handleAddTag}
+              >
                 <Plus className="h-4 w-4" />
               </Button>
             </div>
@@ -375,8 +395,8 @@ export function TaskSheet({
                   />
                   <span
                     className={cn(
-                      'flex-1 text-sm',
-                      subtask.completed && 'line-through text-muted-foreground'
+                      "flex-1 text-sm",
+                      subtask.completed && "line-through text-muted-foreground",
                     )}
                   >
                     {subtask.title}
@@ -399,10 +419,15 @@ export function TaskSheet({
                 value={newSubtask}
                 onChange={(e) => setNewSubtask(e.target.value)}
                 onKeyDown={(e) =>
-                  e.key === 'Enter' && (e.preventDefault(), handleAddSubtask())
+                  e.key === "Enter" && (e.preventDefault(), handleAddSubtask())
                 }
               />
-              <Button type="button" variant="outline" size="icon" onClick={handleAddSubtask}>
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={handleAddSubtask}
+              >
                 <Plus className="h-4 w-4" />
               </Button>
             </div>
@@ -425,7 +450,7 @@ export function TaskSheet({
             Annuler
           </Button>
           <Button type="button" onClick={handleSave} disabled={!title.trim()}>
-            {isEditing ? 'Enregistrer' : 'Créer'}
+            {isEditing ? "Enregistrer" : "Créer"}
           </Button>
         </SheetFooter>
       </SheetContent>

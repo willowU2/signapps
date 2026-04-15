@@ -72,16 +72,12 @@ pub async fn create_domain(
         pxe_enabled: req.pxe_enabled,
     };
 
-    let result = signapps_ad_core::provisioner::provision_domain(
-        &state.pool,
-        ctx.tenant_id,
-        input,
-    )
-    .await
-    .map_err(|e| {
-        tracing::error!("Domain provisioning failed: {}", e);
-        StatusCode::INTERNAL_SERVER_ERROR
-    })?;
+    let result = signapps_ad_core::provisioner::provision_domain(&state.pool, ctx.tenant_id, input)
+        .await
+        .map_err(|e| {
+            tracing::error!("Domain provisioning failed: {}", e);
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
 
     Ok((StatusCode::CREATED, Json(json!(result))))
 }
@@ -116,9 +112,9 @@ pub async fn update_domain(
     Path(id): Path<Uuid>,
     Json(body): Json<serde_json::Value>,
 ) -> Result<impl IntoResponse, StatusCode> {
-    let mut updates = vec!["updated_at = NOW()".to_string()];
-    let mut bind_idx = 1u32;
-    let mut values: Vec<Box<dyn std::any::Any + Send + Sync>> = Vec::new();
+    let updates = vec!["updated_at = NOW()".to_string()];
+    let bind_idx = 1u32;
+    let values: Vec<Box<dyn std::any::Any + Send + Sync>> = Vec::new();
 
     // Build dynamic SET clause
     // Use raw SQL with parameter placeholders since we need dynamic updates
@@ -131,7 +127,7 @@ pub async fn update_domain(
     let ntp_enabled = body["ntp_enabled"].as_bool();
 
     // Simple approach: update all provided fields
-    let result = sqlx::query(
+    let _result = sqlx::query(
         r#"UPDATE infrastructure.domains SET
             netbios_name = COALESCE($2, netbios_name),
             domain_type = COALESCE($3, domain_type),
@@ -260,16 +256,15 @@ pub async fn list_dns_zones(
     Extension(_claims): Extension<Claims>,
     Path(domain_id): Path<Uuid>,
 ) -> Result<impl IntoResponse, StatusCode> {
-    let zones: Vec<signapps_db::models::ad_dns::AdDnsZone> = sqlx::query_as(
-        "SELECT * FROM ad_dns_zones WHERE domain_id = $1 ORDER BY zone_name",
-    )
-    .bind(domain_id)
-    .fetch_all(&*state.pool)
-    .await
-    .map_err(|e| {
-        tracing::error!("Failed to list DNS zones: {}", e);
-        StatusCode::INTERNAL_SERVER_ERROR
-    })?;
+    let zones: Vec<signapps_db::models::ad_dns::AdDnsZone> =
+        sqlx::query_as("SELECT * FROM ad_dns_zones WHERE domain_id = $1 ORDER BY zone_name")
+            .bind(domain_id)
+            .fetch_all(&*state.pool)
+            .await
+            .map_err(|e| {
+                tracing::error!("Failed to list DNS zones: {}", e);
+                StatusCode::INTERNAL_SERVER_ERROR
+            })?;
     Ok(Json(json!(zones)))
 }
 
@@ -362,34 +357,32 @@ pub async fn list_computers(
     Extension(_claims): Extension<Claims>,
     Path(_domain_id): Path<Uuid>,
 ) -> Result<impl IntoResponse, StatusCode> {
-    let computers: Vec<serde_json::Value> = sqlx::query_as::<
-        _,
-        (Uuid, String, Option<String>, chrono::DateTime<chrono::Utc>),
-    >(
-        "SELECT id, name, description, created_at FROM workforce_org_nodes \
+    let computers: Vec<serde_json::Value> =
+        sqlx::query_as::<_, (Uuid, String, Option<String>, chrono::DateTime<chrono::Utc>)>(
+            "SELECT id, name, description, created_at FROM workforce_org_nodes \
          WHERE tenant_id = $1 AND node_type = 'computer' AND is_active = true ORDER BY name",
-    )
-    .bind(ctx.tenant_id)
-    .fetch_all(&*state.pool)
-    .await
-    .map_err(|e| {
-        tracing::error!("Failed to list computer accounts: {}", e);
-        StatusCode::INTERNAL_SERVER_ERROR
-    })?
-    .into_iter()
-    .map(|(id, name, _desc, created)| {
-        let none: Option<String> = None;
-        json!({
-            "id": id,
-            "name": name,
-            "dns_hostname": none,
-            "os": none,
-            "os_version": none,
-            "last_logon": none,
-            "created_at": created,
+        )
+        .bind(ctx.tenant_id)
+        .fetch_all(&*state.pool)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to list computer accounts: {}", e);
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?
+        .into_iter()
+        .map(|(id, name, _desc, created)| {
+            let none: Option<String> = None;
+            json!({
+                "id": id,
+                "name": name,
+                "dns_hostname": none,
+                "os": none,
+                "os_version": none,
+                "last_logon": none,
+                "created_at": created,
+            })
         })
-    })
-    .collect();
+        .collect();
     Ok(Json(json!(computers)))
 }
 
@@ -430,17 +423,19 @@ pub async fn list_gpos(
         StatusCode::INTERNAL_SERVER_ERROR
     })?
     .into_iter()
-    .map(|(id, name, _desc, _domain, _priority, enforced, disabled, _settings)| {
-        json!({
-            "id": id,
-            "display_name": name,
-            "version": 1,
-            "enabled": !disabled,
-            "machine_enabled": enforced,
-            "user_enabled": true,
-            "linked_ous": [],
-        })
-    })
+    .map(
+        |(id, name, _desc, _domain, _priority, enforced, disabled, _settings)| {
+            json!({
+                "id": id,
+                "display_name": name,
+                "version": 1,
+                "enabled": !disabled,
+                "machine_enabled": enforced,
+                "user_enabled": true,
+                "linked_ous": [],
+            })
+        },
+    )
     .collect();
     Ok(Json(json!(gpos)))
 }
@@ -705,15 +700,17 @@ pub async fn update_domain_config(
     Path(domain_id): Path<Uuid>,
     Json(body): Json<serde_json::Value>,
 ) -> Result<impl IntoResponse, StatusCode> {
-    sqlx::query("UPDATE infrastructure.domains SET config = config || $1, updated_at = now() WHERE id = $2")
-        .bind(&body)
-        .bind(domain_id)
-        .execute(&*state.pool)
-        .await
-        .map_err(|e| {
-            tracing::error!("Failed to update domain config: {}", e);
-            StatusCode::INTERNAL_SERVER_ERROR
-        })?;
+    sqlx::query(
+        "UPDATE infrastructure.domains SET config = config || $1, updated_at = now() WHERE id = $2",
+    )
+    .bind(&body)
+    .bind(domain_id)
+    .execute(&*state.pool)
+    .await
+    .map_err(|e| {
+        tracing::error!("Failed to update domain config: {}", e);
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
     Ok(StatusCode::NO_CONTENT)
 }
 
@@ -789,16 +786,14 @@ pub async fn revoke_certificate(
     Extension(_claims): Extension<Claims>,
     Path(cert_id): Path<Uuid>,
 ) -> Result<impl IntoResponse, StatusCode> {
-    sqlx::query(
-        "UPDATE infrastructure.certificates SET status = 'revoked' WHERE id = $1",
-    )
-    .bind(cert_id)
-    .execute(&*state.pool)
-    .await
-    .map_err(|e| {
-        tracing::error!("Failed to revoke certificate: {}", e);
-        StatusCode::INTERNAL_SERVER_ERROR
-    })?;
+    sqlx::query("UPDATE infrastructure.certificates SET status = 'revoked' WHERE id = $1")
+        .bind(cert_id)
+        .execute(&*state.pool)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to revoke certificate: {}", e);
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
     Ok(StatusCode::NO_CONTENT)
 }
 
@@ -846,18 +841,17 @@ pub async fn list_dhcp_reservations(
     Extension(_claims): Extension<Claims>,
     Path(scope_id): Path<Uuid>,
 ) -> Result<impl IntoResponse, StatusCode> {
-    let reservations: Vec<signapps_db::models::infrastructure::DhcpReservation> =
-        sqlx::query_as(
-            "SELECT * FROM infrastructure.dhcp_reservations \
+    let reservations: Vec<signapps_db::models::infrastructure::DhcpReservation> = sqlx::query_as(
+        "SELECT * FROM infrastructure.dhcp_reservations \
              WHERE scope_id = $1 ORDER BY ip_address",
-        )
-        .bind(scope_id)
-        .fetch_all(&*state.pool)
-        .await
-        .map_err(|e| {
-            tracing::error!("Failed to list DHCP reservations: {}", e);
-            StatusCode::INTERNAL_SERVER_ERROR
-        })?;
+    )
+    .bind(scope_id)
+    .fetch_all(&*state.pool)
+    .await
+    .map_err(|e| {
+        tracing::error!("Failed to list DHCP reservations: {}", e);
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
     Ok(Json(json!(reservations)))
 }
 
@@ -937,32 +931,30 @@ pub async fn list_deploy_assignments(
     Extension(_claims): Extension<Claims>,
     Path(profile_id): Path<Uuid>,
 ) -> Result<impl IntoResponse, StatusCode> {
-    let assignments: Vec<serde_json::Value> = sqlx::query_as::<
-        _,
-        (Uuid, Uuid, String, String, chrono::DateTime<chrono::Utc>),
-    >(
-        "SELECT id, profile_id, target_type, target_id, created_at \
+    let assignments: Vec<serde_json::Value> =
+        sqlx::query_as::<_, (Uuid, Uuid, String, String, chrono::DateTime<chrono::Utc>)>(
+            "SELECT id, profile_id, target_type, target_id, created_at \
          FROM infrastructure.deploy_assignments \
          WHERE profile_id = $1 ORDER BY created_at",
-    )
-    .bind(profile_id)
-    .fetch_all(&*state.pool)
-    .await
-    .map_err(|e| {
-        tracing::error!("Failed to list deploy assignments: {}", e);
-        StatusCode::INTERNAL_SERVER_ERROR
-    })?
-    .into_iter()
-    .map(|(id, pid, ttype, tid, created)| {
-        json!({
-            "id": id,
-            "profile_id": pid,
-            "target_type": ttype,
-            "target_id": tid,
-            "created_at": created,
+        )
+        .bind(profile_id)
+        .fetch_all(&*state.pool)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to list deploy assignments: {}", e);
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?
+        .into_iter()
+        .map(|(id, pid, ttype, tid, created)| {
+            json!({
+                "id": id,
+                "profile_id": pid,
+                "target_type": ttype,
+                "target_id": tid,
+                "created_at": created,
+            })
         })
-    })
-    .collect();
+        .collect();
     Ok(Json(json!(assignments)))
 }
 

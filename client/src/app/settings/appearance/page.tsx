@@ -1,22 +1,41 @@
-'use client';
+"use client";
 
-import { useEffect, useState, useCallback } from 'react';
-import { usePageTitle } from '@/hooks/use-page-title';
-import { AppLayout } from '@/components/layout/app-layout';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { useEffect, useState, useCallback } from "react";
+import { usePageTitle } from "@/hooks/use-page-title";
+import { AppLayout } from "@/components/layout/app-layout";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from '@/components/ui/select';
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
-  Palette, Type, Minimize2, RectangleHorizontal, Check, RotateCcw,
-  Sun, Moon, Monitor, Contrast, ZoomIn,
-} from 'lucide-react';
-import { useTheme } from 'next-themes';
-import { cn } from '@/lib/utils';
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Palette,
+  Type,
+  Minimize2,
+  RectangleHorizontal,
+  Check,
+  RotateCcw,
+  Sun,
+  Moon,
+  Monitor,
+  Contrast,
+  ZoomIn,
+} from "lucide-react";
+import { useTheme } from "next-themes";
+import { cn } from "@/lib/utils";
 
 // ── Types ──
 interface ThemePreferences {
@@ -28,43 +47,45 @@ interface ThemePreferences {
   fontSizePx: number;
 }
 
-const STORAGE_KEY = 'signapps-theme-preferences';
+const STORAGE_KEY = "signapps-theme-preferences";
 
 const DEFAULT_PREFS: ThemePreferences = {
-  primaryColor: 'blue',
-  fontSize: 'medium',
+  primaryColor: "blue",
+  fontSize: "medium",
   compactMode: false,
-  borderRadius: 'rounded',
+  borderRadius: "rounded",
   highContrast: false,
   fontSizePx: 16,
 };
 
 const COLOR_OPTIONS = [
-  { id: 'blue',   label: 'Bleu',    hex: '#135bec', darkHex: '#3b82f6' },
-  { id: 'green',  label: 'Vert',    hex: '#059669', darkHex: '#10b981' },
-  { id: 'purple', label: 'Violet',  hex: '#7c3aed', darkHex: '#8b5cf6' },
-  { id: 'orange', label: 'Orange',  hex: '#ea580c', darkHex: '#f97316' },
-  { id: 'red',    label: 'Rouge',   hex: '#dc2626', darkHex: '#ef4444' },
+  { id: "blue", label: "Bleu", hex: "#135bec", darkHex: "#3b82f6" },
+  { id: "green", label: "Vert", hex: "#059669", darkHex: "#10b981" },
+  { id: "purple", label: "Violet", hex: "#7c3aed", darkHex: "#8b5cf6" },
+  { id: "orange", label: "Orange", hex: "#ea580c", darkHex: "#f97316" },
+  { id: "red", label: "Rouge", hex: "#dc2626", darkHex: "#ef4444" },
 ];
 
 const FONT_SIZE_OPTIONS = [
-  { id: 'small',  label: 'Petit (13px)',  preview: '13px' },
-  { id: 'medium', label: 'Normal (15px)', preview: '15px' },
-  { id: 'large',  label: 'Grand (17px)',  preview: '17px' },
+  { id: "small", label: "Petit (13px)", preview: "13px" },
+  { id: "medium", label: "Normal (15px)", preview: "15px" },
+  { id: "large", label: "Grand (17px)", preview: "17px" },
 ];
 
 const BORDER_RADIUS_OPTIONS = [
-  { id: 'sharp',   label: 'Anguleux', preview: '2px' },
-  { id: 'rounded', label: 'Arrondi',  preview: '10px' },
-  { id: 'pill',    label: 'Pilule',   preview: '24px' },
+  { id: "sharp", label: "Anguleux", preview: "2px" },
+  { id: "rounded", label: "Arrondi", preview: "10px" },
+  { id: "pill", label: "Pilule", preview: "24px" },
 ];
 
 function loadPreferences(): ThemePreferences {
-  if (typeof window === 'undefined') return DEFAULT_PREFS;
+  if (typeof window === "undefined") return DEFAULT_PREFS;
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) return { ...DEFAULT_PREFS, ...JSON.parse(stored) };
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
   return DEFAULT_PREFS;
 }
 
@@ -86,21 +107,21 @@ function applyTheme(prefs: ThemePreferences) {
 
   // AC4: Dynamic font size (px slider)
   const px = Math.max(14, Math.min(20, prefs.fontSizePx));
-  root.style.setProperty('--font-size-base', `${px}px`);
+  root.style.setProperty("--font-size-base", `${px}px`);
 
   // Compact mode
-  root.classList.toggle('compact-mode', prefs.compactMode);
+  root.classList.toggle("compact-mode", prefs.compactMode);
 
   // Border radius
   BORDER_RADIUS_OPTIONS.forEach((b) => root.classList.remove(`radius-${b.id}`));
   root.classList.add(`radius-${prefs.borderRadius}`);
 
   // AC4: High contrast mode
-  root.classList.toggle('high-contrast', prefs.highContrast);
+  root.classList.toggle("high-contrast", prefs.highContrast);
 }
 
 export default function SettingsAppearancePage() {
-  usePageTitle('Appearance');
+  usePageTitle("Appearance");
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [prefs, setPrefs] = useState<ThemePreferences>(DEFAULT_PREFS);
@@ -112,31 +133,31 @@ export default function SettingsAppearancePage() {
     applyTheme(loaded);
   }, []);
 
-  const updatePref = useCallback(<K extends keyof ThemePreferences>(
-    key: K,
-    value: ThemePreferences[K],
-  ) => {
-    setPrefs((prev) => {
-      const next = { ...prev, [key]: value };
-      savePreferences(next);
-      applyTheme(next);
-      return next;
-    });
-  }, []);
+  const updatePref = useCallback(
+    <K extends keyof ThemePreferences>(key: K, value: ThemePreferences[K]) => {
+      setPrefs((prev) => {
+        const next = { ...prev, [key]: value };
+        savePreferences(next);
+        applyTheme(next);
+        return next;
+      });
+    },
+    [],
+  );
 
   const resetDefaults = useCallback(() => {
     setPrefs(DEFAULT_PREFS);
     savePreferences(DEFAULT_PREFS);
     applyTheme(DEFAULT_PREFS);
-    setTheme('system');
+    setTheme("system");
   }, [setTheme]);
 
   if (!mounted) return null;
 
   const themes = [
-    { id: 'light',  label: 'Clair',   icon: Sun },
-    { id: 'dark',   label: 'Sombre',  icon: Moon },
-    { id: 'system', label: 'Systeme', icon: Monitor },
+    { id: "light", label: "Clair", icon: Sun },
+    { id: "dark", label: "Sombre", icon: Moon },
+    { id: "system", label: "Systeme", icon: Monitor },
   ];
 
   return (
@@ -149,7 +170,12 @@ export default function SettingsAppearancePage() {
               Personnalisez l'apparence de SignApps selon vos preferences.
             </p>
           </div>
-          <Button variant="outline" size="sm" onClick={resetDefaults} className="gap-1.5 btn-press">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={resetDefaults}
+            className="gap-1.5 btn-press"
+          >
             <RotateCcw className="w-4 h-4" />
             Reinitialiser
           </Button>
@@ -162,7 +188,9 @@ export default function SettingsAppearancePage() {
               <Monitor className="w-5 h-5" />
               Theme
             </CardTitle>
-            <CardDescription>Choisissez le mode d'affichage adapte a votre environnement.</CardDescription>
+            <CardDescription>
+              Choisissez le mode d'affichage adapte a votre environnement.
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -175,13 +203,18 @@ export default function SettingsAppearancePage() {
                     onClick={() => setTheme(t.id)}
                     aria-pressed={isActive}
                     className={cn(
-                      'flex flex-col items-center justify-center p-5 rounded-xl border-2 transition-all btn-press',
+                      "flex flex-col items-center justify-center p-5 rounded-xl border-2 transition-all btn-press",
                       isActive
-                        ? 'border-primary bg-primary/5 text-primary'
-                        : 'border-transparent bg-muted hover:bg-muted/80 text-muted-foreground',
+                        ? "border-primary bg-primary/5 text-primary"
+                        : "border-transparent bg-muted hover:bg-muted/80 text-muted-foreground",
                     )}
                   >
-                    <Icon className={cn('w-7 h-7 mb-2', isActive ? 'text-primary' : 'text-muted-foreground')} />
+                    <Icon
+                      className={cn(
+                        "w-7 h-7 mb-2",
+                        isActive ? "text-primary" : "text-muted-foreground",
+                      )}
+                    />
                     <span className="font-medium text-sm">{t.label}</span>
                   </button>
                 );
@@ -197,10 +230,16 @@ export default function SettingsAppearancePage() {
               <Palette className="w-5 h-5" />
               Couleur primaire
             </CardTitle>
-            <CardDescription>Definissez la couleur d'accent de l'interface.</CardDescription>
+            <CardDescription>
+              Definissez la couleur d'accent de l'interface.
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex flex-wrap gap-3" role="radiogroup" aria-label="Couleur primaire">
+            <div
+              className="flex flex-wrap gap-3"
+              role="radiogroup"
+              aria-label="Couleur primaire"
+            >
               {COLOR_OPTIONS.map((color) => {
                 const isActive = prefs.primaryColor === color.id;
                 return (
@@ -209,21 +248,26 @@ export default function SettingsAppearancePage() {
                     role="radio"
                     aria-checked={isActive}
                     aria-label={color.label}
-                    onClick={() => updatePref('primaryColor', color.id)}
+                    onClick={() => updatePref("primaryColor", color.id)}
                     className={cn(
-                      'relative w-12 h-12 rounded-full border-2 transition-all btn-press flex items-center justify-center',
-                      isActive ? 'border-foreground scale-110' : 'border-transparent hover:scale-105',
+                      "relative w-12 h-12 rounded-full border-2 transition-all btn-press flex items-center justify-center",
+                      isActive
+                        ? "border-foreground scale-110"
+                        : "border-transparent hover:scale-105",
                     )}
                     style={{ backgroundColor: color.hex }}
                   >
-                    {isActive && <Check className="w-5 h-5 text-white drop-shadow-md" />}
+                    {isActive && (
+                      <Check className="w-5 h-5 text-white drop-shadow-md" />
+                    )}
                   </button>
                 );
               })}
             </div>
             <div className="mt-3 flex items-center gap-2">
               <Badge variant="outline" className="text-xs">
-                Actif: {COLOR_OPTIONS.find((c) => c.id === prefs.primaryColor)?.label}
+                Actif:{" "}
+                {COLOR_OPTIONS.find((c) => c.id === prefs.primaryColor)?.label}
               </Badge>
             </div>
           </CardContent>
@@ -236,7 +280,9 @@ export default function SettingsAppearancePage() {
               <Type className="w-5 h-5" />
               Taille de police
             </CardTitle>
-            <CardDescription>Ajustez la taille du texte dans l'interface.</CardDescription>
+            <CardDescription>
+              Ajustez la taille du texte dans l'interface.
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -245,17 +291,24 @@ export default function SettingsAppearancePage() {
                 return (
                   <button
                     key={fs.id}
-                    onClick={() => updatePref('fontSize', fs.id)}
+                    onClick={() => updatePref("fontSize", fs.id)}
                     aria-pressed={isActive}
                     className={cn(
-                      'flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all btn-press',
+                      "flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all btn-press",
                       isActive
-                        ? 'border-primary bg-primary/5'
-                        : 'border-transparent bg-muted hover:bg-muted/80',
+                        ? "border-primary bg-primary/5"
+                        : "border-transparent bg-muted hover:bg-muted/80",
                     )}
                   >
-                    <span style={{ fontSize: fs.preview }} className="font-medium mb-1">Aa</span>
-                    <span className="text-xs text-muted-foreground">{fs.label}</span>
+                    <span
+                      style={{ fontSize: fs.preview }}
+                      className="font-medium mb-1"
+                    >
+                      Aa
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {fs.label}
+                    </span>
                   </button>
                 );
               })}
@@ -270,7 +323,9 @@ export default function SettingsAppearancePage() {
               <Minimize2 className="w-5 h-5" />
               Mode compact
             </CardTitle>
-            <CardDescription>Reduisez l'espacement pour afficher plus de contenu a l'ecran.</CardDescription>
+            <CardDescription>
+              Reduisez l'espacement pour afficher plus de contenu a l'ecran.
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between max-w-md">
@@ -285,7 +340,7 @@ export default function SettingsAppearancePage() {
               <Switch
                 id="compact-mode"
                 checked={prefs.compactMode}
-                onCheckedChange={(v) => updatePref('compactMode', v)}
+                onCheckedChange={(v) => updatePref("compactMode", v)}
               />
             </div>
           </CardContent>
@@ -306,7 +361,10 @@ export default function SettingsAppearancePage() {
             {/* High contrast toggle */}
             <div className="flex items-center justify-between max-w-md">
               <div className="space-y-0.5">
-                <Label htmlFor="high-contrast" className="text-base font-medium">
+                <Label
+                  htmlFor="high-contrast"
+                  className="text-base font-medium"
+                >
                   Mode contraste eleve
                 </Label>
                 <p className="text-sm text-muted-foreground">
@@ -316,7 +374,7 @@ export default function SettingsAppearancePage() {
               <Switch
                 id="high-contrast"
                 checked={prefs.highContrast}
-                onCheckedChange={(v) => updatePref('highContrast', v)}
+                onCheckedChange={(v) => updatePref("highContrast", v)}
                 aria-describedby="high-contrast-desc"
               />
             </div>
@@ -327,7 +385,10 @@ export default function SettingsAppearancePage() {
             {/* Font size slider */}
             <div className="max-w-md space-y-3">
               <div className="flex items-center justify-between">
-                <Label htmlFor="font-size-slider" className="text-base font-medium flex items-center gap-2">
+                <Label
+                  htmlFor="font-size-slider"
+                  className="text-base font-medium flex items-center gap-2"
+                >
                   <ZoomIn className="w-4 h-4" />
                   Taille du texte
                 </Label>
@@ -340,7 +401,9 @@ export default function SettingsAppearancePage() {
                 max={20}
                 step={1}
                 value={prefs.fontSizePx}
-                onChange={(e) => updatePref('fontSizePx', parseInt(e.target.value))}
+                onChange={(e) =>
+                  updatePref("fontSizePx", parseInt(e.target.value))
+                }
                 className="w-full accent-primary"
                 aria-label={`Taille de police: ${prefs.fontSizePx}px`}
                 aria-valuemin={14}
@@ -353,7 +416,10 @@ export default function SettingsAppearancePage() {
                 <span>17px (par defaut)</span>
                 <span>20px (max)</span>
               </div>
-              <p className="text-sm text-muted-foreground" style={{ fontSize: `${prefs.fontSizePx}px` }}>
+              <p
+                className="text-sm text-muted-foreground"
+                style={{ fontSize: `${prefs.fontSizePx}px` }}
+              >
                 Apercu: Ceci est un exemple de texte a {prefs.fontSizePx}px.
               </p>
             </div>
@@ -367,7 +433,9 @@ export default function SettingsAppearancePage() {
               <RectangleHorizontal className="w-5 h-5" />
               Coins des elements
             </CardTitle>
-            <CardDescription>Choisissez le style d'arrondi des boutons et cartes.</CardDescription>
+            <CardDescription>
+              Choisissez le style d'arrondi des boutons et cartes.
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -376,13 +444,13 @@ export default function SettingsAppearancePage() {
                 return (
                   <button
                     key={br.id}
-                    onClick={() => updatePref('borderRadius', br.id)}
+                    onClick={() => updatePref("borderRadius", br.id)}
                     aria-pressed={isActive}
                     className={cn(
-                      'flex flex-col items-center justify-center p-4 border-2 transition-all btn-press',
+                      "flex flex-col items-center justify-center p-4 border-2 transition-all btn-press",
                       isActive
-                        ? 'border-primary bg-primary/5'
-                        : 'border-transparent bg-muted hover:bg-muted/80',
+                        ? "border-primary bg-primary/5"
+                        : "border-transparent bg-muted hover:bg-muted/80",
                     )}
                     style={{ borderRadius: br.preview }}
                   >
@@ -390,7 +458,9 @@ export default function SettingsAppearancePage() {
                       className="w-16 h-10 bg-primary/20 border border-primary/40 mb-2"
                       style={{ borderRadius: br.preview }}
                     />
-                    <span className="text-xs text-muted-foreground">{br.label}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {br.label}
+                    </span>
                   </button>
                 );
               })}
@@ -402,14 +472,22 @@ export default function SettingsAppearancePage() {
         <Card className="card-lift">
           <CardHeader>
             <CardTitle className="text-lg">Apercu en direct</CardTitle>
-            <CardDescription>Visualisez vos reglages avant de quitter la page.</CardDescription>
+            <CardDescription>
+              Visualisez vos reglages avant de quitter la page.
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-3 p-4 rounded-xl border bg-background">
               <div className="flex items-center gap-3">
-                <Button size="sm" className="btn-press">Bouton primaire</Button>
-                <Button size="sm" variant="outline" className="btn-press">Secondaire</Button>
-                <Button size="sm" variant="destructive" className="btn-press">Supprimer</Button>
+                <Button size="sm" className="btn-press">
+                  Bouton primaire
+                </Button>
+                <Button size="sm" variant="outline" className="btn-press">
+                  Secondaire
+                </Button>
+                <Button size="sm" variant="destructive" className="btn-press">
+                  Supprimer
+                </Button>
               </div>
               <div className="flex items-center gap-2">
                 <Badge>Badge</Badge>
@@ -417,7 +495,8 @@ export default function SettingsAppearancePage() {
                 <Badge variant="outline">Outline</Badge>
               </div>
               <p className="text-sm text-muted-foreground">
-                Ceci est un exemple de texte dans l'interface avec vos parametres actuels.
+                Ceci est un exemple de texte dans l'interface avec vos
+                parametres actuels.
               </p>
             </div>
           </CardContent>

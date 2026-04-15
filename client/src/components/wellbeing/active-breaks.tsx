@@ -17,10 +17,22 @@ export default function ActiveBreaks() {
 
   const exercises: Exercise[] = [
     { name: "Neck Rolls", description: "Slow circular motion", duration: 60 },
-    { name: "Shoulder Shrugs", description: "Up and down, 10 reps", duration: 45 },
-    { name: "Wrist Stretches", description: "Extend arms, gentle pull", duration: 60 },
+    {
+      name: "Shoulder Shrugs",
+      description: "Up and down, 10 reps",
+      duration: 45,
+    },
+    {
+      name: "Wrist Stretches",
+      description: "Extend arms, gentle pull",
+      duration: 60,
+    },
     { name: "Eye Focus", description: "Look away from screen", duration: 120 },
-    { name: "Standing Stretch", description: "Full body extension", duration: 75 },
+    {
+      name: "Standing Stretch",
+      description: "Full body extension",
+      duration: 75,
+    },
   ];
 
   useEffect(() => {
@@ -74,7 +86,11 @@ export default function ActiveBreaks() {
             <Button
               size="lg"
               onClick={() => setIsRunning(!isRunning)}
-              className={isRunning ? "bg-orange-500 hover:bg-orange-600" : "bg-green-500 hover:bg-green-600"}
+              className={
+                isRunning
+                  ? "bg-orange-500 hover:bg-orange-600"
+                  : "bg-green-500 hover:bg-green-600"
+              }
             >
               {isRunning ? (
                 <>
@@ -88,7 +104,11 @@ export default function ActiveBreaks() {
                 </>
               )}
             </Button>
-            <Button size="lg" variant="outline" onClick={() => setTimeRemaining(300)}>
+            <Button
+              size="lg"
+              variant="outline"
+              onClick={() => setTimeRemaining(300)}
+            >
               <Clock className="w-5 h-5" />
             </Button>
           </div>
@@ -102,9 +122,15 @@ export default function ActiveBreaks() {
         </h3>
         <div className="space-y-4">
           <div>
-            <h4 className="text-xl font-bold text-foreground">{exercise.name}</h4>
-            <p className="text-sm text-muted-foreground mt-1">{exercise.description}</p>
-            <p className="text-xs text-muted-foreground mt-2">Duration: ~{exercise.duration}s</p>
+            <h4 className="text-xl font-bold text-foreground">
+              {exercise.name}
+            </h4>
+            <p className="text-sm text-muted-foreground mt-1">
+              {exercise.description}
+            </p>
+            <p className="text-xs text-muted-foreground mt-2">
+              Duration: ~{exercise.duration}s
+            </p>
           </div>
           <div className="bg-orange-50 p-3 rounded border border-orange-200">
             <p className="text-sm text-orange-900">
@@ -121,7 +147,9 @@ export default function ActiveBreaks() {
             <div
               key={idx}
               className={`p-3 rounded-lg text-sm ${
-                idx === currentExercise ? "bg-blue-100 border border-blue-300" : "bg-muted border border-border"
+                idx === currentExercise
+                  ? "bg-blue-100 border border-blue-300"
+                  : "bg-muted border border-border"
               }`}
             >
               <p className="font-medium">{ex.name}</p>

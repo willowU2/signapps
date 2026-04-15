@@ -99,12 +99,11 @@ pub async fn reconcile(pool: &PgPool) -> Result<ReconciliationReport> {
 
 /// Return the IDs of all currently active AD domains.
 async fn get_active_ad_domains(pool: &PgPool) -> Result<Vec<Uuid>> {
-    let ids: Vec<(Uuid,)> = sqlx::query_as(
-        "SELECT id FROM infrastructure.domains WHERE is_active = true",
-    )
-    .fetch_all(pool)
-    .await
-    .map_err(|e| signapps_common::Error::Database(e.to_string()))?;
+    let ids: Vec<(Uuid,)> =
+        sqlx::query_as("SELECT id FROM infrastructure.domains WHERE is_active = true")
+            .fetch_all(pool)
+            .await
+            .map_err(|e| signapps_common::Error::Database(e.to_string()))?;
 
     Ok(ids.into_iter().map(|(id,)| id).collect())
 }
@@ -226,8 +225,7 @@ async fn reconcile_users(
                 "person_id": person_id,
                 "node_id": node_id,
             });
-            AdSyncQueueRepository::enqueue(pool, domain_id, "user_provision", payload, 10)
-                .await?;
+            AdSyncQueueRepository::enqueue(pool, domain_id, "user_provision", payload, 10).await?;
             report.users_created += 1;
         }
     }
@@ -259,12 +257,11 @@ async fn reconcile_groups(
     report: &mut ReconciliationReport,
 ) -> Result<()> {
     // Expected org_groups (transversal groups)
-    let org_groups: Vec<(Uuid, String)> = sqlx::query_as(
-        "SELECT id, name FROM workforce_org_groups",
-    )
-    .fetch_all(pool)
-    .await
-    .map_err(|e| signapps_common::Error::Database(e.to_string()))?;
+    let org_groups: Vec<(Uuid, String)> =
+        sqlx::query_as("SELECT id, name FROM workforce_org_groups")
+            .fetch_all(pool)
+            .await
+            .map_err(|e| signapps_common::Error::Database(e.to_string()))?;
 
     // Expected teams and positions from org_nodes
     let team_positions: Vec<(Uuid, String, String)> = sqlx::query_as(
@@ -380,17 +377,15 @@ async fn reconcile_computers(
             .map_err(|e| signapps_common::Error::Database(e.to_string()))?;
 
     // Actual: AD computer accounts for this domain (enabled or disabled)
-    let actual: Vec<(Option<Uuid>,)> = sqlx::query_as(
-        "SELECT hardware_id FROM ad_computer_accounts WHERE domain_id = $1",
-    )
-    .bind(domain_id)
-    .fetch_all(pool)
-    .await
-    .map_err(|e| signapps_common::Error::Database(e.to_string()))?;
+    let actual: Vec<(Option<Uuid>,)> =
+        sqlx::query_as("SELECT hardware_id FROM ad_computer_accounts WHERE domain_id = $1")
+            .bind(domain_id)
+            .fetch_all(pool)
+            .await
+            .map_err(|e| signapps_common::Error::Database(e.to_string()))?;
 
     use std::collections::HashSet;
-    let actual_hw_ids: HashSet<Uuid> =
-        actual.into_iter().filter_map(|(id,)| id).collect();
+    let actual_hw_ids: HashSet<Uuid> = actual.into_iter().filter_map(|(id,)| id).collect();
 
     for (hw_id, hostname) in &expected {
         if !actual_hw_ids.contains(hw_id) {
@@ -398,8 +393,7 @@ async fn reconcile_computers(
                 "hardware_id": hw_id,
                 "hostname": hostname,
             });
-            AdSyncQueueRepository::enqueue(pool, domain_id, "computer_create", payload, 10)
-                .await?;
+            AdSyncQueueRepository::enqueue(pool, domain_id, "computer_create", payload, 10).await?;
             report.computers_created += 1;
         }
     }

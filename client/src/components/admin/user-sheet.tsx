@@ -1,6 +1,6 @@
 "use client";
 
-import { SpinnerInfinity } from 'spinners-react';
+import { SpinnerInfinity } from "spinners-react";
 
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -32,8 +32,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { UserPlus, Upload, Trash2 } from 'lucide-react';
-import { User, CreateUserRequest, UpdateUserRequest, Workspace } from "@/lib/api";
+import { UserPlus, Upload, Trash2 } from "lucide-react";
+import {
+  User,
+  CreateUserRequest,
+  UpdateUserRequest,
+  Workspace,
+} from "@/lib/api";
 import { workspacesApi } from "@/lib/api/tenant";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { PasswordStrength } from "@/components/auth/password-strength";
@@ -113,9 +118,12 @@ export function UserSheet({
         });
       }
       // Load workspaces available to assign
-      workspacesApi.list().then((res: any) => {
-        setWorkspaces(res.data?.data || res.data || []);
-      }).catch(console.error);
+      workspacesApi
+        .list()
+        .then((res: any) => {
+          setWorkspaces(res.data?.data || res.data || []);
+        })
+        .catch(console.error);
     }
   }, [open, user, form]);
 
@@ -133,7 +141,9 @@ export function UserSheet({
       await onSubmit(updateData);
     } else {
       if (!values.password) {
-        form.setError("password", { message: "Password is required for new users" });
+        form.setError("password", {
+          message: "Password is required for new users",
+        });
         return;
       }
       const createData: CreateUserRequest = {
@@ -155,34 +165,38 @@ export function UserSheet({
         <div className="p-6 pb-4 border-b border-border/50 bg-muted/10">
           <DialogHeader>
             <div className="flex items-start gap-4 mb-1">
-               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary shrink-0 shadow-sm ring-1 ring-primary/20">
-                  <UserPlus className="h-6 w-6" />
-               </div>
-               <div className="space-y-1">
-                 <DialogTitle className="text-2xl font-extrabold tracking-tight text-foreground text-left">
-                   {isEditing ? "Edit User" : "New User"}
-                 </DialogTitle>
-                 <DialogDescription className="text-[14.5px] font-medium text-muted-foreground leading-snug text-left">
-                   {isEditing
-                     ? "Modify the user's details and role."
-                     : "Add a new user to the platform."}
-                 </DialogDescription>
-               </div>
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary shrink-0 shadow-sm ring-1 ring-primary/20">
+                <UserPlus className="h-6 w-6" />
+              </div>
+              <div className="space-y-1">
+                <DialogTitle className="text-2xl font-extrabold tracking-tight text-foreground text-left">
+                  {isEditing ? "Edit User" : "New User"}
+                </DialogTitle>
+                <DialogDescription className="text-[14.5px] font-medium text-muted-foreground leading-snug text-left">
+                  {isEditing
+                    ? "Modify the user's details and role."
+                    : "Add a new user to the platform."}
+                </DialogDescription>
+              </div>
             </div>
           </DialogHeader>
         </div>
 
         <div className="p-6 pt-4 max-h-[70vh] overflow-y-auto [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-muted-foreground/20 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-muted-foreground/40 transition-colors">
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-              
+            <form
+              onSubmit={form.handleSubmit(handleSubmit)}
+              className="space-y-6"
+            >
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormField
                   control={form.control}
                   name="username"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-[13px] font-extrabold text-foreground/85 uppercase tracking-wide">Username</FormLabel>
+                      <FormLabel className="text-[13px] font-extrabold text-foreground/85 uppercase tracking-wide">
+                        Username
+                      </FormLabel>
                       <FormControl>
                         <Input
                           placeholder="jdoe"
@@ -201,7 +215,9 @@ export function UserSheet({
                   name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-[13px] font-extrabold text-foreground/85 uppercase tracking-wide">Email</FormLabel>
+                      <FormLabel className="text-[13px] font-extrabold text-foreground/85 uppercase tracking-wide">
+                        Email
+                      </FormLabel>
                       <FormControl>
                         <Input
                           type="email"
@@ -224,7 +240,10 @@ export function UserSheet({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="text-[13px] font-extrabold text-foreground/85 uppercase tracking-wide">
-                        Display Name <span className="text-muted-foreground/70 font-semibold normal-case tracking-normal ml-1">(Optional)</span>
+                        Display Name{" "}
+                        <span className="text-muted-foreground/70 font-semibold normal-case tracking-normal ml-1">
+                          (Optional)
+                        </span>
                       </FormLabel>
                       <FormControl>
                         <Input
@@ -244,7 +263,9 @@ export function UserSheet({
                   name="role"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-[13px] font-extrabold text-foreground/85 uppercase tracking-wide">Role</FormLabel>
+                      <FormLabel className="text-[13px] font-extrabold text-foreground/85 uppercase tracking-wide">
+                        Role
+                      </FormLabel>
                       <Select
                         disabled={isLoading}
                         onValueChange={field.onChange}
@@ -256,9 +277,15 @@ export function UserSheet({
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent className="rounded-xl shadow-lg border-border/50">
-                          <SelectItem value="0" className="py-3 cursor-pointer">Admin</SelectItem>
-                          <SelectItem value="1" className="py-3 cursor-pointer">User</SelectItem>
-                          <SelectItem value="2" className="py-3 cursor-pointer">Viewer</SelectItem>
+                          <SelectItem value="0" className="py-3 cursor-pointer">
+                            Admin
+                          </SelectItem>
+                          <SelectItem value="1" className="py-3 cursor-pointer">
+                            User
+                          </SelectItem>
+                          <SelectItem value="2" className="py-3 cursor-pointer">
+                            Viewer
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage className="text-xs font-semibold text-destructive mt-1.5" />
@@ -275,19 +302,30 @@ export function UserSheet({
                     <FormItem>
                       <FormLabel className="text-[13px] font-extrabold text-foreground/85 uppercase tracking-wide">
                         {isEditing ? "New Password" : "Password"}
-                        {isEditing && <span className="text-muted-foreground/70 font-semibold normal-case tracking-normal ml-1">(Optional)</span>}
+                        {isEditing && (
+                          <span className="text-muted-foreground/70 font-semibold normal-case tracking-normal ml-1">
+                            (Optional)
+                          </span>
+                        )}
                       </FormLabel>
                       <FormControl>
                         <Input
                           type="password"
-                          placeholder={isEditing ? "Leave blank to keep current password" : "Secure password"}
+                          placeholder={
+                            isEditing
+                              ? "Leave blank to keep current password"
+                              : "Secure password"
+                          }
                           disabled={isLoading}
                           className="h-[52px] bg-sidebar-accent/50 focus-visible:bg-transparent shadow-sm rounded-xl border-border focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary text-[15px] px-4 transition-all"
                           {...field}
                         />
                       </FormControl>
                       {watchedPassword && (
-                        <PasswordStrength password={watchedPassword} showRequirements={false} />
+                        <PasswordStrength
+                          password={watchedPassword}
+                          showRequirements={false}
+                        />
                       )}
                       <FormMessage className="text-xs font-semibold text-destructive mt-1.5" />
                     </FormItem>
@@ -300,93 +338,107 @@ export function UserSheet({
                   render={({ field }) => (
                     <FormItem className="col-span-1 md:col-span-2">
                       <FormLabel className="text-[13px] font-extrabold text-foreground/85 uppercase tracking-wide">
-                        Avatar <span className="text-muted-foreground/70 font-semibold normal-case tracking-normal ml-1">(Optional)</span>
+                        Avatar{" "}
+                        <span className="text-muted-foreground/70 font-semibold normal-case tracking-normal ml-1">
+                          (Optional)
+                        </span>
                       </FormLabel>
                       <div className="flex items-center gap-4 mt-2">
-                          <Avatar className="h-16 w-16 border-2 border-dashed border-border/50 bg-muted/30">
-                              {field.value ? (
-                                  <AvatarImage src={field.value} className="object-cover" />
-                              ) : (
-                                  <AvatarFallback className="bg-transparent text-muted-foreground">
-                                      <Upload className="h-6 w-6" />
-                                  </AvatarFallback>
-                              )}
-                          </Avatar>
-                          <div className="flex flex-col gap-2">
-                              <div className="flex gap-2">
-                                  <Button
-                                      type="button"
-                                      variant="outline"
-                                      size="sm"
-                                      className="h-9 px-4 text-sm font-medium"
-                                      disabled={isLoading}
-                                      onClick={() => document.getElementById('admin-avatar-upload')?.click()}
-                                  >
-                                      <Upload className="h-4 w-4 mr-2" />
-                                      Upload Image
-                                  </Button>
-                                  {field.value && (
-                                      <Button
-                                          type="button"
-                                          variant="ghost"
-                                          size="icon"
-                                          className="h-9 w-9 text-destructive hover:text-destructive hover:bg-destructive/10"
-                                          disabled={isLoading}
-                                          onClick={() => field.onChange('')}
-                                      >
-                                          <Trash2 className="h-4 w-4" />
-                                      </Button>
-                                  )}
-                              </div>
-                              <p className="text-xs text-muted-foreground font-medium">
-                                  Recommended: 256x256px.
-                              </p>
-                              <input
-                                  id="admin-avatar-upload"
-                                  type="file"
-                                  accept="image/*"
-                                  className="hidden"
-                                  disabled={isLoading}
-                                  onChange={(e) => {
-                                      const file = e.target.files?.[0];
-                                      if (file) {
-                                          const reader = new FileReader();
-                                          reader.onload = (event) => {
-                                              const img = new Image();
-                                              img.onload = () => {
-                                                  const canvas = document.createElement('canvas');
-                                                  const ctx = canvas.getContext('2d');
-                                                  const MAX_SIZE = 256;
-                                                  let width = img.width;
-                                                  let height = img.height;
-
-                                                  if (width > height) {
-                                                      if (width > MAX_SIZE) {
-                                                          height *= MAX_SIZE / width;
-                                                          width = MAX_SIZE;
-                                                      }
-                                                  } else {
-                                                      if (height > MAX_SIZE) {
-                                                          width *= MAX_SIZE / height;
-                                                          height = MAX_SIZE;
-                                                      }
-                                                  }
-
-                                                  canvas.width = width;
-                                                  canvas.height = height;
-                                                  ctx?.drawImage(img, 0, 0, width, height);
-
-                                                  const dataUrl = canvas.toDataURL('image/webp', 0.8);
-                                                  field.onChange(dataUrl);
-                                              };
-                                              img.src = event.target?.result as string;
-                                          };
-                                          reader.readAsDataURL(file);
-                                      }
-                                      e.target.value = '';
-                                  }}
-                              />
+                        <Avatar className="h-16 w-16 border-2 border-dashed border-border/50 bg-muted/30">
+                          {field.value ? (
+                            <AvatarImage
+                              src={field.value}
+                              className="object-cover"
+                            />
+                          ) : (
+                            <AvatarFallback className="bg-transparent text-muted-foreground">
+                              <Upload className="h-6 w-6" />
+                            </AvatarFallback>
+                          )}
+                        </Avatar>
+                        <div className="flex flex-col gap-2">
+                          <div className="flex gap-2">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className="h-9 px-4 text-sm font-medium"
+                              disabled={isLoading}
+                              onClick={() =>
+                                document
+                                  .getElementById("admin-avatar-upload")
+                                  ?.click()
+                              }
+                            >
+                              <Upload className="h-4 w-4 mr-2" />
+                              Upload Image
+                            </Button>
+                            {field.value && (
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="h-9 w-9 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                disabled={isLoading}
+                                onClick={() => field.onChange("")}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            )}
                           </div>
+                          <p className="text-xs text-muted-foreground font-medium">
+                            Recommended: 256x256px.
+                          </p>
+                          <input
+                            id="admin-avatar-upload"
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            disabled={isLoading}
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                const reader = new FileReader();
+                                reader.onload = (event) => {
+                                  const img = new Image();
+                                  img.onload = () => {
+                                    const canvas =
+                                      document.createElement("canvas");
+                                    const ctx = canvas.getContext("2d");
+                                    const MAX_SIZE = 256;
+                                    let width = img.width;
+                                    let height = img.height;
+
+                                    if (width > height) {
+                                      if (width > MAX_SIZE) {
+                                        height *= MAX_SIZE / width;
+                                        width = MAX_SIZE;
+                                      }
+                                    } else {
+                                      if (height > MAX_SIZE) {
+                                        width *= MAX_SIZE / height;
+                                        height = MAX_SIZE;
+                                      }
+                                    }
+
+                                    canvas.width = width;
+                                    canvas.height = height;
+                                    ctx?.drawImage(img, 0, 0, width, height);
+
+                                    const dataUrl = canvas.toDataURL(
+                                      "image/webp",
+                                      0.8,
+                                    );
+                                    field.onChange(dataUrl);
+                                  };
+                                  img.src = event.target?.result as string;
+                                };
+                                reader.readAsDataURL(file);
+                              }
+                              e.target.value = "";
+                            }}
+                          />
+                        </div>
                       </div>
                       <FormMessage className="text-xs font-semibold text-destructive mt-1.5" />
                     </FormItem>
@@ -401,9 +453,12 @@ export function UserSheet({
                   render={() => (
                     <FormItem className="pt-2 border-t border-border/50">
                       <div className="mb-4">
-                        <FormLabel className="text-[13px] font-extrabold text-foreground/85 uppercase tracking-wide">Workspaces</FormLabel>
+                        <FormLabel className="text-[13px] font-extrabold text-foreground/85 uppercase tracking-wide">
+                          Workspaces
+                        </FormLabel>
                         <p className="text-[14px] font-medium text-muted-foreground leading-snug text-left mt-1">
-                          Assign the user to one or multiple workspaces immediately.
+                          Assign the user to one or multiple workspaces
+                          immediately.
                         </p>
                       </div>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -420,15 +475,21 @@ export function UserSheet({
                                 >
                                   <FormControl>
                                     <Checkbox
-                                      checked={field.value?.includes(workspace.id)}
+                                      checked={field.value?.includes(
+                                        workspace.id,
+                                      )}
                                       onCheckedChange={(checked) => {
                                         const current = field.value || [];
                                         return checked
-                                          ? field.onChange([...current, workspace.id])
+                                          ? field.onChange([
+                                              ...current,
+                                              workspace.id,
+                                            ])
                                           : field.onChange(
                                               current.filter(
-                                                (value) => value !== workspace.id
-                                              )
+                                                (value) =>
+                                                  value !== workspace.id,
+                                              ),
                                             );
                                       }}
                                     />
@@ -458,15 +519,26 @@ export function UserSheet({
                 >
                   Cancel
                 </Button>
-                <Button 
-                  type="submit" 
+                <Button
+                  type="submit"
                   disabled={isLoading}
                   className="h-[52px] px-8 rounded-xl text-[15px] bg-[#4d51f2] hover:bg-[#4d51f2]/90 text-white shadow-sm font-bold transition-all hover:-translate-y-0.5"
                 >
                   {isLoading ? (
-                    <><SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-5 w-5 " /> {isEditing ? "Enregistrement..." : "Création..."}</>
+                    <>
+                      <SpinnerInfinity
+                        size={24}
+                        secondaryColor="rgba(128,128,128,0.2)"
+                        color="currentColor"
+                        speed={120}
+                        className="mr-2 h-5 w-5 "
+                      />{" "}
+                      {isEditing ? "Enregistrement..." : "Création..."}
+                    </>
+                  ) : isEditing ? (
+                    "Enregistrer"
                   ) : (
-                    isEditing ? "Enregistrer" : "Créer l'utilisateur"
+                    "Créer l'utilisateur"
                   )}
                 </Button>
               </div>

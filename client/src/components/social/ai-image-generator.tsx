@@ -146,7 +146,8 @@ export function AiImageGenerator({ onUseInPost }: AiImageGeneratorProps) {
   const [generating, setGenerating] = useState(false);
   const [result, setResult] = useState<GeneratedImage | null>(null);
 
-  const selectedStyleObj = IMAGE_STYLES.find((s) => s.id === selectedStyle) ?? null;
+  const selectedStyleObj =
+    IMAGE_STYLES.find((s) => s.id === selectedStyle) ?? null;
 
   const handleGenerate = useCallback(async () => {
     if (description.trim().length < 30) {
@@ -269,7 +270,8 @@ export function AiImageGenerator({ onUseInPost }: AiImageGeneratorProps) {
           </div>
           {selectedStyleObj && (
             <p className="text-xs text-muted-foreground">
-              Selected: <span className="font-medium">{selectedStyleObj.name}</span>
+              Selected:{" "}
+              <span className="font-medium">{selectedStyleObj.name}</span>
             </p>
           )}
         </div>
@@ -279,7 +281,9 @@ export function AiImageGenerator({ onUseInPost }: AiImageGeneratorProps) {
         {/* ---------- Generate Button ---------- */}
         <Button
           onClick={handleGenerate}
-          disabled={generating || description.trim().length < 30 || !selectedStyle}
+          disabled={
+            generating || description.trim().length < 30 || !selectedStyle
+          }
           className="w-full"
         >
           {generating ? (
@@ -352,10 +356,12 @@ export function AiImageGenerator({ onUseInPost }: AiImageGeneratorProps) {
               {/* Details */}
               <div className="text-xs text-muted-foreground space-y-1">
                 <p>
-                  <span className="font-medium">Style:</span> {result.style.name}
+                  <span className="font-medium">Style:</span>{" "}
+                  {result.style.name}
                 </p>
                 <p>
-                  <span className="font-medium">Description:</span> {result.description}
+                  <span className="font-medium">Description:</span>{" "}
+                  {result.description}
                 </p>
                 <p>
                   <span className="font-medium">Generated:</span>{" "}

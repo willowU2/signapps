@@ -7,7 +7,7 @@
  * This runs client-side and caches in localStorage to avoid repeat fetches.
  */
 
-const CACHE_KEY = 'signapps-logo-cache';
+const CACHE_KEY = "signapps-logo-cache";
 const CACHE_TTL = 7 * 24 * 60 * 60 * 1000; // 7 days
 
 interface LogoCache {
@@ -40,8 +40,8 @@ function setCache(cache: LogoCache): void {
  */
 export async function validateLogoUrl(url: string): Promise<boolean> {
   try {
-    const resp = await fetch(url, { method: 'HEAD', mode: 'no-cors' });
-    return resp.ok || resp.type === 'opaque'; // no-cors returns opaque
+    const resp = await fetch(url, { method: "HEAD", mode: "no-cors" });
+    return resp.ok || resp.type === "opaque"; // no-cors returns opaque
   } catch {
     return false;
   }

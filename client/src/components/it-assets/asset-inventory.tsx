@@ -1,18 +1,18 @@
-'use client';
+"use client";
 
-import { useMemo, useState } from 'react';
-import { ColumnDef } from '@tanstack/react-table';
-import { format, parseISO, differenceInDays } from 'date-fns';
-import { fr } from 'date-fns/locale';
-import { AlertCircle, Plus } from 'lucide-react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { toast } from 'sonner';
+import { useMemo, useState } from "react";
+import { ColumnDef } from "@tanstack/react-table";
+import { format, parseISO, differenceInDays } from "date-fns";
+import { fr } from "date-fns/locale";
+import { AlertCircle, Plus } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { toast } from "sonner";
 
-import { DataTable } from '@/components/ui/data-table';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { DataTable } from "@/components/ui/data-table";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -20,7 +20,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 import {
   Form,
   FormControl,
@@ -28,18 +28,18 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from "@/components/ui/select";
 
-export type AssetType = 'Laptop' | 'Desktop' | 'Server' | 'Phone' | 'Printer';
-export type AssetStatus = 'Active' | 'Maintenance' | 'Retired';
+export type AssetType = "Laptop" | "Desktop" | "Server" | "Phone" | "Printer";
+export type AssetStatus = "Active" | "Maintenance" | "Retired";
 
 export interface ITAsset {
   id: string;
@@ -52,12 +52,12 @@ export interface ITAsset {
 }
 
 const assetSchema = z.object({
-  name: z.string().min(2, 'Le nom doit contenir au moins 2 caractères'),
-  type: z.enum(['Laptop', 'Desktop', 'Server', 'Phone', 'Printer'] as const),
-  serialNumber: z.string().min(1, 'Numéro de série requis'),
-  assignedTo: z.string().min(1, 'Assignation requise'),
-  status: z.enum(['Active', 'Maintenance', 'Retired'] as const),
-  warrantyEndDate: z.string().min(1, 'Date de garantie requise'),
+  name: z.string().min(2, "Le nom doit contenir au moins 2 caractères"),
+  type: z.enum(["Laptop", "Desktop", "Server", "Phone", "Printer"] as const),
+  serialNumber: z.string().min(1, "Numéro de série requis"),
+  assignedTo: z.string().min(1, "Assignation requise"),
+  status: z.enum(["Active", "Maintenance", "Retired"] as const),
+  warrantyEndDate: z.string().min(1, "Date de garantie requise"),
 });
 
 type AssetFormValues = z.infer<typeof assetSchema>;
@@ -73,37 +73,40 @@ export function AssetInventory({ assets, onAddAsset }: AssetInventoryProps) {
   const form = useForm<AssetFormValues>({
     resolver: zodResolver(assetSchema),
     defaultValues: {
-      name: '',
-      type: 'Laptop',
-      serialNumber: '',
-      assignedTo: '',
-      status: 'Active',
-      warrantyEndDate: '',
+      name: "",
+      type: "Laptop",
+      serialNumber: "",
+      assignedTo: "",
+      status: "Active",
+      warrantyEndDate: "",
     },
   });
 
   const getTypeColor = (type: AssetType) => {
     const colorMap: Record<AssetType, string> = {
-      Laptop: 'bg-blue-100 text-blue-800',
-      Desktop: 'bg-slate-100 text-slate-800',
-      Server: 'bg-purple-100 text-purple-800',
-      Phone: 'bg-green-100 text-green-800',
-      Printer: 'bg-orange-100 text-orange-800',
+      Laptop: "bg-blue-100 text-blue-800",
+      Desktop: "bg-slate-100 text-slate-800",
+      Server: "bg-purple-100 text-purple-800",
+      Phone: "bg-green-100 text-green-800",
+      Printer: "bg-orange-100 text-orange-800",
     };
     return colorMap[type];
   };
 
   const getStatusColor = (status: AssetStatus) => {
     const colorMap: Record<AssetStatus, string> = {
-      Active: 'bg-emerald-100 text-emerald-800',
-      Maintenance: 'bg-yellow-100 text-yellow-800',
-      Retired: 'bg-red-100 text-red-800',
+      Active: "bg-emerald-100 text-emerald-800",
+      Maintenance: "bg-yellow-100 text-yellow-800",
+      Retired: "bg-red-100 text-red-800",
     };
     return colorMap[status];
   };
 
   const isWarrantyExpiring = (warrantyDate: string): boolean => {
-    const daysUntilExpiry = differenceInDays(parseISO(warrantyDate), new Date());
+    const daysUntilExpiry = differenceInDays(
+      parseISO(warrantyDate),
+      new Date(),
+    );
     return daysUntilExpiry <= 30 && daysUntilExpiry >= 0;
   };
 
@@ -118,11 +121,11 @@ export function AssetInventory({ assets, onAddAsset }: AssetInventoryProps) {
         ...values,
       };
       onAddAsset?.(newAsset);
-      toast.success('Actif ajouté avec succès');
+      toast.success("Actif ajouté avec succès");
       form.reset();
       setOpen(false);
     } catch (error) {
-      toast.error('Erreur lors de l\'ajout de l\'actif');
+      toast.error("Erreur lors de l'ajout de l'actif");
       console.error(error);
     }
   };
@@ -130,15 +133,15 @@ export function AssetInventory({ assets, onAddAsset }: AssetInventoryProps) {
   const columns: ColumnDef<ITAsset>[] = useMemo(
     () => [
       {
-        accessorKey: 'name',
-        header: 'Nom de l\'actif',
+        accessorKey: "name",
+        header: "Nom de l'actif",
         cell: ({ row }) => (
           <div className="font-medium text-foreground">{row.original.name}</div>
         ),
       },
       {
-        accessorKey: 'type',
-        header: 'Type',
+        accessorKey: "type",
+        header: "Type",
         cell: ({ row }) => (
           <Badge className={getTypeColor(row.original.type)}>
             {row.original.type}
@@ -146,8 +149,8 @@ export function AssetInventory({ assets, onAddAsset }: AssetInventoryProps) {
         ),
       },
       {
-        accessorKey: 'serialNumber',
-        header: 'Numéro de série',
+        accessorKey: "serialNumber",
+        header: "Numéro de série",
         cell: ({ row }) => (
           <span className="text-sm text-muted-foreground font-mono">
             {row.original.serialNumber}
@@ -155,15 +158,17 @@ export function AssetInventory({ assets, onAddAsset }: AssetInventoryProps) {
         ),
       },
       {
-        accessorKey: 'assignedTo',
-        header: 'Assigné à',
+        accessorKey: "assignedTo",
+        header: "Assigné à",
         cell: ({ row }) => (
-          <span className="text-sm text-muted-foreground">{row.original.assignedTo}</span>
+          <span className="text-sm text-muted-foreground">
+            {row.original.assignedTo}
+          </span>
         ),
       },
       {
-        accessorKey: 'status',
-        header: 'Statut',
+        accessorKey: "status",
+        header: "Statut",
         cell: ({ row }) => (
           <Badge className={getStatusColor(row.original.status)}>
             {row.original.status}
@@ -171,8 +176,8 @@ export function AssetInventory({ assets, onAddAsset }: AssetInventoryProps) {
         ),
       },
       {
-        accessorKey: 'warrantyEndDate',
-        header: 'Fin de garantie',
+        accessorKey: "warrantyEndDate",
+        header: "Fin de garantie",
         cell: ({ row }) => {
           const isExpired = isWarrantyExpired(row.original.warrantyEndDate);
           const isExpiring = isWarrantyExpiring(row.original.warrantyEndDate);
@@ -180,7 +185,7 @@ export function AssetInventory({ assets, onAddAsset }: AssetInventoryProps) {
           return (
             <div className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground">
-                {format(parseISO(row.original.warrantyEndDate), 'd MMM yyyy', {
+                {format(parseISO(row.original.warrantyEndDate), "d MMM yyyy", {
                   locale: fr,
                 })}
               </span>
@@ -199,13 +204,15 @@ export function AssetInventory({ assets, onAddAsset }: AssetInventoryProps) {
         },
       },
     ],
-    []
+    [],
   );
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold tracking-tight">Inventaire Informatique</h2>
+        <h2 className="text-2xl font-bold tracking-tight">
+          Inventaire Informatique
+        </h2>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button>
@@ -217,12 +224,16 @@ export function AssetInventory({ assets, onAddAsset }: AssetInventoryProps) {
             <DialogHeader>
               <DialogTitle>Ajouter un nouvel actif</DialogTitle>
               <DialogDescription>
-                Remplissez les informations de l\'actif informatique à ajouter à l\'inventaire.
+                Remplissez les informations de l\'actif informatique à ajouter à
+                l\'inventaire.
               </DialogDescription>
             </DialogHeader>
 
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="space-y-4"
+              >
                 <FormField
                   control={form.control}
                   name="name"
@@ -243,7 +254,10 @@ export function AssetInventory({ assets, onAddAsset }: AssetInventoryProps) {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Type</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue />
@@ -296,7 +310,10 @@ export function AssetInventory({ assets, onAddAsset }: AssetInventoryProps) {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Statut</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue />
@@ -304,7 +321,9 @@ export function AssetInventory({ assets, onAddAsset }: AssetInventoryProps) {
                         </FormControl>
                         <SelectContent>
                           <SelectItem value="Active">Active</SelectItem>
-                          <SelectItem value="Maintenance">Maintenance</SelectItem>
+                          <SelectItem value="Maintenance">
+                            Maintenance
+                          </SelectItem>
                           <SelectItem value="Retired">Retired</SelectItem>
                         </SelectContent>
                       </Select>

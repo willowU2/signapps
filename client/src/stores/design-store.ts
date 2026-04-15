@@ -1,11 +1,19 @@
 "use client";
 
-import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
-import { useShallow } from 'zustand/react/shallow';
-import type { Design, DesignMeta, DesignFormat, DesignPage, DesignObject, BrandKit, ExportOptions } from '@/components/design/types';
-import { DESIGN_FORMATS } from '@/components/design/types';
-import { getClient, ServiceName } from '@/lib/api/factory';
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
+import { useShallow } from "zustand/react/shallow";
+import type {
+  Design,
+  DesignMeta,
+  DesignFormat,
+  DesignPage,
+  DesignObject,
+  BrandKit,
+  ExportOptions,
+} from "@/components/design/types";
+import { DESIGN_FORMATS } from "@/components/design/types";
+import { getClient, ServiceName } from "@/lib/api/factory";
 
 const docsClient = getClient(ServiceName.DOCS);
 
@@ -24,7 +32,7 @@ interface DesignState {
   undoStack: string[]; // serialized page states
   redoStack: string[];
   // UI
-  leftPanel: 'layers' | 'pages' | null;
+  leftPanel: "layers" | "pages" | null;
   rightPanel: boolean;
 
   // Dashboard actions
@@ -68,7 +76,7 @@ interface DesignState {
   redo: () => void;
 
   // UI actions
-  setLeftPanel: (panel: 'layers' | 'pages' | null) => void;
+  setLeftPanel: (panel: "layers" | "pages" | null) => void;
   setRightPanel: (open: boolean) => void;
 
   // Brand kit
@@ -82,7 +90,7 @@ function createDefaultPage(): DesignPage {
   return {
     id: crypto.randomUUID(),
     objects: [],
-    background: '#ffffff',
+    background: "#ffffff",
   };
 }
 
@@ -99,16 +107,16 @@ export const useDesignStore = create<DesignState>()(
       brandKit: null,
       undoStack: [],
       redoStack: [],
-      leftPanel: 'layers',
+      leftPanel: "layers",
       rightPanel: true,
 
       // Dashboard actions
       loadDesigns: async () => {
         try {
-          const res = await docsClient.get<any[]>('/designs');
+          const res = await docsClient.get<any[]>("/designs");
           const metas: DesignMeta[] = (res.data ?? []).map((d: any) => ({
             id: d.id,
-            name: d.name ?? d.title ?? 'Untitled',
+            name: d.name ?? d.title ?? "Untitled",
             format: d.format ?? DESIGN_FORMATS[0],
             createdAt: d.created_at ?? d.createdAt ?? new Date().toISOString(),
             updatedAt: d.updated_at ?? d.updatedAt ?? new Date().toISOString(),
@@ -148,18 +156,20 @@ export const useDesignStore = create<DesignState>()(
           redoStack: [],
         }));
         // Also persist the full design
-        if (typeof window !== 'undefined') {
+        if (typeof window !== "undefined") {
           localStorage.setItem(`design-${id}`, JSON.stringify(design));
         }
         // Sync to API
-        docsClient.post('/designs', {
-          id,
-          name,
-          format,
-          pages: design.pages,
-          created_at: now,
-          updated_at: now,
-        }).catch(() => {});
+        docsClient
+          .post("/designs", {
+            id,
+            name,
+            format,
+            pages: design.pages,
+            created_at: now,
+            updated_at: now,
+          })
+          .catch(() => {});
         return id;
       },
 
@@ -168,7 +178,7 @@ export const useDesignStore = create<DesignState>()(
           designs: s.designs.filter((d) => d.id !== id),
           currentDesign: s.currentDesign?.id === id ? null : s.currentDesign,
         }));
-        if (typeof window !== 'undefined') {
+        if (typeof window !== "undefined") {
           localStorage.removeItem(`design-${id}`);
         }
         docsClient.delete(`/designs/${id}`).catch(() => {});
@@ -177,14 +187,14 @@ export const useDesignStore = create<DesignState>()(
       duplicateDesign: (id) => {
         const state = get();
         const meta = state.designs.find((d) => d.id === id);
-        if (!meta) return '';
+        if (!meta) return "";
 
         let sourceDesign: Design | null = null;
-        if (typeof window !== 'undefined') {
+        if (typeof window !== "undefined") {
           const raw = localStorage.getItem(`design-${id}`);
           if (raw) sourceDesign = JSON.parse(raw);
         }
-        if (!sourceDesign) return '';
+        if (!sourceDesign) return "";
 
         const newId = crypto.randomUUID();
         const now = new Date().toISOString();
@@ -208,7 +218,7 @@ export const useDesignStore = create<DesignState>()(
           updatedAt: now,
         };
         set((s) => ({ designs: [newMeta, ...s.designs] }));
-        if (typeof window !== 'undefined') {
+        if (typeof window !== "undefined") {
           localStorage.setItem(`design-${newId}`, JSON.stringify(newDesign));
         }
         return newId;
@@ -216,30 +226,55 @@ export const useDesignStore = create<DesignState>()(
 
       renameDesign: (id, name) => {
         set((s) => ({
-          designs: s.designs.map((d) => (d.id === id ? { ...d, name, updatedAt: new Date().toISOString() } : d)),
-          currentDesign: s.currentDesign?.id === id ? { ...s.currentDesign, name, updatedAt: new Date().toISOString() } : s.currentDesign,
+          designs: s.designs.map((d) =>
+            d.id === id
+              ? { ...d, name, updatedAt: new Date().toISOString() }
+              : d,
+          ),
+          currentDesign:
+            s.currentDesign?.id === id
+              ? {
+                  ...s.currentDesign,
+                  name,
+                  updatedAt: new Date().toISOString(),
+                }
+              : s.currentDesign,
         }));
         // Persist locally
         const state = get();
-        if (state.currentDesign?.id === id && typeof window !== 'undefined') {
-          localStorage.setItem(`design-${id}`, JSON.stringify(state.currentDesign));
+        if (state.currentDesign?.id === id && typeof window !== "undefined") {
+          localStorage.setItem(
+            `design-${id}`,
+            JSON.stringify(state.currentDesign),
+          );
         }
         docsClient.put(`/designs/${id}`, { name }).catch(() => {});
       },
 
       loadDesign: async (id) => {
-        if (typeof window === 'undefined') return;
+        if (typeof window === "undefined") return;
         // DW1: Try Drive API first, fallback to localStorage
         try {
           const res = await docsClient.get<any>(`/designs/${id}`);
           if (res.data) {
             const design: Design = {
               id: res.data.id,
-              name: res.data.name ?? res.data.title ?? 'Untitled',
-              format: res.data.format ?? { width: 1920, height: 1080, label: 'Présentation', unit: 'px' },
+              name: res.data.name ?? res.data.title ?? "Untitled",
+              format: res.data.format ?? {
+                width: 1920,
+                height: 1080,
+                label: "Présentation",
+                unit: "px",
+              },
               pages: res.data.pages ?? [createDefaultPage()],
-              createdAt: res.data.created_at ?? res.data.createdAt ?? new Date().toISOString(),
-              updatedAt: res.data.updated_at ?? res.data.updatedAt ?? new Date().toISOString(),
+              createdAt:
+                res.data.created_at ??
+                res.data.createdAt ??
+                new Date().toISOString(),
+              updatedAt:
+                res.data.updated_at ??
+                res.data.updatedAt ??
+                new Date().toISOString(),
             };
             // Also cache locally
             localStorage.setItem(`design-${id}`, JSON.stringify(design));
@@ -271,26 +306,36 @@ export const useDesignStore = create<DesignState>()(
 
       saveDesign: () => {
         const state = get();
-        if (!state.currentDesign || typeof window === 'undefined') return;
+        if (!state.currentDesign || typeof window === "undefined") return;
         const now = new Date().toISOString();
         const updated = { ...state.currentDesign, updatedAt: now };
         // DW1: Save to localStorage AND Drive API
         localStorage.setItem(`design-${updated.id}`, JSON.stringify(updated));
         set((s) => ({
           currentDesign: updated,
-          designs: s.designs.map((d) => (d.id === updated.id ? { ...d, updatedAt: now } : d)),
+          designs: s.designs.map((d) =>
+            d.id === updated.id ? { ...d, updatedAt: now } : d,
+          ),
         }));
-        docsClient.put(`/designs/${updated.id}`, {
-          name: updated.name,
-          format: updated.format,
-          pages: updated.pages,
-          updated_at: now,
-        }).catch(() => {});
+        docsClient
+          .put(`/designs/${updated.id}`, {
+            name: updated.name,
+            format: updated.format,
+            pages: updated.pages,
+            updated_at: now,
+          })
+          .catch(() => {});
       },
 
       closeDesign: () => {
         get().saveDesign();
-        set({ currentDesign: null, currentPageIndex: 0, selectedObjectIds: [], undoStack: [], redoStack: [] });
+        set({
+          currentDesign: null,
+          currentPageIndex: 0,
+          selectedObjectIds: [],
+          undoStack: [],
+          redoStack: [],
+        });
       },
 
       // Page actions
@@ -317,7 +362,10 @@ export const useDesignStore = create<DesignState>()(
           const cloned: DesignPage = {
             ...page,
             id: crypto.randomUUID(),
-            objects: page.objects.map((o) => ({ ...o, id: crypto.randomUUID() })),
+            objects: page.objects.map((o) => ({
+              ...o,
+              id: crypto.randomUUID(),
+            })),
           };
           const newPages = [...s.currentDesign.pages];
           newPages.splice(index + 1, 0, cloned);
@@ -358,7 +406,7 @@ export const useDesignStore = create<DesignState>()(
         set((s) => {
           if (!s.currentDesign) return s;
           const pages = s.currentDesign.pages.map((p, i) =>
-            i === pageIndex ? { ...p, background: bg } : p
+            i === pageIndex ? { ...p, background: bg } : p,
           );
           return { currentDesign: { ...s.currentDesign, pages } };
         });
@@ -371,7 +419,9 @@ export const useDesignStore = create<DesignState>()(
         set((s) => {
           if (!s.currentDesign) return s;
           const pages = s.currentDesign.pages.map((p, i) =>
-            i === s.currentPageIndex ? { ...p, objects: [...p.objects, obj] } : p
+            i === s.currentPageIndex
+              ? { ...p, objects: [...p.objects, obj] }
+              : p,
           );
           return {
             currentDesign: { ...s.currentDesign, pages },
@@ -385,8 +435,13 @@ export const useDesignStore = create<DesignState>()(
           if (!s.currentDesign) return s;
           const pages = s.currentDesign.pages.map((p, i) =>
             i === s.currentPageIndex
-              ? { ...p, objects: p.objects.map((o) => (o.id === id ? { ...o, ...updates } : o)) }
-              : p
+              ? {
+                  ...p,
+                  objects: p.objects.map((o) =>
+                    o.id === id ? { ...o, ...updates } : o,
+                  ),
+                }
+              : p,
           );
           return { currentDesign: { ...s.currentDesign, pages } };
         });
@@ -400,7 +455,7 @@ export const useDesignStore = create<DesignState>()(
           const pages = s.currentDesign.pages.map((p, i) =>
             i === s.currentPageIndex
               ? { ...p, objects: p.objects.filter((o) => o.id !== id) }
-              : p
+              : p,
           );
           return {
             currentDesign: { ...s.currentDesign, pages },
@@ -420,7 +475,7 @@ export const useDesignStore = create<DesignState>()(
           const [moved] = objects.splice(fromIndex, 1);
           objects.splice(toIndex, 0, moved);
           const pages = s.currentDesign.pages.map((p, i) =>
-            i === s.currentPageIndex ? { ...p, objects } : p
+            i === s.currentPageIndex ? { ...p, objects } : p,
           );
           return { currentDesign: { ...s.currentDesign, pages } };
         });
@@ -431,8 +486,13 @@ export const useDesignStore = create<DesignState>()(
           if (!s.currentDesign) return s;
           const pages = s.currentDesign.pages.map((p, i) =>
             i === s.currentPageIndex
-              ? { ...p, objects: p.objects.map((o) => (o.id === id ? { ...o, locked: !o.locked } : o)) }
-              : p
+              ? {
+                  ...p,
+                  objects: p.objects.map((o) =>
+                    o.id === id ? { ...o, locked: !o.locked } : o,
+                  ),
+                }
+              : p,
           );
           return { currentDesign: { ...s.currentDesign, pages } };
         });
@@ -443,8 +503,13 @@ export const useDesignStore = create<DesignState>()(
           if (!s.currentDesign) return s;
           const pages = s.currentDesign.pages.map((p, i) =>
             i === s.currentPageIndex
-              ? { ...p, objects: p.objects.map((o) => (o.id === id ? { ...o, visible: !o.visible } : o)) }
-              : p
+              ? {
+                  ...p,
+                  objects: p.objects.map((o) =>
+                    o.id === id ? { ...o, visible: !o.visible } : o,
+                  ),
+                }
+              : p,
           );
           return { currentDesign: { ...s.currentDesign, pages } };
         });
@@ -455,8 +520,13 @@ export const useDesignStore = create<DesignState>()(
           if (!s.currentDesign) return s;
           const pages = s.currentDesign.pages.map((p, i) =>
             i === s.currentPageIndex
-              ? { ...p, objects: p.objects.map((o) => (o.id === id ? { ...o, name } : o)) }
-              : p
+              ? {
+                  ...p,
+                  objects: p.objects.map((o) =>
+                    o.id === id ? { ...o, name } : o,
+                  ),
+                }
+              : p,
           );
           return { currentDesign: { ...s.currentDesign, pages } };
         });
@@ -488,7 +558,7 @@ export const useDesignStore = create<DesignState>()(
         set((s) => {
           if (!s.currentDesign) return s;
           const pages = s.currentDesign.pages.map((p, i) =>
-            i === s.currentPageIndex ? restored : p
+            i === s.currentPageIndex ? restored : p,
           );
           return {
             currentDesign: { ...s.currentDesign, pages },
@@ -508,7 +578,7 @@ export const useDesignStore = create<DesignState>()(
         set((s) => {
           if (!s.currentDesign) return s;
           const pages = s.currentDesign.pages.map((p, i) =>
-            i === s.currentPageIndex ? restored : p
+            i === s.currentPageIndex ? restored : p,
           );
           return {
             currentDesign: { ...s.currentDesign, pages },
@@ -558,20 +628,22 @@ export const useDesignStore = create<DesignState>()(
               updatedAt: new Date().toISOString(),
             },
             designs: s.designs.map((d) =>
-              d.id === s.currentDesign!.id ? { ...d, format, updatedAt: new Date().toISOString() } : d
+              d.id === s.currentDesign!.id
+                ? { ...d, format, updatedAt: new Date().toISOString() }
+                : d,
             ),
           };
         });
       },
     }),
     {
-      name: 'design-storage',
+      name: "design-storage",
       partialize: (state) => ({
         designs: state.designs,
         brandKit: state.brandKit,
       }),
-    }
-  )
+    },
+  ),
 );
 
 // Selectors
@@ -584,7 +656,7 @@ export const useDesignEditor = () =>
       zoom: s.zoom,
       showGrid: s.showGrid,
       snapToGrid: s.snapToGrid,
-    }))
+    })),
   );
 
 export const useDesignPages = () =>
@@ -597,7 +669,7 @@ export const useDesignPages = () =>
       duplicatePage: s.duplicatePage,
       deletePage: s.deletePage,
       reorderPages: s.reorderPages,
-    }))
+    })),
   );
 
 export const useDesignObjects = () => {
@@ -621,5 +693,5 @@ export const useDesignActions = () =>
       undo: s.undo,
       redo: s.redo,
       saveDesign: s.saveDesign,
-    }))
+    })),
   );

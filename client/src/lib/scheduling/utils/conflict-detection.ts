@@ -5,8 +5,13 @@
  * tasks, and resource bookings.
  */
 
-import { areIntervalsOverlapping, addMinutes, subMinutes, isWithinInterval } from 'date-fns';
-import type { ScheduleBlock, DateRange } from '../types/scheduling';
+import {
+  areIntervalsOverlapping,
+  addMinutes,
+  subMinutes,
+  isWithinInterval,
+} from "date-fns";
+import type { ScheduleBlock, DateRange } from "../types/scheduling";
 
 // ============================================================================
 // Types
@@ -22,12 +27,12 @@ export interface ConflictCheckOptions {
 }
 
 export interface Conflict {
-  type: 'overlap' | 'resource' | 'attendee';
+  type: "overlap" | "resource" | "attendee";
   event: ScheduleBlock;
   overlapStart: Date;
   overlapEnd: Date;
   overlapMinutes: number;
-  severity: 'warning' | 'error';
+  severity: "warning" | "error";
 }
 
 export interface ConflictResult {
@@ -54,14 +59,14 @@ export function doTimesOverlap(
   end1: Date,
   start2: Date,
   end2: Date,
-  bufferMinutes = 0
+  bufferMinutes = 0,
 ): boolean {
   const adjustedStart1 = subMinutes(start1, bufferMinutes);
   const adjustedEnd1 = addMinutes(end1, bufferMinutes);
 
   return areIntervalsOverlapping(
     { start: adjustedStart1, end: adjustedEnd1 },
-    { start: start2, end: end2 }
+    { start: start2, end: end2 },
   );
 }
 
@@ -72,7 +77,7 @@ export function calculateOverlap(
   start1: Date,
   end1: Date,
   start2: Date,
-  end2: Date
+  end2: Date,
 ): { start: Date; end: Date; minutes: number } | null {
   const overlapStart = new Date(Math.max(start1.getTime(), start2.getTime()));
   const overlapEnd = new Date(Math.min(end1.getTime(), end2.getTime()));
@@ -81,7 +86,9 @@ export function calculateOverlap(
     return null;
   }
 
-  const minutes = Math.round((overlapEnd.getTime() - overlapStart.getTime()) / 60000);
+  const minutes = Math.round(
+    (overlapEnd.getTime() - overlapStart.getTime()) / 60000,
+  );
   return { start: overlapStart, end: overlapEnd, minutes };
 }
 
@@ -92,7 +99,7 @@ export function checkConflicts(
   proposedStart: Date,
   proposedEnd: Date,
   existingEvents: ScheduleBlock[],
-  options: ConflictCheckOptions = {}
+  options: ConflictCheckOptions = {},
 ): ConflictResult {
   const {
     bufferMinutes = 0,
@@ -112,23 +119,39 @@ export function checkConflicts(
     const eventEnd = event.end || addMinutes(event.start, 60);
 
     // Check time overlap
-    if (doTimesOverlap(proposedStart, proposedEnd, event.start, eventEnd, bufferMinutes)) {
-      const overlap = calculateOverlap(proposedStart, proposedEnd, event.start, eventEnd);
+    if (
+      doTimesOverlap(
+        proposedStart,
+        proposedEnd,
+        event.start,
+        eventEnd,
+        bufferMinutes,
+      )
+    ) {
+      const overlap = calculateOverlap(
+        proposedStart,
+        proposedEnd,
+        event.start,
+        eventEnd,
+      );
 
       if (overlap) {
         conflicts.push({
-          type: 'overlap',
+          type: "overlap",
           event,
           overlapStart: overlap.start,
           overlapEnd: overlap.end,
           overlapMinutes: overlap.minutes,
-          severity: overlap.minutes >= 30 ? 'error' : 'warning',
+          severity: overlap.minutes >= 30 ? "error" : "warning",
         });
       }
     }
   }
 
-  const totalOverlapMinutes = conflicts.reduce((sum, c) => sum + c.overlapMinutes, 0);
+  const totalOverlapMinutes = conflicts.reduce(
+    (sum, c) => sum + c.overlapMinutes,
+    0,
+  );
 
   return {
     hasConflicts: conflicts.length > 0,
@@ -145,28 +168,33 @@ export function checkResourceConflicts(
   proposedStart: Date,
   proposedEnd: Date,
   existingBookings: ScheduleBlock[],
-  excludeIds: string[] = []
+  excludeIds: string[] = [],
 ): Conflict[] {
   const conflicts: Conflict[] = [];
 
   const resourceBookings = existingBookings.filter(
-    (b) => b.resourceId === resourceId && !excludeIds.includes(b.id)
+    (b) => b.resourceId === resourceId && !excludeIds.includes(b.id),
   );
 
   for (const booking of resourceBookings) {
     const bookingEnd = booking.end || addMinutes(booking.start, 60);
 
     if (doTimesOverlap(proposedStart, proposedEnd, booking.start, bookingEnd)) {
-      const overlap = calculateOverlap(proposedStart, proposedEnd, booking.start, bookingEnd);
+      const overlap = calculateOverlap(
+        proposedStart,
+        proposedEnd,
+        booking.start,
+        bookingEnd,
+      );
 
       if (overlap) {
         conflicts.push({
-          type: 'resource',
+          type: "resource",
           event: booking,
           overlapStart: overlap.start,
           overlapEnd: overlap.end,
           overlapMinutes: overlap.minutes,
-          severity: 'error', // Resource conflicts are always errors
+          severity: "error", // Resource conflicts are always errors
         });
       }
     }
@@ -183,7 +211,7 @@ export function checkAttendeeConflicts(
   proposedStart: Date,
   proposedEnd: Date,
   attendeeEvents: ScheduleBlock[],
-  excludeIds: string[] = []
+  excludeIds: string[] = [],
 ): Conflict[] {
   const conflicts: Conflict[] = [];
 
@@ -194,16 +222,21 @@ export function checkAttendeeConflicts(
     const eventEnd = event.end || addMinutes(event.start, 60);
 
     if (doTimesOverlap(proposedStart, proposedEnd, event.start, eventEnd)) {
-      const overlap = calculateOverlap(proposedStart, proposedEnd, event.start, eventEnd);
+      const overlap = calculateOverlap(
+        proposedStart,
+        proposedEnd,
+        event.start,
+        eventEnd,
+      );
 
       if (overlap) {
         conflicts.push({
-          type: 'attendee',
+          type: "attendee",
           event,
           overlapStart: overlap.start,
           overlapEnd: overlap.end,
           overlapMinutes: overlap.minutes,
-          severity: 'warning', // Attendee conflicts are warnings (they can still be invited)
+          severity: "warning", // Attendee conflicts are warnings (they can still be invited)
         });
       }
     }
@@ -227,7 +260,7 @@ export function findAvailableSlots(
     workingHoursStart?: number;
     workingHoursEnd?: number;
     bufferMinutes?: number;
-  } = {}
+  } = {},
 ): AvailableSlot[] {
   const {
     minDurationMinutes = 30,
@@ -275,12 +308,17 @@ export function findAvailableSlots(
 
     for (const event of dayEvents) {
       const eventStart = subMinutes(event.start, bufferMinutes);
-      const eventEnd = addMinutes(event.end || addMinutes(event.start, 60), bufferMinutes);
+      const eventEnd = addMinutes(
+        event.end || addMinutes(event.start, 60),
+        bufferMinutes,
+      );
 
       // If there's a gap before this event
       if (eventStart > slotStart) {
         const gapEnd = eventStart;
-        const durationMinutes = Math.round((gapEnd.getTime() - slotStart.getTime()) / 60000);
+        const durationMinutes = Math.round(
+          (gapEnd.getTime() - slotStart.getTime()) / 60000,
+        );
 
         if (durationMinutes >= minDurationMinutes) {
           slots.push({
@@ -299,7 +337,9 @@ export function findAvailableSlots(
 
     // Check for gap after last event until end of day
     if (slotStart < dayEnd) {
-      const durationMinutes = Math.round((dayEnd.getTime() - slotStart.getTime()) / 60000);
+      const durationMinutes = Math.round(
+        (dayEnd.getTime() - slotStart.getTime()) / 60000,
+      );
 
       if (durationMinutes >= minDurationMinutes) {
         slots.push({
@@ -329,7 +369,7 @@ export function findNextAvailableSlot(
     workingHoursStart?: number;
     workingHoursEnd?: number;
     bufferMinutes?: number;
-  } = {}
+  } = {},
 ): AvailableSlot | null {
   const {
     maxDaysToSearch = 14,
@@ -348,7 +388,7 @@ export function findNextAvailableSlot(
       workingHoursStart,
       workingHoursEnd,
       bufferMinutes,
-    }
+    },
   );
 
   // Return the first slot that can accommodate the duration
@@ -376,7 +416,7 @@ export function suggestAlternativeTimes(
     maxSuggestions?: number;
     workingHoursStart?: number;
     workingHoursEnd?: number;
-  } = {}
+  } = {},
 ): AvailableSlot[] {
   const {
     maxSuggestions = 3,
@@ -385,7 +425,7 @@ export function suggestAlternativeTimes(
   } = options;
 
   const durationMinutes = Math.round(
-    (proposedEnd.getTime() - proposedStart.getTime()) / 60000
+    (proposedEnd.getTime() - proposedStart.getTime()) / 60000,
   );
 
   const suggestions: AvailableSlot[] = [];
@@ -400,7 +440,7 @@ export function suggestAlternativeTimes(
       minDurationMinutes: durationMinutes,
       workingHoursStart,
       workingHoursEnd,
-    }
+    },
   );
 
   for (const slot of slots) {
@@ -430,7 +470,7 @@ export function suggestAlternativeTimes(
 export function isWithinWorkingHours(
   time: Date,
   workingHoursStart = 9,
-  workingHoursEnd = 18
+  workingHoursEnd = 18,
 ): boolean {
   const hour = time.getHours();
   return hour >= workingHoursStart && hour < workingHoursEnd;
@@ -439,8 +479,10 @@ export function isWithinWorkingHours(
 /**
  * Get conflict severity color
  */
-export function getConflictSeverityColor(severity: 'warning' | 'error'): string {
-  return severity === 'error' ? 'text-destructive' : 'text-yellow-600';
+export function getConflictSeverityColor(
+  severity: "warning" | "error",
+): string {
+  return severity === "error" ? "text-destructive" : "text-yellow-600";
 }
 
 /**
@@ -450,11 +492,11 @@ export function formatConflictMessage(conflict: Conflict): string {
   const eventTitle = conflict.event.title;
 
   switch (conflict.type) {
-    case 'overlap':
+    case "overlap":
       return `Conflit avec "${eventTitle}" (${conflict.overlapMinutes} min de chevauchement)`;
-    case 'resource':
+    case "resource":
       return `Ressource déjà réservée par "${eventTitle}"`;
-    case 'attendee':
+    case "attendee":
       return `Participant occupé: "${eventTitle}"`;
     default:
       return `Conflit avec "${eventTitle}"`;

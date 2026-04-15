@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * Slot Selector Component
@@ -7,9 +7,9 @@
  * Shows a list of recommended times with participant availability.
  */
 
-import * as React from 'react';
-import { format, differenceInMinutes, isToday, isTomorrow } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import * as React from "react";
+import { format, differenceInMinutes, isToday, isTomorrow } from "date-fns";
+import { fr } from "date-fns/locale";
 import {
   Clock,
   Users,
@@ -19,19 +19,19 @@ import {
   AlertCircle,
   ChevronDown,
   ChevronUp,
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Label } from '@/components/ui/label';
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from '@/components/ui/collapsible';
-import type { CommonSlot } from '@/lib/scheduling/utils/availability-finder';
+} from "@/components/ui/collapsible";
+import type { CommonSlot } from "@/lib/scheduling/utils/availability-finder";
 
 // ============================================================================
 // Types
@@ -68,13 +68,13 @@ interface SlotCardProps {
 // ============================================================================
 
 function formatSlotDate(date: Date): string {
-  if (isToday(date)) return 'Aujourd\'hui';
-  if (isTomorrow(date)) return 'Demain';
-  return format(date, 'EEEE d MMMM', { locale: fr });
+  if (isToday(date)) return "Aujourd'hui";
+  if (isTomorrow(date)) return "Demain";
+  return format(date, "EEEE d MMMM", { locale: fr });
 }
 
 function formatSlotTime(start: Date, end: Date): string {
-  return `${format(start, 'HH:mm')} - ${format(end, 'HH:mm')}`;
+  return `${format(start, "HH:mm")} - ${format(end, "HH:mm")}`;
 }
 
 function getSlotDuration(start: Date, end: Date): string {
@@ -119,7 +119,7 @@ export function SlotSelector({
 
   if (slots.length === 0) {
     return (
-      <div className={cn('p-4 text-center', className)}>
+      <div className={cn("p-4 text-center", className)}>
         <AlertCircle className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
         <p className="text-sm text-muted-foreground">
           Aucun créneau disponible trouvé pour les participants sélectionnés.
@@ -132,7 +132,7 @@ export function SlotSelector({
   }
 
   return (
-    <div className={cn('space-y-4', className)}>
+    <div className={cn("space-y-4", className)}>
       {/* Perfect matches section */}
       {perfectSlots.length > 0 && (
         <div className="space-y-2">
@@ -153,7 +153,8 @@ export function SlotSelector({
                   key={slot.start.toISOString()}
                   slot={slot}
                   isSelected={
-                    selectedSlot?.start.toISOString() === slot.start.toISOString()
+                    selectedSlot?.start.toISOString() ===
+                    slot.start.toISOString()
                   }
                   onSelect={() => onSlotSelect(slot)}
                   totalParticipants={totalParticipants}
@@ -196,7 +197,8 @@ export function SlotSelector({
                     key={slot.start.toISOString()}
                     slot={slot}
                     isSelected={
-                      selectedSlot?.start.toISOString() === slot.start.toISOString()
+                      selectedSlot?.start.toISOString() ===
+                      slot.start.toISOString()
                     }
                     onSelect={() => onSlotSelect(slot)}
                     totalParticipants={totalParticipants}
@@ -252,11 +254,11 @@ function SlotCard({
   return (
     <Card
       className={cn(
-        'cursor-pointer transition-all hover:shadow-md',
-        isSelected && 'ring-2 ring-primary',
+        "cursor-pointer transition-all hover:shadow-md",
+        isSelected && "ring-2 ring-primary",
         slot.allAvailable
-          ? 'border-green-200 hover:border-green-300'
-          : 'border-yellow-200 hover:border-yellow-300'
+          ? "border-green-200 hover:border-green-300"
+          : "border-yellow-200 hover:border-yellow-300",
       )}
       onClick={onSelect}
     >
@@ -304,16 +306,23 @@ function SlotCard({
                 <div className="flex items-center gap-2">
                   <Users className="h-4 w-4 text-muted-foreground" />
                   <span>
-                    {slot.availableParticipants.length}/{totalParticipants} disponibles
+                    {slot.availableParticipants.length}/{totalParticipants}{" "}
+                    disponibles
                   </span>
                 </div>
                 {slot.allAvailable ? (
-                  <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                  <Badge
+                    variant="outline"
+                    className="bg-green-50 text-green-700 border-green-200"
+                  >
                     <Check className="h-3 w-3 mr-1" />
                     Parfait
                   </Badge>
                 ) : (
-                  <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
+                  <Badge
+                    variant="outline"
+                    className="bg-yellow-50 text-yellow-700 border-yellow-200"
+                  >
                     <AlertCircle className="h-3 w-3 mr-1" />
                     Partiel
                   </Badge>
@@ -362,7 +371,7 @@ export function SlotSelectorCompact({
   const displaySlots = topSlots.length > 0 ? topSlots : slots.slice(0, 3);
 
   return (
-    <div className={cn('flex flex-wrap gap-2', className)}>
+    <div className={cn("flex flex-wrap gap-2", className)}>
       {displaySlots.map((slot) => {
         const isSelected =
           selectedSlot?.start.toISOString() === slot.start.toISOString();
@@ -370,21 +379,29 @@ export function SlotSelectorCompact({
         return (
           <Button
             key={slot.start.toISOString()}
-            variant={isSelected ? 'default' : 'outline'}
+            variant={isSelected ? "default" : "outline"}
             size="sm"
             onClick={() => onSlotSelect(slot)}
             className={cn(
-              'h-auto py-1.5 px-3',
-              !isSelected && slot.allAvailable && 'border-green-300 hover:bg-green-50',
-              !isSelected && !slot.allAvailable && 'border-yellow-300 hover:bg-yellow-50'
+              "h-auto py-1.5 px-3",
+              !isSelected &&
+                slot.allAvailable &&
+                "border-green-300 hover:bg-green-50",
+              !isSelected &&
+                !slot.allAvailable &&
+                "border-yellow-300 hover:bg-yellow-50",
             )}
           >
             <div className="flex flex-col items-start text-xs">
               <span className="font-medium">
-                {isToday(slot.start) ? 'Auj.' : isTomorrow(slot.start) ? 'Dem.' : format(slot.start, 'EEE d', { locale: fr })}
+                {isToday(slot.start)
+                  ? "Auj."
+                  : isTomorrow(slot.start)
+                    ? "Dem."
+                    : format(slot.start, "EEE d", { locale: fr })}
               </span>
               <span className="text-muted-foreground">
-                {format(slot.start, 'HH:mm')}
+                {format(slot.start, "HH:mm")}
               </span>
             </div>
           </Button>

@@ -93,7 +93,10 @@ mod tests {
     fn sysvol_path() {
         let gpo = default_domain_policy();
         let path = gpo.sysvol_path("example.com");
-        assert_eq!(path, "sysvol/example.com/Policies/{31B2F340-016D-11D2-945F-00C04FB984F9}");
+        assert_eq!(
+            path,
+            "sysvol/example.com/Policies/{31B2F340-016D-11D2-945F-00C04FB984F9}"
+        );
     }
 
     #[test]

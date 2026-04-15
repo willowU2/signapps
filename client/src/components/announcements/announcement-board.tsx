@@ -34,12 +34,15 @@ interface Announcement {
 
 interface AnnouncementBoardProps {
   initialAnnouncements?: Announcement[];
-  onAnnounceAdd?: (announcement: Omit<Announcement, "id" | "likes" | "liked">) => void;
+  onAnnounceAdd?: (
+    announcement: Omit<Announcement, "id" | "likes" | "liked">,
+  ) => void;
 }
 
 const categoryColors: Record<AnnouncementCategory, string> = {
   RH: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
-  Direction: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
+  Direction:
+    "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
   IT: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
   General: "bg-muted text-gray-800 dark:bg-gray-900 dark:text-gray-200",
 };
@@ -48,7 +51,8 @@ export function AnnouncementBoard({
   initialAnnouncements = [],
   onAnnounceAdd,
 }: AnnouncementBoardProps) {
-  const [announcements, setAnnouncements] = useState<Announcement[]>(initialAnnouncements);
+  const [announcements, setAnnouncements] =
+    useState<Announcement[]>(initialAnnouncements);
   const [formOpen, setFormOpen] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
@@ -92,7 +96,9 @@ export function AnnouncementBoard({
 
   const togglePin = (id: string) => {
     setAnnouncements(
-      announcements.map((a) => (a.id === id ? { ...a, isPinned: !a.isPinned } : a))
+      announcements.map((a) =>
+        a.id === id ? { ...a, isPinned: !a.isPinned } : a,
+      ),
     );
   };
 
@@ -107,7 +113,7 @@ export function AnnouncementBoard({
           };
         }
         return a;
-      })
+      }),
     );
   };
 
@@ -116,7 +122,11 @@ export function AnnouncementBoard({
   };
 
   const sortedAnnouncements = [...announcements].sort((a, b) =>
-    a.isPinned === b.isPinned ? b.date.getTime() - a.date.getTime() : a.isPinned ? -1 : 1
+    a.isPinned === b.isPinned
+      ? b.date.getTime() - a.date.getTime()
+      : a.isPinned
+        ? -1
+        : 1,
   );
 
   return (
@@ -124,7 +134,9 @@ export function AnnouncementBoard({
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold">Announcements</h2>
-          <p className="text-sm text-muted-foreground">Company updates and important messages</p>
+          <p className="text-sm text-muted-foreground">
+            Company updates and important messages
+          </p>
         </div>
         <Dialog open={formOpen} onOpenChange={setFormOpen}>
           <DialogTrigger asChild>
@@ -143,7 +155,9 @@ export function AnnouncementBoard({
                 <Input
                   placeholder="Announcement title"
                   value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, title: e.target.value })
+                  }
                   className="mt-1"
                 />
               </div>
@@ -152,7 +166,9 @@ export function AnnouncementBoard({
                 <Textarea
                   placeholder="Write your announcement here..."
                   value={formData.content}
-                  onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, content: e.target.value })
+                  }
                   className="mt-1"
                   rows={5}
                 />
@@ -176,7 +192,11 @@ export function AnnouncementBoard({
                 </select>
               </div>
               <div className="flex justify-end gap-2 pt-2">
-                <Button type="button" variant="outline" onClick={() => setFormOpen(false)}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setFormOpen(false)}
+                >
                   Cancel
                 </Button>
                 <Button type="submit">Post Announcement</Button>
@@ -190,7 +210,9 @@ export function AnnouncementBoard({
         <Card className="border-dashed">
           <CardContent className="flex flex-col items-center justify-center py-12">
             <p className="text-muted-foreground">No announcements yet</p>
-            <p className="text-xs text-muted-foreground">Post one to get started</p>
+            <p className="text-xs text-muted-foreground">
+              Post one to get started
+            </p>
           </CardContent>
         </Card>
       ) : (
@@ -200,14 +222,17 @@ export function AnnouncementBoard({
               key={announcement.id}
               className={cn(
                 "transition-shadow hover:shadow-md",
-                announcement.isPinned && "border-yellow-200 bg-yellow-50 dark:border-yellow-900 dark:bg-yellow-950/30"
+                announcement.isPinned &&
+                  "border-yellow-200 bg-yellow-50 dark:border-yellow-900 dark:bg-yellow-950/30",
               )}
             >
               <CardContent className="p-6">
                 <div className="space-y-3">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
-                      <h3 className="text-lg font-semibold">{announcement.title}</h3>
+                      <h3 className="text-lg font-semibold">
+                        {announcement.title}
+                      </h3>
                       <p className="text-sm text-muted-foreground">
                         By {announcement.author} •{" "}
                         {announcement.date.toLocaleDateString("en-US", {
@@ -231,7 +256,9 @@ export function AnnouncementBoard({
                       {announcement.category}
                     </Badge>
                   </div>
-                  <p className="text-sm text-foreground">{announcement.content}</p>
+                  <p className="text-sm text-foreground">
+                    {announcement.content}
+                  </p>
                   <div className="flex items-center gap-2 pt-2">
                     <Button
                       variant="ghost"
@@ -239,11 +266,14 @@ export function AnnouncementBoard({
                       onClick={() => toggleLike(announcement.id)}
                       className={cn(
                         "gap-1",
-                        announcement.liked && "text-red-500"
+                        announcement.liked && "text-red-500",
                       )}
                     >
                       <Heart
-                        className={cn("h-4 w-4", announcement.liked && "fill-current")}
+                        className={cn(
+                          "h-4 w-4",
+                          announcement.liked && "fill-current",
+                        )}
                       />
                       <span className="text-xs">{announcement.likes}</span>
                     </Button>
@@ -253,11 +283,14 @@ export function AnnouncementBoard({
                       onClick={() => togglePin(announcement.id)}
                       className={cn(
                         "gap-1",
-                        announcement.isPinned && "text-yellow-500"
+                        announcement.isPinned && "text-yellow-500",
                       )}
                     >
                       <Pin
-                        className={cn("h-4 w-4", announcement.isPinned && "fill-current")}
+                        className={cn(
+                          "h-4 w-4",
+                          announcement.isPinned && "fill-current",
+                        )}
                       />
                     </Button>
                   </div>

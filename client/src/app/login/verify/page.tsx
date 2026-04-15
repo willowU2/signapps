@@ -1,23 +1,30 @@
-'use client';
+"use client";
 
-import { SpinnerInfinity } from 'spinners-react';
+import { SpinnerInfinity } from "spinners-react";
 
-import { useState, useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
-import { authApi } from '@/lib/api';
-import { useAuthStore } from '@/lib/store';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ShieldCheck, ArrowLeft } from 'lucide-react';
-import { parseApiError } from '@/lib/errors';
-import { usePageTitle } from '@/hooks/use-page-title';
+import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
+import { authApi } from "@/lib/api";
+import { useAuthStore } from "@/lib/store";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { ShieldCheck, ArrowLeft } from "lucide-react";
+import { parseApiError } from "@/lib/errors";
+import { usePageTitle } from "@/hooks/use-page-title";
 
 export default function VerifyPage() {
-  usePageTitle('Verification');
+  usePageTitle("Verification");
   const router = useRouter();
-  const { mfaSessionToken, setUser, setMfaSessionToken, redirectAfterLogin } = useAuthStore();
-  const [code, setCode] = useState(['', '', '', '', '', '']);
+  const { mfaSessionToken, setUser, setMfaSessionToken, redirectAfterLogin } =
+    useAuthStore();
+  const [code, setCode] = useState(["", "", "", "", "", ""]);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -25,7 +32,7 @@ export default function VerifyPage() {
   // Redirect if no MFA session token
   useEffect(() => {
     if (!mfaSessionToken) {
-      router.push('/login');
+      router.push("/login");
     }
   }, [mfaSessionToken, router]);
 
@@ -43,36 +50,48 @@ export default function VerifyPage() {
     }
 
     // Auto-submit when all digits entered
-    if (newCode.every((digit) => digit !== '') && newCode.join('').length === 6) {
-      handleSubmit(newCode.join(''));
+    if (
+      newCode.every((digit) => digit !== "") &&
+      newCode.join("").length === 6
+    ) {
+      handleSubmit(newCode.join(""));
     }
   };
 
-  const handleKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Backspace' && !code[index] && index > 0) {
+  const handleKeyDown = (
+    index: number,
+    e: React.KeyboardEvent<HTMLInputElement>,
+  ) => {
+    if (e.key === "Backspace" && !code[index] && index > 0) {
       inputRefs.current[index - 1]?.focus();
     }
   };
 
   const handlePaste = (e: React.ClipboardEvent) => {
     e.preventDefault();
-    const pastedData = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
+    const pastedData = e.clipboardData
+      .getData("text")
+      .replace(/\D/g, "")
+      .slice(0, 6);
     if (pastedData.length === 6) {
-      const newCode = pastedData.split('');
+      const newCode = pastedData.split("");
       setCode(newCode);
       handleSubmit(pastedData);
     }
   };
 
   const handleSubmit = async (codeString?: string) => {
-    const verificationCode = codeString || code.join('');
+    const verificationCode = codeString || code.join("");
     if (verificationCode.length !== 6 || !mfaSessionToken) return;
 
     setIsSubmitting(true);
     setError(null);
 
     try {
-      const response = await authApi.mfaVerify(mfaSessionToken, verificationCode);
+      const response = await authApi.mfaVerify(
+        mfaSessionToken,
+        verificationCode,
+      );
 
       if (response.data.access_token && response.data.refresh_token) {
         // Tokens are stored securely in HttpOnly cookies by the backend
@@ -83,20 +102,22 @@ export default function VerifyPage() {
         }
 
         // Sync cookie immediately so middleware sees authenticated state
-        const cookieValue = JSON.stringify({ state: { isAuthenticated: true } });
-        const secure = window.location.protocol === 'https:' ? ' Secure;' : '';
+        const cookieValue = JSON.stringify({
+          state: { isAuthenticated: true },
+        });
+        const secure = window.location.protocol === "https:" ? " Secure;" : "";
         document.cookie = `auth-storage=${encodeURIComponent(cookieValue)}; path=/;${secure} max-age=31536000; SameSite=Lax`;
 
         // Clear MFA session token
         setMfaSessionToken(null);
 
         // Redirect to dashboard or saved redirect path
-        const redirectPath = redirectAfterLogin || '/dashboard';
+        const redirectPath = redirectAfterLogin || "/dashboard";
         router.push(redirectPath);
       }
     } catch (err: unknown) {
       setError(parseApiError(err));
-      setCode(['', '', '', '', '', '']);
+      setCode(["", "", "", "", "", ""]);
       inputRefs.current[0]?.focus();
     } finally {
       setIsSubmitting(false);
@@ -105,7 +126,7 @@ export default function VerifyPage() {
 
   const handleBackToLogin = () => {
     setMfaSessionToken(null);
-    router.push('/login');
+    router.push("/login");
   };
 
   if (!mfaSessionToken) {
@@ -136,7 +157,9 @@ export default function VerifyPage() {
               {code.map((digit, index) => (
                 <Input
                   key={index}
-                  ref={(el) => { inputRefs.current[index] = el; }}
+                  ref={(el) => {
+                    inputRefs.current[index] = el;
+                  }}
                   type="text"
                   inputMode="numeric"
                   maxLength={1}
@@ -157,11 +180,17 @@ export default function VerifyPage() {
             >
               {isSubmitting ? (
                 <>
-                  <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />
+                  <SpinnerInfinity
+                    size={24}
+                    secondaryColor="rgba(128,128,128,0.2)"
+                    color="currentColor"
+                    speed={120}
+                    className="mr-2 h-4 w-4 "
+                  />
                   Verifying...
                 </>
               ) : (
-                'Verify'
+                "Verify"
               )}
             </Button>
 
@@ -177,7 +206,8 @@ export default function VerifyPage() {
             </div>
 
             <p className="text-center text-xs text-muted-foreground">
-              Lost access to your authenticator? Contact your administrator for assistance.
+              Lost access to your authenticator? Contact your administrator for
+              assistance.
             </p>
           </div>
         </CardContent>

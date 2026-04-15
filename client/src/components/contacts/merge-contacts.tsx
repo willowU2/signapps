@@ -22,18 +22,24 @@ interface MergeContactsProps {
 }
 
 // Simple duplicate detection: same email or very similar name
-function findDuplicatePairs(contacts: MergeableContact[]): [MergeableContact, MergeableContact][] {
+function findDuplicatePairs(
+  contacts: MergeableContact[],
+): [MergeableContact, MergeableContact][] {
   const pairs: [MergeableContact, MergeableContact][] = [];
   const seen = new Set<string>();
 
   for (let i = 0; i < contacts.length; i++) {
     for (let j = i + 1; j < contacts.length; j++) {
-      const a = contacts[i], b = contacts[j];
+      const a = contacts[i],
+        b = contacts[j];
       const key = [a.id, b.id].sort().join("-");
       if (seen.has(key)) continue;
 
-      const sameEmail = a.email && b.email && a.email.toLowerCase() === b.email.toLowerCase();
-      const similarName = a.name.toLowerCase().replace(/\s+/g, "") === b.name.toLowerCase().replace(/\s+/g, "");
+      const sameEmail =
+        a.email && b.email && a.email.toLowerCase() === b.email.toLowerCase();
+      const similarName =
+        a.name.toLowerCase().replace(/\s+/g, "") ===
+        b.name.toLowerCase().replace(/\s+/g, "");
 
       if (sameEmail || similarName) {
         pairs.push([a, b]);
@@ -59,18 +65,26 @@ function FieldRow({ label, aVal, bVal, chosen, onChoose }: FieldRowProps) {
       <span className="text-xs font-medium text-muted-foreground">{label}</span>
       <button
         onClick={() => !same && onChoose("a")}
-        className={cn("text-left rounded px-2 py-1 text-xs truncate transition-colors",
-          same ? "text-muted-foreground" :
-          chosen === "a" ? "bg-primary text-primary-foreground" : "hover:bg-muted"
+        className={cn(
+          "text-left rounded px-2 py-1 text-xs truncate transition-colors",
+          same
+            ? "text-muted-foreground"
+            : chosen === "a"
+              ? "bg-primary text-primary-foreground"
+              : "hover:bg-muted",
         )}
       >
         {aVal || "—"}
       </button>
       <button
         onClick={() => !same && onChoose("b")}
-        className={cn("text-left rounded px-2 py-1 text-xs truncate transition-colors",
-          same ? "text-muted-foreground" :
-          chosen === "b" ? "bg-primary text-primary-foreground" : "hover:bg-muted"
+        className={cn(
+          "text-left rounded px-2 py-1 text-xs truncate transition-colors",
+          same
+            ? "text-muted-foreground"
+            : chosen === "b"
+              ? "bg-primary text-primary-foreground"
+              : "hover:bg-muted",
         )}
       >
         {bVal || "—"}
@@ -80,9 +94,14 @@ function FieldRow({ label, aVal, bVal, chosen, onChoose }: FieldRowProps) {
 }
 
 export function MergeContacts({ contacts, onMerge }: MergeContactsProps) {
-  const pairs = useMemo(() => findDuplicatePairs(contacts as MergeableContact[]), [contacts]);
+  const pairs = useMemo(
+    () => findDuplicatePairs(contacts as MergeableContact[]),
+    [contacts],
+  );
   const [pairIndex, setPairIndex] = useState(0);
-  const [choices, setChoices] = useState<Record<string, "a" | "b" | "both">>({});
+  const [choices, setChoices] = useState<Record<string, "a" | "b" | "both">>(
+    {},
+  );
 
   if (pairs.length === 0) {
     return (
@@ -98,8 +117,10 @@ export function MergeContacts({ contacts, onMerge }: MergeContactsProps) {
   if (!a || !b) return null;
 
   const fields: { key: keyof MergeableContact; label: string }[] = [
-    { key: "name", label: "Nom" }, { key: "email", label: "Email" },
-    { key: "phone", label: "Tél." }, { key: "company", label: "Société" },
+    { key: "name", label: "Nom" },
+    { key: "email", label: "Email" },
+    { key: "phone", label: "Tél." },
+    { key: "company", label: "Société" },
   ];
 
   const getChoice = (key: string) => choices[key] ?? "a";
@@ -131,12 +152,28 @@ export function MergeContacts({ contacts, onMerge }: MergeContactsProps) {
           Doublon {pairIndex + 1} / {pairs.length}
         </h4>
         <div className="flex gap-1">
-          <Button size="sm" variant="outline" className="h-7 text-xs" disabled={pairIndex === 0}
-            onClick={() => { setPairIndex((p) => p - 1); setChoices({}); }}>
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-7 text-xs"
+            disabled={pairIndex === 0}
+            onClick={() => {
+              setPairIndex((p) => p - 1);
+              setChoices({});
+            }}
+          >
             ←
           </Button>
-          <Button size="sm" variant="outline" className="h-7 text-xs" disabled={pairIndex === pairs.length - 1}
-            onClick={() => { setPairIndex((p) => p + 1); setChoices({}); }}>
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-7 text-xs"
+            disabled={pairIndex === pairs.length - 1}
+            onClick={() => {
+              setPairIndex((p) => p + 1);
+              setChoices({});
+            }}
+          >
             →
           </Button>
         </div>
@@ -146,14 +183,21 @@ export function MergeContacts({ contacts, onMerge }: MergeContactsProps) {
         {/* Column headers */}
         <div className="grid grid-cols-[80px_1fr_1fr] gap-2 text-xs font-semibold text-muted-foreground pb-1 border-b">
           <span />
-          <span className="flex items-center gap-1">Contact A <Badge variant="outline" className="text-xs">conserver</Badge></span>
+          <span className="flex items-center gap-1">
+            Contact A{" "}
+            <Badge variant="outline" className="text-xs">
+              conserver
+            </Badge>
+          </span>
           <span>Contact B</span>
         </div>
 
         {fields.map(({ key, label }) => (
           <FieldRow
-            key={key} label={label}
-            aVal={String(a[key] ?? "")} bVal={String(b[key] ?? "")}
+            key={key}
+            label={label}
+            aVal={String(a[key] ?? "")}
+            bVal={String(b[key] ?? "")}
             chosen={getChoice(key) as "a" | "b" | "both"}
             onChoose={(v) => setChoices((p) => ({ ...p, [key]: v }))}
           />
@@ -161,13 +205,30 @@ export function MergeContacts({ contacts, onMerge }: MergeContactsProps) {
 
         {/* Tags */}
         <div className="grid grid-cols-[80px_1fr_1fr] gap-2 items-start text-sm py-1">
-          <span className="text-xs font-medium text-muted-foreground pt-1">Tags</span>
-          <div className="flex gap-1 flex-wrap">{a.tags.map((t) => <Badge key={t} variant="secondary" className="text-xs">{t}</Badge>)}</div>
-          <div className="flex gap-1 flex-wrap">{b.tags.map((t) => <Badge key={t} variant="secondary" className="text-xs">{t}</Badge>)}</div>
+          <span className="text-xs font-medium text-muted-foreground pt-1">
+            Tags
+          </span>
+          <div className="flex gap-1 flex-wrap">
+            {a.tags.map((t) => (
+              <Badge key={t} variant="secondary" className="text-xs">
+                {t}
+              </Badge>
+            ))}
+          </div>
+          <div className="flex gap-1 flex-wrap">
+            {b.tags.map((t) => (
+              <Badge key={t} variant="secondary" className="text-xs">
+                {t}
+              </Badge>
+            ))}
+          </div>
         </div>
       </div>
 
-      <p className="text-xs text-muted-foreground">Cliquez sur les valeurs pour choisir. Les tags sont automatiquement fusionnés.</p>
+      <p className="text-xs text-muted-foreground">
+        Cliquez sur les valeurs pour choisir. Les tags sont automatiquement
+        fusionnés.
+      </p>
 
       <div className="flex gap-2">
         <Button onClick={handleMerge} className="flex-1 gap-1">

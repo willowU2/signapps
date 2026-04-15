@@ -71,7 +71,7 @@ export function NonConformity({
         severity: formData.severity as "High" | "Medium" | "Low",
       };
       setNCRs((prev) =>
-        prev.map((n) => (n.id === editingId ? { ...n, ...updatedNCR } : n))
+        prev.map((n) => (n.id === editingId ? { ...n, ...updatedNCR } : n)),
       );
       onNCRUpdate?.(editingId, updatedNCR);
       setEditingId(null);
@@ -101,10 +101,11 @@ export function NonConformity({
     onNCRDelete?.(id);
   };
 
-  const handleStatusChange = (id: string, status: "Open" | "InProgress" | "Closed") => {
-    setNCRs((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, status } : n))
-    );
+  const handleStatusChange = (
+    id: string,
+    status: "Open" | "InProgress" | "Closed",
+  ) => {
+    setNCRs((prev) => prev.map((n) => (n.id === id ? { ...n, status } : n)));
     onNCRUpdate?.(id, { status });
   };
 
@@ -150,7 +151,9 @@ export function NonConformity({
               <input
                 type="text"
                 value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, title: e.target.value })
+                }
                 placeholder="NCR title..."
                 className="w-full px-3 py-2 border rounded bg-card dark:bg-gray-900 dark:border-gray-700"
               />
@@ -158,10 +161,14 @@ export function NonConformity({
 
             {/* Description */}
             <div>
-              <label className="block text-sm font-medium mb-1">Description</label>
+              <label className="block text-sm font-medium mb-1">
+                Description
+              </label>
               <textarea
                 value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, description: e.target.value })
+                }
                 placeholder="Detailed description of the non-conformity..."
                 rows={3}
                 className="w-full px-3 py-2 border rounded bg-card dark:bg-gray-900 dark:border-gray-700"
@@ -171,11 +178,16 @@ export function NonConformity({
             {/* Severity and Area */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium mb-1">Severity</label>
+                <label className="block text-sm font-medium mb-1">
+                  Severity
+                </label>
                 <select
                   value={formData.severity}
                   onChange={(e) =>
-                    setFormData({ ...formData, severity: e.target.value as "High" | "Medium" | "Low" })
+                    setFormData({
+                      ...formData,
+                      severity: e.target.value as "High" | "Medium" | "Low",
+                    })
                   }
                   className="w-full px-3 py-2 border rounded bg-card dark:bg-gray-900 dark:border-gray-700"
                 >
@@ -186,11 +198,15 @@ export function NonConformity({
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1">Area Affected</label>
+                <label className="block text-sm font-medium mb-1">
+                  Area Affected
+                </label>
                 <input
                   type="text"
                   value={formData.areaAffected}
-                  onChange={(e) => setFormData({ ...formData, areaAffected: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, areaAffected: e.target.value })
+                  }
                   placeholder="e.g., Production Floor..."
                   className="w-full px-3 py-2 border rounded bg-card dark:bg-gray-900 dark:border-gray-700"
                 />
@@ -199,10 +215,14 @@ export function NonConformity({
 
             {/* Corrective Action */}
             <div>
-              <label className="block text-sm font-medium mb-1">Corrective Action</label>
+              <label className="block text-sm font-medium mb-1">
+                Corrective Action
+              </label>
               <textarea
                 value={formData.correctiveAction}
-                onChange={(e) => setFormData({ ...formData, correctiveAction: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, correctiveAction: e.target.value })
+                }
                 placeholder="Describe the corrective action to be taken..."
                 rows={3}
                 className="w-full px-3 py-2 border rounded bg-card dark:bg-gray-900 dark:border-gray-700"
@@ -241,7 +261,9 @@ export function NonConformity({
                     </p>
                   </div>
                   <div className="flex gap-2">
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${severityColors[ncr.severity]}`}>
+                    <span
+                      className={`px-3 py-1 rounded-full text-xs font-medium ${severityColors[ncr.severity]}`}
+                    >
                       {ncr.severity}
                     </span>
                     <button
@@ -266,11 +288,15 @@ export function NonConformity({
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
                     <span className="font-medium">Area Affected:</span>
-                    <p className="text-muted-foreground dark:text-gray-400">{ncr.areaAffected}</p>
+                    <p className="text-muted-foreground dark:text-gray-400">
+                      {ncr.areaAffected}
+                    </p>
                   </div>
                   <div>
                     <span className="font-medium">Corrective Action:</span>
-                    <p className="text-muted-foreground dark:text-gray-400">{ncr.correctiveAction}</p>
+                    <p className="text-muted-foreground dark:text-gray-400">
+                      {ncr.correctiveAction}
+                    </p>
                   </div>
                 </div>
 
@@ -280,7 +306,10 @@ export function NonConformity({
                   <select
                     value={ncr.status}
                     onChange={(e) =>
-                      handleStatusChange(ncr.id, e.target.value as "Open" | "InProgress" | "Closed")
+                      handleStatusChange(
+                        ncr.id,
+                        e.target.value as "Open" | "InProgress" | "Closed",
+                      )
                     }
                     className={`px-3 py-1 rounded text-xs font-medium border-0 cursor-pointer ${
                       statusColors[ncr.status]

@@ -38,7 +38,9 @@ export default function PeopleCounter() {
     return `${hour - 12}PM`;
   };
 
-  const maxFlow = Math.max(...data.dailyInOut.map((d) => Math.max(d.in, d.out)));
+  const maxFlow = Math.max(
+    ...data.dailyInOut.map((d) => Math.max(d.in, d.out)),
+  );
 
   return (
     <div className="space-y-4">
@@ -51,21 +53,29 @@ export default function PeopleCounter() {
         <Card className="p-4 bg-gradient-to-br from-blue-50 to-blue-100">
           <p className="text-sm text-muted-foreground mb-1">Live Occupancy</p>
           <p className="text-4xl font-bold text-blue-600">{data.liveCount}</p>
-          <p className="text-xs text-muted-foreground mt-2">people in building</p>
+          <p className="text-xs text-muted-foreground mt-2">
+            people in building
+          </p>
         </Card>
 
         <Card className="p-4 bg-gradient-to-br from-green-50 to-green-100">
           <p className="text-sm text-muted-foreground mb-1">Peak Hour</p>
           <div className="flex items-baseline gap-2">
-            <p className="text-2xl font-bold text-green-600">{getHourLabel(data.peakHour)}</p>
-            <Badge className="bg-green-600 text-white">{data.peakCount} entries</Badge>
+            <p className="text-2xl font-bold text-green-600">
+              {getHourLabel(data.peakHour)}
+            </p>
+            <Badge className="bg-green-600 text-white">
+              {data.peakCount} entries
+            </Badge>
           </div>
           <p className="text-xs text-muted-foreground mt-2">highest traffic</p>
         </Card>
 
         <Card className="p-4 bg-gradient-to-br from-purple-50 to-purple-100">
           <p className="text-sm text-muted-foreground mb-1">Total Today</p>
-          <p className="text-4xl font-bold text-purple-600">{data.totalToday}</p>
+          <p className="text-4xl font-bold text-purple-600">
+            {data.totalToday}
+          </p>
           <p className="text-xs text-muted-foreground mt-2">entries & exits</p>
         </Card>
       </div>
@@ -82,8 +92,13 @@ export default function PeopleCounter() {
               <div className="flex justify-between items-center mb-1 text-sm">
                 <span className="font-medium">{getHourLabel(item.hour)}</span>
                 <span className="text-muted-foreground">
-                  <span className="text-green-600 font-semibold">↓{item.in}</span> •{" "}
-                  <span className="text-red-600 font-semibold">↑{item.out}</span>
+                  <span className="text-green-600 font-semibold">
+                    ↓{item.in}
+                  </span>{" "}
+                  •{" "}
+                  <span className="text-red-600 font-semibold">
+                    ↑{item.out}
+                  </span>
                 </span>
               </div>
               <div className="flex gap-1 h-6">

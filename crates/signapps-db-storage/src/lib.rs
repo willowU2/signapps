@@ -24,6 +24,6 @@ pub use models::storage_tier2::*;
 pub use models::storage_tier3::*;
 
 pub use repositories::{
-    AuditAlertConfigRepository, DriveAuditLogRepository, QuotaRepository,
-    StorageTier2Repository, StorageTier3Repository,
+    AuditAlertConfigRepository, DriveAuditLogRepository, QuotaRepository, StorageTier2Repository,
+    StorageTier3Repository,
 };

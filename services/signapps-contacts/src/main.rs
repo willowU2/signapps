@@ -797,8 +797,8 @@ fn create_router(state: AppState, sharing_engine: SharingEngine) -> Router {
         ));
 
     // Sharing sub-router: State<SharingEngine> — separate from AppState.
-    let sharing_sub = sharing_routes("contacts", ResourceType::ContactBook)
-        .with_state(sharing_engine);
+    let sharing_sub =
+        sharing_routes("contacts", ResourceType::ContactBook).with_state(sharing_engine);
 
     // Persons routes (protected)
     let persons_routes = Router::new()

@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * TaskColumn Component
@@ -7,24 +7,24 @@
  * Supports drag and drop of task cards.
  */
 
-import * as React from 'react';
-import { useDroppable } from '@dnd-kit/core';
+import * as React from "react";
+import { useDroppable } from "@dnd-kit/core";
 import {
   SortableContext,
   verticalListSortingStrategy,
-} from '@dnd-kit/sortable';
-import { Plus, MoreHorizontal } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
+} from "@dnd-kit/sortable";
+import { Plus, MoreHorizontal } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { TaskCard } from './TaskCard';
-import type { Task, TaskStatus } from '@/lib/scheduling/types/scheduling';
+} from "@/components/ui/dropdown-menu";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { TaskCard } from "./TaskCard";
+import type { Task, TaskStatus } from "@/lib/scheduling/types/scheduling";
 
 // ============================================================================
 // Types
@@ -53,24 +53,24 @@ export const columnConfig: Record<
   { title: string; color: string; emoji: string }
 > = {
   backlog: {
-    title: 'Backlog',
-    color: 'border-slate-300',
-    emoji: '📋',
+    title: "Backlog",
+    color: "border-slate-300",
+    emoji: "📋",
   },
   today: {
     title: "Aujourd'hui",
-    color: 'border-blue-400',
-    emoji: '🎯',
+    color: "border-blue-400",
+    emoji: "🎯",
   },
-  'in-progress': {
-    title: 'En cours',
-    color: 'border-amber-400',
-    emoji: '🔄',
+  "in-progress": {
+    title: "En cours",
+    color: "border-amber-400",
+    emoji: "🔄",
   },
   done: {
-    title: 'Terminé',
-    color: 'border-green-400',
-    emoji: '✅',
+    title: "Terminé",
+    color: "border-green-400",
+    emoji: "✅",
   },
 };
 
@@ -93,7 +93,7 @@ export function TaskColumn({
 }: TaskColumnProps) {
   const { setNodeRef, isOver } = useDroppable({
     id,
-    data: { type: 'column', status: id },
+    data: { type: "column", status: id },
   });
 
   const config = columnConfig[id];
@@ -102,9 +102,9 @@ export function TaskColumn({
   return (
     <div
       className={cn(
-        'flex flex-col bg-muted/30 rounded-xl min-w-[280px] max-w-[320px] w-full',
-        'border-t-4',
-        color ?? config.color
+        "flex flex-col bg-muted/30 rounded-xl min-w-[280px] max-w-[320px] w-full",
+        "border-t-4",
+        color ?? config.color,
       )}
     >
       {/* Column Header */}
@@ -135,7 +135,7 @@ export function TaskColumn({
               <DropdownMenuItem onClick={() => onAddTask?.(id)}>
                 Ajouter une tâche
               </DropdownMenuItem>
-              {id === 'done' && tasks.length > 0 && (
+              {id === "done" && tasks.length > 0 && (
                 <DropdownMenuItem
                   className="text-destructive"
                   onClick={() => onClearColumn?.(id)}
@@ -152,12 +152,15 @@ export function TaskColumn({
       <div
         ref={setNodeRef}
         className={cn(
-          'flex-1 transition-colors rounded-b-xl',
-          isOver && 'bg-primary/5 ring-2 ring-primary/20 ring-inset'
+          "flex-1 transition-colors rounded-b-xl",
+          isOver && "bg-primary/5 ring-2 ring-primary/20 ring-inset",
         )}
       >
         <ScrollArea className="h-[calc(100vh-220px)]">
-          <SortableContext items={taskIds} strategy={verticalListSortingStrategy}>
+          <SortableContext
+            items={taskIds}
+            strategy={verticalListSortingStrategy}
+          >
             <div className="flex flex-col gap-2 p-3 pt-1">
               {tasks.map((task) => (
                 <TaskCard
@@ -173,9 +176,7 @@ export function TaskColumn({
               {/* Empty State */}
               {tasks.length === 0 && (
                 <div className="flex flex-col items-center justify-center py-8 text-center">
-                  <p className="text-sm text-muted-foreground">
-                    Aucune tâche
-                  </p>
+                  <p className="text-sm text-muted-foreground">Aucune tâche</p>
                   <Button
                     variant="ghost"
                     size="sm"

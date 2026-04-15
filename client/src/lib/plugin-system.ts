@@ -29,21 +29,33 @@ class PluginRegistry {
   unregister(pluginId: string) {
     this.plugins.delete(pluginId);
     this.hooks.forEach((hooks, name) => {
-      this.hooks.set(name, hooks.filter(h => !h.name.startsWith(pluginId)));
+      this.hooks.set(
+        name,
+        hooks.filter((h) => !h.name.startsWith(pluginId)),
+      );
     });
   }
 
-  addHook(hookName: string, pluginId: string, callback: (...args: unknown[]) => unknown) {
+  addHook(
+    hookName: string,
+    pluginId: string,
+    callback: (...args: unknown[]) => unknown,
+  ) {
     if (!this.hooks.has(hookName)) this.hooks.set(hookName, []);
-    this.hooks.get(hookName)!.push({ name: `${pluginId}:${hookName}`, callback });
+    this.hooks
+      .get(hookName)!
+      .push({ name: `${pluginId}:${hookName}`, callback });
   }
 
   async executeHook(hookName: string, ...args: unknown[]): Promise<unknown[]> {
     const hooks = this.hooks.get(hookName) || [];
     const results: unknown[] = [];
     for (const hook of hooks) {
-      try { results.push(await hook.callback(...args)); }
-      catch (e) { console.error(`Plugin hook error [${hook.name}]:`, e); }
+      try {
+        results.push(await hook.callback(...args));
+      } catch (e) {
+        console.error(`Plugin hook error [${hook.name}]:`, e);
+      }
     }
     return results;
   }

@@ -1,4 +1,4 @@
-import { SpinnerInfinity } from 'spinners-react';
+import { SpinnerInfinity } from "spinners-react";
 /**
  * Entity Picker Component
  *
@@ -6,10 +6,19 @@ import { SpinnerInfinity } from 'spinners-react';
  * support multi-select et affichage d'avatars.
  */
 
-"use client";
+("use client");
 
 import * as React from "react";
-import { Check, ChevronsUpDown, X, User, File, Calendar, FileText, CheckSquare } from 'lucide-react';
+import {
+  Check,
+  ChevronsUpDown,
+  X,
+  User,
+  File,
+  Calendar,
+  FileText,
+  CheckSquare,
+} from "lucide-react";
 
 // Simple debounce hook
 function useDebounce<T>(value: T, delay: number): T {
@@ -50,7 +59,15 @@ import { cn } from "@/lib/utils";
 // Types
 // ============================================================================
 
-export type EntityType = "user" | "file" | "task" | "event" | "document" | "group" | "role" | "custom";
+export type EntityType =
+  | "user"
+  | "file"
+  | "task"
+  | "event"
+  | "document"
+  | "group"
+  | "role"
+  | "custom";
 
 export interface EntityOption {
   /** Unique entity ID */
@@ -132,9 +149,17 @@ interface EntityChipProps {
   disabled?: boolean;
 }
 
-export function EntityChip({ entity, entityType, onRemove, disabled }: EntityChipProps) {
+export function EntityChip({
+  entity,
+  entityType,
+  onRemove,
+  disabled,
+}: EntityChipProps) {
   return (
-    <Badge variant="secondary" className="flex items-center gap-1.5 pr-1 max-w-[150px]">
+    <Badge
+      variant="secondary"
+      className="flex items-center gap-1.5 pr-1 max-w-[150px]"
+    >
       {entityType === "user" ? (
         <Avatar className="h-4 w-4">
           <AvatarImage src={entity.avatarUrl} alt={entity.name} />
@@ -178,7 +203,12 @@ interface EntityOptionItemProps {
   onSelect: () => void;
 }
 
-function EntityOptionItem({ entity, entityType, isSelected, onSelect }: EntityOptionItemProps) {
+function EntityOptionItem({
+  entity,
+  entityType,
+  isSelected,
+  onSelect,
+}: EntityOptionItemProps) {
   return (
     <CommandItem
       value={entity.id}
@@ -187,7 +217,10 @@ function EntityOptionItem({ entity, entityType, isSelected, onSelect }: EntityOp
       className="flex items-center gap-3 cursor-pointer"
     >
       <Check
-        className={cn("h-4 w-4 shrink-0", isSelected ? "opacity-100" : "opacity-0")}
+        className={cn(
+          "h-4 w-4 shrink-0",
+          isSelected ? "opacity-100" : "opacity-0",
+        )}
       />
 
       {entityType === "user" ? (
@@ -211,7 +244,9 @@ function EntityOptionItem({ entity, entityType, isSelected, onSelect }: EntityOp
       <div className="flex-1 min-w-0">
         <p className="font-medium truncate">{entity.name}</p>
         {entity.description && (
-          <p className="text-xs text-muted-foreground truncate">{entity.description}</p>
+          <p className="text-xs text-muted-foreground truncate">
+            {entity.description}
+          </p>
         )}
       </div>
     </CommandItem>
@@ -245,7 +280,9 @@ export function EntityPicker({
   const debouncedQuery = useDebounce(searchQuery, 300);
   const [isSearching, setIsSearching] = React.useState(false);
   const [searchResults, setSearchResults] = React.useState<EntityOption[]>([]);
-  const [selectedEntities, setSelectedEntities] = React.useState<EntityOption[]>([]);
+  const [selectedEntities, setSelectedEntities] = React.useState<
+    EntityOption[]
+  >([]);
   const [isCreating, setIsCreating] = React.useState(false);
 
   // Normalize value to array
@@ -268,13 +305,17 @@ export function EntityPicker({
 
       if (missingIds.length === 0) {
         // Filter out any entities that are no longer selected
-        setSelectedEntities((prev) => prev.filter((e) => selectedIds.includes(e.id)));
+        setSelectedEntities((prev) =>
+          prev.filter((e) => selectedIds.includes(e.id)),
+        );
         return;
       }
 
       // Try to find in static options first
       if (staticOptions) {
-        const fromStatic = staticOptions.filter((o) => selectedIds.includes(o.id));
+        const fromStatic = staticOptions.filter((o) =>
+          selectedIds.includes(o.id),
+        );
         if (fromStatic.length === selectedIds.length) {
           setSelectedEntities(fromStatic);
           return;
@@ -286,7 +327,10 @@ export function EntityPicker({
         try {
           const loaded = await onLoad(missingIds);
           setSelectedEntities((prev) => {
-            const combined = [...prev.filter((e) => selectedIds.includes(e.id)), ...loaded];
+            const combined = [
+              ...prev.filter((e) => selectedIds.includes(e.id)),
+              ...loaded,
+            ];
             // Dedupe
             const seen = new Set<string>();
             return combined.filter((e) => {
@@ -302,7 +346,7 @@ export function EntityPicker({
     };
 
     loadSelectedEntities();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedIds, staticOptions, onLoad]);
 
   // Search effect
@@ -317,7 +361,7 @@ export function EntityPicker({
         // Filter static options
         if (staticOptions) {
           const filtered = staticOptions.filter((o) =>
-            o.name.toLowerCase().includes(debouncedQuery.toLowerCase())
+            o.name.toLowerCase().includes(debouncedQuery.toLowerCase()),
           );
           setSearchResults(filtered);
         }
@@ -393,7 +437,10 @@ export function EntityPicker({
   // Get display text
   const getDisplayText = () => {
     if (selectedEntities.length === 0) {
-      return placeholder ?? `Sélectionner ${entityType === "user" ? "un utilisateur" : "un élément"}...`;
+      return (
+        placeholder ??
+        `Sélectionner ${entityType === "user" ? "un utilisateur" : "un élément"}...`
+      );
     }
 
     if (!multiple) {
@@ -415,7 +462,7 @@ export function EntityPicker({
             "w-full justify-between font-normal min-h-10",
             !selectedEntities.length && "text-muted-foreground",
             error && "border-destructive",
-            className
+            className,
           )}
         >
           {multiple && selectedEntities.length > 0 ? (
@@ -451,7 +498,13 @@ export function EntityPicker({
           <CommandList>
             {isSearching && (
               <div className="flex items-center justify-center py-6">
-                <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-4 w-4 " />
+                <SpinnerInfinity
+                  size={24}
+                  secondaryColor="rgba(128,128,128,0.2)"
+                  color="currentColor"
+                  speed={120}
+                  className="h-4 w-4 "
+                />
               </div>
             )}
 
@@ -468,7 +521,13 @@ export function EntityPicker({
                       disabled={isCreating}
                     >
                       {isCreating ? (
-                        <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />
+                        <SpinnerInfinity
+                          size={24}
+                          secondaryColor="rgba(128,128,128,0.2)"
+                          color="currentColor"
+                          speed={120}
+                          className="mr-2 h-4 w-4 "
+                        />
                       ) : null}
                       Créer "{searchQuery}"
                     </Button>
@@ -501,7 +560,10 @@ export function EntityPicker({
 // Preset Pickers
 // ============================================================================
 
-export interface UserPickerProps extends Omit<EntityPickerProps, "entityType"> {}
+export interface UserPickerProps extends Omit<
+  EntityPickerProps,
+  "entityType"
+> {}
 
 export function UserPicker(props: UserPickerProps) {
   return (
@@ -509,12 +571,17 @@ export function UserPicker(props: UserPickerProps) {
       {...props}
       entityType="user"
       placeholder={props.placeholder ?? "Sélectionner un utilisateur..."}
-      searchPlaceholder={props.searchPlaceholder ?? "Rechercher un utilisateur..."}
+      searchPlaceholder={
+        props.searchPlaceholder ?? "Rechercher un utilisateur..."
+      }
     />
   );
 }
 
-export interface FilePickerProps extends Omit<EntityPickerProps, "entityType"> {}
+export interface FilePickerProps extends Omit<
+  EntityPickerProps,
+  "entityType"
+> {}
 
 export function FilePicker(props: FilePickerProps) {
   return (
@@ -527,7 +594,10 @@ export function FilePicker(props: FilePickerProps) {
   );
 }
 
-export interface TaskPickerProps extends Omit<EntityPickerProps, "entityType"> {}
+export interface TaskPickerProps extends Omit<
+  EntityPickerProps,
+  "entityType"
+> {}
 
 export function TaskPicker(props: TaskPickerProps) {
   return (

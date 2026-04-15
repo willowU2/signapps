@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { useEffect } from 'react';
-import { SUPPORTED_LANGUAGES } from './language-switcher';
+import { useEffect } from "react";
+import { SUPPORTED_LANGUAGES } from "./language-switcher";
 
 /**
  * RTL Layout Support
@@ -10,11 +10,11 @@ import { SUPPORTED_LANGUAGES } from './language-switcher';
  */
 export function RTLProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
-    const locale = localStorage.getItem('signapps_locale') || 'fr';
-    const lang = SUPPORTED_LANGUAGES.find(l => l.code === locale);
+    const locale = localStorage.getItem("signapps_locale") || "fr";
+    const lang = SUPPORTED_LANGUAGES.find((l) => l.code === locale);
     if (lang) {
       document.documentElement.lang = locale;
-      document.documentElement.dir = lang.dir as 'ltr' | 'rtl';
+      document.documentElement.dir = lang.dir as "ltr" | "rtl";
     }
   }, []);
 

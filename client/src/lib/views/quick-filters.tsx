@@ -41,17 +41,12 @@ function QuickFilterChip({ filter, isActive, onToggle }: QuickFilterChipProps) {
     <Button
       variant={isActive ? "default" : "outline"}
       size="sm"
-      className={cn(
-        "h-8 rounded-full transition-all",
-        isActive && "pl-2 pr-3"
-      )}
+      className={cn("h-8 rounded-full transition-all", isActive && "pl-2 pr-3")}
       onClick={onToggle}
     >
       {Icon && <Icon className="h-3.5 w-3.5 mr-1.5" />}
       <span className="text-xs">{filter.label}</span>
-      {isActive && (
-        <X className="h-3 w-3 ml-1.5 hover:text-destructive" />
-      )}
+      {isActive && <X className="h-3 w-3 ml-1.5 hover:text-destructive" />}
     </Button>
   );
 }
@@ -118,7 +113,7 @@ export function ActiveFiltersSummary({
   }
 
   const activeFilterObjects = preset.filters.filter((f) =>
-    activeFilters.includes(f.id)
+    activeFilters.includes(f.id),
   );
 
   return (

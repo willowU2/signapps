@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * Pulse Survey Component
@@ -7,12 +7,12 @@
  * Shows trend chart with last 8 weeks average, submit button, and weekly results.
  */
 
-import * as React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Star } from 'lucide-react';
-import { toast } from 'sonner';
+import * as React from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Star } from "lucide-react";
+import { toast } from "sonner";
 
 export interface PulseSurveyResponse {
   id: string;
@@ -23,16 +23,18 @@ export interface PulseSurveyResponse {
 
 export interface PulseSurveyProps {
   responses: PulseSurveyResponse[];
-  onSubmitSurvey?: (data: Omit<PulseSurveyResponse, 'id' | 'submittedAt'>) => void;
+  onSubmitSurvey?: (
+    data: Omit<PulseSurveyResponse, "id" | "submittedAt">,
+  ) => void;
   className?: string;
 }
 
 const SURVEY_QUESTIONS = [
-  'Comment évaluez-vous votre satisfaction au travail cette semaine ?',
-  'Vous sentez-vous bien soutenu par vos collègues ?',
-  'Avez-vous les outils nécessaires pour faire votre travail efficacement ?',
-  'Êtes-vous engagé dans vos projets actuels ?',
-  'Comment évaluez-vous votre équilibre travail-vie personnelle ?',
+  "Comment évaluez-vous votre satisfaction au travail cette semaine ?",
+  "Vous sentez-vous bien soutenu par vos collègues ?",
+  "Avez-vous les outils nécessaires pour faire votre travail efficacement ?",
+  "Êtes-vous engagé dans vos projets actuels ?",
+  "Comment évaluez-vous votre équilibre travail-vie personnelle ?",
 ];
 
 function StarRating({
@@ -60,12 +62,14 @@ function StarRating({
             onMouseEnter={() => !disabled && setHoverRating(starValue)}
             onMouseLeave={() => setHoverRating(0)}
             disabled={disabled}
-            className={`transition-colors ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+            className={`transition-colors ${disabled ? "cursor-not-allowed" : "cursor-pointer"}`}
           >
             <Star
               size={24}
               className={`${
-                isFilled ? 'fill-amber-400 text-amber-400' : 'text-gray-300 dark:text-muted-foreground'
+                isFilled
+                  ? "fill-amber-400 text-amber-400"
+                  : "text-gray-300 dark:text-muted-foreground"
               }`}
             />
           </button>
@@ -106,10 +110,14 @@ function TrendChart({ responses }: { responses: PulseSurveyResponse[] }) {
       <div className="flex items-end justify-between gap-2 h-40">
         {last8Weeks.map((week) => {
           const percentage = (week.average / maxAverage) * 100;
-          const height = (percentage / 100) * (maxHeight - minHeight) + minHeight;
+          const height =
+            (percentage / 100) * (maxHeight - minHeight) + minHeight;
 
           return (
-            <div key={week.week} className="flex-1 flex flex-col items-center gap-2">
+            <div
+              key={week.week}
+              className="flex-1 flex flex-col items-center gap-2"
+            >
               <div className="relative h-40 w-full flex items-end justify-center">
                 <div
                   className="w-full bg-blue-500 rounded-t transition-all"
@@ -127,8 +135,14 @@ function TrendChart({ responses }: { responses: PulseSurveyResponse[] }) {
   );
 }
 
-export function PulseSurvey({ responses, onSubmitSurvey, className }: PulseSurveyProps) {
-  const [formResponses, setFormResponses] = React.useState<Record<string, number>>({});
+export function PulseSurvey({
+  responses,
+  onSubmitSurvey,
+  className,
+}: PulseSurveyProps) {
+  const [formResponses, setFormResponses] = React.useState<
+    Record<string, number>
+  >({});
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   const handleRatingChange = (questionIndex: number, rating: number) => {
@@ -139,18 +153,21 @@ export function PulseSurvey({ responses, onSubmitSurvey, className }: PulseSurve
   };
 
   const handleSubmit = async () => {
-    const allAnswered = SURVEY_QUESTIONS.every((_, index) => formResponses[index]);
+    const allAnswered = SURVEY_QUESTIONS.every(
+      (_, index) => formResponses[index],
+    );
 
     if (!allAnswered) {
-      toast.error('Veuillez répondre à toutes les questions');
+      toast.error("Veuillez répondre à toutes les questions");
       return;
     }
 
     setIsSubmitting(true);
     try {
       const currentWeek = Math.ceil(
-        (new Date().getTime() - new Date(new Date().getFullYear(), 0, 1).getTime()) /
-          (1000 * 60 * 60 * 24 * 7)
+        (new Date().getTime() -
+          new Date(new Date().getFullYear(), 0, 1).getTime()) /
+          (1000 * 60 * 60 * 24 * 7),
       );
 
       onSubmitSurvey?.({
@@ -159,15 +176,17 @@ export function PulseSurvey({ responses, onSubmitSurvey, className }: PulseSurve
       });
 
       setFormResponses({});
-      toast.success('Sondage soumis avec succès');
+      toast.success("Sondage soumis avec succès");
     } catch (error) {
-      toast.error('Erreur lors de la soumission du sondage');
+      toast.error("Erreur lors de la soumission du sondage");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const isFormComplete = SURVEY_QUESTIONS.every((_, index) => formResponses[index]);
+  const isFormComplete = SURVEY_QUESTIONS.every(
+    (_, index) => formResponses[index],
+  );
 
   return (
     <div className={`space-y-6 ${className}`}>
@@ -196,7 +215,7 @@ export function PulseSurvey({ responses, onSubmitSurvey, className }: PulseSurve
             disabled={!isFormComplete || isSubmitting}
             className="w-full mt-6"
           >
-            {isSubmitting ? 'Soumission...' : 'Soumettre le sondage'}
+            {isSubmitting ? "Soumission..." : "Soumettre le sondage"}
           </Button>
         </CardContent>
       </Card>

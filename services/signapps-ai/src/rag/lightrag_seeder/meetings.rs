@@ -48,7 +48,7 @@ where
                 relations_created: 0,
                 source: "meet.rooms".to_string(),
             });
-        }
+        },
     };
 
     let mut count = 0usize;

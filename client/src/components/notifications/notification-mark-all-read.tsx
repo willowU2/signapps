@@ -6,7 +6,15 @@ import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Check, CheckCheck, Bell, Briefcase, Users, CheckSquare, Calendar } from "lucide-react";
+import {
+  Check,
+  CheckCheck,
+  Bell,
+  Briefcase,
+  Users,
+  CheckSquare,
+  Calendar,
+} from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -21,10 +29,34 @@ interface ModuleUnreadCount {
 }
 
 const INITIAL_COUNTS: ModuleUnreadCount[] = [
-  { module: "projects", label: "Projets", icon: <Briefcase className="size-3.5" />, count: 4, color: "text-blue-600" },
-  { module: "hr", label: "RH", icon: <Users className="size-3.5" />, count: 2, color: "text-purple-600" },
-  { module: "tasks", label: "Tâches", icon: <CheckSquare className="size-3.5" />, count: 7, color: "text-green-600" },
-  { module: "calendar", label: "Calendrier", icon: <Calendar className="size-3.5" />, count: 1, color: "text-orange-600" },
+  {
+    module: "projects",
+    label: "Projets",
+    icon: <Briefcase className="size-3.5" />,
+    count: 4,
+    color: "text-blue-600",
+  },
+  {
+    module: "hr",
+    label: "RH",
+    icon: <Users className="size-3.5" />,
+    count: 2,
+    color: "text-purple-600",
+  },
+  {
+    module: "tasks",
+    label: "Tâches",
+    icon: <CheckSquare className="size-3.5" />,
+    count: 7,
+    color: "text-green-600",
+  },
+  {
+    module: "calendar",
+    label: "Calendrier",
+    icon: <Calendar className="size-3.5" />,
+    count: 1,
+    color: "text-orange-600",
+  },
 ];
 
 export function NotificationMarkAllRead() {
@@ -42,7 +74,9 @@ export function NotificationMarkAllRead() {
       toast.success("Toutes les notifications marquées comme lues");
     } else {
       const moduleLabel = counts.find((m) => m.module === module)?.label;
-      setCounts((prev) => prev.map((m) => m.module === module ? { ...m, count: 0 } : m));
+      setCounts((prev) =>
+        prev.map((m) => (m.module === module ? { ...m, count: 0 } : m)),
+      );
       toast.success(`Notifications ${moduleLabel} marquées comme lues`);
     }
     setMarking(null);
@@ -55,7 +89,11 @@ export function NotificationMarkAllRead() {
           <CardTitle className="flex items-center gap-2 text-base">
             <Bell className="size-4" />
             Notifications
-            {totalUnread > 0 && <Badge className="size-5 justify-center p-0 text-[10px]">{totalUnread}</Badge>}
+            {totalUnread > 0 && (
+              <Badge className="size-5 justify-center p-0 text-[10px]">
+                {totalUnread}
+              </Badge>
+            )}
           </CardTitle>
           <Button
             size="sm"
@@ -73,13 +111,18 @@ export function NotificationMarkAllRead() {
         {counts.map((m) => (
           <div
             key={m.module}
-            className={cn("flex items-center justify-between rounded-lg border px-3 py-2 transition-opacity", m.count === 0 && "opacity-50")}
+            className={cn(
+              "flex items-center justify-between rounded-lg border px-3 py-2 transition-opacity",
+              m.count === 0 && "opacity-50",
+            )}
           >
             <div className="flex items-center gap-2">
               <span className={m.color}>{m.icon}</span>
               <span className="text-sm">{m.label}</span>
               {m.count > 0 && (
-                <Badge variant="secondary" className="text-[10px] h-4 px-1.5">{m.count}</Badge>
+                <Badge variant="secondary" className="text-[10px] h-4 px-1.5">
+                  {m.count}
+                </Badge>
               )}
             </div>
             <Button
@@ -92,7 +135,9 @@ export function NotificationMarkAllRead() {
               {marking === m.module ? (
                 <span className="animate-pulse">...</span>
               ) : (
-                <><Check className="size-3" /> Lu</>
+                <>
+                  <Check className="size-3" /> Lu
+                </>
               )}
             </Button>
           </div>

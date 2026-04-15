@@ -4,4 +4,8 @@
  * Mobile-specific components for the Unified Scheduling UI.
  */
 
-export { BottomTabs, BottomTabsSpacer, MobileScopeSwitcher } from './BottomTabs';
+export {
+  BottomTabs,
+  BottomTabsSpacer,
+  MobileScopeSwitcher,
+} from "./BottomTabs";

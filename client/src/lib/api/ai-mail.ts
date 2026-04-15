@@ -2,7 +2,7 @@
  * AI Mail API — typed helpers that wrap the generic AI chat endpoint
  * with mail-specific prompts.
  */
-import { aiApi } from '@/lib/api/ai';
+import { aiApi } from "@/lib/api/ai";
 
 export const aiMailApi = {
   /**
@@ -10,18 +10,17 @@ export const aiMailApi = {
    */
   suggestReply: (emailBody: string, context?: string) =>
     aiApi.chat(
-      `Suggest 3 reply options for this email:\n${emailBody}\n${context || ''}`,
-      { language: 'fr' },
+      `Suggest 3 reply options for this email:\n${emailBody}\n${context || ""}`,
+      { language: "fr" },
     ),
 
   /**
    * Summarise a thread from an array of message texts.
    */
   summarizeThread: (messages: string[]) =>
-    aiApi.chat(
-      `Summarize this email thread:\n${messages.join('\n---\n')}`,
-      { language: 'fr' },
-    ),
+    aiApi.chat(`Summarize this email thread:\n${messages.join("\n---\n")}`, {
+      language: "fr",
+    }),
 
   /**
    * Extract action items from an email body as a JSON array.
@@ -29,7 +28,7 @@ export const aiMailApi = {
   extractActions: (emailBody: string) =>
     aiApi.chat(
       `Extract action items from this email as JSON array:\n${emailBody}`,
-      { language: 'fr' },
+      { language: "fr" },
     ),
 
   /**
@@ -40,7 +39,7 @@ export const aiMailApi = {
   rewriteTone: (body: string, tone: string) =>
     aiApi.chat(
       `Réécris ce texte d'email avec un ton "${tone}". Renvoie uniquement le corps réécrit, sans explication:\n\n${body}`,
-      { language: 'fr' },
+      { language: "fr" },
     ),
 
   /**
@@ -51,7 +50,7 @@ export const aiMailApi = {
   translate: (body: string, targetLang: string) =>
     aiApi.chat(
       `Traduis ce texte d'email en ${targetLang}. Renvoie uniquement la traduction:\n\n${body}`,
-      { language: 'fr' },
+      { language: "fr" },
     ),
 
   /**
@@ -69,6 +68,6 @@ export const aiMailApi = {
 }
 
 Brouillon:\n${body}`,
-      { language: 'fr' },
+      { language: "fr" },
     ),
 };

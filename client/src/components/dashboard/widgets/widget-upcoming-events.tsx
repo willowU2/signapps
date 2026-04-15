@@ -58,11 +58,7 @@ export function WidgetUpcomingEvents({ widget }: WidgetRenderProps) {
       const allEvents: EventItem[] = [];
       for (const cal of calendars) {
         try {
-          const response = await calendarApi.listEvents(
-            cal.id,
-            now,
-            endDate
-          );
+          const response = await calendarApi.listEvents(cal.id, now, endDate);
           const calEvents = (response.data || []) as EventItem[];
           allEvents.push(...calEvents);
         } catch {
@@ -71,7 +67,10 @@ export function WidgetUpcomingEvents({ widget }: WidgetRenderProps) {
       }
 
       return allEvents
-        .sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime())
+        .sort(
+          (a, b) =>
+            new Date(a.start_time).getTime() - new Date(b.start_time).getTime(),
+        )
         .slice(0, limit);
     },
     staleTime: 60 * 1000,
@@ -136,54 +135,66 @@ export function WidgetUpcomingEvents({ widget }: WidgetRenderProps) {
             </div>
           ) : (
             <div className="space-y-4">
-              {Array.from(groupedEvents.entries()).map(([dateKey, dateEvents]) => {
-                const date = new Date(dateKey);
-                return (
-                  <div key={dateKey}>
-                    <div className="text-xs font-semibold text-muted-foreground mb-2">
-                      {formatEventDate(date)}
-                    </div>
-                    <div className="space-y-2">
-                      {dateEvents.map((event) => (
-                        <div
-                          key={event.id}
-                          className="flex items-start gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
-                        >
-                          <div className="w-10 h-10 rounded bg-primary/10 flex items-center justify-center shrink-0">
-                            <span className="text-xs font-bold text-primary">
-                              {format(new Date(event.start_time), "HH:mm")}
-                            </span>
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="font-medium text-sm truncate">
-                              {event.title}
+              {Array.from(groupedEvents.entries()).map(
+                ([dateKey, dateEvents]) => {
+                  const date = new Date(dateKey);
+                  return (
+                    <div key={dateKey}>
+                      <div className="text-xs font-semibold text-muted-foreground mb-2">
+                        {formatEventDate(date)}
+                      </div>
+                      <div className="space-y-2">
+                        {dateEvents.map((event) => (
+                          <div
+                            key={event.id}
+                            className="flex items-start gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
+                          >
+                            <div className="w-10 h-10 rounded bg-primary/10 flex items-center justify-center shrink-0">
+                              <span className="text-xs font-bold text-primary">
+                                {format(new Date(event.start_time), "HH:mm")}
+                              </span>
                             </div>
-                            <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
-                              {event.all_day ? (
-                                <span>Toute la journée</span>
-                              ) : (
-                                <span className="flex items-center gap-1">
-                                  <Clock className="h-3 w-3" />
-                                  {format(new Date(event.start_time), "HH:mm")}
-                                  {event.end_time && (
-                                    <> - {format(new Date(event.end_time), "HH:mm")}</>
-                                  )}
-                                </span>
-                              )}
-                              {event.location && (
-                                <span className="flex items-center gap-1 truncate">
-                                  <MapPin className="h-3 w-3" />
-                                  {event.location}
-                                </span>
-                              )}
+                            <div className="flex-1 min-w-0">
+                              <div className="font-medium text-sm truncate">
+                                {event.title}
+                              </div>
+                              <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
+                                {event.all_day ? (
+                                  <span>Toute la journée</span>
+                                ) : (
+                                  <span className="flex items-center gap-1">
+                                    <Clock className="h-3 w-3" />
+                                    {format(
+                                      new Date(event.start_time),
+                                      "HH:mm",
+                                    )}
+                                    {event.end_time && (
+                                      <>
+                                        {" "}
+                                        -{" "}
+                                        {format(
+                                          new Date(event.end_time),
+                                          "HH:mm",
+                                        )}
+                                      </>
+                                    )}
+                                  </span>
+                                )}
+                                {event.location && (
+                                  <span className="flex items-center gap-1 truncate">
+                                    <MapPin className="h-3 w-3" />
+                                    {event.location}
+                                  </span>
+                                )}
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                },
+              )}
             </div>
           )}
         </ScrollArea>

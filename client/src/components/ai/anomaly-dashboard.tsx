@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useCallback } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useState, useEffect, useCallback } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Shield,
   AlertTriangle,
@@ -15,13 +15,18 @@ import {
   ChevronUp,
   Clock,
   Lightbulb,
-} from 'lucide-react';
-import { toast } from 'sonner';
-import { aiApi } from '@/lib/api';
-import { metricsApi, alertsApi, type AlertEvent, type SystemMetrics } from '@/lib/api';
+} from "lucide-react";
+import { toast } from "sonner";
+import { aiApi } from "@/lib/api";
+import {
+  metricsApi,
+  alertsApi,
+  type AlertEvent,
+  type SystemMetrics,
+} from "@/lib/api";
 
-type AnomalySeverity = 'low' | 'medium' | 'high' | 'critical';
-type AnomalyCategory = 'security' | 'storage' | 'performance' | 'error_rate';
+type AnomalySeverity = "low" | "medium" | "high" | "critical";
+type AnomalyCategory = "security" | "storage" | "performance" | "error_rate";
 
 interface Anomaly {
   id: string;
@@ -55,7 +60,7 @@ export function AnomalyDashboard() {
       const detectedAnomalies: Anomaly[] = [];
 
       // Convert active alerts to anomalies
-      if (alertsResult.status === 'fulfilled') {
+      if (alertsResult.status === "fulfilled") {
         const alerts: AlertEvent[] = alertsResult.value.data;
         for (const alert of alerts) {
           detectedAnomalies.push({
@@ -73,7 +78,7 @@ export function AnomalyDashboard() {
       }
 
       // Analyze metrics for anomalies that alerts might not catch
-      if (metricsResult.status === 'fulfilled') {
+      if (metricsResult.status === "fulfilled") {
         const metrics: SystemMetrics = metricsResult.value.data;
         const metricAnomalies = detectMetricAnomalies(metrics);
         detectedAnomalies.push(...metricAnomalies);
@@ -82,7 +87,7 @@ export function AnomalyDashboard() {
       setAnomalies(detectedAnomalies);
       setLastRefresh(new Date());
     } catch (error) {
-      toast.error('Impossible de charger les données d\'anomalies');
+      toast.error("Impossible de charger les données d'anomalies");
     } finally {
       setIsLoading(false);
     }
@@ -98,7 +103,7 @@ export function AnomalyDashboard() {
 
   const handleAIAnalysis = async () => {
     if (anomalies.length === 0) {
-      toast.info('No anomalies to analyze');
+      toast.info("No anomalies to analyze");
       return;
     }
 
@@ -127,11 +132,11 @@ For each anomaly, provide:
 Format as a clear, actionable report.`,
         {
           systemPrompt:
-            'You are a DevOps and security expert. Analyze system anomalies and provide actionable recommendations.',
-        }
+            "You are a DevOps and security expert. Analyze system anomalies and provide actionable recommendations.",
+        },
       );
 
-      toast.success('AI analysis complete');
+      toast.success("AI analysis complete");
 
       // Update anomalies with AI-enhanced suggestions
       const enhancedAnomalies = anomalies.map((anomaly) => ({
@@ -140,7 +145,7 @@ Format as a clear, actionable report.`,
       }));
       setAnomalies(enhancedAnomalies);
     } catch {
-      toast.error('AI analysis failed');
+      toast.error("AI analysis failed");
     } finally {
       setIsAnalyzing(false);
     }
@@ -148,53 +153,53 @@ Format as a clear, actionable report.`,
 
   const getCategoryIcon = (category: AnomalyCategory) => {
     switch (category) {
-      case 'security':
+      case "security":
         return <Shield className="h-5 w-5" />;
-      case 'storage':
+      case "storage":
         return <HardDrive className="h-5 w-5" />;
-      case 'performance':
+      case "performance":
         return <Activity className="h-5 w-5" />;
-      case 'error_rate':
+      case "error_rate":
         return <Bug className="h-5 w-5" />;
     }
   };
 
   const getSeverityColor = (severity: AnomalySeverity) => {
     switch (severity) {
-      case 'critical':
-        return 'border-red-500 bg-red-50 dark:bg-red-950/20';
-      case 'high':
-        return 'border-orange-500 bg-orange-50 dark:bg-orange-950/20';
-      case 'medium':
-        return 'border-yellow-500 bg-yellow-50 dark:bg-yellow-950/20';
-      case 'low':
-        return 'border-blue-500 bg-blue-50 dark:bg-blue-950/20';
+      case "critical":
+        return "border-red-500 bg-red-50 dark:bg-red-950/20";
+      case "high":
+        return "border-orange-500 bg-orange-50 dark:bg-orange-950/20";
+      case "medium":
+        return "border-yellow-500 bg-yellow-50 dark:bg-yellow-950/20";
+      case "low":
+        return "border-blue-500 bg-blue-50 dark:bg-blue-950/20";
     }
   };
 
   const getSeverityBadgeColor = (severity: AnomalySeverity) => {
     switch (severity) {
-      case 'critical':
-        return 'bg-red-500 text-white';
-      case 'high':
-        return 'bg-orange-500 text-white';
-      case 'medium':
-        return 'bg-yellow-500 text-foreground';
-      case 'low':
-        return 'bg-blue-500 text-white';
+      case "critical":
+        return "bg-red-500 text-white";
+      case "high":
+        return "bg-orange-500 text-white";
+      case "medium":
+        return "bg-yellow-500 text-foreground";
+      case "low":
+        return "bg-blue-500 text-white";
     }
   };
 
   const getCategoryColor = (category: AnomalyCategory) => {
     switch (category) {
-      case 'security':
-        return 'text-red-600 dark:text-red-400';
-      case 'storage':
-        return 'text-purple-600 dark:text-purple-400';
-      case 'performance':
-        return 'text-amber-600 dark:text-amber-400';
-      case 'error_rate':
-        return 'text-rose-600 dark:text-rose-400';
+      case "security":
+        return "text-red-600 dark:text-red-400";
+      case "storage":
+        return "text-purple-600 dark:text-purple-400";
+      case "performance":
+        return "text-amber-600 dark:text-amber-400";
+      case "error_rate":
+        return "text-rose-600 dark:text-rose-400";
     }
   };
 
@@ -202,10 +207,10 @@ Format as a clear, actionable report.`,
     anomalies.filter((a) => a.category === category).length;
 
   const severityCounts = {
-    critical: anomalies.filter((a) => a.severity === 'critical').length,
-    high: anomalies.filter((a) => a.severity === 'high').length,
-    medium: anomalies.filter((a) => a.severity === 'medium').length,
-    low: anomalies.filter((a) => a.severity === 'low').length,
+    critical: anomalies.filter((a) => a.severity === "critical").length,
+    high: anomalies.filter((a) => a.severity === "high").length,
+    medium: anomalies.filter((a) => a.severity === "medium").length,
+    low: anomalies.filter((a) => a.severity === "low").length,
   };
 
   return (
@@ -243,7 +248,7 @@ Format as a clear, actionable report.`,
             title="Refresh anomalies"
           >
             <RefreshCw
-              className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`}
+              className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`}
             />
           </Button>
         </div>
@@ -253,10 +258,14 @@ Format as a clear, actionable report.`,
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {(
           [
-            { cat: 'security' as const, label: 'Security', icon: Shield },
-            { cat: 'storage' as const, label: 'Storage', icon: HardDrive },
-            { cat: 'performance' as const, label: 'Performance', icon: Activity },
-            { cat: 'error_rate' as const, label: 'Error Rate', icon: Bug },
+            { cat: "security" as const, label: "Security", icon: Shield },
+            { cat: "storage" as const, label: "Storage", icon: HardDrive },
+            {
+              cat: "performance" as const,
+              label: "Performance",
+              icon: Activity,
+            },
+            { cat: "error_rate" as const, label: "Error Rate", icon: Bug },
           ] as const
         ).map(({ cat, label, icon: Icon }) => (
           <Card key={cat}>
@@ -337,9 +346,7 @@ Format as a clear, actionable report.`,
                 <div
                   className="flex items-start justify-between cursor-pointer"
                   onClick={() =>
-                    setExpandedId(
-                      expandedId === anomaly.id ? null : anomaly.id
-                    )
+                    setExpandedId(expandedId === anomaly.id ? null : anomaly.id)
                   }
                 >
                   <div className="flex items-start gap-3">
@@ -370,7 +377,7 @@ Format as a clear, actionable report.`,
                             Value: {anomaly.metric_value.toFixed(1)}
                             {anomaly.threshold
                               ? ` / Threshold: ${anomaly.threshold}`
-                              : ''}
+                              : ""}
                           </span>
                         )}
                       </div>
@@ -429,48 +436,48 @@ Format as a clear, actionable report.`,
 
 function mapAlertCategory(metricType: string): AnomalyCategory {
   switch (metricType) {
-    case 'cpu_usage':
-    case 'memory_usage':
-      return 'performance';
-    case 'disk_usage':
-    case 'disk_io':
-      return 'storage';
-    case 'network_in':
-    case 'network_out':
-      return 'security';
+    case "cpu_usage":
+    case "memory_usage":
+      return "performance";
+    case "disk_usage":
+    case "disk_io":
+      return "storage";
+    case "network_in":
+    case "network_out":
+      return "security";
     default:
-      return 'error_rate';
+      return "error_rate";
   }
 }
 
 function mapAlertSeverity(severity: string): AnomalySeverity {
   switch (severity) {
-    case 'critical':
-      return 'critical';
-    case 'warning':
-      return 'high';
-    case 'info':
-      return 'medium';
+    case "critical":
+      return "critical";
+    case "warning":
+      return "high";
+    case "info":
+      return "medium";
     default:
-      return 'low';
+      return "low";
   }
 }
 
 function getSuggestedAction(alert: AlertEvent): string {
   switch (alert.metric_type) {
-    case 'cpu_usage':
-      return 'Check for runaway processes. Consider scaling compute resources or optimizing heavy workloads.';
-    case 'memory_usage':
-      return 'Identify memory-intensive processes. Check for memory leaks in long-running services.';
-    case 'disk_usage':
-      return 'Clean up temporary files, old logs, and unused Docker images. Consider expanding storage.';
-    case 'disk_io':
-      return 'Check for intensive disk operations. Consider moving to SSD or optimizing database queries.';
-    case 'network_in':
-    case 'network_out':
-      return 'Review network traffic patterns. Check for unusual connections or data exfiltration.';
+    case "cpu_usage":
+      return "Check for runaway processes. Consider scaling compute resources or optimizing heavy workloads.";
+    case "memory_usage":
+      return "Identify memory-intensive processes. Check for memory leaks in long-running services.";
+    case "disk_usage":
+      return "Clean up temporary files, old logs, and unused Docker images. Consider expanding storage.";
+    case "disk_io":
+      return "Check for intensive disk operations. Consider moving to SSD or optimizing database queries.";
+    case "network_in":
+    case "network_out":
+      return "Review network traffic patterns. Check for unusual connections or data exfiltration.";
     default:
-      return 'Investigate the root cause and take appropriate remediation action.';
+      return "Investigate the root cause and take appropriate remediation action.";
   }
 }
 
@@ -483,13 +490,13 @@ function detectMetricAnomalies(metrics: SystemMetrics): Anomaly[] {
   if (cpuUsage > 90) {
     anomalies.push({
       id: `metric_cpu_${Date.now()}`,
-      category: 'performance',
-      severity: cpuUsage > 95 ? 'critical' : 'high',
-      title: 'High CPU Usage',
+      category: "performance",
+      severity: cpuUsage > 95 ? "critical" : "high",
+      title: "High CPU Usage",
       description: `CPU usage at ${cpuUsage.toFixed(1)}%, which exceeds safe operating threshold.`,
       timestamp: now,
       suggestedAction:
-        'Identify CPU-intensive processes and consider scaling or load balancing.',
+        "Identify CPU-intensive processes and consider scaling or load balancing.",
       metric_value: cpuUsage,
       threshold: 90,
     });
@@ -500,13 +507,13 @@ function detectMetricAnomalies(metrics: SystemMetrics): Anomaly[] {
   if (memUsage > 85) {
     anomalies.push({
       id: `metric_mem_${Date.now()}`,
-      category: 'performance',
-      severity: memUsage > 95 ? 'critical' : 'high',
-      title: 'High Memory Usage',
+      category: "performance",
+      severity: memUsage > 95 ? "critical" : "high",
+      title: "High Memory Usage",
       description: `Memory usage at ${memUsage.toFixed(1)}%, risk of OOM conditions.`,
       timestamp: now,
       suggestedAction:
-        'Check for memory leaks. Restart memory-intensive services if needed.',
+        "Check for memory leaks. Restart memory-intensive services if needed.",
       metric_value: memUsage,
       threshold: 85,
     });
@@ -517,13 +524,14 @@ function detectMetricAnomalies(metrics: SystemMetrics): Anomaly[] {
   if (diskUsage > 80) {
     anomalies.push({
       id: `metric_disk_${Date.now()}`,
-      category: 'storage',
-      severity: diskUsage > 95 ? 'critical' : diskUsage > 90 ? 'high' : 'medium',
-      title: 'Disk Space Running Low',
+      category: "storage",
+      severity:
+        diskUsage > 95 ? "critical" : diskUsage > 90 ? "high" : "medium",
+      title: "Disk Space Running Low",
       description: `Disk usage at ${diskUsage.toFixed(1)}%. Services may fail if disk becomes full.`,
       timestamp: now,
       suggestedAction:
-        'Clean up logs, temporary files, old Docker images. Consider expanding storage volume.',
+        "Clean up logs, temporary files, old Docker images. Consider expanding storage volume.",
       metric_value: diskUsage,
       threshold: 80,
     });

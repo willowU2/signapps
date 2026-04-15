@@ -1,22 +1,30 @@
-import type * as Y from 'yjs';
-import { parseSpreadsheetBuffer } from '@/lib/file-parsers';
-import type { CellData } from '@/components/sheets/types';
-import { MAX_ROW, COLS } from '@/components/sheets/types';
+import type * as Y from "yjs";
+import { parseSpreadsheetBuffer } from "@/lib/file-parsers";
+import type { CellData } from "@/components/sheets/types";
+import { MAX_ROW, COLS } from "@/components/sheets/types";
 
 function ensureString(v: unknown): string {
-  if (v === null || v === undefined) return '';
-  if (typeof v === 'string') return v;
-  if (typeof v === 'number' || typeof v === 'boolean') return String(v);
-  if (typeof v === 'object') {
+  if (v === null || v === undefined) return "";
+  if (typeof v === "string") return v;
+  if (typeof v === "number" || typeof v === "boolean") return String(v);
+  if (typeof v === "object") {
     type ObjRecord = Record<string, unknown> & { toISOString?: () => string };
     const o = v as ObjRecord;
-    if (o instanceof Date) return o.toISOString!().split('T')[0];
-    if (typeof o.toISOString === 'function') return o.toISOString().split('T')[0];
-    if ('result' in o) return ensureString(o.result);
-    if ('text' in o) return String(o.text || '');
-    if ('richText' in o && Array.isArray(o.richText)) return (o.richText as { text?: string }[]).map((r) => r?.text || '').join('');
-    if ('error' in o) return String(o.error || '');
-    try { return JSON.stringify(v); } catch { return ''; }
+    if (o instanceof Date) return o.toISOString!().split("T")[0];
+    if (typeof o.toISOString === "function")
+      return o.toISOString().split("T")[0];
+    if ("result" in o) return ensureString(o.result);
+    if ("text" in o) return String(o.text || "");
+    if ("richText" in o && Array.isArray(o.richText))
+      return (o.richText as { text?: string }[])
+        .map((r) => r?.text || "")
+        .join("");
+    if ("error" in o) return String(o.error || "");
+    try {
+      return JSON.stringify(v);
+    } catch {
+      return "";
+    }
   }
   return String(v);
 }
@@ -32,19 +40,21 @@ export interface ImportResult {
 export async function importXlsxToYjs(
   doc: Y.Doc,
   arrayBuffer: ArrayBuffer,
-  ext: string
+  ext: string,
 ): Promise<ImportResult> {
   const result = await parseSpreadsheetBuffer(arrayBuffer, ext);
   const sheetNames = result.sheets;
-  if (sheetNames.length === 0) throw new Error('No sheets found');
+  if (sheetNames.length === 0) throw new Error("No sheets found");
 
-  const sheetsMetaV2 = doc.getArray<{ id: string; name: string }>('sheets-meta-v2');
+  const sheetsMetaV2 = doc.getArray<{ id: string; name: string }>(
+    "sheets-meta-v2",
+  );
 
   // Step 1: Clear all existing sheets and rebuild from scratch.
   // Re-use the first sheet's ID (typically 'default') so existing grid data
   // gets overwritten rather than orphaned, but remove every extra sheet that
   // might be left over from a previous import.
-  const firstId = sheetsMetaV2.length > 0 ? sheetsMetaV2.get(0).id : 'default';
+  const firstId = sheetsMetaV2.length > 0 ? sheetsMetaV2.get(0).id : "default";
 
   doc.transact(() => {
     // Delete all existing sheet metadata
@@ -57,7 +67,9 @@ export async function importXlsxToYjs(
 
     // Create additional sheets with fresh IDs
     for (let i = 1; i < sheetNames.length; i++) {
-      const id = crypto.randomUUID ? crypto.randomUUID() : `sheet-${Date.now()}-${i}`;
+      const id = crypto.randomUUID
+        ? crypto.randomUUID()
+        : `sheet-${Date.now()}-${i}`;
       sheetsMetaV2.push([{ id, name: sheetNames[i] }]);
     }
   });
@@ -66,7 +78,7 @@ export async function importXlsxToYjs(
   const allEntries = sheetsMetaV2.toArray();
   console.warn(
     `[import-xlsx] Sheets created: ${allEntries.length}/${sheetNames.length}`,
-    allEntries.map(s => `${s.name}(${s.id})`)
+    allEntries.map((s) => `${s.name}(${s.id})`),
   );
 
   // Step 4: Write data — aggressively filtered and chunked to prevent OOM
@@ -85,16 +97,22 @@ export async function importXlsxToYjs(
     // Pre-filter: only store cells with visible content (Google Sheets style sparse storage)
     const filtered: Array<[string, any]> = [];
     for (const [key, cellData] of Object.entries(cellsMap)) {
-      const [rStr, cStr] = key.split(',');
+      const [rStr, cStr] = key.split(",");
       const r = parseInt(rStr, 10);
-      if (r >= MAX_ROW) { skippedCells++; continue; }
+      if (r >= MAX_ROW) {
+        skippedCells++;
+        continue;
+      }
 
       const val = ensureString(cellData.value);
       const hasStyle = cellData.style && Object.keys(cellData.style).length > 0;
       const hasComment = !!cellData.comment;
 
       // Skip truly empty cells
-      if (!val && !hasStyle && !hasComment) { skippedCells++; continue; }
+      if (!val && !hasStyle && !hasComment) {
+        skippedCells++;
+        continue;
+      }
 
       // Build minimal cell data — NO formulas stored (saves 60%+ memory)
       // Values are already the computed results from Excel
@@ -110,7 +128,7 @@ export async function importXlsxToYjs(
       const batch = filtered.slice(chunk, chunk + CHUNK_SIZE);
       doc.transact(() => {
         for (const [key, safeData] of batch) {
-          const [rStr, cStr] = key.split(',');
+          const [rStr, cStr] = key.split(",");
           const r = parseInt(rStr, 10);
           const c = parseInt(cStr, 10);
           if (r >= MAX_ROW || c >= COLS) continue;
@@ -118,7 +136,7 @@ export async function importXlsxToYjs(
           totalCells++;
         }
       });
-      await new Promise(r => setTimeout(r, 0));
+      await new Promise((r) => setTimeout(r, 0));
     }
   }
   console.warn(`[import-xlsx] Skipped ${skippedCells} trivial cells`);
@@ -151,7 +169,9 @@ export async function importXlsxToYjs(
     }
   });
 
-  console.warn(`[import-xlsx] Imported ${totalCells} cells across ${sheetNames.length} sheets`);
+  console.warn(
+    `[import-xlsx] Imported ${totalCells} cells across ${sheetNames.length} sheets`,
+  );
 
   return {
     totalCells,

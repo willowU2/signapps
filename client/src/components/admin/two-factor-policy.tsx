@@ -25,28 +25,46 @@ export function TwoFactorPolicy() {
   const [policies, setPolicies] = useState<RolePolicy[]>([
     { role: "Admin", required: true, adoptionRate: 100, nonCompliantCount: 0 },
     { role: "Manager", required: true, adoptionRate: 87, nonCompliantCount: 5 },
-    { role: "Employee", required: false, adoptionRate: 45, nonCompliantCount: 23 },
+    {
+      role: "Employee",
+      required: false,
+      adoptionRate: 45,
+      nonCompliantCount: 23,
+    },
   ]);
 
   const [nonCompliantUsers] = useState<NonCompliantUser[]>([
-    { id: "1", name: "Alice Johnson", email: "alice@company.com", role: "Manager" },
+    {
+      id: "1",
+      name: "Alice Johnson",
+      email: "alice@company.com",
+      role: "Manager",
+    },
     { id: "2", name: "Bob Smith", email: "bob@company.com", role: "Manager" },
-    { id: "3", name: "Charlie Brown", email: "charlie@company.com", role: "Employee" },
-    { id: "4", name: "Diana Prince", email: "diana@company.com", role: "Employee" },
+    {
+      id: "3",
+      name: "Charlie Brown",
+      email: "charlie@company.com",
+      role: "Employee",
+    },
+    {
+      id: "4",
+      name: "Diana Prince",
+      email: "diana@company.com",
+      role: "Employee",
+    },
     { id: "5", name: "Eve Wilson", email: "eve@company.com", role: "Employee" },
   ]);
 
   const togglePolicy = (role: Role) => {
     setPolicies((prev) =>
-      prev.map((p) =>
-        p.role === role ? { ...p, required: !p.required } : p
-      )
+      prev.map((p) => (p.role === role ? { ...p, required: !p.required } : p)),
     );
   };
 
   const totalNonCompliant = policies.reduce(
     (sum, p) => sum + p.nonCompliantCount,
-    0
+    0,
   );
 
   return (
@@ -55,7 +73,9 @@ export function TwoFactorPolicy() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Shield className="h-6 w-6 text-blue-600" />
-          <h2 className="text-2xl font-bold">Two-Factor Authentication Policy</h2>
+          <h2 className="text-2xl font-bold">
+            Two-Factor Authentication Policy
+          </h2>
         </div>
         <div className="text-sm text-muted-foreground">
           {totalNonCompliant} non-compliant users
@@ -130,7 +150,9 @@ export function TwoFactorPolicy() {
                 className="flex items-center justify-between p-2 rounded hover:bg-muted border border-gray-100"
               >
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-foreground">{user.name}</p>
+                  <p className="text-sm font-medium text-foreground">
+                    {user.name}
+                  </p>
                   <p className="text-xs text-muted-foreground">{user.email}</p>
                 </div>
                 <div className="flex items-center gap-2">

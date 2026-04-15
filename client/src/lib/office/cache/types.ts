@@ -9,25 +9,25 @@
 // ============================================================================
 
 export type CacheType =
-  | 'document_content'
-  | 'document_preview'
-  | 'export_result'
-  | 'conversion_result'
-  | 'thumbnail'
-  | 'template'
-  | 'font'
-  | 'image';
+  | "document_content"
+  | "document_preview"
+  | "export_result"
+  | "conversion_result"
+  | "thumbnail"
+  | "template"
+  | "font"
+  | "image";
 
 export type CacheStrategy =
-  | 'lru'        // Least Recently Used
-  | 'lfu'        // Least Frequently Used
-  | 'ttl'        // Time-To-Live based
-  | 'priority';  // Priority-based eviction
+  | "lru" // Least Recently Used
+  | "lfu" // Least Frequently Used
+  | "ttl" // Time-To-Live based
+  | "priority"; // Priority-based eviction
 
 export type CacheLocation =
-  | 'memory'     // In-memory cache (fast, volatile)
-  | 'disk'       // Disk cache (slower, persistent)
-  | 'cdn';       // CDN cache (distributed)
+  | "memory" // In-memory cache (fast, volatile)
+  | "disk" // Disk cache (slower, persistent)
+  | "cdn"; // CDN cache (distributed)
 
 // ============================================================================
 // Cache Entry
@@ -129,7 +129,7 @@ export interface CacheConfig {
 
 export const DEFAULT_CACHE_CONFIG: CacheConfig = {
   enabled: true,
-  strategy: 'lru',
+  strategy: "lru",
   maxTotalSize: 500 * 1024 * 1024, // 500MB
 
   memoryLimit: 100 * 1024 * 1024, // 100MB
@@ -161,7 +161,7 @@ export const DEFAULT_CACHE_CONFIG: CacheConfig = {
   cleanupThreshold: 90, // cleanup at 90% capacity
 
   prewarmEnabled: true,
-  prewarmTypes: ['font', 'template'],
+  prewarmTypes: ["font", "template"],
 };
 
 // ============================================================================
@@ -196,8 +196,8 @@ export interface ListCacheEntriesParams {
   type?: CacheType;
   location?: CacheLocation;
   documentId?: string;
-  sortBy?: 'size' | 'accessedAt' | 'hitCount' | 'priority';
-  sortOrder?: 'asc' | 'desc';
+  sortBy?: "size" | "accessedAt" | "hitCount" | "priority";
+  sortOrder?: "asc" | "desc";
   limit?: number;
   offset?: number;
 }
@@ -229,36 +229,36 @@ export interface PrewarmCacheResponse {
 // ============================================================================
 
 export const CACHE_TYPE_LABELS: Record<CacheType, string> = {
-  document_content: 'Contenu document',
-  document_preview: 'Aperçu document',
-  export_result: 'Export',
-  conversion_result: 'Conversion',
-  thumbnail: 'Miniature',
-  template: 'Template',
-  font: 'Police',
-  image: 'Image',
+  document_content: "Contenu document",
+  document_preview: "Aperçu document",
+  export_result: "Export",
+  conversion_result: "Conversion",
+  thumbnail: "Miniature",
+  template: "Template",
+  font: "Police",
+  image: "Image",
 };
 
 export const CACHE_TYPE_COLORS: Record<CacheType, string> = {
-  document_content: 'bg-blue-100 text-blue-800',
-  document_preview: 'bg-purple-100 text-purple-800',
-  export_result: 'bg-green-100 text-green-800',
-  conversion_result: 'bg-yellow-100 text-yellow-800',
-  thumbnail: 'bg-pink-100 text-pink-800',
-  template: 'bg-indigo-100 text-indigo-800',
-  font: 'bg-gray-100 text-gray-800',
-  image: 'bg-orange-100 text-orange-800',
+  document_content: "bg-blue-100 text-blue-800",
+  document_preview: "bg-purple-100 text-purple-800",
+  export_result: "bg-green-100 text-green-800",
+  conversion_result: "bg-yellow-100 text-yellow-800",
+  thumbnail: "bg-pink-100 text-pink-800",
+  template: "bg-indigo-100 text-indigo-800",
+  font: "bg-gray-100 text-gray-800",
+  image: "bg-orange-100 text-orange-800",
 };
 
 export const CACHE_LOCATION_LABELS: Record<CacheLocation, string> = {
-  memory: 'Mémoire',
-  disk: 'Disque',
-  cdn: 'CDN',
+  memory: "Mémoire",
+  disk: "Disque",
+  cdn: "CDN",
 };
 
 export const CACHE_STRATEGY_LABELS: Record<CacheStrategy, string> = {
-  lru: 'Moins récemment utilisé',
-  lfu: 'Moins fréquemment utilisé',
-  ttl: 'Basé sur TTL',
-  priority: 'Basé sur priorité',
+  lru: "Moins récemment utilisé",
+  lfu: "Moins fréquemment utilisé",
+  ttl: "Basé sur TTL",
+  priority: "Basé sur priorité",
 };

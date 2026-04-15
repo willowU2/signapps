@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { toast } from 'sonner';
+import { toast } from "sonner";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -10,8 +10,8 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import { useDeleteGroup, Group } from '@/hooks/use-groups';
+} from "@/components/ui/alert-dialog";
+import { useDeleteGroup, Group } from "@/hooks/use-groups";
 
 interface GroupDeleteDialogProps {
   open: boolean;
@@ -19,7 +19,11 @@ interface GroupDeleteDialogProps {
   group: Group | null;
 }
 
-export function GroupDeleteDialog({ open, onOpenChange, group }: GroupDeleteDialogProps) {
+export function GroupDeleteDialog({
+  open,
+  onOpenChange,
+  group,
+}: GroupDeleteDialogProps) {
   const deleteMutation = useDeleteGroup();
 
   if (!group) return null;
@@ -27,10 +31,10 @@ export function GroupDeleteDialog({ open, onOpenChange, group }: GroupDeleteDial
   const handleDelete = async () => {
     try {
       await deleteMutation.mutateAsync(group.id);
-      toast.success('Groupe supprimé avec succès');
+      toast.success("Groupe supprimé avec succès");
       onOpenChange(false);
     } catch (error) {
-      toast.error('Erreur lors de la suppression du groupe');
+      toast.error("Erreur lors de la suppression du groupe");
       console.error(error);
     }
   };
@@ -41,9 +45,9 @@ export function GroupDeleteDialog({ open, onOpenChange, group }: GroupDeleteDial
         <AlertDialogHeader>
           <AlertDialogTitle>Êtes-vous absolument sûr ?</AlertDialogTitle>
           <AlertDialogDescription>
-            Cette action est irréversible. Elle supprimera définitivement le groupe{' '}
-            <strong>{group.name}</strong> et retirera tous les droits RBAC associés pour
-            ses {group.member_count} membres.
+            Cette action est irréversible. Elle supprimera définitivement le
+            groupe <strong>{group.name}</strong> et retirera tous les droits
+            RBAC associés pour ses {group.member_count} membres.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -58,7 +62,7 @@ export function GroupDeleteDialog({ open, onOpenChange, group }: GroupDeleteDial
             disabled={deleteMutation.isPending}
             className="bg-red-600 hover:bg-red-700"
           >
-            {deleteMutation.isPending ? 'Suppression...' : 'Supprimer'}
+            {deleteMutation.isPending ? "Suppression..." : "Supprimer"}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

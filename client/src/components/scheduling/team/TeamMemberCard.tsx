@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * TeamMemberCard Component
@@ -6,9 +6,9 @@
  * Displays a team member with their current status and availability.
  */
 
-import * as React from 'react';
-import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import * as React from "react";
+import { format } from "date-fns";
+import { fr } from "date-fns/locale";
 import {
   Calendar,
   Clock,
@@ -17,30 +17,33 @@ import {
   MoreHorizontal,
   Phone,
   Video,
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
+} from "@/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from "@/components/ui/dropdown-menu";
 import {
   HoverCard,
   HoverCardContent,
   HoverCardTrigger,
-} from '@/components/ui/hover-card';
-import type { TeamMember, AvailabilitySlot } from '@/lib/scheduling/types/scheduling';
+} from "@/components/ui/hover-card";
+import type {
+  TeamMember,
+  AvailabilitySlot,
+} from "@/lib/scheduling/types/scheduling";
 
 // ============================================================================
 // Types
@@ -48,7 +51,7 @@ import type { TeamMember, AvailabilitySlot } from '@/lib/scheduling/types/schedu
 
 interface TeamMemberCardProps {
   member: TeamMember;
-  currentStatus?: AvailabilitySlot['status'];
+  currentStatus?: AvailabilitySlot["status"];
   nextAvailable?: Date;
   onScheduleMeeting?: (member: TeamMember) => void;
   onViewCalendar?: (member: TeamMember) => void;
@@ -61,28 +64,28 @@ interface TeamMemberCardProps {
 // ============================================================================
 
 const statusConfig: Record<
-  AvailabilitySlot['status'],
+  AvailabilitySlot["status"],
   { label: string; color: string; bgColor: string }
 > = {
   available: {
-    label: 'Disponible',
-    color: 'text-green-600',
-    bgColor: 'bg-green-500',
+    label: "Disponible",
+    color: "text-green-600",
+    bgColor: "bg-green-500",
   },
   busy: {
-    label: 'Occupé',
-    color: 'text-red-600',
-    bgColor: 'bg-red-500',
+    label: "Occupé",
+    color: "text-red-600",
+    bgColor: "bg-red-500",
   },
   tentative: {
-    label: 'Peut-être disponible',
-    color: 'text-amber-600',
-    bgColor: 'bg-amber-500',
+    label: "Peut-être disponible",
+    color: "text-amber-600",
+    bgColor: "bg-amber-500",
   },
-  'out-of-office': {
-    label: 'Absent',
-    color: 'text-slate-600',
-    bgColor: 'bg-slate-400',
+  "out-of-office": {
+    label: "Absent",
+    color: "text-slate-600",
+    bgColor: "bg-slate-400",
   },
 };
 
@@ -92,9 +95,9 @@ const statusConfig: Record<
 
 function getInitials(name: string): string {
   return name
-    .split(' ')
+    .split(" ")
     .map((n) => n[0])
-    .join('')
+    .join("")
     .toUpperCase()
     .slice(0, 2);
 }
@@ -105,7 +108,7 @@ function getInitials(name: string): string {
 
 export function TeamMemberCard({
   member,
-  currentStatus = 'available',
+  currentStatus = "available",
   nextAvailable,
   onScheduleMeeting,
   onViewCalendar,
@@ -115,7 +118,7 @@ export function TeamMemberCard({
   const status = statusConfig[currentStatus];
 
   return (
-    <Card className={cn('relative', className)}>
+    <Card className={cn("relative", className)}>
       <CardHeader className="pb-3">
         <div className="flex items-start gap-3">
           {/* Avatar with status indicator */}
@@ -126,8 +129,8 @@ export function TeamMemberCard({
             </Avatar>
             <span
               className={cn(
-                'absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-background',
-                status.bgColor
+                "absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-background",
+                status.bgColor,
               )}
             />
           </div>
@@ -164,13 +167,13 @@ export function TeamMemberCard({
         <div className="flex items-center justify-between">
           <Badge
             variant="secondary"
-            className={cn('font-normal', status.color)}
+            className={cn("font-normal", status.color)}
           >
             {status.label}
           </Badge>
-          {currentStatus !== 'available' && nextAvailable && (
+          {currentStatus !== "available" && nextAvailable && (
             <span className="text-xs text-muted-foreground">
-              Dispo. à {format(nextAvailable, 'HH:mm', { locale: fr })}
+              Dispo. à {format(nextAvailable, "HH:mm", { locale: fr })}
             </span>
           )}
         </div>
@@ -180,7 +183,7 @@ export function TeamMemberCard({
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <Clock className="h-3 w-3" />
             <span>
-              {member.workingHours.schedule.monday?.start} -{' '}
+              {member.workingHours.schedule.monday?.start} -{" "}
               {member.workingHours.schedule.monday?.end}
             </span>
             <span className="text-muted-foreground/50">
@@ -220,10 +223,10 @@ export function TeamMemberCard({
 
 export function TeamMemberCardCompact({
   member,
-  currentStatus = 'available',
+  currentStatus = "available",
   onClick,
   className,
-}: Pick<TeamMemberCardProps, 'member' | 'currentStatus' | 'className'> & {
+}: Pick<TeamMemberCardProps, "member" | "currentStatus" | "className"> & {
   onClick?: (member: TeamMember) => void;
 }) {
   const status = statusConfig[currentStatus];
@@ -233,8 +236,8 @@ export function TeamMemberCardCompact({
       <HoverCardTrigger asChild>
         <div
           className={cn(
-            'flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors',
-            className
+            "flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors",
+            className,
           )}
           onClick={() => onClick?.(member)}
         >
@@ -247,8 +250,8 @@ export function TeamMemberCardCompact({
             </Avatar>
             <span
               className={cn(
-                'absolute bottom-0 right-0 h-2 w-2 rounded-full border border-background',
-                status.bgColor
+                "absolute bottom-0 right-0 h-2 w-2 rounded-full border border-background",
+                status.bgColor,
               )}
             />
           </div>
@@ -291,21 +294,21 @@ export function TeamMemberCardCompact({
 export function TeamMemberAvatarStack({
   members,
   max = 4,
-  size = 'default',
+  size = "default",
   onClick,
 }: {
   members: TeamMember[];
   max?: number;
-  size?: 'sm' | 'default' | 'lg';
+  size?: "sm" | "default" | "lg";
   onClick?: (member: TeamMember) => void;
 }) {
   const visibleMembers = members.slice(0, max);
   const remaining = members.length - max;
 
   const sizeClasses = {
-    sm: 'h-6 w-6 text-[10px]',
-    default: 'h-8 w-8 text-xs',
-    lg: 'h-10 w-10 text-sm',
+    sm: "h-6 w-6 text-[10px]",
+    default: "h-8 w-8 text-xs",
+    lg: "h-10 w-10 text-sm",
   };
 
   return (
@@ -315,7 +318,7 @@ export function TeamMemberAvatarStack({
           key={member.id}
           className={cn(
             sizeClasses[size],
-            'border-2 border-background cursor-pointer hover:z-10 transition-transform hover:scale-110'
+            "border-2 border-background cursor-pointer hover:z-10 transition-transform hover:scale-110",
           )}
           onClick={() => onClick?.(member)}
         >
@@ -327,7 +330,7 @@ export function TeamMemberAvatarStack({
         <div
           className={cn(
             sizeClasses[size],
-            'flex items-center justify-center rounded-full border-2 border-background bg-muted font-medium'
+            "flex items-center justify-center rounded-full border-2 border-background bg-muted font-medium",
           )}
         >
           +{remaining}

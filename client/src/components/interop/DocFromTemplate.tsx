@@ -1,23 +1,27 @@
-'use client';
+"use client";
 
 /**
  * Feature 9: Doc template → use in social post
  * Feature 22: Drive → create doc from template
  */
 
-import { useState } from 'react';
-import { Layout, Plus, Loader2, ExternalLink } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { useState } from "react";
+import { Layout, Plus, Loader2, ExternalLink } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { toast } from 'sonner';
-import { driveApi } from '@/lib/api/drive';
-import { BUILTIN_DOC_TEMPLATES } from '@/lib/document-templates';
-import { useRouter } from 'next/navigation';
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "sonner";
+import { driveApi } from "@/lib/api/drive";
+import { BUILTIN_DOC_TEMPLATES } from "@/lib/document-templates";
+import { useRouter } from "next/navigation";
 
 interface DocFromTemplateProps {
   /** When provided, after creating doc, set the content in the composer */
@@ -25,51 +29,76 @@ interface DocFromTemplateProps {
   triggerLabel?: string;
 }
 
-export function DocFromTemplate({ onInsertContent, triggerLabel = 'Modèle' }: DocFromTemplateProps) {
+export function DocFromTemplate({
+  onInsertContent,
+  triggerLabel = "Modèle",
+}: DocFromTemplateProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<any>(null);
-  const [docName, setDocName] = useState('');
+  const [docName, setDocName] = useState("");
   const [loading, setLoading] = useState(false);
 
   const templates = BUILTIN_DOC_TEMPLATES;
 
   const handleCreate = async () => {
-    if (!docName.trim()) { toast.error('Donnez un titre au document'); return; }
+    if (!docName.trim()) {
+      toast.error("Donnez un titre au document");
+      return;
+    }
     setLoading(true);
     try {
       const targetId = crypto.randomUUID();
       const newNode = await driveApi.createNode({
         name: docName.trim(),
-        node_type: 'document',
+        node_type: "document",
         parent_id: null,
         target_id: targetId,
       });
       const finalId = newNode.target_id || newNode.id;
       if (selectedTemplate?.content) {
-        localStorage.setItem(`doc-template:${finalId}`, selectedTemplate.content);
+        localStorage.setItem(
+          `doc-template:${finalId}`,
+          selectedTemplate.content,
+        );
       }
-      toast.success('Document créé depuis le modèle');
+      toast.success("Document créé depuis le modèle");
       setOpen(false);
-      router.push(`/docs/editor?id=${finalId}&name=${encodeURIComponent(newNode.name)}`);
+      router.push(
+        `/docs/editor?id=${finalId}&name=${encodeURIComponent(newNode.name)}`,
+      );
     } catch {
-      toast.error('Erreur lors de la création');
+      toast.error("Erreur lors de la création");
     } finally {
       setLoading(false);
     }
   };
 
   const handleUseInPost = () => {
-    if (!selectedTemplate?.content) { toast.error('Sélectionnez un modèle'); return; }
+    if (!selectedTemplate?.content) {
+      toast.error("Sélectionnez un modèle");
+      return;
+    }
     if (onInsertContent) {
-      onInsertContent(selectedTemplate.content.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 500));
+      onInsertContent(
+        selectedTemplate.content
+          .replace(/<[^>]+>/g, " ")
+          .replace(/\s+/g, " ")
+          .trim()
+          .slice(0, 500),
+      );
       setOpen(false);
     }
   };
 
   return (
     <>
-      <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setOpen(true)}>
+      <Button
+        variant="outline"
+        size="sm"
+        className="gap-1.5"
+        onClick={() => setOpen(true)}
+      >
         <Layout className="h-3.5 w-3.5" />
         {triggerLabel}
       </Button>
@@ -88,15 +117,20 @@ export function DocFromTemplate({ onInsertContent, triggerLabel = 'Modèle' }: D
               {templates.map((tpl) => (
                 <button
                   key={tpl.id}
-                  onClick={() => { setSelectedTemplate(tpl); setDocName(tpl.title); }}
+                  onClick={() => {
+                    setSelectedTemplate(tpl);
+                    setDocName(tpl.title);
+                  }}
                   className={`p-3 rounded-lg border text-left text-sm transition-all ${
                     selectedTemplate?.id === tpl.id
-                      ? 'border-primary bg-primary/5 font-medium'
-                      : 'border-border hover:border-muted-foreground/50'
+                      ? "border-primary bg-primary/5 font-medium"
+                      : "border-border hover:border-muted-foreground/50"
                   }`}
                 >
                   <p className="font-medium text-xs">{tpl.title}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{tpl.description}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
+                    {tpl.description}
+                  </p>
                 </button>
               ))}
             </div>
@@ -113,14 +147,29 @@ export function DocFromTemplate({ onInsertContent, triggerLabel = 'Modèle' }: D
           </div>
 
           <DialogFooter className="gap-2">
-            <Button variant="ghost" onClick={() => setOpen(false)}>Annuler</Button>
+            <Button variant="ghost" onClick={() => setOpen(false)}>
+              Annuler
+            </Button>
             {onInsertContent && (
-              <Button variant="outline" onClick={handleUseInPost} disabled={!selectedTemplate} className="gap-1.5">
+              <Button
+                variant="outline"
+                onClick={handleUseInPost}
+                disabled={!selectedTemplate}
+                className="gap-1.5"
+              >
                 Utiliser dans le post
               </Button>
             )}
-            <Button onClick={handleCreate} disabled={loading || !docName.trim()} className="gap-1.5">
-              {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />}
+            <Button
+              onClick={handleCreate}
+              disabled={loading || !docName.trim()}
+              className="gap-1.5"
+            >
+              {loading ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Plus className="h-3.5 w-3.5" />
+              )}
               Créer le document
             </Button>
           </DialogFooter>

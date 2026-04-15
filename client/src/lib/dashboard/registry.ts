@@ -23,7 +23,11 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-import type { WidgetDefinition, WidgetCategory, DashboardPreset } from "./types";
+import type {
+  WidgetDefinition,
+  WidgetCategory,
+  DashboardPreset,
+} from "./types";
 
 // ============================================================================
 // Widget Registry
@@ -308,63 +312,69 @@ widgetRegistry.set("performance-chart", {
 // Unified Dashboard Widgets (previously hardcoded sections)
 // ============================================================================
 
-import { Sparkles, BarChart, Eye, Rss as RssIcon, LayoutGrid } from 'lucide-react';
+import {
+  Sparkles,
+  BarChart,
+  Eye,
+  Rss as RssIcon,
+  LayoutGrid,
+} from "lucide-react";
 
-widgetRegistry.set('ai-daily-brief', {
-  type: 'ai-daily-brief',
-  name: 'Résumé du jour (IA)',
-  description: 'Résumé IA: tâches en attente, emails non lus, événements',
-  category: 'productivity',
+widgetRegistry.set("ai-daily-brief", {
+  type: "ai-daily-brief",
+  name: "Résumé du jour (IA)",
+  description: "Résumé IA: tâches en attente, emails non lus, événements",
+  category: "productivity",
   icon: Sparkles,
   size: { minW: 6, minH: 2, defaultW: 12, defaultH: 3 },
   isPublic: true,
 });
 
-widgetRegistry.set('unified-stats', {
-  type: 'unified-stats',
-  name: 'Statistiques unifiées',
-  description: 'Documents, emails, événements en un coup d\'oeil',
-  category: 'analytics',
+widgetRegistry.set("unified-stats", {
+  type: "unified-stats",
+  name: "Statistiques unifiées",
+  description: "Documents, emails, événements en un coup d'oeil",
+  category: "analytics",
   icon: BarChart,
   size: { minW: 6, minH: 2, defaultW: 12, defaultH: 2 },
   isPublic: true,
 });
 
-widgetRegistry.set('today-view', {
-  type: 'today-view',
-  name: 'Vue Aujourd\'hui',
-  description: 'Emails + tâches + événements du jour combinés',
-  category: 'productivity',
+widgetRegistry.set("today-view", {
+  type: "today-view",
+  name: "Vue Aujourd'hui",
+  description: "Emails + tâches + événements du jour combinés",
+  category: "productivity",
   icon: Eye,
   size: { minW: 6, minH: 3, defaultW: 12, defaultH: 5 },
   isPublic: true,
 });
 
-widgetRegistry.set('activity-feed', {
-  type: 'activity-feed',
-  name: 'Fil d\'activité',
-  description: 'Activité globale avec filtres et recherche',
-  category: 'content',
+widgetRegistry.set("activity-feed", {
+  type: "activity-feed",
+  name: "Fil d'activité",
+  description: "Activité globale avec filtres et recherche",
+  category: "content",
   icon: Activity,
   size: { minW: 4, minH: 3, defaultW: 6, defaultH: 4 },
   isPublic: true,
 });
 
-widgetRegistry.set('all-apps', {
-  type: 'all-apps',
-  name: 'Toutes les applications',
-  description: 'Catalogue complet des applications avec recherche',
-  category: 'system',
+widgetRegistry.set("all-apps", {
+  type: "all-apps",
+  name: "Toutes les applications",
+  description: "Catalogue complet des applications avec recherche",
+  category: "system",
   icon: LayoutGrid,
   size: { minW: 6, minH: 3, defaultW: 12, defaultH: 5 },
   isPublic: true,
 });
 
-widgetRegistry.set('kpi-cards', {
-  type: 'kpi-cards',
-  name: 'KPIs clés',
-  description: 'Indicateurs de performance multi-services',
-  category: 'analytics',
+widgetRegistry.set("kpi-cards", {
+  type: "kpi-cards",
+  name: "KPIs clés",
+  description: "Indicateurs de performance multi-services",
+  category: "analytics",
   icon: TrendingUp,
   size: { minW: 4, minH: 2, defaultW: 8, defaultH: 3 },
   isPublic: true,
@@ -387,7 +397,7 @@ export function getAllWidgets(): WidgetDefinition[] {
 }
 
 export function getWidgetsByCategory(
-  category: WidgetCategory
+  category: WidgetCategory,
 ): WidgetDefinition[] {
   return getAllWidgets().filter((w) => w.category === category);
 }
@@ -512,148 +522,165 @@ export const dashboardPresets: DashboardPreset[] = [
 ];
 
 // IDEA-122: Register extended widgets
-import { Cloud, StickyNote, Rss, Flame, Star, CalendarDays } from 'lucide-react';
+import {
+  Cloud,
+  StickyNote,
+  Rss,
+  Flame,
+  Star,
+  CalendarDays,
+} from "lucide-react";
 
-widgetRegistry.set('weather', {
-  type: 'weather',
-  name: 'Météo',
-  description: 'Météo locale en temps réel (Open-Meteo)',
-  category: 'productivity',
+widgetRegistry.set("weather", {
+  type: "weather",
+  name: "Météo",
+  description: "Météo locale en temps réel (Open-Meteo)",
+  category: "productivity",
   icon: Cloud,
   size: { minW: 3, minH: 2, defaultW: 4, defaultH: 3 },
   isPublic: true,
 });
 
-widgetRegistry.set('quick-notes', {
-  type: 'quick-notes',
-  name: 'Notes rapides',
-  description: 'Bloc-notes personnel persistant',
-  category: 'productivity',
+widgetRegistry.set("quick-notes", {
+  type: "quick-notes",
+  name: "Notes rapides",
+  description: "Bloc-notes personnel persistant",
+  category: "productivity",
   icon: StickyNote,
   size: { minW: 3, minH: 2, defaultW: 4, defaultH: 3 },
   isPublic: true,
 });
 
-widgetRegistry.set('rss-feed', {
-  type: 'rss-feed',
-  name: 'RSS Feed',
-  description: 'Flux RSS personnalisé',
-  category: 'content',
+widgetRegistry.set("rss-feed", {
+  type: "rss-feed",
+  name: "RSS Feed",
+  description: "Flux RSS personnalisé",
+  category: "content",
   icon: Rss,
   size: { minW: 3, minH: 3, defaultW: 4, defaultH: 4 },
   isPublic: true,
-  defaultConfig: { feedUrl: 'https://news.ycombinator.com/rss', title: 'Hacker News' },
+  defaultConfig: {
+    feedUrl: "https://news.ycombinator.com/rss",
+    title: "Hacker News",
+  },
 });
 
 // Dashboard customization: extended widgets
-widgetRegistry.set('activity-heatmap', {
-  type: 'activity-heatmap',
-  name: 'Heatmap d\'activité',
-  description: 'Carte de chaleur de l\'activité sur les 12 dernières semaines',
-  category: 'analytics',
+widgetRegistry.set("activity-heatmap", {
+  type: "activity-heatmap",
+  name: "Heatmap d'activité",
+  description: "Carte de chaleur de l'activité sur les 12 dernières semaines",
+  category: "analytics",
   icon: Flame,
   size: { minW: 6, minH: 2, defaultW: 8, defaultH: 3 },
   isPublic: true,
 });
 
-widgetRegistry.set('favorites', {
-  type: 'favorites',
-  name: 'Favoris',
-  description: 'Accès rapide à vos éléments épinglés',
-  category: 'productivity',
+widgetRegistry.set("favorites", {
+  type: "favorites",
+  name: "Favoris",
+  description: "Accès rapide à vos éléments épinglés",
+  category: "productivity",
   icon: Star,
   size: { minW: 3, minH: 2, defaultW: 4, defaultH: 3 },
   isPublic: true,
 });
 
-widgetRegistry.set('calendar-preview', {
-  type: 'calendar-preview',
-  name: 'Aperçu calendrier',
-  description: 'Mini-calendrier avec événements de la semaine',
-  category: 'productivity',
+widgetRegistry.set("calendar-preview", {
+  type: "calendar-preview",
+  name: "Aperçu calendrier",
+  description: "Mini-calendrier avec événements de la semaine",
+  category: "productivity",
   icon: CalendarDays,
   size: { minW: 3, minH: 3, defaultW: 4, defaultH: 4 },
   isPublic: true,
 });
 
 // AgentIQ widgets
-import { Bot, GitBranch, ShieldCheck, Lightbulb, GitPullRequest, Compass } from 'lucide-react';
+import {
+  Bot,
+  GitBranch,
+  ShieldCheck,
+  Lightbulb,
+  GitPullRequest,
+  Compass,
+} from "lucide-react";
 
-widgetRegistry.set('agentiq-agents', {
-  type: 'agentiq-agents',
-  name: 'AI Agents',
-  description: 'Les 3 agents principaux: Antigravity, Claude, OpenClaw',
-  category: 'custom',
+widgetRegistry.set("agentiq-agents", {
+  type: "agentiq-agents",
+  name: "AI Agents",
+  description: "Les 3 agents principaux: Antigravity, Claude, OpenClaw",
+  category: "custom",
   icon: Bot,
   size: { minW: 4, minH: 3, defaultW: 6, defaultH: 4 },
   isPublic: true,
 });
 
-widgetRegistry.set('agentiq-subagents', {
-  type: 'agentiq-subagents',
-  name: 'Sous-Agents',
-  description: 'Sous-agents dispatchés en temps réel',
-  category: 'custom',
+widgetRegistry.set("agentiq-subagents", {
+  type: "agentiq-subagents",
+  name: "Sous-Agents",
+  description: "Sous-agents dispatchés en temps réel",
+  category: "custom",
   icon: GitBranch,
   size: { minW: 3, minH: 2, defaultW: 4, defaultH: 3 },
   isPublic: true,
 });
 
-widgetRegistry.set('agentiq-reviewers', {
-  type: 'agentiq-reviewers',
-  name: 'Code Reviewers',
-  description: 'Agents de revue de code par domaine',
-  category: 'custom',
+widgetRegistry.set("agentiq-reviewers", {
+  type: "agentiq-reviewers",
+  name: "Code Reviewers",
+  description: "Agents de revue de code par domaine",
+  category: "custom",
   icon: ShieldCheck,
   size: { minW: 3, minH: 2, defaultW: 4, defaultH: 3 },
   isPublic: true,
 });
 
-widgetRegistry.set('agentiq-ideas', {
-  type: 'agentiq-ideas',
-  name: 'Ideas Kanban',
-  description: 'Kanban des idées: Quick Win / Moyen Terme / Long Terme',
-  category: 'custom',
+widgetRegistry.set("agentiq-ideas", {
+  type: "agentiq-ideas",
+  name: "Ideas Kanban",
+  description: "Kanban des idées: Quick Win / Moyen Terme / Long Terme",
+  category: "custom",
   icon: Lightbulb,
   size: { minW: 4, minH: 3, defaultW: 6, defaultH: 5 },
   isPublic: true,
 });
 
-widgetRegistry.set('agentiq-pipeline', {
-  type: 'agentiq-pipeline',
-  name: 'Pipeline',
-  description: 'Funnel du cycle de vie des idées',
-  category: 'custom',
+widgetRegistry.set("agentiq-pipeline", {
+  type: "agentiq-pipeline",
+  name: "Pipeline",
+  description: "Funnel du cycle de vie des idées",
+  category: "custom",
   icon: GitPullRequest,
   size: { minW: 3, minH: 2, defaultW: 6, defaultH: 2 },
   isPublic: true,
 });
 
-widgetRegistry.set('agentiq-timeline', {
-  type: 'agentiq-timeline',
-  name: 'Timeline',
-  description: 'Journal d\'actions des agents',
-  category: 'custom',
+widgetRegistry.set("agentiq-timeline", {
+  type: "agentiq-timeline",
+  name: "Timeline",
+  description: "Journal d'actions des agents",
+  category: "custom",
   icon: Clock,
   size: { minW: 3, minH: 2, defaultW: 4, defaultH: 4 },
   isPublic: true,
 });
 
-widgetRegistry.set('agentiq-guidelines', {
-  type: 'agentiq-guidelines',
-  name: 'Guidelines',
-  description: 'Guidelines actives du projet',
-  category: 'custom',
+widgetRegistry.set("agentiq-guidelines", {
+  type: "agentiq-guidelines",
+  name: "Guidelines",
+  description: "Guidelines actives du projet",
+  category: "custom",
   icon: Compass,
   size: { minW: 3, minH: 1, defaultW: 6, defaultH: 2 },
   isPublic: true,
 });
 
-widgetRegistry.set('agentiq-health', {
-  type: 'agentiq-health',
-  name: 'AgentIQ Health',
-  description: 'Santé du système AgentIQ: uptime, crashes, Golden Rules',
-  category: 'custom',
+widgetRegistry.set("agentiq-health", {
+  type: "agentiq-health",
+  name: "AgentIQ Health",
+  description: "Santé du système AgentIQ: uptime, crashes, Golden Rules",
+  category: "custom",
   icon: Activity,
   size: { minW: 3, minH: 2, defaultW: 4, defaultH: 3 },
   isPublic: true,
@@ -661,20 +688,20 @@ widgetRegistry.set('agentiq-health', {
 
 // CEO / Operator preset including AgentIQ widgets
 dashboardPresets.push({
-  id: 'ceo',
-  name: 'CEO / Opérateur',
-  description: 'Vue AgentIQ complète pour piloter les agents IA et les idées',
-  targetRole: 'admin',
+  id: "ceo",
+  name: "CEO / Opérateur",
+  description: "Vue AgentIQ complète pour piloter les agents IA et les idées",
+  targetRole: "admin",
   icon: Bot,
   widgets: [
-    { type: 'agentiq-health', x: 0, y: 0, w: 4, h: 3, config: {} },
-    { type: 'agentiq-agents', x: 4, y: 0, w: 8, h: 4, config: {} },
-    { type: 'agentiq-pipeline', x: 0, y: 3, w: 4, h: 2, config: {} },
-    { type: 'agentiq-ideas', x: 0, y: 5, w: 6, h: 5, config: {} },
-    { type: 'agentiq-timeline', x: 6, y: 4, w: 4, h: 4, config: {} },
-    { type: 'agentiq-subagents', x: 10, y: 4, w: 2, h: 4, config: {} },
-    { type: 'agentiq-reviewers', x: 6, y: 8, w: 3, h: 3, config: {} },
-    { type: 'agentiq-guidelines', x: 0, y: 10, w: 12, h: 2, config: {} },
+    { type: "agentiq-health", x: 0, y: 0, w: 4, h: 3, config: {} },
+    { type: "agentiq-agents", x: 4, y: 0, w: 8, h: 4, config: {} },
+    { type: "agentiq-pipeline", x: 0, y: 3, w: 4, h: 2, config: {} },
+    { type: "agentiq-ideas", x: 0, y: 5, w: 6, h: 5, config: {} },
+    { type: "agentiq-timeline", x: 6, y: 4, w: 4, h: 4, config: {} },
+    { type: "agentiq-subagents", x: 10, y: 4, w: 2, h: 4, config: {} },
+    { type: "agentiq-reviewers", x: 6, y: 8, w: 3, h: 3, config: {} },
+    { type: "agentiq-guidelines", x: 0, y: 10, w: 12, h: 2, config: {} },
   ],
 });
 
@@ -685,41 +712,46 @@ export function getPreset(id: string): DashboardPreset | undefined {
 // IDEA-123: Additional role-based presets for HR and Sales
 dashboardPresets.push(
   {
-    id: 'hr',
-    name: 'RH',
-    description: 'Focus sur l\'équipe et les talents',
-    targetRole: 'hr',
+    id: "hr",
+    name: "RH",
+    description: "Focus sur l'équipe et les talents",
+    targetRole: "hr",
     icon: Users,
     widgets: [
-      { type: 'stat-cards', x: 0, y: 0, w: 12, h: 2, config: {} },
-      { type: 'team-activity', x: 0, y: 2, w: 8, h: 5, config: { limit: 20 } },
-      { type: 'upcoming-events', x: 8, y: 2, w: 4, h: 5, config: { limit: 8 } },
-      { type: 'recent-tasks', x: 0, y: 7, w: 6, h: 4, config: { limit: 8, filterStatus: 'all' } },
-      { type: 'quick-notes', x: 6, y: 7, w: 6, h: 4, config: {} },
+      { type: "stat-cards", x: 0, y: 0, w: 12, h: 2, config: {} },
+      { type: "team-activity", x: 0, y: 2, w: 8, h: 5, config: { limit: 20 } },
+      { type: "upcoming-events", x: 8, y: 2, w: 4, h: 5, config: { limit: 8 } },
+      {
+        type: "recent-tasks",
+        x: 0,
+        y: 7,
+        w: 6,
+        h: 4,
+        config: { limit: 8, filterStatus: "all" },
+      },
+      { type: "quick-notes", x: 6, y: 7, w: 6, h: 4, config: {} },
     ],
   },
   {
-    id: 'sales',
-    name: 'Commercial',
-    description: 'Focus sur les emails, tâches et agenda',
-    targetRole: 'sales',
+    id: "sales",
+    name: "Commercial",
+    description: "Focus sur les emails, tâches et agenda",
+    targetRole: "sales",
     icon: TrendingUp,
     widgets: [
-      { type: 'stat-cards', x: 0, y: 0, w: 12, h: 2, config: {} },
-      { type: 'unread-emails', x: 0, y: 2, w: 4, h: 2, config: {} },
-      { type: 'active-tasks', x: 4, y: 2, w: 4, h: 2, config: {} },
-      { type: 'today-calendar', x: 8, y: 2, w: 4, h: 2, config: {} },
-      { type: 'recent-emails', x: 0, y: 4, w: 6, h: 5, config: { limit: 10 } },
-      { type: 'upcoming-events', x: 6, y: 4, w: 6, h: 5, config: { limit: 8 } },
+      { type: "stat-cards", x: 0, y: 0, w: 12, h: 2, config: {} },
+      { type: "unread-emails", x: 0, y: 2, w: 4, h: 2, config: {} },
+      { type: "active-tasks", x: 4, y: 2, w: 4, h: 2, config: {} },
+      { type: "today-calendar", x: 8, y: 2, w: 4, h: 2, config: {} },
+      { type: "recent-emails", x: 0, y: 4, w: 6, h: 5, config: { limit: 10 } },
+      { type: "upcoming-events", x: 6, y: 4, w: 6, h: 5, config: { limit: 8 } },
     ],
-  }
+  },
 );
 
-export function getPresetsForRole(
-  role?: string
-): DashboardPreset[] {
+export function getPresetsForRole(role?: string): DashboardPreset[] {
   if (!role) return dashboardPresets.filter((p) => p.targetRole === "all");
   return dashboardPresets.filter(
-    (p) => p.targetRole === "all" || p.targetRole === role
+    (p) => p.targetRole === "all" || p.targetRole === role,
   );
 }

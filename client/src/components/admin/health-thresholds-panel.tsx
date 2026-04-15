@@ -1,13 +1,13 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import { Settings2, Save, AlertTriangle } from 'lucide-react';
-import { toast } from 'sonner';
+import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Settings2, Save, AlertTriangle } from "lucide-react";
+import { toast } from "sonner";
 
 export interface HealthThresholds {
   cpu_warn: number;
@@ -31,12 +31,18 @@ const DEFAULT_THRESHOLDS: HealthThresholds = {
   response_crit_ms: 2000,
 };
 
-const STORAGE_KEY = 'health_thresholds';
+const STORAGE_KEY = "health_thresholds";
 
 function loadThresholds(): HealthThresholds {
-  if (typeof window === 'undefined') return DEFAULT_THRESHOLDS;
-  try { return { ...DEFAULT_THRESHOLDS, ...JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}') }; }
-  catch { return DEFAULT_THRESHOLDS; }
+  if (typeof window === "undefined") return DEFAULT_THRESHOLDS;
+  try {
+    return {
+      ...DEFAULT_THRESHOLDS,
+      ...JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}"),
+    };
+  } catch {
+    return DEFAULT_THRESHOLDS;
+  }
 }
 
 interface ThresholdRowProps {
@@ -48,7 +54,14 @@ interface ThresholdRowProps {
   onChange: (k: keyof HealthThresholds, v: number) => void;
 }
 
-function ThresholdRow({ label, warnKey, critKey, unit, values, onChange }: ThresholdRowProps) {
+function ThresholdRow({
+  label,
+  warnKey,
+  critKey,
+  unit,
+  values,
+  onChange,
+}: ThresholdRowProps) {
   return (
     <div className="grid grid-cols-3 gap-3 items-center">
       <span className="text-sm font-medium">{label}</span>
@@ -80,18 +93,21 @@ interface HealthThresholdsPanelProps {
   onThresholdsChange?: (t: HealthThresholds) => void;
 }
 
-export function HealthThresholdsPanel({ onThresholdsChange }: HealthThresholdsPanelProps) {
-  const [thresholds, setThresholds] = useState<HealthThresholds>(loadThresholds);
+export function HealthThresholdsPanel({
+  onThresholdsChange,
+}: HealthThresholdsPanelProps) {
+  const [thresholds, setThresholds] =
+    useState<HealthThresholds>(loadThresholds);
   const [open, setOpen] = useState(false);
 
   const handleChange = (k: keyof HealthThresholds, v: number) => {
-    setThresholds(prev => ({ ...prev, [k]: v }));
+    setThresholds((prev) => ({ ...prev, [k]: v }));
   };
 
   const handleSave = () => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(thresholds));
     onThresholdsChange?.(thresholds);
-    toast.success('Seuils de santé enregistrés');
+    toast.success("Seuils de santé enregistrés");
     setOpen(false);
   };
 
@@ -101,7 +117,12 @@ export function HealthThresholdsPanel({ onThresholdsChange }: HealthThresholdsPa
 
   if (!open) {
     return (
-      <Button variant="outline" size="sm" onClick={() => setOpen(true)} className="gap-1.5">
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => setOpen(true)}
+        className="gap-1.5"
+      >
         <Settings2 className="h-4 w-4" />
         Thresholds
       </Button>
@@ -114,7 +135,9 @@ export function HealthThresholdsPanel({ onThresholdsChange }: HealthThresholdsPa
         <CardTitle className="text-sm flex items-center gap-2">
           <AlertTriangle className="h-4 w-4 text-amber-500" />
           Alert Thresholds
-          <Badge variant="outline" className="ml-auto text-xs">Stored locally</Badge>
+          <Badge variant="outline" className="ml-auto text-xs">
+            Stored locally
+          </Badge>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -152,11 +175,18 @@ export function HealthThresholdsPanel({ onThresholdsChange }: HealthThresholdsPa
         />
 
         <div className="flex items-center justify-between pt-2 border-t">
-          <Button variant="ghost" size="sm" onClick={handleReset} className="text-xs">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleReset}
+            className="text-xs"
+          >
             Reset to defaults
           </Button>
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={() => setOpen(false)}>Annuler</Button>
+            <Button variant="outline" size="sm" onClick={() => setOpen(false)}>
+              Annuler
+            </Button>
             <Button size="sm" onClick={handleSave}>
               <Save className="h-3.5 w-3.5 mr-1.5" />
               Save

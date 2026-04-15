@@ -76,9 +76,7 @@ export function OffboardingChecklist() {
 
   const handleToggleTask = (id: string) => {
     setTasks(
-      tasks.map((t) =>
-        t.id === id ? { ...t, completed: !t.completed } : t
-      )
+      tasks.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t)),
     );
   };
 
@@ -94,13 +92,19 @@ export function OffboardingChecklist() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-foreground">Offboarding Checklist</h2>
-          <p className="text-muted-foreground">Employee exit and access revocation workflow</p>
+          <h2 className="text-2xl font-bold text-foreground">
+            Offboarding Checklist
+          </h2>
+          <p className="text-muted-foreground">
+            Employee exit and access revocation workflow
+          </p>
         </div>
       </div>
 
       <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
-        <p className="text-sm text-orange-700 font-medium">Completion Progress</p>
+        <p className="text-sm text-orange-700 font-medium">
+          Completion Progress
+        </p>
         <p className="text-2xl font-bold text-orange-900">
           {completedTasks}/{totalTasks} Tasks
         </p>
@@ -119,7 +123,8 @@ export function OffboardingChecklist() {
             <p className="text-sm font-medium text-blue-700">Equipment</p>
           </div>
           <p className="text-lg font-bold text-blue-900">
-            {equipmentTasks.filter((t) => t.completed).length}/{equipmentTasks.length}
+            {equipmentTasks.filter((t) => t.completed).length}/
+            {equipmentTasks.length}
           </p>
         </div>
 
@@ -146,14 +151,17 @@ export function OffboardingChecklist() {
 
       <div className="space-y-4">
         {["equipment", "access", "documentation"].map((category) => (
-          <div key={category} className="border rounded-lg overflow-hidden bg-card">
+          <div
+            key={category}
+            className="border rounded-lg overflow-hidden bg-card"
+          >
             <div className="bg-muted border-b p-4">
               <h3 className="font-semibold text-foreground capitalize">
                 {category === "equipment"
                   ? "Equipment Return"
                   : category === "access"
-                  ? "Access Revocation"
-                  : "Documentation & Final Items"}
+                    ? "Access Revocation"
+                    : "Documentation & Final Items"}
               </h3>
             </div>
 
@@ -178,8 +186,12 @@ export function OffboardingChecklist() {
                       </div>
 
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-foreground">{task.title}</p>
-                        <p className="text-sm text-muted-foreground">{task.description}</p>
+                        <p className="font-medium text-foreground">
+                          {task.title}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {task.description}
+                        </p>
                         <div className="flex gap-3 mt-2 text-xs text-muted-foreground">
                           <span>Assigned: {task.assignedTo}</span>
                           <span>Due: {task.dueDate}</span>
@@ -209,8 +221,8 @@ export function OffboardingChecklist() {
       <div className="border-l-4 border-yellow-400 bg-yellow-50 p-4 rounded-r-lg">
         <p className="text-sm font-medium text-yellow-900">Important</p>
         <p className="text-sm text-yellow-800 mt-1">
-          Ensure all tasks are completed before final departure. Non-completion may
-          result in security risks or regulatory compliance issues.
+          Ensure all tasks are completed before final departure. Non-completion
+          may result in security risks or regulatory compliance issues.
         </p>
       </div>
     </div>

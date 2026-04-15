@@ -150,7 +150,7 @@ export function BlockInline({
       className={cn(
         "inline-flex items-center gap-1.5 px-2 py-0.5 cursor-pointer",
         "hover:bg-muted/80 transition-colors",
-        className
+        className,
       )}
       style={{ borderLeftColor: block.color, borderLeftWidth: 2 }}
       onClick={() => onClick?.(block)}
@@ -326,7 +326,7 @@ export function BlockCard({
         "group relative transition-all cursor-pointer",
         "hover:shadow-md hover:border-primary/30",
         selected && "ring-2 ring-primary border-primary",
-        className
+        className,
       )}
       onClick={() => onClick?.(block)}
       onDoubleClick={() => onDoubleClick?.(block)}
@@ -336,7 +336,7 @@ export function BlockCard({
           className={cn(
             "absolute top-2 left-2 z-10",
             "opacity-0 group-hover:opacity-100 transition-opacity",
-            selected && "opacity-100"
+            selected && "opacity-100",
           )}
           onClick={(e) => e.stopPropagation()}
         >
@@ -367,7 +367,7 @@ export function BlockCard({
                   <DropdownMenuItem
                     onClick={() => action.onClick(block)}
                     className={cn(
-                      action.variant === "destructive" && "text-destructive"
+                      action.variant === "destructive" && "text-destructive",
                     )}
                   >
                     {action.label}
@@ -404,7 +404,9 @@ export function BlockCard({
             </div>
           )}
           <div className="flex-1 min-w-0 space-y-1">
-            <p className="font-semibold truncate leading-tight">{block.title}</p>
+            <p className="font-semibold truncate leading-tight">
+              {block.title}
+            </p>
             {block.subtitle && (
               <p className="text-sm text-muted-foreground truncate">
                 {block.subtitle}
@@ -498,7 +500,7 @@ export function BlockRow({
         "group flex items-center gap-3 px-3 py-2 rounded-lg",
         "hover:bg-muted/50 transition-colors cursor-pointer",
         selected && "bg-primary/10",
-        className
+        className,
       )}
       onClick={() => onClick?.(block)}
     >
@@ -522,7 +524,7 @@ export function BlockRow({
         <div
           className={cn(
             "rounded flex items-center justify-center shrink-0",
-            compact ? "h-6 w-6" : "h-8 w-8"
+            compact ? "h-6 w-6" : "h-8 w-8",
           )}
           style={{ backgroundColor: `${block.color}20` }}
         >
@@ -537,7 +539,7 @@ export function BlockRow({
         <p
           className={cn(
             "font-medium truncate",
-            compact ? "text-sm" : "text-base"
+            compact ? "text-sm" : "text-base",
           )}
         >
           {block.title}
@@ -682,7 +684,7 @@ export function BlockList({
       <div
         className={cn(
           "grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4",
-          className
+          className,
         )}
       >
         {blocks.map((block) => (

@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo } from "react";
 import {
   Plus,
   Trash2,
@@ -10,19 +10,19 @@ import {
   GripVertical,
   ChevronDown,
   ChevronUp,
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -30,27 +30,31 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@/components/ui/tooltip';
-import type { CoverageSlot, WeeklyPattern, FunctionDefinition } from '@/types/workforce';
+} from "@/components/ui/tooltip";
+import type {
+  CoverageSlot,
+  WeeklyPattern,
+  FunctionDefinition,
+} from "@/types/workforce";
 
 // Days of the week configuration
 const DAYS_OF_WEEK = [
-  { key: 'monday' as const, label: 'Lundi', short: 'Lun', dayIndex: 1 },
-  { key: 'tuesday' as const, label: 'Mardi', short: 'Mar', dayIndex: 2 },
-  { key: 'wednesday' as const, label: 'Mercredi', short: 'Mer', dayIndex: 3 },
-  { key: 'thursday' as const, label: 'Jeudi', short: 'Jeu', dayIndex: 4 },
-  { key: 'friday' as const, label: 'Vendredi', short: 'Ven', dayIndex: 5 },
-  { key: 'saturday' as const, label: 'Samedi', short: 'Sam', dayIndex: 6 },
-  { key: 'sunday' as const, label: 'Dimanche', short: 'Dim', dayIndex: 0 },
+  { key: "monday" as const, label: "Lundi", short: "Lun", dayIndex: 1 },
+  { key: "tuesday" as const, label: "Mardi", short: "Mar", dayIndex: 2 },
+  { key: "wednesday" as const, label: "Mercredi", short: "Mer", dayIndex: 3 },
+  { key: "thursday" as const, label: "Jeudi", short: "Jeu", dayIndex: 4 },
+  { key: "friday" as const, label: "Vendredi", short: "Ven", dayIndex: 5 },
+  { key: "saturday" as const, label: "Samedi", short: "Sam", dayIndex: 6 },
+  { key: "sunday" as const, label: "Dimanche", short: "Dim", dayIndex: 0 },
 ] as const;
 
-type DayKey = (typeof DAYS_OF_WEEK)[number]['key'];
+type DayKey = (typeof DAYS_OF_WEEK)[number]["key"];
 
 const EMPTY_PATTERN: WeeklyPattern = {
   monday: [],
@@ -80,8 +84,8 @@ interface SlotFormData {
 }
 
 const DEFAULT_SLOT: SlotFormData = {
-  start_time: '09:00',
-  end_time: '17:00',
+  start_time: "09:00",
+  end_time: "17:00",
   min_employees: 1,
   required_functions: [],
 };
@@ -94,13 +98,19 @@ export function CoverageEditor({
   className,
 }: CoverageEditorProps) {
   const [selectedDay, setSelectedDay] = useState<DayKey | null>(null);
-  const [editingSlot, setEditingSlot] = useState<{ day: DayKey; index: number } | null>(null);
+  const [editingSlot, setEditingSlot] = useState<{
+    day: DayKey;
+    index: number;
+  } | null>(null);
   const [slotForm, setSlotForm] = useState<SlotFormData>(DEFAULT_SLOT);
   const [showSlotDialog, setShowSlotDialog] = useState(false);
 
   // Calculate total hours per day
   const dayStats = useMemo(() => {
-    const stats: Record<DayKey, { slotCount: number; totalHours: number; totalEmployees: number }> = {
+    const stats: Record<
+      DayKey,
+      { slotCount: number; totalHours: number; totalEmployees: number }
+    > = {
       monday: { slotCount: 0, totalHours: 0, totalEmployees: 0 },
       tuesday: { slotCount: 0, totalHours: 0, totalEmployees: 0 },
       wednesday: { slotCount: 0, totalHours: 0, totalEmployees: 0 },
@@ -114,8 +124,8 @@ export function CoverageEditor({
       const slots = value[day.key] || [];
       stats[day.key].slotCount = slots.length;
       for (const slot of slots) {
-        const [startH, startM] = slot.start_time.split(':').map(Number);
-        const [endH, endM] = slot.end_time.split(':').map(Number);
+        const [startH, startM] = slot.start_time.split(":").map(Number);
+        const [endH, endM] = slot.end_time.split(":").map(Number);
         const hours = (endH * 60 + endM - startH * 60 - startM) / 60;
         stats[day.key].totalHours += hours;
         stats[day.key].totalEmployees += slot.min_employees;
@@ -126,31 +136,35 @@ export function CoverageEditor({
   }, [value]);
 
   // Open slot dialog for adding/editing
-  const openSlotDialog = useCallback((day: DayKey, index?: number) => {
-    setSelectedDay(day);
-    if (index !== undefined) {
-      const slot = value[day][index];
-      setEditingSlot({ day, index });
-      setSlotForm({
-        start_time: slot.start_time,
-        end_time: slot.end_time,
-        min_employees: slot.min_employees,
-        max_employees: slot.max_employees,
-        required_functions: slot.required_functions,
-        label: slot.label,
-      });
-    } else {
-      setEditingSlot(null);
-      setSlotForm(DEFAULT_SLOT);
-    }
-    setShowSlotDialog(true);
-  }, [value]);
+  const openSlotDialog = useCallback(
+    (day: DayKey, index?: number) => {
+      setSelectedDay(day);
+      if (index !== undefined) {
+        const slot = value[day][index];
+        setEditingSlot({ day, index });
+        setSlotForm({
+          start_time: slot.start_time,
+          end_time: slot.end_time,
+          min_employees: slot.min_employees,
+          max_employees: slot.max_employees,
+          required_functions: slot.required_functions,
+          label: slot.label,
+        });
+      } else {
+        setEditingSlot(null);
+        setSlotForm(DEFAULT_SLOT);
+      }
+      setShowSlotDialog(true);
+    },
+    [value],
+  );
 
   // Save slot from dialog
   const saveSlot = useCallback(() => {
     if (!selectedDay) return;
 
-    const dayIndex = DAYS_OF_WEEK.find(d => d.key === selectedDay)?.dayIndex ?? 0;
+    const dayIndex =
+      DAYS_OF_WEEK.find((d) => d.key === selectedDay)?.dayIndex ?? 0;
     const newSlot: CoverageSlot = {
       day_of_week: dayIndex,
       start_time: slotForm.start_time,
@@ -172,34 +186,43 @@ export function CoverageEditor({
     }
 
     // Sort slots by start time
-    newPattern[selectedDay].sort((a, b) => a.start_time.localeCompare(b.start_time));
+    newPattern[selectedDay].sort((a, b) =>
+      a.start_time.localeCompare(b.start_time),
+    );
 
     onChange(newPattern);
     setShowSlotDialog(false);
   }, [selectedDay, slotForm, editingSlot, value, onChange]);
 
   // Delete a slot
-  const deleteSlot = useCallback((day: DayKey, index: number) => {
-    const newPattern = { ...value };
-    newPattern[day] = value[day].filter((_, i) => i !== index);
-    onChange(newPattern);
-  }, [value, onChange]);
+  const deleteSlot = useCallback(
+    (day: DayKey, index: number) => {
+      const newPattern = { ...value };
+      newPattern[day] = value[day].filter((_, i) => i !== index);
+      onChange(newPattern);
+    },
+    [value, onChange],
+  );
 
   // Copy slots from one day to another
-  const copyDaySlots = useCallback((fromDay: DayKey, toDay: DayKey) => {
-    const toDayIndex = DAYS_OF_WEEK.find(d => d.key === toDay)?.dayIndex ?? 0;
-    const newPattern = { ...value };
-    newPattern[toDay] = value[fromDay].map(slot => ({
-      ...slot,
-      day_of_week: toDayIndex,
-    }));
-    onChange(newPattern);
-  }, [value, onChange]);
+  const copyDaySlots = useCallback(
+    (fromDay: DayKey, toDay: DayKey) => {
+      const toDayIndex =
+        DAYS_OF_WEEK.find((d) => d.key === toDay)?.dayIndex ?? 0;
+      const newPattern = { ...value };
+      newPattern[toDay] = value[fromDay].map((slot) => ({
+        ...slot,
+        day_of_week: toDayIndex,
+      }));
+      onChange(newPattern);
+    },
+    [value, onChange],
+  );
 
   // Render a single slot
   const renderSlot = (slot: CoverageSlot, day: DayKey, index: number) => {
-    const functionBadges = slot.required_functions.map(f => {
-      const fn = availableFunctions.find(def => def.code === f);
+    const functionBadges = slot.required_functions.map((f) => {
+      const fn = availableFunctions.find((def) => def.code === f);
       return fn?.name || f;
     });
 
@@ -207,8 +230,8 @@ export function CoverageEditor({
       <div
         key={`${day}-${index}`}
         className={cn(
-          'group flex items-center gap-2 rounded-md border bg-card p-2 text-sm',
-          !readOnly && 'cursor-pointer hover:border-primary/50'
+          "group flex items-center gap-2 rounded-md border bg-card p-2 text-sm",
+          !readOnly && "cursor-pointer hover:border-primary/50",
         )}
         onClick={() => !readOnly && openSlotDialog(day, index)}
       >
@@ -228,9 +251,12 @@ export function CoverageEditor({
             <Users className="h-3.5 w-3.5 text-muted-foreground" />
             <span className="text-xs">
               {slot.min_employees}
-              {slot.max_employees && slot.max_employees !== slot.min_employees && (
-                <span className="text-muted-foreground">-{slot.max_employees}</span>
-              )}
+              {slot.max_employees &&
+                slot.max_employees !== slot.min_employees && (
+                  <span className="text-muted-foreground">
+                    -{slot.max_employees}
+                  </span>
+                )}
             </span>
           </div>
 
@@ -243,7 +269,11 @@ export function CoverageEditor({
           {functionBadges.length > 0 && (
             <div className="flex gap-1 overflow-hidden">
               {functionBadges.slice(0, 2).map((name, i) => (
-                <Badge key={i} variant="secondary" className="h-5 shrink-0 px-1.5 text-xs">
+                <Badge
+                  key={i}
+                  variant="secondary"
+                  className="h-5 shrink-0 px-1.5 text-xs"
+                >
                   {name}
                 </Badge>
               ))}
@@ -283,8 +313,8 @@ export function CoverageEditor({
       <div
         key={day.key}
         className={cn(
-          'flex flex-col rounded-lg border bg-muted/30 p-3',
-          isExpanded && 'ring-2 ring-primary/20'
+          "flex flex-col rounded-lg border bg-muted/30 p-3",
+          isExpanded && "ring-2 ring-primary/20",
         )}
       >
         {/* Day header */}
@@ -373,7 +403,9 @@ export function CoverageEditor({
                       onClick={(e) => {
                         e.stopPropagation();
                         // Copy to next day
-                        const currentIndex = DAYS_OF_WEEK.findIndex(d => d.key === day.key);
+                        const currentIndex = DAYS_OF_WEEK.findIndex(
+                          (d) => d.key === day.key,
+                        );
                         const nextDay = DAYS_OF_WEEK[(currentIndex + 1) % 7];
                         copyDaySlots(day.key, nextDay.key);
                       }}
@@ -392,7 +424,7 @@ export function CoverageEditor({
   };
 
   return (
-    <div className={cn('space-y-4', className)}>
+    <div className={cn("space-y-4", className)}>
       {/* Weekly grid */}
       <div className="grid grid-cols-7 gap-2">
         {DAYS_OF_WEEK.map(renderDayColumn)}
@@ -403,10 +435,11 @@ export function CoverageEditor({
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>
-              {editingSlot ? 'Modifier le créneau' : 'Nouveau créneau'}
+              {editingSlot ? "Modifier le créneau" : "Nouveau créneau"}
             </DialogTitle>
             <DialogDescription>
-              Définissez les horaires et les exigences de personnel pour ce créneau.
+              Définissez les horaires et les exigences de personnel pour ce
+              créneau.
             </DialogDescription>
           </DialogHeader>
 
@@ -419,7 +452,9 @@ export function CoverageEditor({
                   id="start_time"
                   type="time"
                   value={slotForm.start_time}
-                  onChange={(e) => setSlotForm({ ...slotForm, start_time: e.target.value })}
+                  onChange={(e) =>
+                    setSlotForm({ ...slotForm, start_time: e.target.value })
+                  }
                 />
               </div>
               <div className="space-y-2">
@@ -428,7 +463,9 @@ export function CoverageEditor({
                   id="end_time"
                   type="time"
                   value={slotForm.end_time}
-                  onChange={(e) => setSlotForm({ ...slotForm, end_time: e.target.value })}
+                  onChange={(e) =>
+                    setSlotForm({ ...slotForm, end_time: e.target.value })
+                  }
                 />
               </div>
             </div>
@@ -442,7 +479,12 @@ export function CoverageEditor({
                   type="number"
                   min={0}
                   value={slotForm.min_employees}
-                  onChange={(e) => setSlotForm({ ...slotForm, min_employees: parseInt(e.target.value) || 0 })}
+                  onChange={(e) =>
+                    setSlotForm({
+                      ...slotForm,
+                      min_employees: parseInt(e.target.value) || 0,
+                    })
+                  }
                 />
               </div>
               <div className="space-y-2">
@@ -452,11 +494,15 @@ export function CoverageEditor({
                   type="number"
                   min={slotForm.min_employees}
                   placeholder="Illimité"
-                  value={slotForm.max_employees ?? ''}
-                  onChange={(e) => setSlotForm({
-                    ...slotForm,
-                    max_employees: e.target.value ? parseInt(e.target.value) : undefined
-                  })}
+                  value={slotForm.max_employees ?? ""}
+                  onChange={(e) =>
+                    setSlotForm({
+                      ...slotForm,
+                      max_employees: e.target.value
+                        ? parseInt(e.target.value)
+                        : undefined,
+                    })
+                  }
                 />
               </div>
             </div>
@@ -467,8 +513,13 @@ export function CoverageEditor({
               <Input
                 id="label"
                 placeholder="ex: Pause déjeuner"
-                value={slotForm.label ?? ''}
-                onChange={(e) => setSlotForm({ ...slotForm, label: e.target.value || undefined })}
+                value={slotForm.label ?? ""}
+                onChange={(e) =>
+                  setSlotForm({
+                    ...slotForm,
+                    label: e.target.value || undefined,
+                  })
+                }
               />
             </div>
 
@@ -482,7 +533,10 @@ export function CoverageEditor({
                     if (!slotForm.required_functions.includes(code)) {
                       setSlotForm({
                         ...slotForm,
-                        required_functions: [...slotForm.required_functions, code],
+                        required_functions: [
+                          ...slotForm.required_functions,
+                          code,
+                        ],
                       });
                     }
                   }}
@@ -492,7 +546,9 @@ export function CoverageEditor({
                   </SelectTrigger>
                   <SelectContent>
                     {availableFunctions
-                      .filter(f => !slotForm.required_functions.includes(f.code))
+                      .filter(
+                        (f) => !slotForm.required_functions.includes(f.code),
+                      )
                       .map((fn) => (
                         <SelectItem key={fn.id} value={fn.code}>
                           {fn.name}
@@ -504,16 +560,23 @@ export function CoverageEditor({
                 {slotForm.required_functions.length > 0 && (
                   <div className="flex flex-wrap gap-1">
                     {slotForm.required_functions.map((code) => {
-                      const fn = availableFunctions.find(f => f.code === code);
+                      const fn = availableFunctions.find(
+                        (f) => f.code === code,
+                      );
                       return (
                         <Badge key={code} variant="secondary" className="gap-1">
                           {fn?.name || code}
                           <button
                             className="ml-1 hover:text-destructive"
-                            onClick={() => setSlotForm({
-                              ...slotForm,
-                              required_functions: slotForm.required_functions.filter(c => c !== code),
-                            })}
+                            onClick={() =>
+                              setSlotForm({
+                                ...slotForm,
+                                required_functions:
+                                  slotForm.required_functions.filter(
+                                    (c) => c !== code,
+                                  ),
+                              })
+                            }
                           >
                             ×
                           </button>
@@ -531,7 +594,7 @@ export function CoverageEditor({
               Annuler
             </Button>
             <Button onClick={saveSlot}>
-              {editingSlot ? 'Mettre à jour' : 'Ajouter'}
+              {editingSlot ? "Mettre à jour" : "Ajouter"}
             </Button>
           </DialogFooter>
         </DialogContent>

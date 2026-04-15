@@ -1,17 +1,17 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
+import { useState } from "react";
 import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
   SheetDescription,
-} from '@/components/ui/sheet';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
+} from "@/components/ui/sheet";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Table,
   TableBody,
@@ -19,14 +19,14 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Eye, EyeOff, Copy, Globe, Plus } from 'lucide-react';
-import { useContainerDetails } from '@/hooks/use-container-details';
-import { useRoutes } from '@/hooks/use-routes';
-import { RouteDialog } from '@/components/routes/route-dialog';
-import { Route } from '@/lib/api';
-import { toast } from 'sonner';
+} from "@/components/ui/table";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Eye, EyeOff, Copy, Globe, Plus } from "lucide-react";
+import { useContainerDetails } from "@/hooks/use-container-details";
+import { useRoutes } from "@/hooks/use-routes";
+import { RouteDialog } from "@/components/routes/route-dialog";
+import { Route } from "@/lib/api";
+import { toast } from "sonner";
 
 interface ContainerDetailsSheetProps {
   open: boolean;
@@ -38,20 +38,20 @@ interface ContainerDetailsSheetProps {
 }
 
 function formatBytes(bytes: number | undefined | null): string {
-  if (!bytes || bytes <= 0) return '-';
+  if (!bytes || bytes <= 0) return "-";
   const mb = bytes / 1024 / 1024;
   if (mb >= 1024) return `${(mb / 1024).toFixed(1)} GB`;
   return `${mb.toFixed(0)} MB`;
 }
 
 function formatNanoCpus(nano: number | undefined | null): string {
-  if (!nano) return '-';
+  if (!nano) return "-";
   return `${(nano / 1_000_000_000).toFixed(2)} cores`;
 }
 
 function copyToClipboard(text: string) {
   navigator.clipboard.writeText(text);
-  toast.success('Copié dans le presse-papiers');
+  toast.success("Copié dans le presse-papiers");
 }
 
 export function ContainerDetailsSheet({
@@ -103,9 +103,9 @@ export function ContainerDetailsSheet({
             {details && (
               <Badge
                 className={
-                  details.state?.toLowerCase().includes('running')
-                    ? 'bg-green-500/10 text-green-600'
-                    : 'bg-gray-500/10 text-muted-foreground'
+                  details.state?.toLowerCase().includes("running")
+                    ? "bg-green-500/10 text-green-600"
+                    : "bg-gray-500/10 text-muted-foreground"
                 }
               >
                 {details.state}
@@ -113,7 +113,7 @@ export function ContainerDetailsSheet({
             )}
           </SheetTitle>
           <SheetDescription>
-            {details?.image || 'Chargement...'}
+            {details?.image || "Chargement..."}
           </SheetDescription>
         </SheetHeader>
 
@@ -146,31 +146,50 @@ export function ContainerDetailsSheet({
               <TabsContent value="overview">
                 <div className="space-y-4">
                   <InfoSection title="General">
-                    <InfoRow label="Container ID" value={details.id?.slice(0, 12)} copyable={details.id} />
+                    <InfoRow
+                      label="Container ID"
+                      value={details.id?.slice(0, 12)}
+                      copyable={details.id}
+                    />
                     <InfoRow label="Image" value={details.image} />
                     <InfoRow label="Created" value={details.created} />
                     <InfoRow label="Status" value={details.status} />
-                    <InfoRow label="Hostname" value={details.hostname || '-'} />
-                    <InfoRow label="User" value={details.user || 'default'} />
-                    <InfoRow label="Working Dir" value={details.working_dir || '-'} />
+                    <InfoRow label="Hostname" value={details.hostname || "-"} />
+                    <InfoRow label="User" value={details.user || "default"} />
+                    <InfoRow
+                      label="Working Dir"
+                      value={details.working_dir || "-"}
+                    />
                   </InfoSection>
 
                   <InfoSection title="Command">
                     {details.entrypoint && (
-                      <InfoRow label="Entrypoint" value={details.entrypoint.join(' ')} mono />
+                      <InfoRow
+                        label="Entrypoint"
+                        value={details.entrypoint.join(" ")}
+                        mono
+                      />
                     )}
                     {details.cmd && (
-                      <InfoRow label="Cmd" value={details.cmd.join(' ')} mono />
+                      <InfoRow label="Cmd" value={details.cmd.join(" ")} mono />
                     )}
                     {!details.entrypoint && !details.cmd && (
-                      <p className="text-sm text-muted-foreground">Default image command</p>
+                      <p className="text-sm text-muted-foreground">
+                        Default image command
+                      </p>
                     )}
                   </InfoSection>
 
                   <InfoSection title="Restart Policy">
-                    <InfoRow label="Policy" value={details.restart_policy || 'no'} />
+                    <InfoRow
+                      label="Policy"
+                      value={details.restart_policy || "no"}
+                    />
                     {details.restart_count != null && (
-                      <InfoRow label="Restart Count" value={String(details.restart_count)} />
+                      <InfoRow
+                        label="Restart Count"
+                        value={String(details.restart_count)}
+                      />
                     )}
                   </InfoSection>
 
@@ -183,19 +202,22 @@ export function ContainerDetailsSheet({
                       label="CPU"
                       value={formatNanoCpus(details.resources?.nano_cpus)}
                     />
-                    {details.resources?.cpu_shares != null && details.resources.cpu_shares > 0 && (
-                      <InfoRow
-                        label="CPU Shares"
-                        value={String(details.resources.cpu_shares)}
-                      />
-                    )}
+                    {details.resources?.cpu_shares != null &&
+                      details.resources.cpu_shares > 0 && (
+                        <InfoRow
+                          label="CPU Shares"
+                          value={String(details.resources.cpu_shares)}
+                        />
+                      )}
                   </InfoSection>
 
                   {details.networks && details.networks.length > 0 && (
                     <InfoSection title="Networks">
                       <div className="flex flex-wrap gap-2">
                         {details.networks.map((n) => (
-                          <Badge key={n} variant="outline">{n}</Badge>
+                          <Badge key={n} variant="outline">
+                            {n}
+                          </Badge>
                         ))}
                       </div>
                     </InfoSection>
@@ -206,7 +228,9 @@ export function ContainerDetailsSheet({
               {/* Ports */}
               <TabsContent value="ports">
                 {details.ports.length === 0 ? (
-                  <p className="text-sm text-muted-foreground py-4">No port mappings</p>
+                  <p className="text-sm text-muted-foreground py-4">
+                    No port mappings
+                  </p>
                 ) : (
                   <Table>
                     <TableHeader>
@@ -221,13 +245,13 @@ export function ContainerDetailsSheet({
                       {details.ports.map((p, i) => (
                         <TableRow key={i}>
                           <TableCell className="font-mono">
-                            {p.host_port ?? '-'}
+                            {p.host_port ?? "-"}
                           </TableCell>
                           <TableCell className="font-mono">
                             {p.container_port}
                           </TableCell>
                           <TableCell>{p.protocol}</TableCell>
-                          <TableCell>{p.host_ip || '0.0.0.0'}</TableCell>
+                          <TableCell>{p.host_ip || "0.0.0.0"}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -238,7 +262,9 @@ export function ContainerDetailsSheet({
               {/* Volumes */}
               <TabsContent value="volumes">
                 {!details.mounts || details.mounts.length === 0 ? (
-                  <p className="text-sm text-muted-foreground py-4">No volumes mounted</p>
+                  <p className="text-sm text-muted-foreground py-4">
+                    No volumes mounted
+                  </p>
                 ) : (
                   <Table>
                     <TableHeader>
@@ -252,18 +278,24 @@ export function ContainerDetailsSheet({
                     <TableBody>
                       {details.mounts.map((m, i) => (
                         <TableRow key={i}>
-                          <TableCell className="font-mono text-xs max-w-[200px] truncate" title={m.source || '-'}>
-                            {m.source || '-'}
+                          <TableCell
+                            className="font-mono text-xs max-w-[200px] truncate"
+                            title={m.source || "-"}
+                          >
+                            {m.source || "-"}
                           </TableCell>
-                          <TableCell className="font-mono text-xs max-w-[200px] truncate" title={m.destination}>
+                          <TableCell
+                            className="font-mono text-xs max-w-[200px] truncate"
+                            title={m.destination}
+                          >
                             {m.destination}
                           </TableCell>
                           <TableCell>
                             <Badge variant="outline">{m.mount_type}</Badge>
                           </TableCell>
                           <TableCell>
-                            <Badge variant={m.rw ? 'default' : 'secondary'}>
-                              {m.rw ? 'RW' : 'RO'}
+                            <Badge variant={m.rw ? "default" : "secondary"}>
+                              {m.rw ? "RW" : "RO"}
                             </Badge>
                           </TableCell>
                         </TableRow>
@@ -286,21 +318,32 @@ export function ContainerDetailsSheet({
                       onClick={() => setShowEnvValues(!showEnvValues)}
                     >
                       {showEnvValues ? (
-                        <><EyeOff className="mr-1 h-4 w-4" />Hide Values</>
+                        <>
+                          <EyeOff className="mr-1 h-4 w-4" />
+                          Hide Values
+                        </>
                       ) : (
-                        <><Eye className="mr-1 h-4 w-4" />Show Values</>
+                        <>
+                          <Eye className="mr-1 h-4 w-4" />
+                          Show Values
+                        </>
                       )}
                     </Button>
                   </div>
                   {!details.env || details.env.length === 0 ? (
-                    <p className="text-sm text-muted-foreground py-4">No environment variables</p>
+                    <p className="text-sm text-muted-foreground py-4">
+                      No environment variables
+                    </p>
                   ) : (
                     <div className="space-y-1 font-mono text-xs">
                       {details.env.map((envVar, i) => {
-                        const eqIdx = envVar.indexOf('=');
-                        const key = eqIdx >= 0 ? envVar.slice(0, eqIdx) : envVar;
-                        const value = eqIdx >= 0 ? envVar.slice(eqIdx + 1) : '';
-                        const isSensitive = /password|secret|key|token/i.test(key);
+                        const eqIdx = envVar.indexOf("=");
+                        const key =
+                          eqIdx >= 0 ? envVar.slice(0, eqIdx) : envVar;
+                        const value = eqIdx >= 0 ? envVar.slice(eqIdx + 1) : "";
+                        const isSensitive = /password|secret|key|token/i.test(
+                          key,
+                        );
                         return (
                           <div
                             key={i}
@@ -313,7 +356,7 @@ export function ContainerDetailsSheet({
                             <span className="break-all flex-1">
                               {showEnvValues || !isSensitive
                                 ? value
-                                : '********'}
+                                : "********"}
                             </span>
                             <Button
                               variant="ghost"
@@ -334,7 +377,9 @@ export function ContainerDetailsSheet({
               {/* Labels */}
               <TabsContent value="labels">
                 {!details.labels || Object.keys(details.labels).length === 0 ? (
-                  <p className="text-sm text-muted-foreground py-4">No labels</p>
+                  <p className="text-sm text-muted-foreground py-4">
+                    No labels
+                  </p>
                 ) : (
                   <Table>
                     <TableHeader>
@@ -348,10 +393,16 @@ export function ContainerDetailsSheet({
                         .sort(([a], [b]) => a.localeCompare(b))
                         .map(([key, value]) => (
                           <TableRow key={key}>
-                            <TableCell className="font-mono text-xs max-w-[250px] truncate" title={key}>
+                            <TableCell
+                              className="font-mono text-xs max-w-[250px] truncate"
+                              title={key}
+                            >
                               {key}
                             </TableCell>
-                            <TableCell className="font-mono text-xs max-w-[250px] truncate" title={value}>
+                            <TableCell
+                              className="font-mono text-xs max-w-[250px] truncate"
+                              title={value}
+                            >
                               {value}
                             </TableCell>
                           </TableRow>
@@ -380,7 +431,9 @@ export function ContainerDetailsSheet({
                   {containerRoutes.length === 0 ? (
                     <div className="rounded-lg border border-dashed p-6 text-center text-muted-foreground">
                       <Globe className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                      <p className="text-sm">No routes configured for this container</p>
+                      <p className="text-sm">
+                        No routes configured for this container
+                      </p>
                       <p className="text-xs mt-1">
                         Create a route to expose this container to the web
                       </p>
@@ -395,18 +448,22 @@ export function ContainerDetailsSheet({
                           <div className="space-y-1">
                             <div className="flex items-center gap-2">
                               <Globe className="h-4 w-4 text-blue-500" />
-                              <span className="font-medium text-sm">{route.name}</span>
+                              <span className="font-medium text-sm">
+                                {route.name}
+                              </span>
                               <Badge
                                 className={
                                   route.enabled
-                                    ? 'bg-green-500/10 text-green-600'
-                                    : 'bg-gray-500/10 text-muted-foreground'
+                                    ? "bg-green-500/10 text-green-600"
+                                    : "bg-gray-500/10 text-muted-foreground"
                                 }
                               >
-                                {route.enabled ? 'Active' : 'Disabled'}
+                                {route.enabled ? "Active" : "Disabled"}
                               </Badge>
                               {route.tls_enabled && (
-                                <Badge variant="outline" className="text-xs">HTTPS</Badge>
+                                <Badge variant="outline" className="text-xs">
+                                  HTTPS
+                                </Badge>
                               )}
                             </div>
                             <p className="text-xs text-muted-foreground font-mono">
@@ -443,7 +500,7 @@ export function ContainerDetailsSheet({
                       {details.health.test && (
                         <InfoRow
                           label="Test Command"
-                          value={details.health.test.join(' ')}
+                          value={details.health.test.join(" ")}
                           mono
                         />
                       )}
@@ -459,7 +516,13 @@ export function ContainerDetailsSheet({
   );
 }
 
-function InfoSection({ title, children }: { title: string; children: React.ReactNode }) {
+function InfoSection({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
   return (
     <div className="space-y-2">
       <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
@@ -491,7 +554,7 @@ function InfoRow({
       ) : (
         <div className="flex items-center gap-1">
           <span
-            className={`text-sm text-right truncate max-w-[300px] ${mono ? 'font-mono text-xs' : ''}`}
+            className={`text-sm text-right truncate max-w-[300px] ${mono ? "font-mono text-xs" : ""}`}
             title={value}
           >
             {value}
@@ -514,13 +577,13 @@ function InfoRow({
 
 function HealthBadge({ status }: { status: string }) {
   const lower = status.toLowerCase();
-  if (lower.includes('healthy')) {
+  if (lower.includes("healthy")) {
     return <Badge className="bg-green-500/10 text-green-600">Healthy</Badge>;
   }
-  if (lower.includes('unhealthy')) {
+  if (lower.includes("unhealthy")) {
     return <Badge className="bg-red-500/10 text-red-600">Unhealthy</Badge>;
   }
-  if (lower.includes('starting')) {
+  if (lower.includes("starting")) {
     return <Badge className="bg-yellow-500/10 text-yellow-600">Starting</Badge>;
   }
   return <Badge variant="outline">{status}</Badge>;

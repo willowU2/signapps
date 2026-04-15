@@ -1,7 +1,7 @@
-import React, { useMemo, useState } from 'react';
-import { useTasks, useUpdateTask } from '@/lib/scheduling/api/tasks';
-import { TaskStatus } from '@/lib/scheduling/types/scheduling';
-import { Loader2 } from 'lucide-react';
+import React, { useMemo, useState } from "react";
+import { useTasks, useUpdateTask } from "@/lib/scheduling/api/tasks";
+import { TaskStatus } from "@/lib/scheduling/types/scheduling";
+import { Loader2 } from "lucide-react";
 import {
   DndContext,
   DragOverlay,
@@ -12,12 +12,12 @@ import {
   useSensors,
   DragStartEvent,
   DragEndEvent,
-} from '@dnd-kit/core';
-import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
-import { TaskColumn } from './TaskColumn';
-import { TaskCard } from './TaskCard';
-import { TaskSheet } from './TaskSheet';
-import type { Task } from '@/lib/scheduling/types/scheduling';
+} from "@dnd-kit/core";
+import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
+import { TaskColumn } from "./TaskColumn";
+import { TaskCard } from "./TaskCard";
+import { TaskSheet } from "./TaskSheet";
+import type { Task } from "@/lib/scheduling/types/scheduling";
 
 export interface TaskBoardProps {
   projectId: string;
@@ -32,32 +32,44 @@ export function TaskBoard({ projectId }: TaskBoardProps) {
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
   );
 
-  const columns: { id: TaskStatus; title: string }[] = useMemo(() => [
-    { id: 'backlog', title: 'Backlog' },
-    { id: 'today', title: 'Aujourd\'hui' },
-    { id: 'in-progress', title: 'En cours' },
-    { id: 'done', title: 'Terminé' },
-  ], []);
+  const columns: { id: TaskStatus; title: string }[] = useMemo(
+    () => [
+      { id: "backlog", title: "Backlog" },
+      { id: "today", title: "Aujourd'hui" },
+      { id: "in-progress", title: "En cours" },
+      { id: "done", title: "Terminé" },
+    ],
+    [],
+  );
 
   // Filter by project when projectId is provided — must be before useMemo (rules-of-hooks)
   const boardTasks = useMemo(
-    () => isLoading ? [] : (projectId ? tasks.filter(t => t.projectId === projectId) : tasks),
-    [isLoading, projectId, tasks]
+    () =>
+      isLoading
+        ? []
+        : projectId
+          ? tasks.filter((t) => t.projectId === projectId)
+          : tasks,
+    [isLoading, projectId, tasks],
   );
 
   const activeTask = useMemo(
     () => boardTasks.find((t) => t.id === activeId),
-    [activeId, boardTasks]
+    [activeId, boardTasks],
   );
 
   if (isLoading) {
     return (
       <div className="flex h-full items-center justify-center p-8">
         <Loader2 className="h-6 w-6 animate-spin text-muted-foreground mr-2" />
-        <span className="text-muted-foreground text-sm">Chargement du Kanban...</span>
+        <span className="text-muted-foreground text-sm">
+          Chargement du Kanban...
+        </span>
       </div>
     );
   }
@@ -81,7 +93,10 @@ export function TaskBoard({ projectId }: TaskBoardProps) {
     const overColumn = columns.find((c) => c.id === overId);
     if (overColumn) {
       if (activeTask.status !== overColumn.id) {
-        updateTask.mutate({ id: activeTaskId, updates: { status: overColumn.id } });
+        updateTask.mutate({
+          id: activeTaskId,
+          updates: { status: overColumn.id },
+        });
       }
       return;
     }
@@ -89,7 +104,10 @@ export function TaskBoard({ projectId }: TaskBoardProps) {
     // Has it been dropped over another task?
     const overTask = boardTasks.find((t) => t.id === overId);
     if (overTask && overTask.status !== activeTask.status) {
-      updateTask.mutate({ id: activeTaskId, updates: { status: overTask.status } });
+      updateTask.mutate({
+        id: activeTaskId,
+        updates: { status: overTask.status },
+      });
     }
   };
 
@@ -107,12 +125,12 @@ export function TaskBoard({ projectId }: TaskBoardProps) {
         onDragEnd={handleDragEnd}
       >
         {columns.map((col) => {
-          const columnTasks = boardTasks.filter(t => t.status === col.id);
+          const columnTasks = boardTasks.filter((t) => t.status === col.id);
           return (
-            <TaskColumn 
-              key={col.id} 
-              column={col} 
-              tasks={columnTasks} 
+            <TaskColumn
+              key={col.id}
+              column={col}
+              tasks={columnTasks}
               onTaskClick={handleTaskClick}
             />
           );
@@ -121,7 +139,7 @@ export function TaskBoard({ projectId }: TaskBoardProps) {
           {activeTask ? <TaskCard task={activeTask} isOverlay /> : null}
         </DragOverlay>
       </DndContext>
-      
+
       <TaskSheet
         task={selectedTask}
         open={isSheetOpen}

@@ -73,8 +73,11 @@ interface ObjectProperties {
   ry?: number;
 }
 
-export default function DesignPropertyPanel({ fabricCanvasRef }: DesignPropertyPanelProps) {
-  const { selectedObjectIds, updateObject, removeObject, pushUndo } = useDesignStore();
+export default function DesignPropertyPanel({
+  fabricCanvasRef,
+}: DesignPropertyPanelProps) {
+  const { selectedObjectIds, updateObject, removeObject, pushUndo } =
+    useDesignStore();
   const [props, setProps] = useState<ObjectProperties | null>(null);
 
   const refreshProps = useCallback(() => {
@@ -135,20 +138,23 @@ export default function DesignPropertyPanel({ fabricCanvasRef }: DesignPropertyP
     };
   }, [refreshProps, fabricCanvasRef]);
 
-  const setProp = useCallback((key: string, value: any) => {
-    const canvas = fabricCanvasRef.current;
-    if (!canvas) return;
-    const obj = canvas.getActiveObject();
-    if (!obj) return;
-    obj.set(key, value);
-    obj.setCoords();
-    canvas.requestRenderAll();
-    const objWithId = obj as FabricObjectWithProps;
-    if (objWithId.id) {
-      updateObject(objWithId.id, { fabricData: obj.toObject(["id"]) });
-    }
-    refreshProps();
-  }, [fabricCanvasRef, updateObject, refreshProps]);
+  const setProp = useCallback(
+    (key: string, value: any) => {
+      const canvas = fabricCanvasRef.current;
+      if (!canvas) return;
+      const obj = canvas.getActiveObject();
+      if (!obj) return;
+      obj.set(key, value);
+      obj.setCoords();
+      canvas.requestRenderAll();
+      const objWithId = obj as FabricObjectWithProps;
+      if (objWithId.id) {
+        updateObject(objWithId.id, { fabricData: obj.toObject(["id"]) });
+      }
+      refreshProps();
+    },
+    [fabricCanvasRef, updateObject, refreshProps],
+  );
 
   const handleDelete = () => {
     const canvas = fabricCanvasRef.current;
@@ -184,12 +190,18 @@ export default function DesignPropertyPanel({ fabricCanvasRef }: DesignPropertyP
   const handleBringForward = () => {
     const canvas = fabricCanvasRef.current;
     const obj = canvas?.getActiveObject();
-    if (canvas && obj) { canvas.bringObjectForward(obj); canvas.requestRenderAll(); }
+    if (canvas && obj) {
+      canvas.bringObjectForward(obj);
+      canvas.requestRenderAll();
+    }
   };
   const handleSendBackward = () => {
     const canvas = fabricCanvasRef.current;
     const obj = canvas?.getActiveObject();
-    if (canvas && obj) { canvas.sendObjectBackwards(obj); canvas.requestRenderAll(); }
+    if (canvas && obj) {
+      canvas.sendObjectBackwards(obj);
+      canvas.requestRenderAll();
+    }
   };
 
   if (!props || selectedObjectIds.length === 0) {
@@ -202,29 +214,68 @@ export default function DesignPropertyPanel({ fabricCanvasRef }: DesignPropertyP
     );
   }
 
-  const isText = props.type === "textbox" || props.type === "i-text" || props.type === "text";
+  const isText =
+    props.type === "textbox" ||
+    props.type === "i-text" ||
+    props.type === "text";
 
   return (
     <div className="w-64 border-l bg-background/95 p-3 overflow-y-auto space-y-4 text-sm">
       {/* Quick actions */}
       <div className="flex items-center gap-1">
-        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleDuplicate} title="Dupliquer">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-7 w-7"
+          onClick={handleDuplicate}
+          title="Dupliquer"
+        >
           <Copy className="h-3.5 w-3.5" />
         </Button>
-        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleDelete} title="Supprimer">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-7 w-7"
+          onClick={handleDelete}
+          title="Supprimer"
+        >
           <Trash2 className="h-3.5 w-3.5 text-destructive" />
         </Button>
         <div className="flex-1" />
-        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleBringForward} title="Avancer">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-7 w-7"
+          onClick={handleBringForward}
+          title="Avancer"
+        >
           <MoveUp className="h-3.5 w-3.5" />
         </Button>
-        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleSendBackward} title="Reculer">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-7 w-7"
+          onClick={handleSendBackward}
+          title="Reculer"
+        >
           <MoveDown className="h-3.5 w-3.5" />
         </Button>
-        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleFlipH} title="Flip Horizontal">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-7 w-7"
+          onClick={handleFlipH}
+          title="Flip Horizontal"
+        >
           <FlipHorizontal className="h-3.5 w-3.5" />
         </Button>
-        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleFlipV} title="Flip Vertical">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-7 w-7"
+          onClick={handleFlipV}
+          title="Flip Vertical"
+        >
           <FlipVertical className="h-3.5 w-3.5" />
         </Button>
       </div>
@@ -233,7 +284,9 @@ export default function DesignPropertyPanel({ fabricCanvasRef }: DesignPropertyP
 
       {/* Position & Size */}
       <div className="space-y-2">
-        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Position</p>
+        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+          Position
+        </p>
         <div className="grid grid-cols-2 gap-2">
           <div>
             <Label className="text-[10px] text-muted-foreground">X</Label>
@@ -290,7 +343,9 @@ export default function DesignPropertyPanel({ fabricCanvasRef }: DesignPropertyP
         </div>
         <div className="grid grid-cols-2 gap-2">
           <div>
-            <Label className="text-[10px] text-muted-foreground">Rotation</Label>
+            <Label className="text-[10px] text-muted-foreground">
+              Rotation
+            </Label>
             <Input
               type="number"
               value={props.angle}
@@ -309,7 +364,9 @@ export default function DesignPropertyPanel({ fabricCanvasRef }: DesignPropertyP
                 onValueChange={([v]) => setProp("opacity", v / 100)}
                 className="flex-1"
               />
-              <span className="text-[10px] w-7 text-right tabular-nums">{props.opacity}%</span>
+              <span className="text-[10px] w-7 text-right tabular-nums">
+                {props.opacity}%
+              </span>
             </div>
           </div>
         </div>
@@ -319,10 +376,14 @@ export default function DesignPropertyPanel({ fabricCanvasRef }: DesignPropertyP
 
       {/* Fill & Stroke */}
       <div className="space-y-2">
-        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Appearance</p>
+        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+          Appearance
+        </p>
         {!isText && (
           <div className="flex items-center gap-2">
-            <Label className="text-[10px] text-muted-foreground w-10">Fill</Label>
+            <Label className="text-[10px] text-muted-foreground w-10">
+              Fill
+            </Label>
             <input
               type="color"
               value={props.fill}
@@ -337,7 +398,9 @@ export default function DesignPropertyPanel({ fabricCanvasRef }: DesignPropertyP
           </div>
         )}
         <div className="flex items-center gap-2">
-          <Label className="text-[10px] text-muted-foreground w-10">Stroke</Label>
+          <Label className="text-[10px] text-muted-foreground w-10">
+            Stroke
+          </Label>
           <input
             type="color"
             value={props.stroke || "#000000"}
@@ -355,16 +418,23 @@ export default function DesignPropertyPanel({ fabricCanvasRef }: DesignPropertyP
         </div>
         {props.rx !== undefined && (
           <div className="flex items-center gap-2">
-            <Label className="text-[10px] text-muted-foreground w-10">Radius</Label>
+            <Label className="text-[10px] text-muted-foreground w-10">
+              Radius
+            </Label>
             <Slider
               value={[props.rx || 0]}
               min={0}
               max={100}
               step={1}
-              onValueChange={([v]) => { setProp("rx", v); setProp("ry", v); }}
+              onValueChange={([v]) => {
+                setProp("rx", v);
+                setProp("ry", v);
+              }}
               className="flex-1"
             />
-            <span className="text-[10px] w-7 tabular-nums">{props.rx || 0}</span>
+            <span className="text-[10px] w-7 tabular-nums">
+              {props.rx || 0}
+            </span>
           </div>
         )}
       </div>
@@ -374,7 +444,9 @@ export default function DesignPropertyPanel({ fabricCanvasRef }: DesignPropertyP
         <>
           <Separator />
           <div className="space-y-2">
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Typography</p>
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              Typography
+            </p>
 
             {/* Font family */}
             <select
@@ -383,13 +455,17 @@ export default function DesignPropertyPanel({ fabricCanvasRef }: DesignPropertyP
               className="w-full h-7 text-xs rounded border bg-background px-2"
             >
               {FONT_FAMILIES.map((f) => (
-                <option key={f} value={f}>{f}</option>
+                <option key={f} value={f}>
+                  {f}
+                </option>
               ))}
             </select>
 
             {/* Font size */}
             <div className="flex items-center gap-2">
-              <Label className="text-[10px] text-muted-foreground w-10">Size</Label>
+              <Label className="text-[10px] text-muted-foreground w-10">
+                Size
+              </Label>
               <Input
                 type="number"
                 value={props.fontSize || 18}
@@ -402,7 +478,9 @@ export default function DesignPropertyPanel({ fabricCanvasRef }: DesignPropertyP
 
             {/* Color */}
             <div className="flex items-center gap-2">
-              <Label className="text-[10px] text-muted-foreground w-10">Color</Label>
+              <Label className="text-[10px] text-muted-foreground w-10">
+                Color
+              </Label>
               <input
                 type="color"
                 value={props.fill}
@@ -422,7 +500,12 @@ export default function DesignPropertyPanel({ fabricCanvasRef }: DesignPropertyP
                 variant={props.fontWeight === "bold" ? "secondary" : "ghost"}
                 size="icon"
                 className="h-7 w-7"
-                onClick={() => setProp("fontWeight", props.fontWeight === "bold" ? "normal" : "bold")}
+                onClick={() =>
+                  setProp(
+                    "fontWeight",
+                    props.fontWeight === "bold" ? "normal" : "bold",
+                  )
+                }
               >
                 <Bold className="h-3.5 w-3.5" />
               </Button>
@@ -430,7 +513,12 @@ export default function DesignPropertyPanel({ fabricCanvasRef }: DesignPropertyP
                 variant={props.fontStyle === "italic" ? "secondary" : "ghost"}
                 size="icon"
                 className="h-7 w-7"
-                onClick={() => setProp("fontStyle", props.fontStyle === "italic" ? "normal" : "italic")}
+                onClick={() =>
+                  setProp(
+                    "fontStyle",
+                    props.fontStyle === "italic" ? "normal" : "italic",
+                  )
+                }
               >
                 <Italic className="h-3.5 w-3.5" />
               </Button>
@@ -480,7 +568,9 @@ export default function DesignPropertyPanel({ fabricCanvasRef }: DesignPropertyP
             {/* Line height & letter spacing */}
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <Label className="text-[10px] text-muted-foreground">Line Height</Label>
+                <Label className="text-[10px] text-muted-foreground">
+                  Line Height
+                </Label>
                 <Slider
                   value={[(props.lineHeight || 1.2) * 100]}
                   min={80}
@@ -490,7 +580,9 @@ export default function DesignPropertyPanel({ fabricCanvasRef }: DesignPropertyP
                 />
               </div>
               <div>
-                <Label className="text-[10px] text-muted-foreground">Spacing</Label>
+                <Label className="text-[10px] text-muted-foreground">
+                  Spacing
+                </Label>
                 <Slider
                   value={[props.charSpacing || 0]}
                   min={-200}

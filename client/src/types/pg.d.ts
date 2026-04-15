@@ -2,7 +2,7 @@
  * Minimal type declarations for 'pg' module
  * Used by development scripts
  */
-declare module 'pg' {
+declare module "pg" {
   export interface QueryResult<R = Record<string, unknown>> {
     rows: R[];
     rowCount: number | null;
@@ -23,14 +23,20 @@ declare module 'pg' {
   export class Client {
     constructor(config?: ClientConfig | string);
     connect(): Promise<void>;
-    query<R = Record<string, unknown>>(text: string, values?: unknown[]): Promise<QueryResult<R>>;
+    query<R = Record<string, unknown>>(
+      text: string,
+      values?: unknown[],
+    ): Promise<QueryResult<R>>;
     end(): Promise<void>;
   }
 
   export class Pool {
     constructor(config?: ClientConfig);
     connect(): Promise<Client>;
-    query<R = Record<string, unknown>>(text: string, values?: unknown[]): Promise<QueryResult<R>>;
+    query<R = Record<string, unknown>>(
+      text: string,
+      values?: unknown[],
+    ): Promise<QueryResult<R>>;
     end(): Promise<void>;
   }
 

@@ -18,7 +18,7 @@ export function createAuditEntry(
   action: string,
   resource: string,
   resourceId: string,
-  details?: Record<string, unknown>
+  details?: Record<string, unknown>,
 ): AuditEntry {
   return {
     id: Date.now().toString(36) + Math.random().toString(36).slice(2, 8),
@@ -34,7 +34,9 @@ export function createAuditEntry(
 /**
  * RGPD: Export all user data as JSON
  */
-export async function exportUserData(userId: string): Promise<Record<string, unknown>> {
+export async function exportUserData(
+  userId: string,
+): Promise<Record<string, unknown>> {
   const response = await fetch(`/api/rgpd/export/${userId}`);
   return response.json();
 }
@@ -42,7 +44,11 @@ export async function exportUserData(userId: string): Promise<Record<string, unk
 /**
  * RGPD: Request data deletion (right to be forgotten)
  */
-export async function requestDataDeletion(userId: string): Promise<{ requestId: string }> {
-  const response = await fetch(`/api/rgpd/delete/${userId}`, { method: "POST" });
+export async function requestDataDeletion(
+  userId: string,
+): Promise<{ requestId: string }> {
+  const response = await fetch(`/api/rgpd/delete/${userId}`, {
+    method: "POST",
+  });
   return response.json();
 }

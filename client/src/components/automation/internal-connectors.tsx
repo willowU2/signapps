@@ -66,11 +66,7 @@ export function InternalConnectors({ onToggle }: InternalConnectorsProps) {
 
   const handleToggle = (id: string) => {
     setConnectors(
-      connectors.map((c) =>
-        c.id === id
-          ? { ...c, enabled: !c.enabled }
-          : c
-      )
+      connectors.map((c) => (c.id === id ? { ...c, enabled: !c.enabled } : c)),
     );
 
     const connector = connectors.find((c) => c.id === id);
@@ -78,7 +74,7 @@ export function InternalConnectors({ onToggle }: InternalConnectorsProps) {
       const newConnector = { ...connector, enabled: !connector.enabled };
       onToggle?.(newConnector);
       toast.success(
-        `Connector ${newConnector.enabled ? "enabled" : "disabled"}`
+        `Connector ${newConnector.enabled ? "enabled" : "disabled"}`,
       );
     }
   };
@@ -87,12 +83,17 @@ export function InternalConnectors({ onToggle }: InternalConnectorsProps) {
     const colors: { [key: string]: string } = {
       Storage: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
       Chat: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
-      Calendar: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
-      Email: "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200",
+      Calendar:
+        "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
+      Email:
+        "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200",
       Form: "bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-200",
       Task: "bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200",
     };
-    return colors[service] || "bg-muted text-gray-800 dark:bg-gray-900 dark:text-gray-200";
+    return (
+      colors[service] ||
+      "bg-muted text-gray-800 dark:bg-gray-900 dark:text-gray-200"
+    );
   };
 
   return (

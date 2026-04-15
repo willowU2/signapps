@@ -1,43 +1,55 @@
-'use client';
+"use client";
 
-import { LayoutList, AlignJustify, Rows3 } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { usePreferencesStore, selectLayout } from '@/lib/preferences/store';
-import type { DensityMode } from '@/lib/preferences/types';
-import { useEffect } from 'react';
+import { LayoutList, AlignJustify, Rows3 } from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { usePreferencesStore, selectLayout } from "@/lib/preferences/store";
+import type { DensityMode } from "@/lib/preferences/types";
+import { useEffect } from "react";
 
-const MODES: { value: DensityMode; label: string; description: string; icon: React.ReactNode; preview: string }[] = [
+const MODES: {
+  value: DensityMode;
+  label: string;
+  description: string;
+  icon: React.ReactNode;
+  preview: string;
+}[] = [
   {
-    value: 'compact',
-    label: 'Compact',
-    description: 'Plus de contenu, moins d\'espace',
+    value: "compact",
+    label: "Compact",
+    description: "Plus de contenu, moins d'espace",
     icon: <LayoutList className="w-5 h-5" />,
-    preview: 'py-1 text-xs',
+    preview: "py-1 text-xs",
   },
   {
-    value: 'comfortable',
-    label: 'Confortable',
-    description: 'Équilibre espace et contenu',
+    value: "comfortable",
+    label: "Confortable",
+    description: "Équilibre espace et contenu",
     icon: <AlignJustify className="w-5 h-5" />,
-    preview: 'py-2 text-sm',
+    preview: "py-2 text-sm",
   },
   {
-    value: 'spacious',
-    label: 'Aéré',
-    description: 'Beaucoup d\'espace, zen',
+    value: "spacious",
+    label: "Aéré",
+    description: "Beaucoup d'espace, zen",
     icon: <Rows3 className="w-5 h-5" />,
-    preview: 'py-3 text-base',
+    preview: "py-3 text-base",
   },
 ];
 
 export function DensityModeToggle() {
   const layout = usePreferencesStore(selectLayout);
-  const updateLayout = usePreferencesStore(s => s.updateLayout);
+  const updateLayout = usePreferencesStore((s) => s.updateLayout);
 
   const setDensity = (density: DensityMode) => {
     updateLayout({ density });
-    if (typeof document !== 'undefined') {
-      document.documentElement.setAttribute('data-density', density);
+    if (typeof document !== "undefined") {
+      document.documentElement.setAttribute("data-density", density);
     }
   };
 
@@ -54,29 +66,48 @@ export function DensityModeToggle() {
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-3 gap-3">
-          {MODES.map(mode => {
+          {MODES.map((mode) => {
             const isActive = layout.density === mode.value;
             return (
               <button
                 key={mode.value}
                 onClick={() => setDensity(mode.value)}
                 className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all hover:shadow-md ${
-                  isActive ? 'border-primary bg-primary/5' : 'border-transparent bg-muted hover:bg-muted/80'
+                  isActive
+                    ? "border-primary bg-primary/5"
+                    : "border-transparent bg-muted hover:bg-muted/80"
                 }`}
               >
-                <div className={isActive ? 'text-primary' : 'text-muted-foreground'}>
+                <div
+                  className={
+                    isActive ? "text-primary" : "text-muted-foreground"
+                  }
+                >
                   {mode.icon}
                 </div>
                 <div className="text-center">
-                  <p className={`font-medium text-sm ${isActive ? 'text-primary' : ''}`}>{mode.label}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">{mode.description}</p>
+                  <p
+                    className={`font-medium text-sm ${isActive ? "text-primary" : ""}`}
+                  >
+                    {mode.label}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {mode.description}
+                  </p>
                 </div>
                 <div className={`w-full space-y-1 mt-1`}>
-                  {[1, 2, 3].map(i => (
+                  {[1, 2, 3].map((i) => (
                     <div
                       key={i}
                       className={`bg-border rounded w-full ${mode.preview}`}
-                      style={{ height: mode.value === 'compact' ? '4px' : mode.value === 'spacious' ? '8px' : '6px' }}
+                      style={{
+                        height:
+                          mode.value === "compact"
+                            ? "4px"
+                            : mode.value === "spacious"
+                              ? "8px"
+                              : "6px",
+                      }}
                     />
                   ))}
                 </div>

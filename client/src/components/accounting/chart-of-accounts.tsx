@@ -218,9 +218,7 @@ export function ChartOfAccounts() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-foreground">
-            Plan comptable
-          </h2>
+          <h2 className="text-2xl font-bold text-foreground">Plan comptable</h2>
           <p className="text-muted-foreground">
             Manage account structure and balances
           </p>
@@ -286,7 +284,11 @@ export function ChartOfAccounts() {
           { label: "Actif", type: "asset", color: "text-blue-600" },
           { label: "Passif", type: "liability", color: "text-red-600" },
           { label: "Capital", type: "equity", color: "text-green-600" },
-          { label: "Chiffre d'affaires", type: "revenue", color: "text-emerald-600" },
+          {
+            label: "Chiffre d'affaires",
+            type: "revenue",
+            color: "text-emerald-600",
+          },
           { label: "Charges", type: "expense", color: "text-orange-600" },
         ].map(({ label, type, color }) => {
           const sum = calculateBalances(

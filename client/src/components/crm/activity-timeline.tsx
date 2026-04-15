@@ -1,7 +1,7 @@
-"use client"
-import { useEffect, useState, useCallback } from "react"
-import { format, parseISO, isValid } from "date-fns"
-import { fr } from "date-fns/locale"
+"use client";
+import { useEffect, useState, useCallback } from "react";
+import { format, parseISO, isValid } from "date-fns";
+import { fr } from "date-fns/locale";
 import {
   Mail,
   Phone,
@@ -10,27 +10,27 @@ import {
   TrendingUp,
   Loader2,
   ExternalLink,
-} from "lucide-react"
-import { Card } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { activitiesApi } from "@/lib/api/crm"
-import { calendarApi } from "@/lib/api/calendar"
-import { searchApi, type Email } from "@/lib/api-mail"
-import type { Event } from "@/types/calendar"
+} from "lucide-react";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { activitiesApi } from "@/lib/api/crm";
+import { calendarApi } from "@/lib/api/calendar";
+import { searchApi, type Email } from "@/lib/api-mail";
+import type { Event } from "@/types/calendar";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-type TimelineItemType = "email" | "call" | "meeting" | "note" | "deal_change"
+type TimelineItemType = "email" | "call" | "meeting" | "note" | "deal_change";
 
 interface TimelineItem {
-  id: string
-  type: TimelineItemType
-  date: string
-  title: string
-  summary: string
-  sourceUrl?: string
-  sourceLabel?: string
+  id: string;
+  type: TimelineItemType;
+  date: string;
+  title: string;
+  summary: string;
+  sourceUrl?: string;
+  sourceLabel?: string;
 }
 
 // ── Icon config ───────────────────────────────────────────────────────────────
@@ -48,7 +48,8 @@ const TYPE_CONFIG: Record<
   call: {
     icon: Phone,
     dot: "bg-green-500",
-    badge: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300",
+    badge:
+      "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300",
     label: "Appel",
   },
   meeting: {
@@ -71,43 +72,50 @@ const TYPE_CONFIG: Record<
     badge: "bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-300",
     label: "Changement deal",
   },
-}
+};
 
 // ── Props ─────────────────────────────────────────────────────────────────────
 
 interface Props {
-  contactId?: string
-  contactEmail?: string
+  contactId?: string;
+  contactEmail?: string;
 }
 
 // ── Main Component ─────────────────────────────────────────────────────────────
 
 export function ActivityTimeline({ contactId, contactEmail }: Props) {
-  const [items, setItems] = useState<TimelineItem[]>([])
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [items, setItems] = useState<TimelineItem[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    setLoading(true)
-    setError(null)
+    setLoading(true);
+    setError(null);
 
-    const merged: TimelineItem[] = []
+    const merged: TimelineItem[] = [];
 
     // 1. CRM activities
     try {
       const crmActs = contactId
         ? activitiesApi.byContact(contactId)
-        : activitiesApi.list()
-      crmActs.forEach(a => {
+        : activitiesApi.list();
+      crmActs.forEach((a) => {
         merged.push({
           id: `crm-${a.id}`,
           type: a.type === "phone" ? "call" : (a.type as TimelineItemType),
           date: a.date,
-          title: a.type === "email" ? "Email" : a.type === "phone" ? "Appel" : a.type === "meeting" ? "Réunion" : "Note",
+          title:
+            a.type === "email"
+              ? "Email"
+              : a.type === "phone"
+                ? "Appel"
+                : a.type === "meeting"
+                  ? "Réunion"
+                  : "Note",
           summary: a.content,
           sourceLabel: a.author,
-        })
-      })
+        });
+      });
     } catch {
       // CRM is localStorage-based, never fails
     }
@@ -115,10 +123,13 @@ export function ActivityTimeline({ contactId, contactEmail }: Props) {
     // 2. Mail search (by contact email)
     if (contactEmail) {
       try {
-        const mails: Email[] = await searchApi.search({ q: contactEmail, limit: 20 })
+        const mails: Email[] = await searchApi.search({
+          q: contactEmail,
+          limit: 20,
+        });
         mails.forEach((m) => {
-          const date = m.received_at ?? m.sent_at ?? m.created_at
-          if (!date) return
+          const date = m.received_at ?? m.sent_at ?? m.created_at;
+          if (!date) return;
           merged.push({
             id: `mail-${m.id}`,
             type: "email",
@@ -127,8 +138,8 @@ export function ActivityTimeline({ contactId, contactEmail }: Props) {
             summary: (m.body_text ?? "").slice(0, 120),
             sourceUrl: `/mail?id=${m.id}`,
             sourceLabel: "Messagerie",
-          })
-        })
+          });
+        });
       } catch {
         // Mail API unavailable — skip silently
       }
@@ -137,22 +148,23 @@ export function ActivityTimeline({ contactId, contactEmail }: Props) {
     // 3. Calendar events (filter by attendee email)
     if (contactEmail) {
       try {
-        const calendars = await calendarApi.listCalendars()
-        const now = new Date()
-        const past = new Date(now)
-        past.setMonth(past.getMonth() - 3)
-        const future = new Date(now)
-        future.setMonth(future.getMonth() + 1)
+        const calendars = await calendarApi.listCalendars();
+        const now = new Date();
+        const past = new Date(now);
+        past.setMonth(past.getMonth() - 3);
+        const future = new Date(now);
+        future.setMonth(future.getMonth() + 1);
 
-        for (const cal of (Array.isArray(calendars) ? calendars : [])) {
+        for (const cal of Array.isArray(calendars) ? calendars : []) {
           try {
-            const events = await calendarApi.listEvents(cal.id, past, future)
-            ;(Array.isArray(events) ? events : []).forEach((ev: Event) => {
-              const attendees = ev.attendees ?? []
+            const events = await calendarApi.listEvents(cal.id, past, future);
+            (Array.isArray(events) ? events : []).forEach((ev: Event) => {
+              const attendees = ev.attendees ?? [];
               const match = attendees.some(
-                (a) => (a.email ?? "").toLowerCase() === contactEmail.toLowerCase()
-              )
-              if (!match) return
+                (a) =>
+                  (a.email ?? "").toLowerCase() === contactEmail.toLowerCase(),
+              );
+              if (!match) return;
               merged.push({
                 id: `cal-${ev.id}`,
                 type: "meeting",
@@ -161,8 +173,8 @@ export function ActivityTimeline({ contactId, contactEmail }: Props) {
                 summary: ev.description ?? "",
                 sourceUrl: `/calendar?event=${ev.id}`,
                 sourceLabel: cal.name ?? "Calendrier",
-              })
-            })
+              });
+            });
           } catch {
             // skip calendar
           }
@@ -174,18 +186,18 @@ export function ActivityTimeline({ contactId, contactEmail }: Props) {
 
     // Sort by date descending
     merged.sort((a, b) => {
-      const da = isValid(new Date(a.date)) ? new Date(a.date).getTime() : 0
-      const db = isValid(new Date(b.date)) ? new Date(b.date).getTime() : 0
-      return db - da
-    })
+      const da = isValid(new Date(a.date)) ? new Date(a.date).getTime() : 0;
+      const db = isValid(new Date(b.date)) ? new Date(b.date).getTime() : 0;
+      return db - da;
+    });
 
-    setItems(merged)
-    setLoading(false)
-  }, [contactId, contactEmail])
+    setItems(merged);
+    setLoading(false);
+  }, [contactId, contactEmail]);
 
   useEffect(() => {
-    load()
-  }, [load])
+    load();
+  }, [load]);
 
   if (loading) {
     return (
@@ -193,7 +205,7 @@ export function ActivityTimeline({ contactId, contactEmail }: Props) {
         <Loader2 className="size-4 animate-spin" />
         <span className="text-sm">Chargement du fil d&apos;activités…</span>
       </div>
-    )
+    );
   }
 
   if (error) {
@@ -204,7 +216,7 @@ export function ActivityTimeline({ contactId, contactEmail }: Props) {
           Réessayer
         </Button>
       </div>
-    )
+    );
   }
 
   if (items.length === 0) {
@@ -215,7 +227,7 @@ export function ActivityTimeline({ contactId, contactEmail }: Props) {
           Aucune activité trouvée pour ce contact.
         </p>
       </Card>
-    )
+    );
   }
 
   return (
@@ -223,15 +235,15 @@ export function ActivityTimeline({ contactId, contactEmail }: Props) {
       {/* Vertical line */}
       <div className="absolute left-3 top-0 bottom-0 w-0.5 bg-border" />
 
-      {items.map(item => {
-        const cfg = TYPE_CONFIG[item.type]
-        const Icon = cfg.icon
+      {items.map((item) => {
+        const cfg = TYPE_CONFIG[item.type];
+        const Icon = cfg.icon;
 
-        let formattedDate = item.date
+        let formattedDate = item.date;
         try {
-          const d = parseISO(item.date)
+          const d = parseISO(item.date);
           if (isValid(d)) {
-            formattedDate = format(d, "d MMM yyyy, HH:mm", { locale: fr })
+            formattedDate = format(d, "d MMM yyyy, HH:mm", { locale: fr });
           }
         } catch {
           // keep raw
@@ -283,8 +295,8 @@ export function ActivityTimeline({ contactId, contactEmail }: Props) {
               )}
             </Card>
           </div>
-        )
+        );
       })}
     </div>
-  )
+  );
 }

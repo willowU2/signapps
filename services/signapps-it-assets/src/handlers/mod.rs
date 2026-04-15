@@ -1,7 +1,5 @@
 pub mod agent;
 pub mod automation;
-pub mod resources;
-pub mod sites;
 pub mod cmdb;
 pub mod commands;
 pub mod custom_fields;
@@ -17,8 +15,10 @@ pub mod patches;
 pub mod playbooks;
 pub mod policies;
 pub mod remote_ws;
+pub mod resources;
 pub mod script_library;
 pub mod security;
+pub mod sites;
 pub mod software_policies;
 pub mod tickets;
 pub mod wol;

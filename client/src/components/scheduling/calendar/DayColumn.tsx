@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * DayColumn Component
@@ -8,15 +8,22 @@
  * Handles TimeItem placement, drag/drop zones, and click interactions.
  */
 
-import * as React from 'react';
-import { format, isToday, isSameDay, setHours, setMinutes, parseISO } from 'date-fns';
-import { fr } from 'date-fns/locale';
-import { cn } from '@/lib/utils';
-import { useCalendarStore } from '@/stores/scheduling/calendar-store';
-import { useSchedulingStore } from '@/stores/scheduling/scheduling-store';
-import { TimeItemBlock } from './TimeItemBlock';
-import type { TimeItem, PositionedItem } from '@/lib/scheduling/types';
-import { calculateItemPositions } from '@/lib/scheduling/utils/overlap-calculator';
+import * as React from "react";
+import {
+  format,
+  isToday,
+  isSameDay,
+  setHours,
+  setMinutes,
+  parseISO,
+} from "date-fns";
+import { fr } from "date-fns/locale";
+import { cn } from "@/lib/utils";
+import { useCalendarStore } from "@/stores/scheduling/calendar-store";
+import { useSchedulingStore } from "@/stores/scheduling/scheduling-store";
+import { TimeItemBlock } from "./TimeItemBlock";
+import type { TimeItem, PositionedItem } from "@/lib/scheduling/types";
+import { calculateItemPositions } from "@/lib/scheduling/utils/overlap-calculator";
 
 // ============================================================================
 // Types
@@ -47,26 +54,33 @@ interface TimeSlotProps {
 // TimeSlot Component
 // ============================================================================
 
-function TimeSlot({ date, hour, minute, height, isWorkingHour, onClick }: TimeSlotProps) {
+function TimeSlot({
+  date,
+  hour,
+  minute,
+  height,
+  isWorkingHour,
+  onClick,
+}: TimeSlotProps) {
   const isCurrentHour = new Date().getHours() === hour && isToday(date);
   const isHalfHour = minute === 30;
 
   return (
     <div
       className={cn(
-        'relative border-b border-border/50 transition-colors',
-        isWorkingHour ? 'bg-background' : 'bg-muted/30',
-        isHalfHour && 'border-dashed',
-        'hover:bg-accent/30 cursor-pointer',
-        isCurrentHour && 'bg-primary/5'
+        "relative border-b border-border/50 transition-colors",
+        isWorkingHour ? "bg-background" : "bg-muted/30",
+        isHalfHour && "border-dashed",
+        "hover:bg-accent/30 cursor-pointer",
+        isCurrentHour && "bg-primary/5",
       )}
       style={{ height }}
       onClick={onClick}
       role="button"
       tabIndex={0}
-      aria-label={`${format(setMinutes(setHours(date, hour), minute), 'EEEE d MMMM, HH:mm', { locale: fr })}`}
+      aria-label={`${format(setMinutes(setHours(date, hour), minute), "EEEE d MMMM, HH:mm", { locale: fr })}`}
       onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
+        if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
           onClick?.();
         }
@@ -97,7 +111,8 @@ function CurrentTimeIndicator({
       const currentMinute = now.getMinutes();
 
       // Calculate position relative to working hours start
-      const minutesFromStart = (currentHour - workingHoursStart) * 60 + currentMinute;
+      const minutesFromStart =
+        (currentHour - workingHoursStart) * 60 + currentMinute;
       const pixelsPerMinute = slotHeight / slotDuration;
 
       setPosition(minutesFromStart * pixelsPerMinute);
@@ -142,28 +157,28 @@ export function DayHeader({
   return (
     <div
       className={cn(
-        'flex flex-col items-center justify-center py-2 border-b',
-        today && 'bg-primary/5',
-        className
+        "flex flex-col items-center justify-center py-2 border-b",
+        today && "bg-primary/5",
+        className,
       )}
     >
       <span
         className={cn(
-          'text-xs uppercase tracking-wider',
-          today ? 'text-primary font-medium' : 'text-muted-foreground'
+          "text-xs uppercase tracking-wider",
+          today ? "text-primary font-medium" : "text-muted-foreground",
         )}
       >
-        {format(date, compact ? 'EEE' : 'EEEE', { locale: fr })}
+        {format(date, compact ? "EEE" : "EEEE", { locale: fr })}
       </span>
       <span
         className={cn(
-          'text-2xl font-bold',
+          "text-2xl font-bold",
           today
-            ? 'bg-primary text-primary-foreground rounded-full w-10 h-10 flex items-center justify-center'
-            : 'text-foreground'
+            ? "bg-primary text-primary-foreground rounded-full w-10 h-10 flex items-center justify-center"
+            : "text-foreground",
         )}
       >
-        {format(date, 'd')}
+        {format(date, "d")}
       </span>
     </div>
   );
@@ -175,7 +190,9 @@ export function DayHeader({
 
 function getItemDate(item: TimeItem): Date | null {
   if (!item.startTime) return null;
-  return typeof item.startTime === 'string' ? parseISO(item.startTime) : item.startTime;
+  return typeof item.startTime === "string"
+    ? parseISO(item.startTime)
+    : item.startTime;
 }
 
 // ============================================================================
@@ -234,7 +251,11 @@ export function DayColumn({
     }
 
     // Calculate positions with overlap handling
-    const calculatedPositions = calculateItemPositions(dayItems, hourStart, hourEnd);
+    const calculatedPositions = calculateItemPositions(
+      dayItems,
+      hourStart,
+      hourEnd,
+    );
 
     // Convert percentage-based positions to pixel-based
     const totalHeight = slots.length * slotHeight;
@@ -245,21 +266,30 @@ export function DayColumn({
     }));
   }, [positions, dayItems, date, hourStart, hourEnd, slots.length, slotHeight]);
 
-  const handleSlotClick = React.useCallback((hour: number, minute: number) => {
-    onSlotClick?.(date, hour, minute);
-  }, [date, onSlotClick]);
+  const handleSlotClick = React.useCallback(
+    (hour: number, minute: number) => {
+      onSlotClick?.(date, hour, minute);
+    },
+    [date, onSlotClick],
+  );
 
-  const handleItemClick = React.useCallback((item: TimeItem) => {
-    selectItem(item);
-    onItemClick?.(item);
-  }, [selectItem, onItemClick]);
+  const handleItemClick = React.useCallback(
+    (item: TimeItem) => {
+      selectItem(item);
+      onItemClick?.(item);
+    },
+    [selectItem, onItemClick],
+  );
 
-  const handleItemDoubleClick = React.useCallback((item: TimeItem) => {
-    onItemDoubleClick?.(item);
-  }, [onItemDoubleClick]);
+  const handleItemDoubleClick = React.useCallback(
+    (item: TimeItem) => {
+      onItemDoubleClick?.(item);
+    },
+    [onItemDoubleClick],
+  );
 
   return (
-    <div className={cn('relative flex-1 border-r last:border-r-0', className)}>
+    <div className={cn("relative flex-1 border-r last:border-r-0", className)}>
       {/* Time Slots */}
       <div className="relative">
         {slots.map((slot) => (

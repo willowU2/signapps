@@ -116,11 +116,7 @@ pub async fn send_message(
             tracing::info!(id = %msg.id, channel = %channel_id, "Message sent");
             // Broadcast with the shape expected by the frontend WS handler:
             // { type: "new_message", message: <ChatMessage> }
-            broadcast(
-                &state,
-                "new_message",
-                serde_json::json!({ "message": msg }),
-            );
+            broadcast(&state, "new_message", serde_json::json!({ "message": msg }));
             let _ = state
                 .event_bus
                 .publish(NewEvent {
@@ -211,7 +207,11 @@ pub async fn edit_message(
             msg.content = payload.content.clone();
             msg.updated_at = Utc::now().to_rfc3339();
             let val = serde_json::to_value(msg.clone()).unwrap_or_default();
-            broadcast(&state, "message_edited", serde_json::json!({ "message": msg.clone() }));
+            broadcast(
+                &state,
+                "message_edited",
+                serde_json::json!({ "message": msg.clone() }),
+            );
             return (StatusCode::OK, Json(val));
         }
     }

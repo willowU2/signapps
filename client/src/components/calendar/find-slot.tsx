@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -13,7 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 import {
   CalendarClock,
   Loader2,
@@ -21,11 +21,11 @@ import {
   Clock,
   Users,
   CheckCircle2,
-} from 'lucide-react';
-import { toast } from 'sonner';
-import { aiApi, calendarApi } from '@/lib/api';
-import { useEvents } from '@/hooks/use-events';
-import { CreateEvent } from '@/types/calendar';
+} from "lucide-react";
+import { toast } from "sonner";
+import { aiApi, calendarApi } from "@/lib/api";
+import { useEvents } from "@/hooks/use-events";
+import { CreateEvent } from "@/types/calendar";
 
 interface SuggestedSlot {
   start_time: string;
@@ -43,10 +43,10 @@ interface FindSlotProps {
 export function FindSlot({ calendarId, open, onOpenChange }: FindSlotProps) {
   const { createEvent, events } = useEvents(calendarId);
 
-  const [description, setDescription] = useState('');
-  const [duration, setDuration] = useState('60');
-  const [participants, setParticipants] = useState('');
-  const [constraints, setConstraints] = useState('');
+  const [description, setDescription] = useState("");
+  const [duration, setDuration] = useState("60");
+  const [participants, setParticipants] = useState("");
+  const [constraints, setConstraints] = useState("");
   const [suggestedSlots, setSuggestedSlots] = useState<SuggestedSlot[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
@@ -54,7 +54,7 @@ export function FindSlot({ calendarId, open, onOpenChange }: FindSlotProps) {
 
   const handleFindSlots = async () => {
     if (!description.trim()) {
-      toast.error('Please describe the meeting');
+      toast.error("Please describe the meeting");
       return;
     }
 
@@ -91,8 +91,8 @@ ${JSON.stringify(existingEvents, null, 2)}
 Meeting requirements:
 - Description: ${description}
 - Duration: ${duration} minutes
-${participants ? `- Participants: ${participants}` : ''}
-${constraints ? `- Constraints: ${constraints}` : ''}
+${participants ? `- Participants: ${participants}` : ""}
+${constraints ? `- Constraints: ${constraints}` : ""}
 
 Rules:
 - Avoid scheduling over existing events
@@ -104,7 +104,8 @@ Return ONLY valid JSON array with exactly 3 suggestions:
 [{"start_time": "ISO8601", "end_time": "ISO8601", "score": number, "reason": "brief explanation"}]`;
 
       const response = await aiApi.chat(prompt, {
-        systemPrompt: 'You are a scheduling AI. Return only valid JSON, no markdown.',
+        systemPrompt:
+          "You are a scheduling AI. Return only valid JSON, no markdown.",
       });
 
       try {
@@ -114,13 +115,13 @@ Return ONLY valid JSON array with exactly 3 suggestions:
           setSuggestedSlots(slots.sort((a, b) => b.score - a.score));
           toast.success(`Found ${slots.length} available slots`);
         } else {
-          toast.error('AI could not find available slots');
+          toast.error("AI could not find available slots");
         }
       } catch {
-        toast.error('Failed to parse slot suggestions');
+        toast.error("Failed to parse slot suggestions");
       }
     } catch (error) {
-      toast.error('Failed to analyze calendar');
+      toast.error("Failed to analyze calendar");
     } finally {
       setIsLoading(false);
     }
@@ -133,20 +134,18 @@ Return ONLY valid JSON array with exactly 3 suggestions:
     try {
       const eventData: CreateEvent = {
         title: description,
-        description: participants
-          ? `Participants: ${participants}`
-          : undefined,
+        description: participants ? `Participants: ${participants}` : undefined,
         start_time: slot.start_time,
         end_time: slot.end_time,
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       };
 
       await createEvent(eventData);
-      toast.success('Event created successfully');
+      toast.success("Event created successfully");
       onOpenChange(false);
       resetForm();
     } catch (error) {
-      toast.error('Impossible de créer event');
+      toast.error("Impossible de créer event");
     } finally {
       setIsCreating(false);
       setSelectedSlot(null);
@@ -154,10 +153,10 @@ Return ONLY valid JSON array with exactly 3 suggestions:
   };
 
   const resetForm = () => {
-    setDescription('');
-    setDuration('60');
-    setParticipants('');
-    setConstraints('');
+    setDescription("");
+    setDuration("60");
+    setParticipants("");
+    setConstraints("");
     setSuggestedSlots([]);
     setSelectedSlot(null);
   };
@@ -165,11 +164,11 @@ Return ONLY valid JSON array with exactly 3 suggestions:
   const formatSlotTime = (isoString: string) => {
     const date = new Date(isoString);
     return date.toLocaleString(undefined, {
-      weekday: 'short',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     });
   };
 
@@ -273,11 +272,9 @@ Return ONLY valid JSON array with exactly 3 suggestions:
                 <Card
                   key={index}
                   className={`cursor-pointer transition-all hover:border-primary ${
-                    selectedSlot === slot ? 'border-primary bg-primary/5' : ''
+                    selectedSlot === slot ? "border-primary bg-primary/5" : ""
                   }`}
-                  onClick={() =>
-                    !isCreating && handleCreateEvent(slot)
-                  }
+                  onClick={() => !isCreating && handleCreateEvent(slot)}
                 >
                   <CardContent className="p-4">
                     <div className="flex items-start justify-between">
@@ -302,10 +299,10 @@ Return ONLY valid JSON array with exactly 3 suggestions:
                           <div
                             className={`h-2 w-2 rounded-full ${
                               slot.score >= 80
-                                ? 'bg-green-500'
+                                ? "bg-green-500"
                                 : slot.score >= 50
-                                  ? 'bg-yellow-500'
-                                  : 'bg-red-500'
+                                  ? "bg-yellow-500"
+                                  : "bg-red-500"
                             }`}
                           />
                           <span className="text-xs font-semibold">

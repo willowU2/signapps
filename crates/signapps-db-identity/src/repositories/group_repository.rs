@@ -3,8 +3,8 @@
 use crate::models::group::{
     CreateGroup, CreateRole, CreateWebhook, Group, GroupMember, GroupMemberWithUser, Role, Webhook,
 };
-use signapps_db_shared::DatabasePool;
 use signapps_common::Result;
+use signapps_db_shared::DatabasePool;
 use uuid::Uuid;
 
 /// Repository for group and RBAC operations.

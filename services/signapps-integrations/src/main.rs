@@ -12,7 +12,9 @@ use axum::{
     Router,
 };
 use signapps_common::bootstrap::{init_tracing, load_env, ServiceConfig};
-use signapps_common::middleware::{auth_middleware, require_admin, tenant_context_middleware, AuthState};
+use signapps_common::middleware::{
+    auth_middleware, require_admin, tenant_context_middleware, AuthState,
+};
 use signapps_common::JwtConfig;
 use tower_http::{
     cors::{AllowOrigin, CorsLayer},
@@ -149,7 +151,12 @@ mod tests {
     async fn health_endpoint_returns_200() {
         let app = create_router(make_state());
         let response = app
-            .oneshot(Request::builder().uri("/health").body(Body::empty()).unwrap())
+            .oneshot(
+                Request::builder()
+                    .uri("/health")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
             .await
             .unwrap();
         assert_eq!(response.status(), StatusCode::OK);

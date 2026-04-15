@@ -97,7 +97,7 @@ pub async fn internal_refresh(
             return Err(AppError::BadRequest(format!(
                 "unknown source_table: {other}"
             )));
-        }
+        },
     };
 
     // ── Look up (tenant_id, provider_key) from the refresh queue row ─────────
@@ -181,7 +181,13 @@ pub async fn internal_refresh(
                 .unwrap_or_else(|| Utc::now() + chrono::Duration::hours(1));
 
             table
-                .update(&pool, body.source_id, &access_enc, &new_refresh_enc, new_expires_at)
+                .update(
+                    &pool,
+                    body.source_id,
+                    &access_enc,
+                    &new_refresh_enc,
+                    new_expires_at,
+                )
                 .await
                 .map_err(crate::handlers::oauth::error::oauth_error_to_app_error)?;
 
@@ -196,8 +202,10 @@ pub async fn internal_refresh(
                 access_token: tokens.access_token,
                 expires_at: new_expires_at,
             }))
-        }
-        RefreshOutcome::Revoked { error, description, .. } => {
+        },
+        RefreshOutcome::Revoked {
+            error, description, ..
+        } => {
             tracing::warn!(
                 provider = %provider_key,
                 error = %error,
@@ -207,7 +215,7 @@ pub async fn internal_refresh(
             Err(AppError::ExternalService(format!(
                 "refresh token revoked: {error} {description:?}"
             )))
-        }
+        },
         RefreshOutcome::Transient { reason } => {
             tracing::warn!(
                 provider = %provider_key,
@@ -217,7 +225,7 @@ pub async fn internal_refresh(
             Err(AppError::ExternalService(format!(
                 "transient refresh failure: {reason}"
             )))
-        }
+        },
     }
 }
 

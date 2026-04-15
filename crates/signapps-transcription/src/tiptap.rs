@@ -88,7 +88,7 @@ fn build_title(result: &TranscriptionResult) -> String {
         TranscriptionSource::ExternalCapture => {
             let app = result.meta.source_app.as_deref().unwrap_or("External");
             format!("{app} — {date}")
-        }
+        },
         TranscriptionSource::VoiceMemo => format!("Mémo vocal — {date}"),
     }
 }

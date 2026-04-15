@@ -17,11 +17,41 @@ interface Connection {
 }
 
 const SAMPLE_SERVICES: ServiceNode[] = [
-  { id: "api", name: "API Gateway", status: "running", version: "1.2.0", connections: ["auth", "data", "cache"] },
-  { id: "auth", name: "Auth Service", status: "running", version: "1.1.5", connections: ["db"] },
-  { id: "data", name: "Data Service", status: "running", version: "2.0.1", connections: ["db", "cache"] },
-  { id: "cache", name: "Cache Layer", status: "degraded", version: "1.0.3", connections: [] },
-  { id: "db", name: "Database", status: "running", version: "5.7", connections: [] },
+  {
+    id: "api",
+    name: "API Gateway",
+    status: "running",
+    version: "1.2.0",
+    connections: ["auth", "data", "cache"],
+  },
+  {
+    id: "auth",
+    name: "Auth Service",
+    status: "running",
+    version: "1.1.5",
+    connections: ["db"],
+  },
+  {
+    id: "data",
+    name: "Data Service",
+    status: "running",
+    version: "2.0.1",
+    connections: ["db", "cache"],
+  },
+  {
+    id: "cache",
+    name: "Cache Layer",
+    status: "degraded",
+    version: "1.0.3",
+    connections: [],
+  },
+  {
+    id: "db",
+    name: "Database",
+    status: "running",
+    version: "5.7",
+    connections: [],
+  },
 ];
 
 const SAMPLE_CONNECTIONS: Connection[] = [
@@ -59,24 +89,32 @@ export function ServiceMesh() {
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-bold text-foreground">Service Mesh</h2>
-        <p className="text-muted-foreground">Monitor services and inter-service communication</p>
+        <p className="text-muted-foreground">
+          Monitor services and inter-service communication
+        </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Service Graph */}
         <div className="lg:col-span-2 border rounded-lg p-6 bg-card">
-          <h3 className="text-lg font-semibold text-foreground mb-4">Service Graph</h3>
+          <h3 className="text-lg font-semibold text-foreground mb-4">
+            Service Graph
+          </h3>
           <div className="flex flex-wrap gap-4 items-center justify-center min-h-96 bg-muted rounded p-4">
             {SAMPLE_SERVICES.map((service) => (
               <button
                 key={service.id}
                 onClick={() => setSelectedService(service.id)}
                 className={`p-4 rounded-lg border-2 font-medium transition-all ${getStatusColor(service.status)} ${
-                  selectedService === service.id ? "ring-2 ring-blue-500 ring-offset-2" : ""
+                  selectedService === service.id
+                    ? "ring-2 ring-blue-500 ring-offset-2"
+                    : ""
                 }`}
               >
                 <div className="font-semibold text-sm">{service.name}</div>
-                <div className="text-xs mt-1 opacity-75">v{service.version}</div>
+                <div className="text-xs mt-1 opacity-75">
+                  v{service.version}
+                </div>
               </button>
             ))}
           </div>
@@ -85,7 +123,9 @@ export function ServiceMesh() {
         {/* Connections & Details */}
         <div className="space-y-4">
           <div className="border rounded-lg p-4 bg-card">
-            <h3 className="text-lg font-semibold text-foreground mb-3">Service Status</h3>
+            <h3 className="text-lg font-semibold text-foreground mb-3">
+              Service Status
+            </h3>
             <div className="space-y-2">
               {SAMPLE_SERVICES.map((service) => (
                 <div
@@ -93,25 +133,38 @@ export function ServiceMesh() {
                   className="flex items-center justify-between p-2 rounded hover:bg-muted cursor-pointer"
                   onClick={() => setSelectedService(service.id)}
                 >
-                  <span className="text-sm font-medium text-foreground">{service.name}</span>
-                  <div className={`w-3 h-3 rounded-full ${service.status === "running" ? "bg-green-500" : service.status === "degraded" ? "bg-amber-500" : "bg-red-500"}`} />
+                  <span className="text-sm font-medium text-foreground">
+                    {service.name}
+                  </span>
+                  <div
+                    className={`w-3 h-3 rounded-full ${service.status === "running" ? "bg-green-500" : service.status === "degraded" ? "bg-amber-500" : "bg-red-500"}`}
+                  />
                 </div>
               ))}
             </div>
           </div>
 
           <div className="border rounded-lg p-4 bg-card">
-            <h3 className="text-lg font-semibold text-foreground mb-3">Latency</h3>
+            <h3 className="text-lg font-semibold text-foreground mb-3">
+              Latency
+            </h3>
             <div className="space-y-2 text-sm">
               {SAMPLE_CONNECTIONS.slice(0, 5).map((conn, idx) => {
-                const fromService = SAMPLE_SERVICES.find((s) => s.id === conn.from);
+                const fromService = SAMPLE_SERVICES.find(
+                  (s) => s.id === conn.from,
+                );
                 const toService = SAMPLE_SERVICES.find((s) => s.id === conn.to);
                 return (
-                  <div key={idx} className="flex items-center justify-between p-2 rounded hover:bg-muted">
+                  <div
+                    key={idx}
+                    className="flex items-center justify-between p-2 rounded hover:bg-muted"
+                  >
                     <span className="text-muted-foreground">
                       {fromService?.name} → {toService?.name}
                     </span>
-                    <span className={`font-mono font-semibold ${getLatencyColor(conn.latency)}`}>
+                    <span
+                      className={`font-mono font-semibold ${getLatencyColor(conn.latency)}`}
+                    >
                       {conn.latency}ms
                     </span>
                   </div>

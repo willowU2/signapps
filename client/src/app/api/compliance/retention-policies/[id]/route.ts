@@ -1,22 +1,32 @@
 // CO3: Next.js proxy for retention policy by id (PATCH/DELETE/run)
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from "next/server";
 
-const IDENTITY = process.env.IDENTITY_URL ?? 'http://localhost:3001';
+const IDENTITY = process.env.IDENTITY_URL ?? "http://localhost:3001";
 
-async function proxy(req: NextRequest, method: string, id: string, body?: unknown) {
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-  const authHeader = req.headers.get('authorization');
-  if (authHeader) headers['Authorization'] = authHeader;
+async function proxy(
+  req: NextRequest,
+  method: string,
+  id: string,
+  body?: unknown,
+) {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+  const authHeader = req.headers.get("authorization");
+  if (authHeader) headers["Authorization"] = authHeader;
 
   const url = new URL(req.url);
-  const suffix = url.pathname.endsWith('/run') ? '/run' : '';
+  const suffix = url.pathname.endsWith("/run") ? "/run" : "";
 
-  const res = await fetch(`${IDENTITY}/api/v1/compliance/retention-policies/${id}${suffix}`, {
-    method,
-    headers,
-    body: body !== undefined ? JSON.stringify(body) : undefined,
-  }).catch(() => null);
+  const res = await fetch(
+    `${IDENTITY}/api/v1/compliance/retention-policies/${id}${suffix}`,
+    {
+      method,
+      headers,
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+    },
+  ).catch(() => null);
 
   if (!res) {
     // Stub response for /run until backend implements it
@@ -33,7 +43,7 @@ export async function PATCH(
 ) {
   const { id } = await params;
   const body = await req.json().catch(() => ({}));
-  return proxy(req, 'PATCH', id, body);
+  return proxy(req, "PATCH", id, body);
 }
 
 export async function DELETE(
@@ -41,7 +51,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
-  return proxy(req, 'DELETE', id);
+  return proxy(req, "DELETE", id);
 }
 
 export async function POST(

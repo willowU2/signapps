@@ -16,9 +16,7 @@ interface ServiceStatus {
   history: number[];
 }
 
-const SERVICES = [
-  { name: "Metrics Service", endpoint: metricsApi.health },
-];
+const SERVICES = [{ name: "Metrics Service", endpoint: metricsApi.health }];
 
 export function UptimeMonitor() {
   const [services, setServices] = useState<ServiceStatus[]>([]);
@@ -81,11 +79,23 @@ export function UptimeMonitor() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "up":
-        return <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Healthy</Badge>;
+        return (
+          <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
+            Healthy
+          </Badge>
+        );
       case "degraded":
-        return <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">Degraded</Badge>;
+        return (
+          <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">
+            Degraded
+          </Badge>
+        );
       case "down":
-        return <Badge className="bg-red-100 text-red-800 hover:bg-red-100">Down</Badge>;
+        return (
+          <Badge className="bg-red-100 text-red-800 hover:bg-red-100">
+            Down
+          </Badge>
+        );
       default:
         return null;
     }
@@ -109,21 +119,37 @@ export function UptimeMonitor() {
   return (
     <div className="space-y-4 w-full">
       <div className="flex justify-end">
-        <Button variant="outline" size="sm" onClick={checkServices} disabled={isRefreshing}>
-          <RefreshCw className={`w-4 h-4 mr-2 ${isRefreshing ? "animate-spin" : ""}`} />
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={checkServices}
+          disabled={isRefreshing}
+        >
+          <RefreshCw
+            className={`w-4 h-4 mr-2 ${isRefreshing ? "animate-spin" : ""}`}
+          />
           Refresh
         </Button>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {services.map((service) => (
-          <Card key={service.name} className="p-4 border border-border hover:shadow-lg transition">
+          <Card
+            key={service.name}
+            className="p-4 border border-border hover:shadow-lg transition"
+          >
             <div className="space-y-4">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
-                  <h4 className="font-semibold text-foreground">{service.name}</h4>
+                  <h4 className="font-semibold text-foreground">
+                    {service.name}
+                  </h4>
                   <p className="text-xs text-muted-foreground mt-1">
                     Last checked{" "}
-                    {Math.round((Date.now() - new Date(service.lastChecked).getTime()) / 1000)}s ago
+                    {Math.round(
+                      (Date.now() - new Date(service.lastChecked).getTime()) /
+                        1000,
+                    )}
+                    s ago
                   </p>
                 </div>
                 {getStatusIcon(service.status)}
@@ -141,9 +167,13 @@ export function UptimeMonitor() {
 
               {service.responseTime > 0 && (
                 <div className="bg-muted rounded p-3">
-                  <p className="text-xs text-muted-foreground mb-2">Response Time</p>
+                  <p className="text-xs text-muted-foreground mb-2">
+                    Response Time
+                  </p>
                   <div className="flex items-baseline gap-2">
-                    <span className={`text-xl font-bold ${getResponseTimeColor(service.responseTime)}`}>
+                    <span
+                      className={`text-xl font-bold ${getResponseTimeColor(service.responseTime)}`}
+                    >
                       {service.responseTime}
                     </span>
                     <span className="text-xs text-muted-foreground">ms</span>

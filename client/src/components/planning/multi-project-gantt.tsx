@@ -26,8 +26,20 @@ export default function MultiProjectGantt() {
       name: "Platform Relaunch",
       tasks: [
         { id: "t1", name: "Design", start: 0, duration: 10 },
-        { id: "t2", name: "Development", start: 10, duration: 20, dependencies: ["t1"] },
-        { id: "t3", name: "Testing", start: 30, duration: 10, dependencies: ["t2"] },
+        {
+          id: "t2",
+          name: "Development",
+          start: 10,
+          duration: 20,
+          dependencies: ["t1"],
+        },
+        {
+          id: "t3",
+          name: "Testing",
+          start: 30,
+          duration: 10,
+          dependencies: ["t2"],
+        },
       ],
     },
     {
@@ -35,7 +47,13 @@ export default function MultiProjectGantt() {
       name: "Mobile App",
       tasks: [
         { id: "t4", name: "Requirements", start: 2, duration: 8 },
-        { id: "t5", name: "Development", start: 10, duration: 25, dependencies: ["t4"] },
+        {
+          id: "t5",
+          name: "Development",
+          start: 10,
+          duration: 25,
+          dependencies: ["t4"],
+        },
         { id: "t6", name: "QA", start: 35, duration: 8, dependencies: ["t5"] },
       ],
     },
@@ -45,7 +63,7 @@ export default function MultiProjectGantt() {
     setExpandedProjects(
       expandedProjects.includes(projectId)
         ? expandedProjects.filter((p) => p !== projectId)
-        : [...expandedProjects, projectId]
+        : [...expandedProjects, projectId],
     );
   };
 
@@ -68,7 +86,10 @@ export default function MultiProjectGantt() {
             <span className="text-xs text-white px-2 py-1">{task.name}</span>
           </div>
           {hasDeps && (
-            <div className="absolute top-0 left-0 w-1 h-full bg-red-600" style={{ left: `${task.start * dayWidth}px` }} />
+            <div
+              className="absolute top-0 left-0 w-1 h-full bg-red-600"
+              style={{ left: `${task.start * dayWidth}px` }}
+            />
           )}
         </div>
       </div>
@@ -104,7 +125,11 @@ export default function MultiProjectGantt() {
 
         <div className="flex gap-1 mt-8 text-xs text-muted-foreground mb-4">
           {Array.from({ length: 10 }).map((_, i) => (
-            <div key={i} style={{ width: `${dayWidth * 5}px` }} className="text-center">
+            <div
+              key={i}
+              style={{ width: `${dayWidth * 5}px` }}
+              className="text-center"
+            >
               Day {i * 5}
             </div>
           ))}

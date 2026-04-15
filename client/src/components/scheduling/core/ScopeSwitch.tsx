@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * ScopeSwitch Component
@@ -8,19 +8,19 @@
  * Avec option ALL optionnelle.
  */
 
-import * as React from 'react';
-import { motion } from 'framer-motion';
-import { User, Users, UsersRound, Globe } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { useSchedulingStore } from '@/stores/scheduling/scheduling-store';
-import type { Scope } from '@/lib/scheduling/types';
+import * as React from "react";
+import { motion } from "framer-motion";
+import { User, Users, UsersRound, Globe } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { useSchedulingStore } from "@/stores/scheduling/scheduling-store";
+import type { Scope } from "@/lib/scheduling/types";
 
 // ============================================================================
 // Types
 // ============================================================================
 
 interface ScopeOption {
-  id: Scope | 'all';
+  id: Scope | "all";
   label: string;
   shortLabel: string;
   description: string;
@@ -41,38 +41,38 @@ interface ScopeSwitchProps {
 
 const scopeOptions: ScopeOption[] = [
   {
-    id: 'moi',
-    label: 'Moi',
-    shortLabel: 'Moi',
-    description: 'Mes tâches et événements personnels',
+    id: "moi",
+    label: "Moi",
+    shortLabel: "Moi",
+    description: "Mes tâches et événements personnels",
     icon: User,
-    shortcut: 'm',
+    shortcut: "m",
   },
   {
-    id: 'eux',
-    label: 'Eux',
-    shortLabel: 'Eux',
-    description: 'Visibilité sur les autres',
+    id: "eux",
+    label: "Eux",
+    shortLabel: "Eux",
+    description: "Visibilité sur les autres",
     icon: Users,
-    shortcut: 'e',
+    shortcut: "e",
   },
   {
-    id: 'nous',
-    label: 'Nous',
-    shortLabel: 'Nous',
-    description: 'Collaboratif et partagé',
+    id: "nous",
+    label: "Nous",
+    shortLabel: "Nous",
+    description: "Collaboratif et partagé",
     icon: UsersRound,
-    shortcut: 'n',
+    shortcut: "n",
   },
 ];
 
 const allOption: ScopeOption = {
-  id: 'all',
-  label: 'Tout',
-  shortLabel: 'All',
-  description: 'Afficher tout',
+  id: "all",
+  label: "Tout",
+  shortLabel: "All",
+  description: "Afficher tout",
   icon: Globe,
-  shortcut: 'a',
+  shortcut: "a",
 };
 
 // ============================================================================
@@ -90,7 +90,7 @@ export function ScopeSwitch({
 
   const options = React.useMemo(
     () => (showAll ? [...scopeOptions, allOption] : scopeOptions),
-    [showAll]
+    [showAll],
   );
 
   // Keyboard shortcuts
@@ -107,22 +107,24 @@ export function ScopeSwitch({
         return;
       }
 
-      const option = options.find((opt) => opt.shortcut === e.key.toLowerCase());
+      const option = options.find(
+        (opt) => opt.shortcut === e.key.toLowerCase(),
+      );
       if (option) {
         e.preventDefault();
         setScope(option.id);
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [options, setScope]);
 
   return (
     <div
       className={cn(
-        'inline-flex items-center rounded-lg bg-muted p-1',
-        className
+        "inline-flex items-center rounded-lg bg-muted p-1",
+        className,
       )}
       role="tablist"
       aria-label="Filtre de scope"
@@ -139,12 +141,12 @@ export function ScopeSwitch({
             aria-controls={`scope-panel-${option.id}`}
             onClick={() => setScope(option.id)}
             className={cn(
-              'relative inline-flex items-center justify-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
-              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
-              'disabled:pointer-events-none disabled:opacity-50',
+              "relative inline-flex items-center justify-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+              "disabled:pointer-events-none disabled:opacity-50",
               isActive
-                ? 'text-foreground'
-                : 'text-muted-foreground hover:text-foreground'
+                ? "text-foreground"
+                : "text-muted-foreground hover:text-foreground",
             )}
             title={`${option.description} (${option.shortcut.toUpperCase()})`}
           >
@@ -153,7 +155,7 @@ export function ScopeSwitch({
                 layoutId="scope-switch-indicator"
                 className="absolute inset-0 rounded-md bg-background shadow-sm"
                 transition={{
-                  type: 'spring',
+                  type: "spring",
                   stiffness: 500,
                   damping: 35,
                 }}
@@ -179,15 +181,23 @@ export function ScopeSwitch({
 // Icon-Only Variant
 // ============================================================================
 
-export function ScopeSwitchIcons({ className, showAll = false }: Omit<ScopeSwitchProps, 'compact' | 'showLabels'>) {
-  return <ScopeSwitch className={className} showAll={showAll} showLabels={false} />;
+export function ScopeSwitchIcons({
+  className,
+  showAll = false,
+}: Omit<ScopeSwitchProps, "compact" | "showLabels">) {
+  return (
+    <ScopeSwitch className={className} showAll={showAll} showLabels={false} />
+  );
 }
 
 // ============================================================================
 // Compact Mobile Variant
 // ============================================================================
 
-export function ScopeSwitchCompact({ className, showAll = false }: Omit<ScopeSwitchProps, 'compact' | 'showLabels'>) {
+export function ScopeSwitchCompact({
+  className,
+  showAll = false,
+}: Omit<ScopeSwitchProps, "compact" | "showLabels">) {
   return <ScopeSwitch className={className} showAll={showAll} compact />;
 }
 
@@ -201,12 +211,12 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from "@/components/ui/select";
 
 export function ScopeSwitchDropdown({
   className,
   showAll = false,
-}: Omit<ScopeSwitchProps, 'compact' | 'showLabels'>) {
+}: Omit<ScopeSwitchProps, "compact" | "showLabels">) {
   const scope = useSchedulingStore((state) => state.scope);
   const setScope = useSchedulingStore((state) => state.setScope);
 
@@ -215,9 +225,9 @@ export function ScopeSwitchDropdown({
   return (
     <Select
       value={scope}
-      onValueChange={(value) => setScope(value as Scope | 'all')}
+      onValueChange={(value) => setScope(value as Scope | "all")}
     >
-      <SelectTrigger className={cn('w-[120px]', className)}>
+      <SelectTrigger className={cn("w-[120px]", className)}>
         <SelectValue placeholder="Scope" />
       </SelectTrigger>
       <SelectContent>
@@ -252,8 +262,8 @@ export function ScopeBadge({ className }: { className?: string }) {
   return (
     <div
       className={cn(
-        'inline-flex items-center gap-1.5 rounded-md bg-muted px-2 py-1 text-xs font-medium text-muted-foreground',
-        className
+        "inline-flex items-center gap-1.5 rounded-md bg-muted px-2 py-1 text-xs font-medium text-muted-foreground",
+        className,
       )}
     >
       <Icon className="h-3 w-3" />
@@ -266,30 +276,33 @@ export function ScopeBadge({ className }: { className?: string }) {
 // Scope Colors (for visual differentiation)
 // ============================================================================
 
-export const scopeColors: Record<Scope | 'all', { bg: string; text: string; border: string }> = {
+export const scopeColors: Record<
+  Scope | "all",
+  { bg: string; text: string; border: string }
+> = {
   moi: {
-    bg: 'bg-blue-50 dark:bg-blue-950',
-    text: 'text-blue-600 dark:text-blue-400',
-    border: 'border-blue-200 dark:border-blue-800',
+    bg: "bg-blue-50 dark:bg-blue-950",
+    text: "text-blue-600 dark:text-blue-400",
+    border: "border-blue-200 dark:border-blue-800",
   },
   eux: {
-    bg: 'bg-purple-50 dark:bg-purple-950',
-    text: 'text-purple-600 dark:text-purple-400',
-    border: 'border-purple-200 dark:border-purple-800',
+    bg: "bg-purple-50 dark:bg-purple-950",
+    text: "text-purple-600 dark:text-purple-400",
+    border: "border-purple-200 dark:border-purple-800",
   },
   nous: {
-    bg: 'bg-green-50 dark:bg-green-950',
-    text: 'text-green-600 dark:text-green-400',
-    border: 'border-green-200 dark:border-green-800',
+    bg: "bg-green-50 dark:bg-green-950",
+    text: "text-green-600 dark:text-green-400",
+    border: "border-green-200 dark:border-green-800",
   },
   all: {
-    bg: 'bg-muted dark:bg-gray-950',
-    text: 'text-muted-foreground dark:text-gray-400',
-    border: 'border-border dark:border-gray-800',
+    bg: "bg-muted dark:bg-gray-950",
+    text: "text-muted-foreground dark:text-gray-400",
+    border: "border-border dark:border-gray-800",
   },
 };
 
-export function getScopeColor(scope: Scope | 'all') {
+export function getScopeColor(scope: Scope | "all") {
   return scopeColors[scope] || scopeColors.all;
 }
 

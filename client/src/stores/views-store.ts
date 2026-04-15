@@ -12,7 +12,11 @@ import type {
   FilterGroup,
   ViewShareConfig,
 } from "@/lib/views/types";
-import { createEmptyFilterGroup, getDefaultView, createViewFromTemplate } from "@/lib/views/registry";
+import {
+  createEmptyFilterGroup,
+  getDefaultView,
+  createViewFromTemplate,
+} from "@/lib/views/registry";
 
 // ============================================================================
 // Store State
@@ -37,17 +41,30 @@ interface ViewsState {
 
 interface ViewsActions {
   // View CRUD
-  createView: (view: Omit<ViewDefinition, "id" | "createdAt" | "updatedAt">) => ViewDefinition;
-  updateView: (entityType: string, viewId: string, updates: Partial<ViewDefinition>) => void;
+  createView: (
+    view: Omit<ViewDefinition, "id" | "createdAt" | "updatedAt">,
+  ) => ViewDefinition;
+  updateView: (
+    entityType: string,
+    viewId: string,
+    updates: Partial<ViewDefinition>,
+  ) => void;
   deleteView: (entityType: string, viewId: string) => void;
-  duplicateView: (entityType: string, viewId: string, newName: string) => ViewDefinition | null;
+  duplicateView: (
+    entityType: string,
+    viewId: string,
+    newName: string,
+  ) => ViewDefinition | null;
 
   // Active view management
   setActiveView: (entityType: string, viewId: string | null) => void;
   getActiveView: (entityType: string) => ViewDefinition | null;
 
   // Draft changes
-  setDraftChanges: (entityType: string, changes: Partial<ViewDefinition> | null) => void;
+  setDraftChanges: (
+    entityType: string,
+    changes: Partial<ViewDefinition> | null,
+  ) => void;
   applyDraftChanges: (entityType: string) => void;
   discardDraftChanges: (entityType: string) => void;
   hasDraftChanges: (entityType: string) => boolean;
@@ -58,8 +75,17 @@ interface ViewsActions {
   getActiveQuickFilters: (entityType: string) => string[];
 
   // Sharing
-  shareView: (entityType: string, viewId: string, config: ViewShareConfig) => void;
-  unshareView: (entityType: string, viewId: string, targetType: string, targetId?: string) => void;
+  shareView: (
+    entityType: string,
+    viewId: string,
+    config: ViewShareConfig,
+  ) => void;
+  unshareView: (
+    entityType: string,
+    viewId: string,
+    targetType: string,
+    targetId?: string,
+  ) => void;
 
   // Import/Export
   exportView: (entityType: string, viewId: string) => ViewDefinition | null;
@@ -67,7 +93,9 @@ interface ViewsActions {
 
   // Recent views
   addToRecent: (entityType: string, viewId: string) => void;
-  getRecentViews: (limit?: number) => { entityType: string; viewId: string; usedAt: string }[];
+  getRecentViews: (
+    limit?: number,
+  ) => { entityType: string; viewId: string; usedAt: string }[];
 
   // Initialization
   initializeViews: (entityType: string, userId: string) => void;
@@ -116,7 +144,7 @@ export const useViewsStore = create<ViewsState & ViewsActions>()(
             [entityType]: (state.views[entityType] || []).map((v) =>
               v.id === viewId
                 ? { ...v, ...updates, updatedAt: new Date().toISOString() }
-                : v
+                : v,
             ),
           },
         }));
@@ -125,7 +153,7 @@ export const useViewsStore = create<ViewsState & ViewsActions>()(
       deleteView: (entityType, viewId) => {
         set((state) => {
           const newViews = (state.views[entityType] || []).filter(
-            (v) => v.id !== viewId
+            (v) => v.id !== viewId,
           );
           const newActiveViewIds = { ...state.activeViewIds };
           if (newActiveViewIds[entityType] === viewId) {
@@ -280,7 +308,7 @@ export const useViewsStore = create<ViewsState & ViewsActions>()(
                     sharedWith: [...(v.sharedWith || []), config],
                     updatedAt: new Date().toISOString(),
                   }
-                : v
+                : v,
             ),
           },
         }));
@@ -294,7 +322,7 @@ export const useViewsStore = create<ViewsState & ViewsActions>()(
               if (v.id !== viewId) return v;
               const newSharedWith = (v.sharedWith || []).filter(
                 (s) =>
-                  !(s.targetType === targetType && s.targetId === targetId)
+                  !(s.targetType === targetType && s.targetId === targetId),
               );
               return {
                 ...v,
@@ -346,7 +374,7 @@ export const useViewsStore = create<ViewsState & ViewsActions>()(
       addToRecent: (entityType, viewId) => {
         set((state) => {
           const filtered = state.recentViews.filter(
-            (r) => !(r.entityType === entityType && r.viewId === viewId)
+            (r) => !(r.entityType === entityType && r.viewId === viewId),
           );
           return {
             recentViews: [
@@ -395,8 +423,8 @@ export const useViewsStore = create<ViewsState & ViewsActions>()(
         activeQuickFilters: state.activeQuickFilters,
         recentViews: state.recentViews,
       }),
-    }
-  )
+    },
+  ),
 );
 
 // ============================================================================
@@ -436,7 +464,7 @@ export function useViewActions() {
       exportView: state.exportView,
       importView: state.importView,
       initializeViews: state.initializeViews,
-    }))
+    })),
   );
 }
 

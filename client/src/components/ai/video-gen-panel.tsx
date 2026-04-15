@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   Video,
   Loader2,
@@ -12,38 +12,33 @@ import {
   FileText,
   X,
   Clock,
-} from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import { Slider } from '@/components/ui/slider';
-import { Separator } from '@/components/ui/separator';
+} from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Slider } from "@/components/ui/slider";
+import { Separator } from "@/components/ui/separator";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from '@/components/ui/tabs';
-import { toast } from 'sonner';
-import { useAiVideo } from '@/hooks/use-ai-video';
+} from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { toast } from "sonner";
+import { useAiVideo } from "@/hooks/use-ai-video";
 
 // ─── Presets ─────────────────────────────────────────────────────────────────
 
 const RESOLUTION_PRESETS = [
-  { label: '512x512', w: 512, h: 512 },
-  { label: '768x432', w: 768, h: 432 },
-  { label: '1024x576', w: 1024, h: 576 },
-  { label: '1280x720', w: 1280, h: 720 },
+  { label: "512x512", w: 512, h: 512 },
+  { label: "768x432", w: 768, h: 432 },
+  { label: "1024x576", w: 1024, h: 576 },
+  { label: "1280x720", w: 1280, h: 720 },
 ] as const;
 
 const FPS_OPTIONS = [24, 30] as const;
@@ -85,7 +80,7 @@ function FileDropZone({
       onClick={() => inputRef.current?.click()}
       className={`
         border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors
-        ${dragOver ? 'border-primary bg-primary/5' : 'border-muted-foreground/25 hover:border-primary/50'}
+        ${dragOver ? "border-primary bg-primary/5" : "border-muted-foreground/25 hover:border-primary/50"}
       `}
     >
       <input
@@ -124,7 +119,7 @@ function FileDropZone({
 function formatTime(seconds: number): string {
   const m = Math.floor(seconds / 60);
   const s = Math.floor(seconds % 60);
-  return `${m}:${s.toString().padStart(2, '0')}`;
+  return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
 // ─── Component ───────────────────────────────────────────────────────────────
@@ -147,22 +142,22 @@ export function VideoGenPanel() {
   } = useAiVideo();
 
   // --- Generate tab ---
-  const [prompt, setPrompt] = useState('');
-  const [negativePrompt, setNegativePrompt] = useState('');
+  const [prompt, setPrompt] = useState("");
+  const [negativePrompt, setNegativePrompt] = useState("");
   const [duration, setDuration] = useState(10);
   const [fps, setFps] = useState<number>(24);
   const [resW, setResW] = useState(1024);
   const [resH, setResH] = useState(576);
-  const [model, setModel] = useState('');
+  const [model, setModel] = useState("");
 
   // --- Img-to-Video tab ---
   const [i2vImage, setI2vImage] = useState<File | null>(null);
-  const [i2vPrompt, setI2vPrompt] = useState('');
+  const [i2vPrompt, setI2vPrompt] = useState("");
   const [i2vDuration, setI2vDuration] = useState(5);
 
   // --- Analyze tab ---
   const [analyzeFile, setAnalyzeFile] = useState<File | null>(null);
-  const [analyzePrompt, setAnalyzePrompt] = useState('');
+  const [analyzePrompt, setAnalyzePrompt] = useState("");
 
   // --- Transcribe tab ---
   const [transcribeFile, setTranscribeFile] = useState<File | null>(null);
@@ -181,7 +176,7 @@ export function VideoGenPanel() {
 
   const handleGenerate = useCallback(() => {
     if (!prompt.trim()) {
-      toast.error('Veuillez saisir un prompt');
+      toast.error("Veuillez saisir un prompt");
       return;
     }
     generateVideo({
@@ -197,7 +192,7 @@ export function VideoGenPanel() {
 
   const handleI2V = useCallback(() => {
     if (!i2vImage) {
-      toast.error('Veuillez fournir une image');
+      toast.error("Veuillez fournir une image");
       return;
     }
     imgToVideo(i2vImage, i2vPrompt.trim() || undefined, i2vDuration);
@@ -205,7 +200,7 @@ export function VideoGenPanel() {
 
   const handleAnalyze = useCallback(() => {
     if (!analyzeFile) {
-      toast.error('Veuillez fournir une vidéo');
+      toast.error("Veuillez fournir une vidéo");
       return;
     }
     analyzeVideo(analyzeFile, analyzePrompt.trim() || undefined);
@@ -213,7 +208,7 @@ export function VideoGenPanel() {
 
   const handleTranscribe = useCallback(() => {
     if (!transcribeFile) {
-      toast.error('Veuillez fournir une vidéo');
+      toast.error("Veuillez fournir une vidéo");
       return;
     }
     transcribeVideo(transcribeFile);
@@ -221,7 +216,7 @@ export function VideoGenPanel() {
 
   const handleDownload = useCallback(() => {
     if (!result?.video_url) return;
-    const a = document.createElement('a');
+    const a = document.createElement("a");
     a.href = result.video_url;
     a.download = `generated-${Date.now()}.mp4`;
     a.click();
@@ -291,7 +286,9 @@ export function VideoGenPanel() {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label>Durée</Label>
-                <span className="text-xs text-muted-foreground">{duration}s</span>
+                <span className="text-xs text-muted-foreground">
+                  {duration}s
+                </span>
               </div>
               <Slider
                 min={2}
@@ -310,7 +307,7 @@ export function VideoGenPanel() {
                 {FPS_OPTIONS.map((f) => (
                   <Button
                     key={f}
-                    variant={fps === f ? 'default' : 'outline'}
+                    variant={fps === f ? "default" : "outline"}
                     size="sm"
                     onClick={() => setFps(f)}
                     disabled={busy}
@@ -328,7 +325,9 @@ export function VideoGenPanel() {
                 {RESOLUTION_PRESETS.map((p) => (
                   <Button
                     key={p.label}
-                    variant={resW === p.w && resH === p.h ? 'default' : 'outline'}
+                    variant={
+                      resW === p.w && resH === p.h ? "default" : "outline"
+                    }
                     size="sm"
                     onClick={() => {
                       setResW(p.w);
@@ -407,7 +406,9 @@ export function VideoGenPanel() {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label>Durée</Label>
-                <span className="text-xs text-muted-foreground">{i2vDuration}s</span>
+                <span className="text-xs text-muted-foreground">
+                  {i2vDuration}s
+                </span>
               </div>
               <Slider
                 min={2}
@@ -484,13 +485,19 @@ export function VideoGenPanel() {
               <>
                 <Separator />
                 <div className="space-y-3">
-                  <h3 className="text-sm font-semibold">Résultat de l&apos;analyse</h3>
+                  <h3 className="text-sm font-semibold">
+                    Résultat de l&apos;analyse
+                  </h3>
                   <p className="text-sm">{analysis.description}</p>
 
                   {analysis.tags && analysis.tags.length > 0 && (
                     <div className="flex flex-wrap gap-1">
                       {analysis.tags.map((tag) => (
-                        <Badge key={tag} variant="secondary" className="text-xs">
+                        <Badge
+                          key={tag}
+                          variant="secondary"
+                          className="text-xs"
+                        >
                           {tag}
                         </Badge>
                       ))}
@@ -511,7 +518,8 @@ export function VideoGenPanel() {
                             <Clock className="h-3 w-3 mt-0.5 shrink-0 text-muted-foreground" />
                             <div>
                               <span className="font-mono text-muted-foreground">
-                                {formatTime(scene.start_time)} - {formatTime(scene.end_time)}
+                                {formatTime(scene.start_time)} -{" "}
+                                {formatTime(scene.end_time)}
                               </span>
                               <p className="mt-0.5">{scene.description}</p>
                             </div>

@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
+import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
   TableBody,
@@ -12,13 +12,13 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
+} from "@/components/ui/table";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from "@/components/ui/dropdown-menu";
 import {
   Share2,
   Plus,
@@ -30,11 +30,11 @@ import {
   Lock,
   Calendar,
   ExternalLink,
-} from 'lucide-react';
-import type { ShareLink } from '@/lib/api';
-import { ConfirmDialog } from '@/components/confirm-dialog';
-import { toast } from 'sonner';
-import { ShareDialog } from './share-dialog';
+} from "lucide-react";
+import type { ShareLink } from "@/lib/api";
+import { ConfirmDialog } from "@/components/confirm-dialog";
+import { toast } from "sonner";
+import { ShareDialog } from "./share-dialog";
 
 interface ShareListProps {
   shares: ShareLink[];
@@ -45,21 +45,21 @@ interface ShareListProps {
     expires_in_hours?: number;
     password?: string;
     max_downloads?: number;
-    access_type?: 'view' | 'download';
+    access_type?: "view" | "download";
   }) => Promise<unknown>;
   onDeleteShare?: (id: string) => Promise<void>;
   onRefresh?: () => void;
 }
 
 function formatDate(dateString?: string): string {
-  if (!dateString) return 'Jamais';
+  if (!dateString) return "Jamais";
   const date = new Date(dateString);
-  return date.toLocaleDateString('fr-FR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
+  return date.toLocaleDateString("fr-FR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
   });
 }
 
@@ -76,14 +76,14 @@ export function ShareList({
   const copyLink = async (share: ShareLink) => {
     const url = `${window.location.origin}/share/${share.token}`;
     await navigator.clipboard.writeText(url);
-    toast.success('Lien copié dans le presse-papier');
+    toast.success("Lien copié dans le presse-papier");
   };
 
   const getAccessIcon = (type: string) => {
     switch (type) {
-      case 'view':
+      case "view":
         return <Eye className="h-4 w-4" />;
-      case 'download':
+      case "download":
         return <Download className="h-4 w-4" />;
       default:
         return <Share2 className="h-4 w-4" />;
@@ -145,7 +145,8 @@ export function ShareList({
               </TableHeader>
               <TableBody>
                 {shares.map((share) => {
-                  const isExpired = share.expires_at && new Date(share.expires_at) < new Date();
+                  const isExpired =
+                    share.expires_at && new Date(share.expires_at) < new Date();
                   const isActive = share.is_active && !isExpired;
 
                   return (
@@ -156,7 +157,7 @@ export function ShareList({
                             <Lock className="h-4 w-4 text-muted-foreground" />
                           )}
                           <span className="font-medium truncate max-w-[200px]">
-                            {share.key.split('/').pop()}
+                            {share.key.split("/").pop()}
                           </span>
                         </div>
                         <p className="text-xs text-muted-foreground">
@@ -166,7 +167,9 @@ export function ShareList({
                       <TableCell>
                         <div className="flex items-center gap-1">
                           {getAccessIcon(share.access_type)}
-                          <span className="capitalize">{share.access_type}</span>
+                          <span className="capitalize">
+                            {share.access_type}
+                          </span>
                         </div>
                       </TableCell>
                       <TableCell>
@@ -176,12 +179,18 @@ export function ShareList({
                       <TableCell>
                         <div className="flex items-center gap-1 text-sm">
                           <Calendar className="h-3 w-3" />
-                          {share.expires_at ? formatDate(share.expires_at) : 'Jamais'}
+                          {share.expires_at
+                            ? formatDate(share.expires_at)
+                            : "Jamais"}
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge variant={isActive ? 'default' : 'secondary'}>
-                          {isExpired ? 'Expiré' : isActive ? 'Actif' : 'Désactivé'}
+                        <Badge variant={isActive ? "default" : "secondary"}>
+                          {isExpired
+                            ? "Expiré"
+                            : isActive
+                              ? "Actif"
+                              : "Désactivé"}
                         </Badge>
                       </TableCell>
                       <TableCell>
@@ -197,7 +206,9 @@ export function ShareList({
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => window.open(`/share/${share.token}`, '_blank')}
+                            onClick={() =>
+                              window.open(`/share/${share.token}`, "_blank")
+                            }
                             title="Ouvrir"
                           >
                             <ExternalLink className="h-4 w-4" />
@@ -249,7 +260,9 @@ export function ShareList({
       {/* Delete Share Confirmation */}
       <ConfirmDialog
         open={deleteShareId !== null}
-        onOpenChange={(open) => { if (!open) setDeleteShareId(null); }}
+        onOpenChange={(open) => {
+          if (!open) setDeleteShareId(null);
+        }}
         title="Supprimer le partage"
         description="Supprimer ce lien de partage ? Les personnes ayant le lien ne pourront plus accéder au fichier."
         onConfirm={() => {

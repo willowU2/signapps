@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * Clock In Component
@@ -7,18 +7,12 @@
  * current time display, status indicator, and work hours summary.
  */
 
-import * as React from 'react';
-import {
-  Clock,
-  LogIn,
-  LogOut,
-  Check,
-  AlertCircle,
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import * as React from "react";
+import { Clock, LogIn, LogOut, Check, AlertCircle } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 export interface ClockInProps {
   isCheckedIn?: boolean;
@@ -26,7 +20,7 @@ export interface ClockInProps {
   lastCheckOut?: Date;
   todayHours?: number;
   weeklyHours?: number;
-  onCheckInOut?: (action: 'in' | 'out') => Promise<void>;
+  onCheckInOut?: (action: "in" | "out") => Promise<void>;
   disabled?: boolean;
   loading?: boolean;
 }
@@ -67,22 +61,22 @@ export const ClockIn: React.FC<ClockInProps> = ({
     if (!onCheckInOut) return;
 
     try {
-      await onCheckInOut(isCheckedIn ? 'out' : 'in');
+      await onCheckInOut(isCheckedIn ? "out" : "in");
     } catch (error) {
-      console.error('Check in/out failed:', error);
+      console.error("Check in/out failed:", error);
     }
   };
 
-  const formattedTime = currentTime.toLocaleTimeString('en-US', {
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
+  const formattedTime = currentTime.toLocaleTimeString("en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
   });
 
-  const formattedDate = currentTime.toLocaleDateString('en-US', {
-    weekday: 'short',
-    month: 'short',
-    day: 'numeric',
+  const formattedDate = currentTime.toLocaleDateString("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
   });
 
   const formatHours = (hours: number): string => {
@@ -92,7 +86,9 @@ export const ClockIn: React.FC<ClockInProps> = ({
   };
 
   const todayHoursFormatted = formatHours(todayHours + sessionHours);
-  const weeklyHoursFormatted = formatHours(weeklyHours + (isCheckedIn ? sessionHours : 0));
+  const weeklyHoursFormatted = formatHours(
+    weeklyHours + (isCheckedIn ? sessionHours : 0),
+  );
 
   return (
     <Card className="w-full">
@@ -103,11 +99,11 @@ export const ClockIn: React.FC<ClockInProps> = ({
             Time Tracking
           </CardTitle>
           <Badge
-            variant={isCheckedIn ? 'default' : 'secondary'}
+            variant={isCheckedIn ? "default" : "secondary"}
             className={cn(
-              'gap-1.5 px-3 py-1',
-              isCheckedIn && 'bg-green-600 hover:bg-green-700',
-              !isCheckedIn && 'bg-gray-400 hover:bg-gray-500'
+              "gap-1.5 px-3 py-1",
+              isCheckedIn && "bg-green-600 hover:bg-green-700",
+              !isCheckedIn && "bg-gray-400 hover:bg-gray-500",
             )}
           >
             {isCheckedIn ? (
@@ -131,9 +127,7 @@ export const ClockIn: React.FC<ClockInProps> = ({
           <div className="text-4xl font-bold font-mono tracking-tight">
             {formattedTime}
           </div>
-          <div className="text-sm text-muted-foreground">
-            {formattedDate}
-          </div>
+          <div className="text-sm text-muted-foreground">{formattedDate}</div>
         </div>
 
         {/* Last Action Info */}
@@ -145,9 +139,9 @@ export const ClockIn: React.FC<ClockInProps> = ({
                   Last Check-in
                 </div>
                 <div className="font-mono">
-                  {new Date(lastCheckIn).toLocaleTimeString('en-US', {
-                    hour: '2-digit',
-                    minute: '2-digit',
+                  {new Date(lastCheckIn).toLocaleTimeString("en-US", {
+                    hour: "2-digit",
+                    minute: "2-digit",
                   })}
                 </div>
               </div>
@@ -158,9 +152,9 @@ export const ClockIn: React.FC<ClockInProps> = ({
                   Last Check-out
                 </div>
                 <div className="font-mono">
-                  {new Date(lastCheckOut).toLocaleTimeString('en-US', {
-                    hour: '2-digit',
-                    minute: '2-digit',
+                  {new Date(lastCheckOut).toLocaleTimeString("en-US", {
+                    hour: "2-digit",
+                    minute: "2-digit",
                   })}
                 </div>
               </div>
@@ -174,10 +168,10 @@ export const ClockIn: React.FC<ClockInProps> = ({
           disabled={disabled || loading}
           size="lg"
           className={cn(
-            'w-full h-16 text-base font-semibold rounded-lg',
+            "w-full h-16 text-base font-semibold rounded-lg",
             isCheckedIn
-              ? 'bg-green-600 hover:bg-green-700 text-white'
-              : 'bg-blue-600 hover:bg-blue-700 text-white'
+              ? "bg-green-600 hover:bg-green-700 text-white"
+              : "bg-blue-600 hover:bg-blue-700 text-white",
           )}
         >
           {loading ? (
@@ -218,7 +212,10 @@ export const ClockIn: React.FC<ClockInProps> = ({
         {/* Current Session Info */}
         {isCheckedIn && sessionHours > 0 && (
           <div className="text-center text-sm text-muted-foreground border-t pt-4">
-            Current session: <span className="font-mono font-semibold text-foreground">{formatHours(sessionHours)}</span>
+            Current session:{" "}
+            <span className="font-mono font-semibold text-foreground">
+              {formatHours(sessionHours)}
+            </span>
           </div>
         )}
       </CardContent>

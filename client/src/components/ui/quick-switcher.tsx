@@ -2,13 +2,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import {
-  FileText,
-  Table2,
-  Presentation,
-  Clock,
-  Search,
-} from "lucide-react";
+import { FileText, Table2, Presentation, Clock, Search } from "lucide-react";
 import {
   CommandDialog,
   CommandEmpty,
@@ -51,16 +45,21 @@ export function getRecentDocs(): RecentDocument[] {
 export function trackDocVisit(doc: Omit<RecentDocument, "lastOpenedAt">): void {
   const docs = getRecentDocs();
   const filtered = docs.filter((d) => d.id !== doc.id);
-  const updated: RecentDocument = { ...doc, lastOpenedAt: new Date().toISOString() };
+  const updated: RecentDocument = {
+    ...doc,
+    lastOpenedAt: new Date().toISOString(),
+  };
   const next = [updated, ...filtered].slice(0, MAX_RECENT);
   localStorage.setItem(RECENT_DOCS_KEY, JSON.stringify(next));
   // Sync to API (fire-and-forget)
-  identityClient.post('/users/me/recent-docs', {
-    doc_id: doc.id,
-    name: doc.name,
-    kind: doc.kind,
-    href: doc.href,
-  }).catch(() => {});
+  identityClient
+    .post("/users/me/recent-docs", {
+      doc_id: doc.id,
+      name: doc.name,
+      kind: doc.kind,
+      href: doc.href,
+    })
+    .catch(() => {});
 }
 
 export function clearRecentDocs(): void {
@@ -149,13 +148,16 @@ export function QuickSwitcher() {
     setQuery("");
     const load = async () => {
       try {
-        const res = await identityClient.get<any[]>('/users/me/recent-docs');
+        const res = await identityClient.get<any[]>("/users/me/recent-docs");
         const loaded: RecentDocument[] = (res.data ?? []).map((d: any) => ({
           id: d.doc_id ?? d.id,
-          name: d.name ?? '',
-          kind: (['text','sheet','slide'].includes(d.kind) ? d.kind : 'text') as DocKind,
+          name: d.name ?? "",
+          kind: (["text", "sheet", "slide"].includes(d.kind)
+            ? d.kind
+            : "text") as DocKind,
           href: d.href ?? `/docs/${d.doc_id ?? d.id}`,
-          lastOpenedAt: d.last_opened_at ?? d.lastOpenedAt ?? new Date().toISOString(),
+          lastOpenedAt:
+            d.last_opened_at ?? d.lastOpenedAt ?? new Date().toISOString(),
         }));
         setRecentDocs(loaded);
         localStorage.setItem(RECENT_DOCS_KEY, JSON.stringify(loaded));
@@ -172,13 +174,18 @@ export function QuickSwitcher() {
     return recentDocs.filter(
       (doc) =>
         doc.name.toLowerCase().includes(q) ||
-        kindLabel(doc.kind).toLowerCase().includes(q)
+        kindLabel(doc.kind).toLowerCase().includes(q),
     );
   }, [recentDocs, query]);
 
   const handleSelect = (doc: RecentDocument) => {
     // Track visit again (moves to top)
-    trackDocVisit({ id: doc.id, name: doc.name, kind: doc.kind, href: doc.href });
+    trackDocVisit({
+      id: doc.id,
+      name: doc.name,
+      kind: doc.kind,
+      href: doc.href,
+    });
     setIsOpen(false);
     router.push(doc.href);
   };
@@ -221,13 +228,15 @@ export function QuickSwitcher() {
                 >
                   <div
                     className={cn(
-                      "flex h-8 w-8 items-center justify-center rounded-md bg-muted shrink-0"
+                      "flex h-8 w-8 items-center justify-center rounded-md bg-muted shrink-0",
                     )}
                   >
                     <Icon className={cn("h-4 w-4", kindColor(doc.kind))} />
                   </div>
                   <div className="flex flex-col min-w-0 flex-1">
-                    <span className="font-medium text-sm truncate">{doc.name}</span>
+                    <span className="font-medium text-sm truncate">
+                      {doc.name}
+                    </span>
                     <span className="text-xs text-muted-foreground">
                       {kindLabel(doc.kind)}
                     </span>

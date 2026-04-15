@@ -1,13 +1,13 @@
 // CO4: Consent records proxy → identity service
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from "next/server";
 
-const IDENTITY = process.env.IDENTITY_URL ?? 'http://localhost:3001';
+const IDENTITY = process.env.IDENTITY_URL ?? "http://localhost:3001";
 
 export async function GET(req: NextRequest) {
   const headers: Record<string, string> = {};
-  const authHeader = req.headers.get('authorization');
-  if (authHeader) headers['Authorization'] = authHeader;
+  const authHeader = req.headers.get("authorization");
+  if (authHeader) headers["Authorization"] = authHeader;
 
   const url = new URL(req.url);
   const res = await fetch(

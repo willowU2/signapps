@@ -70,14 +70,17 @@ export function TimezoneSelector({ value, onChange }: TimezoneSelectorProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   const filtered = ALL_TIMEZONES.filter((tz) =>
-    tz.toLowerCase().includes(search.toLowerCase())
+    tz.toLowerCase().includes(search.toLowerCase()),
   );
 
   return (
     <div className="space-y-0 text-sm">
       <div className="relative">
         <Select value={value} onValueChange={onChange}>
-          <SelectTrigger id="timezone" className="h-8 text-xs border-transparent bg-muted/40 hover:bg-muted/80 transition-colors">
+          <SelectTrigger
+            id="timezone"
+            className="h-8 text-xs border-transparent bg-muted/40 hover:bg-muted/80 transition-colors"
+          >
             <SelectValue placeholder="Select timezone" />
           </SelectTrigger>
           <SelectContent>
@@ -87,7 +90,7 @@ export function TimezoneSelector({ value, onChange }: TimezoneSelectorProps) {
             </div>
             {COMMON_TIMEZONES.map((tz) => (
               <SelectItem key={tz} value={tz}>
-                {tz.split('/').pop()?.replace('_', ' ') || tz}
+                {tz.split("/").pop()?.replace("_", " ") || tz}
               </SelectItem>
             ))}
 
@@ -96,7 +99,7 @@ export function TimezoneSelector({ value, onChange }: TimezoneSelectorProps) {
             </div>
             {ALL_TIMEZONES.map((tz) => (
               <SelectItem key={tz} value={tz}>
-                {tz.replace('_', ' ')}
+                {tz.replace("_", " ")}
               </SelectItem>
             ))}
           </SelectContent>

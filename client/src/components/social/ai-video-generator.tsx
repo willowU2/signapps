@@ -1,29 +1,37 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Separator } from '@/components/ui/separator';
-import { Video, Sparkles, Download, Camera, Clock, Film, Copy } from 'lucide-react';
-import { toast } from 'sonner';
-import { aiApi } from '@/lib/api/ai';
+} from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import {
+  Video,
+  Sparkles,
+  Download,
+  Camera,
+  Clock,
+  Film,
+  Copy,
+} from "lucide-react";
+import { toast } from "sonner";
+import { aiApi } from "@/lib/api/ai";
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
-type Platform = 'tiktok' | 'reels' | 'shorts';
+type Platform = "tiktok" | "reels" | "shorts";
 type Duration = 15 | 30 | 60;
 
 interface VideoScene {
@@ -48,15 +56,15 @@ interface VideoScript {
 // ---------------------------------------------------------------------------
 
 const PLATFORM_LABELS: Record<Platform, string> = {
-  tiktok: 'TikTok',
-  reels: 'Instagram Reels',
-  shorts: 'YouTube Shorts',
+  tiktok: "TikTok",
+  reels: "Instagram Reels",
+  shorts: "YouTube Shorts",
 };
 
 const DURATION_LABELS: Record<Duration, string> = {
-  15: '15 seconds',
-  30: '30 seconds',
-  60: '60 seconds',
+  15: "15 seconds",
+  30: "30 seconds",
+  60: "60 seconds",
 };
 
 // ---------------------------------------------------------------------------
@@ -96,7 +104,9 @@ function SceneCard({ scene }: { scene: VideoScene }) {
             <Film className="h-3 w-3" />
             B-roll
           </p>
-          <p className="text-xs text-muted-foreground">{scene.bRollSuggestion}</p>
+          <p className="text-xs text-muted-foreground">
+            {scene.bRollSuggestion}
+          </p>
         </div>
       )}
     </div>
@@ -111,10 +121,10 @@ function scriptToText(script: VideoScript): string {
   const lines: string[] = [
     `VIDEO SCRIPT: ${script.title}`,
     `Platform: ${PLATFORM_LABELS[script.platform]} | Duration: ${script.totalDuration}s`,
-    '',
+    "",
     `HOOK: ${script.hook}`,
-    '',
-    '--- SCENES ---',
+    "",
+    "--- SCENES ---",
   ];
   for (const scene of script.scenes) {
     lines.push(`\n[SCENE ${scene.sceneNumber}] (${scene.duration}s)`);
@@ -122,15 +132,19 @@ function scriptToText(script: VideoScript): string {
     lines.push(`SHOT: ${scene.visualDesc}`);
     if (scene.bRollSuggestion) lines.push(`B-ROLL: ${scene.bRollSuggestion}`);
   }
-  lines.push('', `CTA: ${script.cta}`);
-  return lines.join('\n');
+  lines.push("", `CTA: ${script.cta}`);
+  return lines.join("\n");
 }
 
 // ---------------------------------------------------------------------------
 // AI prompt builder
 // ---------------------------------------------------------------------------
 
-function buildPrompt(topic: string, platform: Platform, duration: Duration): string {
+function buildPrompt(
+  topic: string,
+  platform: Platform,
+  duration: Duration,
+): string {
   const sceneCount = duration === 15 ? 3 : duration === 30 ? 5 : 8;
   return `You are a professional social media video scriptwriter.
 
@@ -165,16 +179,16 @@ Requirements:
 // ---------------------------------------------------------------------------
 
 export function AIVideoGenerator() {
-  const [topic, setTopic] = useState('');
-  const [platform, setPlatform] = useState<Platform>('reels');
+  const [topic, setTopic] = useState("");
+  const [platform, setPlatform] = useState<Platform>("reels");
   const [duration, setDuration] = useState<Duration>(30);
   const [isGenerating, setIsGenerating] = useState(false);
   const [script, setScript] = useState<VideoScript | null>(null);
-  const [rawJson, setRawJson] = useState('');
+  const [rawJson, setRawJson] = useState("");
 
   const handleGenerate = async () => {
     if (!topic.trim()) {
-      toast.error('Enter a topic first');
+      toast.error("Enter a topic first");
       return;
     }
     setIsGenerating(true);
@@ -183,33 +197,37 @@ export function AIVideoGenerator() {
     try {
       const prompt = buildPrompt(topic, platform, duration);
       const response = await aiApi.chat(prompt, {
-        systemPrompt: 'You are a video scriptwriter. Always respond with valid JSON only.',
+        systemPrompt:
+          "You are a video scriptwriter. Always respond with valid JSON only.",
       });
 
-      const raw: string = (response.data as any)?.answer ?? (response.data as any)?.content ?? '';
+      const raw: string =
+        (response.data as any)?.answer ?? (response.data as any)?.content ?? "";
       // Extract JSON from response
       const jsonMatch = raw.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) throw new Error('No JSON in response');
+      if (!jsonMatch) throw new Error("No JSON in response");
 
       const parsed = JSON.parse(jsonMatch[0]);
       const result: VideoScript = {
         title: parsed.title ?? topic,
         platform,
         totalDuration: duration,
-        hook: parsed.hook ?? '',
-        cta: parsed.cta ?? '',
+        hook: parsed.hook ?? "",
+        cta: parsed.cta ?? "",
         scenes: (parsed.scenes ?? []).map((s: any, i: number) => ({
           sceneNumber: s.sceneNumber ?? i + 1,
-          text: s.text ?? '',
-          duration: s.duration ?? Math.floor(duration / (parsed.scenes?.length ?? 1)),
-          visualDesc: s.visualDesc ?? s.visual_desc ?? '',
-          bRollSuggestion: s.bRollSuggestion ?? s.b_roll_suggestion ?? undefined,
+          text: s.text ?? "",
+          duration:
+            s.duration ?? Math.floor(duration / (parsed.scenes?.length ?? 1)),
+          visualDesc: s.visualDesc ?? s.visual_desc ?? "",
+          bRollSuggestion:
+            s.bRollSuggestion ?? s.b_roll_suggestion ?? undefined,
         })),
       };
 
       setScript(result);
       setRawJson(scriptToText(result));
-      toast.success('Script generated!');
+      toast.success("Script generated!");
     } catch (err) {
       // Fallback mock for when AI is not available
       const mockScript: VideoScript = {
@@ -217,18 +235,26 @@ export function AIVideoGenerator() {
         platform,
         totalDuration: duration,
         hook: `Did you know that ${topic} can change everything?`,
-        cta: 'Follow for more tips and drop a comment below!',
-        scenes: Array.from({ length: duration === 15 ? 3 : duration === 30 ? 5 : 8 }, (_, i) => ({
-          sceneNumber: i + 1,
-          text: `Key point ${i + 1} about ${topic}`,
-          duration: Math.floor(duration / (duration === 15 ? 3 : duration === 30 ? 5 : 8)),
-          visualDesc: `Close-up shot showing aspect ${i + 1} of ${topic}`,
-          bRollSuggestion: i % 2 === 0 ? `Stock footage or product shot related to ${topic}` : undefined,
-        })),
+        cta: "Follow for more tips and drop a comment below!",
+        scenes: Array.from(
+          { length: duration === 15 ? 3 : duration === 30 ? 5 : 8 },
+          (_, i) => ({
+            sceneNumber: i + 1,
+            text: `Key point ${i + 1} about ${topic}`,
+            duration: Math.floor(
+              duration / (duration === 15 ? 3 : duration === 30 ? 5 : 8),
+            ),
+            visualDesc: `Close-up shot showing aspect ${i + 1} of ${topic}`,
+            bRollSuggestion:
+              i % 2 === 0
+                ? `Stock footage or product shot related to ${topic}`
+                : undefined,
+          }),
+        ),
       };
       setScript(mockScript);
       setRawJson(scriptToText(mockScript));
-      toast.info('Using demo script (AI not available)');
+      toast.info("Using demo script (AI not available)");
     } finally {
       setIsGenerating(false);
     }
@@ -236,18 +262,18 @@ export function AIVideoGenerator() {
 
   const handleCopyScript = () => {
     navigator.clipboard.writeText(rawJson);
-    toast.success('Script copied to clipboard');
+    toast.success("Script copied to clipboard");
   };
 
   const handleDownload = () => {
-    const blob = new Blob([rawJson], { type: 'text/plain' });
+    const blob = new Blob([rawJson], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    const a = document.createElement("a");
     a.href = url;
-    a.download = `video-script-${topic.replace(/\s+/g, '-').toLowerCase()}.txt`;
+    a.download = `video-script-${topic.replace(/\s+/g, "-").toLowerCase()}.txt`;
     a.click();
     URL.revokeObjectURL(url);
-    toast.success('Script downloaded');
+    toast.success("Script downloaded");
   };
 
   return (
@@ -267,20 +293,25 @@ export function AIVideoGenerator() {
               placeholder="e.g. 5 productivity hacks for remote workers"
               value={topic}
               onChange={(e) => setTopic(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleGenerate()}
+              onKeyDown={(e) => e.key === "Enter" && handleGenerate()}
             />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
               <Label className="text-xs">Platform</Label>
-              <Select value={platform} onValueChange={(v) => setPlatform(v as Platform)}>
+              <Select
+                value={platform}
+                onValueChange={(v) => setPlatform(v as Platform)}
+              >
                 <SelectTrigger className="text-sm">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   {Object.entries(PLATFORM_LABELS).map(([val, label]) => (
-                    <SelectItem key={val} value={val}>{label}</SelectItem>
+                    <SelectItem key={val} value={val}>
+                      {label}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -296,16 +327,22 @@ export function AIVideoGenerator() {
                 </SelectTrigger>
                 <SelectContent>
                   {Object.entries(DURATION_LABELS).map(([val, label]) => (
-                    <SelectItem key={val} value={val}>{label}</SelectItem>
+                    <SelectItem key={val} value={val}>
+                      {label}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
           </div>
 
-          <Button onClick={handleGenerate} disabled={isGenerating || !topic.trim()} className="w-full">
+          <Button
+            onClick={handleGenerate}
+            disabled={isGenerating || !topic.trim()}
+            className="w-full"
+          >
             <Sparkles className="h-4 w-4 mr-2" />
-            {isGenerating ? 'Generating script…' : 'Generate Script'}
+            {isGenerating ? "Generating script…" : "Generate Script"}
           </Button>
         </CardContent>
       </Card>
@@ -318,7 +355,7 @@ export function AIVideoGenerator() {
             <div>
               <h3 className="font-semibold">{script.title}</h3>
               <p className="text-sm text-muted-foreground">
-                {PLATFORM_LABELS[script.platform]} · {script.totalDuration}s ·{' '}
+                {PLATFORM_LABELS[script.platform]} · {script.totalDuration}s ·{" "}
                 {script.scenes.length} scenes
               </p>
             </div>
@@ -337,7 +374,9 @@ export function AIVideoGenerator() {
           {/* Hook */}
           <Card className="border-primary/40">
             <CardContent className="pt-4">
-              <p className="text-xs font-medium text-primary uppercase tracking-wide mb-1">Hook (0-3s)</p>
+              <p className="text-xs font-medium text-primary uppercase tracking-wide mb-1">
+                Hook (0-3s)
+              </p>
               <p className="text-sm font-medium">{script.hook}</p>
             </CardContent>
           </Card>
@@ -355,7 +394,9 @@ export function AIVideoGenerator() {
           {/* CTA */}
           <Card className="border-green-500/40">
             <CardContent className="pt-4">
-              <p className="text-xs font-medium text-green-600 uppercase tracking-wide mb-1">Call to Action</p>
+              <p className="text-xs font-medium text-green-600 uppercase tracking-wide mb-1">
+                Call to Action
+              </p>
               <p className="text-sm font-medium">{script.cta}</p>
             </CardContent>
           </Card>

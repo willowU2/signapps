@@ -213,7 +213,11 @@ export function ExpenseForm({
                 <FileUp className="mr-2 h-4 w-4" />
                 Télécharger
               </Button>
-              {fileName && <span className="text-xs text-muted-foreground">{fileName}</span>}
+              {fileName && (
+                <span className="text-xs text-muted-foreground">
+                  {fileName}
+                </span>
+              )}
             </div>
           </div>
 

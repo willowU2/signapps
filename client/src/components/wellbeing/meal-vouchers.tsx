@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * Meal Vouchers Component
@@ -7,17 +7,17 @@
  * Shows allocation as a progress bar and lists recent meals purchased.
  */
 
-import * as React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { UtensilsCrossed, TrendingDown, Calendar } from 'lucide-react';
+import * as React from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { UtensilsCrossed, TrendingDown, Calendar } from "lucide-react";
 
 export interface MealVoucher {
   id: string;
   date: Date;
   merchant: string;
   amount: number;
-  category: 'restaurant' | 'café' | 'bakery';
+  category: "restaurant" | "café" | "bakery";
 }
 
 export interface MealVouchersProps {
@@ -28,9 +28,11 @@ export interface MealVouchersProps {
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
-  restaurant: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
-  café: 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200',
-  bakery: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
+  restaurant:
+    "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200",
+  café: "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200",
+  bakery:
+    "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
 };
 
 function MealTransactionCard({ transaction }: { transaction: MealVoucher }) {
@@ -44,18 +46,20 @@ function MealTransactionCard({ transaction }: { transaction: MealVoucher }) {
           <p className="text-sm font-medium">{transaction.merchant}</p>
           <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
             <Calendar className="w-3 h-3" />
-            {new Date(transaction.date).toLocaleDateString('fr-FR', {
-              day: 'numeric',
-              month: 'short',
+            {new Date(transaction.date).toLocaleDateString("fr-FR", {
+              day: "numeric",
+              month: "short",
             })}
           </p>
         </div>
       </div>
       <div className="text-right">
-        <p className="text-sm font-semibold">-€{transaction.amount.toFixed(2)}</p>
+        <p className="text-sm font-semibold">
+          -€{transaction.amount.toFixed(2)}
+        </p>
         <Badge
           variant="secondary"
-          className={`mt-1 text-xs ${CATEGORY_COLORS[transaction.category] || 'bg-muted'}`}
+          className={`mt-1 text-xs ${CATEGORY_COLORS[transaction.category] || "bg-muted"}`}
         >
           {transaction.category}
         </Badge>
@@ -68,19 +72,21 @@ export function MealVouchers({
   monthlyAllocation,
   currentBalance,
   transactions,
-  currency = '€',
+  currency = "€",
 }: MealVouchersProps) {
   const usedAmount = monthlyAllocation - currentBalance;
   const usagePercentage = (usedAmount / monthlyAllocation) * 100;
 
   const sortedTransactions = [...transactions].sort(
-    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
   );
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold tracking-tight">Tickets Restaurants</h2>
+        <h2 className="text-2xl font-bold tracking-tight">
+          Tickets Restaurants
+        </h2>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
@@ -91,7 +97,10 @@ export function MealVouchers({
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{currency}{monthlyAllocation.toFixed(2)}</div>
+            <div className="text-3xl font-bold">
+              {currency}
+              {monthlyAllocation.toFixed(2)}
+            </div>
           </CardContent>
         </Card>
 
@@ -102,7 +111,10 @@ export function MealVouchers({
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-green-600">{currency}{currentBalance.toFixed(2)}</div>
+            <div className="text-3xl font-bold text-green-600">
+              {currency}
+              {currentBalance.toFixed(2)}
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -120,7 +132,10 @@ export function MealVouchers({
               />
             </div>
             <div className="flex justify-between text-xs text-muted-foreground">
-              <span>{usedAmount.toFixed(2)}{currency} utilisés</span>
+              <span>
+                {usedAmount.toFixed(2)}
+                {currency} utilisés
+              </span>
               <span>{usagePercentage.toFixed(0)}%</span>
             </div>
           </div>
@@ -130,7 +145,9 @@ export function MealVouchers({
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle className="text-base">Historique des Transactions</CardTitle>
+            <CardTitle className="text-base">
+              Historique des Transactions
+            </CardTitle>
             <Badge variant="outline">{transactions.length}</Badge>
           </div>
         </CardHeader>

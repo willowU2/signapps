@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { SpinnerInfinity } from 'spinners-react';
+import { SpinnerInfinity } from "spinners-react";
 
 /**
  * Employee Sheet Component
@@ -8,13 +8,13 @@ import { SpinnerInfinity } from 'spinners-react';
  * Side sheet for creating/editing employees.
  */
 
-import * as React from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import * as React from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { Button } from '@/components/ui/button';
+import { Button } from "@/components/ui/button";
 import {
   Sheet,
   SheetContent,
@@ -22,7 +22,7 @@ import {
   SheetFooter,
   SheetHeader,
   SheetTitle,
-} from '@/components/ui/sheet';
+} from "@/components/ui/sheet";
 import {
   Form,
   FormControl,
@@ -31,51 +31,67 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Slider } from '@/components/ui/slider';
-import { MultiSelect } from '@/components/ui/multi-select';
-import { toast } from 'sonner';
-import { employeesApi, orgNodesApi, functionDefsApi } from '@/lib/api/workforce';
-import type { EmployeeWithDetails, CreateEmployee, UpdateEmployee, ContractType, EmployeeStatus } from '@/types/workforce';
+} from "@/components/ui/select";
+import { Slider } from "@/components/ui/slider";
+import { MultiSelect } from "@/components/ui/multi-select";
+import { toast } from "sonner";
+import {
+  employeesApi,
+  orgNodesApi,
+  functionDefsApi,
+} from "@/lib/api/workforce";
+import type {
+  EmployeeWithDetails,
+  CreateEmployee,
+  UpdateEmployee,
+  ContractType,
+  EmployeeStatus,
+} from "@/types/workforce";
 
 // Contract type options
 const CONTRACT_OPTIONS: { value: ContractType; label: string }[] = [
-  { value: 'full-time', label: 'CDI - Temps plein' },
-  { value: 'part-time', label: 'CDI - Temps partiel' },
-  { value: 'contract', label: 'CDD' },
-  { value: 'intern', label: 'Stage' },
-  { value: 'temporary', label: 'Intérim' },
+  { value: "full-time", label: "CDI - Temps plein" },
+  { value: "part-time", label: "CDI - Temps partiel" },
+  { value: "contract", label: "CDD" },
+  { value: "intern", label: "Stage" },
+  { value: "temporary", label: "Intérim" },
 ];
 
 // Status options
 const STATUS_OPTIONS: { value: EmployeeStatus; label: string }[] = [
-  { value: 'active', label: 'Actif' },
-  { value: 'on_leave', label: 'En congé' },
-  { value: 'suspended', label: 'Suspendu' },
-  { value: 'terminated', label: 'Terminé' },
+  { value: "active", label: "Actif" },
+  { value: "on_leave", label: "En congé" },
+  { value: "suspended", label: "Suspendu" },
+  { value: "terminated", label: "Terminé" },
 ];
 
 // Validation schema
 const employeeSchema = z.object({
-  first_name: z.string().min(1, 'Le prénom est requis').max(100),
-  last_name: z.string().min(1, 'Le nom est requis').max(100),
-  email: z.string().email('Email invalide').optional().or(z.literal('')),
+  first_name: z.string().min(1, "Le prénom est requis").max(100),
+  last_name: z.string().min(1, "Le nom est requis").max(100),
+  email: z.string().email("Email invalide").optional().or(z.literal("")),
   phone: z.string().max(20).optional(),
   employee_number: z.string().max(50).optional(),
   org_node_id: z.string().min(1, "L'unité est requise"),
   functions: z.array(z.string()),
-  contract_type: z.enum(['full-time', 'part-time', 'contract', 'intern', 'temporary']),
+  contract_type: z.enum([
+    "full-time",
+    "part-time",
+    "contract",
+    "intern",
+    "temporary",
+  ]),
   fte_ratio: z.number().min(0).max(1),
   hire_date: z.string().optional(),
-  status: z.enum(['active', 'on_leave', 'suspended', 'terminated']).optional(),
+  status: z.enum(["active", "on_leave", "suspended", "terminated"]).optional(),
 });
 
 type EmployeeFormValues = z.infer<typeof employeeSchema>;
@@ -98,13 +114,13 @@ export function EmployeeSheet({
 
   // Fetch org nodes for selector
   const { data: nodesData } = useQuery({
-    queryKey: ['workforce', 'tree'],
+    queryKey: ["workforce", "tree"],
     queryFn: () => orgNodesApi.getTree({ max_depth: 10 }),
   });
 
   // Fetch function definitions
   const { data: functionsData } = useQuery({
-    queryKey: ['workforce', 'functions'],
+    queryKey: ["workforce", "functions"],
     queryFn: () => functionDefsApi.list(),
   });
 
@@ -130,17 +146,17 @@ export function EmployeeSheet({
   const form = useForm<EmployeeFormValues>({
     resolver: zodResolver(employeeSchema),
     defaultValues: {
-      first_name: employee?.first_name || '',
-      last_name: employee?.last_name || '',
-      email: employee?.email || '',
-      phone: employee?.phone || '',
-      employee_number: employee?.employee_number || '',
-      org_node_id: employee?.org_node_id || defaultOrgNodeId || '',
+      first_name: employee?.first_name || "",
+      last_name: employee?.last_name || "",
+      email: employee?.email || "",
+      phone: employee?.phone || "",
+      employee_number: employee?.employee_number || "",
+      org_node_id: employee?.org_node_id || defaultOrgNodeId || "",
       functions: employee?.functions || [],
-      contract_type: employee?.contract_type || 'full-time',
+      contract_type: employee?.contract_type || "full-time",
       fte_ratio: employee?.fte_ratio ?? 1,
-      hire_date: employee?.hire_date?.split('T')[0] || '',
-      status: employee?.status || 'active',
+      hire_date: employee?.hire_date?.split("T")[0] || "",
+      status: employee?.status || "active",
     },
   });
 
@@ -148,17 +164,17 @@ export function EmployeeSheet({
   React.useEffect(() => {
     if (isOpen) {
       form.reset({
-        first_name: employee?.first_name || '',
-        last_name: employee?.last_name || '',
-        email: employee?.email || '',
-        phone: employee?.phone || '',
-        employee_number: employee?.employee_number || '',
-        org_node_id: employee?.org_node_id || defaultOrgNodeId || '',
+        first_name: employee?.first_name || "",
+        last_name: employee?.last_name || "",
+        email: employee?.email || "",
+        phone: employee?.phone || "",
+        employee_number: employee?.employee_number || "",
+        org_node_id: employee?.org_node_id || defaultOrgNodeId || "",
         functions: employee?.functions || [],
-        contract_type: employee?.contract_type || 'full-time',
+        contract_type: employee?.contract_type || "full-time",
         fte_ratio: employee?.fte_ratio ?? 1,
-        hire_date: employee?.hire_date?.split('T')[0] || '',
-        status: employee?.status || 'active',
+        hire_date: employee?.hire_date?.split("T")[0] || "",
+        status: employee?.status || "active",
       });
     }
   }, [isOpen, employee, defaultOrgNodeId, form]);
@@ -167,13 +183,13 @@ export function EmployeeSheet({
   const createMutation = useMutation({
     mutationFn: (data: CreateEmployee) => employeesApi.create(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['workforce', 'employees'] });
-      queryClient.invalidateQueries({ queryKey: ['workforce', 'tree'] });
-      toast.success('Employé créé avec succès');
+      queryClient.invalidateQueries({ queryKey: ["workforce", "employees"] });
+      queryClient.invalidateQueries({ queryKey: ["workforce", "tree"] });
+      toast.success("Employé créé avec succès");
       onClose();
     },
     onError: () => {
-      toast.error('Erreur lors de la création');
+      toast.error("Erreur lors de la création");
     },
   });
 
@@ -182,13 +198,13 @@ export function EmployeeSheet({
     mutationFn: ({ id, data }: { id: string; data: UpdateEmployee }) =>
       employeesApi.update(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['workforce', 'employees'] });
-      queryClient.invalidateQueries({ queryKey: ['workforce', 'tree'] });
-      toast.success('Employé mis à jour avec succès');
+      queryClient.invalidateQueries({ queryKey: ["workforce", "employees"] });
+      queryClient.invalidateQueries({ queryKey: ["workforce", "tree"] });
+      toast.success("Employé mis à jour avec succès");
       onClose();
     },
     onError: () => {
-      toast.error('Erreur lors de la mise à jour');
+      toast.error("Erreur lors de la mise à jour");
     },
   });
 
@@ -227,20 +243,25 @@ export function EmployeeSheet({
       <SheetContent className="w-full overflow-y-auto sm:max-w-lg">
         <SheetHeader>
           <SheetTitle>
-            {isEditing ? 'Modifier l\'employé' : 'Nouvel employé'}
+            {isEditing ? "Modifier l'employé" : "Nouvel employé"}
           </SheetTitle>
           <SheetDescription>
             {isEditing
-              ? 'Modifiez les informations de l\'employé'
-              : 'Créez un nouveau dossier employé'}
+              ? "Modifiez les informations de l'employé"
+              : "Créez un nouveau dossier employé"}
           </SheetDescription>
         </SheetHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 py-6">
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="space-y-6 py-6"
+          >
             {/* Personal Info */}
             <div className="space-y-4">
-              <h4 className="text-sm font-medium text-muted-foreground">Informations personnelles</h4>
+              <h4 className="text-sm font-medium text-muted-foreground">
+                Informations personnelles
+              </h4>
 
               <div className="grid grid-cols-2 gap-4">
                 <FormField
@@ -279,7 +300,11 @@ export function EmployeeSheet({
                   <FormItem>
                     <FormLabel>Email</FormLabel>
                     <FormControl>
-                      <Input type="email" placeholder="jean.dupont@example.com" {...field} />
+                      <Input
+                        type="email"
+                        placeholder="jean.dupont@example.com"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -303,7 +328,9 @@ export function EmployeeSheet({
 
             {/* Employment Info */}
             <div className="space-y-4">
-              <h4 className="text-sm font-medium text-muted-foreground">Informations professionnelles</h4>
+              <h4 className="text-sm font-medium text-muted-foreground">
+                Informations professionnelles
+              </h4>
 
               <FormField
                 control={form.control}
@@ -325,7 +352,10 @@ export function EmployeeSheet({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Unité organisationnelle</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Sélectionner une unité" />
@@ -334,7 +364,7 @@ export function EmployeeSheet({
                       <SelectContent>
                         {flatNodes.map((node) => (
                           <SelectItem key={node.id} value={node.id}>
-                            {'─'.repeat(node.depth)} {node.name}
+                            {"─".repeat(node.depth)} {node.name}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -373,7 +403,10 @@ export function EmployeeSheet({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Type de contrat</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue />
@@ -412,7 +445,9 @@ export function EmployeeSheet({
                 name="fte_ratio"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Taux ETP ({Math.round(field.value * 100)}%)</FormLabel>
+                    <FormLabel>
+                      Taux ETP ({Math.round(field.value * 100)}%)
+                    </FormLabel>
                     <FormControl>
                       <Slider
                         min={0}
@@ -437,7 +472,10 @@ export function EmployeeSheet({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Statut</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue />
@@ -463,8 +501,16 @@ export function EmployeeSheet({
                 Annuler
               </Button>
               <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting && <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />}
-                {isEditing ? 'Mettre à jour' : 'Créer'}
+                {isSubmitting && (
+                  <SpinnerInfinity
+                    size={24}
+                    secondaryColor="rgba(128,128,128,0.2)"
+                    color="currentColor"
+                    speed={120}
+                    className="mr-2 h-4 w-4 "
+                  />
+                )}
+                {isEditing ? "Mettre à jour" : "Créer"}
               </Button>
             </SheetFooter>
           </form>

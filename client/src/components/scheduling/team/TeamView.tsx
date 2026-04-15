@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * TeamView Component
@@ -7,10 +7,10 @@
  * Shows team members with their status and a timeline for finding free slots.
  */
 
-import * as React from 'react';
-import { format, setHours, setMinutes } from 'date-fns';
-import { fr } from 'date-fns/locale';
-import { useRouter } from 'next/navigation';
+import * as React from "react";
+import { format, setHours, setMinutes } from "date-fns";
+import { fr } from "date-fns/locale";
+import { useRouter } from "next/navigation";
 import {
   Search,
   Filter,
@@ -22,14 +22,14 @@ import {
   Mail,
   Send,
   X,
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -37,7 +37,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from "@/components/ui/dropdown-menu";
 import {
   Dialog,
   DialogContent,
@@ -45,25 +45,22 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import {
-  TeamMemberCard,
-  TeamMemberCardCompact,
-} from './TeamMemberCard';
-import { TeamTimeline } from './TeamTimeline';
-import { EventSheet } from '../calendar/EventSheet';
+} from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { TeamMemberCard, TeamMemberCardCompact } from "./TeamMemberCard";
+import { TeamTimeline } from "./TeamTimeline";
+import { EventSheet } from "../calendar/EventSheet";
 import {
   useTeamMembers,
   useAvailabilitySlots,
-} from '@/lib/scheduling/api/team';
-import { useEvents, useCreateEvent } from '@/lib/scheduling/api/calendar';
+} from "@/lib/scheduling/api/team";
+import { useEvents, useCreateEvent } from "@/lib/scheduling/api/calendar";
 import type {
   TeamMember,
   AvailabilitySlot,
   CreateEventInput,
-} from '@/lib/scheduling/types/scheduling';
+} from "@/lib/scheduling/types/scheduling";
 
 // ============================================================================
 // Types
@@ -73,17 +70,17 @@ interface TeamViewProps {
   className?: string;
 }
 
-type ViewMode = 'grid' | 'timeline';
+type ViewMode = "grid" | "timeline";
 
 // ============================================================================
 // Status Filter Options
 // ============================================================================
 
-const statusOptions: { value: AvailabilitySlot['status']; label: string }[] = [
-  { value: 'available', label: 'Disponible' },
-  { value: 'busy', label: 'Occupé' },
-  { value: 'tentative', label: 'Peut-être' },
-  { value: 'out-of-office', label: 'Absent' },
+const statusOptions: { value: AvailabilitySlot["status"]; label: string }[] = [
+  { value: "available", label: "Disponible" },
+  { value: "busy", label: "Occupé" },
+  { value: "tentative", label: "Peut-être" },
+  { value: "out-of-office", label: "Absent" },
 ];
 
 // ============================================================================
@@ -94,29 +91,39 @@ export function TeamView({ className }: TeamViewProps) {
   const router = useRouter();
 
   // State
-  const [viewMode, setViewMode] = React.useState<ViewMode>('grid');
-  const [search, setSearch] = React.useState('');
+  const [viewMode, setViewMode] = React.useState<ViewMode>("grid");
+  const [search, setSearch] = React.useState("");
   const [selectedStatuses, setSelectedStatuses] = React.useState<
-    AvailabilitySlot['status'][]
+    AvailabilitySlot["status"][]
   >([]);
-  const [selectedDepartments, setSelectedDepartments] = React.useState<string[]>([]);
+  const [selectedDepartments, setSelectedDepartments] = React.useState<
+    string[]
+  >([]);
   const [currentDate, setCurrentDate] = React.useState(new Date());
 
   // Event Sheet State
   const [showEventSheet, setShowEventSheet] = React.useState(false);
-  const [eventSheetMember, setEventSheetMember] = React.useState<TeamMember | null>(null);
-  const [eventSheetDate, setEventSheetDate] = React.useState<Date | undefined>();
-  const [eventSheetTime, setEventSheetTime] = React.useState<string | undefined>();
+  const [eventSheetMember, setEventSheetMember] =
+    React.useState<TeamMember | null>(null);
+  const [eventSheetDate, setEventSheetDate] = React.useState<
+    Date | undefined
+  >();
+  const [eventSheetTime, setEventSheetTime] = React.useState<
+    string | undefined
+  >();
 
   // Message Dialog State
   const [showMessageDialog, setShowMessageDialog] = React.useState(false);
-  const [messageMember, setMessageMember] = React.useState<TeamMember | null>(null);
-  const [messageContent, setMessageContent] = React.useState('');
+  const [messageMember, setMessageMember] = React.useState<TeamMember | null>(
+    null,
+  );
+  const [messageContent, setMessageContent] = React.useState("");
   const [isSendingMessage, setIsSendingMessage] = React.useState(false);
 
   // Data
   const { data: members = [], isLoading: membersLoading } = useTeamMembers();
-  const { data: slots = [], isLoading: slotsLoading } = useAvailabilitySlots(currentDate);
+  const { data: slots = [], isLoading: slotsLoading } =
+    useAvailabilitySlots(currentDate);
   const { data: events = [], isLoading: eventsLoading } = useEvents({
     start: currentDate,
     end: new Date(currentDate.getTime() + 24 * 60 * 60 * 1000),
@@ -135,15 +142,15 @@ export function TeamView({ className }: TeamViewProps) {
   }, [members]);
 
   // Get current status for a member
-  const getMemberStatus = (memberId: string): AvailabilitySlot['status'] => {
+  const getMemberStatus = (memberId: string): AvailabilitySlot["status"] => {
     const now = new Date();
     const slot = slots.find(
       (s) =>
         s.memberId === memberId &&
         new Date(s.start) <= now &&
-        new Date(s.end) >= now
+        new Date(s.end) >= now,
     );
-    return slot?.status ?? 'available';
+    return slot?.status ?? "available";
   };
 
   // Filter members
@@ -179,7 +186,7 @@ export function TeamView({ className }: TeamViewProps) {
 
       return true;
     });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [members, search, selectedStatuses, selectedDepartments, slots]);
 
   // Handlers
@@ -199,7 +206,7 @@ export function TeamView({ className }: TeamViewProps) {
   const handleSendMessage = (member: TeamMember) => {
     // Open messaging dialog
     setMessageMember(member);
-    setMessageContent('');
+    setMessageContent("");
     setShowMessageDialog(true);
   };
 
@@ -207,7 +214,7 @@ export function TeamView({ className }: TeamViewProps) {
     // Open meeting creation with pre-filled time and member
     setEventSheetMember(member);
     setEventSheetDate(time);
-    setEventSheetTime(format(time, 'HH:mm'));
+    setEventSheetTime(format(time, "HH:mm"));
     setShowEventSheet(true);
   };
 
@@ -219,7 +226,7 @@ export function TeamView({ className }: TeamViewProps) {
     }
 
     await createEvent.mutateAsync({
-      calendarId: event.calendarId || 'default',
+      calendarId: event.calendarId || "default",
       input: { ...event, attendees },
     });
 
@@ -234,10 +241,12 @@ export function TeamView({ className }: TeamViewProps) {
     try {
       // Navigate to chat with the member
       // For now, we'll open a direct message channel
-      router.push(`/chat/dm/${messageMember.id}?message=${encodeURIComponent(messageContent)}`);
+      router.push(
+        `/chat/dm/${messageMember.id}?message=${encodeURIComponent(messageContent)}`,
+      );
       setShowMessageDialog(false);
       setMessageMember(null);
-      setMessageContent('');
+      setMessageContent("");
     } finally {
       setIsSendingMessage(false);
     }
@@ -245,9 +254,9 @@ export function TeamView({ className }: TeamViewProps) {
 
   const getInitials = (name: string): string => {
     return name
-      .split(' ')
+      .split(" ")
       .map((n) => n[0])
-      .join('')
+      .join("")
       .toUpperCase()
       .slice(0, 2);
   };
@@ -266,14 +275,14 @@ export function TeamView({ className }: TeamViewProps) {
 
   // Stats
   const availableCount = filteredMembers.filter(
-    (m) => getMemberStatus(m.id) === 'available'
+    (m) => getMemberStatus(m.id) === "available",
   ).length;
   const busyCount = filteredMembers.filter(
-    (m) => getMemberStatus(m.id) === 'busy'
+    (m) => getMemberStatus(m.id) === "busy",
   ).length;
 
   return (
-    <div className={cn('flex flex-col h-full', className)}>
+    <div className={cn("flex flex-col h-full", className)}>
       {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-3 p-4 border-b">
         {/* Search */}
@@ -293,7 +302,8 @@ export function TeamView({ className }: TeamViewProps) {
             <Button variant="outline" size="sm">
               <Filter className="h-4 w-4 mr-2" />
               Filtres
-              {(selectedStatuses.length > 0 || selectedDepartments.length > 0) && (
+              {(selectedStatuses.length > 0 ||
+                selectedDepartments.length > 0) && (
                 <Badge variant="secondary" className="ml-2">
                   {selectedStatuses.length + selectedDepartments.length}
                 </Badge>
@@ -310,7 +320,7 @@ export function TeamView({ className }: TeamViewProps) {
                   setSelectedStatuses(
                     checked
                       ? [...selectedStatuses, opt.value]
-                      : selectedStatuses.filter((s) => s !== opt.value)
+                      : selectedStatuses.filter((s) => s !== opt.value),
                   );
                 }}
               >
@@ -329,7 +339,7 @@ export function TeamView({ className }: TeamViewProps) {
                       setSelectedDepartments(
                         checked
                           ? [...selectedDepartments, dept]
-                          : selectedDepartments.filter((d) => d !== dept)
+                          : selectedDepartments.filter((d) => d !== dept),
                       );
                     }}
                   >
@@ -378,7 +388,7 @@ export function TeamView({ className }: TeamViewProps) {
 
       {/* Content */}
       <div className="flex-1 overflow-hidden p-4">
-        {viewMode === 'grid' && (
+        {viewMode === "grid" && (
           <ScrollArea className="h-full">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {filteredMembers.map((member) => (
@@ -400,7 +410,7 @@ export function TeamView({ className }: TeamViewProps) {
           </ScrollArea>
         )}
 
-        {viewMode === 'timeline' && (
+        {viewMode === "timeline" && (
           <TeamTimeline
             members={filteredMembers}
             slots={slots}
@@ -433,8 +443,13 @@ export function TeamView({ className }: TeamViewProps) {
               {messageMember && (
                 <>
                   <Avatar className="h-8 w-8">
-                    <AvatarImage src={messageMember.avatarUrl} alt={messageMember.name} />
-                    <AvatarFallback>{getInitials(messageMember.name)}</AvatarFallback>
+                    <AvatarImage
+                      src={messageMember.avatarUrl}
+                      alt={messageMember.name}
+                    />
+                    <AvatarFallback>
+                      {getInitials(messageMember.name)}
+                    </AvatarFallback>
                   </Avatar>
                   <span>Message à {messageMember.name}</span>
                 </>
@@ -474,7 +489,7 @@ export function TeamView({ className }: TeamViewProps) {
               disabled={!messageContent.trim() || isSendingMessage}
             >
               <Send className="h-4 w-4 mr-2" />
-              {isSendingMessage ? 'Envoi...' : 'Envoyer'}
+              {isSendingMessage ? "Envoi..." : "Envoyer"}
             </Button>
           </DialogFooter>
         </DialogContent>

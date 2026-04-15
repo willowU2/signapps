@@ -41,7 +41,12 @@ import { useEntityStore } from "@/stores/entity-hub-store";
 import { useUIStore } from "@/lib/store";
 import { useCommandBarStore } from "@/stores/command-bar-store";
 import { usePermissions } from "@/lib/permissions";
-import { useBlockSearch, BlockInline, type UniversalBlock, getBlockTypeInfo } from "@/lib/blocks";
+import {
+  useBlockSearch,
+  BlockInline,
+  type UniversalBlock,
+  getBlockTypeInfo,
+} from "@/lib/blocks";
 import { useUniversalSearch } from "@/hooks/use-universal-search";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -74,7 +79,9 @@ export function CommandBarEnhanced() {
   const router = useRouter();
   const inputRef = React.useRef<HTMLInputElement>(null);
   const [search, setSearch] = React.useState("");
-  const [selectedSection, setSelectedSection] = React.useState<string | null>(null);
+  const [selectedSection, setSelectedSection] = React.useState<string | null>(
+    null,
+  );
 
   // Stores
   const { workspaces, projects, setSelectedWorkspace } = useEntityStore();
@@ -118,7 +125,7 @@ export function CommandBarEnhanced() {
       if (label) addToHistory(label);
       command();
     },
-    [setOpen, addToHistory]
+    [setOpen, addToHistory],
   );
 
   // Universal search - fetch real data
@@ -196,7 +203,7 @@ export function CommandBarEnhanced() {
         action: () => router.push("/storage?upload=true"),
       },
     ],
-    [router, setCreateTaskModalOpen, setCreateProjectModalOpen]
+    [router, setCreateTaskModalOpen, setCreateProjectModalOpen],
   );
 
   // Navigation commands
@@ -247,7 +254,7 @@ export function CommandBarEnhanced() {
         action: () => router.push("/settings/appearance"),
       },
     ],
-    [router]
+    [router],
   );
 
   // Admin commands
@@ -300,7 +307,7 @@ export function CommandBarEnhanced() {
             },
           ]
         : [],
-    [isAdmin, router]
+    [isAdmin, router],
   );
 
   if (!isOpen) return null;
@@ -314,11 +321,7 @@ export function CommandBarEnhanced() {
         className="w-full max-w-2xl bg-card/80 backdrop-blur-2xl rounded-2xl shadow-2xl border border-border/50 overflow-hidden animate-in fade-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
-        <Command
-          label="Command Bar"
-          className="w-full"
-          shouldFilter={true}
-        >
+        <Command label="Command Bar" className="w-full" shouldFilter={true}>
           {/* Input */}
           <div className="flex items-center border-b border-border/50 px-4">
             <Search className="h-5 w-5 shrink-0 text-muted-foreground" />
@@ -345,7 +348,9 @@ export function CommandBarEnhanced() {
           <ScrollArea className="max-h-[400px]">
             <Command.List className="p-2">
               <Command.Empty className="py-6 text-center text-sm text-muted-foreground">
-                {isSearching || isLoadingBlocks ? "Recherche en cours..." : "Aucun résultat trouvé."}
+                {isSearching || isLoadingBlocks
+                  ? "Recherche en cours..."
+                  : "Aucun résultat trouvé."}
               </Command.Empty>
 
               {/* Search Results */}
@@ -368,7 +373,9 @@ export function CommandBarEnhanced() {
                         onSelect={() =>
                           runCommand(() => {
                             // Track in recents
-                            useCommandBarStore.getState().addRecentItem(result.block);
+                            useCommandBarStore
+                              .getState()
+                              .addRecentItem(result.block);
                             // Navigate based on block type
                             const routes: Record<string, string> = {
                               document: `/docs/${result.block.id}`,
@@ -380,7 +387,8 @@ export function CommandBarEnhanced() {
                               container: `/containers?id=${result.block.id}`,
                             };
                             router.push(
-                              routes[result.block.type] || `/view/${result.block.id}`
+                              routes[result.block.type] ||
+                                `/view/${result.block.id}`,
                             );
                           }, result.block.title)
                         }
@@ -388,7 +396,10 @@ export function CommandBarEnhanced() {
                       >
                         <span
                           className="w-2 h-2 rounded-full shrink-0"
-                          style={{ backgroundColor: result.block.color || typeInfo.color }}
+                          style={{
+                            backgroundColor:
+                              result.block.color || typeInfo.color,
+                          }}
                         />
                         <div className="flex-1 min-w-0">
                           <div className="truncate">{result.block.title}</div>
@@ -398,7 +409,10 @@ export function CommandBarEnhanced() {
                             </div>
                           )}
                         </div>
-                        <Badge variant="outline" className="text-[10px] shrink-0">
+                        <Badge
+                          variant="outline"
+                          className="text-[10px] shrink-0"
+                        >
                           {typeInfo.displayName}
                         </Badge>
                       </Command.Item>
@@ -471,7 +485,7 @@ export function CommandBarEnhanced() {
                             event: `/cal?event=${item.block.id}`,
                           };
                           router.push(
-                            routes[item.block.type] || `/view/${item.block.id}`
+                            routes[item.block.type] || `/view/${item.block.id}`,
                           );
                         })
                       }

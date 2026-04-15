@@ -17,7 +17,9 @@ export function StreakCounter() {
       return;
     }
 
-    const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+    const yesterday = new Date(Date.now() - 86400000)
+      .toISOString()
+      .slice(0, 10);
     if (last === yesterday) {
       s++;
     } else {
@@ -32,8 +34,12 @@ export function StreakCounter() {
   if (streak <= 0) return null;
 
   return (
-    <span className="inline-flex items-center gap-1 text-xs text-orange-500 font-medium" title={streak + " jours consecutifs"}>
-      <span className="text-sm">&#128293;</span>{streak}j
+    <span
+      className="inline-flex items-center gap-1 text-xs text-orange-500 font-medium"
+      title={streak + " jours consecutifs"}
+    >
+      <span className="text-sm">&#128293;</span>
+      {streak}j
     </span>
   );
 }

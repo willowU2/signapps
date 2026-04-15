@@ -1,28 +1,61 @@
-"use client"
+"use client";
 
-import { useQuery } from "@tanstack/react-query"
-import { AppLayout } from "@/components/layout/app-layout"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Monitor, Wifi, WifiOff, AlertTriangle, Server } from "lucide-react"
+import { useQuery } from "@tanstack/react-query";
+import { AppLayout } from "@/components/layout/app-layout";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import {
-  PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, Legend,
-} from "recharts"
-import { itAssetsApi, FleetOverview } from "@/lib/api/it-assets"
-import { usePageTitle } from "@/hooks/use-page-title"
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Monitor, Wifi, WifiOff, AlertTriangle, Server } from "lucide-react";
+import {
+  PieChart,
+  Pie,
+  Cell,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Legend,
+} from "recharts";
+import { itAssetsApi, FleetOverview } from "@/lib/api/it-assets";
+import { usePageTitle } from "@/hooks/use-page-title";
 
-const OS_COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#8b5cf6", "#ef4444", "#6b7280"]
+const OS_COLORS = [
+  "#3b82f6",
+  "#10b981",
+  "#f59e0b",
+  "#8b5cf6",
+  "#ef4444",
+  "#6b7280",
+];
 const STATUS_COLORS: Record<string, string> = {
   active: "#10b981",
   maintenance: "#f59e0b",
   retired: "#6b7280",
   stock: "#3b82f6",
   unknown: "#ef4444",
-}
+};
 
-function StatCard({ label, value, icon, color }: { label: string; value: number; icon: React.ReactNode; color: string }) {
+function StatCard({
+  label,
+  value,
+  icon,
+  color,
+}: {
+  label: string;
+  value: number;
+  icon: React.ReactNode;
+  color: string;
+}) {
   return (
     <Card>
       <CardContent className="pt-6">
@@ -31,23 +64,21 @@ function StatCard({ label, value, icon, color }: { label: string; value: number;
             <p className="text-sm text-muted-foreground">{label}</p>
             <p className="text-3xl font-bold mt-1">{value}</p>
           </div>
-          <div className={`p-3 rounded-xl ${color}`}>
-            {icon}
-          </div>
+          <div className={`p-3 rounded-xl ${color}`}>{icon}</div>
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }
 
 export default function FleetPage() {
-  usePageTitle("Fleet Overview")
+  usePageTitle("Fleet Overview");
 
   const { data: fleet, isLoading } = useQuery<FleetOverview>({
     queryKey: ["fleet-overview"],
-    queryFn: () => itAssetsApi.getFleetOverview().then(r => r.data),
+    queryFn: () => itAssetsApi.getFleetOverview().then((r) => r.data),
     refetchInterval: 30_000,
-  })
+  });
 
   if (isLoading || !fleet) {
     return (
@@ -56,14 +87,14 @@ export default function FleetPage() {
           Loading fleet data...
         </div>
       </AppLayout>
-    )
+    );
   }
 
-  const statusData = fleet.by_status.map(s => ({
+  const statusData = fleet.by_status.map((s) => ({
     name: s.status,
     count: Number(s.count),
     fill: STATUS_COLORS[s.status] ?? "#6b7280",
-  }))
+  }));
 
   return (
     <AppLayout>
@@ -73,7 +104,9 @@ export default function FleetPage() {
             <Server className="h-6 w-6 text-primary" />
             Fleet Overview
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">Real-time status of all managed machines</p>
+          <p className="text-sm text-muted-foreground mt-1">
+            Real-time status of all managed machines
+          </p>
         </div>
 
         {/* Summary cards */}
@@ -147,7 +180,12 @@ export default function FleetPage() {
                 <BarChart data={statusData} layout="vertical">
                   <CartesianGrid strokeDasharray="3 3" className="opacity-20" />
                   <XAxis type="number" tick={{ fontSize: 11 }} />
-                  <YAxis type="category" dataKey="name" tick={{ fontSize: 11 }} width={80} />
+                  <YAxis
+                    type="category"
+                    dataKey="name"
+                    tick={{ fontSize: 11 }}
+                    width={80}
+                  />
                   <Tooltip />
                   <Bar dataKey="count" radius={4}>
                     {statusData.map((entry, i) => (
@@ -163,11 +201,15 @@ export default function FleetPage() {
         {/* Recently offline table */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-sm font-medium">Machines Sorted by Last Seen</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Machines Sorted by Last Seen
+            </CardTitle>
           </CardHeader>
           <CardContent>
             {fleet.recently_offline.length === 0 ? (
-              <div className="py-8 text-center text-muted-foreground text-sm">All machines have been seen recently</div>
+              <div className="py-8 text-center text-muted-foreground text-sm">
+                All machines have been seen recently
+              </div>
             ) : (
               <Table>
                 <TableHeader>
@@ -179,17 +221,25 @@ export default function FleetPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {fleet.recently_offline.map(m => (
+                  {fleet.recently_offline.map((m) => (
                     <TableRow key={m.id}>
                       <TableCell className="font-medium">{m.name}</TableCell>
-                      <TableCell className="text-muted-foreground">{m.os_type ?? "—"}</TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {m.os_type ?? "—"}
+                      </TableCell>
                       <TableCell>
-                        <Badge variant={m.status === "active" ? "default" : "secondary"}>
+                        <Badge
+                          variant={
+                            m.status === "active" ? "default" : "secondary"
+                          }
+                        >
                           {m.status ?? "unknown"}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground">
-                        {m.last_heartbeat ? new Date(m.last_heartbeat).toLocaleString() : "Never"}
+                        {m.last_heartbeat
+                          ? new Date(m.last_heartbeat).toLocaleString()
+                          : "Never"}
                       </TableCell>
                     </TableRow>
                   ))}
@@ -200,5 +250,5 @@ export default function FleetPage() {
         </Card>
       </div>
     </AppLayout>
-  )
+  );
 }

@@ -21,8 +21,8 @@ import {
   isWithinInterval,
   eachDayOfInterval,
   format,
-} from 'date-fns';
-import { fr } from 'date-fns/locale';
+} from "date-fns";
+import { fr } from "date-fns/locale";
 import type {
   ScheduleBlock,
   SchedulingSuggestion,
@@ -31,7 +31,7 @@ import type {
   ConflictInfo,
   WorkloadData,
   ViewConfig,
-} from '../types/scheduling';
+} from "../types/scheduling";
 
 // ============================================================================
 // Types
@@ -93,7 +93,7 @@ const MEETING_HOURS = [10, 11, 14, 15, 16]; // Mid-morning to late afternoon
 
 export function generateSuggestions(
   context: SuggestionContext,
-  options: SuggestionOptions = {}
+  options: SuggestionOptions = {},
 ): SchedulingSuggestion[] {
   const opts = { ...DEFAULT_OPTIONS, ...options };
   const now = context.now || new Date();
@@ -116,7 +116,11 @@ export function generateSuggestions(
 
   // Generate optimization suggestions
   if (opts.includeOptimizations) {
-    const optimizationSuggestions = suggestOptimizations(context, patterns, now);
+    const optimizationSuggestions = suggestOptimizations(
+      context,
+      patterns,
+      now,
+    );
     suggestions.push(...optimizationSuggestions);
   }
 
@@ -134,11 +138,11 @@ export function generateSuggestions(
 export function analyzePatterns(
   events: ScheduleBlock[],
   days: number,
-  now: Date
+  now: Date,
 ): PatternAnalysis {
   const startDate = addDays(now, -days);
   const pastEvents = events.filter(
-    (e) => e.start >= startDate && e.start < now && e.type === 'event'
+    (e) => e.start >= startDate && e.start < now && e.type === "event",
   );
 
   // Analyze meeting times
@@ -183,14 +187,18 @@ export function analyzePatterns(
   const quietestDays = dayScores.slice(-2).map((d) => d.day);
 
   // Find typical working hours
-  const eventHours = pastEvents.map((e) => getHours(e.start)).sort((a, b) => a - b);
+  const eventHours = pastEvents
+    .map((e) => getHours(e.start))
+    .sort((a, b) => a - b);
   const typicalStartHour = eventHours.length > 0 ? eventHours[0] : 9;
-  const typicalEndHour = eventHours.length > 0 ? eventHours[eventHours.length - 1] : 18;
+  const typicalEndHour =
+    eventHours.length > 0 ? eventHours[eventHours.length - 1] : 18;
 
   return {
     preferredMeetingTimes,
     preferredFocusTimes,
-    averageMeetingDuration: meetingCount > 0 ? totalDuration / meetingCount : 60,
+    averageMeetingDuration:
+      meetingCount > 0 ? totalDuration / meetingCount : 60,
     busiestDays,
     quietestDays,
     typicalStartHour,
@@ -205,7 +213,7 @@ export function analyzePatterns(
 function suggestFocusBlocks(
   context: SuggestionContext,
   patterns: PatternAnalysis,
-  now: Date
+  now: Date,
 ): SchedulingSuggestion[] {
   const suggestions: SchedulingSuggestion[] = [];
   const nextWeek = eachDayOfInterval({
@@ -219,7 +227,7 @@ function suggestFocusBlocks(
       (e) =>
         e.start >= startOfDay(day) &&
         e.start < endOfDay(day) &&
-        e.type === 'event'
+        e.type === "event",
     );
 
     // Check each preferred focus hour
@@ -230,31 +238,31 @@ function suggestFocusBlocks(
       // Check if slot is free
       const hasConflict = dayEvents.some(
         (e) =>
-          e.end &&
-          isWithinInterval(slotStart, { start: e.start, end: e.end }) ||
-          isWithinInterval(slotEnd, { start: e.start, end: e.end! })
+          (e.end &&
+            isWithinInterval(slotStart, { start: e.start, end: e.end })) ||
+          isWithinInterval(slotEnd, { start: e.start, end: e.end! }),
       );
 
       if (!hasConflict) {
         const confidence = Math.min(0.9, score * 0.7 + 0.3);
 
         suggestions.push({
-          id: `focus-${format(slotStart, 'yyyy-MM-dd-HH')}`,
-          type: 'time-block',
-          title: 'Bloc de concentration recommand\u00e9',
-          description: `${format(slotStart, 'EEEE d MMMM', { locale: fr })} de ${format(slotStart, 'HH:mm')} \u00e0 ${format(slotEnd, 'HH:mm')}. Ce cr\u00e9neau est g\u00e9n\u00e9ralement calme pour vous.`,
+          id: `focus-${format(slotStart, "yyyy-MM-dd-HH")}`,
+          type: "time-block",
+          title: "Bloc de concentration recommand\u00e9",
+          description: `${format(slotStart, "EEEE d MMMM", { locale: fr })} de ${format(slotStart, "HH:mm")} \u00e0 ${format(slotEnd, "HH:mm")}. Ce cr\u00e9neau est g\u00e9n\u00e9ralement calme pour vous.`,
           confidence,
-          impact: 'medium',
+          impact: "medium",
           suggestedAction: {
-            type: 'create',
+            type: "create",
             data: {
-              type: 'event',
-              title: 'Focus Time',
+              type: "event",
+              title: "Focus Time",
               start: slotStart,
               end: slotEnd,
               allDay: false,
-              color: '#10b981', // Green for focus
-              status: 'confirmed',
+              color: "#10b981", // Green for focus
+              status: "confirmed",
             } as Partial<ScheduleBlock>,
           },
           reasoning: `Bas\u00e9 sur vos habitudes, vous avez peu de r\u00e9unions \u00e0 ${hour}h. Ce cr\u00e9neau est id\u00e9al pour le travail concentr\u00e9.`,
@@ -274,11 +282,11 @@ function suggestFocusBlocks(
 
 function suggestConflictResolutions(
   events: ScheduleBlock[],
-  now: Date
+  now: Date,
 ): SchedulingSuggestion[] {
   const suggestions: SchedulingSuggestion[] = [];
   const futureEvents = events.filter(
-    (e) => e.start >= now && e.type === 'event'
+    (e) => e.start >= now && e.type === "event",
   );
 
   // Find overlapping events
@@ -298,30 +306,34 @@ function suggestConflictResolutions(
       if (overlap) {
         const overlapMinutes = Math.min(
           differenceInMinutes(event1.end, event2.start),
-          differenceInMinutes(event2.end, event1.start)
+          differenceInMinutes(event2.end, event1.start),
         );
 
         // Suggest moving the shorter event
-        const eventToMove = differenceInMinutes(event1.end, event1.start) <
+        const eventToMove =
+          differenceInMinutes(event1.end, event1.start) <
           differenceInMinutes(event2.end, event2.start)
-          ? event1
-          : event2;
+            ? event1
+            : event2;
         const otherEvent = eventToMove === event1 ? event2 : event1;
 
         // Find next available slot after the other event
         const newStart = otherEvent.end!;
-        const duration = differenceInMinutes(eventToMove.end!, eventToMove.start);
+        const duration = differenceInMinutes(
+          eventToMove.end!,
+          eventToMove.start,
+        );
         const newEnd = addMinutes(newStart, duration);
 
         suggestions.push({
           id: `conflict-${eventToMove.id}`,
-          type: 'conflict-resolution',
-          title: 'Conflit d\u00e9tect\u00e9',
+          type: "conflict-resolution",
+          title: "Conflit d\u00e9tect\u00e9",
           description: `"${eventToMove.title}" chevauche "${otherEvent.title}" de ${overlapMinutes} minutes.`,
           confidence: 0.85,
-          impact: 'high',
+          impact: "high",
           suggestedAction: {
-            type: 'move',
+            type: "move",
             targetId: eventToMove.id,
             data: {
               start: newStart,
@@ -332,17 +344,20 @@ function suggestConflictResolutions(
           alternatives: [
             {
               id: `conflict-${eventToMove.id}-alt`,
-              type: 'conflict-resolution',
-              title: 'Alternative: d\u00e9placer l\'autre \u00e9v\u00e9nement',
+              type: "conflict-resolution",
+              title: "Alternative: d\u00e9placer l'autre \u00e9v\u00e9nement",
               description: `D\u00e9placer "${otherEvent.title}" \u00e0 la place`,
               confidence: 0.7,
-              impact: 'high',
+              impact: "high",
               suggestedAction: {
-                type: 'move',
+                type: "move",
                 targetId: otherEvent.id,
                 data: {
                   start: eventToMove.end,
-                  end: addMinutes(eventToMove.end!, differenceInMinutes(otherEvent.end!, otherEvent.start)),
+                  end: addMinutes(
+                    eventToMove.end!,
+                    differenceInMinutes(otherEvent.end!, otherEvent.start),
+                  ),
                 },
               },
             },
@@ -362,20 +377,20 @@ function suggestConflictResolutions(
 function suggestOptimizations(
   context: SuggestionContext,
   patterns: PatternAnalysis,
-  now: Date
+  now: Date,
 ): SchedulingSuggestion[] {
   const suggestions: SchedulingSuggestion[] = [];
   const tomorrow = addDays(startOfDay(now), 1);
   const nextWeekEnd = addDays(tomorrow, 7);
 
   const upcomingEvents = context.events.filter(
-    (e) => e.start >= tomorrow && e.start < nextWeekEnd && e.type === 'event'
+    (e) => e.start >= tomorrow && e.start < nextWeekEnd && e.type === "event",
   );
 
   // Check for meeting clusters that could be consolidated
   const meetingsByDay: Record<string, ScheduleBlock[]> = {};
   upcomingEvents.forEach((event) => {
-    const dayKey = format(event.start, 'yyyy-MM-dd');
+    const dayKey = format(event.start, "yyyy-MM-dd");
     if (!meetingsByDay[dayKey]) meetingsByDay[dayKey] = [];
     meetingsByDay[dayKey].push(event);
   });
@@ -384,7 +399,9 @@ function suggestOptimizations(
     if (dayEvents.length < 3) return;
 
     // Check for fragmented meetings (short gaps between)
-    const sortedEvents = dayEvents.sort((a, b) => a.start.getTime() - b.start.getTime());
+    const sortedEvents = dayEvents.sort(
+      (a, b) => a.start.getTime() - b.start.getTime(),
+    );
     let fragmentedCount = 0;
 
     for (let i = 0; i < sortedEvents.length - 1; i++) {
@@ -402,15 +419,16 @@ function suggestOptimizations(
       const dayDate = new Date(dayKey);
       suggestions.push({
         id: `optimize-${dayKey}`,
-        type: 'optimization',
-        title: 'Journ\u00e9e fragment\u00e9e d\u00e9tect\u00e9e',
-        description: `Le ${format(dayDate, 'EEEE d MMMM', { locale: fr })}, vous avez ${dayEvents.length} r\u00e9unions avec des pauses trop courtes entre elles.`,
+        type: "optimization",
+        title: "Journ\u00e9e fragment\u00e9e d\u00e9tect\u00e9e",
+        description: `Le ${format(dayDate, "EEEE d MMMM", { locale: fr })}, vous avez ${dayEvents.length} r\u00e9unions avec des pauses trop courtes entre elles.`,
         confidence: 0.75,
-        impact: 'medium',
+        impact: "medium",
         suggestedAction: {
-          type: 'update',
+          type: "update",
         },
-        reasoning: 'Regrouper les r\u00e9unions permettrait de lib\u00e9rer des blocs de temps plus longs pour le travail concentr\u00e9.',
+        reasoning:
+          "Regrouper les r\u00e9unions permettrait de lib\u00e9rer des blocs de temps plus longs pour le travail concentr\u00e9.",
       });
     }
   });
@@ -421,16 +439,17 @@ function suggestOptimizations(
     if (hour < patterns.typicalStartHour || hour > patterns.typicalEndHour) {
       suggestions.push({
         id: `optimize-time-${event.id}`,
-        type: 'optimization',
-        title: 'R\u00e9union hors heures habituelles',
-        description: `"${event.title}" est planifi\u00e9 \u00e0 ${format(event.start, 'HH:mm')}, en dehors de vos heures de travail typiques (${patterns.typicalStartHour}h-${patterns.typicalEndHour}h).`,
+        type: "optimization",
+        title: "R\u00e9union hors heures habituelles",
+        description: `"${event.title}" est planifi\u00e9 \u00e0 ${format(event.start, "HH:mm")}, en dehors de vos heures de travail typiques (${patterns.typicalStartHour}h-${patterns.typicalEndHour}h).`,
         confidence: 0.65,
-        impact: 'low',
+        impact: "low",
         suggestedAction: {
-          type: 'move',
+          type: "move",
           targetId: event.id,
         },
-        reasoning: 'Envisagez de d\u00e9placer cette r\u00e9union vers vos heures de travail habituelles pour un meilleur \u00e9quilibre.',
+        reasoning:
+          "Envisagez de d\u00e9placer cette r\u00e9union vers vos heures de travail habituelles pour un meilleur \u00e9quilibre.",
       });
     }
   });
@@ -440,27 +459,26 @@ function suggestOptimizations(
     if (!event.end) return;
 
     const nextEvent = upcomingEvents.find(
-      (e) =>
-        e.id !== event.id &&
-        e.start.getTime() === event.end!.getTime()
+      (e) => e.id !== event.id && e.start.getTime() === event.end!.getTime(),
     );
 
     if (nextEvent) {
       suggestions.push({
         id: `optimize-break-${event.id}`,
-        type: 'optimization',
-        title: 'R\u00e9unions cons\u00e9cutives',
+        type: "optimization",
+        title: "R\u00e9unions cons\u00e9cutives",
         description: `"${event.title}" et "${nextEvent.title}" sont encha\u00een\u00e9s sans pause.`,
         confidence: 0.7,
-        impact: 'low',
+        impact: "low",
         suggestedAction: {
-          type: 'update',
+          type: "update",
           targetId: event.id,
           data: {
             end: addMinutes(event.end, -5), // Shorten by 5 min
           },
         },
-        reasoning: 'Ajouter une pause de 5-10 minutes entre les r\u00e9unions am\u00e9liore la concentration et r\u00e9duit la fatigue.',
+        reasoning:
+          "Ajouter une pause de 5-10 minutes entre les r\u00e9unions am\u00e9liore la concentration et r\u00e9duit la fatigue.",
       });
     }
   });
@@ -474,14 +492,14 @@ function suggestOptimizations(
 
 export function detectRecurringConflicts(
   events: ScheduleBlock[],
-  weeks: number = 4
+  weeks: number = 4,
 ): ConflictInfo[] {
   const conflicts: ConflictInfo[] = [];
   const now = new Date();
   const startDate = addDays(now, -weeks * 7);
 
   const pastEvents = events.filter(
-    (e) => e.start >= startDate && e.start < now && e.status === 'cancelled'
+    (e) => e.start >= startDate && e.start < now && e.status === "cancelled",
   );
 
   // Group cancelled events by day of week and hour
@@ -496,24 +514,32 @@ export function detectRecurringConflicts(
   // Find patterns with multiple cancellations
   Object.entries(cancelledPatterns).forEach(([key, cancelledEvents]) => {
     if (cancelledEvents.length >= 2) {
-      const [day, hour] = key.split('-').map(Number);
-      const dayNames = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
+      const [day, hour] = key.split("-").map(Number);
+      const dayNames = [
+        "dimanche",
+        "lundi",
+        "mardi",
+        "mercredi",
+        "jeudi",
+        "vendredi",
+        "samedi",
+      ];
 
       conflicts.push({
         id: `recurring-cancel-${key}`,
-        type: 'preference',
-        severity: 'medium',
+        type: "preference",
+        severity: "medium",
         blocks: cancelledEvents,
         description: `Les r\u00e9unions \u00e0 ${hour}h le ${dayNames[day]} sont souvent annul\u00e9es (${cancelledEvents.length} fois).`,
         suggestions: [
           {
             id: `avoid-${key}`,
-            type: 'optimization',
-            title: '\u00c9viter ce cr\u00e9neau',
+            type: "optimization",
+            title: "\u00c9viter ce cr\u00e9neau",
             description: `Consid\u00e9rez d'\u00e9viter de planifier des r\u00e9unions \u00e0 ${hour}h le ${dayNames[day]}.`,
             confidence: 0.8,
-            impact: 'medium',
-            suggestedAction: { type: 'update' },
+            impact: "medium",
+            suggestedAction: { type: "update" },
           },
         ],
       });
@@ -531,7 +557,7 @@ export function findBestMeetingTime(
   events: ScheduleBlock[],
   duration: number, // minutes
   dateRange: DateRange,
-  patterns: PatternAnalysis
+  patterns: PatternAnalysis,
 ): DateRange[] {
   const slots: DateRange[] = [];
   const days = eachDayOfInterval(dateRange);
@@ -544,7 +570,11 @@ export function findBestMeetingTime(
 
     // Check each preferred meeting hour
     for (const { hour, score } of patterns.preferredMeetingTimes) {
-      if (hour < patterns.typicalStartHour || hour > patterns.typicalEndHour - 1) continue;
+      if (
+        hour < patterns.typicalStartHour ||
+        hour > patterns.typicalEndHour - 1
+      )
+        continue;
 
       const slotStart = setMinutes(setHours(day, hour), 0);
       const slotEnd = addMinutes(slotStart, duration);

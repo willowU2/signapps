@@ -219,8 +219,14 @@ mod recursive_task_tests {
         assert_eq!(max_depth(&tree), 2);
 
         // Verify structure
-        let root1 = tree.iter().find(|n| n.task.title == "Root 1").expect("Root 1 must exist in tree");
-        let root2 = tree.iter().find(|n| n.task.title == "Root 2").expect("Root 2 must exist in tree");
+        let root1 = tree
+            .iter()
+            .find(|n| n.task.title == "Root 1")
+            .expect("Root 1 must exist in tree");
+        let root2 = tree
+            .iter()
+            .find(|n| n.task.title == "Root 2")
+            .expect("Root 2 must exist in tree");
 
         assert_eq!(root1.children.len(), 1);
         assert_eq!(root1.children[0].task.title, "Child of Root 1");
@@ -338,7 +344,9 @@ mod recursive_task_tests {
             description: Some("A subtask description".to_string()),
             priority: Some(2),
             position: Some(0),
-            due_date: Some(NaiveDate::from_ymd_opt(2024, 12, 31).expect("2024-12-31 is a valid date")),
+            due_date: Some(
+                NaiveDate::from_ymd_opt(2024, 12, 31).expect("2024-12-31 is a valid date"),
+            ),
             assigned_to: None,
         };
 

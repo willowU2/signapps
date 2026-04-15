@@ -1,14 +1,20 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useCallback } from 'react';
-import { AppLayout } from '@/components/layout/app-layout';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useState, useEffect, useCallback } from "react";
+import { AppLayout } from "@/components/layout/app-layout";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table,
   TableBody,
@@ -16,7 +22,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
+} from "@/components/ui/table";
 import {
   Dialog,
   DialogContent,
@@ -24,7 +30,7 @@ import {
   DialogTitle,
   DialogFooter,
   DialogDescription,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -34,14 +40,14 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+} from "@/components/ui/alert-dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from "@/components/ui/dropdown-menu";
 import {
   Shield,
   Radio,
@@ -62,8 +68,8 @@ import {
   CheckCircle,
   AlertTriangle,
   Settings,
-} from 'lucide-react';
-import { toast } from 'sonner';
+} from "lucide-react";
+import { toast } from "sonner";
 import {
   securelinkApi,
   DashboardStats,
@@ -75,40 +81,39 @@ import {
   DnsBlocklist,
   DnsRecord,
   DnsStats,
-} from '@/lib/api/securelink';
-import { usePageTitle } from '@/hooks/use-page-title';
+} from "@/lib/api/securelink";
+import { usePageTitle } from "@/hooks/use-page-title";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function formatBytes(bytes: number): string {
-  if (bytes === 0) return '0 B';
+  if (bytes === 0) return "0 B";
   const k = 1024;
-  const sizes = ['B', 'KB', 'MB', 'GB'];
+  const sizes = ["B", "KB", "MB", "GB"];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
 }
 
 function formatDate(dateStr?: string): string {
-  if (!dateStr) return '—';
-  return new Date(dateStr).toLocaleString('fr-FR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
+  if (!dateStr) return "—";
+  return new Date(dateStr).toLocaleString("fr-FR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
   });
 }
 
-function TunnelStatusBadge({ status }: { status: Tunnel['status'] }) {
-  if (status === 'connected')
+function TunnelStatusBadge({ status }: { status: Tunnel["status"] }) {
+  if (status === "connected")
     return <Badge className="bg-green-500/10 text-green-600">Connecté</Badge>;
-  if (status === 'error')
-    return <Badge variant="destructive">Erreur</Badge>;
+  if (status === "error") return <Badge variant="destructive">Erreur</Badge>;
   return <Badge variant="secondary">Déconnecté</Badge>;
 }
 
-function RelayStatusBadge({ status }: { status: Relay['status'] }) {
-  if (status === 'connected')
+function RelayStatusBadge({ status }: { status: Relay["status"] }) {
+  if (status === "connected")
     return <Badge className="bg-green-500/10 text-green-600">Connecté</Badge>;
   return <Badge variant="secondary">Déconnecté</Badge>;
 }
@@ -129,47 +134,53 @@ function DashboardTab() {
       setStats(s.data);
       setTraffic(t.data);
     } catch {
-      toast.error('Impossible de charger les statistiques');
+      toast.error("Impossible de charger les statistiques");
     } finally {
       setLoading(false);
     }
   }, []);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    load();
+  }, [load]);
 
   const statCards = [
     {
-      label: 'Active Tunnels',
-      value: stats?.active_tunnels ?? '—',
+      label: "Active Tunnels",
+      value: stats?.active_tunnels ?? "—",
       icon: <Network className="h-5 w-5 text-blue-500" />,
-      bg: 'bg-blue-500/10',
+      bg: "bg-blue-500/10",
     },
     {
-      label: 'Active Relays',
-      value: stats?.active_relays ?? '—',
+      label: "Active Relays",
+      value: stats?.active_relays ?? "—",
       icon: <Radio className="h-5 w-5 text-purple-500" />,
-      bg: 'bg-purple-500/10',
+      bg: "bg-purple-500/10",
     },
     {
-      label: 'DNS Queries Today',
-      value: stats?.dns_queries_today ?? '—',
+      label: "DNS Queries Today",
+      value: stats?.dns_queries_today ?? "—",
       icon: <Globe className="h-5 w-5 text-green-500" />,
-      bg: 'bg-green-500/10',
+      bg: "bg-green-500/10",
     },
     {
-      label: 'Blocked Queries',
-      value: stats?.blocked_queries_today ?? '—',
+      label: "Blocked Queries",
+      value: stats?.blocked_queries_today ?? "—",
       icon: <Ban className="h-5 w-5 text-red-500" />,
-      bg: 'bg-red-500/10',
+      bg: "bg-red-500/10",
     },
   ];
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <p className="text-muted-foreground text-sm">Overview of all SecureLink services</p>
+        <p className="text-muted-foreground text-sm">
+          Overview of all SecureLink services
+        </p>
         <Button variant="outline" size="sm" onClick={load} disabled={loading}>
-          <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+          <RefreshCw
+            className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`}
+          />
           Refresh
         </Button>
       </div>
@@ -180,7 +191,9 @@ function DashboardTab() {
           <Card key={card.label}>
             <CardContent className="p-6">
               <div className="flex items-center gap-3">
-                <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${card.bg}`}>
+                <div
+                  className={`flex h-10 w-10 items-center justify-center rounded-lg ${card.bg}`}
+                >
                   {card.icon}
                 </div>
                 <div>
@@ -211,13 +224,20 @@ function DashboardTab() {
           ) : (
             <div className="space-y-2">
               {traffic.slice(-10).map((point, i) => (
-                <div key={i} className="flex items-center justify-between rounded border px-3 py-1.5 text-sm">
+                <div
+                  key={i}
+                  className="flex items-center justify-between rounded border px-3 py-1.5 text-sm"
+                >
                   <span className="text-muted-foreground font-mono text-xs">
-                    {new Date(point.timestamp).toLocaleTimeString('fr-FR')}
+                    {new Date(point.timestamp).toLocaleTimeString("fr-FR")}
                   </span>
                   <div className="flex gap-4">
-                    <span className="text-green-600">↓ {formatBytes(point.bytes_in)}</span>
-                    <span className="text-orange-500">↑ {formatBytes(point.bytes_out)}</span>
+                    <span className="text-green-600">
+                      ↓ {formatBytes(point.bytes_in)}
+                    </span>
+                    <span className="text-orange-500">
+                      ↑ {formatBytes(point.bytes_out)}
+                    </span>
                   </div>
                 </div>
               ))}
@@ -237,8 +257,17 @@ function TunnelsTab() {
   const [createOpen, setCreateOpen] = useState(false);
   const [quickOpen, setQuickOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [form, setForm] = useState({ name: '', target_host: '', target_port: '', local_port: '', protocol: 'tcp' });
-  const [quickForm, setQuickForm] = useState({ target_host: '', target_port: '' });
+  const [form, setForm] = useState({
+    name: "",
+    target_host: "",
+    target_port: "",
+    local_port: "",
+    protocol: "tcp",
+  });
+  const [quickForm, setQuickForm] = useState({
+    target_host: "",
+    target_port: "",
+  });
   const [saving, setSaving] = useState(false);
 
   const load = useCallback(async () => {
@@ -247,17 +276,19 @@ function TunnelsTab() {
       const res = await securelinkApi.tunnels.list();
       setTunnels(res.data);
     } catch {
-      toast.error('Failed to load tunnels');
+      toast.error("Failed to load tunnels");
     } finally {
       setLoading(false);
     }
   }, []);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    load();
+  }, [load]);
 
   const handleCreate = async () => {
     if (!form.name || !form.target_host || !form.target_port) {
-      toast.error('Nom, hôte et port requis');
+      toast.error("Nom, hôte et port requis");
       return;
     }
     setSaving(true);
@@ -269,12 +300,18 @@ function TunnelsTab() {
         local_port: form.local_port ? parseInt(form.local_port) : undefined,
         protocol: form.protocol,
       });
-      toast.success('Tunnel créé');
+      toast.success("Tunnel créé");
       setCreateOpen(false);
-      setForm({ name: '', target_host: '', target_port: '', local_port: '', protocol: 'tcp' });
+      setForm({
+        name: "",
+        target_host: "",
+        target_port: "",
+        local_port: "",
+        protocol: "tcp",
+      });
       load();
     } catch {
-      toast.error('Échec de la création du tunnel');
+      toast.error("Échec de la création du tunnel");
     } finally {
       setSaving(false);
     }
@@ -282,7 +319,7 @@ function TunnelsTab() {
 
   const handleQuickConnect = async () => {
     if (!quickForm.target_host || !quickForm.target_port) {
-      toast.error('Hôte et port requis');
+      toast.error("Hôte et port requis");
       return;
     }
     setSaving(true);
@@ -291,12 +328,12 @@ function TunnelsTab() {
         target_host: quickForm.target_host,
         target_port: parseInt(quickForm.target_port),
       });
-      toast.success('Connexion rapide initiée');
+      toast.success("Connexion rapide initiée");
       setQuickOpen(false);
-      setQuickForm({ target_host: '', target_port: '' });
+      setQuickForm({ target_host: "", target_port: "" });
       load();
     } catch {
-      toast.error('Échec de la connexion rapide');
+      toast.error("Échec de la connexion rapide");
     } finally {
       setSaving(false);
     }
@@ -305,20 +342,20 @@ function TunnelsTab() {
   const handleReconnect = async (id: string) => {
     try {
       await securelinkApi.tunnels.reconnect(id);
-      toast.success('Reconnexion en cours…');
+      toast.success("Reconnexion en cours…");
       load();
     } catch {
-      toast.error('Échec de la reconnexion');
+      toast.error("Échec de la reconnexion");
     }
   };
 
   const handleDelete = async (id: string) => {
     try {
       await securelinkApi.tunnels.delete(id);
-      toast.success('Tunnel supprimé');
+      toast.success("Tunnel supprimé");
       load();
     } catch {
-      toast.error('Échec de la suppression');
+      toast.error("Échec de la suppression");
     }
     setDeleteId(null);
   };
@@ -326,9 +363,15 @@ function TunnelsTab() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">{tunnels.length} tunnel(s) configured</p>
+        <p className="text-sm text-muted-foreground">
+          {tunnels.length} tunnel(s) configured
+        </p>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => setQuickOpen(true)}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setQuickOpen(true)}
+          >
             <Zap className="mr-2 h-4 w-4" />
             Quick Connect
           </Button>
@@ -337,7 +380,7 @@ function TunnelsTab() {
             New Tunnel
           </Button>
           <Button variant="ghost" size="sm" onClick={load} disabled={loading}>
-            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
           </Button>
         </div>
       </div>
@@ -357,7 +400,10 @@ function TunnelsTab() {
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={6} className="py-8 text-center text-muted-foreground">
+                <TableCell
+                  colSpan={6}
+                  className="py-8 text-center text-muted-foreground"
+                >
                   Loading tunnels…
                 </TableCell>
               </TableRow>
@@ -377,11 +423,15 @@ function TunnelsTab() {
                   <TableCell className="font-mono text-sm">
                     {tunnel.target_host}:{tunnel.target_port}
                     {tunnel.local_port && (
-                      <span className="ml-1 text-muted-foreground">→ :{tunnel.local_port}</span>
+                      <span className="ml-1 text-muted-foreground">
+                        → :{tunnel.local_port}
+                      </span>
                     )}
                   </TableCell>
                   <TableCell>
-                    <Badge variant="outline" className="uppercase">{tunnel.protocol}</Badge>
+                    <Badge variant="outline" className="uppercase">
+                      {tunnel.protocol}
+                    </Badge>
                   </TableCell>
                   <TableCell>
                     <TunnelStatusBadge status={tunnel.status} />
@@ -397,7 +447,9 @@ function TunnelsTab() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => handleReconnect(tunnel.id)}>
+                        <DropdownMenuItem
+                          onClick={() => handleReconnect(tunnel.id)}
+                        >
                           <RefreshCw className="mr-2 h-4 w-4" />
                           Reconnect
                         </DropdownMenuItem>
@@ -424,7 +476,9 @@ function TunnelsTab() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>New Tunnel</DialogTitle>
-            <DialogDescription>Configure a secure tunnel to a remote host.</DialogDescription>
+            <DialogDescription>
+              Configure a secure tunnel to a remote host.
+            </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-2">
             <div className="grid gap-1.5">
@@ -432,7 +486,9 @@ function TunnelsTab() {
               <Input
                 placeholder="my-tunnel"
                 value={form.name}
-                onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, name: e.target.value }))
+                }
               />
             </div>
             <div className="grid grid-cols-2 gap-3">
@@ -441,7 +497,9 @@ function TunnelsTab() {
                 <Input
                   placeholder="192.168.1.1"
                   value={form.target_host}
-                  onChange={(e) => setForm((f) => ({ ...f, target_host: e.target.value }))}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, target_host: e.target.value }))
+                  }
                 />
               </div>
               <div className="grid gap-1.5">
@@ -450,7 +508,9 @@ function TunnelsTab() {
                   type="number"
                   placeholder="22"
                   value={form.target_port}
-                  onChange={(e) => setForm((f) => ({ ...f, target_port: e.target.value }))}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, target_port: e.target.value }))
+                  }
                 />
               </div>
             </div>
@@ -461,7 +521,9 @@ function TunnelsTab() {
                   type="number"
                   placeholder="auto"
                   value={form.local_port}
-                  onChange={(e) => setForm((f) => ({ ...f, local_port: e.target.value }))}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, local_port: e.target.value }))
+                  }
                 />
               </div>
               <div className="grid gap-1.5">
@@ -469,15 +531,19 @@ function TunnelsTab() {
                 <Input
                   placeholder="tcp"
                   value={form.protocol}
-                  onChange={(e) => setForm((f) => ({ ...f, protocol: e.target.value }))}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, protocol: e.target.value }))
+                  }
                 />
               </div>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setCreateOpen(false)}>Annuler</Button>
+            <Button variant="outline" onClick={() => setCreateOpen(false)}>
+              Annuler
+            </Button>
             <Button onClick={handleCreate} disabled={saving}>
-              {saving ? 'Création…' : 'Créer le tunnel'}
+              {saving ? "Création…" : "Créer le tunnel"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -488,7 +554,9 @@ function TunnelsTab() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Quick Connect</DialogTitle>
-            <DialogDescription>Instantly open a tunnel to a host and port.</DialogDescription>
+            <DialogDescription>
+              Instantly open a tunnel to a host and port.
+            </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-2">
             <div className="grid gap-1.5">
@@ -496,7 +564,9 @@ function TunnelsTab() {
               <Input
                 placeholder="192.168.1.1"
                 value={quickForm.target_host}
-                onChange={(e) => setQuickForm((f) => ({ ...f, target_host: e.target.value }))}
+                onChange={(e) =>
+                  setQuickForm((f) => ({ ...f, target_host: e.target.value }))
+                }
               />
             </div>
             <div className="grid gap-1.5">
@@ -505,27 +575,37 @@ function TunnelsTab() {
                 type="number"
                 placeholder="80"
                 value={quickForm.target_port}
-                onChange={(e) => setQuickForm((f) => ({ ...f, target_port: e.target.value }))}
+                onChange={(e) =>
+                  setQuickForm((f) => ({ ...f, target_port: e.target.value }))
+                }
               />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setQuickOpen(false)}>Annuler</Button>
+            <Button variant="outline" onClick={() => setQuickOpen(false)}>
+              Annuler
+            </Button>
             <Button onClick={handleQuickConnect} disabled={saving}>
               <Zap className="mr-2 h-4 w-4" />
-              {saving ? 'Connexion…' : 'Connecter'}
+              {saving ? "Connexion…" : "Connecter"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* Delete Confirmation */}
-      <AlertDialog open={deleteId !== null} onOpenChange={(o) => { if (!o) setDeleteId(null); }}>
+      <AlertDialog
+        open={deleteId !== null}
+        onOpenChange={(o) => {
+          if (!o) setDeleteId(null);
+        }}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Supprimer le tunnel</AlertDialogTitle>
             <AlertDialogDescription>
-              Ce tunnel sera supprimé définitivement. Cette action est irréversible.
+              Ce tunnel sera supprimé définitivement. Cette action est
+              irréversible.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -550,8 +630,11 @@ function RelaysTab() {
   const [loading, setLoading] = useState(true);
   const [createOpen, setCreateOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [statsRelay, setStatsRelay] = useState<{ id: string; stats: RelayStats } | null>(null);
-  const [form, setForm] = useState({ name: '', host: '', port: '' });
+  const [statsRelay, setStatsRelay] = useState<{
+    id: string;
+    stats: RelayStats;
+  } | null>(null);
+  const [form, setForm] = useState({ name: "", host: "", port: "" });
   const [saving, setSaving] = useState(false);
 
   const load = useCallback(async () => {
@@ -560,17 +643,19 @@ function RelaysTab() {
       const res = await securelinkApi.relays.list();
       setRelays(res.data);
     } catch {
-      toast.error('Impossible de charger les relais');
+      toast.error("Impossible de charger les relais");
     } finally {
       setLoading(false);
     }
   }, []);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    load();
+  }, [load]);
 
   const handleCreate = async () => {
     if (!form.name || !form.host || !form.port) {
-      toast.error('Nom, hôte et port requis');
+      toast.error("Nom, hôte et port requis");
       return;
     }
     setSaving(true);
@@ -580,12 +665,12 @@ function RelaysTab() {
         host: form.host,
         port: parseInt(form.port),
       });
-      toast.success('Relais créé');
+      toast.success("Relais créé");
       setCreateOpen(false);
-      setForm({ name: '', host: '', port: '' });
+      setForm({ name: "", host: "", port: "" });
       load();
     } catch {
-      toast.error('Échec de la création du relais');
+      toast.error("Échec de la création du relais");
     } finally {
       setSaving(false);
     }
@@ -594,29 +679,29 @@ function RelaysTab() {
   const handleConnect = async (id: string) => {
     try {
       await securelinkApi.relays.connect(id);
-      toast.success('Relais en cours de connexion…');
+      toast.success("Relais en cours de connexion…");
       load();
     } catch {
-      toast.error('Échec de la connexion');
+      toast.error("Échec de la connexion");
     }
   };
 
   const handleDisconnect = async (id: string) => {
     try {
       await securelinkApi.relays.disconnect(id);
-      toast.success('Relais déconnecté');
+      toast.success("Relais déconnecté");
       load();
     } catch {
-      toast.error('Échec de la déconnexion');
+      toast.error("Échec de la déconnexion");
     }
   };
 
   const handleTest = async (id: string) => {
     try {
       await securelinkApi.relays.test(id);
-      toast.success('Test du relais envoyé');
+      toast.success("Test du relais envoyé");
     } catch {
-      toast.error('Échec du test');
+      toast.error("Échec du test");
     }
   };
 
@@ -625,17 +710,17 @@ function RelaysTab() {
       const res = await securelinkApi.relays.stats(id);
       setStatsRelay({ id, stats: res.data });
     } catch {
-      toast.error('Impossible de charger les stats du relais');
+      toast.error("Impossible de charger les stats du relais");
     }
   };
 
   const handleDelete = async (id: string) => {
     try {
       await securelinkApi.relays.delete(id);
-      toast.success('Relais supprimé');
+      toast.success("Relais supprimé");
       load();
     } catch {
-      toast.error('Échec de la suppression');
+      toast.error("Échec de la suppression");
     }
     setDeleteId(null);
   };
@@ -643,14 +728,16 @@ function RelaysTab() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">{relays.length} relay(s) configured</p>
+        <p className="text-sm text-muted-foreground">
+          {relays.length} relay(s) configured
+        </p>
         <div className="flex gap-2">
           <Button size="sm" onClick={() => setCreateOpen(true)}>
             <Plus className="mr-2 h-4 w-4" />
             New Relay
           </Button>
           <Button variant="ghost" size="sm" onClick={load} disabled={loading}>
-            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
           </Button>
         </div>
       </div>
@@ -669,7 +756,10 @@ function RelaysTab() {
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={5} className="py-8 text-center text-muted-foreground">
+                <TableCell
+                  colSpan={5}
+                  className="py-8 text-center text-muted-foreground"
+                >
                   Loading relays…
                 </TableCell>
               </TableRow>
@@ -691,7 +781,15 @@ function RelaysTab() {
                   </TableCell>
                   <TableCell className="text-sm">
                     {relay.latency_ms != null ? (
-                      <span className={relay.latency_ms < 50 ? 'text-green-600' : relay.latency_ms < 150 ? 'text-yellow-600' : 'text-red-500'}>
+                      <span
+                        className={
+                          relay.latency_ms < 50
+                            ? "text-green-600"
+                            : relay.latency_ms < 150
+                              ? "text-yellow-600"
+                              : "text-red-500"
+                        }
+                      >
                         {relay.latency_ms} ms
                       </span>
                     ) : (
@@ -709,13 +807,17 @@ function RelaysTab() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        {relay.status === 'connected' ? (
-                          <DropdownMenuItem onClick={() => handleDisconnect(relay.id)}>
+                        {relay.status === "connected" ? (
+                          <DropdownMenuItem
+                            onClick={() => handleDisconnect(relay.id)}
+                          >
                             <WifiOff className="mr-2 h-4 w-4" />
                             Disconnect
                           </DropdownMenuItem>
                         ) : (
-                          <DropdownMenuItem onClick={() => handleConnect(relay.id)}>
+                          <DropdownMenuItem
+                            onClick={() => handleConnect(relay.id)}
+                          >
                             <Wifi className="mr-2 h-4 w-4" />
                             Connect
                           </DropdownMenuItem>
@@ -724,7 +826,9 @@ function RelaysTab() {
                           <PlugZap className="mr-2 h-4 w-4" />
                           Test
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleShowStats(relay.id)}>
+                        <DropdownMenuItem
+                          onClick={() => handleShowStats(relay.id)}
+                        >
                           <Activity className="mr-2 h-4 w-4" />
                           Stats
                         </DropdownMenuItem>
@@ -751,7 +855,9 @@ function RelaysTab() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>New Relay</DialogTitle>
-            <DialogDescription>Add a new relay server to route traffic through.</DialogDescription>
+            <DialogDescription>
+              Add a new relay server to route traffic through.
+            </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-2">
             <div className="grid gap-1.5">
@@ -759,7 +865,9 @@ function RelaysTab() {
               <Input
                 placeholder="relay-eu-1"
                 value={form.name}
-                onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, name: e.target.value }))
+                }
               />
             </div>
             <div className="grid grid-cols-2 gap-3">
@@ -768,7 +876,9 @@ function RelaysTab() {
                 <Input
                   placeholder="relay.example.com"
                   value={form.host}
-                  onChange={(e) => setForm((f) => ({ ...f, host: e.target.value }))}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, host: e.target.value }))
+                  }
                 />
               </div>
               <div className="grid gap-1.5">
@@ -777,22 +887,31 @@ function RelaysTab() {
                   type="number"
                   placeholder="443"
                   value={form.port}
-                  onChange={(e) => setForm((f) => ({ ...f, port: e.target.value }))}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, port: e.target.value }))
+                  }
                 />
               </div>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setCreateOpen(false)}>Annuler</Button>
+            <Button variant="outline" onClick={() => setCreateOpen(false)}>
+              Annuler
+            </Button>
             <Button onClick={handleCreate} disabled={saving}>
-              {saving ? 'Création…' : 'Créer le relais'}
+              {saving ? "Création…" : "Créer le relais"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* Stats Dialog */}
-      <Dialog open={statsRelay !== null} onOpenChange={(o) => { if (!o) setStatsRelay(null); }}>
+      <Dialog
+        open={statsRelay !== null}
+        onOpenChange={(o) => {
+          if (!o) setStatsRelay(null);
+        }}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Relay Stats</DialogTitle>
@@ -802,44 +921,60 @@ function RelaysTab() {
               <Card>
                 <CardContent className="p-4">
                   <p className="text-xs text-muted-foreground">Bytes In</p>
-                  <p className="text-xl font-bold">{formatBytes(statsRelay.stats.bytes_in)}</p>
+                  <p className="text-xl font-bold">
+                    {formatBytes(statsRelay.stats.bytes_in)}
+                  </p>
                 </CardContent>
               </Card>
               <Card>
                 <CardContent className="p-4">
                   <p className="text-xs text-muted-foreground">Bytes Out</p>
-                  <p className="text-xl font-bold">{formatBytes(statsRelay.stats.bytes_out)}</p>
+                  <p className="text-xl font-bold">
+                    {formatBytes(statsRelay.stats.bytes_out)}
+                  </p>
                 </CardContent>
               </Card>
               <Card>
                 <CardContent className="p-4">
                   <p className="text-xs text-muted-foreground">Latency</p>
                   <p className="text-xl font-bold">
-                    {statsRelay.stats.latency_ms != null ? `${statsRelay.stats.latency_ms} ms` : '—'}
+                    {statsRelay.stats.latency_ms != null
+                      ? `${statsRelay.stats.latency_ms} ms`
+                      : "—"}
                   </p>
                 </CardContent>
               </Card>
               <Card>
                 <CardContent className="p-4">
                   <p className="text-xs text-muted-foreground">Connecté At</p>
-                  <p className="text-sm font-medium">{formatDate(statsRelay.stats.connected_at)}</p>
+                  <p className="text-sm font-medium">
+                    {formatDate(statsRelay.stats.connected_at)}
+                  </p>
                 </CardContent>
               </Card>
             </div>
           )}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setStatsRelay(null)}>Fermer</Button>
+            <Button variant="outline" onClick={() => setStatsRelay(null)}>
+              Fermer
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* Delete Confirmation */}
-      <AlertDialog open={deleteId !== null} onOpenChange={(o) => { if (!o) setDeleteId(null); }}>
+      <AlertDialog
+        open={deleteId !== null}
+        onOpenChange={(o) => {
+          if (!o) setDeleteId(null);
+        }}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Supprimer le relais</AlertDialogTitle>
             <AlertDialogDescription>
-              Ce relais sera supprimé définitivement. Cette action est irréversible.
+              Ce relais sera supprimé définitivement. Cette action est
+              irréversible.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -867,15 +1002,25 @@ function DnsTab() {
   const [loading, setLoading] = useState(true);
 
   const [editConfig, setEditConfig] = useState(false);
-  const [configForm, setConfigForm] = useState({ upstream: '', cache_size: '', blocking: false });
+  const [configForm, setConfigForm] = useState({
+    upstream: "",
+    cache_size: "",
+    blocking: false,
+  });
 
   const [addBlocklistOpen, setAddBlocklistOpen] = useState(false);
-  const [blocklistForm, setBlocklistForm] = useState({ name: '', url: '' });
+  const [blocklistForm, setBlocklistForm] = useState({ name: "", url: "" });
 
   const [addRecordOpen, setAddRecordOpen] = useState(false);
-  const [recordForm, setRecordForm] = useState({ name: '', record_type: 'A', value: '' });
+  const [recordForm, setRecordForm] = useState({
+    name: "",
+    record_type: "A",
+    value: "",
+  });
 
-  const [deleteBlocklistId, setDeleteBlocklistId] = useState<string | null>(null);
+  const [deleteBlocklistId, setDeleteBlocklistId] = useState<string | null>(
+    null,
+  );
   const [deleteRecord, setDeleteRecord] = useState<DnsRecord | null>(null);
 
   const [saving, setSaving] = useState(false);
@@ -891,7 +1036,7 @@ function DnsTab() {
       ]);
       setConfig(cfg.data);
       setConfigForm({
-        upstream: cfg.data.upstream_servers.join(', '),
+        upstream: cfg.data.upstream_servers.join(", "),
         cache_size: String(cfg.data.cache_size),
         blocking: cfg.data.blocking_enabled,
       });
@@ -899,27 +1044,32 @@ function DnsTab() {
       setRecords(rec.data);
       setDnsStats(st.data);
     } catch {
-      toast.error('Impossible de charger la configuration DNS');
+      toast.error("Impossible de charger la configuration DNS");
     } finally {
       setLoading(false);
     }
   }, []);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    load();
+  }, [load]);
 
   const handleSaveConfig = async () => {
     setSaving(true);
     try {
       await securelinkApi.dns.updateConfig({
-        upstream_servers: configForm.upstream.split(',').map((s) => s.trim()).filter(Boolean),
+        upstream_servers: configForm.upstream
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean),
         cache_size: parseInt(configForm.cache_size) || 1000,
         blocking_enabled: configForm.blocking,
       });
-      toast.success('Configuration DNS mise à jour');
+      toast.success("Configuration DNS mise à jour");
       setEditConfig(false);
       load();
     } catch {
-      toast.error('Échec de la mise à jour DNS');
+      toast.error("Échec de la mise à jour DNS");
     } finally {
       setSaving(false);
     }
@@ -927,18 +1077,18 @@ function DnsTab() {
 
   const handleAddBlocklist = async () => {
     if (!blocklistForm.name || !blocklistForm.url) {
-      toast.error('Nom et URL requis');
+      toast.error("Nom et URL requis");
       return;
     }
     setSaving(true);
     try {
       await securelinkApi.dns.addBlocklist(blocklistForm);
-      toast.success('Liste de blocage ajoutée');
+      toast.success("Liste de blocage ajoutée");
       setAddBlocklistOpen(false);
-      setBlocklistForm({ name: '', url: '' });
+      setBlocklistForm({ name: "", url: "" });
       load();
     } catch {
-      toast.error('Échec de l\'ajout de la liste');
+      toast.error("Échec de l'ajout de la liste");
     } finally {
       setSaving(false);
     }
@@ -947,27 +1097,27 @@ function DnsTab() {
   const handleRefreshBlocklist = async (id: string) => {
     try {
       await securelinkApi.dns.refreshBlocklist(id);
-      toast.success('Actualisation de la liste initiée');
+      toast.success("Actualisation de la liste initiée");
       load();
     } catch {
-      toast.error('Échec de l\'actualisation');
+      toast.error("Échec de l'actualisation");
     }
   };
 
   const handleDeleteBlocklist = async (id: string) => {
     try {
       await securelinkApi.dns.deleteBlocklist(id);
-      toast.success('Liste de blocage supprimée');
+      toast.success("Liste de blocage supprimée");
       load();
     } catch {
-      toast.error('Échec de la suppression');
+      toast.error("Échec de la suppression");
     }
     setDeleteBlocklistId(null);
   };
 
   const handleAddRecord = async () => {
     if (!recordForm.name || !recordForm.value) {
-      toast.error('Nom et valeur requis');
+      toast.error("Nom et valeur requis");
       return;
     }
     setSaving(true);
@@ -977,12 +1127,12 @@ function DnsTab() {
         record_type: recordForm.record_type,
         value: recordForm.value,
       });
-      toast.success('Enregistrement DNS ajouté');
+      toast.success("Enregistrement DNS ajouté");
       setAddRecordOpen(false);
-      setRecordForm({ name: '', record_type: 'A', value: '' });
+      setRecordForm({ name: "", record_type: "A", value: "" });
       load();
     } catch {
-      toast.error('Échec de l\'ajout de l\'enregistrement');
+      toast.error("Échec de l'ajout de l'enregistrement");
     } finally {
       setSaving(false);
     }
@@ -990,11 +1140,14 @@ function DnsTab() {
 
   const handleDeleteRecord = async (record: DnsRecord) => {
     try {
-      await securelinkApi.dns.deleteRecord({ name: record.name, record_type: record.record_type });
-      toast.success('Enregistrement DNS supprimé');
+      await securelinkApi.dns.deleteRecord({
+        name: record.name,
+        record_type: record.record_type,
+      });
+      toast.success("Enregistrement DNS supprimé");
       load();
     } catch {
-      toast.error('Échec de la suppression');
+      toast.error("Échec de la suppression");
     }
     setDeleteRecord(null);
   };
@@ -1002,20 +1155,20 @@ function DnsTab() {
   const handleFlushCache = async () => {
     try {
       await securelinkApi.dns.flushCache();
-      toast.success('Cache DNS vidé');
+      toast.success("Cache DNS vidé");
       load();
     } catch {
-      toast.error('Échec du vidage du cache');
+      toast.error("Échec du vidage du cache");
     }
   };
 
   const handleResetStats = async () => {
     try {
       await securelinkApi.dns.resetStats();
-      toast.success('Statistiques DNS réinitialisées');
+      toast.success("Statistiques DNS réinitialisées");
       load();
     } catch {
-      toast.error('Échec de la réinitialisation');
+      toast.error("Échec de la réinitialisation");
     }
   };
 
@@ -1038,25 +1191,43 @@ function DnsTab() {
                 <Settings className="h-5 w-5" />
                 DNS Configuration
               </CardTitle>
-              <CardDescription>Upstream resolvers and cache settings</CardDescription>
+              <CardDescription>
+                Upstream resolvers and cache settings
+              </CardDescription>
             </div>
             <div className="flex gap-2">
               {editConfig ? (
                 <>
-                  <Button variant="outline" size="sm" onClick={() => setEditConfig(false)}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setEditConfig(false)}
+                  >
                     Annuler
                   </Button>
-                  <Button size="sm" onClick={handleSaveConfig} disabled={saving}>
-                    {saving ? 'Enregistrement…' : 'Enregistrer'}
+                  <Button
+                    size="sm"
+                    onClick={handleSaveConfig}
+                    disabled={saving}
+                  >
+                    {saving ? "Enregistrement…" : "Enregistrer"}
                   </Button>
                 </>
               ) : (
                 <>
-                  <Button variant="outline" size="sm" onClick={handleFlushCache}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleFlushCache}
+                  >
                     <Database className="mr-2 h-4 w-4" />
                     Flush Cache
                   </Button>
-                  <Button size="sm" variant="outline" onClick={() => setEditConfig(true)}>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setEditConfig(true)}
+                  >
                     <Settings className="mr-2 h-4 w-4" />
                     Edit
                   </Button>
@@ -1073,7 +1244,9 @@ function DnsTab() {
                 <Input
                   placeholder="8.8.8.8, 1.1.1.1"
                   value={configForm.upstream}
-                  onChange={(e) => setConfigForm((f) => ({ ...f, upstream: e.target.value }))}
+                  onChange={(e) =>
+                    setConfigForm((f) => ({ ...f, upstream: e.target.value }))
+                  }
                 />
               </div>
               <div className="grid gap-1.5">
@@ -1082,13 +1255,17 @@ function DnsTab() {
                   type="number"
                   placeholder="1000"
                   value={configForm.cache_size}
-                  onChange={(e) => setConfigForm((f) => ({ ...f, cache_size: e.target.value }))}
+                  onChange={(e) =>
+                    setConfigForm((f) => ({ ...f, cache_size: e.target.value }))
+                  }
                 />
               </div>
               <div className="flex items-center gap-3">
                 <Switch
                   checked={configForm.blocking}
-                  onCheckedChange={(v) => setConfigForm((f) => ({ ...f, blocking: v }))}
+                  onCheckedChange={(v) =>
+                    setConfigForm((f) => ({ ...f, blocking: v }))
+                  }
                 />
                 <Label>Blocking Enabled</Label>
               </div>
@@ -1097,11 +1274,15 @@ function DnsTab() {
             <div className="grid gap-3 text-sm">
               <div className="flex items-center justify-between rounded border p-3">
                 <span className="text-muted-foreground">Upstream Servers</span>
-                <span className="font-mono">{config?.upstream_servers.join(', ') || '—'}</span>
+                <span className="font-mono">
+                  {config?.upstream_servers.join(", ") || "—"}
+                </span>
               </div>
               <div className="flex items-center justify-between rounded border p-3">
                 <span className="text-muted-foreground">Cache Size</span>
-                <span className="font-mono">{config?.cache_size ?? '—'} entries</span>
+                <span className="font-mono">
+                  {config?.cache_size ?? "—"} entries
+                </span>
               </div>
               <div className="flex items-center justify-between rounded border p-3">
                 <span className="text-muted-foreground">Blocking</span>
@@ -1140,10 +1321,10 @@ function DnsTab() {
           <CardContent>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               {[
-                { label: 'Total Queries', value: dnsStats.total_queries },
-                { label: 'Blocked', value: dnsStats.blocked_queries },
-                { label: 'Cache Hits', value: dnsStats.cache_hits },
-                { label: 'Cache Misses', value: dnsStats.cache_misses },
+                { label: "Total Queries", value: dnsStats.total_queries },
+                { label: "Blocked", value: dnsStats.blocked_queries },
+                { label: "Cache Hits", value: dnsStats.cache_hits },
+                { label: "Cache Misses", value: dnsStats.cache_misses },
               ].map((s) => (
                 <div key={s.label} className="rounded border p-3 text-center">
                   <p className="text-2xl font-bold">{s.value}</p>
@@ -1164,7 +1345,9 @@ function DnsTab() {
                 <Ban className="h-5 w-5" />
                 Blocklists
               </CardTitle>
-              <CardDescription>{blocklists.length} list(s) configured</CardDescription>
+              <CardDescription>
+                {blocklists.length} list(s) configured
+              </CardDescription>
             </div>
             <Button size="sm" onClick={() => setAddBlocklistOpen(true)}>
               <Plus className="mr-2 h-4 w-4" />
@@ -1186,7 +1369,10 @@ function DnsTab() {
             <TableBody>
               {blocklists.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="py-6 text-center text-muted-foreground">
+                  <TableCell
+                    colSpan={5}
+                    className="py-6 text-center text-muted-foreground"
+                  >
                     No blocklists configured
                   </TableCell>
                 </TableRow>
@@ -1196,7 +1382,9 @@ function DnsTab() {
                     <TableCell>
                       <div>
                         <p className="font-medium">{bl.name}</p>
-                        <p className="font-mono text-xs text-muted-foreground truncate max-w-[200px]">{bl.url}</p>
+                        <p className="font-mono text-xs text-muted-foreground truncate max-w-[200px]">
+                          {bl.url}
+                        </p>
                       </div>
                     </TableCell>
                     <TableCell>{bl.entries_count.toLocaleString()}</TableCell>
@@ -1205,7 +1393,9 @@ function DnsTab() {
                     </TableCell>
                     <TableCell>
                       {bl.enabled ? (
-                        <Badge className="bg-green-500/10 text-green-600">Active</Badge>
+                        <Badge className="bg-green-500/10 text-green-600">
+                          Active
+                        </Badge>
                       ) : (
                         <Badge variant="secondary">Inactive</Badge>
                       )}
@@ -1218,7 +1408,9 @@ function DnsTab() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleRefreshBlocklist(bl.id)}>
+                          <DropdownMenuItem
+                            onClick={() => handleRefreshBlocklist(bl.id)}
+                          >
                             <RefreshCw className="mr-2 h-4 w-4" />
                             Refresh
                           </DropdownMenuItem>
@@ -1271,18 +1463,25 @@ function DnsTab() {
             <TableBody>
               {records.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={4} className="py-6 text-center text-muted-foreground">
+                  <TableCell
+                    colSpan={4}
+                    className="py-6 text-center text-muted-foreground"
+                  >
                     No custom DNS records
                   </TableCell>
                 </TableRow>
               ) : (
                 records.map((rec, i) => (
-                  <TableRow key={rec.name + '-' + rec.record_type}>
-                    <TableCell className="font-mono text-sm">{rec.name}</TableCell>
+                  <TableRow key={rec.name + "-" + rec.record_type}>
+                    <TableCell className="font-mono text-sm">
+                      {rec.name}
+                    </TableCell>
                     <TableCell>
                       <Badge variant="outline">{rec.record_type}</Badge>
                     </TableCell>
-                    <TableCell className="font-mono text-sm">{rec.value}</TableCell>
+                    <TableCell className="font-mono text-sm">
+                      {rec.value}
+                    </TableCell>
                     <TableCell>
                       <Button
                         variant="ghost"
@@ -1305,7 +1504,9 @@ function DnsTab() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Add Blocklist</DialogTitle>
-            <DialogDescription>Subscribe to a DNS blocklist from a URL.</DialogDescription>
+            <DialogDescription>
+              Subscribe to a DNS blocklist from a URL.
+            </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-2">
             <div className="grid gap-1.5">
@@ -1313,7 +1514,9 @@ function DnsTab() {
               <Input
                 placeholder="EasyList"
                 value={blocklistForm.name}
-                onChange={(e) => setBlocklistForm((f) => ({ ...f, name: e.target.value }))}
+                onChange={(e) =>
+                  setBlocklistForm((f) => ({ ...f, name: e.target.value }))
+                }
               />
             </div>
             <div className="grid gap-1.5">
@@ -1321,14 +1524,21 @@ function DnsTab() {
               <Input
                 placeholder="https://somehost.invalid/blocklist.txt"
                 value={blocklistForm.url}
-                onChange={(e) => setBlocklistForm((f) => ({ ...f, url: e.target.value }))}
+                onChange={(e) =>
+                  setBlocklistForm((f) => ({ ...f, url: e.target.value }))
+                }
               />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setAddBlocklistOpen(false)}>Annuler</Button>
+            <Button
+              variant="outline"
+              onClick={() => setAddBlocklistOpen(false)}
+            >
+              Annuler
+            </Button>
             <Button onClick={handleAddBlocklist} disabled={saving}>
-              {saving ? 'Ajout…' : 'Ajouter la liste'}
+              {saving ? "Ajout…" : "Ajouter la liste"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1339,7 +1549,9 @@ function DnsTab() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Add DNS Record</DialogTitle>
-            <DialogDescription>Create a custom local DNS record.</DialogDescription>
+            <DialogDescription>
+              Create a custom local DNS record.
+            </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-2">
             <div className="grid gap-1.5">
@@ -1347,7 +1559,9 @@ function DnsTab() {
               <Input
                 placeholder="myservice.local"
                 value={recordForm.name}
-                onChange={(e) => setRecordForm((f) => ({ ...f, name: e.target.value }))}
+                onChange={(e) =>
+                  setRecordForm((f) => ({ ...f, name: e.target.value }))
+                }
               />
             </div>
             <div className="grid grid-cols-2 gap-3">
@@ -1356,7 +1570,12 @@ function DnsTab() {
                 <Input
                   placeholder="A"
                   value={recordForm.record_type}
-                  onChange={(e) => setRecordForm((f) => ({ ...f, record_type: e.target.value }))}
+                  onChange={(e) =>
+                    setRecordForm((f) => ({
+                      ...f,
+                      record_type: e.target.value,
+                    }))
+                  }
                 />
               </div>
               <div className="grid gap-1.5">
@@ -1364,34 +1583,46 @@ function DnsTab() {
                 <Input
                   placeholder="192.168.1.100"
                   value={recordForm.value}
-                  onChange={(e) => setRecordForm((f) => ({ ...f, value: e.target.value }))}
+                  onChange={(e) =>
+                    setRecordForm((f) => ({ ...f, value: e.target.value }))
+                  }
                 />
               </div>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setAddRecordOpen(false)}>Annuler</Button>
+            <Button variant="outline" onClick={() => setAddRecordOpen(false)}>
+              Annuler
+            </Button>
             <Button onClick={handleAddRecord} disabled={saving}>
-              {saving ? 'Ajout…' : 'Ajouter l\'enregistrement'}
+              {saving ? "Ajout…" : "Ajouter l'enregistrement"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* Delete Blocklist Confirmation */}
-      <AlertDialog open={deleteBlocklistId !== null} onOpenChange={(o) => { if (!o) setDeleteBlocklistId(null); }}>
+      <AlertDialog
+        open={deleteBlocklistId !== null}
+        onOpenChange={(o) => {
+          if (!o) setDeleteBlocklistId(null);
+        }}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Supprimer la liste de blocage</AlertDialogTitle>
             <AlertDialogDescription>
-              Cette liste sera supprimée définitivement. Cette action est irréversible.
+              Cette liste sera supprimée définitivement. Cette action est
+              irréversible.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Annuler</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              onClick={() => deleteBlocklistId && handleDeleteBlocklist(deleteBlocklistId)}
+              onClick={() =>
+                deleteBlocklistId && handleDeleteBlocklist(deleteBlocklistId)
+              }
             >
               Supprimer
             </AlertDialogAction>
@@ -1400,13 +1631,21 @@ function DnsTab() {
       </AlertDialog>
 
       {/* Delete Record Confirmation */}
-      <AlertDialog open={deleteRecord !== null} onOpenChange={(o) => { if (!o) setDeleteRecord(null); }}>
+      <AlertDialog
+        open={deleteRecord !== null}
+        onOpenChange={(o) => {
+          if (!o) setDeleteRecord(null);
+        }}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Supprimer l'enregistrement DNS</AlertDialogTitle>
             <AlertDialogDescription>
-              Supprimer l'enregistrement <span className="font-mono font-medium">{deleteRecord?.name}</span> ?
-              Cette action est irréversible.
+              Supprimer l'enregistrement{" "}
+              <span className="font-mono font-medium">
+                {deleteRecord?.name}
+              </span>{" "}
+              ? Cette action est irréversible.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -1427,7 +1666,7 @@ function DnsTab() {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function SecureLinkPage() {
-  usePageTitle('SecureLink');
+  usePageTitle("SecureLink");
   return (
     <AppLayout>
       <div className="space-y-6">

@@ -94,7 +94,7 @@ export function ApplicantTracker({
       <div className="grid gap-4 overflow-x-auto lg:grid-cols-5">
         {stages.map((stageConfig) => {
           const stageCandidates = candidates.filter(
-            (c) => c.stage === stageConfig.key
+            (c) => c.stage === stageConfig.key,
           );
 
           return (
@@ -177,7 +177,9 @@ export function ApplicantTracker({
               <p className="text-3xl font-bold">
                 {getStageCount(stageConfig.key)}
               </p>
-              <p className="text-sm text-muted-foreground">{stageConfig.label}</p>
+              <p className="text-sm text-muted-foreground">
+                {stageConfig.label}
+              </p>
             </div>
           ))}
         </div>

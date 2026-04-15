@@ -1,28 +1,28 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { UserPlus, X, FolderOpen, Trash2 } from 'lucide-react';
-import { toast } from 'sonner';
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { UserPlus, X, FolderOpen, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 
-export type FolderPermissionRole = 'viewer' | 'editor' | 'owner';
+export type FolderPermissionRole = "viewer" | "editor" | "owner";
 
 export interface FolderShareEntry {
   email: string;
@@ -38,15 +38,15 @@ interface FolderShareDialogProps {
 }
 
 const ROLE_LABELS: Record<FolderPermissionRole, string> = {
-  viewer: 'Viewer — can view and download',
-  editor: 'Editor — can upload and rename',
-  owner: 'Owner — full control',
+  viewer: "Viewer — can view and download",
+  editor: "Editor — can upload and rename",
+  owner: "Owner — full control",
 };
 
 const ROLE_COLORS: Record<FolderPermissionRole, string> = {
-  viewer: 'bg-blue-500/10 text-blue-700',
-  editor: 'bg-green-500/10 text-green-700',
-  owner: 'bg-purple-500/10 text-purple-700',
+  viewer: "bg-blue-500/10 text-blue-700",
+  editor: "bg-green-500/10 text-green-700",
+  owner: "bg-purple-500/10 text-purple-700",
 };
 
 export function FolderShareDialog({
@@ -57,23 +57,23 @@ export function FolderShareDialog({
   onSave,
 }: FolderShareDialogProps) {
   const [shares, setShares] = useState<FolderShareEntry[]>(initialShares);
-  const [newEmail, setNewEmail] = useState('');
-  const [newRole, setNewRole] = useState<FolderPermissionRole>('viewer');
+  const [newEmail, setNewEmail] = useState("");
+  const [newRole, setNewRole] = useState<FolderPermissionRole>("viewer");
   const [saving, setSaving] = useState(false);
 
   const handleAdd = () => {
     const email = newEmail.trim().toLowerCase();
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      toast.error('Please enter a valid email address');
+      toast.error("Please enter a valid email address");
       return;
     }
     if (shares.some((s) => s.email === email)) {
-      toast.error('This email is already in the list');
+      toast.error("This email is already in the list");
       return;
     }
     setShares([...shares, { email, role: newRole }]);
-    setNewEmail('');
-    setNewRole('viewer');
+    setNewEmail("");
+    setNewRole("viewer");
   };
 
   const handleRemove = (email: string) => {
@@ -88,7 +88,7 @@ export function FolderShareDialog({
     setSaving(true);
     try {
       await onSave(shares);
-      toast.success('Folder permissions saved');
+      toast.success("Folder permissions saved");
       onOpenChange(false);
     } catch {
       toast.error("Impossible d'enregistrer permissions");
@@ -118,10 +118,13 @@ export function FolderShareDialog({
               placeholder="Email address..."
               value={newEmail}
               onChange={(e) => setNewEmail(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
+              onKeyDown={(e) => e.key === "Enter" && handleAdd()}
               className="flex-1"
             />
-            <Select value={newRole} onValueChange={(v) => setNewRole(v as FolderPermissionRole)}>
+            <Select
+              value={newRole}
+              onValueChange={(v) => setNewRole(v as FolderPermissionRole)}
+            >
               <SelectTrigger className="w-28">
                 <SelectValue />
               </SelectTrigger>
@@ -150,13 +153,17 @@ export function FolderShareDialog({
               >
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium truncate">{s.email}</p>
-                  <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${ROLE_COLORS[s.role]}`}>
+                  <span
+                    className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${ROLE_COLORS[s.role]}`}
+                  >
                     {s.role}
                   </span>
                 </div>
                 <Select
                   value={s.role}
-                  onValueChange={(v) => handleRoleChange(s.email, v as FolderPermissionRole)}
+                  onValueChange={(v) =>
+                    handleRoleChange(s.email, v as FolderPermissionRole)
+                  }
                 >
                   <SelectTrigger className="w-24 h-7 text-xs">
                     <SelectValue />
@@ -188,8 +195,8 @@ export function FolderShareDialog({
         <div className="text-xs text-muted-foreground space-y-0.5">
           {(Object.keys(ROLE_LABELS) as FolderPermissionRole[]).map((r) => (
             <div key={r}>
-              <span className="font-medium capitalize">{r}:</span>{' '}
-              {ROLE_LABELS[r].split(' — ')[1]}
+              <span className="font-medium capitalize">{r}:</span>{" "}
+              {ROLE_LABELS[r].split(" — ")[1]}
             </div>
           ))}
         </div>

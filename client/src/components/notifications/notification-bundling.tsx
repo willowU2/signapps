@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
 // IDEA-115: Notification bundling — group N similar notifications into one
 
-import { useMemo } from 'react';
-import { Bell } from 'lucide-react';
-import { AppNotification } from '@/stores/notification-store';
+import { useMemo } from "react";
+import { Bell } from "lucide-react";
+import { AppNotification } from "@/stores/notification-store";
 
 interface BundledGroup {
   key: string;
@@ -18,14 +18,14 @@ interface BundledGroup {
 const BUNDLE_THRESHOLD = 3;
 
 const TYPE_LABELS: Record<string, string> = {
-  mail: 'nouveaux emails',
-  tasks: 'tâches mises à jour',
-  calendar: 'rappels calendrier',
-  container: 'événements container',
-  security: 'alertes sécurité',
-  storage: 'notifications stockage',
-  user: 'activités utilisateur',
-  system: 'notifications système',
+  mail: "nouveaux emails",
+  tasks: "tâches mises à jour",
+  calendar: "rappels calendrier",
+  container: "événements container",
+  security: "alertes sécurité",
+  storage: "notifications stockage",
+  user: "activités utilisateur",
+  system: "notifications système",
 };
 
 export function bundleNotifications(notifications: AppNotification[]): {
@@ -47,13 +47,13 @@ export function bundleNotifications(notifications: AppNotification[]): {
   groups.forEach((items, type) => {
     if (items.length >= BUNDLE_THRESHOLD) {
       const sorted = [...items].sort(
-        (a, b) => b.timestamp.getTime() - a.timestamp.getTime()
+        (a, b) => b.timestamp.getTime() - a.timestamp.getTime(),
       );
       bundled.push({
         key: type,
         type,
         count: items.length,
-        label: `${items.length} ${TYPE_LABELS[type] ?? 'notifications'}`,
+        label: `${items.length} ${TYPE_LABELS[type] ?? "notifications"}`,
         latest: sorted[0],
         all: sorted,
       });
@@ -103,7 +103,7 @@ export function NotificationBundleView({
 }: NotificationBundleViewProps) {
   const { bundled, singles } = useMemo(
     () => bundleNotifications(notifications),
-    [notifications]
+    [notifications],
   );
 
   // No bundling if all singles
@@ -114,11 +114,7 @@ export function NotificationBundleView({
   return (
     <div className="space-y-2">
       {bundled.map((g) => (
-        <BundledGroupCard
-          key={g.key}
-          group={g}
-          onExpand={() => {}}
-        />
+        <BundledGroupCard key={g.key} group={g} onExpand={() => {}} />
       ))}
       {singles.map((n) => renderSingle(n))}
     </div>

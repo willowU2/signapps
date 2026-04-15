@@ -8,13 +8,17 @@
 // Provider Types
 // ============================================================================
 
-export type CalendarProvider = 'google' | 'microsoft' | 'apple' | 'caldav';
+export type CalendarProvider = "google" | "microsoft" | "apple" | "caldav";
 
-export type SyncDirection = 'import' | 'export' | 'bidirectional';
+export type SyncDirection = "import" | "export" | "bidirectional";
 
-export type SyncStatus = 'idle' | 'syncing' | 'success' | 'error' | 'paused';
+export type SyncStatus = "idle" | "syncing" | "success" | "error" | "paused";
 
-export type ConflictResolution = 'local_wins' | 'remote_wins' | 'newest_wins' | 'manual';
+export type ConflictResolution =
+  | "local_wins"
+  | "remote_wins"
+  | "newest_wins"
+  | "manual";
 
 // ============================================================================
 // Connection Types
@@ -65,7 +69,7 @@ export interface ExternalCalendar {
   color: string;
   is_primary: boolean;
   is_selected: boolean;
-  access_role: 'owner' | 'writer' | 'reader' | 'freeBusyReader';
+  access_role: "owner" | "writer" | "reader" | "freeBusyReader";
   sync_enabled: boolean;
   sync_direction: SyncDirection;
   last_sync_at: string | null;
@@ -136,8 +140,8 @@ export interface UpdateSyncConfigRequest {
 export interface SyncLogEntry {
   id: string;
   sync_config_id: string;
-  direction: 'import' | 'export';
-  status: 'success' | 'partial' | 'error';
+  direction: "import" | "export";
+  status: "success" | "partial" | "error";
   events_imported: number;
   events_exported: number;
   events_updated: number;
@@ -167,17 +171,17 @@ export interface SyncConflict {
   external_event_id: string;
   local_updated_at: string;
   external_updated_at: string;
-  conflict_type: 'update' | 'delete' | 'both_updated';
+  conflict_type: "update" | "delete" | "both_updated";
   local_data: Record<string, unknown>;
   external_data: Record<string, unknown>;
   resolved: boolean;
-  resolution: 'local' | 'remote' | null;
+  resolution: "local" | "remote" | null;
   resolved_at: string | null;
   created_at: string;
 }
 
 export interface ResolveConflictRequest {
-  resolution: 'local' | 'remote';
+  resolution: "local" | "remote";
 }
 
 // ============================================================================
@@ -204,17 +208,17 @@ export interface GoogleCalendarEvent {
   attendees?: {
     email: string;
     displayName?: string;
-    responseStatus?: 'needsAction' | 'declined' | 'tentative' | 'accepted';
+    responseStatus?: "needsAction" | "declined" | "tentative" | "accepted";
   }[];
   reminders?: {
     useDefault: boolean;
     overrides?: {
-      method: 'email' | 'popup';
+      method: "email" | "popup";
       minutes: number;
     }[];
   };
   colorId?: string;
-  status?: 'confirmed' | 'tentative' | 'cancelled';
+  status?: "confirmed" | "tentative" | "cancelled";
   created: string;
   updated: string;
 }
@@ -224,7 +228,7 @@ export interface OutlookCalendarEvent {
   id: string;
   subject: string;
   body?: {
-    contentType: 'text' | 'html';
+    contentType: "text" | "html";
     content: string;
   };
   location?: {
@@ -247,12 +251,12 @@ export interface OutlookCalendarEvent {
   };
   recurrence?: {
     pattern: {
-      type: 'daily' | 'weekly' | 'absoluteMonthly' | 'absoluteYearly';
+      type: "daily" | "weekly" | "absoluteMonthly" | "absoluteYearly";
       interval: number;
       daysOfWeek?: string[];
     };
     range: {
-      type: 'endDate' | 'noEnd' | 'numbered';
+      type: "endDate" | "noEnd" | "numbered";
       startDate: string;
       endDate?: string;
     };
@@ -263,10 +267,16 @@ export interface OutlookCalendarEvent {
       address: string;
     };
     status?: {
-      response: 'none' | 'organizer' | 'tentativelyAccepted' | 'accepted' | 'declined' | 'notResponded';
+      response:
+        | "none"
+        | "organizer"
+        | "tentativelyAccepted"
+        | "accepted"
+        | "declined"
+        | "notResponded";
     };
   }[];
-  showAs?: 'free' | 'tentative' | 'busy' | 'oof' | 'workingElsewhere';
+  showAs?: "free" | "tentative" | "busy" | "oof" | "workingElsewhere";
   createdDateTime: string;
   lastModifiedDateTime: string;
 }
@@ -276,51 +286,51 @@ export interface OutlookCalendarEvent {
 // ============================================================================
 
 export const PROVIDER_LABELS: Record<CalendarProvider, string> = {
-  google: 'Google Calendar',
-  microsoft: 'Microsoft Outlook',
-  apple: 'Apple iCloud',
-  caldav: 'CalDAV',
+  google: "Google Calendar",
+  microsoft: "Microsoft Outlook",
+  apple: "Apple iCloud",
+  caldav: "CalDAV",
 };
 
 export const PROVIDER_ICONS: Record<CalendarProvider, string> = {
-  google: '/icons/google-calendar.svg',
-  microsoft: '/icons/outlook.svg',
-  apple: '/icons/icloud.svg',
-  caldav: '/icons/caldav.svg',
+  google: "/icons/google-calendar.svg",
+  microsoft: "/icons/outlook.svg",
+  apple: "/icons/icloud.svg",
+  caldav: "/icons/caldav.svg",
 };
 
 export const PROVIDER_COLORS: Record<CalendarProvider, string> = {
-  google: '#4285F4',
-  microsoft: '#0078D4',
-  apple: '#007AFF',
-  caldav: '#6B7280',
+  google: "#4285F4",
+  microsoft: "#0078D4",
+  apple: "#007AFF",
+  caldav: "#6B7280",
 };
 
 export const SYNC_DIRECTION_LABELS: Record<SyncDirection, string> = {
-  import: 'Import only',
-  export: 'Export only',
-  bidirectional: 'Two-way sync',
+  import: "Import only",
+  export: "Export only",
+  bidirectional: "Two-way sync",
 };
 
 export const SYNC_STATUS_LABELS: Record<SyncStatus, string> = {
-  idle: 'Ready',
-  syncing: 'Syncing...',
-  success: 'Synced',
-  error: 'Error',
-  paused: 'Paused',
+  idle: "Ready",
+  syncing: "Syncing...",
+  success: "Synced",
+  error: "Error",
+  paused: "Paused",
 };
 
 export const SYNC_STATUS_COLORS: Record<SyncStatus, string> = {
-  idle: 'text-gray-500',
-  syncing: 'text-blue-500',
-  success: 'text-green-500',
-  error: 'text-red-500',
-  paused: 'text-yellow-500',
+  idle: "text-gray-500",
+  syncing: "text-blue-500",
+  success: "text-green-500",
+  error: "text-red-500",
+  paused: "text-yellow-500",
 };
 
 export const CONFLICT_RESOLUTION_LABELS: Record<ConflictResolution, string> = {
-  local_wins: 'Keep local changes',
-  remote_wins: 'Keep remote changes',
-  newest_wins: 'Keep newest',
-  manual: 'Resolve manually',
+  local_wins: "Keep local changes",
+  remote_wins: "Keep remote changes",
+  newest_wins: "Keep newest",
+  manual: "Resolve manually",
 };

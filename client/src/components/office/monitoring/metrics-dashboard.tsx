@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * MetricsDashboard
@@ -6,7 +6,7 @@
  * Dashboard for Office Suite metrics and monitoring.
  */
 
-import React, { useEffect } from 'react';
+import React, { useEffect } from "react";
 import {
   FileText,
   Users,
@@ -21,22 +21,22 @@ import {
   Activity,
   BarChart3,
   PieChart,
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { Separator } from '@/components/ui/separator';
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { Separator } from "@/components/ui/separator";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { cn } from '@/lib/utils';
-import { useMonitoringStore } from '@/stores/monitoring-store';
-import type { TimeRange } from '@/lib/office/monitoring/types';
-import { TIME_RANGE_LABELS } from '@/lib/office/monitoring/types';
+} from "@/components/ui/select";
+import { cn } from "@/lib/utils";
+import { useMonitoringStore } from "@/stores/monitoring-store";
+import type { TimeRange } from "@/lib/office/monitoring/types";
+import { TIME_RANGE_LABELS } from "@/lib/office/monitoring/types";
 
 // ============================================================================
 // Stat Card
@@ -51,16 +51,23 @@ interface StatCardProps {
   className?: string;
 }
 
-function StatCard({ icon, label, value, subValue, trend, className }: StatCardProps) {
+function StatCard({
+  icon,
+  label,
+  value,
+  subValue,
+  trend,
+  className,
+}: StatCardProps) {
   return (
-    <div className={cn('p-4 rounded-lg border bg-card', className)}>
+    <div className={cn("p-4 rounded-lg border bg-card", className)}>
       <div className="flex items-center justify-between mb-2">
         <div className="p-2 rounded-lg bg-muted">{icon}</div>
         {trend !== undefined && (
           <div
             className={cn(
-              'flex items-center text-xs font-medium',
-              trend >= 0 ? 'text-green-600' : 'text-red-600'
+              "flex items-center text-xs font-medium",
+              trend >= 0 ? "text-green-600" : "text-red-600",
             )}
           >
             {trend >= 0 ? (
@@ -96,17 +103,17 @@ interface DocumentTypeChartProps {
 
 function DocumentTypeChart({ breakdown }: DocumentTypeChartProps) {
   const colors = {
-    document: 'bg-blue-500',
-    spreadsheet: 'bg-green-500',
-    presentation: 'bg-orange-500',
-    form: 'bg-purple-500',
+    document: "bg-blue-500",
+    spreadsheet: "bg-green-500",
+    presentation: "bg-orange-500",
+    form: "bg-purple-500",
   };
 
   const labels = {
-    document: 'Documents',
-    spreadsheet: 'Feuilles de calcul',
-    presentation: 'Présentations',
-    form: 'Formulaires',
+    document: "Documents",
+    spreadsheet: "Feuilles de calcul",
+    presentation: "Présentations",
+    form: "Formulaires",
   };
 
   return (
@@ -119,13 +126,18 @@ function DocumentTypeChart({ breakdown }: DocumentTypeChartProps) {
         {breakdown.map((item) => (
           <div key={item.type}>
             <div className="flex items-center justify-between text-sm mb-1">
-              <span>{labels[item.type as keyof typeof labels] || item.type}</span>
+              <span>
+                {labels[item.type as keyof typeof labels] || item.type}
+              </span>
               <span className="font-medium">{item.count}</span>
             </div>
             <div className="flex items-center gap-2">
               <Progress
                 value={item.percentage}
-                className={cn('h-2 flex-1', `[&>div]:${colors[item.type as keyof typeof colors] || 'bg-gray-500'}`)}
+                className={cn(
+                  "h-2 flex-1",
+                  `[&>div]:${colors[item.type as keyof typeof colors] || "bg-gray-500"}`,
+                )}
               />
               <span className="text-xs text-muted-foreground w-12 text-right">
                 {item.percentage.toFixed(0)}%
@@ -160,10 +172,13 @@ function PerformanceMetrics({
     return `${(ms / 1000).toFixed(2)}s`;
   };
 
-  const getPerformanceColor = (ms: number, thresholds: { good: number; warn: number }) => {
-    if (ms <= thresholds.good) return 'text-green-600';
-    if (ms <= thresholds.warn) return 'text-yellow-600';
-    return 'text-red-600';
+  const getPerformanceColor = (
+    ms: number,
+    thresholds: { good: number; warn: number },
+  ) => {
+    if (ms <= thresholds.good) return "text-green-600";
+    if (ms <= thresholds.warn) return "text-yellow-600";
+    return "text-red-600";
   };
 
   return (
@@ -175,25 +190,48 @@ function PerformanceMetrics({
       <div className="grid grid-cols-2 gap-4">
         <div>
           <p className="text-xs text-muted-foreground">Chargement moyen</p>
-          <p className={cn('text-lg font-semibold', getPerformanceColor(averageLoadTime, { good: 500, warn: 1000 }))}>
+          <p
+            className={cn(
+              "text-lg font-semibold",
+              getPerformanceColor(averageLoadTime, { good: 500, warn: 1000 }),
+            )}
+          >
             {formatMs(averageLoadTime)}
           </p>
         </div>
         <div>
           <p className="text-xs text-muted-foreground">Sauvegarde moyenne</p>
-          <p className={cn('text-lg font-semibold', getPerformanceColor(averageSaveTime, { good: 200, warn: 500 }))}>
+          <p
+            className={cn(
+              "text-lg font-semibold",
+              getPerformanceColor(averageSaveTime, { good: 200, warn: 500 }),
+            )}
+          >
             {formatMs(averageSaveTime)}
           </p>
         </div>
         <div>
           <p className="text-xs text-muted-foreground">Export moyen</p>
-          <p className={cn('text-lg font-semibold', getPerformanceColor(averageExportTime, { good: 2000, warn: 5000 }))}>
+          <p
+            className={cn(
+              "text-lg font-semibold",
+              getPerformanceColor(averageExportTime, {
+                good: 2000,
+                warn: 5000,
+              }),
+            )}
+          >
             {formatMs(averageExportTime)}
           </p>
         </div>
         <div>
           <p className="text-xs text-muted-foreground">P99 Chargement</p>
-          <p className={cn('text-lg font-semibold', getPerformanceColor(p99LoadTime, { good: 1000, warn: 2000 }))}>
+          <p
+            className={cn(
+              "text-lg font-semibold",
+              getPerformanceColor(p99LoadTime, { good: 1000, warn: 2000 }),
+            )}
+          >
             {formatMs(p99LoadTime)}
           </p>
         </div>
@@ -213,7 +251,12 @@ interface ConversionStatsProps {
   averageTime: number;
 }
 
-function ConversionStats({ total, successful, failed, averageTime }: ConversionStatsProps) {
+function ConversionStats({
+  total,
+  successful,
+  failed,
+  averageTime,
+}: ConversionStatsProps) {
   const successRate = total > 0 ? (successful / total) * 100 : 0;
 
   return (
@@ -228,7 +271,11 @@ function ConversionStats({ total, successful, failed, averageTime }: ConversionS
           <Badge
             variant="outline"
             className={cn(
-              successRate >= 95 ? 'text-green-600' : successRate >= 80 ? 'text-yellow-600' : 'text-red-600'
+              successRate >= 95
+                ? "text-green-600"
+                : successRate >= 80
+                  ? "text-yellow-600"
+                  : "text-red-600",
             )}
           >
             {successRate.toFixed(1)}%
@@ -250,7 +297,9 @@ function ConversionStats({ total, successful, failed, averageTime }: ConversionS
         </div>
         <div className="flex items-center justify-between text-sm">
           <span className="text-muted-foreground">Temps moyen</span>
-          <span className="font-medium">{(averageTime / 1000).toFixed(1)}s</span>
+          <span className="font-medium">
+            {(averageTime / 1000).toFixed(1)}s
+          </span>
         </div>
       </div>
     </div>
@@ -289,7 +338,13 @@ export function MetricsDashboard({ className }: MetricsDashboardProps) {
     return () => {
       unsubscribeAll();
     };
-  }, [loadSummary, loadDocumentBreakdown, loadUserActivity, subscribeToMetrics, unsubscribeAll]);
+  }, [
+    loadSummary,
+    loadDocumentBreakdown,
+    loadUserActivity,
+    subscribeToMetrics,
+    unsubscribeAll,
+  ]);
 
   const handleRefresh = () => {
     loadSummary();
@@ -299,27 +354,32 @@ export function MetricsDashboard({ className }: MetricsDashboardProps) {
 
   if (!summary) {
     return (
-      <div className={cn('flex items-center justify-center h-64', className)}>
+      <div className={cn("flex items-center justify-center h-64", className)}>
         <div className="text-center">
           <Activity className="h-12 w-12 mx-auto mb-3 text-muted-foreground animate-pulse" />
-          <p className="text-sm text-muted-foreground">Chargement des métriques...</p>
+          <p className="text-sm text-muted-foreground">
+            Chargement des métriques...
+          </p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className={cn('space-y-6', className)}>
+    <div className={cn("space-y-6", className)}>
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-bold">Tableau de bord Office</h2>
           <p className="text-sm text-muted-foreground">
-            Mis à jour: {new Date(summary.updatedAt).toLocaleString('fr-FR')}
+            Mis à jour: {new Date(summary.updatedAt).toLocaleString("fr-FR")}
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Select value={timeRange} onValueChange={(v) => setTimeRange(v as TimeRange)}>
+          <Select
+            value={timeRange}
+            onValueChange={(v) => setTimeRange(v as TimeRange)}
+          >
             <SelectTrigger className="w-[160px]">
               <SelectValue />
             </SelectTrigger>
@@ -337,7 +397,9 @@ export function MetricsDashboard({ className }: MetricsDashboardProps) {
             onClick={handleRefresh}
             disabled={isLoadingSummary}
           >
-            <RefreshCw className={cn('h-4 w-4', isLoadingSummary && 'animate-spin')} />
+            <RefreshCw
+              className={cn("h-4 w-4", isLoadingSummary && "animate-spin")}
+            />
           </Button>
         </div>
       </div>
@@ -407,26 +469,39 @@ export function MetricsDashboard({ className }: MetricsDashboardProps) {
                 <p className="text-xs text-muted-foreground">Actifs</p>
               </div>
               <div className="text-center">
-                <p className="text-2xl font-bold text-green-600">{userActivity.newUsers}</p>
+                <p className="text-2xl font-bold text-green-600">
+                  {userActivity.newUsers}
+                </p>
                 <p className="text-xs text-muted-foreground">Nouveaux</p>
               </div>
               <div className="text-center">
-                <p className="text-2xl font-bold">{userActivity.returningUsers}</p>
+                <p className="text-2xl font-bold">
+                  {userActivity.returningUsers}
+                </p>
                 <p className="text-xs text-muted-foreground">Récurrents</p>
               </div>
             </div>
             {userActivity.topUsers.length > 0 && (
               <>
                 <Separator className="my-3" />
-                <p className="text-xs text-muted-foreground mb-2">Top contributeurs</p>
+                <p className="text-xs text-muted-foreground mb-2">
+                  Top contributeurs
+                </p>
                 <div className="space-y-2">
                   {userActivity.topUsers.slice(0, 3).map((user, index) => (
-                    <div key={user.userId} className="flex items-center justify-between text-sm">
+                    <div
+                      key={user.userId}
+                      className="flex items-center justify-between text-sm"
+                    >
                       <span className="flex items-center gap-2">
-                        <span className="text-muted-foreground">{index + 1}.</span>
+                        <span className="text-muted-foreground">
+                          {index + 1}.
+                        </span>
                         {user.userName}
                       </span>
-                      <span className="font-medium">{user.totalEdits} édits</span>
+                      <span className="font-medium">
+                        {user.totalEdits} édits
+                      </span>
                     </div>
                   ))}
                 </div>
@@ -444,16 +519,24 @@ export function MetricsDashboard({ className }: MetricsDashboardProps) {
           <div className="grid grid-cols-2 gap-4">
             <div className="p-3 rounded bg-muted text-center">
               <p className="text-2xl font-bold">{summary.syncedDocuments}</p>
-              <p className="text-xs text-muted-foreground">Documents synchronisés</p>
+              <p className="text-xs text-muted-foreground">
+                Documents synchronisés
+              </p>
             </div>
-            <div className={cn(
-              'p-3 rounded text-center',
-              summary.syncConflicts > 0 ? 'bg-yellow-50 dark:bg-yellow-900/20' : 'bg-muted'
-            )}>
-              <p className={cn(
-                'text-2xl font-bold',
-                summary.syncConflicts > 0 && 'text-yellow-600'
-              )}>
+            <div
+              className={cn(
+                "p-3 rounded text-center",
+                summary.syncConflicts > 0
+                  ? "bg-yellow-50 dark:bg-yellow-900/20"
+                  : "bg-muted",
+              )}
+            >
+              <p
+                className={cn(
+                  "text-2xl font-bold",
+                  summary.syncConflicts > 0 && "text-yellow-600",
+                )}
+              >
                 {summary.syncConflicts}
               </p>
               <p className="text-xs text-muted-foreground">Conflits</p>
@@ -461,7 +544,8 @@ export function MetricsDashboard({ className }: MetricsDashboardProps) {
           </div>
           {summary.lastSyncTime && (
             <p className="text-xs text-muted-foreground mt-3 text-center">
-              Dernière sync: {new Date(summary.lastSyncTime).toLocaleString('fr-FR')}
+              Dernière sync:{" "}
+              {new Date(summary.lastSyncTime).toLocaleString("fr-FR")}
             </p>
           )}
         </div>

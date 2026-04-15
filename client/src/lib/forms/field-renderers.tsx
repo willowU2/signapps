@@ -9,7 +9,14 @@
 import * as React from "react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { CalendarIcon, Check, ChevronsUpDown, Star, Upload, X } from "lucide-react";
+import {
+  CalendarIcon,
+  Check,
+  ChevronsUpDown,
+  Star,
+  Upload,
+  X,
+} from "lucide-react";
 
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -77,12 +84,25 @@ export function FieldWrapper({ field, error, children }: FieldWrapperProps) {
 // Text Input
 // ============================================================================
 
-export function TextField({ field, value, onChange, error, disabled }: FieldRenderProps) {
-  const inputType = field.type === "password" ? "password" :
-                    field.type === "email" ? "email" :
-                    field.type === "url" ? "url" :
-                    field.type === "tel" ? "tel" :
-                    field.type === "number" ? "number" : "text";
+export function TextField({
+  field,
+  value,
+  onChange,
+  error,
+  disabled,
+}: FieldRenderProps) {
+  const inputType =
+    field.type === "password"
+      ? "password"
+      : field.type === "email"
+        ? "email"
+        : field.type === "url"
+          ? "url"
+          : field.type === "tel"
+            ? "tel"
+            : field.type === "number"
+              ? "number"
+              : "text";
 
   return (
     <FieldWrapper field={field} error={error}>
@@ -90,7 +110,11 @@ export function TextField({ field, value, onChange, error, disabled }: FieldRend
         id={field.id}
         type={inputType}
         value={(value as string) ?? ""}
-        onChange={(e) => onChange(field.type === "number" ? e.target.valueAsNumber : e.target.value)}
+        onChange={(e) =>
+          onChange(
+            field.type === "number" ? e.target.valueAsNumber : e.target.value,
+          )
+        }
         placeholder={field.placeholder}
         disabled={disabled || field.disabled}
         readOnly={field.readOnly}
@@ -110,7 +134,13 @@ export function TextField({ field, value, onChange, error, disabled }: FieldRend
 // Textarea
 // ============================================================================
 
-export function TextareaField({ field, value, onChange, error, disabled }: FieldRenderProps) {
+export function TextareaField({
+  field,
+  value,
+  onChange,
+  error,
+  disabled,
+}: FieldRenderProps) {
   return (
     <FieldWrapper field={field} error={error}>
       <Textarea
@@ -133,7 +163,13 @@ export function TextareaField({ field, value, onChange, error, disabled }: Field
 // Select
 // ============================================================================
 
-export function SelectField({ field, value, onChange, error, disabled }: FieldRenderProps) {
+export function SelectField({
+  field,
+  value,
+  onChange,
+  error,
+  disabled,
+}: FieldRenderProps) {
   return (
     <FieldWrapper field={field} error={error}>
       <Select
@@ -173,7 +209,13 @@ export function SelectField({ field, value, onChange, error, disabled }: FieldRe
 // Multi-Select (Combobox style)
 // ============================================================================
 
-export function MultiSelectField({ field, value, onChange, error, disabled }: FieldRenderProps) {
+export function MultiSelectField({
+  field,
+  value,
+  onChange,
+  error,
+  disabled,
+}: FieldRenderProps) {
   const [open, setOpen] = React.useState(false);
   const selectedValues = (value as string[]) ?? [];
 
@@ -196,7 +238,7 @@ export function MultiSelectField({ field, value, onChange, error, disabled }: Fi
             disabled={disabled || field.disabled}
             className={cn(
               "w-full justify-between font-normal",
-              error && "border-destructive"
+              error && "border-destructive",
             )}
           >
             {selectedValues.length > 0 ? (
@@ -241,7 +283,7 @@ export function MultiSelectField({ field, value, onChange, error, disabled }: Fi
                       <Check
                         className={cn(
                           "mr-2 h-4 w-4",
-                          isSelected ? "opacity-100" : "opacity-0"
+                          isSelected ? "opacity-100" : "opacity-0",
                         )}
                       />
                       {Icon && <Icon className="mr-2 h-4 w-4" />}
@@ -267,7 +309,13 @@ export function MultiSelectField({ field, value, onChange, error, disabled }: Fi
 // Radio Group
 // ============================================================================
 
-export function RadioField({ field, value, onChange, error, disabled }: FieldRenderProps) {
+export function RadioField({
+  field,
+  value,
+  onChange,
+  error,
+  disabled,
+}: FieldRenderProps) {
   return (
     <FieldWrapper field={field} error={error}>
       <RadioGroup
@@ -309,7 +357,13 @@ export function RadioField({ field, value, onChange, error, disabled }: FieldRen
 // Checkbox
 // ============================================================================
 
-export function CheckboxField({ field, value, onChange, error, disabled }: FieldRenderProps) {
+export function CheckboxField({
+  field,
+  value,
+  onChange,
+  error,
+  disabled,
+}: FieldRenderProps) {
   return (
     <div className="flex items-start space-x-3 space-y-0">
       <Checkbox
@@ -337,7 +391,13 @@ export function CheckboxField({ field, value, onChange, error, disabled }: Field
 // Switch
 // ============================================================================
 
-export function SwitchField({ field, value, onChange, error, disabled }: FieldRenderProps) {
+export function SwitchField({
+  field,
+  value,
+  onChange,
+  error,
+  disabled,
+}: FieldRenderProps) {
   return (
     <div className="flex items-center justify-between space-x-3">
       <div className="space-y-0.5">
@@ -364,7 +424,13 @@ export function SwitchField({ field, value, onChange, error, disabled }: FieldRe
 // Date Picker
 // ============================================================================
 
-export function DateField({ field, value, onChange, error, disabled }: FieldRenderProps) {
+export function DateField({
+  field,
+  value,
+  onChange,
+  error,
+  disabled,
+}: FieldRenderProps) {
   const date = value ? new Date(value as string) : undefined;
 
   return (
@@ -378,11 +444,13 @@ export function DateField({ field, value, onChange, error, disabled }: FieldRend
             className={cn(
               "w-full justify-start text-left font-normal",
               !date && "text-muted-foreground",
-              error && "border-destructive"
+              error && "border-destructive",
             )}
           >
             <CalendarIcon className="mr-2 h-4 w-4" />
-            {date ? format(date, "PPP", { locale: fr }) : field.placeholder ?? "Choisir une date"}
+            {date
+              ? format(date, "PPP", { locale: fr })
+              : (field.placeholder ?? "Choisir une date")}
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="start">
@@ -403,7 +471,13 @@ export function DateField({ field, value, onChange, error, disabled }: FieldRend
 // DateTime Picker
 // ============================================================================
 
-export function DateTimeField({ field, value, onChange, error, disabled }: FieldRenderProps) {
+export function DateTimeField({
+  field,
+  value,
+  onChange,
+  error,
+  disabled,
+}: FieldRenderProps) {
   const dateValue = value ? new Date(value as string) : undefined;
 
   const handleDateChange = (newDate: Date | undefined) => {
@@ -436,7 +510,7 @@ export function DateTimeField({ field, value, onChange, error, disabled }: Field
               className={cn(
                 "flex-1 justify-start text-left font-normal",
                 !dateValue && "text-muted-foreground",
-                error && "border-destructive"
+                error && "border-destructive",
               )}
             >
               <CalendarIcon className="mr-2 h-4 w-4" />
@@ -469,7 +543,13 @@ export function DateTimeField({ field, value, onChange, error, disabled }: Field
 // Time Picker
 // ============================================================================
 
-export function TimeField({ field, value, onChange, error, disabled }: FieldRenderProps) {
+export function TimeField({
+  field,
+  value,
+  onChange,
+  error,
+  disabled,
+}: FieldRenderProps) {
   return (
     <FieldWrapper field={field} error={error}>
       <Input
@@ -488,7 +568,13 @@ export function TimeField({ field, value, onChange, error, disabled }: FieldRend
 // Slider
 // ============================================================================
 
-export function SliderField({ field, value, onChange, error, disabled }: FieldRenderProps) {
+export function SliderField({
+  field,
+  value,
+  onChange,
+  error,
+  disabled,
+}: FieldRenderProps) {
   const numValue = (value as number) ?? field.min ?? 0;
 
   return (
@@ -505,7 +591,9 @@ export function SliderField({ field, value, onChange, error, disabled }: FieldRe
             disabled={disabled || field.disabled}
             className="flex-1"
           />
-          <span className="ml-4 w-12 text-right text-sm font-medium">{numValue}</span>
+          <span className="ml-4 w-12 text-right text-sm font-medium">
+            {numValue}
+          </span>
         </div>
         {field.marks && (
           <div className="flex justify-between text-xs text-muted-foreground">
@@ -523,7 +611,13 @@ export function SliderField({ field, value, onChange, error, disabled }: FieldRe
 // Rating
 // ============================================================================
 
-export function RatingField({ field, value, onChange, error, disabled }: FieldRenderProps) {
+export function RatingField({
+  field,
+  value,
+  onChange,
+  error,
+  disabled,
+}: FieldRenderProps) {
   const maxRating = field.maxRating ?? 5;
   const currentRating = (value as number) ?? 0;
 
@@ -538,7 +632,9 @@ export function RatingField({ field, value, onChange, error, disabled }: FieldRe
             disabled={disabled || field.disabled}
             className={cn(
               "transition-colors",
-              disabled || field.disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer hover:scale-110"
+              disabled || field.disabled
+                ? "cursor-not-allowed opacity-50"
+                : "cursor-pointer hover:scale-110",
             )}
           >
             <Star
@@ -546,7 +642,7 @@ export function RatingField({ field, value, onChange, error, disabled }: FieldRe
                 "h-6 w-6",
                 star <= currentRating
                   ? "fill-yellow-400 text-yellow-400"
-                  : "text-muted-foreground"
+                  : "text-muted-foreground",
               )}
             />
           </button>
@@ -560,9 +656,19 @@ export function RatingField({ field, value, onChange, error, disabled }: FieldRe
 // File Upload
 // ============================================================================
 
-export function FileField({ field, value, onChange, error, disabled }: FieldRenderProps) {
+export function FileField({
+  field,
+  value,
+  onChange,
+  error,
+  disabled,
+}: FieldRenderProps) {
   const inputRef = React.useRef<HTMLInputElement>(null);
-  const files = field.multiple ? (value as File[]) ?? [] : value ? [value as File] : [];
+  const files = field.multiple
+    ? ((value as File[]) ?? [])
+    : value
+      ? [value as File]
+      : [];
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = e.target.files;
@@ -639,7 +745,13 @@ export function FileField({ field, value, onChange, error, disabled }: FieldRend
 // Color Picker
 // ============================================================================
 
-export function ColorField({ field, value, onChange, error, disabled }: FieldRenderProps) {
+export function ColorField({
+  field,
+  value,
+  onChange,
+  error,
+  disabled,
+}: FieldRenderProps) {
   return (
     <FieldWrapper field={field} error={error}>
       <div className="flex items-center gap-2">

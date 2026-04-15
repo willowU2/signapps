@@ -1,9 +1,9 @@
 //! RecurrenceRuleRepository — recurrence rule CRUD operations.
 
 use crate::models::{RecurrenceRule, RecurrenceRuleInput};
-use signapps_db_shared::DatabasePool;
 use chrono::{DateTime, Utc};
 use signapps_common::Result;
+use signapps_db_shared::DatabasePool;
 use uuid::Uuid;
 
 /// Repository for recurrence rule CRUD operations.

@@ -13,7 +13,9 @@ interface TeamEntry {
 }
 
 export default function TeamLeaderboard() {
-  const [period, setPeriod] = useState<"weekly" | "monthly" | "alltime">("weekly");
+  const [period, setPeriod] = useState<"weekly" | "monthly" | "alltime">(
+    "weekly",
+  );
   const [teams, setTeams] = useState<TeamEntry[]>([
     {
       position: 1,
@@ -105,29 +107,43 @@ export default function TeamLeaderboard() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3 flex-1">
                 <div className="text-2xl font-bold text-muted-foreground w-8">
-                  {team.position === 1 ? "🥇" : team.position === 2 ? "🥈" : team.position === 3 ? "🥉" : team.position}
+                  {team.position === 1
+                    ? "🥇"
+                    : team.position === 2
+                      ? "🥈"
+                      : team.position === 3
+                        ? "🥉"
+                        : team.position}
                 </div>
                 <div className="text-2xl">{team.avatar}</div>
                 <div>
                   <p className="font-medium">{team.name}</p>
-                  <p className="text-xs text-muted-foreground">{team.score.toLocaleString()} points</p>
+                  <p className="text-xs text-muted-foreground">
+                    {team.score.toLocaleString()} points
+                  </p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
                 {team.trend === "up" && (
                   <div className="flex items-center gap-1 text-green-600">
                     <TrendingUp className="w-4 h-4" />
-                    <span className="text-sm font-medium">+{team.trendValue}</span>
+                    <span className="text-sm font-medium">
+                      +{team.trendValue}
+                    </span>
                   </div>
                 )}
                 {team.trend === "down" && (
                   <div className="flex items-center gap-1 text-red-600">
                     <TrendingDown className="w-4 h-4" />
-                    <span className="text-sm font-medium">-{team.trendValue}</span>
+                    <span className="text-sm font-medium">
+                      -{team.trendValue}
+                    </span>
                   </div>
                 )}
                 {team.trend === "stable" && (
-                  <div className="text-sm font-medium text-muted-foreground">−</div>
+                  <div className="text-sm font-medium text-muted-foreground">
+                    −
+                  </div>
                 )}
               </div>
             </div>

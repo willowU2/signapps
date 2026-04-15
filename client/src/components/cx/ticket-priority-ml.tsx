@@ -160,25 +160,23 @@ export function TicketPriorityML({
                 </TableCell>
                 <TableCell>
                   <div className="flex gap-1">
-                    {(
-                      [
-                        "Urgent",
-                        "Normal",
-                        "Low",
-                      ] as PriorityLevel[]
-                    ).map((p) => (
-                      <Button
-                        key={p}
-                        size="sm"
-                        variant={
-                          displayPriority(ticket) === p ? "default" : "outline"
-                        }
-                        onClick={() => handleOverride(ticket.id, p)}
-                        className="text-xs"
-                      >
-                        {p}
-                      </Button>
-                    ))}
+                    {(["Urgent", "Normal", "Low"] as PriorityLevel[]).map(
+                      (p) => (
+                        <Button
+                          key={p}
+                          size="sm"
+                          variant={
+                            displayPriority(ticket) === p
+                              ? "default"
+                              : "outline"
+                          }
+                          onClick={() => handleOverride(ticket.id, p)}
+                          className="text-xs"
+                        >
+                          {p}
+                        </Button>
+                      ),
+                    )}
                   </div>
                 </TableCell>
               </TableRow>
@@ -188,8 +186,8 @@ export function TicketPriorityML({
 
         <div className="mt-4 text-xs text-muted-foreground">
           <p>
-            💡 Cliquez sur les boutons de priorité pour surcharger la
-            prédiction ML.
+            💡 Cliquez sur les boutons de priorité pour surcharger la prédiction
+            ML.
           </p>
         </div>
       </Card>

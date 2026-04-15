@@ -1,12 +1,12 @@
 "use client";
 
-import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
-import { useShallow } from 'zustand/react/shallow';
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
+import { useShallow } from "zustand/react/shallow";
 
 export interface AiMessage {
   id: string;
-  role: 'user' | 'assistant';
+  role: "user" | "assistant";
   content: string;
   timestamp: string;
   sources?: AiSource[];
@@ -25,7 +25,7 @@ interface AiState {
   streamingMessageId: string | null;
 
   // Actions
-  addMessage: (role: 'user' | 'assistant', content: string) => string;
+  addMessage: (role: "user" | "assistant", content: string) => string;
   updateMessage: (id: string, content: string) => void;
   appendToMessage: (id: string, token: string) => void;
   setMessageSources: (id: string, sources: AiSource[]) => void;
@@ -38,9 +38,9 @@ export const useAiStore = create<AiState>()(
     (set, get) => ({
       messages: [
         {
-          id: 'welcome',
-          role: 'assistant',
-          content: 'Bonjour ! Comment puis-je vous aider aujourd\'hui ?',
+          id: "welcome",
+          role: "assistant",
+          content: "Bonjour ! Comment puis-je vous aider aujourd'hui ?",
           timestamp: new Date().toISOString(),
         },
       ],
@@ -66,7 +66,7 @@ export const useAiStore = create<AiState>()(
       updateMessage: (id, content) => {
         set((state) => ({
           messages: state.messages.map((msg) =>
-            msg.id === id ? { ...msg, content } : msg
+            msg.id === id ? { ...msg, content } : msg,
           ),
         }));
       },
@@ -74,7 +74,7 @@ export const useAiStore = create<AiState>()(
       appendToMessage: (id, token) => {
         set((state) => ({
           messages: state.messages.map((msg) =>
-            msg.id === id ? { ...msg, content: msg.content + token } : msg
+            msg.id === id ? { ...msg, content: msg.content + token } : msg,
           ),
         }));
       },
@@ -82,7 +82,7 @@ export const useAiStore = create<AiState>()(
       setMessageSources: (id, sources) => {
         set((state) => ({
           messages: state.messages.map((msg) =>
-            msg.id === id ? { ...msg, sources } : msg
+            msg.id === id ? { ...msg, sources } : msg,
           ),
         }));
       },
@@ -95,9 +95,9 @@ export const useAiStore = create<AiState>()(
         set({
           messages: [
             {
-              id: 'welcome',
-              role: 'assistant',
-              content: 'Bonjour ! Comment puis-je vous aider aujourd\'hui ?',
+              id: "welcome",
+              role: "assistant",
+              content: "Bonjour ! Comment puis-je vous aider aujourd'hui ?",
               timestamp: new Date().toISOString(),
             },
           ],
@@ -107,12 +107,12 @@ export const useAiStore = create<AiState>()(
       },
     }),
     {
-      name: 'ai-chat-storage',
+      name: "ai-chat-storage",
       partialize: (state) => ({
         messages: state.messages,
       }),
-    }
-  )
+    },
+  ),
 );
 
 // Granular selector hooks for optimized re-renders
@@ -123,7 +123,7 @@ export const useAiStreamingState = () =>
     useShallow((state) => ({
       isStreaming: state.isStreaming,
       streamingMessageId: state.streamingMessageId,
-    }))
+    })),
   );
 
 export const useAiMessageActions = () =>
@@ -135,5 +135,5 @@ export const useAiMessageActions = () =>
       setMessageSources: state.setMessageSources,
       setStreaming: state.setStreaming,
       clearMessages: state.clearMessages,
-    }))
+    })),
   );

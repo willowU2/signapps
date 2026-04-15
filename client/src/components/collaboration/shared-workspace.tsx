@@ -1,7 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { FileText, MessageSquare, CheckSquare, Archive, Clock, Users } from "lucide-react";
+import {
+  FileText,
+  MessageSquare,
+  CheckSquare,
+  Archive,
+  Clock,
+  Users,
+} from "lucide-react";
 
 interface Workspace {
   id: string;
@@ -70,21 +77,24 @@ export function SharedWorkspace() {
 
   const handleArchive = (id: string) => {
     setWorkspaces(
-      workspaces.map((w) =>
-        w.id === id ? { ...w, isArchived: true } : w
-      )
+      workspaces.map((w) => (w.id === id ? { ...w, isArchived: true } : w)),
     );
   };
 
-  const activeWorkspace = workspaces.find((w) => w.id === activeTab) || workspaces[0];
+  const activeWorkspace =
+    workspaces.find((w) => w.id === activeTab) || workspaces[0];
   const daysRemaining = calculateDaysRemaining(activeWorkspace.expiresAt);
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-foreground">Shared Workspaces</h2>
-          <p className="text-muted-foreground">Collaboration areas with expiration tracking</p>
+          <h2 className="text-2xl font-bold text-foreground">
+            Shared Workspaces
+          </h2>
+          <p className="text-muted-foreground">
+            Collaboration areas with expiration tracking
+          </p>
         </div>
       </div>
 
@@ -116,7 +126,9 @@ export function SharedWorkspace() {
               </p>
             </div>
 
-            <div className={`rounded-lg p-3 ${getExpirationColor(daysRemaining)}`}>
+            <div
+              className={`rounded-lg p-3 ${getExpirationColor(daysRemaining)}`}
+            >
               <div className="flex items-center gap-2 mb-1">
                 <Clock className="w-4 h-4" />
                 <span className="text-sm font-medium">Expires in</span>
@@ -130,7 +142,9 @@ export function SharedWorkspace() {
             <div className="rounded-lg border p-3">
               <div className="flex items-center gap-2 mb-1">
                 <Users className="w-4 h-4 text-purple-600" />
-                <span className="text-xs font-medium text-muted-foreground">Members</span>
+                <span className="text-xs font-medium text-muted-foreground">
+                  Members
+                </span>
               </div>
               <p className="text-2xl font-bold text-foreground">
                 {activeWorkspace.members}
@@ -140,7 +154,9 @@ export function SharedWorkspace() {
             <div className="rounded-lg border p-3">
               <div className="flex items-center gap-2 mb-1">
                 <FileText className="w-4 h-4 text-blue-600" />
-                <span className="text-xs font-medium text-muted-foreground">Documents</span>
+                <span className="text-xs font-medium text-muted-foreground">
+                  Documents
+                </span>
               </div>
               <p className="text-2xl font-bold text-foreground">
                 {activeWorkspace.docs}
@@ -150,7 +166,9 @@ export function SharedWorkspace() {
             <div className="rounded-lg border p-3">
               <div className="flex items-center gap-2 mb-1">
                 <MessageSquare className="w-4 h-4 text-green-600" />
-                <span className="text-xs font-medium text-muted-foreground">Chats</span>
+                <span className="text-xs font-medium text-muted-foreground">
+                  Chats
+                </span>
               </div>
               <p className="text-2xl font-bold text-foreground">
                 {activeWorkspace.chats}
@@ -160,7 +178,9 @@ export function SharedWorkspace() {
             <div className="rounded-lg border p-3">
               <div className="flex items-center gap-2 mb-1">
                 <CheckSquare className="w-4 h-4 text-orange-600" />
-                <span className="text-xs font-medium text-muted-foreground">Tasks</span>
+                <span className="text-xs font-medium text-muted-foreground">
+                  Tasks
+                </span>
               </div>
               <p className="text-2xl font-bold text-foreground">
                 {activeWorkspace.tasks}
@@ -189,17 +209,25 @@ export function SharedWorkspace() {
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="rounded-lg border p-4">
-          <p className="text-sm text-muted-foreground font-medium">Total Workspaces</p>
-          <p className="text-2xl font-bold text-foreground">{workspaces.length}</p>
+          <p className="text-sm text-muted-foreground font-medium">
+            Total Workspaces
+          </p>
+          <p className="text-2xl font-bold text-foreground">
+            {workspaces.length}
+          </p>
         </div>
         <div className="rounded-lg border p-4">
-          <p className="text-sm text-muted-foreground font-medium">Total Documents</p>
+          <p className="text-sm text-muted-foreground font-medium">
+            Total Documents
+          </p>
           <p className="text-2xl font-bold text-foreground">
             {workspaces.reduce((sum, w) => sum + w.docs, 0)}
           </p>
         </div>
         <div className="rounded-lg border p-4">
-          <p className="text-sm text-muted-foreground font-medium">Active Members</p>
+          <p className="text-sm text-muted-foreground font-medium">
+            Active Members
+          </p>
           <p className="text-2xl font-bold text-foreground">
             {workspaces.reduce((sum, w) => sum + w.members, 0)}
           </p>

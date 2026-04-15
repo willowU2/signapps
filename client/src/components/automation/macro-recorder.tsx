@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Circle, Square, Play, Trash2 } from 'lucide-react';
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Circle, Square, Play, Trash2 } from "lucide-react";
 
 interface MacroAction {
   label: string;
@@ -18,7 +18,7 @@ interface Macro {
 export function MacroRecorder() {
   const [macros, setMacros] = useState<Macro[]>([]);
   const [isRecording, setIsRecording] = useState(false);
-  const [macroName, setMacroName] = useState('');
+  const [macroName, setMacroName] = useState("");
   const [currentActions, setCurrentActions] = useState<MacroAction[]>([]);
 
   const startRecording = () => {
@@ -34,7 +34,7 @@ export function MacroRecorder() {
         ...macros,
         { id: `m${Date.now()}`, name: macroName, actions: currentActions },
       ]);
-      setMacroName('');
+      setMacroName("");
       setCurrentActions([]);
       setIsRecording(false);
     }
@@ -65,17 +65,26 @@ export function MacroRecorder() {
             onChange={(e) => setMacroName(e.target.value)}
             disabled={isRecording}
           />
-          <Button onClick={isRecording ? stopRecording : startRecording} size="sm">
+          <Button
+            onClick={isRecording ? stopRecording : startRecording}
+            size="sm"
+          >
             {isRecording ? (
-              <><Square className="w-4 h-4 mr-1" />Stop</>
+              <>
+                <Square className="w-4 h-4 mr-1" />
+                Stop
+              </>
             ) : (
-              <><Circle className="w-4 h-4 mr-1 text-red-500 fill-red-500" />Start</>
+              <>
+                <Circle className="w-4 h-4 mr-1 text-red-500 fill-red-500" />
+                Start
+              </>
             )}
           </Button>
         </div>
         {isRecording && (
           <div className="flex gap-1 mb-2">
-            {['Click', 'Type', 'Scroll', 'Wait'].map((a) => (
+            {["Click", "Type", "Scroll", "Wait"].map((a) => (
               <Button
                 key={a}
                 size="xs"
@@ -88,7 +97,9 @@ export function MacroRecorder() {
           </div>
         )}
         {isRecording && (
-          <p className="text-xs text-muted-foreground">{currentActions.length} action(s)</p>
+          <p className="text-xs text-muted-foreground">
+            {currentActions.length} action(s)
+          </p>
         )}
       </div>
 
@@ -102,13 +113,23 @@ export function MacroRecorder() {
               <div key={m.id} className="flex justify-between items-center">
                 <div>
                   <p className="text-sm font-medium">{m.name}</p>
-                  <p className="text-xs text-muted-foreground">{m.actions.length} action(s)</p>
+                  <p className="text-xs text-muted-foreground">
+                    {m.actions.length} action(s)
+                  </p>
                 </div>
                 <div className="flex gap-1">
-                  <Button size="xs" variant="outline" onClick={() => playMacro(m)}>
+                  <Button
+                    size="xs"
+                    variant="outline"
+                    onClick={() => playMacro(m)}
+                  >
                     <Play className="w-3 h-3" />
                   </Button>
-                  <Button size="xs" variant="ghost" onClick={() => deleteMacro(m.id)}>
+                  <Button
+                    size="xs"
+                    variant="ghost"
+                    onClick={() => deleteMacro(m.id)}
+                  >
                     <Trash2 className="w-3 h-3 text-red-600" />
                   </Button>
                 </div>

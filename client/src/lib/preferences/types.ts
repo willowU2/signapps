@@ -9,7 +9,15 @@
 // ============================================================================
 
 export type ThemeMode = "light" | "dark" | "system";
-export type AccentColor = "indigo" | "blue" | "green" | "orange" | "pink" | "purple" | "red" | "yellow";
+export type AccentColor =
+  | "indigo"
+  | "blue"
+  | "green"
+  | "orange"
+  | "pink"
+  | "purple"
+  | "red"
+  | "yellow";
 
 export interface ThemePreferences {
   /** Theme mode */
@@ -64,7 +72,7 @@ export interface NotificationPreferences {
   dndSchedule: {
     enabled: boolean;
     startTime: string; // "22:00"
-    endTime: string;   // "08:00"
+    endTime: string; // "08:00"
   };
   /** Per-category settings */
   categories: {
@@ -138,7 +146,7 @@ export interface CalendarPreferences {
   /** Working hours start */
   workingHoursStart: string; // "09:00"
   /** Working hours end */
-  workingHoursEnd: string;   // "18:00"
+  workingHoursEnd: string; // "18:00"
   /** Default event duration (minutes) */
   defaultEventDuration: number;
   /** Default reminder (minutes before) */
@@ -402,7 +410,8 @@ export const DEFAULT_PREFERENCES: UserPreferences = {
     language: "fr",
     dateFormat: "dd/mm/yyyy",
     numberFormat: "fr",
-    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "Europe/Paris",
+    timezone:
+      Intl.DateTimeFormat().resolvedOptions().timeZone || "Europe/Paris",
   },
   lastSyncedAt: null,
   lastModifiedBy: null,
@@ -412,7 +421,10 @@ export const DEFAULT_PREFERENCES: UserPreferences = {
 // Utility Types
 // ============================================================================
 
-export type PreferencesSection = keyof Omit<UserPreferences, "version" | "lastSyncedAt" | "lastModifiedBy">;
+export type PreferencesSection = keyof Omit<
+  UserPreferences,
+  "version" | "lastSyncedAt" | "lastModifiedBy"
+>;
 
 export interface PreferencesUpdate<T extends PreferencesSection> {
   section: T;

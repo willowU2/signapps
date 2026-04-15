@@ -98,7 +98,7 @@ pub async fn get_my_team(
                 "team_size": 0,
                 "has_reports": false
             })));
-        }
+        },
     };
 
     let node_id = match resolve_node_id(pool, person_id).await? {
@@ -110,7 +110,7 @@ pub async fn get_my_team(
                 "team_size": 0,
                 "has_reports": false
             })));
-        }
+        },
     };
 
     // Direct reports: depth = 1
@@ -137,9 +137,8 @@ pub async fn get_my_team(
         })?;
 
     // Manager: ancestor at depth 1 with assignment_type = 'holder'
-    let manager: Option<(Uuid, String, String, Option<String>, Option<String>)> =
-        sqlx::query_as(
-            r#"
+    let manager: Option<(Uuid, String, String, Option<String>, Option<String>)> = sqlx::query_as(
+        r#"
             SELECT p.id, p.first_name, p.last_name, p.email, p.avatar_url
             FROM core.assignments a
             JOIN core.persons p ON p.id = a.person_id
@@ -150,14 +149,14 @@ pub async fn get_my_team(
               AND a.end_date IS NULL
             LIMIT 1
             "#,
-        )
-        .bind(node_id)
-        .fetch_optional(&**pool)
-        .await
-        .map_err(|e| {
-            tracing::error!(?e, "DB error fetching manager");
-            StatusCode::INTERNAL_SERVER_ERROR
-        })?;
+    )
+    .bind(node_id)
+    .fetch_optional(&**pool)
+    .await
+    .map_err(|e| {
+        tracing::error!(?e, "DB error fetching manager");
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
 
     let team_size = direct_reports.len();
     let has_reports = team_size > 0;
@@ -213,7 +212,7 @@ pub async fn get_extended_team(
                 "extended_team": [],
                 "team_size": 0
             })));
-        }
+        },
     };
 
     let node_id = match resolve_node_id(pool, person_id).await? {
@@ -224,13 +223,12 @@ pub async fn get_extended_team(
                 "extended_team": [],
                 "team_size": 0
             })));
-        }
+        },
     };
 
     // All descendants: depth > 0
-    let members: Vec<(Uuid, String, String, Option<String>, Option<String>, i32)> =
-        sqlx::query_as(
-            r#"
+    let members: Vec<(Uuid, String, String, Option<String>, Option<String>, i32)> = sqlx::query_as(
+        r#"
             SELECT DISTINCT a.person_id, p.first_name, p.last_name, p.email, p.avatar_url, oc.depth
             FROM core.assignments a
             JOIN core.persons p ON p.id = a.person_id
@@ -241,20 +239,19 @@ pub async fn get_extended_team(
               AND a.person_id != $2
             ORDER BY oc.depth
             "#,
-        )
-        .bind(node_id)
-        .bind(person_id)
-        .fetch_all(&**pool)
-        .await
-        .map_err(|e| {
-            tracing::error!(?e, "DB error fetching extended team");
-            StatusCode::INTERNAL_SERVER_ERROR
-        })?;
+    )
+    .bind(node_id)
+    .bind(person_id)
+    .fetch_all(&**pool)
+    .await
+    .map_err(|e| {
+        tracing::error!(?e, "DB error fetching extended team");
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
 
     // Manager
-    let manager: Option<(Uuid, String, String, Option<String>, Option<String>)> =
-        sqlx::query_as(
-            r#"
+    let manager: Option<(Uuid, String, String, Option<String>, Option<String>)> = sqlx::query_as(
+        r#"
             SELECT p.id, p.first_name, p.last_name, p.email, p.avatar_url
             FROM core.assignments a
             JOIN core.persons p ON p.id = a.person_id
@@ -265,14 +262,14 @@ pub async fn get_extended_team(
               AND a.end_date IS NULL
             LIMIT 1
             "#,
-        )
-        .bind(node_id)
-        .fetch_optional(&**pool)
-        .await
-        .map_err(|e| {
-            tracing::error!(?e, "DB error fetching manager for extended team");
-            StatusCode::INTERNAL_SERVER_ERROR
-        })?;
+    )
+    .bind(node_id)
+    .fetch_optional(&**pool)
+    .await
+    .map_err(|e| {
+        tracing::error!(?e, "DB error fetching manager for extended team");
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
 
     let team_size = members.len();
     let members_json: Vec<_> = members
@@ -327,9 +324,8 @@ pub async fn get_manager(
         None => return Ok(Json(json!({ "manager": null }))),
     };
 
-    let manager: Option<(Uuid, String, String, Option<String>, Option<String>)> =
-        sqlx::query_as(
-            r#"
+    let manager: Option<(Uuid, String, String, Option<String>, Option<String>)> = sqlx::query_as(
+        r#"
             SELECT p.id, p.first_name, p.last_name, p.email, p.avatar_url
             FROM core.assignments a
             JOIN core.persons p ON p.id = a.person_id
@@ -340,14 +336,14 @@ pub async fn get_manager(
               AND a.end_date IS NULL
             LIMIT 1
             "#,
-        )
-        .bind(node_id)
-        .fetch_optional(&**pool)
-        .await
-        .map_err(|e| {
-            tracing::error!(?e, "DB error fetching manager");
-            StatusCode::INTERNAL_SERVER_ERROR
-        })?;
+    )
+    .bind(node_id)
+    .fetch_optional(&**pool)
+    .await
+    .map_err(|e| {
+        tracing::error!(?e, "DB error fetching manager");
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
 
     let manager_json = manager.map(|(id, first, last, email, avatar)| {
         json!({ "id": id, "first_name": first, "last_name": last, "email": email, "avatar_url": avatar })
@@ -453,7 +449,7 @@ pub async fn get_team_summary(
                 "pending_timesheets": 0,
                 "avg_fte": 0.0
             })));
-        }
+        },
     };
 
     let node_id = match resolve_node_id(pool, person_id).await? {
@@ -466,7 +462,7 @@ pub async fn get_team_summary(
                 "pending_timesheets": 0,
                 "avg_fte": 0.0
             })));
-        }
+        },
     };
 
     // Count direct reports
@@ -510,9 +506,7 @@ pub async fn get_team_summary(
     .await
     .unwrap_or(None);
 
-    let avg_fte = avg_fte_row
-        .and_then(|(v,)| v)
-        .unwrap_or(1.0);
+    let avg_fte = avg_fte_row.and_then(|(v,)| v).unwrap_or(1.0);
 
     Ok(Json(json!({
         "team_size": team_size,

@@ -1,13 +1,13 @@
-'use client';
+"use client";
 
-import { useEffect, useState, useCallback } from 'react';
-import { Flame, CheckCircle2, Circle, Target } from 'lucide-react';
-import { Progress } from '@/components/ui/progress';
-import { cn } from '@/lib/utils';
+import { useEffect, useState, useCallback } from "react";
+import { Flame, CheckCircle2, Circle, Target } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+import { cn } from "@/lib/utils";
 
 // ── Storage keys ──────────────────────────────────────────────
-const STREAK_KEY = 'signapps-streak-v2';
-const GOALS_KEY = 'signapps-daily-goals';
+const STREAK_KEY = "signapps-streak-v2";
+const GOALS_KEY = "signapps-daily-goals";
 
 // ── Streak types ──────────────────────────────────────────────
 interface StreakState {
@@ -38,8 +38,12 @@ function yesterday(): string {
 }
 
 function defaultStreaks(): StreakState {
-  const base = { current: 0, longest: 0, lastDate: '' };
-  return { inboxZero: { ...base }, taskCrusher: { ...base }, dailyLogin: { ...base } };
+  const base = { current: 0, longest: 0, lastDate: "" };
+  return {
+    inboxZero: { ...base },
+    taskCrusher: { ...base },
+    dailyLogin: { ...base },
+  };
 }
 
 function defaultGoals(): DailyGoals {
@@ -78,11 +82,15 @@ function loadGoals(): DailyGoals {
 }
 
 function saveStreaks(s: StreakState) {
-  try { localStorage.setItem(STREAK_KEY, JSON.stringify(s)); } catch {}
+  try {
+    localStorage.setItem(STREAK_KEY, JSON.stringify(s));
+  } catch {}
 }
 
 function saveGoals(g: DailyGoals) {
-  try { localStorage.setItem(GOALS_KEY, JSON.stringify(g)); } catch {}
+  try {
+    localStorage.setItem(GOALS_KEY, JSON.stringify(g));
+  } catch {}
 }
 
 /**
@@ -122,7 +130,11 @@ export function markInboxZero(): StreakState {
   const newCurrent = iz.lastDate === yd ? iz.current + 1 : 1;
   const updated: StreakState = {
     ...state,
-    inboxZero: { current: newCurrent, longest: Math.max(iz.longest, newCurrent), lastDate: t },
+    inboxZero: {
+      current: newCurrent,
+      longest: Math.max(iz.longest, newCurrent),
+      lastDate: t,
+    },
   };
   saveStreaks(updated);
   return updated;
@@ -146,7 +158,11 @@ export function incrementTaskGoal(): DailyGoals {
       const newCurrent = tc.lastDate === yd ? tc.current + 1 : 1;
       saveStreaks({
         ...state,
-        taskCrusher: { current: newCurrent, longest: Math.max(tc.longest, newCurrent), lastDate: t },
+        taskCrusher: {
+          current: newCurrent,
+          longest: Math.max(tc.longest, newCurrent),
+          lastDate: t,
+        },
       });
     }
   }
@@ -175,8 +191,8 @@ export function StreakTracker({ compact = false }: StreakTrackerProps) {
     const handler = (e: StorageEvent) => {
       if (e.key === STREAK_KEY || e.key === GOALS_KEY) refresh();
     };
-    window.addEventListener('storage', handler);
-    return () => window.removeEventListener('storage', handler);
+    window.addEventListener("storage", handler);
+    return () => window.removeEventListener("storage", handler);
   }, [refresh]);
 
   if (!streaks || !goals) return null;
@@ -192,29 +208,49 @@ export function StreakTracker({ compact = false }: StreakTrackerProps) {
 
   const goalItems = [
     {
-      label: 'Complete 3 tasks today',
-      icon: '✅',
+      label: "Complete 3 tasks today",
+      icon: "✅",
       done: goals.tasksDone,
       target: goals.tasksTarget,
     },
     {
-      label: 'Send 5 emails',
-      icon: '✉️',
+      label: "Send 5 emails",
+      icon: "✉️",
       done: goals.emailsSent,
       target: goals.emailsTarget,
     },
     {
-      label: 'Create 1 calendar event',
-      icon: '📅',
+      label: "Create 1 calendar event",
+      icon: "📅",
       done: goals.eventsDone,
       target: goals.eventsTarget,
     },
   ];
 
-  const streakItems: Array<{ label: string; icon: string; current: number; longest: number }> = [
-    { label: 'Daily login', icon: '🔥', current: streaks.dailyLogin.current, longest: streaks.dailyLogin.longest },
-    { label: 'Inbox Zero', icon: '📭', current: streaks.inboxZero.current, longest: streaks.inboxZero.longest },
-    { label: 'Task Crusher', icon: '⚡', current: streaks.taskCrusher.current, longest: streaks.taskCrusher.longest },
+  const streakItems: Array<{
+    label: string;
+    icon: string;
+    current: number;
+    longest: number;
+  }> = [
+    {
+      label: "Daily login",
+      icon: "🔥",
+      current: streaks.dailyLogin.current,
+      longest: streaks.dailyLogin.longest,
+    },
+    {
+      label: "Inbox Zero",
+      icon: "📭",
+      current: streaks.inboxZero.current,
+      longest: streaks.inboxZero.longest,
+    },
+    {
+      label: "Task Crusher",
+      icon: "⚡",
+      current: streaks.taskCrusher.current,
+      longest: streaks.taskCrusher.longest,
+    },
   ];
 
   return (
@@ -224,7 +260,9 @@ export function StreakTracker({ compact = false }: StreakTrackerProps) {
         <div className="flex items-center gap-2 mb-3">
           <Target className="h-4 w-4 text-primary" />
           <h3 className="text-sm font-semibold">Daily goals</h3>
-          <span className="text-xs text-muted-foreground ml-auto">{new Date().toLocaleDateString()}</span>
+          <span className="text-xs text-muted-foreground ml-auto">
+            {new Date().toLocaleDateString()}
+          </span>
         </div>
         <div className="space-y-2.5">
           {goalItems.map((g) => {
@@ -233,18 +271,27 @@ export function StreakTracker({ compact = false }: StreakTrackerProps) {
             return (
               <div key={g.label} className="space-y-1">
                 <div className="flex items-center gap-2 text-sm">
-                  {done
-                    ? <CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0" />
-                    : <Circle className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                  }
-                  <span className={cn('flex-1', done && 'text-muted-foreground line-through')}>
+                  {done ? (
+                    <CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0" />
+                  ) : (
+                    <Circle className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                  )}
+                  <span
+                    className={cn(
+                      "flex-1",
+                      done && "text-muted-foreground line-through",
+                    )}
+                  >
                     {g.icon} {g.label}
                   </span>
                   <span className="text-xs text-muted-foreground">
                     {g.done}/{g.target}
                   </span>
                 </div>
-                <Progress value={pct} className={cn('h-1.5', done && '[&>div]:bg-green-500')} />
+                <Progress
+                  value={pct}
+                  className={cn("h-1.5", done && "[&>div]:bg-green-500")}
+                />
               </div>
             );
           })}
@@ -266,15 +313,19 @@ export function StreakTracker({ compact = false }: StreakTrackerProps) {
               <span className="text-xl mb-1">{s.icon}</span>
               <span
                 className={cn(
-                  'text-2xl font-bold',
-                  s.current > 0 ? 'text-orange-500' : 'text-muted-foreground',
+                  "text-2xl font-bold",
+                  s.current > 0 ? "text-orange-500" : "text-muted-foreground",
                 )}
               >
                 {s.current}
               </span>
-              <span className="text-xs text-muted-foreground leading-tight">{s.label}</span>
+              <span className="text-xs text-muted-foreground leading-tight">
+                {s.label}
+              </span>
               {s.longest > 1 && (
-                <span className="text-[10px] text-muted-foreground mt-0.5">Best: {s.longest}</span>
+                <span className="text-[10px] text-muted-foreground mt-0.5">
+                  Best: {s.longest}
+                </span>
               )}
             </div>
           ))}

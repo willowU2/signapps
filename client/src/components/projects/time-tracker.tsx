@@ -14,7 +14,7 @@ interface TimeEntry {
   taskId: string;
   taskTitle: string;
   start: string; // ISO
-  end?: string;  // ISO — absent means running
+  end?: string; // ISO — absent means running
   minutes?: number; // manual entry
 }
 
@@ -61,7 +61,9 @@ export function TimeTracker({ tasks = SAMPLE_TASKS }: TimeTrackerProps) {
     } else {
       if (intervalRef.current) clearInterval(intervalRef.current);
     }
-    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
   }, [running]);
 
   const runningEntry = entries.find((e) => e.id === running);
@@ -71,14 +73,23 @@ export function TimeTracker({ tasks = SAMPLE_TASKS }: TimeTrackerProps) {
     const task = tasks.find((t) => t.id === selectedTask);
     if (!task) return;
     const id = crypto.randomUUID();
-    const entry: TimeEntry = { id, taskId: task.id, taskTitle: task.title, start: new Date().toISOString() };
+    const entry: TimeEntry = {
+      id,
+      taskId: task.id,
+      taskTitle: task.title,
+      start: new Date().toISOString(),
+    };
     setEntries((p) => [entry, ...p]);
     setRunning(id);
   };
 
   const handleStop = () => {
     if (!running) return;
-    setEntries((p) => p.map((e) => e.id === running ? { ...e, end: new Date().toISOString() } : e));
+    setEntries((p) =>
+      p.map((e) =>
+        e.id === running ? { ...e, end: new Date().toISOString() } : e,
+      ),
+    );
     setRunning(null);
   };
 
@@ -88,8 +99,12 @@ export function TimeTracker({ tasks = SAMPLE_TASKS }: TimeTrackerProps) {
     const task = tasks.find((t) => t.id === selectedTask);
     if (!task) return;
     const entry: TimeEntry = {
-      id: crypto.randomUUID(), taskId: task.id, taskTitle: task.title,
-      start: new Date().toISOString(), end: new Date().toISOString(), minutes: mins,
+      id: crypto.randomUUID(),
+      taskId: task.id,
+      taskTitle: task.title,
+      start: new Date().toISOString(),
+      end: new Date().toISOString(),
+      minutes: mins,
     };
     setEntries((p) => [entry, ...p]);
     setManualMinutes("");
@@ -103,10 +118,14 @@ export function TimeTracker({ tasks = SAMPLE_TASKS }: TimeTrackerProps) {
   const totalMs = entries.reduce((acc, e) => acc + entryDuration(e), 0);
 
   // Group by task
-  const byTask = tasks.map((t) => ({
-    ...t,
-    total: entries.filter((e) => e.taskId === t.id).reduce((acc, e) => acc + entryDuration(e), 0),
-  })).filter((t) => t.total > 0);
+  const byTask = tasks
+    .map((t) => ({
+      ...t,
+      total: entries
+        .filter((e) => e.taskId === t.id)
+        .reduce((acc, e) => acc + entryDuration(e), 0),
+    }))
+    .filter((t) => t.total > 0);
 
   return (
     <div className="space-y-4 p-4 border rounded-lg bg-background">
@@ -120,20 +139,31 @@ export function TimeTracker({ tasks = SAMPLE_TASKS }: TimeTrackerProps) {
       {/* Timer controls */}
       <div className="flex gap-2 flex-wrap items-end">
         <div className="space-y-1 flex-1 min-w-[140px]">
-          <label className="text-xs font-medium text-muted-foreground">Tâche</label>
+          <label className="text-xs font-medium text-muted-foreground">
+            Tâche
+          </label>
           <select
             value={selectedTask}
             onChange={(e) => setSelectedTask(e.target.value)}
             className="w-full h-9 rounded-md border px-3 text-sm bg-background"
           >
-            {tasks.map((t) => <option key={t.id} value={t.id}>{t.title}</option>)}
+            {tasks.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.title}
+              </option>
+            ))}
           </select>
         </div>
 
         {running ? (
           <Button onClick={handleStop} variant="destructive" className="gap-2">
             <Square className="size-4" />
-            Arrêter {runningEntry && <span className="font-mono text-xs">{fmtDuration(entryDuration(runningEntry))}</span>}
+            Arrêter{" "}
+            {runningEntry && (
+              <span className="font-mono text-xs">
+                {fmtDuration(entryDuration(runningEntry))}
+              </span>
+            )}
           </Button>
         ) : (
           <Button onClick={handleStart} className="gap-2">
@@ -145,12 +175,18 @@ export function TimeTracker({ tasks = SAMPLE_TASKS }: TimeTrackerProps) {
       {/* Manual entry */}
       <div className="flex gap-2 items-end">
         <div className="space-y-1 flex-1">
-          <label className="text-xs font-medium text-muted-foreground">Ajout manuel (minutes)</label>
+          <label className="text-xs font-medium text-muted-foreground">
+            Ajout manuel (minutes)
+          </label>
           <Input
-            type="number" min="1" placeholder="ex: 30"
+            type="number"
+            min="1"
+            placeholder="ex: 30"
             value={manualMinutes}
             onChange={(e) => setManualMinutes(e.target.value)}
-            onKeyDown={(e) => { if (e.key === "Enter") handleManualAdd(); }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") handleManualAdd();
+            }}
           />
         </div>
         <Button variant="outline" onClick={handleManualAdd} className="gap-1">
@@ -161,11 +197,15 @@ export function TimeTracker({ tasks = SAMPLE_TASKS }: TimeTrackerProps) {
       {/* Summary by task */}
       {byTask.length > 0 && (
         <div className="space-y-1">
-          <p className="text-xs font-medium text-muted-foreground">Résumé par tâche</p>
+          <p className="text-xs font-medium text-muted-foreground">
+            Résumé par tâche
+          </p>
           {byTask.map((t) => (
             <div key={t.id} className="flex justify-between text-sm">
               <span className="truncate">{t.title}</span>
-              <span className="font-mono text-muted-foreground">{fmtDuration(t.total)}</span>
+              <span className="font-mono text-muted-foreground">
+                {fmtDuration(t.total)}
+              </span>
             </div>
           ))}
         </div>
@@ -174,14 +214,40 @@ export function TimeTracker({ tasks = SAMPLE_TASKS }: TimeTrackerProps) {
       {/* Entries list */}
       {entries.length > 0 && (
         <div className="space-y-1 max-h-56 overflow-y-auto">
-          <p className="text-xs font-medium text-muted-foreground">Historique</p>
+          <p className="text-xs font-medium text-muted-foreground">
+            Historique
+          </p>
           {entries.map((e) => (
-            <div key={e.id} className={cn("flex items-center gap-2 text-xs border rounded px-2 py-1", e.id === running && "border-primary bg-primary/5")}>
-              <span className={cn("size-2 rounded-full shrink-0", e.id === running ? "bg-green-500 animate-pulse" : "bg-muted-foreground/40")} />
+            <div
+              key={e.id}
+              className={cn(
+                "flex items-center gap-2 text-xs border rounded px-2 py-1",
+                e.id === running && "border-primary bg-primary/5",
+              )}
+            >
+              <span
+                className={cn(
+                  "size-2 rounded-full shrink-0",
+                  e.id === running
+                    ? "bg-green-500 animate-pulse"
+                    : "bg-muted-foreground/40",
+                )}
+              />
               <span className="flex-1 truncate">{e.taskTitle}</span>
-              <span className="font-mono text-muted-foreground">{fmtDuration(entryDuration(e))}</span>
-              {e.minutes && <Badge variant="outline" className="text-xs">manuel</Badge>}
-              <Button size="icon" variant="ghost" className="size-5" onClick={() => handleDelete(e.id)}>
+              <span className="font-mono text-muted-foreground">
+                {fmtDuration(entryDuration(e))}
+              </span>
+              {e.minutes && (
+                <Badge variant="outline" className="text-xs">
+                  manuel
+                </Badge>
+              )}
+              <Button
+                size="icon"
+                variant="ghost"
+                className="size-5"
+                onClick={() => handleDelete(e.id)}
+              >
                 <Trash2 className="size-3" />
               </Button>
             </div>
@@ -190,7 +256,9 @@ export function TimeTracker({ tasks = SAMPLE_TASKS }: TimeTrackerProps) {
       )}
 
       {entries.length === 0 && (
-        <p className="text-sm text-muted-foreground text-center py-4">Aucune entrée de temps.</p>
+        <p className="text-sm text-muted-foreground text-center py-4">
+          Aucune entrée de temps.
+        </p>
       )}
     </div>
   );

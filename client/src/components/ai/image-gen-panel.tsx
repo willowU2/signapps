@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   ImageIcon,
   Loader2,
@@ -13,52 +13,47 @@ import {
   Maximize2,
   Dice5,
   X,
-} from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import { Slider } from '@/components/ui/slider';
-import { Separator } from '@/components/ui/separator';
+} from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Slider } from "@/components/ui/slider";
+import { Separator } from "@/components/ui/separator";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from '@/components/ui/tabs';
+} from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from '@/components/ui/collapsible';
-import { toast } from 'sonner';
-import { useAiImageGen } from '@/hooks/use-ai-image-gen';
+} from "@/components/ui/collapsible";
+import { toast } from "sonner";
+import { useAiImageGen } from "@/hooks/use-ai-image-gen";
 
 // ─── Presets ─────────────────────────────────────────────────────────────────
 
 const SIZE_PRESETS = [
-  { label: '512x512', w: 512, h: 512 },
-  { label: '768x768', w: 768, h: 768 },
-  { label: '1024x1024', w: 1024, h: 1024 },
-  { label: '1024x1792', w: 1024, h: 1792 },
-  { label: '1792x1024', w: 1792, h: 1024 },
+  { label: "512x512", w: 512, h: 512 },
+  { label: "768x768", w: 768, h: 768 },
+  { label: "1024x1024", w: 1024, h: 1024 },
+  { label: "1024x1792", w: 1024, h: 1792 },
+  { label: "1792x1024", w: 1792, h: 1024 },
 ] as const;
 
 const STYLES = [
-  { id: 'photorealistic', label: 'Photoréaliste' },
-  { id: 'anime', label: 'Anime' },
-  { id: 'sketch', label: 'Croquis' },
-  { id: 'digital-art', label: 'Art numérique' },
-  { id: 'oil-painting', label: 'Peinture à l\'huile' },
+  { id: "photorealistic", label: "Photoréaliste" },
+  { id: "anime", label: "Anime" },
+  { id: "sketch", label: "Croquis" },
+  { id: "digital-art", label: "Art numérique" },
+  { id: "oil-painting", label: "Peinture à l'huile" },
 ] as const;
 
 const UPSCALE_OPTIONS = [2, 4] as const;
@@ -100,7 +95,7 @@ function FileDropZone({
       onClick={() => inputRef.current?.click()}
       className={`
         border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors
-        ${dragOver ? 'border-primary bg-primary/5' : 'border-muted-foreground/25 hover:border-primary/50'}
+        ${dragOver ? "border-primary bg-primary/5" : "border-muted-foreground/25 hover:border-primary/50"}
       `}
     >
       <input
@@ -153,25 +148,25 @@ export function ImageGenPanel() {
   } = useAiImageGen();
 
   // --- Generate tab state ---
-  const [prompt, setPrompt] = useState('');
-  const [negativePrompt, setNegativePrompt] = useState('');
+  const [prompt, setPrompt] = useState("");
+  const [negativePrompt, setNegativePrompt] = useState("");
   const [negativeOpen, setNegativeOpen] = useState(false);
   const [width, setWidth] = useState(1024);
   const [height, setHeight] = useState(1024);
   const [steps, setSteps] = useState(20);
   const [guidance, setGuidance] = useState(7.5);
-  const [seed, setSeed] = useState('');
-  const [style, setStyle] = useState('photorealistic');
-  const [model, setModel] = useState('');
+  const [seed, setSeed] = useState("");
+  const [style, setStyle] = useState("photorealistic");
+  const [model, setModel] = useState("");
 
   // --- Inpaint tab state ---
   const [inpaintImage, setInpaintImage] = useState<File | null>(null);
   const [inpaintMask, setInpaintMask] = useState<File | null>(null);
-  const [inpaintPrompt, setInpaintPrompt] = useState('');
+  const [inpaintPrompt, setInpaintPrompt] = useState("");
 
   // --- Img2Img tab state ---
   const [i2iImage, setI2iImage] = useState<File | null>(null);
-  const [i2iPrompt, setI2iPrompt] = useState('');
+  const [i2iPrompt, setI2iPrompt] = useState("");
   const [i2iStrength, setI2iStrength] = useState(0.75);
 
   // --- Upscale tab state ---
@@ -190,7 +185,7 @@ export function ImageGenPanel() {
 
   const handleGenerate = useCallback(() => {
     if (!prompt.trim()) {
-      toast.error('Veuillez saisir un prompt');
+      toast.error("Veuillez saisir un prompt");
       return;
     }
     generate({
@@ -204,15 +199,26 @@ export function ImageGenPanel() {
       model: model || undefined,
       style,
     });
-  }, [prompt, negativePrompt, width, height, steps, guidance, seed, model, style, generate]);
+  }, [
+    prompt,
+    negativePrompt,
+    width,
+    height,
+    steps,
+    guidance,
+    seed,
+    model,
+    style,
+    generate,
+  ]);
 
   const handleInpaint = useCallback(() => {
     if (!inpaintImage || !inpaintMask) {
-      toast.error('Veuillez fournir une image et un masque');
+      toast.error("Veuillez fournir une image et un masque");
       return;
     }
     if (!inpaintPrompt.trim()) {
-      toast.error('Veuillez saisir un prompt');
+      toast.error("Veuillez saisir un prompt");
       return;
     }
     inpaint(inpaintImage, inpaintMask, inpaintPrompt.trim());
@@ -220,11 +226,11 @@ export function ImageGenPanel() {
 
   const handleImg2Img = useCallback(() => {
     if (!i2iImage) {
-      toast.error('Veuillez fournir une image source');
+      toast.error("Veuillez fournir une image source");
       return;
     }
     if (!i2iPrompt.trim()) {
-      toast.error('Veuillez saisir un prompt');
+      toast.error("Veuillez saisir un prompt");
       return;
     }
     img2img(i2iImage, i2iPrompt.trim(), i2iStrength);
@@ -232,7 +238,7 @@ export function ImageGenPanel() {
 
   const handleUpscale = useCallback(() => {
     if (!upscaleImage) {
-      toast.error('Veuillez fournir une image');
+      toast.error("Veuillez fournir une image");
       return;
     }
     upscale(upscaleImage, upscaleScale);
@@ -240,7 +246,7 @@ export function ImageGenPanel() {
 
   const handleDownload = useCallback(() => {
     if (!result?.image_url) return;
-    const a = document.createElement('a');
+    const a = document.createElement("a");
     a.href = result.image_url;
     a.download = `generated-${Date.now()}.png`;
     a.click();
@@ -302,9 +308,13 @@ export function ImageGenPanel() {
             {/* Negative prompt (collapsible) */}
             <Collapsible open={negativeOpen} onOpenChange={setNegativeOpen}>
               <CollapsibleTrigger asChild>
-                <Button variant="ghost" size="sm" className="gap-1 text-muted-foreground">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="gap-1 text-muted-foreground"
+                >
                   <ChevronDown
-                    className={`h-4 w-4 transition-transform ${negativeOpen ? 'rotate-180' : ''}`}
+                    className={`h-4 w-4 transition-transform ${negativeOpen ? "rotate-180" : ""}`}
                   />
                   Prompt négatif
                 </Button>
@@ -329,7 +339,9 @@ export function ImageGenPanel() {
                 {SIZE_PRESETS.map((p) => (
                   <Button
                     key={p.label}
-                    variant={width === p.w && height === p.h ? 'default' : 'outline'}
+                    variant={
+                      width === p.w && height === p.h ? "default" : "outline"
+                    }
                     size="sm"
                     onClick={() => handleSizePreset(p.w, p.h)}
                     disabled={generating}
@@ -360,7 +372,9 @@ export function ImageGenPanel() {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label>Guidance scale</Label>
-                <span className="text-xs text-muted-foreground">{guidance.toFixed(1)}</span>
+                <span className="text-xs text-muted-foreground">
+                  {guidance.toFixed(1)}
+                </span>
               </div>
               <Slider
                 min={1}
@@ -388,7 +402,9 @@ export function ImageGenPanel() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setSeed(String(Math.floor(Math.random() * 2147483647)))}
+                  onClick={() =>
+                    setSeed(String(Math.floor(Math.random() * 2147483647)))
+                  }
                   disabled={generating}
                   title="Seed aléatoire"
                 >
@@ -400,7 +416,11 @@ export function ImageGenPanel() {
             {/* Style */}
             <div className="space-y-2">
               <Label>Style</Label>
-              <Select value={style} onValueChange={setStyle} disabled={generating}>
+              <Select
+                value={style}
+                onValueChange={setStyle}
+                disabled={generating}
+              >
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Choisir un style" />
                 </SelectTrigger>
@@ -418,7 +438,11 @@ export function ImageGenPanel() {
             {models.length > 0 && (
               <div className="space-y-2">
                 <Label>Modèle</Label>
-                <Select value={model} onValueChange={setModel} disabled={generating}>
+                <Select
+                  value={model}
+                  onValueChange={setModel}
+                  disabled={generating}
+                >
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Modèle par défaut" />
                   </SelectTrigger>
@@ -489,7 +513,12 @@ export function ImageGenPanel() {
 
             <Button
               onClick={handleInpaint}
-              disabled={generating || !inpaintImage || !inpaintMask || !inpaintPrompt.trim()}
+              disabled={
+                generating ||
+                !inpaintImage ||
+                !inpaintMask ||
+                !inpaintPrompt.trim()
+              }
               className="w-full"
             >
               {generating ? (
@@ -587,7 +616,7 @@ export function ImageGenPanel() {
                 {UPSCALE_OPTIONS.map((s) => (
                   <Button
                     key={s}
-                    variant={upscaleScale === s ? 'default' : 'outline'}
+                    variant={upscaleScale === s ? "default" : "outline"}
                     size="sm"
                     onClick={() => setUpscaleScale(s)}
                     disabled={generating}

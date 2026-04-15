@@ -1,12 +1,24 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Badge } from '@/components/ui/badge';
-import { Edit, RotateCcw, Keyboard } from 'lucide-react';
-import { toast } from 'sonner';
+import { useState, useEffect } from "react";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import { Edit, RotateCcw, Keyboard } from "lucide-react";
+import { toast } from "sonner";
 
 interface Shortcut {
   id: string;
@@ -17,11 +29,41 @@ interface Shortcut {
 }
 
 const DEFAULT_SHORTCUTS: Shortcut[] = [
-  { id: '1', name: 'Nouvelle conversation', category: 'Chat', keys: ['Ctrl', 'N'], default: ['Ctrl', 'N'] },
-  { id: '2', name: 'Recherche', category: 'Navigation', keys: ['Ctrl', 'K'], default: ['Ctrl', 'K'] },
-  { id: '3', name: 'Enregistrer', category: 'Édition', keys: ['Ctrl', 'S'], default: ['Ctrl', 'S'] },
-  { id: '4', name: 'Annuler', category: 'Édition', keys: ['Ctrl', 'Z'], default: ['Ctrl', 'Z'] },
-  { id: '5', name: 'Refaire', category: 'Édition', keys: ['Ctrl', 'Shift', 'Z'], default: ['Ctrl', 'Shift', 'Z'] },
+  {
+    id: "1",
+    name: "Nouvelle conversation",
+    category: "Chat",
+    keys: ["Ctrl", "N"],
+    default: ["Ctrl", "N"],
+  },
+  {
+    id: "2",
+    name: "Recherche",
+    category: "Navigation",
+    keys: ["Ctrl", "K"],
+    default: ["Ctrl", "K"],
+  },
+  {
+    id: "3",
+    name: "Enregistrer",
+    category: "Édition",
+    keys: ["Ctrl", "S"],
+    default: ["Ctrl", "S"],
+  },
+  {
+    id: "4",
+    name: "Annuler",
+    category: "Édition",
+    keys: ["Ctrl", "Z"],
+    default: ["Ctrl", "Z"],
+  },
+  {
+    id: "5",
+    name: "Refaire",
+    category: "Édition",
+    keys: ["Ctrl", "Shift", "Z"],
+    default: ["Ctrl", "Shift", "Z"],
+  },
 ];
 
 export function ShortcutManager() {
@@ -31,7 +73,7 @@ export function ShortcutManager() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   useEffect(() => {
-    const stored = localStorage.getItem('shortcuts');
+    const stored = localStorage.getItem("shortcuts");
     if (stored) {
       try {
         setShortcuts(JSON.parse(stored));
@@ -50,10 +92,10 @@ export function ShortcutManager() {
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
     e.preventDefault();
     const keys: string[] = [];
-    if (e.ctrlKey) keys.push('Ctrl');
-    if (e.shiftKey) keys.push('Shift');
-    if (e.altKey) keys.push('Alt');
-    if (!['Control', 'Shift', 'Alt'].includes(e.key)) {
+    if (e.ctrlKey) keys.push("Ctrl");
+    if (e.shiftKey) keys.push("Shift");
+    if (e.altKey) keys.push("Alt");
+    if (!["Control", "Shift", "Alt"].includes(e.key)) {
       keys.push(e.key.toUpperCase());
     }
     setRecordedKeys(keys.length > 0 ? keys : recordedKeys);
@@ -62,11 +104,11 @@ export function ShortcutManager() {
   const handleSaveShortcut = () => {
     if (editingId && recordedKeys.length > 0) {
       const updated = shortcuts.map((s) =>
-        s.id === editingId ? { ...s, keys: recordedKeys } : s
+        s.id === editingId ? { ...s, keys: recordedKeys } : s,
       );
       setShortcuts(updated);
-      localStorage.setItem('shortcuts', JSON.stringify(updated));
-      toast.success('Raccourci mis à jour');
+      localStorage.setItem("shortcuts", JSON.stringify(updated));
+      toast.success("Raccourci mis à jour");
       setIsDialogOpen(false);
       setEditingId(null);
     }
@@ -74,8 +116,8 @@ export function ShortcutManager() {
 
   const handleReset = () => {
     setShortcuts(DEFAULT_SHORTCUTS);
-    localStorage.setItem('shortcuts', JSON.stringify(DEFAULT_SHORTCUTS));
-    toast.success('Raccourcis réinitialisés');
+    localStorage.setItem("shortcuts", JSON.stringify(DEFAULT_SHORTCUTS));
+    toast.success("Raccourcis réinitialisés");
   };
 
   const categories = [...new Set(shortcuts.map((s) => s.category))];
@@ -86,7 +128,10 @@ export function ShortcutManager() {
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
             <CardTitle>Raccourcis personnalisés</CardTitle>
-            <CardDescription>Configurez les raccourcis clavier pour accélérer votre productivité.</CardDescription>
+            <CardDescription>
+              Configurez les raccourcis clavier pour accélérer votre
+              productivité.
+            </CardDescription>
           </div>
           <Button variant="outline" size="sm" onClick={handleReset}>
             <RotateCcw className="w-4 h-4 mr-2" />
@@ -96,7 +141,9 @@ export function ShortcutManager() {
         <CardContent className="space-y-6">
           {categories.map((category) => (
             <div key={category} className="space-y-3">
-              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">{category}</h3>
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                {category}
+              </h3>
               <div className="space-y-2">
                 {shortcuts
                   .filter((s) => s.category === category)
@@ -109,10 +156,17 @@ export function ShortcutManager() {
                         <p className="text-sm font-medium">{shortcut.name}</p>
                       </div>
                       <div className="flex items-center gap-3">
-                        <Badge variant="secondary" className="font-mono text-xs">
-                          {shortcut.keys.join(' + ')}
+                        <Badge
+                          variant="secondary"
+                          className="font-mono text-xs"
+                        >
+                          {shortcut.keys.join(" + ")}
                         </Badge>
-                        <Button size="sm" variant="ghost" onClick={() => handleEditClick(shortcut.id)}>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleEditClick(shortcut.id)}
+                        >
                           <Edit className="w-4 h-4" />
                         </Button>
                       </div>
@@ -141,10 +195,14 @@ export function ShortcutManager() {
               {recordedKeys.length > 0 ? (
                 <div className="flex items-center justify-center gap-1">
                   <Keyboard className="w-5 h-5 text-primary" />
-                  <span className="font-mono font-semibold text-primary">{recordedKeys.join(' + ')}</span>
+                  <span className="font-mono font-semibold text-primary">
+                    {recordedKeys.join(" + ")}
+                  </span>
                 </div>
               ) : (
-                <p className="text-muted-foreground">Appuyez sur les touches...</p>
+                <p className="text-muted-foreground">
+                  Appuyez sur les touches...
+                </p>
               )}
             </div>
           </div>
@@ -152,7 +210,10 @@ export function ShortcutManager() {
             <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
               Annuler
             </Button>
-            <Button onClick={handleSaveShortcut} disabled={recordedKeys.length === 0}>
+            <Button
+              onClick={handleSaveShortcut}
+              disabled={recordedKeys.length === 0}
+            >
               Enregistrer
             </Button>
           </DialogFooter>

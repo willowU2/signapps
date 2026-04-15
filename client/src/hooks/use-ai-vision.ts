@@ -1,5 +1,5 @@
-import { create } from 'zustand';
-import { getClient, ServiceName } from '@/lib/api/factory';
+import { create } from "zustand";
+import { getClient, ServiceName } from "@/lib/api/factory";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -46,18 +46,18 @@ export const useAiVision = create<VisionState>()((set) => ({
     set({ analyzing: true, error: null, result: null });
     try {
       const formData = new FormData();
-      formData.append('image', image);
-      if (prompt) formData.append('prompt', prompt);
+      formData.append("image", image);
+      if (prompt) formData.append("prompt", prompt);
 
       const res = await aiClient.post<VisionResult>(
-        '/ai/vision/describe',
+        "/ai/vision/describe",
         formData,
-        { headers: { 'Content-Type': 'multipart/form-data' } },
+        { headers: { "Content-Type": "multipart/form-data" } },
       );
       set({ result: res.data, analyzing: false });
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : 'Image description failed';
+        err instanceof Error ? err.message : "Image description failed";
       set({ error: message, analyzing: false });
     }
   },
@@ -66,18 +66,15 @@ export const useAiVision = create<VisionState>()((set) => ({
     set({ analyzing: true, error: null, vqaResult: null });
     try {
       const formData = new FormData();
-      formData.append('image', image);
-      formData.append('question', question);
+      formData.append("image", image);
+      formData.append("question", question);
 
-      const res = await aiClient.post<VqaResult>(
-        '/ai/vision/vqa',
-        formData,
-        { headers: { 'Content-Type': 'multipart/form-data' } },
-      );
+      const res = await aiClient.post<VqaResult>("/ai/vision/vqa", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
       set({ vqaResult: res.data, analyzing: false });
     } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : 'Visual Q&A failed';
+      const message = err instanceof Error ? err.message : "Visual Q&A failed";
       set({ error: message, analyzing: false });
     }
   },

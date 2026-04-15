@@ -3,11 +3,11 @@
  * Story 1.1.5: User Preferences Store
  */
 
-import { create } from 'zustand';
-import { devtools, persist } from 'zustand/middleware';
-import { immer } from 'zustand/middleware/immer';
-import type { ViewType, Scope, TimeOfDay } from '@/lib/scheduling/types';
-import { schedulingApi } from '@/lib/scheduling/api';
+import { create } from "zustand";
+import { devtools, persist } from "zustand/middleware";
+import { immer } from "zustand/middleware/immer";
+import type { ViewType, Scope, TimeOfDay } from "@/lib/scheduling/types";
+import { schedulingApi } from "@/lib/scheduling/api";
 
 // ============================================================================
 // STATE INTERFACE
@@ -38,10 +38,10 @@ export interface PreferencesState {
 
   // Energy-Aware Scheduling
   energyProfile: {
-    morning: 'high' | 'medium' | 'low';
-    midday: 'high' | 'medium' | 'low';
-    afternoon: 'high' | 'medium' | 'low';
-    evening: 'high' | 'medium' | 'low';
+    morning: "high" | "medium" | "low";
+    midday: "high" | "medium" | "low";
+    afternoon: "high" | "medium" | "low";
+    evening: "high" | "medium" | "low";
   };
   preferredDeepWorkTime: TimeOfDay;
 
@@ -64,7 +64,7 @@ export interface PreferencesState {
   setPeakHours: (start: number, end: number) => void;
   setPomodoroSettings: (length: number, breakLength: number) => void;
   setReminderDefaults: (minutes: number[]) => void;
-  setEnergyProfile: (profile: PreferencesState['energyProfile']) => void;
+  setEnergyProfile: (profile: PreferencesState["energyProfile"]) => void;
   toggleAutoSchedule: () => void;
   syncWithServer: () => Promise<void>;
   loadFromServer: () => Promise<void>;
@@ -82,10 +82,10 @@ export interface PreferencesState {
 // ============================================================================
 
 const defaultEnergyProfile = {
-  morning: 'high' as const,
-  midday: 'medium' as const,
-  afternoon: 'low' as const,
-  evening: 'medium' as const,
+  morning: "high" as const,
+  midday: "medium" as const,
+  afternoon: "low" as const,
+  evening: "medium" as const,
 };
 
 const initialState = {
@@ -102,8 +102,8 @@ const initialState = {
   // Display Preferences
   showWeekends: true,
   show24Hour: true,
-  defaultView: 'week' as ViewType,
-  defaultScope: 'moi' as Scope,
+  defaultView: "week" as ViewType,
+  defaultScope: "moi" as Scope,
   weekStartsOn: 1 as 0 | 1,
 
   // Notification Settings
@@ -113,7 +113,7 @@ const initialState = {
 
   // Energy-Aware Scheduling
   energyProfile: defaultEnergyProfile,
-  preferredDeepWorkTime: 'morning' as TimeOfDay,
+  preferredDeepWorkTime: "morning" as TimeOfDay,
 
   // Auto-Scheduling
   autoScheduleEnabled: false,
@@ -153,7 +153,10 @@ export const usePreferencesStore = create<PreferencesState>()(
         setPeakHours: (start: number, end: number) => {
           set((state) => {
             state.peakHoursStart = Math.max(0, Math.min(23, start));
-            state.peakHoursEnd = Math.max(state.peakHoursStart + 1, Math.min(24, end));
+            state.peakHoursEnd = Math.max(
+              state.peakHoursStart + 1,
+              Math.min(24, end),
+            );
           });
         },
 
@@ -166,11 +169,13 @@ export const usePreferencesStore = create<PreferencesState>()(
 
         setReminderDefaults: (minutes: number[]) => {
           set((state) => {
-            state.reminderDefaults = minutes.filter((m) => m > 0).sort((a, b) => a - b);
+            state.reminderDefaults = minutes
+              .filter((m) => m > 0)
+              .sort((a, b) => a - b);
           });
         },
 
-        setEnergyProfile: (profile: PreferencesState['energyProfile']) => {
+        setEnergyProfile: (profile: PreferencesState["energyProfile"]) => {
           set((state) => {
             state.energyProfile = profile;
           });
@@ -214,7 +219,8 @@ export const usePreferencesStore = create<PreferencesState>()(
           } catch (error) {
             set((s) => {
               s.isSyncing = false;
-              s.syncError = error instanceof Error ? error.message : 'Sync failed';
+              s.syncError =
+                error instanceof Error ? error.message : "Sync failed";
             });
           }
         },
@@ -245,7 +251,8 @@ export const usePreferencesStore = create<PreferencesState>()(
           } catch (error) {
             set((s) => {
               s.isSyncing = false;
-              s.syncError = error instanceof Error ? error.message : 'Load failed';
+              s.syncError =
+                error instanceof Error ? error.message : "Load failed";
             });
           }
         },
@@ -285,7 +292,7 @@ export const usePreferencesStore = create<PreferencesState>()(
         },
       })),
       {
-        name: 'scheduling-preferences',
+        name: "scheduling-preferences",
         partialize: (state) => ({
           peakHoursStart: state.peakHoursStart,
           peakHoursEnd: state.peakHoursEnd,
@@ -307,10 +314,10 @@ export const usePreferencesStore = create<PreferencesState>()(
           respectBlockers: state.respectBlockers,
           bufferBetweenMeetings: state.bufferBetweenMeetings,
         }),
-      }
+      },
     ),
-    { name: 'preferences-store' }
-  )
+    { name: "preferences-store" },
+  ),
 );
 
 // ============================================================================
@@ -337,8 +344,10 @@ export const selectDisplayPreferences = (state: PreferencesState) => ({
   weekStartsOn: state.weekStartsOn,
 });
 
-export const selectEnergyProfile = (state: PreferencesState) => state.energyProfile;
-export const selectAutoScheduleEnabled = (state: PreferencesState) => state.autoScheduleEnabled;
+export const selectEnergyProfile = (state: PreferencesState) =>
+  state.energyProfile;
+export const selectAutoScheduleEnabled = (state: PreferencesState) =>
+  state.autoScheduleEnabled;
 export const selectIsSyncing = (state: PreferencesState) => state.isSyncing;
 
 export default usePreferencesStore;

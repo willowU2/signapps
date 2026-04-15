@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * Certifications Tracker Component
@@ -8,10 +8,10 @@
  * days remaining, and alert icon if <90 days to expiry.
  */
 
-import * as React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import * as React from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -19,7 +19,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 import {
   Form,
   FormControl,
@@ -27,13 +27,13 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { AlertCircle, Plus } from 'lucide-react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { toast } from 'sonner';
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { AlertCircle, Plus } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { toast } from "sonner";
 
 export interface CertificationRecord {
   id: string;
@@ -46,15 +46,21 @@ export interface CertificationRecord {
 
 export interface CertificationsTrackerProps {
   certifications: CertificationRecord[];
-  onAddCertification?: (data: Omit<CertificationRecord, 'id'>) => void;
+  onAddCertification?: (data: Omit<CertificationRecord, "id">) => void;
   className?: string;
 }
 
 const certificationSchema = z.object({
-  employeeName: z.string().min(2, 'Le nom doit contenir au moins 2 caractères'),
-  certificationName: z.string().min(2, 'Le nom de certification doit contenir au moins 2 caractères'),
-  obtainedDate: z.string().refine((date) => !isNaN(Date.parse(date)), 'Date invalide'),
-  expiryDate: z.string().refine((date) => !isNaN(Date.parse(date)), 'Date invalide'),
+  employeeName: z.string().min(2, "Le nom doit contenir au moins 2 caractères"),
+  certificationName: z
+    .string()
+    .min(2, "Le nom de certification doit contenir au moins 2 caractères"),
+  obtainedDate: z
+    .string()
+    .refine((date) => !isNaN(Date.parse(date)), "Date invalide"),
+  expiryDate: z
+    .string()
+    .refine((date) => !isNaN(Date.parse(date)), "Date invalide"),
 });
 
 type CertificationFormValues = z.infer<typeof certificationSchema>;
@@ -73,16 +79,30 @@ function getStatusBadge(daysRemaining: number) {
     return <Badge variant="destructive">Expiré</Badge>;
   }
   if (daysRemaining < 90) {
-    return <Badge variant="secondary" className="bg-yellow-500/20 text-yellow-700 dark:text-yellow-400">Expiration prochaine</Badge>;
+    return (
+      <Badge
+        variant="secondary"
+        className="bg-yellow-500/20 text-yellow-700 dark:text-yellow-400"
+      >
+        Expiration prochaine
+      </Badge>
+    );
   }
-  return <Badge variant="outline" className="bg-green-500/20 text-green-700 dark:text-green-400">Valide</Badge>;
+  return (
+    <Badge
+      variant="outline"
+      className="bg-green-500/20 text-green-700 dark:text-green-400"
+    >
+      Valide
+    </Badge>
+  );
 }
 
 function formatDate(date: Date): string {
-  return new Date(date).toLocaleDateString('fr-FR', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
+  return new Date(date).toLocaleDateString("fr-FR", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
   });
 }
 
@@ -98,10 +118,10 @@ function CertificationFormDialog({
   const form = useForm<CertificationFormValues>({
     resolver: zodResolver(certificationSchema),
     defaultValues: {
-      employeeName: '',
-      certificationName: '',
-      obtainedDate: '',
-      expiryDate: '',
+      employeeName: "",
+      certificationName: "",
+      obtainedDate: "",
+      expiryDate: "",
     },
   });
 
@@ -122,7 +142,10 @@ function CertificationFormDialog({
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+          <form
+            onSubmit={form.handleSubmit(handleSubmit)}
+            className="space-y-4"
+          >
             <FormField
               control={form.control}
               name="employeeName"
@@ -180,7 +203,11 @@ function CertificationFormDialog({
             />
 
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+              >
                 Annuler
               </Button>
               <Button type="submit">Ajouter</Button>
@@ -204,7 +231,7 @@ export function CertificationsTracker({
     const expiryDate = new Date(data.expiryDate);
 
     if (expiryDate <= obtainedDate) {
-      toast.error('La date d\'expiration doit être après la date d\'obtention');
+      toast.error("La date d'expiration doit être après la date d'obtention");
       return;
     }
 
@@ -216,7 +243,7 @@ export function CertificationsTracker({
         obtainedDate,
         expiryDate,
       });
-      toast.success('Certification ajoutée avec succès');
+      toast.success("Certification ajoutée avec succès");
     }
   };
 
@@ -235,7 +262,9 @@ export function CertificationsTracker({
           </Button>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-muted-foreground">Aucune certification enregistrée</p>
+          <p className="text-sm text-muted-foreground">
+            Aucune certification enregistrée
+          </p>
         </CardContent>
         <CertificationFormDialog
           open={dialogOpen}
@@ -250,11 +279,7 @@ export function CertificationsTracker({
     <Card className={className}>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>Suivi des certifications</CardTitle>
-        <Button
-          size="sm"
-          onClick={() => setDialogOpen(true)}
-          className="gap-2"
-        >
+        <Button size="sm" onClick={() => setDialogOpen(true)} className="gap-2">
           <Plus className="h-4 w-4" />
           Ajouter
         </Button>
@@ -291,19 +316,36 @@ export function CertificationsTracker({
                 const isAlertNeeded = daysRemaining < 90 && daysRemaining >= 0;
 
                 return (
-                  <tr key={cert.id} className="border-b hover:bg-muted/30 transition-colors">
-                    <td className="px-3 py-3 font-medium">{cert.employeeName}</td>
+                  <tr
+                    key={cert.id}
+                    className="border-b hover:bg-muted/30 transition-colors"
+                  >
+                    <td className="px-3 py-3 font-medium">
+                      {cert.employeeName}
+                    </td>
                     <td className="px-3 py-3">{cert.certificationName}</td>
-                    <td className="px-3 py-3">{formatDate(cert.obtainedDate)}</td>
+                    <td className="px-3 py-3">
+                      {formatDate(cert.obtainedDate)}
+                    </td>
                     <td className="px-3 py-3">{formatDate(cert.expiryDate)}</td>
-                    <td className="px-3 py-3">{getStatusBadge(daysRemaining)}</td>
+                    <td className="px-3 py-3">
+                      {getStatusBadge(daysRemaining)}
+                    </td>
                     <td className="px-3 py-3 text-center">
                       <div className="flex items-center justify-center gap-2">
                         {isAlertNeeded && (
                           <AlertCircle className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
                         )}
-                        <span className={daysRemaining < 0 ? 'text-red-600 dark:text-red-400 font-semibold' : ''}>
-                          {daysRemaining < 0 ? `−${Math.abs(daysRemaining)}` : daysRemaining}
+                        <span
+                          className={
+                            daysRemaining < 0
+                              ? "text-red-600 dark:text-red-400 font-semibold"
+                              : ""
+                          }
+                        >
+                          {daysRemaining < 0
+                            ? `−${Math.abs(daysRemaining)}`
+                            : daysRemaining}
                         </span>
                       </div>
                     </td>

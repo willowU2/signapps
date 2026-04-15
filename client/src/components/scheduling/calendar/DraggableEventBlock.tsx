@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * DraggableEventBlock Component
@@ -7,15 +7,18 @@
  * Supports moving events and resizing from top/bottom edges.
  */
 
-import * as React from 'react';
-import { format, differenceInMinutes } from 'date-fns';
-import { fr } from 'date-fns/locale';
-import { GripVertical } from 'lucide-react';
-import { motion } from 'framer-motion';
-import { cn } from '@/lib/utils';
-import { useSchedulingSelection } from '@/stores/scheduling-store';
-import type { ScheduleBlock, EventLayout } from '@/lib/scheduling/types/scheduling';
-import type { DragState } from '@/lib/scheduling/hooks/use-event-drag';
+import * as React from "react";
+import { format, differenceInMinutes } from "date-fns";
+import { fr } from "date-fns/locale";
+import { GripVertical } from "lucide-react";
+import { motion } from "framer-motion";
+import { cn } from "@/lib/utils";
+import { useSchedulingSelection } from "@/stores/scheduling-store";
+import type {
+  ScheduleBlock,
+  EventLayout,
+} from "@/lib/scheduling/types/scheduling";
+import type { DragState } from "@/lib/scheduling/hooks/use-event-drag";
 
 // ============================================================================
 // Types
@@ -30,8 +33,8 @@ interface DraggableEventBlockProps {
   onDoubleClick?: (event: ScheduleBlock) => void;
   onDragStart?: (
     event: ScheduleBlock,
-    type: 'move' | 'resize-top' | 'resize-bottom',
-    e: React.MouseEvent | React.TouchEvent
+    type: "move" | "resize-top" | "resize-bottom",
+    e: React.MouseEvent | React.TouchEvent,
   ) => void;
 }
 
@@ -39,8 +42,12 @@ interface DraggableEventBlockProps {
 // Helpers
 // ============================================================================
 
-function getEventColor(event: ScheduleBlock): { bg: string; border: string; text: string } {
-  const color = event.color || '#3b82f6';
+function getEventColor(event: ScheduleBlock): {
+  bg: string;
+  border: string;
+  text: string;
+} {
+  const color = event.color || "#3b82f6";
   return {
     bg: `${color}15`,
     border: color,
@@ -48,13 +55,13 @@ function getEventColor(event: ScheduleBlock): { bg: string; border: string; text
   };
 }
 
-type DisplayMode = 'full' | 'compact' | 'minimal' | 'dot';
+type DisplayMode = "full" | "compact" | "minimal" | "dot";
 
 function getDisplayMode(height: number): DisplayMode {
-  if (height < 20) return 'dot';
-  if (height < 32) return 'minimal';
-  if (height < 56) return 'compact';
-  return 'full';
+  if (height < 20) return "dot";
+  if (height < 32) return "minimal";
+  if (height < 56) return "compact";
+  return "full";
 }
 
 // ============================================================================
@@ -66,17 +73,17 @@ function ResizeHandle({
   onMouseDown,
   onTouchStart,
 }: {
-  position: 'top' | 'bottom';
+  position: "top" | "bottom";
   onMouseDown: (e: React.MouseEvent) => void;
   onTouchStart: (e: React.TouchEvent) => void;
 }) {
   return (
     <div
       className={cn(
-        'absolute left-0 right-0 h-2 cursor-ns-resize opacity-0 hover:opacity-100',
-        'group-hover:opacity-50 transition-opacity',
-        'flex items-center justify-center',
-        position === 'top' ? '-top-1' : '-bottom-1'
+        "absolute left-0 right-0 h-2 cursor-ns-resize opacity-0 hover:opacity-100",
+        "group-hover:opacity-50 transition-opacity",
+        "flex items-center justify-center",
+        position === "top" ? "-top-1" : "-bottom-1",
       )}
       onMouseDown={onMouseDown}
       onTouchStart={onTouchStart}
@@ -90,15 +97,29 @@ function ResizeHandle({
 // Event Content Components
 // ============================================================================
 
-function EventTitle({ title, className }: { title: string; className?: string }) {
-  return <span className={cn('font-medium truncate', className)}>{title}</span>;
+function EventTitle({
+  title,
+  className,
+}: {
+  title: string;
+  className?: string;
+}) {
+  return <span className={cn("font-medium truncate", className)}>{title}</span>;
 }
 
-function EventTime({ start, end, className }: { start: Date; end?: Date; className?: string }) {
-  const startStr = format(start, 'HH:mm', { locale: fr });
-  const endStr = end ? format(end, 'HH:mm', { locale: fr }) : null;
+function EventTime({
+  start,
+  end,
+  className,
+}: {
+  start: Date;
+  end?: Date;
+  className?: string;
+}) {
+  const startStr = format(start, "HH:mm", { locale: fr });
+  const endStr = end ? format(end, "HH:mm", { locale: fr }) : null;
   return (
-    <span className={cn('text-muted-foreground', className)}>
+    <span className={cn("text-muted-foreground", className)}>
       {startStr}
       {endStr && ` - ${endStr}`}
     </span>
@@ -123,12 +144,13 @@ export function DraggableEventBlock({
 
   const colors = getEventColor(event);
   const isSelected = selectedBlockId === event.id;
-  const isCancelled = event.status === 'cancelled';
+  const isCancelled = event.status === "cancelled";
   const isDragging = dragState?.isDragging && dragState.eventId === event.id;
 
   // Use preview layout when dragging
   const displayTop = isDragging && previewLayout ? previewLayout.top : top;
-  const displayHeight = isDragging && previewLayout ? previewLayout.height : height;
+  const displayHeight =
+    isDragging && previewLayout ? previewLayout.height : height;
   const displayMode = getDisplayMode(displayHeight);
 
   // Event handlers
@@ -146,17 +168,17 @@ export function DraggableEventBlock({
   };
 
   const handleDragStart = (e: React.MouseEvent | React.TouchEvent) => {
-    onDragStart?.(event, 'move', e);
+    onDragStart?.(event, "move", e);
   };
 
   const handleResizeTopStart = (e: React.MouseEvent | React.TouchEvent) => {
     e.stopPropagation();
-    onDragStart?.(event, 'resize-top', e);
+    onDragStart?.(event, "resize-top", e);
   };
 
   const handleResizeBottomStart = (e: React.MouseEvent | React.TouchEvent) => {
     e.stopPropagation();
-    onDragStart?.(event, 'resize-bottom', e);
+    onDragStart?.(event, "resize-bottom", e);
   };
 
   return (
@@ -171,20 +193,20 @@ export function DraggableEventBlock({
         zIndex: isDragging ? 100 : isSelected ? 20 : 1,
       }}
       transition={{
-        type: 'spring',
+        type: "spring",
         stiffness: 500,
         damping: 30,
         mass: 0.5,
       }}
       className={cn(
-        'group absolute cursor-grab overflow-hidden rounded-md',
-        'transition-shadow duration-150',
-        'hover:shadow-md hover:z-10',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
-        isSelected && !isDragging && 'ring-2 ring-primary ring-offset-1',
-        isDragging && 'cursor-grabbing shadow-xl',
-        isCancelled && 'opacity-50',
-        className
+        "group absolute cursor-grab overflow-hidden rounded-md",
+        "transition-shadow duration-150",
+        "hover:shadow-md hover:z-10",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
+        isSelected && !isDragging && "ring-2 ring-primary ring-offset-1",
+        isDragging && "cursor-grabbing shadow-xl",
+        isCancelled && "opacity-50",
+        className,
       )}
       style={{
         left: `${left}%`,
@@ -198,7 +220,7 @@ export function DraggableEventBlock({
       onTouchStart={handleDragStart}
       tabIndex={0}
       role="button"
-      aria-label={`${event.title} - ${format(event.start, 'EEEE d MMMM à HH:mm', { locale: fr })}`}
+      aria-label={`${event.title} - ${format(event.start, "EEEE d MMMM à HH:mm", { locale: fr })}`}
       aria-selected={isSelected}
     >
       {/* Top Resize Handle */}
@@ -213,13 +235,13 @@ export function DraggableEventBlock({
       {/* Event Content */}
       <div
         className={cn(
-          'h-full p-1.5',
-          displayMode === 'dot' && 'flex items-center justify-center p-0',
-          isCancelled && 'line-through'
+          "h-full p-1.5",
+          displayMode === "dot" && "flex items-center justify-center p-0",
+          isCancelled && "line-through",
         )}
         style={{ color: colors.text }}
       >
-        {displayMode === 'dot' && (
+        {displayMode === "dot" && (
           <div
             className="w-2 h-2 rounded-full"
             style={{ backgroundColor: colors.border }}
@@ -227,26 +249,34 @@ export function DraggableEventBlock({
           />
         )}
 
-        {displayMode === 'minimal' && (
+        {displayMode === "minimal" && (
           <div className="flex items-center gap-1 overflow-hidden">
             <EventTitle title={event.title} className="text-xs" />
           </div>
         )}
 
-        {displayMode === 'compact' && (
+        {displayMode === "compact" && (
           <div className="flex flex-col overflow-hidden">
             <EventTitle title={event.title} className="text-xs" />
-            <EventTime start={event.start} end={event.end} className="text-[10px]" />
+            <EventTime
+              start={event.start}
+              end={event.end}
+              className="text-[10px]"
+            />
           </div>
         )}
 
-        {displayMode === 'full' && (
+        {displayMode === "full" && (
           <div className="flex flex-col gap-0.5 overflow-hidden">
             <div className="flex items-center gap-1">
               <GripVertical className="h-3 w-3 shrink-0 opacity-0 group-hover:opacity-50 cursor-grab" />
               <EventTitle title={event.title} className="text-xs" />
             </div>
-            <EventTime start={event.start} end={event.end} className="text-[10px]" />
+            <EventTime
+              start={event.start}
+              end={event.end}
+              className="text-[10px]"
+            />
             {Boolean(event.metadata?.location) && (
               <div className="text-[10px] text-muted-foreground truncate">
                 {String(event.metadata?.location)}

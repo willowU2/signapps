@@ -1,48 +1,50 @@
-"use client"
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Badge } from "@/components/ui/badge"
-import { Plus, Trash2, CheckSquare } from "lucide-react"
-import { crmTasksApi, type CrmTask } from "@/lib/api/crm"
+"use client";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
+import { Plus, Trash2, CheckSquare } from "lucide-react";
+import { crmTasksApi, type CrmTask } from "@/lib/api/crm";
 
 interface Props {
-  dealId: string
+  dealId: string;
 }
 
 export function DealTasks({ dealId }: Props) {
-  const [tasks, setTasks] = useState<CrmTask[]>(() => crmTasksApi.byDeal(dealId))
-  const [newTitle, setNewTitle] = useState("")
-  const [dueDate, setDueDate] = useState("")
+  const [tasks, setTasks] = useState<CrmTask[]>(() =>
+    crmTasksApi.byDeal(dealId),
+  );
+  const [newTitle, setNewTitle] = useState("");
+  const [dueDate, setDueDate] = useState("");
 
-  const reload = () => setTasks(crmTasksApi.byDeal(dealId))
+  const reload = () => setTasks(crmTasksApi.byDeal(dealId));
 
   const add = () => {
-    if (!newTitle.trim()) return
+    if (!newTitle.trim()) return;
     crmTasksApi.create({
       dealId,
       title: newTitle.trim(),
       dueDate: dueDate || undefined,
       done: false,
-    })
-    setNewTitle("")
-    setDueDate("")
-    reload()
-  }
+    });
+    setNewTitle("");
+    setDueDate("");
+    reload();
+  };
 
   const toggle = (id: string) => {
-    crmTasksApi.toggle(id)
-    reload()
-  }
+    crmTasksApi.toggle(id);
+    reload();
+  };
 
   const remove = (id: string) => {
-    crmTasksApi.delete(id)
-    reload()
-  }
+    crmTasksApi.delete(id);
+    reload();
+  };
 
-  const pending = tasks.filter(t => !t.done).length
-  const done = tasks.filter(t => t.done).length
+  const pending = tasks.filter((t) => !t.done).length;
+  const done = tasks.filter((t) => t.done).length;
 
   return (
     <div className="space-y-3">
@@ -51,10 +53,14 @@ export function DealTasks({ dealId }: Props) {
           <CheckSquare className="h-4 w-4" />
           Tâches
           {pending > 0 && (
-            <Badge variant="secondary" className="text-xs">{pending} en attente</Badge>
+            <Badge variant="secondary" className="text-xs">
+              {pending} en attente
+            </Badge>
           )}
           {done > 0 && (
-            <Badge variant="outline" className="text-xs text-muted-foreground">{done} terminée{done > 1 ? "s" : ""}</Badge>
+            <Badge variant="outline" className="text-xs text-muted-foreground">
+              {done} terminée{done > 1 ? "s" : ""}
+            </Badge>
           )}
         </h3>
       </div>
@@ -64,22 +70,27 @@ export function DealTasks({ dealId }: Props) {
           className="h-8 text-sm flex-1"
           placeholder="Nouvelle tâche…"
           value={newTitle}
-          onChange={e => setNewTitle(e.target.value)}
-          onKeyDown={e => e.key === "Enter" && add()}
+          onChange={(e) => setNewTitle(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && add()}
         />
         <Input
           type="date"
           className="h-8 text-sm w-36"
           value={dueDate}
-          onChange={e => setDueDate(e.target.value)}
+          onChange={(e) => setDueDate(e.target.value)}
         />
-        <Button size="sm" className="h-8 px-3" onClick={add} disabled={!newTitle.trim()}>
+        <Button
+          size="sm"
+          className="h-8 px-3"
+          onClick={add}
+          disabled={!newTitle.trim()}
+        >
           <Plus className="h-3.5 w-3.5" />
         </Button>
       </div>
 
       <div className="space-y-2">
-        {tasks.map(t => (
+        {tasks.map((t) => (
           <div
             key={t.id}
             className={`flex items-center gap-3 p-2.5 rounded-md border transition-colors ${
@@ -91,7 +102,9 @@ export function DealTasks({ dealId }: Props) {
               onCheckedChange={() => toggle(t.id)}
               className="shrink-0"
             />
-            <span className={`text-sm flex-1 ${t.done ? "line-through text-muted-foreground" : ""}`}>
+            <span
+              className={`text-sm flex-1 ${t.done ? "line-through text-muted-foreground" : ""}`}
+            >
               {t.title}
             </span>
             {t.dueDate && (
@@ -110,9 +123,11 @@ export function DealTasks({ dealId }: Props) {
           </div>
         ))}
         {tasks.length === 0 && (
-          <p className="text-sm text-muted-foreground text-center py-4">Aucune tâche.</p>
+          <p className="text-sm text-muted-foreground text-center py-4">
+            Aucune tâche.
+          </p>
         )}
       </div>
     </div>
-  )
+  );
 }

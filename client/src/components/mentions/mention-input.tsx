@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import {
   useState,
@@ -8,12 +8,12 @@ import {
   forwardRef,
   type KeyboardEvent,
   type ChangeEvent,
-} from 'react';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Textarea } from '@/components/ui/textarea';
-import { cn } from '@/lib/utils';
-import { usersApi, type User } from '@/lib/api/identity';
-import { MentionBadge } from './mention-badge';
+} from "react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
+import { usersApi, type User } from "@/lib/api/identity";
+import { MentionBadge } from "./mention-badge";
 
 // ============================================================================
 // Types
@@ -46,22 +46,23 @@ export const MentionInput = forwardRef<HTMLTextAreaElement, MentionInputProps>(
       value,
       onChange,
       onSubmit,
-      placeholder = 'Tapez @ pour mentionner...',
+      placeholder = "Tapez @ pour mentionner...",
       className,
       autoFocus = false,
       rows = 3,
     },
-    ref
+    ref,
   ) => {
     const [showDropdown, setShowDropdown] = useState(false);
-    const [query, setQuery] = useState('');
+    const [query, setQuery] = useState("");
     const [users, setUsers] = useState<User[]>([]);
     const [selectedIndex, setSelectedIndex] = useState(0);
     const [mentions, setMentions] = useState<MentionedUser[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
     const internalRef = useRef<HTMLTextAreaElement>(null);
-    const textareaRef = (ref as React.RefObject<HTMLTextAreaElement>) || internalRef;
+    const textareaRef =
+      (ref as React.RefObject<HTMLTextAreaElement>) || internalRef;
 
     // Search users when query changes
     useEffect(() => {
@@ -78,11 +79,14 @@ export const MentionInput = forwardRef<HTMLTextAreaElement, MentionInputProps>(
         .then((response) => {
           if (abortController.signal.aborted) return;
           const ud = response.data as { users?: User[] } | User[];
-          const allUsers = (ud as { users?: User[] })?.users || (Array.isArray(ud) ? ud : []);
+          const allUsers =
+            (ud as { users?: User[] })?.users || (Array.isArray(ud) ? ud : []);
           const filtered = allUsers.filter(
             (u: User) =>
               u.username.toLowerCase().includes(query.toLowerCase()) ||
-              (u.display_name || '').toLowerCase().includes(query.toLowerCase())
+              (u.display_name || "")
+                .toLowerCase()
+                .includes(query.toLowerCase()),
           );
           setUsers(filtered.slice(0, 8));
           setSelectedIndex(0);
@@ -112,12 +116,12 @@ export const MentionInput = forwardRef<HTMLTextAreaElement, MentionInputProps>(
           setShowDropdown(true);
         } else {
           setShowDropdown(false);
-          setQuery('');
+          setQuery("");
         }
 
         onChange(newValue, mentions);
       },
-      [onChange, mentions]
+      [onChange, mentions],
     );
 
     // Insert mention
@@ -131,7 +135,7 @@ export const MentionInput = forwardRef<HTMLTextAreaElement, MentionInputProps>(
         const textAfterCursor = value.slice(cursorPos);
 
         // Replace @query with @username
-        const mentionStart = textBeforeCursor.lastIndexOf('@');
+        const mentionStart = textBeforeCursor.lastIndexOf("@");
         const before = value.slice(0, mentionStart);
         const mentionText = `@${user.username} `;
         const newValue = before + mentionText + textAfterCursor;
@@ -147,7 +151,7 @@ export const MentionInput = forwardRef<HTMLTextAreaElement, MentionInputProps>(
         setMentions(newMentions);
         onChange(newValue, newMentions);
         setShowDropdown(false);
-        setQuery('');
+        setQuery("");
 
         // Re-focus textarea after insert
         requestAnimationFrame(() => {
@@ -156,28 +160,30 @@ export const MentionInput = forwardRef<HTMLTextAreaElement, MentionInputProps>(
           textarea.setSelectionRange(newPos, newPos);
         });
       },
-      [value, mentions, onChange, textareaRef]
+      [value, mentions, onChange, textareaRef],
     );
 
     const handleKeyDown = useCallback(
       (e: KeyboardEvent<HTMLTextAreaElement>) => {
         if (showDropdown && users.length > 0) {
-          if (e.key === 'ArrowDown') {
+          if (e.key === "ArrowDown") {
             e.preventDefault();
             setSelectedIndex((prev) => (prev + 1) % users.length);
             return;
           }
-          if (e.key === 'ArrowUp') {
+          if (e.key === "ArrowUp") {
             e.preventDefault();
-            setSelectedIndex((prev) => (prev - 1 + users.length) % users.length);
+            setSelectedIndex(
+              (prev) => (prev - 1 + users.length) % users.length,
+            );
             return;
           }
-          if (e.key === 'Enter' || e.key === 'Tab') {
+          if (e.key === "Enter" || e.key === "Tab") {
             e.preventDefault();
             insertMention(users[selectedIndex]);
             return;
           }
-          if (e.key === 'Escape') {
+          if (e.key === "Escape") {
             e.preventDefault();
             setShowDropdown(false);
             return;
@@ -185,12 +191,12 @@ export const MentionInput = forwardRef<HTMLTextAreaElement, MentionInputProps>(
         }
 
         // Submit on Ctrl+Enter
-        if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+        if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
           e.preventDefault();
           onSubmit?.();
         }
       },
-      [showDropdown, users, selectedIndex, insertMention, onSubmit]
+      [showDropdown, users, selectedIndex, insertMention, onSubmit],
     );
 
     return (
@@ -201,7 +207,7 @@ export const MentionInput = forwardRef<HTMLTextAreaElement, MentionInputProps>(
           onChange={handleChange}
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
-          className={cn('resize-none', className)}
+          className={cn("resize-none", className)}
           autoFocus={autoFocus}
           rows={rows}
         />
@@ -225,10 +231,10 @@ export const MentionInput = forwardRef<HTMLTextAreaElement, MentionInputProps>(
                 <button
                   key={user.id}
                   className={cn(
-                    'flex items-center gap-2 w-full px-3 py-2 text-sm text-left transition-colors',
+                    "flex items-center gap-2 w-full px-3 py-2 text-sm text-left transition-colors",
                     index === selectedIndex
-                      ? 'bg-accent text-accent-foreground'
-                      : 'hover:bg-muted'
+                      ? "bg-accent text-accent-foreground"
+                      : "hover:bg-muted",
                   )}
                   onClick={() => insertMention(user)}
                   onMouseEnter={() => setSelectedIndex(index)}
@@ -256,9 +262,9 @@ export const MentionInput = forwardRef<HTMLTextAreaElement, MentionInputProps>(
         )}
       </div>
     );
-  }
+  },
 );
 
-MentionInput.displayName = 'MentionInput';
+MentionInput.displayName = "MentionInput";
 
 export default MentionInput;

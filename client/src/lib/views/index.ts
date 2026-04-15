@@ -27,10 +27,7 @@ export type {
   ViewSelectorProps,
 } from "./types";
 
-export {
-  FILTER_OPERATORS_BY_TYPE,
-  OPERATOR_LABELS,
-} from "./types";
+export { FILTER_OPERATORS_BY_TYPE, OPERATOR_LABELS } from "./types";
 
 // Registry
 export {

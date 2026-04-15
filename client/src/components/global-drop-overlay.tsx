@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { Upload } from 'lucide-react';
-import { toast } from 'sonner';
-import { driveApi } from '@/lib/api';
+import { useState, useEffect, useRef, useCallback } from "react";
+import { Upload } from "lucide-react";
+import { toast } from "sonner";
+import { driveApi } from "@/lib/api";
 
 export function GlobalDropOverlay() {
   const [dragging, setDragging] = useState(false);
@@ -25,7 +25,7 @@ export function GlobalDropOverlay() {
   useEffect(() => {
     const onDragEnter = (e: DragEvent) => {
       e.preventDefault();
-      if (e.dataTransfer?.types.includes('Files')) {
+      if (e.dataTransfer?.types.includes("Files")) {
         counter.current++;
         setDragging(true);
       }
@@ -49,16 +49,16 @@ export function GlobalDropOverlay() {
       if (files.length > 0) handleUpload(files);
     };
 
-    window.addEventListener('dragenter', onDragEnter);
-    window.addEventListener('dragover', onDragOver);
-    window.addEventListener('dragleave', onDragLeave);
-    window.addEventListener('drop', onDrop);
+    window.addEventListener("dragenter", onDragEnter);
+    window.addEventListener("dragover", onDragOver);
+    window.addEventListener("dragleave", onDragLeave);
+    window.addEventListener("drop", onDrop);
 
     return () => {
-      window.removeEventListener('dragenter', onDragEnter);
-      window.removeEventListener('dragover', onDragOver);
-      window.removeEventListener('dragleave', onDragLeave);
-      window.removeEventListener('drop', onDrop);
+      window.removeEventListener("dragenter", onDragEnter);
+      window.removeEventListener("dragover", onDragOver);
+      window.removeEventListener("dragleave", onDragLeave);
+      window.removeEventListener("drop", onDrop);
     };
   }, [handleUpload]);
 
@@ -68,8 +68,12 @@ export function GlobalDropOverlay() {
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-background/80 backdrop-blur-sm border-4 border-dashed border-primary/50 pointer-events-none animate-in fade-in duration-200">
       <div className="flex flex-col items-center gap-3 text-primary">
         <Upload className="h-16 w-16 animate-bounce" />
-        <p className="text-xl font-semibold">Déposez vos fichiers pour les uploader</p>
-        <p className="text-sm text-muted-foreground">Ils seront ajoutés à votre Drive</p>
+        <p className="text-xl font-semibold">
+          Déposez vos fichiers pour les uploader
+        </p>
+        <p className="text-sm text-muted-foreground">
+          Ils seront ajoutés à votre Drive
+        </p>
       </div>
     </div>
   );

@@ -11,13 +11,11 @@ use uuid::Uuid;
 ///
 /// Generated with `argon2id` default parameters (m=65536, t=3, p=4).
 /// All seed users share this hash for convenience in development.
-const PASSWORD_HASH: &str =
-    "$argon2id$v=19$m=65536,t=3,p=4$c2lnbmFwcHNkZXZzZWVk$\
+const PASSWORD_HASH: &str = "$argon2id$v=19$m=65536,t=3,p=4$c2lnbmFwcHNkZXZzZWVk$\
      6W5XfZLvlvTjDJpBGjgqyNkBe1rPnkVfRBM2Z5QFxGE";
 
 /// Pre-computed argon2id hash of `"admin"` — used for the dev super-admin account.
-const ADMIN_PASSWORD_HASH: &str =
-    "$argon2id$v=19$m=19456,t=2,p=1$cnX8EzbWNrtOZUQaGFp2KA$\
+const ADMIN_PASSWORD_HASH: &str = "$argon2id$v=19$m=19456,t=2,p=1$cnX8EzbWNrtOZUQaGFp2KA$\
      Jmz/rru/FcSHziAcsg08VJvqcdLfayKVWulgYkuxW8g";
 
 // ─── Fixed UUIDs for minimal scenario ────────────────────────────────────────
@@ -964,7 +962,7 @@ pub async fn seed_acme(
                 } else {
                     "manager"
                 }
-            }
+            },
             _ => "employee",
         };
         results.push((uid, person_id, role_name.to_string()));
@@ -1004,19 +1002,89 @@ pub async fn seed_startup(
     info!(%tenant_id, "seeding startup users (15 total)");
 
     let users: &[(&str, &str, &str, &str, i16, &str)] = &[
-        ("lea.bernard", "Léa Bernard", "Léa", "Bernard", 3, "Founder & CEO"),
+        (
+            "lea.bernard",
+            "Léa Bernard",
+            "Léa",
+            "Bernard",
+            3,
+            "Founder & CEO",
+        ),
         ("alex.chen", "Alex Chen", "Alex", "Chen", 1, "CTO"),
-        ("sofia.russo", "Sofia Russo", "Sofia", "Russo", 1, "Lead Designer"),
-        ("noah.muller", "Noah Müller", "Noah", "Müller", 1, "Backend Dev"),
-        ("emma.dupont", "Emma Dupont", "Emma", "Dupont", 1, "Frontend Dev"),
+        (
+            "sofia.russo",
+            "Sofia Russo",
+            "Sofia",
+            "Russo",
+            1,
+            "Lead Designer",
+        ),
+        (
+            "noah.muller",
+            "Noah Müller",
+            "Noah",
+            "Müller",
+            1,
+            "Backend Dev",
+        ),
+        (
+            "emma.dupont",
+            "Emma Dupont",
+            "Emma",
+            "Dupont",
+            1,
+            "Frontend Dev",
+        ),
         ("lucas.smith", "Lucas Smith", "Lucas", "Smith", 1, "DevOps"),
-        ("jade.martin", "Jade Martin", "Jade", "Martin", 1, "Product Manager"),
-        ("ethan.kim", "Ethan Kim", "Ethan", "Kim", 1, "Full-Stack Dev"),
-        ("chloe.dubois", "Chloé Dubois", "Chloé", "Dubois", 1, "QA Engineer"),
-        ("liam.torres", "Liam Torres", "Liam", "Torres", 1, "Data Engineer"),
-        ("maya.patel", "Maya Patel", "Maya", "Patel", 1, "Growth Hacker"),
+        (
+            "jade.martin",
+            "Jade Martin",
+            "Jade",
+            "Martin",
+            1,
+            "Product Manager",
+        ),
+        (
+            "ethan.kim",
+            "Ethan Kim",
+            "Ethan",
+            "Kim",
+            1,
+            "Full-Stack Dev",
+        ),
+        (
+            "chloe.dubois",
+            "Chloé Dubois",
+            "Chloé",
+            "Dubois",
+            1,
+            "QA Engineer",
+        ),
+        (
+            "liam.torres",
+            "Liam Torres",
+            "Liam",
+            "Torres",
+            1,
+            "Data Engineer",
+        ),
+        (
+            "maya.patel",
+            "Maya Patel",
+            "Maya",
+            "Patel",
+            1,
+            "Growth Hacker",
+        ),
         ("hugo.roux", "Hugo Roux", "Hugo", "Roux", 1, "Backend Dev"),
-        ("amelia.blanc", "Amelia Blanc", "Amelia", "Blanc", 1, "UX Researcher"),
+        (
+            "amelia.blanc",
+            "Amelia Blanc",
+            "Amelia",
+            "Blanc",
+            1,
+            "UX Researcher",
+        ),
         ("leo.garcia", "Léo Garcia", "Léo", "Garcia", 1, "Mobile Dev"),
         ("zoe.wilson", "Zoé Wilson", "Zoé", "Wilson", 1, "Operations"),
     ];

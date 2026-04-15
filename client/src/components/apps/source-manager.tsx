@@ -1,22 +1,28 @@
-'use client';
+"use client";
 
-import { SpinnerInfinity } from 'spinners-react';
+import { SpinnerInfinity } from "spinners-react";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import { Plus, RefreshCw, Trash2, AlertCircle, CheckCircle2 } from 'lucide-react';
-import { storeApi } from '@/lib/api';
-import type { AppSource } from '@/lib/api';
-import { toast } from 'sonner';
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import {
+  Plus,
+  RefreshCw,
+  Trash2,
+  AlertCircle,
+  CheckCircle2,
+} from "lucide-react";
+import { storeApi } from "@/lib/api";
+import type { AppSource } from "@/lib/api";
+import { toast } from "sonner";
 
 interface SourceManagerProps {
   open: boolean;
@@ -24,19 +30,27 @@ interface SourceManagerProps {
   onSourcesChanged?: () => void;
 }
 
-export function SourceManager({ open, onOpenChange, onSourcesChanged }: SourceManagerProps) {
+export function SourceManager({
+  open,
+  onOpenChange,
+  onSourcesChanged,
+}: SourceManagerProps) {
   const [sources, setSources] = useState<AppSource[]>([]);
   const [loading, setLoading] = useState(false);
   const [refreshingId, setRefreshingId] = useState<string | null>(null);
 
   // Add form
-  const [newName, setNewName] = useState('');
-  const [newUrl, setNewUrl] = useState('');
+  const [newName, setNewName] = useState("");
+  const [newUrl, setNewUrl] = useState("");
   const [adding, setAdding] = useState(false);
 
   // Validation
   const [validating, setValidating] = useState(false);
-  const [validation, setValidation] = useState<{ valid: boolean; app_count?: number; error?: string } | null>(null);
+  const [validation, setValidation] = useState<{
+    valid: boolean;
+    app_count?: number;
+    error?: string;
+  } | null>(null);
 
   const fetchSources = async () => {
     setLoading(true);
@@ -44,7 +58,7 @@ export function SourceManager({ open, onOpenChange, onSourcesChanged }: SourceMa
       const res = await storeApi.listSources();
       setSources(res.data);
     } catch {
-      toast.error('Impossible de charger les sources');
+      toast.error("Impossible de charger les sources");
     } finally {
       setLoading(false);
     }
@@ -57,7 +71,7 @@ export function SourceManager({ open, onOpenChange, onSourcesChanged }: SourceMa
   const isValidUrl = (url: string) => {
     try {
       const u = new URL(url);
-      return u.protocol === 'http:' || u.protocol === 'https:';
+      return u.protocol === "http:" || u.protocol === "https:";
     } catch {
       return false;
     }
@@ -65,16 +79,19 @@ export function SourceManager({ open, onOpenChange, onSourcesChanged }: SourceMa
 
   const handleValidate = async () => {
     if (!newUrl.trim() || !isValidUrl(newUrl.trim())) {
-      setValidation({ valid: false, error: 'Invalid URL format' });
+      setValidation({ valid: false, error: "Invalid URL format" });
       return;
     }
     setValidating(true);
     setValidation(null);
     try {
-      const res = await storeApi.validateSource({ name: newName.trim() || 'test', url: newUrl.trim() });
+      const res = await storeApi.validateSource({
+        name: newName.trim() || "test",
+        url: newUrl.trim(),
+      });
       setValidation(res.data);
     } catch {
-      setValidation({ valid: false, error: 'Failed to reach source' });
+      setValidation({ valid: false, error: "Failed to reach source" });
     } finally {
       setValidating(false);
     }
@@ -85,14 +102,14 @@ export function SourceManager({ open, onOpenChange, onSourcesChanged }: SourceMa
     setAdding(true);
     try {
       await storeApi.addSource({ name: newName.trim(), url: newUrl.trim() });
-      setNewName('');
-      setNewUrl('');
+      setNewName("");
+      setNewUrl("");
       setValidation(null);
-      toast.success('Source ajoutée');
+      toast.success("Source ajoutée");
       fetchSources();
       onSourcesChanged?.();
     } catch {
-      toast.error('Impossible d\'ajouter la source');
+      toast.error("Impossible d'ajouter la source");
     } finally {
       setAdding(false);
     }
@@ -105,7 +122,7 @@ export function SourceManager({ open, onOpenChange, onSourcesChanged }: SourceMa
       fetchSources();
       onSourcesChanged?.();
     } catch {
-      toast.error('Impossible de supprimer la source');
+      toast.error("Impossible de supprimer la source");
     }
   };
 
@@ -113,11 +130,11 @@ export function SourceManager({ open, onOpenChange, onSourcesChanged }: SourceMa
     setRefreshingId(id);
     try {
       await storeApi.refreshSource(id);
-      toast.success('Source actualisée');
+      toast.success("Source actualisée");
       fetchSources();
       onSourcesChanged?.();
     } catch {
-      toast.error('Impossible d\'actualiser la source');
+      toast.error("Impossible d'actualiser la source");
     } finally {
       setRefreshingId(null);
     }
@@ -160,7 +177,13 @@ export function SourceManager({ open, onOpenChange, onSourcesChanged }: SourceMa
                 disabled={validating || !newUrl.trim()}
               >
                 {validating ? (
-                  <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />
+                  <SpinnerInfinity
+                    size={24}
+                    secondaryColor="rgba(128,128,128,0.2)"
+                    color="currentColor"
+                    speed={120}
+                    className="mr-2 h-4 w-4 "
+                  />
                 ) : (
                   <CheckCircle2 className="mr-2 h-4 w-4" />
                 )}
@@ -168,20 +191,30 @@ export function SourceManager({ open, onOpenChange, onSourcesChanged }: SourceMa
               </Button>
             </div>
             {validation && (
-              <p className={`text-xs ${validation.valid ? 'text-green-600' : 'text-destructive'}`}>
+              <p
+                className={`text-xs ${validation.valid ? "text-green-600" : "text-destructive"}`}
+              >
                 {validation.valid
                   ? `✓ ${validation.app_count} apps found`
-                  : `✗ ${validation.error || 'Invalid source'}`}
+                  : `✗ ${validation.error || "Invalid source"}`}
               </p>
             )}
           </div>
           <Button
             size="sm"
             onClick={handleAdd}
-            disabled={adding || !newName.trim() || !newUrl.trim() || !validation?.valid}
+            disabled={
+              adding || !newName.trim() || !newUrl.trim() || !validation?.valid
+            }
           >
             {adding ? (
-              <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />
+              <SpinnerInfinity
+                size={24}
+                secondaryColor="rgba(128,128,128,0.2)"
+                color="currentColor"
+                speed={120}
+                className="mr-2 h-4 w-4 "
+              />
             ) : (
               <Plus className="mr-2 h-4 w-4" />
             )}
@@ -193,12 +226,21 @@ export function SourceManager({ open, onOpenChange, onSourcesChanged }: SourceMa
         <div className="space-y-3">
           {loading && sources.length === 0 && (
             <div className="flex justify-center py-4">
-              <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-6 w-6  text-muted-foreground" />
+              <SpinnerInfinity
+                size={24}
+                secondaryColor="rgba(128,128,128,0.2)"
+                color="currentColor"
+                speed={120}
+                className="h-6 w-6  text-muted-foreground"
+              />
             </div>
           )}
 
           {sources.map((source) => (
-            <div key={source.id} className="flex items-start justify-between gap-3 rounded-lg border p-3">
+            <div
+              key={source.id}
+              className="flex items-start justify-between gap-3 rounded-lg border p-3"
+            >
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
                   <span className="font-medium">{source.name}</span>
@@ -217,13 +259,18 @@ export function SourceManager({ open, onOpenChange, onSourcesChanged }: SourceMa
                     </Badge>
                   ) : null}
                 </div>
-                <p className="mt-1 truncate text-xs text-muted-foreground">{source.url}</p>
+                <p className="mt-1 truncate text-xs text-muted-foreground">
+                  {source.url}
+                </p>
                 {source.last_error && (
-                  <p className="mt-1 text-xs text-destructive">{source.last_error}</p>
+                  <p className="mt-1 text-xs text-destructive">
+                    {source.last_error}
+                  </p>
                 )}
                 {source.last_fetched && (
                   <p className="mt-1 text-xs text-muted-foreground">
-                    Last fetched: {new Date(source.last_fetched).toLocaleString()}
+                    Last fetched:{" "}
+                    {new Date(source.last_fetched).toLocaleString()}
                   </p>
                 )}
               </div>
@@ -234,7 +281,9 @@ export function SourceManager({ open, onOpenChange, onSourcesChanged }: SourceMa
                   onClick={() => handleRefresh(source.id)}
                   disabled={refreshingId === source.id}
                 >
-                  <RefreshCw className={`h-4 w-4 ${refreshingId === source.id ? 'animate-spin' : ''}`} />
+                  <RefreshCw
+                    className={`h-4 w-4 ${refreshingId === source.id ? "animate-spin" : ""}`}
+                  />
                 </Button>
                 <Button
                   variant="ghost"

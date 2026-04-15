@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * Kudos Wall Component
@@ -8,10 +8,10 @@
  * and message. Includes form to send kudos.
  */
 
-import * as React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import * as React from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -19,7 +19,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 import {
   Form,
   FormControl,
@@ -27,23 +27,23 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Send, Plus } from 'lucide-react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { toast } from 'sonner';
+} from "@/components/ui/select";
+import { Send, Plus } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { toast } from "sonner";
 
-export type KudosBadgeType = 'Entraide' | 'Innovation' | 'Qualite' | 'Rapidite';
+export type KudosBadgeType = "Entraide" | "Innovation" | "Qualite" | "Rapidite";
 
 export interface KudosMessage {
   id: string;
@@ -59,32 +59,37 @@ export interface KudosMessage {
 
 export interface KudosWallProps {
   kudos: KudosMessage[];
-  onSendKudos?: (data: Omit<KudosMessage, 'id' | 'createdAt'>) => void;
+  onSendKudos?: (data: Omit<KudosMessage, "id" | "createdAt">) => void;
   currentUserId?: string;
   currentUserName?: string;
   className?: string;
 }
 
 const kudosSchema = z.object({
-  receiverName: z.string().min(2, 'Le nom doit contenir au moins 2 caractères'),
-  badgeType: z.enum(['Entraide', 'Innovation', 'Qualite', 'Rapidite']),
-  message: z.string().min(10, 'Le message doit contenir au moins 10 caractères').max(500),
+  receiverName: z.string().min(2, "Le nom doit contenir au moins 2 caractères"),
+  badgeType: z.enum(["Entraide", "Innovation", "Qualite", "Rapidite"]),
+  message: z
+    .string()
+    .min(10, "Le message doit contenir au moins 10 caractères")
+    .max(500),
 });
 
 type KudosFormValues = z.infer<typeof kudosSchema>;
 
 const BADGE_COLORS: Record<KudosBadgeType, string> = {
-  Entraide: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
-  Innovation: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
-  Qualite: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
-  Rapidite: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
+  Entraide: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
+  Innovation:
+    "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
+  Qualite: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
+  Rapidite:
+    "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200",
 };
 
 function getInitials(name: string): string {
   return name
-    .split(' ')
+    .split(" ")
     .map((n) => n[0])
-    .join('')
+    .join("")
     .toUpperCase()
     .slice(0, 2);
 }
@@ -104,16 +109,18 @@ function KudosCard({ kudos }: { kudos: KudosMessage }) {
             <p className="text-sm font-semibold">{kudos.receiverName}</p>
           </div>
         </div>
-        <Badge className={BADGE_COLORS[kudos.badgeType]}>{kudos.badgeType}</Badge>
+        <Badge className={BADGE_COLORS[kudos.badgeType]}>
+          {kudos.badgeType}
+        </Badge>
       </div>
 
       <p className="text-sm text-foreground leading-relaxed">{kudos.message}</p>
 
       <p className="text-xs text-muted-foreground">
-        {new Date(kudos.createdAt).toLocaleDateString('fr-FR', {
-          day: 'numeric',
-          month: 'long',
-          year: 'numeric',
+        {new Date(kudos.createdAt).toLocaleDateString("fr-FR", {
+          day: "numeric",
+          month: "long",
+          year: "numeric",
         })}
       </p>
     </div>
@@ -134,9 +141,9 @@ function SendKudosDialog({
   const form = useForm<KudosFormValues>({
     resolver: zodResolver(kudosSchema),
     defaultValues: {
-      receiverName: '',
-      badgeType: 'Entraide',
-      message: '',
+      receiverName: "",
+      badgeType: "Entraide",
+      message: "",
     },
   });
 
@@ -157,7 +164,10 @@ function SendKudosDialog({
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+          <form
+            onSubmit={form.handleSubmit(handleSubmit)}
+            className="space-y-4"
+          >
             <FormField
               control={form.control}
               name="receiverName"
@@ -178,7 +188,10 @@ function SendKudosDialog({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Type de Kudos</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue />
@@ -234,7 +247,7 @@ function SendKudosDialog({
 export function KudosWall({
   kudos,
   onSendKudos,
-  currentUserName = 'Utilisateur',
+  currentUserName = "Utilisateur",
   className,
 }: KudosWallProps) {
   const [dialogOpen, setDialogOpen] = React.useState(false);
@@ -244,21 +257,21 @@ export function KudosWall({
     setIsSubmitting(true);
     try {
       onSendKudos?.({
-        senderId: 'current-user',
+        senderId: "current-user",
         senderName: currentUserName,
-        receiverId: 'temp-id',
+        receiverId: "temp-id",
         ...data,
       });
-      toast.success('Kudos envoyé avec succès');
+      toast.success("Kudos envoyé avec succès");
     } catch (error) {
-      toast.error('Erreur lors de l\'envoi du kudos');
+      toast.error("Erreur lors de l'envoi du kudos");
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const sortedKudos = [...kudos].sort(
-    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
   );
 
   return (

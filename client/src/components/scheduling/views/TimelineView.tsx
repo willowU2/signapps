@@ -1,6 +1,5 @@
-'use client';
-import { SpinnerInfinity } from 'spinners-react';
-
+"use client";
+import { SpinnerInfinity } from "spinners-react";
 
 /**
  * TimelineView Component (Gantt Chart)
@@ -10,7 +9,7 @@ import { SpinnerInfinity } from 'spinners-react';
  * Supports dependencies, milestones, and drag-to-resize.
  */
 
-import * as React from 'react';
+import * as React from "react";
 import {
   format,
   startOfWeek,
@@ -24,21 +23,25 @@ import {
   isSameDay,
   isWithinInterval,
   parseISO,
-} from 'date-fns';
-import { fr } from 'date-fns/locale';
-import { cn } from '@/lib/utils';
-import { useCalendarStore } from '@/stores/scheduling/calendar-store';
-import { useSchedulingStore } from '@/stores/scheduling/scheduling-store';
-import { Badge } from '@/components/ui/badge';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { Button } from '@/components/ui/button';
+} from "date-fns";
+import { fr } from "date-fns/locale";
+import { cn } from "@/lib/utils";
+import { useCalendarStore } from "@/stores/scheduling/calendar-store";
+import { useSchedulingStore } from "@/stores/scheduling/scheduling-store";
+import { Badge } from "@/components/ui/badge";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from "@/components/ui/select";
 import {
   ChevronLeft,
   ChevronRight,
@@ -46,14 +49,14 @@ import {
   ZoomOut,
   Milestone,
   Link2,
-} from 'lucide-react';
-import type { TimeItem } from '@/lib/scheduling/types';
+} from "lucide-react";
+import type { TimeItem } from "@/lib/scheduling/types";
 
 // ============================================================================
 // Types
 // ============================================================================
 
-type TimeScale = 'day' | 'week' | 'month';
+type TimeScale = "day" | "week" | "month";
 
 interface TimelineViewProps {
   className?: string;
@@ -77,39 +80,42 @@ const HEADER_HEIGHT = 60;
 const SIDEBAR_WIDTH = 250;
 
 const TYPE_COLORS: Record<string, string> = {
-  task: 'bg-blue-500',
-  event: 'bg-green-500',
-  milestone: 'bg-purple-500',
-  blocker: 'bg-red-500',
-  reminder: 'bg-yellow-500',
-  booking: 'bg-cyan-500',
-  shift: 'bg-orange-500',
+  task: "bg-blue-500",
+  event: "bg-green-500",
+  milestone: "bg-purple-500",
+  blocker: "bg-red-500",
+  reminder: "bg-yellow-500",
+  booking: "bg-cyan-500",
+  shift: "bg-orange-500",
 };
 
 const PRIORITY_COLORS: Record<string, string> = {
-  urgent: 'ring-2 ring-red-500',
-  high: 'ring-2 ring-orange-500',
-  medium: '',
-  low: 'opacity-70',
+  urgent: "ring-2 ring-red-500",
+  high: "ring-2 ring-orange-500",
+  medium: "",
+  low: "opacity-70",
 };
 
 // ============================================================================
 // Helpers
 // ============================================================================
 
-function getItemDates(item: TimeItem): { start: Date | null; end: Date | null } {
+function getItemDates(item: TimeItem): {
+  start: Date | null;
+  end: Date | null;
+} {
   const start = item.startTime
-    ? typeof item.startTime === 'string'
+    ? typeof item.startTime === "string"
       ? parseISO(item.startTime)
       : item.startTime
     : null;
 
   const end = item.endTime
-    ? typeof item.endTime === 'string'
+    ? typeof item.endTime === "string"
       ? parseISO(item.endTime)
       : item.endTime
     : item.deadline
-      ? typeof item.deadline === 'string'
+      ? typeof item.deadline === "string"
         ? parseISO(item.deadline)
         : item.deadline
       : start
@@ -141,7 +147,10 @@ function buildHierarchy(items: TimeItem[]): TimelineRow[] {
   });
 
   // Flatten for rendering
-  const flatten = (rows: TimelineRow[], result: TimelineRow[] = []): TimelineRow[] => {
+  const flatten = (
+    rows: TimelineRow[],
+    result: TimelineRow[] = [],
+  ): TimelineRow[] => {
     rows.forEach((row) => {
       result.push(row);
       if (row.children.length > 0) {
@@ -173,24 +182,24 @@ export function TimelineView({
 
   const items = propItems || storeItems;
 
-  const [timeScale, setTimeScale] = React.useState<TimeScale>('week');
+  const [timeScale, setTimeScale] = React.useState<TimeScale>("week");
   const [zoom, setZoom] = React.useState(1);
   const containerRef = React.useRef<HTMLDivElement>(null);
 
   // Calculate date range based on scale
   const dateRange = React.useMemo(() => {
     switch (timeScale) {
-      case 'day':
+      case "day":
         return {
           start: addDays(currentDate, -7),
           end: addDays(currentDate, 21),
         };
-      case 'week':
+      case "week":
         return {
           start: startOfWeek(addDays(currentDate, -14), { weekStartsOn: 1 }),
           end: endOfWeek(addDays(currentDate, 42), { weekStartsOn: 1 }),
         };
-      case 'month':
+      case "month":
         return {
           start: startOfMonth(addDays(currentDate, -30)),
           end: endOfMonth(addDays(currentDate, 90)),
@@ -210,17 +219,17 @@ export function TimelineView({
     if (!propItems) {
       fetchTimeItems(dateRange);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [propItems, rangeStartISO, rangeEndISO]);
 
   // Generate time slots
   const timeSlots = React.useMemo(() => {
     switch (timeScale) {
-      case 'day':
+      case "day":
         return eachDayOfInterval(dateRange);
-      case 'week':
+      case "week":
         return eachWeekOfInterval(dateRange, { weekStartsOn: 1 });
-      case 'month':
+      case "month":
         return eachWeekOfInterval(dateRange, { weekStartsOn: 1 });
       default:
         return eachDayOfInterval(dateRange);
@@ -229,11 +238,11 @@ export function TimelineView({
 
   const slotWidth = React.useMemo(() => {
     switch (timeScale) {
-      case 'day':
+      case "day":
         return 40 * zoom;
-      case 'week':
+      case "week":
         return 120 * zoom;
-      case 'month':
+      case "month":
         return 80 * zoom;
       default:
         return 40 * zoom;
@@ -271,13 +280,13 @@ export function TimelineView({
   // Navigation
   const handlePrev = () => {
     switch (timeScale) {
-      case 'day':
+      case "day":
         setCurrentDate(addDays(currentDate, -7));
         break;
-      case 'week':
+      case "week":
         setCurrentDate(addDays(currentDate, -28));
         break;
-      case 'month':
+      case "month":
         setCurrentDate(addDays(currentDate, -30));
         break;
     }
@@ -285,13 +294,13 @@ export function TimelineView({
 
   const handleNext = () => {
     switch (timeScale) {
-      case 'day':
+      case "day":
         setCurrentDate(addDays(currentDate, 7));
         break;
-      case 'week':
+      case "week":
         setCurrentDate(addDays(currentDate, 28));
         break;
-      case 'month':
+      case "month":
         setCurrentDate(addDays(currentDate, 30));
         break;
     }
@@ -299,9 +308,14 @@ export function TimelineView({
 
   if (isLoading && items.length === 0) {
     return (
-      <div className={cn('flex h-full items-center justify-center', className)}>
+      <div className={cn("flex h-full items-center justify-center", className)}>
         <div className="flex flex-col items-center gap-2">
-          <SpinnerInfinity size={32} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} />
+          <SpinnerInfinity
+            size={32}
+            secondaryColor="rgba(128,128,128,0.2)"
+            color="currentColor"
+            speed={120}
+          />
           <p className="text-sm text-muted-foreground">Chargement...</p>
         </div>
       </div>
@@ -309,7 +323,7 @@ export function TimelineView({
   }
 
   return (
-    <div className={cn('flex h-full flex-col', className)}>
+    <div className={cn("flex h-full flex-col", className)}>
       {/* Toolbar */}
       <div className="flex items-center justify-between border-b p-2">
         <div className="flex items-center gap-2">
@@ -320,12 +334,15 @@ export function TimelineView({
             <ChevronRight className="h-4 w-4" />
           </Button>
           <span className="text-sm font-medium">
-            {format(currentDate, 'MMMM yyyy', { locale: fr })}
+            {format(currentDate, "MMMM yyyy", { locale: fr })}
           </span>
         </div>
 
         <div className="flex items-center gap-2">
-          <Select value={timeScale} onValueChange={(v) => setTimeScale(v as TimeScale)}>
+          <Select
+            value={timeScale}
+            onValueChange={(v) => setTimeScale(v as TimeScale)}
+          >
             <SelectTrigger className="w-28">
               <SelectValue />
             </SelectTrigger>
@@ -374,8 +391,8 @@ export function TimelineView({
               <div
                 key={row.item.id}
                 className={cn(
-                  'flex items-center border-b px-3 hover:bg-accent/50 cursor-pointer',
-                  'transition-colors'
+                  "flex items-center border-b px-3 hover:bg-accent/50 cursor-pointer",
+                  "transition-colors",
                 )}
                 style={{
                   height: ROW_HEIGHT,
@@ -384,7 +401,7 @@ export function TimelineView({
                 onClick={() => onItemClick?.(row.item)}
                 onDoubleClick={() => onItemDoubleClick?.(row.item)}
               >
-                {row.item.type === 'milestone' && (
+                {row.item.type === "milestone" && (
                   <Milestone className="mr-2 h-4 w-4 text-purple-500" />
                 )}
                 <span className="truncate text-sm">{row.item.title}</span>
@@ -408,28 +425,32 @@ export function TimelineView({
                 <div
                   key={i}
                   className={cn(
-                    'flex flex-col items-center justify-center border-r text-xs',
-                    isSameDay(slot, new Date()) && 'bg-primary/10'
+                    "flex flex-col items-center justify-center border-r text-xs",
+                    isSameDay(slot, new Date()) && "bg-primary/10",
                   )}
                   style={{ width: slotWidth }}
                 >
-                  {timeScale === 'day' && (
+                  {timeScale === "day" && (
                     <>
-                      <span className="font-medium">{format(slot, 'EEE', { locale: fr })}</span>
-                      <span className="text-muted-foreground">{format(slot, 'd')}</span>
-                    </>
-                  )}
-                  {timeScale === 'week' && (
-                    <>
-                      <span className="font-medium">S{format(slot, 'w')}</span>
+                      <span className="font-medium">
+                        {format(slot, "EEE", { locale: fr })}
+                      </span>
                       <span className="text-muted-foreground">
-                        {format(slot, 'd MMM', { locale: fr })}
+                        {format(slot, "d")}
                       </span>
                     </>
                   )}
-                  {timeScale === 'month' && (
+                  {timeScale === "week" && (
+                    <>
+                      <span className="font-medium">S{format(slot, "w")}</span>
+                      <span className="text-muted-foreground">
+                        {format(slot, "d MMM", { locale: fr })}
+                      </span>
+                    </>
+                  )}
+                  {timeScale === "month" && (
                     <span className="font-medium">
-                      {format(slot, 'd MMM', { locale: fr })}
+                      {format(slot, "d MMM", { locale: fr })}
                     </span>
                   )}
                 </div>
@@ -461,8 +482,8 @@ export function TimelineView({
                         <div
                           key={i}
                           className={cn(
-                            'border-r',
-                            isSameDay(slot, new Date()) && 'bg-primary/5'
+                            "border-r",
+                            isSameDay(slot, new Date()) && "bg-primary/5",
                           )}
                           style={{ width: slotWidth }}
                         />
@@ -475,21 +496,25 @@ export function TimelineView({
                         <TooltipTrigger asChild>
                           <div
                             className={cn(
-                              'absolute top-1/2 -translate-y-1/2 h-6 rounded cursor-pointer',
-                              'transition-all hover:ring-2 hover:ring-primary',
-                              TYPE_COLORS[row.item.type] || 'bg-gray-500',
-                              PRIORITY_COLORS[row.item.priority || 'medium'],
-                              row.item.type === 'milestone' && 'w-4 h-4 rotate-45'
+                              "absolute top-1/2 -translate-y-1/2 h-6 rounded cursor-pointer",
+                              "transition-all hover:ring-2 hover:ring-primary",
+                              TYPE_COLORS[row.item.type] || "bg-gray-500",
+                              PRIORITY_COLORS[row.item.priority || "medium"],
+                              row.item.type === "milestone" &&
+                                "w-4 h-4 rotate-45",
                             )}
                             style={{
                               left: barPos.left,
-                              width: row.item.type === 'milestone' ? 16 : barPos.width,
-                              minWidth: row.item.type === 'milestone' ? 16 : 20,
+                              width:
+                                row.item.type === "milestone"
+                                  ? 16
+                                  : barPos.width,
+                              minWidth: row.item.type === "milestone" ? 16 : 20,
                             }}
                             onClick={() => onItemClick?.(row.item)}
                             onDoubleClick={() => onItemDoubleClick?.(row.item)}
                           >
-                            {row.item.type !== 'milestone' && (
+                            {row.item.type !== "milestone" && (
                               <span className="absolute inset-x-1 truncate text-xs text-white leading-6">
                                 {row.item.title}
                               </span>
@@ -502,11 +527,11 @@ export function TimelineView({
                             {row.item.startTime && (
                               <p className="text-muted-foreground">
                                 {format(
-                                  typeof row.item.startTime === 'string'
+                                  typeof row.item.startTime === "string"
                                     ? parseISO(row.item.startTime)
                                     : row.item.startTime,
-                                  'PPp',
-                                  { locale: fr }
+                                  "PPp",
+                                  { locale: fr },
                                 )}
                               </p>
                             )}

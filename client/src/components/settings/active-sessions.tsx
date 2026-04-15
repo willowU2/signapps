@@ -3,7 +3,14 @@
 import { useEffect, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Monitor, Smartphone, Trash2, RefreshCw, LogOut, Loader2 } from "lucide-react";
+import {
+  Monitor,
+  Smartphone,
+  Trash2,
+  RefreshCw,
+  LogOut,
+  Loader2,
+} from "lucide-react";
 import { IDENTITY_URL } from "@/lib/api/core";
 import axios from "axios";
 import { toast } from "sonner";
@@ -17,12 +24,16 @@ interface Session {
   is_current: boolean;
 }
 
-function parseDevice(userAgent: string | null): { label: string; isMobile: boolean } {
+function parseDevice(userAgent: string | null): {
+  label: string;
+  isMobile: boolean;
+} {
   if (!userAgent) return { label: "Unknown device", isMobile: false };
   const ua = userAgent.toLowerCase();
   const isMobile = /mobile|android|iphone|ipad/.test(ua);
   if (/firefox/.test(ua)) return { label: "Firefox", isMobile };
-  if (/safari/.test(ua) && !/chrome/.test(ua)) return { label: "Safari", isMobile };
+  if (/safari/.test(ua) && !/chrome/.test(ua))
+    return { label: "Safari", isMobile };
   if (/chrome|chromium/.test(ua)) return { label: "Chrome", isMobile };
   if (/edge/.test(ua)) return { label: "Edge", isMobile };
   return { label: "Browser", isMobile };
@@ -45,7 +56,9 @@ export function ActiveSessions() {
   const fetchSessions = useCallback(async () => {
     setIsLoading(true);
     try {
-      const res = await axios.get(`${IDENTITY_URL}/auth/sessions`, { withCredentials: true });
+      const res = await axios.get(`${IDENTITY_URL}/auth/sessions`, {
+        withCredentials: true,
+      });
       setSessions(res.data);
     } catch {
       toast.error("Impossible de charger les sessions");
@@ -61,7 +74,9 @@ export function ActiveSessions() {
   const revokeSession = async (id: string) => {
     setRevoking((prev) => new Set(prev).add(id));
     try {
-      await axios.delete(`${IDENTITY_URL}/auth/sessions/${id}`, { withCredentials: true });
+      await axios.delete(`${IDENTITY_URL}/auth/sessions/${id}`, {
+        withCredentials: true,
+      });
       setSessions((prev) => prev.filter((s) => s.id !== id));
       toast.success("Session révoquée");
     } catch {
@@ -78,7 +93,9 @@ export function ActiveSessions() {
   const revokeAll = async () => {
     setIsLoading(true);
     try {
-      const res = await axios.delete(`${IDENTITY_URL}/auth/sessions`, { withCredentials: true });
+      const res = await axios.delete(`${IDENTITY_URL}/auth/sessions`, {
+        withCredentials: true,
+      });
       setSessions([]);
       toast.success(`Revoked ${res.data.revoked} sessions`);
     } catch {
@@ -89,7 +106,7 @@ export function ActiveSessions() {
   };
 
   const activeSessions = sessions.filter(
-    (s) => new Date(s.expires_at) > new Date()
+    (s) => new Date(s.expires_at) > new Date(),
   );
 
   return (
@@ -99,16 +116,32 @@ export function ActiveSessions() {
           <Monitor className="h-6 w-6 text-blue-600" />
           <div>
             <h2 className="text-xl font-bold">Active Sessions</h2>
-            <p className="text-sm text-muted-foreground">Manage where you are signed in</p>
+            <p className="text-sm text-muted-foreground">
+              Manage where you are signed in
+            </p>
           </div>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={fetchSessions} disabled={isLoading} className="gap-1">
-            <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? "animate-spin" : ""}`} />
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={fetchSessions}
+            disabled={isLoading}
+            className="gap-1"
+          >
+            <RefreshCw
+              className={`h-3.5 w-3.5 ${isLoading ? "animate-spin" : ""}`}
+            />
             Refresh
           </Button>
           {activeSessions.length > 1 && (
-            <Button variant="destructive" size="sm" onClick={revokeAll} disabled={isLoading} className="gap-1">
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={revokeAll}
+              disabled={isLoading}
+              className="gap-1"
+            >
               <LogOut className="h-3.5 w-3.5" />
               Revoke all
             </Button>
@@ -143,9 +176,13 @@ export function ActiveSessions() {
                   )}
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="font-medium text-foreground">{label}</span>
+                      <span className="font-medium text-foreground">
+                        {label}
+                      </span>
                       {session.is_current && (
-                        <Badge variant="secondary" className="text-xs">Current</Badge>
+                        <Badge variant="secondary" className="text-xs">
+                          Current
+                        </Badge>
                       )}
                     </div>
                     <div className="mt-0.5 flex items-center gap-3 text-xs text-muted-foreground">

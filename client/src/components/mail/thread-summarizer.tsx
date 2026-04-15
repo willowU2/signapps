@@ -32,7 +32,10 @@ interface SummaryResult {
   summary: string;
 }
 
-export function ThreadSummarizer({ threadId, messages }: ThreadSummarizerProps) {
+export function ThreadSummarizer({
+  threadId,
+  messages,
+}: ThreadSummarizerProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [summary, setSummary] = useState<SummaryResult | null>(null);
@@ -92,8 +95,8 @@ export function ThreadSummarizer({ threadId, messages }: ThreadSummarizerProps) 
     summary?.sentiment === "positive"
       ? "bg-green-500/10 text-green-600"
       : summary?.sentiment === "negative"
-      ? "bg-red-500/10 text-red-600"
-      : "bg-muted text-muted-foreground";
+        ? "bg-red-500/10 text-red-600"
+        : "bg-muted text-muted-foreground";
 
   return (
     <>
@@ -130,9 +133,7 @@ export function ThreadSummarizer({ threadId, messages }: ThreadSummarizerProps) 
             <ScrollArea className="mt-4 h-[calc(100vh-120px)]">
               <div className="space-y-5 pr-4">
                 <div className="flex items-center justify-between">
-                  <Badge className={sentimentColor}>
-                    {summary.sentiment}
-                  </Badge>
+                  <Badge className={sentimentColor}>{summary.sentiment}</Badge>
                   <Button
                     size="sm"
                     variant="ghost"

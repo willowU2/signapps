@@ -13,10 +13,38 @@ interface UpstreamServer {
 }
 
 const SAMPLE_SERVERS: UpstreamServer[] = [
-  { id: "s1", host: "worker-1.local", port: 8080, weight: 100, healthStatus: "healthy", responseTime: 45 },
-  { id: "s2", host: "worker-2.local", port: 8080, weight: 80, healthStatus: "healthy", responseTime: 62 },
-  { id: "s3", host: "worker-3.local", port: 8080, weight: 60, healthStatus: "degraded", responseTime: 180 },
-  { id: "s4", host: "worker-4.local", port: 8080, weight: 0, healthStatus: "down", responseTime: 0 },
+  {
+    id: "s1",
+    host: "worker-1.local",
+    port: 8080,
+    weight: 100,
+    healthStatus: "healthy",
+    responseTime: 45,
+  },
+  {
+    id: "s2",
+    host: "worker-2.local",
+    port: 8080,
+    weight: 80,
+    healthStatus: "healthy",
+    responseTime: 62,
+  },
+  {
+    id: "s3",
+    host: "worker-3.local",
+    port: 8080,
+    weight: 60,
+    healthStatus: "degraded",
+    responseTime: 180,
+  },
+  {
+    id: "s4",
+    host: "worker-4.local",
+    port: 8080,
+    weight: 0,
+    healthStatus: "down",
+    responseTime: 0,
+  },
 ];
 
 function getHealthColor(status: string) {
@@ -38,20 +66,26 @@ export function LoadBalancer() {
   const updateWeight = (id: string, newWeight: number) => {
     setServers(
       servers.map((s) =>
-        s.id === id ? { ...s, weight: Math.max(0, Math.min(100, newWeight)) } : s
-      )
+        s.id === id
+          ? { ...s, weight: Math.max(0, Math.min(100, newWeight)) }
+          : s,
+      ),
     );
   };
 
   const totalWeight = servers.reduce((sum, s) => sum + s.weight, 0);
-  const healthyCount = servers.filter((s) => s.healthStatus === "healthy").length;
+  const healthyCount = servers.filter(
+    (s) => s.healthStatus === "healthy",
+  ).length;
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-foreground">Load Balancer</h2>
-          <p className="text-muted-foreground">Manage upstream servers and load distribution</p>
+          <p className="text-muted-foreground">
+            Manage upstream servers and load distribution
+          </p>
         </div>
         <button className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded flex items-center gap-2">
           <Plus className="w-4 h-4" />
@@ -79,26 +113,46 @@ export function LoadBalancer() {
           <table className="w-full text-sm">
             <thead className="bg-muted border-b sticky top-0 z-10">
               <tr>
-                <th className="px-4 py-3 text-left font-semibold text-foreground">Host</th>
-                <th className="px-4 py-3 text-left font-semibold text-foreground">Port</th>
-                <th className="px-4 py-3 text-center font-semibold text-foreground">Health</th>
-                <th className="px-4 py-3 text-center font-semibold text-foreground">Response Time</th>
-                <th className="px-4 py-3 text-left font-semibold text-foreground">Weight</th>
-                <th className="px-4 py-3 text-center font-semibold text-foreground">Actions</th>
+                <th className="px-4 py-3 text-left font-semibold text-foreground">
+                  Host
+                </th>
+                <th className="px-4 py-3 text-left font-semibold text-foreground">
+                  Port
+                </th>
+                <th className="px-4 py-3 text-center font-semibold text-foreground">
+                  Health
+                </th>
+                <th className="px-4 py-3 text-center font-semibold text-foreground">
+                  Response Time
+                </th>
+                <th className="px-4 py-3 text-left font-semibold text-foreground">
+                  Weight
+                </th>
+                <th className="px-4 py-3 text-center font-semibold text-foreground">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y">
               {servers.map((server) => (
                 <tr key={server.id} className="hover:bg-muted">
-                  <td className="px-4 py-3 font-mono text-foreground">{server.host}</td>
-                  <td className="px-4 py-3 text-muted-foreground">{server.port}</td>
+                  <td className="px-4 py-3 font-mono text-foreground">
+                    {server.host}
+                  </td>
+                  <td className="px-4 py-3 text-muted-foreground">
+                    {server.port}
+                  </td>
                   <td className="px-4 py-3 text-center">
-                    <span className={`text-xs font-semibold px-2 py-1 rounded ${getHealthColor(server.healthStatus)}`}>
+                    <span
+                      className={`text-xs font-semibold px-2 py-1 rounded ${getHealthColor(server.healthStatus)}`}
+                    >
                       {server.healthStatus}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-center">
-                    <span className="font-mono text-foreground">{server.responseTime}ms</span>
+                    <span className="font-mono text-foreground">
+                      {server.responseTime}ms
+                    </span>
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
@@ -107,10 +161,14 @@ export function LoadBalancer() {
                         min="0"
                         max="100"
                         value={server.weight}
-                        onChange={(e) => updateWeight(server.id, parseInt(e.target.value))}
+                        onChange={(e) =>
+                          updateWeight(server.id, parseInt(e.target.value))
+                        }
                         className="w-24 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
                       />
-                      <span className="w-10 text-right font-semibold text-foreground">{server.weight}</span>
+                      <span className="w-10 text-right font-semibold text-foreground">
+                        {server.weight}
+                      </span>
                     </div>
                   </td>
                   <td className="px-4 py-3 text-center">
@@ -127,7 +185,8 @@ export function LoadBalancer() {
 
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
         <p className="text-sm text-blue-900 font-medium">
-          Weight Distribution: Adjust weights to control traffic routing. Servers with weight 0 are excluded from load balancing.
+          Weight Distribution: Adjust weights to control traffic routing.
+          Servers with weight 0 are excluded from load balancing.
         </p>
       </div>
     </div>

@@ -6,11 +6,11 @@
  * Uses a sweep-line algorithm for efficient O(n log n) overlap detection.
  */
 
-import type { TimeItem, OverlapGroup, PositionedItem } from '../types';
-import { parseDate } from './time-utils';
+import type { TimeItem, OverlapGroup, PositionedItem } from "../types";
+import { parseDate } from "./time-utils";
 
 // Re-export PositionedItem for backwards compatibility
-export type { PositionedItem } from '../types';
+export type { PositionedItem } from "../types";
 
 interface TimeRange {
   start: Date;
@@ -142,7 +142,7 @@ function assignColumns(intervals: EventInterval[]): OverlapGroup {
     const startDiff = a.start - b.start;
     if (startDiff !== 0) return startDiff;
     // If same start, put longer items first
-    return (b.end - b.start) - (a.end - a.start);
+    return b.end - b.start - (a.end - a.start);
   });
 
   for (const interval of sorted) {
@@ -190,7 +190,7 @@ export function groupOverlappingItems(items: TimeItem[]): OverlapGroup[] {
 export function calculateItemPositions(
   items: TimeItem[],
   hourStart: number,
-  hourEnd: number
+  hourEnd: number,
 ): PositionedItem[] {
   const totalMinutes = (hourEnd - hourStart) * 60;
   const dayStartMinutes = hourStart * 60;
@@ -241,7 +241,7 @@ export function calculateItemPositionsWithMargins(
   items: TimeItem[],
   hourStart: number,
   hourEnd: number,
-  marginPx: number = 2
+  marginPx: number = 2,
 ): (PositionedItem & { marginLeft: number; marginRight: number })[] {
   const positions = calculateItemPositions(items, hourStart, hourEnd);
 
@@ -261,11 +261,14 @@ export function calculateGroupLayout(
     workingHoursStart: number;
     slotDuration: number;
     slotHeight: number;
-  }
+  },
 ): Map<string, { top: number; height: number; left: number; width: number }> {
   const { workingHoursStart, slotDuration, slotHeight } = options;
   const pixelsPerMinute = slotHeight / slotDuration;
-  const layouts = new Map<string, { top: number; height: number; left: number; width: number }>();
+  const layouts = new Map<
+    string,
+    { top: number; height: number; left: number; width: number }
+  >();
 
   const columnWidth = 100 / group.maxOverlap;
   const padding = group.maxOverlap > 1 ? 1 : 0; // 1% padding between columns
@@ -276,7 +279,8 @@ export function calculateGroupLayout(
 
     const column = group.columns.get(item.id) ?? 0;
     const startMinutes =
-      (range.start.getHours() - workingHoursStart) * 60 + range.start.getMinutes();
+      (range.start.getHours() - workingHoursStart) * 60 +
+      range.start.getMinutes();
     const endMinutes =
       (range.end.getHours() - workingHoursStart) * 60 + range.end.getMinutes();
 
@@ -300,10 +304,30 @@ export function calculateAllLayouts(
     workingHoursStart: number;
     slotDuration: number;
     slotHeight: number;
+  },
+): Map<
+  string,
+  {
+    top: number;
+    height: number;
+    left: number;
+    width: number;
+    column: number;
+    totalColumns: number;
   }
-): Map<string, { top: number; height: number; left: number; width: number; column: number; totalColumns: number }> {
+> {
   const groups = findOverlapGroups(items);
-  const allLayouts = new Map<string, { top: number; height: number; left: number; width: number; column: number; totalColumns: number }>();
+  const allLayouts = new Map<
+    string,
+    {
+      top: number;
+      height: number;
+      left: number;
+      width: number;
+      column: number;
+      totalColumns: number;
+    }
+  >();
 
   for (const group of groups) {
     const groupLayouts = calculateGroupLayout(group, options);
@@ -338,7 +362,7 @@ export function findConflicts(items: TimeItem[]): TimeItem[][] {
  */
 export function wouldConflict(
   newItem: TimeItem,
-  existingItems: TimeItem[]
+  existingItems: TimeItem[],
 ): TimeItem[] {
   const newRange = itemToRange(newItem);
   if (!newRange) return [];
@@ -365,7 +389,7 @@ export function findNextAvailableSlot(
   existingItems: TimeItem[],
   hourStart: number = 6,
   hourEnd: number = 22,
-  slotDuration: number = 30
+  slotDuration: number = 30,
 ): Date | null {
   // Convert existing items to ranges
   const ranges = existingItems
@@ -403,8 +427,10 @@ export function findNextAvailableSlot(
     const slotEnd = new Date(candidate.getTime() + duration * 60 * 1000);
 
     // Make sure we don't go past end of day
-    if (slotEnd.getHours() > hourEnd ||
-        (slotEnd.getHours() === hourEnd && slotEnd.getMinutes() > 0)) {
+    if (
+      slotEnd.getHours() > hourEnd ||
+      (slotEnd.getHours() === hourEnd && slotEnd.getMinutes() > 0)
+    ) {
       // Move to next day
       candidate.setDate(candidate.getDate() + 1);
       candidate.setHours(hourStart, 0, 0, 0);
@@ -414,7 +440,7 @@ export function findNextAvailableSlot(
     const testRange: TimeRange = {
       start: candidate,
       end: slotEnd,
-      id: 'test',
+      id: "test",
     };
 
     const hasConflict = ranges.some((r) => rangesOverlap(testRange, r));

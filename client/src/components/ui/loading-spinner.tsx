@@ -1,21 +1,21 @@
-'use client';
+"use client";
 
-import { cn } from '@/lib/utils';
+import { cn } from "@/lib/utils";
 
 interface LoadingSpinnerProps {
   /** Message to show below the spinner */
   message?: string;
   /** Size variant */
-  size?: 'sm' | 'default' | 'lg';
+  size?: "sm" | "default" | "lg";
   /** Fill the content area (centered) */
   fullPage?: boolean;
   className?: string;
 }
 
 const SIZE_CLASSES = {
-  sm: 'h-4 w-4 border',
-  default: 'h-6 w-6 border-2',
-  lg: 'h-10 w-10 border-2',
+  sm: "h-4 w-4 border",
+  default: "h-6 w-6 border-2",
+  lg: "h-10 w-10 border-2",
 };
 
 /**
@@ -23,8 +23,8 @@ const SIZE_CLASSES = {
  * Usage: <LoadingSpinner /> or <LoadingSpinner message="Chargement..." />
  */
 export function LoadingSpinner({
-  message = 'Chargement...',
-  size = 'default',
+  message = "Chargement...",
+  size = "default",
   fullPage = false,
   className,
 }: LoadingSpinnerProps) {
@@ -33,14 +33,14 @@ export function LoadingSpinner({
       role="status"
       aria-label={message}
       className={cn(
-        'flex flex-col items-center justify-center gap-3 text-muted-foreground',
-        fullPage ? 'min-h-[50vh]' : 'py-12',
+        "flex flex-col items-center justify-center gap-3 text-muted-foreground",
+        fullPage ? "min-h-[50vh]" : "py-12",
         className,
       )}
     >
       <span
         className={cn(
-          'animate-spin rounded-full border-current border-t-transparent',
+          "animate-spin rounded-full border-current border-t-transparent",
           SIZE_CLASSES[size],
         )}
       />

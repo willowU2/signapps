@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import { useState, useCallback, useRef, useEffect } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
+import { useState, useCallback, useRef, useEffect } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -13,14 +13,14 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from '@/components/ui/breadcrumb';
+} from "@/components/ui/breadcrumb";
 import {
   ContextMenu,
   ContextMenuContent,
   ContextMenuItem,
   ContextMenuSeparator,
   ContextMenuTrigger,
-} from '@/components/ui/context-menu';
+} from "@/components/ui/context-menu";
 import {
   Dialog,
   DialogContent,
@@ -28,9 +28,9 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
-import { toast } from 'sonner';
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
 import {
   FolderIcon,
   FileTextIcon,
@@ -52,22 +52,37 @@ import {
   ChevronDown,
   EyeIcon,
   Loader2Icon,
-} from 'lucide-react';
-import { Checkbox } from '@/components/ui/checkbox';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { usePageTitle } from '@/hooks/use-page-title';
-import { DriveSearchDocs } from '@/components/interop/DriveSearchDocs';
-import { DocFromTemplate } from '@/components/interop/DocFromTemplate';
-import { UnifiedContentLibrary } from '@/components/interop/UnifiedContentLibrary';
-import { DriveShareEmail } from '@/components/interop/DriveShareEmail';
-import { driveApi, DriveNode } from '@/lib/api/drive';
-import { storageApi } from '@/lib/api/storage';
+} from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { usePageTitle } from "@/hooks/use-page-title";
+import { DriveSearchDocs } from "@/components/interop/DriveSearchDocs";
+import { DocFromTemplate } from "@/components/interop/DocFromTemplate";
+import { UnifiedContentLibrary } from "@/components/interop/UnifiedContentLibrary";
+import { DriveShareEmail } from "@/components/interop/DriveShareEmail";
+import { driveApi, DriveNode } from "@/lib/api/drive";
+import { storageApi } from "@/lib/api/storage";
 
 // ─── Types ──────────────────────────────────────────────────────────
 interface FileItem {
   id: string;
   name: string;
-  type: 'folder' | 'pdf' | 'xlsx' | 'pptx' | 'png' | 'jpg' | 'jpeg' | 'gif' | 'svg' | 'md' | 'txt' | 'docx' | 'mp4' | 'zip' | 'unknown';
+  type:
+    | "folder"
+    | "pdf"
+    | "xlsx"
+    | "pptx"
+    | "png"
+    | "jpg"
+    | "jpeg"
+    | "gif"
+    | "svg"
+    | "md"
+    | "txt"
+    | "docx"
+    | "mp4"
+    | "zip"
+    | "unknown";
   size?: string;
   items?: number;
   modified: string;
@@ -77,19 +92,33 @@ interface FileItem {
 
 // ─── API Mapper ─────────────────────────────────────────────────────
 function driveNodeToFileItem(node: DriveNode): FileItem {
-  const ext = node.name.split('.').pop()?.toLowerCase() ?? '';
-  const validExtTypes: FileItem['type'][] = ['pdf', 'xlsx', 'pptx', 'png', 'jpg', 'jpeg', 'gif', 'svg', 'md', 'txt', 'docx', 'mp4', 'zip'];
-  let type: FileItem['type'] = 'unknown';
-  if (node.node_type === 'folder') {
-    type = 'folder';
+  const ext = node.name.split(".").pop()?.toLowerCase() ?? "";
+  const validExtTypes: FileItem["type"][] = [
+    "pdf",
+    "xlsx",
+    "pptx",
+    "png",
+    "jpg",
+    "jpeg",
+    "gif",
+    "svg",
+    "md",
+    "txt",
+    "docx",
+    "mp4",
+    "zip",
+  ];
+  let type: FileItem["type"] = "unknown";
+  if (node.node_type === "folder") {
+    type = "folder";
   } else if ((validExtTypes as string[]).includes(ext)) {
-    type = ext as FileItem['type'];
-  } else if (node.node_type === 'document') {
-    type = 'docx';
-  } else if (node.node_type === 'spreadsheet') {
-    type = 'xlsx';
-  } else if (node.node_type === 'presentation') {
-    type = 'pptx';
+    type = ext as FileItem["type"];
+  } else if (node.node_type === "document") {
+    type = "docx";
+  } else if (node.node_type === "spreadsheet") {
+    type = "xlsx";
+  } else if (node.node_type === "presentation") {
+    type = "pptx";
   }
   const sizeKB = node.size ? node.size / 1024 : null;
   const sizeStr = sizeKB
@@ -108,88 +137,96 @@ function driveNodeToFileItem(node: DriveNode): FileItem {
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────
-function getFileIcon(type: FileItem['type'], className: string = 'size-10') {
+function getFileIcon(type: FileItem["type"], className: string = "size-10") {
   switch (type) {
-    case 'folder':
+    case "folder":
       return <FolderIcon className={`${className} text-amber-500`} />;
-    case 'pdf':
+    case "pdf":
       return <FileTextIcon className={`${className} text-red-500`} />;
-    case 'xlsx':
+    case "xlsx":
       return <FileSpreadsheetIcon className={`${className} text-green-600`} />;
-    case 'pptx':
+    case "pptx":
       return <PresentationIcon className={`${className} text-orange-500`} />;
-    case 'png':
-    case 'jpg':
-    case 'jpeg':
-    case 'gif':
-    case 'svg':
+    case "png":
+    case "jpg":
+    case "jpeg":
+    case "gif":
+    case "svg":
       return <ImageIcon className={`${className} text-purple-500`} />;
-    case 'md':
-    case 'txt':
+    case "md":
+    case "txt":
       return <FileTextIcon className={`${className} text-blue-500`} />;
-    case 'docx':
+    case "docx":
       return <FileTextIcon className={`${className} text-blue-600`} />;
-    case 'mp4':
+    case "mp4":
       return <FileIcon className={`${className} text-pink-500`} />;
-    case 'zip':
+    case "zip":
       return <FileIcon className={`${className} text-yellow-600`} />;
     default:
       return <FileIcon className={`${className} text-muted-foreground`} />;
   }
 }
 
-function getTypeLabel(type: FileItem['type']): string {
+function getTypeLabel(type: FileItem["type"]): string {
   const labels: Record<string, string> = {
-    folder: 'Dossier',
-    pdf: 'PDF',
-    xlsx: 'Tableur',
-    pptx: 'Pr\u00e9sentation',
-    png: 'Image PNG',
-    jpg: 'Image JPEG',
-    jpeg: 'Image JPEG',
-    gif: 'Image GIF',
-    svg: 'Image SVG',
-    md: 'Markdown',
-    txt: 'Texte',
-    docx: 'Document Word',
-    mp4: 'Vid\u00e9o',
-    zip: 'Archive',
-    unknown: 'Fichier',
+    folder: "Dossier",
+    pdf: "PDF",
+    xlsx: "Tableur",
+    pptx: "Pr\u00e9sentation",
+    png: "Image PNG",
+    jpg: "Image JPEG",
+    jpeg: "Image JPEG",
+    gif: "Image GIF",
+    svg: "Image SVG",
+    md: "Markdown",
+    txt: "Texte",
+    docx: "Document Word",
+    mp4: "Vid\u00e9o",
+    zip: "Archive",
+    unknown: "Fichier",
   };
-  return labels[type] || 'Fichier';
+  return labels[type] || "Fichier";
 }
 
 function formatDate(dateStr: string): string {
   const date = new Date(dateStr);
-  return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
+  return date.toLocaleDateString("fr-FR", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
 }
 
 // ─── Sort options ───────────────────────────────────────────────────
-type SortField = 'name' | 'modified' | 'size' | 'type';
-type SortOrder = 'asc' | 'desc';
+type SortField = "name" | "modified" | "size" | "type";
+type SortOrder = "asc" | "desc";
 
-function sortFiles(files: FileItem[], field: SortField, order: SortOrder): FileItem[] {
+function sortFiles(
+  files: FileItem[],
+  field: SortField,
+  order: SortOrder,
+): FileItem[] {
   const sorted = [...files].sort((a, b) => {
     // Folders always come first
-    if (a.type === 'folder' && b.type !== 'folder') return -1;
-    if (a.type !== 'folder' && b.type === 'folder') return 1;
+    if (a.type === "folder" && b.type !== "folder") return -1;
+    if (a.type !== "folder" && b.type === "folder") return 1;
 
     let cmp = 0;
     switch (field) {
-      case 'name':
-        cmp = a.name.localeCompare(b.name, 'fr');
+      case "name":
+        cmp = a.name.localeCompare(b.name, "fr");
         break;
-      case 'modified':
+      case "modified":
         cmp = new Date(a.modified).getTime() - new Date(b.modified).getTime();
         break;
-      case 'size':
+      case "size":
         cmp = parseSizeMB(a.size) - parseSizeMB(b.size);
         break;
-      case 'type':
+      case "type":
         cmp = a.type.localeCompare(b.type);
         break;
     }
-    return order === 'asc' ? cmp : -cmp;
+    return order === "asc" ? cmp : -cmp;
   });
   return sorted;
 }
@@ -197,34 +234,36 @@ function sortFiles(files: FileItem[], field: SortField, order: SortOrder): FileI
 function parseSizeMB(size?: string): number {
   if (!size) return 0;
   const num = parseFloat(size);
-  if (size.includes('GB')) return num * 1024;
-  if (size.includes('MB')) return num;
-  if (size.includes('KB')) return num / 1024;
+  if (size.includes("GB")) return num * 1024;
+  if (size.includes("MB")) return num;
+  if (size.includes("KB")) return num / 1024;
   return num;
 }
 
 // ─── Main Component ─────────────────────────────────────────────────
 export default function GlobalDrivePage() {
-  usePageTitle('Drive global');
+  usePageTitle("Drive global");
   // files holds the nodes for the current folder only (fetched from API)
   const [files, setFiles] = useState<FileItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   // breadcrumbPath tracks the navigation stack as [{id, name}]
-  const [breadcrumbPath, setBreadcrumbPath] = useState<{ id: string | null; name: string }[]>([{ id: null, name: 'Accueil' }]);
+  const [breadcrumbPath, setBreadcrumbPath] = useState<
+    { id: string | null; name: string }[]
+  >([{ id: null, name: "Accueil" }]);
   const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [sortField, setSortField] = useState<SortField>('name');
-  const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortField, setSortField] = useState<SortField>("name");
+  const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
 
   // Dialogs
   const [showNewFolder, setShowNewFolder] = useState(false);
-  const [newFolderName, setNewFolderName] = useState('');
+  const [newFolderName, setNewFolderName] = useState("");
   const [showRename, setShowRename] = useState(false);
   const [renameTarget, setRenameTarget] = useState<FileItem | null>(null);
-  const [renameName, setRenameName] = useState('');
+  const [renameName, setRenameName] = useState("");
   const [showDelete, setShowDelete] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<FileItem | null>(null);
   const [previewFile, setPreviewFile] = useState<FileItem | null>(null);
@@ -238,7 +277,7 @@ export default function GlobalDrivePage() {
       const nodes = await driveApi.listNodes(folderId);
       setFiles(nodes.map(driveNodeToFileItem));
     } catch {
-      setError('Impossible de charger les fichiers. Vérifiez votre connexion.');
+      setError("Impossible de charger les fichiers. Vérifiez votre connexion.");
     } finally {
       setLoading(false);
     }
@@ -255,21 +294,24 @@ export default function GlobalDrivePage() {
     files.filter((f) =>
       searchQuery
         ? f.name.toLowerCase().includes(searchQuery.toLowerCase())
-        : true
+        : true,
     ),
     sortField,
-    sortOrder
+    sortOrder,
   );
 
   const navigateToFolder = (folderId: string | null, folderName?: string) => {
     setCurrentFolderId(folderId);
-    setSearchQuery('');
+    setSearchQuery("");
     if (folderId === null) {
       // Go home
-      setBreadcrumbPath([{ id: null, name: 'Accueil' }]);
+      setBreadcrumbPath([{ id: null, name: "Accueil" }]);
     } else if (folderName) {
       // Navigate into a subfolder
-      setBreadcrumbPath((prev) => [...prev, { id: folderId, name: folderName }]);
+      setBreadcrumbPath((prev) => [
+        ...prev,
+        { id: folderId, name: folderName },
+      ]);
     }
   };
 
@@ -277,11 +319,11 @@ export default function GlobalDrivePage() {
     const segment = breadcrumbPath[index];
     setBreadcrumbPath(breadcrumbPath.slice(0, index + 1));
     setCurrentFolderId(segment.id);
-    setSearchQuery('');
+    setSearchQuery("");
   };
 
   const handleDoubleClick = (item: FileItem) => {
-    if (item.type === 'folder') {
+    if (item.type === "folder") {
       navigateToFolder(item.id, item.name);
     } else {
       setPreviewFile(item);
@@ -302,7 +344,11 @@ export default function GlobalDrivePage() {
     e.stopPropagation();
     const clickedIndex = currentFiles.findIndex((f) => f.id === id);
 
-    if (e.shiftKey && lastClickedIndex.current !== null && clickedIndex !== -1) {
+    if (
+      e.shiftKey &&
+      lastClickedIndex.current !== null &&
+      clickedIndex !== -1
+    ) {
       // Range selection
       const start = Math.min(lastClickedIndex.current, clickedIndex);
       const end = Math.max(lastClickedIndex.current, clickedIndex);
@@ -335,8 +381,10 @@ export default function GlobalDrivePage() {
     setSelectedItems(new Set());
   };
 
-  const isAllSelected = currentFiles.length > 0 && selectedItems.size === currentFiles.length;
-  const isSomeSelected = selectedItems.size > 0 && selectedItems.size < currentFiles.length;
+  const isAllSelected =
+    currentFiles.length > 0 && selectedItems.size === currentFiles.length;
+  const isSomeSelected =
+    selectedItems.size > 0 && selectedItems.size < currentFiles.length;
 
   // ── Bulk operations ────────────────────────────────────────────
   const bulkDownload = () => {
@@ -361,7 +409,7 @@ export default function GlobalDrivePage() {
       clearSelection();
       fetchNodes(currentFolderId);
     } catch {
-      toast.error('Erreur lors de la suppression');
+      toast.error("Erreur lors de la suppression");
     }
   };
 
@@ -372,21 +420,23 @@ export default function GlobalDrivePage() {
       await driveApi.createNode({
         parent_id: currentFolderId,
         name: newFolderName.trim(),
-        node_type: 'folder',
+        node_type: "folder",
         target_id: null,
       });
-      setNewFolderName('');
+      setNewFolderName("");
       setShowNewFolder(false);
       toast.success(`Dossier "${newFolderName.trim()}" créé`);
       fetchNodes(currentFolderId);
     } catch {
-      toast.error('Erreur lors de la création du dossier');
+      toast.error("Erreur lors de la création du dossier");
     }
   };
 
   const uploadFileRef = useRef<HTMLInputElement>(null);
 
-  const handleFileInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileInputChange = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const fileList = e.target.files;
     if (!fileList || fileList.length === 0) return;
     const files = Array.from(fileList);
@@ -394,13 +444,13 @@ export default function GlobalDrivePage() {
     let successCount = 0;
     for (const file of files) {
       try {
-        const uploadRes = await storageApi.uploadFile('drive', file);
+        const uploadRes = await storageApi.uploadFile("drive", file);
         if (uploadRes.data && uploadRes.data.length > 0) {
           const target = uploadRes.data[0];
           await driveApi.createNode({
             parent_id: currentFolderId,
             name: target.key,
-            node_type: 'file',
+            node_type: "file",
             target_id: target.id,
             size: target.size,
             mime_type: target.content_type,
@@ -418,7 +468,7 @@ export default function GlobalDrivePage() {
       toast.dismiss(toastId);
     }
     // Reset input
-    if (uploadFileRef.current) uploadFileRef.current.value = '';
+    if (uploadFileRef.current) uploadFileRef.current.value = "";
   };
 
   const renameItem = async () => {
@@ -430,7 +480,7 @@ export default function GlobalDrivePage() {
       setRenameTarget(null);
       fetchNodes(currentFolderId);
     } catch {
-      toast.error('Erreur lors du renommage');
+      toast.error("Erreur lors du renommage");
     }
   };
 
@@ -443,7 +493,7 @@ export default function GlobalDrivePage() {
       setDeleteTarget(null);
       fetchNodes(currentFolderId);
     } catch {
-      toast.error('Erreur lors de la suppression');
+      toast.error("Erreur lors de la suppression");
     }
   };
 
@@ -459,16 +509,16 @@ export default function GlobalDrivePage() {
   };
 
   // ── Stats ───────────────────────────────────────────────────────
-  const totalFiles = files.filter((f) => f.type !== 'folder').length;
-  const totalFolders = files.filter((f) => f.type === 'folder').length;
+  const totalFiles = files.filter((f) => f.type !== "folder").length;
+  const totalFolders = files.filter((f) => f.type === "folder").length;
 
   // ── Toggle sort ─────────────────────────────────────────────────
   const toggleSort = (field: SortField) => {
     if (sortField === field) {
-      setSortOrder((o) => (o === 'asc' ? 'desc' : 'asc'));
+      setSortOrder((o) => (o === "asc" ? "desc" : "asc"));
     } else {
       setSortField(field);
-      setSortOrder('asc');
+      setSortOrder("asc");
     }
   };
 
@@ -491,15 +541,24 @@ export default function GlobalDrivePage() {
             Drive
           </h1>
           <p className="text-muted-foreground mt-1">
-            {loading ? 'Chargement...' : `${totalFolders} dossier${totalFolders !== 1 ? 's' : ''}, ${totalFiles} fichier${totalFiles !== 1 ? 's' : ''}`}
+            {loading
+              ? "Chargement..."
+              : `${totalFolders} dossier${totalFolders !== 1 ? "s" : ""}, ${totalFiles} fichier${totalFiles !== 1 ? "s" : ""}`}
           </p>
         </div>
         <div className="flex gap-2 flex-wrap">
-          <Button variant="outline" onClick={() => setShowNewFolder(true)} className="gap-2">
+          <Button
+            variant="outline"
+            onClick={() => setShowNewFolder(true)}
+            className="gap-2"
+          >
             <PlusIcon className="size-4" />
             Nouveau dossier
           </Button>
-          <Button onClick={() => uploadFileRef.current?.click()} className="gap-2">
+          <Button
+            onClick={() => uploadFileRef.current?.click()}
+            className="gap-2"
+          >
             <UploadIcon className="size-4" />
             Importer
           </Button>
@@ -515,7 +574,7 @@ export default function GlobalDrivePage() {
           <Breadcrumb>
             <BreadcrumbList>
               {breadcrumbPath.map((segment, idx) => (
-                <BreadcrumbItem key={segment.id ?? 'root'}>
+                <BreadcrumbItem key={segment.id ?? "root"}>
                   {idx > 0 && <BreadcrumbSeparator />}
                   {idx === breadcrumbPath.length - 1 ? (
                     <BreadcrumbPage>{segment.name}</BreadcrumbPage>
@@ -552,25 +611,29 @@ export default function GlobalDrivePage() {
           {/* Sort */}
           <div className="flex items-center gap-1">
             <Button
-              variant={sortField === 'name' ? 'secondary' : 'ghost'}
+              variant={sortField === "name" ? "secondary" : "ghost"}
               size="sm"
-              onClick={() => toggleSort('name')}
+              onClick={() => toggleSort("name")}
               className="gap-1 text-xs"
             >
               Nom
-              {sortField === 'name' && (
-                <ChevronDown className={`size-3 transition-transform ${sortOrder === 'asc' ? '' : 'rotate-180'}`} />
+              {sortField === "name" && (
+                <ChevronDown
+                  className={`size-3 transition-transform ${sortOrder === "asc" ? "" : "rotate-180"}`}
+                />
               )}
             </Button>
             <Button
-              variant={sortField === 'modified' ? 'secondary' : 'ghost'}
+              variant={sortField === "modified" ? "secondary" : "ghost"}
               size="sm"
-              onClick={() => toggleSort('modified')}
+              onClick={() => toggleSort("modified")}
               className="gap-1 text-xs"
             >
               Date
-              {sortField === 'modified' && (
-                <ChevronDown className={`size-3 transition-transform ${sortOrder === 'asc' ? '' : 'rotate-180'}`} />
+              {sortField === "modified" && (
+                <ChevronDown
+                  className={`size-3 transition-transform ${sortOrder === "asc" ? "" : "rotate-180"}`}
+                />
               )}
             </Button>
           </div>
@@ -580,17 +643,17 @@ export default function GlobalDrivePage() {
           {/* View toggle */}
           <div className="flex items-center rounded-lg border">
             <Button
-              variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
+              variant={viewMode === "grid" ? "secondary" : "ghost"}
               size="sm"
-              onClick={() => setViewMode('grid')}
+              onClick={() => setViewMode("grid")}
               className="rounded-r-none"
             >
               <LayoutGridIcon className="size-4" />
             </Button>
             <Button
-              variant={viewMode === 'list' ? 'secondary' : 'ghost'}
+              variant={viewMode === "list" ? "secondary" : "ghost"}
               size="sm"
-              onClick={() => setViewMode('list')}
+              onClick={() => setViewMode("list")}
               className="rounded-l-none"
             >
               <ListIcon className="size-4" />
@@ -612,26 +675,47 @@ export default function GlobalDrivePage() {
               aria-label="Tout selectionner"
             />
             <span className="text-sm font-medium">
-              {selectedItems.size} selectionne{selectedItems.size > 1 ? 's' : ''}
+              {selectedItems.size} selectionne
+              {selectedItems.size > 1 ? "s" : ""}
             </span>
           </div>
           <Separator orientation="vertical" className="h-5" />
           <div className="flex items-center gap-1.5">
-            <Button variant="outline" size="sm" className="gap-1.5 h-8" onClick={bulkDownload}>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 h-8"
+              onClick={bulkDownload}
+            >
               <DownloadIcon className="size-3.5" />
               Telecharger
             </Button>
-            <Button variant="outline" size="sm" className="gap-1.5 h-8" onClick={bulkMove}>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 h-8"
+              onClick={bulkMove}
+            >
               <FolderInputIcon className="size-3.5" />
               Deplacer
             </Button>
-            <Button variant="outline" size="sm" className="gap-1.5 h-8 text-destructive hover:text-destructive" onClick={bulkDelete}>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 h-8 text-destructive hover:text-destructive"
+              onClick={bulkDelete}
+            >
               <Trash2Icon className="size-3.5" />
               Supprimer
             </Button>
           </div>
           <div className="flex-1" />
-          <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={clearSelection}>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 text-xs"
+            onClick={clearSelection}
+          >
             Annuler la selection
           </Button>
         </div>
@@ -641,7 +725,9 @@ export default function GlobalDrivePage() {
       {loading && (
         <div className="flex flex-col items-center justify-center py-20 text-center">
           <Loader2Icon className="size-10 text-muted-foreground/60 mb-4 animate-spin" />
-          <p className="text-sm text-muted-foreground">Chargement des fichiers...</p>
+          <p className="text-sm text-muted-foreground">
+            Chargement des fichiers...
+          </p>
         </div>
       )}
 
@@ -649,9 +735,15 @@ export default function GlobalDrivePage() {
       {!loading && error && (
         <div className="flex flex-col items-center justify-center py-20 text-center">
           <FolderIcon className="size-16 text-destructive/40 mb-4" />
-          <h3 className="text-lg font-medium text-destructive">Erreur de chargement</h3>
+          <h3 className="text-lg font-medium text-destructive">
+            Erreur de chargement
+          </h3>
           <p className="text-sm text-muted-foreground mt-1">{error}</p>
-          <Button variant="outline" className="mt-4" onClick={() => fetchNodes(currentFolderId)}>
+          <Button
+            variant="outline"
+            className="mt-4"
+            onClick={() => fetchNodes(currentFolderId)}
+          >
             Réessayer
           </Button>
         </div>
@@ -662,26 +754,27 @@ export default function GlobalDrivePage() {
         <div className="flex flex-col items-center justify-center py-20 text-center">
           <FolderIcon className="size-16 text-muted-foreground/40 mb-4" />
           <h3 className="text-lg font-medium">
-            {searchQuery ? 'Aucun résultat' : 'Dossier vide'}
+            {searchQuery ? "Aucun résultat" : "Dossier vide"}
           </h3>
           <p className="text-sm text-muted-foreground mt-1">
             {searchQuery
               ? `Aucun fichier ne correspond à "${searchQuery}"`
-              : 'Créez un dossier ou importez des fichiers pour commencer.'
-            }
+              : "Créez un dossier ou importez des fichiers pour commencer."}
           </p>
         </div>
       )}
 
       {/* Grid View */}
-      {!loading && !error && viewMode === 'grid' && currentFiles.length > 0 && (
+      {!loading && !error && viewMode === "grid" && currentFiles.length > 0 && (
         <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
           {currentFiles.map((item) => (
             <ContextMenu key={item.id}>
               <ContextMenuTrigger>
                 <Card
                   className={`group cursor-pointer transition-all hover:shadow-md hover:border-primary/30 relative ${
-                    selectedItems.has(item.id) ? 'border-primary bg-primary/5 ring-1 ring-primary' : ''
+                    selectedItems.has(item.id)
+                      ? "border-primary bg-primary/5 ring-1 ring-primary"
+                      : ""
                   }`}
                   onClick={(e) => toggleSelect(item.id, e)}
                   onDoubleClick={() => handleDoubleClick(item)}
@@ -689,8 +782,8 @@ export default function GlobalDrivePage() {
                   <div
                     className={`absolute top-2 left-2 z-10 transition-opacity ${
                       selectedItems.has(item.id) || selectedItems.size > 0
-                        ? 'opacity-100'
-                        : 'opacity-0 group-hover:opacity-100'
+                        ? "opacity-100"
+                        : "opacity-0 group-hover:opacity-100"
                     }`}
                     onClick={(e) => e.stopPropagation()}
                   >
@@ -712,11 +805,14 @@ export default function GlobalDrivePage() {
                       {getFileIcon(item.type)}
                     </div>
                     <div className="w-full text-center min-w-0">
-                      <p className="text-sm font-medium truncate" title={item.name}>
+                      <p
+                        className="text-sm font-medium truncate"
+                        title={item.name}
+                      >
                         {item.name}
                       </p>
                       <p className="text-xs text-muted-foreground mt-0.5">
-                        {item.type === 'folder'
+                        {item.type === "folder"
                           ? `${item.items} \u00e9l\u00e9ments`
                           : item.size}
                       </p>
@@ -725,8 +821,10 @@ export default function GlobalDrivePage() {
                 </Card>
               </ContextMenuTrigger>
               <ContextMenuContent>
-                {item.type === 'folder' ? (
-                  <ContextMenuItem onClick={() => navigateToFolder(item.id, item.name)}>
+                {item.type === "folder" ? (
+                  <ContextMenuItem
+                    onClick={() => navigateToFolder(item.id, item.name)}
+                  >
                     <FolderIcon className="size-4 mr-2" />
                     Ouvrir
                   </ContextMenuItem>
@@ -736,15 +834,21 @@ export default function GlobalDrivePage() {
                     Apercu
                   </ContextMenuItem>
                 )}
-                <ContextMenuItem onClick={() => toast.info(`Téléchargement de "${item.name}"...`)}>
+                <ContextMenuItem
+                  onClick={() =>
+                    toast.info(`Téléchargement de "${item.name}"...`)
+                  }
+                >
                   <DownloadIcon className="size-4 mr-2" />
                   Télécharger
                 </ContextMenuItem>
-                <ContextMenuItem onClick={() => {
-                  const url = `${window.location.origin}/global-drive?node=${item.id}`;
-                  navigator.clipboard.writeText(url);
-                  toast.success('Lien copié');
-                }}>
+                <ContextMenuItem
+                  onClick={() => {
+                    const url = `${window.location.origin}/global-drive?node=${item.id}`;
+                    navigator.clipboard.writeText(url);
+                    toast.success("Lien copié");
+                  }}
+                >
                   <CopyIcon className="size-4 mr-2" />
                   Copier le lien
                 </ContextMenuItem>
@@ -753,16 +857,21 @@ export default function GlobalDrivePage() {
                   <PencilIcon className="size-4 mr-2" />
                   Renommer
                 </ContextMenuItem>
-                <ContextMenuItem onClick={() => toast.info('Copie en cours...')}>
+                <ContextMenuItem
+                  onClick={() => toast.info("Copie en cours...")}
+                >
                   <CopyIcon className="size-4 mr-2" />
                   Copier
                 </ContextMenuItem>
-                <ContextMenuItem onClick={() => toast.info('Déplacement...')}>
+                <ContextMenuItem onClick={() => toast.info("Déplacement...")}>
                   <FolderInputIcon className="size-4 mr-2" />
                   Déplacer
                 </ContextMenuItem>
                 <ContextMenuSeparator />
-                <ContextMenuItem variant="destructive" onClick={() => openDeleteDialog(item)}>
+                <ContextMenuItem
+                  variant="destructive"
+                  onClick={() => openDeleteDialog(item)}
+                >
                   <Trash2Icon className="size-4 mr-2" />
                   Supprimer
                 </ContextMenuItem>
@@ -773,7 +882,7 @@ export default function GlobalDrivePage() {
       )}
 
       {/* List View */}
-      {!loading && !error && viewMode === 'list' && currentFiles.length > 0 && (
+      {!loading && !error && viewMode === "list" && currentFiles.length > 0 && (
         <Card>
           <CardContent className="p-0">
             <div className="overflow-x-auto">
@@ -788,35 +897,58 @@ export default function GlobalDrivePage() {
                           else clearSelection();
                         }}
                         aria-label="Tout selectionner"
-                        className={isSomeSelected ? 'data-[state=unchecked]:bg-primary/20' : ''}
+                        className={
+                          isSomeSelected
+                            ? "data-[state=unchecked]:bg-primary/20"
+                            : ""
+                        }
                       />
                     </th>
                     <th className="text-left font-medium px-4 py-3 w-[40%]">
-                      <button onClick={() => toggleSort('name')} className="flex items-center gap-1 hover:text-foreground">
+                      <button
+                        onClick={() => toggleSort("name")}
+                        className="flex items-center gap-1 hover:text-foreground"
+                      >
                         Nom
-                        {sortField === 'name' && (
-                          <ChevronDown className={`size-3 transition-transform ${sortOrder === 'asc' ? '' : 'rotate-180'}`} />
+                        {sortField === "name" && (
+                          <ChevronDown
+                            className={`size-3 transition-transform ${sortOrder === "asc" ? "" : "rotate-180"}`}
+                          />
                         )}
                       </button>
                     </th>
                     <th className="text-left font-medium px-4 py-3 hidden sm:table-cell">
-                      <button onClick={() => toggleSort('type')} className="flex items-center gap-1 hover:text-foreground">
+                      <button
+                        onClick={() => toggleSort("type")}
+                        className="flex items-center gap-1 hover:text-foreground"
+                      >
                         Type
-                        {sortField === 'type' && (
-                          <ChevronDown className={`size-3 transition-transform ${sortOrder === 'asc' ? '' : 'rotate-180'}`} />
+                        {sortField === "type" && (
+                          <ChevronDown
+                            className={`size-3 transition-transform ${sortOrder === "asc" ? "" : "rotate-180"}`}
+                          />
                         )}
                       </button>
                     </th>
-                    <th className="text-left font-medium px-4 py-3 hidden md:table-cell">Taille</th>
+                    <th className="text-left font-medium px-4 py-3 hidden md:table-cell">
+                      Taille
+                    </th>
                     <th className="text-left font-medium px-4 py-3 hidden lg:table-cell">
-                      <button onClick={() => toggleSort('modified')} className="flex items-center gap-1 hover:text-foreground">
+                      <button
+                        onClick={() => toggleSort("modified")}
+                        className="flex items-center gap-1 hover:text-foreground"
+                      >
                         Modifi\u00e9
-                        {sortField === 'modified' && (
-                          <ChevronDown className={`size-3 transition-transform ${sortOrder === 'asc' ? '' : 'rotate-180'}`} />
+                        {sortField === "modified" && (
+                          <ChevronDown
+                            className={`size-3 transition-transform ${sortOrder === "asc" ? "" : "rotate-180"}`}
+                          />
                         )}
                       </button>
                     </th>
-                    <th className="text-left font-medium px-4 py-3 hidden lg:table-cell">Propri\u00e9taire</th>
+                    <th className="text-left font-medium px-4 py-3 hidden lg:table-cell">
+                      Propri\u00e9taire
+                    </th>
                     <th className="w-10" />
                   </tr>
                 </thead>
@@ -826,12 +958,15 @@ export default function GlobalDrivePage() {
                       <ContextMenuTrigger asChild>
                         <tr
                           className={`border-b last:border-0 hover:bg-muted/50 cursor-pointer transition-colors ${
-                            selectedItems.has(item.id) ? 'bg-primary/5' : ''
+                            selectedItems.has(item.id) ? "bg-primary/5" : ""
                           }`}
                           onClick={(e) => toggleSelect(item.id, e)}
                           onDoubleClick={() => handleDoubleClick(item)}
                         >
-                          <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                          <td
+                            className="px-4 py-3"
+                            onClick={(e) => e.stopPropagation()}
+                          >
                             <Checkbox
                               checked={selectedItems.has(item.id)}
                               onCheckedChange={() => {
@@ -847,42 +982,62 @@ export default function GlobalDrivePage() {
                           </td>
                           <td className="px-4 py-3">
                             <div className="flex items-center gap-3">
-                              {getFileIcon(item.type, 'size-5')}
-                              <span className="font-medium truncate max-w-[300px]" title={item.name}>
+                              {getFileIcon(item.type, "size-5")}
+                              <span
+                                className="font-medium truncate max-w-[300px]"
+                                title={item.name}
+                              >
                                 {item.name}
                               </span>
                             </div>
                           </td>
                           <td className="px-4 py-3 text-muted-foreground hidden sm:table-cell">
-                            <Badge variant="outline" className="font-normal text-xs">
+                            <Badge
+                              variant="outline"
+                              className="font-normal text-xs"
+                            >
                               {getTypeLabel(item.type)}
                             </Badge>
                           </td>
                           <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">
-                            {item.type === 'folder' ? `${item.items} \u00e9l.` : item.size || '\u2014'}
+                            {item.type === "folder"
+                              ? `${item.items} \u00e9l.`
+                              : item.size || "\u2014"}
                           </td>
                           <td className="px-4 py-3 text-muted-foreground hidden lg:table-cell">
                             {formatDate(item.modified)}
                           </td>
                           <td className="px-4 py-3 text-muted-foreground hidden lg:table-cell">
-                            {item.owner || '\u2014'}
+                            {item.owner || "\u2014"}
                           </td>
                           <td className="px-4 py-3" />
                         </tr>
                       </ContextMenuTrigger>
                       <ContextMenuContent>
-                        {item.type === 'folder' ? (
-                          <ContextMenuItem onClick={() => navigateToFolder(item.id, item.name)}>
+                        {item.type === "folder" ? (
+                          <ContextMenuItem
+                            onClick={() => navigateToFolder(item.id, item.name)}
+                          >
                             <FolderIcon className="size-4 mr-2" />
                             Ouvrir
                           </ContextMenuItem>
                         ) : (
-                          <ContextMenuItem onClick={() => toast.info(`Ouverture de "${item.name}"...`)}>
+                          <ContextMenuItem
+                            onClick={() =>
+                              toast.info(`Ouverture de "${item.name}"...`)
+                            }
+                          >
                             <EyeIcon className="size-4 mr-2" />
                             Ouvrir
                           </ContextMenuItem>
                         )}
-                        <ContextMenuItem onClick={() => toast.info(`T\u00e9l\u00e9chargement de "${item.name}"...`)}>
+                        <ContextMenuItem
+                          onClick={() =>
+                            toast.info(
+                              `T\u00e9l\u00e9chargement de "${item.name}"...`,
+                            )
+                          }
+                        >
                           <DownloadIcon className="size-4 mr-2" />
                           T\u00e9l\u00e9charger
                         </ContextMenuItem>
@@ -891,16 +1046,23 @@ export default function GlobalDrivePage() {
                           <PencilIcon className="size-4 mr-2" />
                           Renommer
                         </ContextMenuItem>
-                        <ContextMenuItem onClick={() => toast.info('Copie en cours...')}>
+                        <ContextMenuItem
+                          onClick={() => toast.info("Copie en cours...")}
+                        >
                           <CopyIcon className="size-4 mr-2" />
                           Copier
                         </ContextMenuItem>
-                        <ContextMenuItem onClick={() => toast.info('D\u00e9placement...')}>
+                        <ContextMenuItem
+                          onClick={() => toast.info("D\u00e9placement...")}
+                        >
                           <FolderInputIcon className="size-4 mr-2" />
                           D\u00e9placer
                         </ContextMenuItem>
                         <ContextMenuSeparator />
-                        <ContextMenuItem variant="destructive" onClick={() => openDeleteDialog(item)}>
+                        <ContextMenuItem
+                          variant="destructive"
+                          onClick={() => openDeleteDialog(item)}
+                        >
                           <Trash2Icon className="size-4 mr-2" />
                           Supprimer
                         </ContextMenuItem>
@@ -930,7 +1092,7 @@ export default function GlobalDrivePage() {
               value={newFolderName}
               onChange={(e) => setNewFolderName(e.target.value)}
               placeholder="Mon dossier"
-              onKeyDown={(e) => e.key === 'Enter' && createFolder()}
+              onKeyDown={(e) => e.key === "Enter" && createFolder()}
               autoFocus
             />
           </div>
@@ -960,7 +1122,7 @@ export default function GlobalDrivePage() {
               id="renameName"
               value={renameName}
               onChange={(e) => setRenameName(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && renameItem()}
+              onKeyDown={(e) => e.key === "Enter" && renameItem()}
               autoFocus
             />
           </div>
@@ -981,9 +1143,11 @@ export default function GlobalDrivePage() {
           <DialogHeader>
             <DialogTitle>Confirmer la suppression</DialogTitle>
             <DialogDescription>
-              \u00cates-vous s\u00fbr de vouloir supprimer &quot;{deleteTarget?.name}&quot; ?
-              {deleteTarget?.type === 'folder' && ' Tout le contenu du dossier sera \u00e9galement supprim\u00e9.'}
-              {' '}Cette action est irr\u00e9versible.
+              \u00cates-vous s\u00fbr de vouloir supprimer &quot;
+              {deleteTarget?.name}&quot; ?
+              {deleteTarget?.type === "folder" &&
+                " Tout le contenu du dossier sera \u00e9galement supprim\u00e9."}{" "}
+              Cette action est irr\u00e9versible.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -998,15 +1162,21 @@ export default function GlobalDrivePage() {
       </Dialog>
 
       {/* ── File Preview Dialog ─────────────────────────────────── */}
-      <Dialog open={!!previewFile} onOpenChange={(open) => { if (!open) setPreviewFile(null); }}>
+      <Dialog
+        open={!!previewFile}
+        onOpenChange={(open) => {
+          if (!open) setPreviewFile(null);
+        }}
+      >
         <DialogContent className="sm:max-w-2xl max-h-[85vh] flex flex-col">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              {previewFile && getFileIcon(previewFile.type, 'size-5')}
+              {previewFile && getFileIcon(previewFile.type, "size-5")}
               {previewFile?.name}
             </DialogTitle>
             <DialogDescription>
-              {previewFile && `${getTypeLabel(previewFile.type)} — ${previewFile.size || 'Taille inconnue'} — ${formatDate(previewFile.modified)}`}
+              {previewFile &&
+                `${getTypeLabel(previewFile.type)} — ${previewFile.size || "Taille inconnue"} — ${formatDate(previewFile.modified)}`}
             </DialogDescription>
           </DialogHeader>
           <div className="flex-1 min-h-0">
@@ -1016,7 +1186,12 @@ export default function GlobalDrivePage() {
             <Button variant="outline" onClick={() => setPreviewFile(null)}>
               Fermer
             </Button>
-            <Button onClick={() => { toast.info(`Telechargement de "${previewFile?.name}"...`); setPreviewFile(null); }}>
+            <Button
+              onClick={() => {
+                toast.info(`Telechargement de "${previewFile?.name}"...`);
+                setPreviewFile(null);
+              }}
+            >
               <DownloadIcon className="size-4 mr-2" />
               Telecharger
             </Button>
@@ -1029,17 +1204,19 @@ export default function GlobalDrivePage() {
 
 // ─── File Preview Content Component ──────────────────────────────────
 function FilePreviewContent({ file }: { file: FileItem }) {
-  const isImage = ['png', 'jpg', 'jpeg', 'gif', 'svg'].includes(file.type);
-  const isText = ['md', 'txt'].includes(file.type);
-  const isPdf = file.type === 'pdf';
-  const isVideo = file.type === 'mp4';
+  const isImage = ["png", "jpg", "jpeg", "gif", "svg"].includes(file.type);
+  const isText = ["md", "txt"].includes(file.type);
+  const isPdf = file.type === "pdf";
+  const isVideo = file.type === "mp4";
 
   if (isImage) {
     return (
       <div className="flex items-center justify-center bg-muted/30 rounded-lg p-6 min-h-[300px]">
         <div className="text-center">
           <ImageIcon className="size-16 text-purple-500 mx-auto mb-2" />
-          <p className="text-sm text-muted-foreground font-medium">{file.name}</p>
+          <p className="text-sm text-muted-foreground font-medium">
+            {file.name}
+          </p>
           <p className="text-xs text-muted-foreground mt-1">{file.size}</p>
         </div>
       </div>
@@ -1052,15 +1229,18 @@ function FilePreviewContent({ file }: { file: FileItem }) {
         <FileTextIcon className="size-16 text-red-500 mb-4" />
         <p className="text-sm font-medium">{file.name}</p>
         <p className="text-xs text-muted-foreground mt-1">{file.size}</p>
-        <Badge variant="outline" className="mt-3">Document PDF</Badge>
+        <Badge variant="outline" className="mt-3">
+          Document PDF
+        </Badge>
       </div>
     );
   }
 
   if (isText) {
-    const sampleContent = file.type === 'md'
-      ? `# ${file.name.replace('.md', '')}\n\nApercu du fichier Markdown.\n\n## Section 1\n\nContenu du document...\n\n## Section 2\n\n- Point 1\n- Point 2\n- Point 3\n\n> Note : L'apercu complet sera disponible lorsque le fichier sera charge depuis le serveur.`
-      : `Contenu du fichier texte "${file.name}"\n\nLe contenu complet sera affiche lorsque le fichier sera charge depuis le serveur de stockage.\n\nTaille : ${file.size || 'inconnue'}\nDerniere modification : ${file.modified}`;
+    const sampleContent =
+      file.type === "md"
+        ? `# ${file.name.replace(".md", "")}\n\nApercu du fichier Markdown.\n\n## Section 1\n\nContenu du document...\n\n## Section 2\n\n- Point 1\n- Point 2\n- Point 3\n\n> Note : L'apercu complet sera disponible lorsque le fichier sera charge depuis le serveur.`
+        : `Contenu du fichier texte "${file.name}"\n\nLe contenu complet sera affiche lorsque le fichier sera charge depuis le serveur de stockage.\n\nTaille : ${file.size || "inconnue"}\nDerniere modification : ${file.modified}`;
 
     return (
       <ScrollArea className="h-[350px] rounded-lg border bg-muted/20">
@@ -1087,7 +1267,7 @@ function FilePreviewContent({ file }: { file: FileItem }) {
   return (
     <div className="space-y-4 py-2">
       <div className="flex items-center justify-center py-6">
-        {getFileIcon(file.type, 'size-20')}
+        {getFileIcon(file.type, "size-20")}
       </div>
       <div className="grid grid-cols-2 gap-3 text-sm">
         <div className="space-y-1">
@@ -1100,7 +1280,7 @@ function FilePreviewContent({ file }: { file: FileItem }) {
         </div>
         <div className="space-y-1">
           <p className="text-muted-foreground">Taille</p>
-          <p className="font-medium">{file.size || 'Inconnue'}</p>
+          <p className="font-medium">{file.size || "Inconnue"}</p>
         </div>
         <div className="space-y-1">
           <p className="text-muted-foreground">Modification</p>

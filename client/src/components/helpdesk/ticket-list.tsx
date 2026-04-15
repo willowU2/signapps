@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   Table,
   TableBody,
@@ -8,15 +8,15 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export interface Ticket {
   id: string;
   title: string;
-  status: 'open' | 'in-progress' | 'resolved';
-  priority: 'high' | 'medium' | 'low';
+  status: "open" | "in-progress" | "resolved";
+  priority: "high" | "medium" | "low";
   assignee?: string;
   createdDate: string;
 }
@@ -27,35 +27,35 @@ interface TicketListProps {
 
 const getStatusColor = (status: string) => {
   switch (status) {
-    case 'open':
-      return 'bg-blue-100 text-blue-800';
-    case 'in-progress':
-      return 'bg-yellow-100 text-yellow-800';
-    case 'resolved':
-      return 'bg-green-100 text-green-800';
+    case "open":
+      return "bg-blue-100 text-blue-800";
+    case "in-progress":
+      return "bg-yellow-100 text-yellow-800";
+    case "resolved":
+      return "bg-green-100 text-green-800";
     default:
-      return 'bg-muted text-gray-800';
+      return "bg-muted text-gray-800";
   }
 };
 
 const getPriorityColor = (priority: string) => {
   switch (priority) {
-    case 'high':
-      return 'bg-red-100 text-red-800';
-    case 'medium':
-      return 'bg-orange-100 text-orange-800';
-    case 'low':
-      return 'bg-green-100 text-green-800';
+    case "high":
+      return "bg-red-100 text-red-800";
+    case "medium":
+      return "bg-orange-100 text-orange-800";
+    case "low":
+      return "bg-green-100 text-green-800";
     default:
-      return 'bg-muted text-gray-800';
+      return "bg-muted text-gray-800";
   }
 };
 
 const formatDate = (dateString: string) => {
-  return new Date(dateString).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
+  return new Date(dateString).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
   });
 };
 
@@ -82,27 +82,38 @@ export function TicketList({ tickets = [] }: TicketListProps) {
           <TableBody>
             {displayTickets.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                <TableCell
+                  colSpan={6}
+                  className="text-center py-8 text-muted-foreground"
+                >
                   No tickets found
                 </TableCell>
               </TableRow>
             ) : (
               displayTickets.map((ticket) => (
                 <TableRow key={ticket.id}>
-                  <TableCell className="font-mono text-sm">{ticket.id}</TableCell>
-                  <TableCell className="font-medium truncate">{ticket.title}</TableCell>
+                  <TableCell className="font-mono text-sm">
+                    {ticket.id}
+                  </TableCell>
+                  <TableCell className="font-medium truncate">
+                    {ticket.title}
+                  </TableCell>
                   <TableCell>
-                    <Badge className={`${getStatusColor(ticket.status)} capitalize`}>
-                      {ticket.status.replace('-', ' ')}
+                    <Badge
+                      className={`${getStatusColor(ticket.status)} capitalize`}
+                    >
+                      {ticket.status.replace("-", " ")}
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <Badge className={`${getPriorityColor(ticket.priority)} capitalize`}>
+                    <Badge
+                      className={`${getPriorityColor(ticket.priority)} capitalize`}
+                    >
                       {ticket.priority}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-sm">
-                    {ticket.assignee || '—'}
+                    {ticket.assignee || "—"}
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
                     {formatDate(ticket.createdDate)}

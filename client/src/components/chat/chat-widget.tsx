@@ -2,7 +2,11 @@
 
 import { useRef, useEffect, useState } from "react";
 import { useAiStream } from "@/hooks/use-ai-stream";
-import { useAiMessages, useAiStreamingState, useAiMessageActions } from "@/stores/ai-store";
+import {
+  useAiMessages,
+  useAiStreamingState,
+  useAiMessageActions,
+} from "@/stores/ai-store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -18,7 +22,8 @@ import {
 export function ChatWidget() {
   // Granular selectors for optimized re-renders
   const messages = useAiMessages();
-  const { isStreaming: storeIsStreaming, streamingMessageId } = useAiStreamingState();
+  const { isStreaming: storeIsStreaming, streamingMessageId } =
+    useAiStreamingState();
   const {
     addMessage,
     appendToMessage,
@@ -120,7 +125,7 @@ export function ChatWidget() {
               key={msg.id}
               className={cn(
                 "flex gap-3 text-sm",
-                msg.role === "user" ? "flex-row-reverse" : "flex-row"
+                msg.role === "user" ? "flex-row-reverse" : "flex-row",
               )}
             >
               <div
@@ -128,7 +133,7 @@ export function ChatWidget() {
                   "w-8 h-8 rounded-full flex items-center justify-center shrink-0",
                   msg.role === "user"
                     ? "bg-primary text-primary-foreground"
-                    : "bg-muted"
+                    : "bg-muted",
                 )}
               >
                 {msg.role === "user" ? (
@@ -143,13 +148,11 @@ export function ChatWidget() {
                     "rounded-lg px-3 py-2 whitespace-pre-wrap break-words",
                     msg.role === "user"
                       ? "bg-primary text-primary-foreground"
-                      : "bg-muted"
+                      : "bg-muted",
                   )}
                 >
                   {msg.content ||
-                    (isStreaming && msg.id === streamingMessageId
-                      ? "..."
-                      : "")}
+                    (isStreaming && msg.id === streamingMessageId ? "..." : "")}
                 </div>
                 {/* Sources */}
                 {msg.sources && msg.sources.length > 0 && (

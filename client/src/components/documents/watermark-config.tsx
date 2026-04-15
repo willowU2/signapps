@@ -24,14 +24,24 @@ import { toast } from "sonner";
 
 const watermarkSchema = z.object({
   text: z.string().min(1, "Watermark text is required").max(100),
-  position: z.enum(["center", "top-left", "top-right", "bottom-left", "bottom-right"]),
+  position: z.enum([
+    "center",
+    "top-left",
+    "top-right",
+    "bottom-left",
+    "bottom-right",
+  ]),
   opacity: z.number().min(0).max(100),
 });
 
 type WatermarkValues = z.infer<typeof watermarkSchema>;
 
 export function WatermarkConfig() {
-  const [preview, setPreview] = useState({ text: "CONFIDENTIAL", position: "center", opacity: 30 });
+  const [preview, setPreview] = useState({
+    text: "CONFIDENTIAL",
+    position: "center",
+    opacity: 30,
+  });
 
   const form = useForm<WatermarkValues>({
     resolver: zodResolver(watermarkSchema),
@@ -52,7 +62,8 @@ export function WatermarkConfig() {
   };
 
   const getPositionClass = () => {
-    const baseClass = "absolute text-2xl font-bold text-gray-400 select-none pointer-events-none";
+    const baseClass =
+      "absolute text-2xl font-bold text-gray-400 select-none pointer-events-none";
     const positionClasses = {
       center: "top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2",
       "top-left": "top-4 left-4",
@@ -99,7 +110,7 @@ export function WatermarkConfig() {
                     field.onChange(value);
                     setPreview((prev) => ({
                       ...prev,
-                      position: value as WatermarkValues['position'],
+                      position: value as WatermarkValues["position"],
                     }));
                   }}
                 >

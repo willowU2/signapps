@@ -21,14 +21,31 @@ interface DestructionCertificate {
 
 export function CertifiedDestruction() {
   const [items, setItems] = useState<ItemForDestruction[]>([]);
-  const [certificate, setCertificate] = useState<DestructionCertificate | null>(null);
+  const [certificate, setCertificate] = useState<DestructionCertificate | null>(
+    null,
+  );
   const [confirmed, setConfirmed] = useState(false);
 
   useEffect(() => {
     setItems([
-      { id: "d1", name: "Temp_Cache_2022.tmp", size: 5.2, archivedDate: new Date(Date.now() - 365 * 24 * 3600000) },
-      { id: "d2", name: "LogArchive_Old.zip", size: 12.8, archivedDate: new Date(Date.now() - 300 * 24 * 3600000) },
-      { id: "d3", name: "BackupFile_2021.bak", size: 34.5, archivedDate: new Date(Date.now() - 400 * 24 * 3600000) },
+      {
+        id: "d1",
+        name: "Temp_Cache_2022.tmp",
+        size: 5.2,
+        archivedDate: new Date(Date.now() - 365 * 24 * 3600000),
+      },
+      {
+        id: "d2",
+        name: "LogArchive_Old.zip",
+        size: 12.8,
+        archivedDate: new Date(Date.now() - 300 * 24 * 3600000),
+      },
+      {
+        id: "d3",
+        name: "BackupFile_2021.bak",
+        size: 34.5,
+        archivedDate: new Date(Date.now() - 400 * 24 * 3600000),
+      },
     ]);
   }, []);
 
@@ -57,9 +74,13 @@ export function CertifiedDestruction() {
         <div className="flex items-start space-x-3">
           <AlertTriangle className="w-6 h-6 text-red-600 flex-shrink-0 mt-0.5" />
           <div>
-            <h3 className="font-semibold text-red-900 mb-1">Permanent Destruction</h3>
+            <h3 className="font-semibold text-red-900 mb-1">
+              Permanent Destruction
+            </h3>
             <p className="text-sm text-red-800">
-              This action will permanently delete the selected items. This cannot be undone. A certified destruction certificate will be generated.
+              This action will permanently delete the selected items. This
+              cannot be undone. A certified destruction certificate will be
+              generated.
             </p>
           </div>
         </div>
@@ -69,14 +90,20 @@ export function CertifiedDestruction() {
         <h3 className="font-semibold mb-3">Items to Destroy</h3>
         <div className="space-y-2">
           {items.map((item) => (
-            <div key={item.id} className="flex justify-between items-center p-3 bg-muted rounded">
+            <div
+              key={item.id}
+              className="flex justify-between items-center p-3 bg-muted rounded"
+            >
               <div>
                 <p className="font-medium">{item.name}</p>
                 <p className="text-sm text-muted-foreground">
-                  {formatSize(item.size)} • Archived: {item.archivedDate.toLocaleDateString()}
+                  {formatSize(item.size)} • Archived:{" "}
+                  {item.archivedDate.toLocaleDateString()}
                 </p>
               </div>
-              <span className="text-sm font-medium text-muted-foreground">{formatSize(item.size)}</span>
+              <span className="text-sm font-medium text-muted-foreground">
+                {formatSize(item.size)}
+              </span>
             </div>
           ))}
         </div>
@@ -90,9 +117,12 @@ export function CertifiedDestruction() {
           <div className="flex items-start space-x-3 mb-3">
             <CheckCircle className="w-6 h-6 text-green-600 flex-shrink-0 mt-0.5" />
             <div>
-              <h3 className="font-semibold text-green-900">Destruction Completed</h3>
+              <h3 className="font-semibold text-green-900">
+                Destruction Completed
+              </h3>
               <p className="text-sm text-green-800 mt-1">
-                Certificate ID: <span className="font-mono">{certificate.certificateId}</span>
+                Certificate ID:{" "}
+                <span className="font-mono">{certificate.certificateId}</span>
               </p>
             </div>
           </div>
@@ -114,14 +144,17 @@ export function CertifiedDestruction() {
                 className="mt-1"
               />
               <span className="text-sm">
-                I understand that destroying these files is <strong>permanent</strong> and cannot be undone.
-                A destruction certificate will be issued for compliance purposes.
+                I understand that destroying these files is{" "}
+                <strong>permanent</strong> and cannot be undone. A destruction
+                certificate will be issued for compliance purposes.
               </span>
             </label>
           </div>
 
           <div className="border rounded-lg p-4 bg-yellow-50">
-            <h3 className="font-semibold mb-2">Destruction Certificate Preview</h3>
+            <h3 className="font-semibold mb-2">
+              Destruction Certificate Preview
+            </h3>
             <div className="bg-card border rounded p-4 text-sm space-y-1 font-mono">
               <p>Certificate ID: CERT-PENDING</p>
               <p>Item Count: {items.length}</p>
@@ -132,7 +165,11 @@ export function CertifiedDestruction() {
           </div>
 
           <div className="flex gap-2">
-            <Button onClick={handleDestroy} disabled={!confirmed} variant="destructive">
+            <Button
+              onClick={handleDestroy}
+              disabled={!confirmed}
+              variant="destructive"
+            >
               Confirm Destruction
             </Button>
             <Button variant="outline">Annuler</Button>

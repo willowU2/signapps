@@ -85,7 +85,7 @@ function getHeatmapColor(p: number, i: number): string {
 export function RiskRegister() {
   const risks = DEFAULT_RISKS;
   const sortedRisks = [...risks].sort(
-    (a, b) => b.probability * b.impact - a.probability * a.impact
+    (a, b) => b.probability * b.impact - a.probability * a.impact,
   );
 
   return (
@@ -143,7 +143,9 @@ export function RiskRegister() {
                           </span>
                         </span>
                       </td>
-                      <td className="px-3 py-2 text-muted-foreground">{risk.owner}</td>
+                      <td className="px-3 py-2 text-muted-foreground">
+                        {risk.owner}
+                      </td>
                     </tr>
                   );
                 })}
@@ -232,7 +234,9 @@ export function RiskRegister() {
               <AlertTriangle className="w-4 h-4 text-orange-600 flex-shrink-0 mt-0.5" />
               <div className="flex-1">
                 <p className="font-medium text-foreground">{risk.name}</p>
-                <p className="text-sm text-muted-foreground">{risk.mitigation}</p>
+                <p className="text-sm text-muted-foreground">
+                  {risk.mitigation}
+                </p>
               </div>
             </div>
           ))}

@@ -29,15 +29,51 @@ interface HRHoliday {
 }
 
 const DEMO_TASKS: GanttTask[] = [
-  { id: "t1", title: "API JWT", startDate: "2026-03-30", endDate: "2026-04-10", progress: 60, assignee: "Alice", color: "bg-blue-500" },
-  { id: "t2", title: "Tests unitaires", startDate: "2026-04-08", endDate: "2026-04-16", progress: 20, assignee: "Marc", color: "bg-green-500" },
-  { id: "t3", title: "Déploiement staging", startDate: "2026-04-14", endDate: "2026-04-18", progress: 0, assignee: "Bob", color: "bg-purple-500" },
+  {
+    id: "t1",
+    title: "API JWT",
+    startDate: "2026-03-30",
+    endDate: "2026-04-10",
+    progress: 60,
+    assignee: "Alice",
+    color: "bg-blue-500",
+  },
+  {
+    id: "t2",
+    title: "Tests unitaires",
+    startDate: "2026-04-08",
+    endDate: "2026-04-16",
+    progress: 20,
+    assignee: "Marc",
+    color: "bg-green-500",
+  },
+  {
+    id: "t3",
+    title: "Déploiement staging",
+    startDate: "2026-04-14",
+    endDate: "2026-04-18",
+    progress: 0,
+    assignee: "Bob",
+    color: "bg-purple-500",
+  },
 ];
 
 const DEMO_HOLIDAYS: HRHoliday[] = [
   { date: "2026-04-06", name: "Lundi de Pâques", type: "public" },
-  { date: "2026-04-07", name: "Congé Alice", type: "leave", employeeId: "1", employeeName: "Alice Martin" },
-  { date: "2026-04-08", name: "Congé Alice", type: "leave", employeeId: "1", employeeName: "Alice Martin" },
+  {
+    date: "2026-04-07",
+    name: "Congé Alice",
+    type: "leave",
+    employeeId: "1",
+    employeeName: "Alice Martin",
+  },
+  {
+    date: "2026-04-08",
+    name: "Congé Alice",
+    type: "leave",
+    employeeId: "1",
+    employeeName: "Alice Martin",
+  },
   { date: "2026-04-13", name: "Team Day", type: "company" },
 ];
 
@@ -62,7 +98,10 @@ const HOLIDAY_TYPE_CLASS: Record<HRHoliday["type"], string> = {
 export function GanttHRHolidays() {
   const [showHolidays, setShowHolidays] = useState(true);
   const days = useMemo(() => getDaysInRange(RANGE_START, RANGE_END), []);
-  const holidayDates = useMemo(() => new Map(DEMO_HOLIDAYS.map((h) => [h.date, h])), []);
+  const holidayDates = useMemo(
+    () => new Map(DEMO_HOLIDAYS.map((h) => [h.date, h])),
+    [],
+  );
 
   function taskPositionStyle(task: GanttTask) {
     const allDays = days;
@@ -87,10 +126,17 @@ export function GanttHRHolidays() {
             Gantt + Absences RH
           </CardTitle>
           <div className="flex items-center gap-2">
-            <Label htmlFor="holiday-toggle" className="flex items-center gap-1 text-xs text-muted-foreground">
+            <Label
+              htmlFor="holiday-toggle"
+              className="flex items-center gap-1 text-xs text-muted-foreground"
+            >
               <CalendarX className="size-3.5" /> Absences
             </Label>
-            <Switch id="holiday-toggle" checked={showHolidays} onCheckedChange={setShowHolidays} />
+            <Switch
+              id="holiday-toggle"
+              checked={showHolidays}
+              onCheckedChange={setShowHolidays}
+            />
           </div>
         </div>
       </CardHeader>
@@ -102,13 +148,19 @@ export function GanttHRHolidays() {
               <div className="w-28 shrink-0" />
               <div className="flex flex-1">
                 {days.map((day) => {
-                  const holiday = showHolidays ? holidayDates.get(day) : undefined;
+                  const holiday = showHolidays
+                    ? holidayDates.get(day)
+                    : undefined;
                   const d = new Date(day);
                   const isWeekend = d.getDay() === 0 || d.getDay() === 6;
                   return (
                     <div
                       key={day}
-                      className={cn("flex-1 text-center text-[9px] py-0.5 leading-tight border-r last:border-r-0", isWeekend && "bg-muted", holiday && HOLIDAY_TYPE_CLASS[holiday.type])}
+                      className={cn(
+                        "flex-1 text-center text-[9px] py-0.5 leading-tight border-r last:border-r-0",
+                        isWeekend && "bg-muted",
+                        holiday && HOLIDAY_TYPE_CLASS[holiday.type],
+                      )}
                       title={holiday?.name}
                     >
                       {d.getDate()}
@@ -122,30 +174,52 @@ export function GanttHRHolidays() {
             <div className="space-y-1.5">
               {DEMO_TASKS.map((task) => (
                 <div key={task.id} className="flex items-center gap-2">
-                  <div className="w-28 shrink-0 text-xs truncate text-right pr-2 text-muted-foreground">{task.title}</div>
+                  <div className="w-28 shrink-0 text-xs truncate text-right pr-2 text-muted-foreground">
+                    {task.title}
+                  </div>
                   <div className="flex-1 relative h-5">
                     {/* Holiday overlay */}
-                    {showHolidays && days.map((day, i) => {
-                      const holiday = holidayDates.get(day);
-                      if (!holiday) return null;
-                      const left = (i / days.length) * 100;
-                      const width = (1 / days.length) * 100;
-                      return (
-                        <div key={day} className={cn("absolute inset-y-0 opacity-60", HOLIDAY_TYPE_CLASS[holiday.type])}
-                          style={{ left: `${left}%`, width: `${width}%` }} title={holiday.name} />
-                      );
-                    })}
+                    {showHolidays &&
+                      days.map((day, i) => {
+                        const holiday = holidayDates.get(day);
+                        if (!holiday) return null;
+                        const left = (i / days.length) * 100;
+                        const width = (1 / days.length) * 100;
+                        return (
+                          <div
+                            key={day}
+                            className={cn(
+                              "absolute inset-y-0 opacity-60",
+                              HOLIDAY_TYPE_CLASS[holiday.type],
+                            )}
+                            style={{ left: `${left}%`, width: `${width}%` }}
+                            title={holiday.name}
+                          />
+                        );
+                      })}
                     {/* Task bar */}
                     <div
-                      className={cn("absolute inset-y-0.5 rounded", task.color, "opacity-80 flex items-center px-1.5 overflow-hidden")}
+                      className={cn(
+                        "absolute inset-y-0.5 rounded",
+                        task.color,
+                        "opacity-80 flex items-center px-1.5 overflow-hidden",
+                      )}
                       style={taskPositionStyle(task)}
                     >
-                      <div className="absolute inset-y-0 left-0 bg-card/30 rounded-l" style={{ width: `${task.progress}%` }} />
-                      <span className="text-[10px] text-white font-medium relative z-10 truncate">{task.assignee}</span>
+                      <div
+                        className="absolute inset-y-0 left-0 bg-card/30 rounded-l"
+                        style={{ width: `${task.progress}%` }}
+                      />
+                      <span className="text-[10px] text-white font-medium relative z-10 truncate">
+                        {task.assignee}
+                      </span>
                     </div>
                     {/* Today line */}
                     {todayLeft >= 0 && (
-                      <div className="absolute inset-y-0 w-0.5 bg-red-500 z-20" style={{ left: `${todayLeft}%` }} />
+                      <div
+                        className="absolute inset-y-0 w-0.5 bg-red-500 z-20"
+                        style={{ left: `${todayLeft}%` }}
+                      />
                     )}
                   </div>
                 </div>
@@ -155,9 +229,18 @@ export function GanttHRHolidays() {
             {/* Legend */}
             {showHolidays && (
               <div className="flex gap-3 mt-2 text-[10px] text-muted-foreground">
-                <span className="flex items-center gap-1"><span className="size-2.5 rounded bg-red-200" />Férié</span>
-                <span className="flex items-center gap-1"><span className="size-2.5 rounded bg-purple-200" />Entreprise</span>
-                <span className="flex items-center gap-1"><span className="size-2.5 rounded bg-orange-200" />Congé</span>
+                <span className="flex items-center gap-1">
+                  <span className="size-2.5 rounded bg-red-200" />
+                  Férié
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="size-2.5 rounded bg-purple-200" />
+                  Entreprise
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="size-2.5 rounded bg-orange-200" />
+                  Congé
+                </span>
               </div>
             )}
           </div>

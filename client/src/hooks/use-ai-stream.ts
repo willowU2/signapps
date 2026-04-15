@@ -1,13 +1,18 @@
-import { useState, useCallback, useRef } from 'react';
-import { AI_URL } from '@/lib/api/core';
-
-
+import { useState, useCallback, useRef } from "react";
+import { AI_URL } from "@/lib/api/core";
 
 interface UseAiStreamOptions {
   onToken?: (token: string) => void;
   onDone?: (fullResponse: string) => void;
   onError?: (error: string) => void;
-  onSources?: (sources: { document_id: string; filename: string; score: number; excerpt: string }[]) => void;
+  onSources?: (
+    sources: {
+      document_id: string;
+      filename: string;
+      score: number;
+      excerpt: string;
+    }[],
+  ) => void;
 }
 
 interface StreamConfig {
@@ -31,119 +36,122 @@ export function useAiStream() {
     setIsStreaming(false);
   }, []);
 
-  const stream = useCallback(async (
-    prompt: string,
-    options: UseAiStreamOptions = {},
-    config: StreamConfig = {}
-  ) => {
-    stop();
-    setIsStreaming(true);
+  const stream = useCallback(
+    async (
+      prompt: string,
+      options: UseAiStreamOptions = {},
+      config: StreamConfig = {},
+    ) => {
+      stop();
+      setIsStreaming(true);
 
-    const controller = new AbortController();
-    abortControllerRef.current = controller;
-    let fullResponse = '';
+      const controller = new AbortController();
+      abortControllerRef.current = controller;
+      let fullResponse = "";
 
-    const body = {
-      question: prompt,
-      language: config.language || 'fr',
-      include_sources: config.includeSources ?? false,
-      enable_tools: config.enableTools ?? false,
-      system_prompt: config.systemPrompt,
-      provider: config.provider,
-      model: config.model,
-    };
+      const body = {
+        question: prompt,
+        language: config.language || "fr",
+        include_sources: config.includeSources ?? false,
+        enable_tools: config.enableTools ?? false,
+        system_prompt: config.systemPrompt,
+        provider: config.provider,
+        model: config.model,
+      };
 
-    try {
-      // Try true SSE streaming first
-      const res = await fetch(`${AI_URL}/ai/chat/stream`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(body),
-        signal: controller.signal,
-      });
-
-      if (!res.ok) {
-        // Fallback to non-streaming endpoint
-        const fallbackRes = await fetch(`${AI_URL}/ai/chat`, {
-          method: 'POST',
-          credentials: 'include',
+      try {
+        // Try true SSE streaming first
+        const res = await fetch(`${AI_URL}/ai/chat/stream`, {
+          method: "POST",
+          credentials: "include",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
           body: JSON.stringify(body),
           signal: controller.signal,
         });
 
-        if (fallbackRes.ok) {
-          const data = await fallbackRes.json();
-          fullResponse = data.answer || '';
-          options.onToken?.(fullResponse);
-          if (data.sources) options.onSources?.(data.sources);
-          options.onDone?.(fullResponse);
-        } else {
-          options.onError?.('AI service unavailable');
+        if (!res.ok) {
+          // Fallback to non-streaming endpoint
+          const fallbackRes = await fetch(`${AI_URL}/ai/chat`, {
+            method: "POST",
+            credentials: "include",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(body),
+            signal: controller.signal,
+          });
+
+          if (fallbackRes.ok) {
+            const data = await fallbackRes.json();
+            fullResponse = data.answer || "";
+            options.onToken?.(fullResponse);
+            if (data.sources) options.onSources?.(data.sources);
+            options.onDone?.(fullResponse);
+          } else {
+            options.onError?.("AI service unavailable");
+          }
+          setIsStreaming(false);
+          abortControllerRef.current = null;
+          return;
         }
-        setIsStreaming(false);
-        abortControllerRef.current = null;
-        return;
-      }
 
-      const reader = res.body?.getReader();
-      if (!reader) {
-        options.onError?.('No readable stream');
-        setIsStreaming(false);
-        abortControllerRef.current = null;
-        return;
-      }
+        const reader = res.body?.getReader();
+        if (!reader) {
+          options.onError?.("No readable stream");
+          setIsStreaming(false);
+          abortControllerRef.current = null;
+          return;
+        }
 
-      const decoder = new TextDecoder();
-      let buffer = '';
+        const decoder = new TextDecoder();
+        let buffer = "";
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
 
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n');
-        buffer = lines.pop() || '';
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split("\n");
+          buffer = lines.pop() || "";
 
-        for (const line of lines) {
-          if (!line.startsWith('data: ')) continue;
-          const jsonStr = line.slice(6).trim();
-          if (!jsonStr || jsonStr === '[DONE]') continue;
+          for (const line of lines) {
+            if (!line.startsWith("data: ")) continue;
+            const jsonStr = line.slice(6).trim();
+            if (!jsonStr || jsonStr === "[DONE]") continue;
 
-          try {
-            const event = JSON.parse(jsonStr);
+            try {
+              const event = JSON.parse(jsonStr);
 
-            if (event.type === 'token') {
-              fullResponse += event.content;
-              options.onToken?.(event.content);
-            } else if (event.type === 'sources') {
-              options.onSources?.(event.sources);
-            } else if (event.type === 'done') {
-              break;
-            } else if (event.type === 'error') {
-              options.onError?.(event.message || 'Stream error');
+              if (event.type === "token") {
+                fullResponse += event.content;
+                options.onToken?.(event.content);
+              } else if (event.type === "sources") {
+                options.onSources?.(event.sources);
+              } else if (event.type === "done") {
+                break;
+              } else if (event.type === "error") {
+                options.onError?.(event.message || "Stream error");
+              }
+            } catch {
+              // Skip malformed JSON
             }
-          } catch {
-            // Skip malformed JSON
           }
         }
-      }
 
-      options.onDone?.(fullResponse);
-    } catch (err) {
-      if ((err as Error).name !== 'AbortError') {
-        options.onError?.((err as Error).message || 'Connection error');
+        options.onDone?.(fullResponse);
+      } catch (err) {
+        if ((err as Error).name !== "AbortError") {
+          options.onError?.((err as Error).message || "Connection error");
+        }
+      } finally {
+        setIsStreaming(false);
+        abortControllerRef.current = null;
       }
-    } finally {
-      setIsStreaming(false);
-      abortControllerRef.current = null;
-    }
-  }, [stop]);
+    },
+    [stop],
+  );
 
   return { stream, stop, isStreaming };
 }

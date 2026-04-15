@@ -14,5 +14,5 @@
  * Applied in: task list, contact list, deal list, mail list.
  * (Mail uses its own swipe implementation; this hook harmonises the other modules.)
  */
-export { useSwipeAction as useSwipe } from './use-swipe-action';
-export type { } from './use-swipe-action';
+export { useSwipeAction as useSwipe } from "./use-swipe-action";
+export type {} from "./use-swipe-action";

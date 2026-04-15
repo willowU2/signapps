@@ -218,8 +218,8 @@ async fn main() -> anyhow::Result<()> {
         ));
 
     // Sharing sub-router: State<SharingEngine> — uses the same engine as AppState.
-    let sharing_sub = sharing_routes("documents", ResourceType::Document)
-        .with_state(app_state.sharing.clone());
+    let sharing_sub =
+        sharing_routes("documents", ResourceType::Document).with_state(app_state.sharing.clone());
 
     // Office sub-router: stateless document conversion/import/export (formerly signapps-office, port 3018).
     // Routes preserved: /api/v1/convert, /api/v1/import, /api/v1/spreadsheet,

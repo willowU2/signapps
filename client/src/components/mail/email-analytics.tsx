@@ -1,17 +1,24 @@
-'use client';
+"use client";
 
-import { useEffect, useState, useCallback } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { useEffect, useState, useCallback } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Button } from '@/components/ui/button';
-import { RefreshCw, Mail, Send, CheckCircle2, XCircle, Eye } from 'lucide-react';
+} from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import {
+  RefreshCw,
+  Mail,
+  Send,
+  CheckCircle2,
+  XCircle,
+  Eye,
+} from "lucide-react";
 import {
   LineChart,
   Line,
@@ -21,8 +28,8 @@ import {
   Tooltip,
   ResponsiveContainer,
   Legend,
-} from 'recharts';
-import { mailApi } from '@/lib/api/mail';
+} from "recharts";
+import { mailApi } from "@/lib/api/mail";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -43,14 +50,14 @@ interface TimeSeriesPoint {
   opened: number;
 }
 
-type Period = '7d' | '30d' | '90d';
+type Period = "7d" | "30d" | "90d";
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
 function generateTimeSeries(emails: any[], period: Period): TimeSeriesPoint[] {
-  const days = period === '7d' ? 7 : period === '30d' ? 30 : 90;
+  const days = period === "7d" ? 7 : period === "30d" ? 30 : 90;
   const now = new Date();
   const points: TimeSeriesPoint[] = [];
 
@@ -60,7 +67,7 @@ function generateTimeSeries(emails: any[], period: Period): TimeSeriesPoint[] {
     const dateKey = d.toISOString().slice(0, 10);
 
     const dayEmails = emails.filter((e) => {
-      const eDate = (e.sent_at || e.created_at || '').slice(0, 10);
+      const eDate = (e.sent_at || e.created_at || "").slice(0, 10);
       return eDate === dateKey;
     });
 
@@ -70,7 +77,7 @@ function generateTimeSeries(emails: any[], period: Period): TimeSeriesPoint[] {
     const opened = dayEmails.filter((e) => e.is_read && e.is_sent).length;
 
     points.push({
-      date: d.toLocaleDateString('fr-FR', { month: 'short', day: 'numeric' }),
+      date: d.toLocaleDateString("fr-FR", { month: "short", day: "numeric" }),
       sent,
       delivered,
       bounced,
@@ -91,8 +98,8 @@ function computeStats(emails: any[]): DeliveryStats {
 }
 
 function pct(value: number, total: number): string {
-  if (total === 0) return '0%';
-  return ((value / total) * 100).toFixed(1) + '%';
+  if (total === 0) return "0%";
+  return ((value / total) * 100).toFixed(1) + "%";
 }
 
 // ---------------------------------------------------------------------------
@@ -102,7 +109,7 @@ function pct(value: number, total: number): string {
 export function EmailAnalytics() {
   const [emails, setEmails] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [period, setPeriod] = useState<Period>('30d');
+  const [period, setPeriod] = useState<Period>("30d");
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -124,10 +131,28 @@ export function EmailAnalytics() {
   const series = generateTimeSeries(emails, period);
 
   const statCards = [
-    { label: 'Sent', value: stats.sent, icon: Send, color: 'text-blue-600' },
-    { label: 'Delivered', value: stats.delivered, icon: CheckCircle2, color: 'text-green-600', rate: pct(stats.delivered, stats.sent) },
-    { label: 'Bounced', value: stats.bounced, icon: XCircle, color: 'text-red-600', rate: pct(stats.bounced, stats.sent) },
-    { label: 'Opened', value: stats.opened, icon: Eye, color: 'text-purple-600', rate: pct(stats.opened, stats.delivered) },
+    { label: "Sent", value: stats.sent, icon: Send, color: "text-blue-600" },
+    {
+      label: "Delivered",
+      value: stats.delivered,
+      icon: CheckCircle2,
+      color: "text-green-600",
+      rate: pct(stats.delivered, stats.sent),
+    },
+    {
+      label: "Bounced",
+      value: stats.bounced,
+      icon: XCircle,
+      color: "text-red-600",
+      rate: pct(stats.bounced, stats.sent),
+    },
+    {
+      label: "Opened",
+      value: stats.opened,
+      icon: Eye,
+      color: "text-purple-600",
+      rate: pct(stats.opened, stats.delivered),
+    },
   ];
 
   return (
@@ -149,8 +174,13 @@ export function EmailAnalytics() {
               <SelectItem value="90d">90 days</SelectItem>
             </SelectContent>
           </Select>
-          <Button variant="outline" size="sm" onClick={fetchData} disabled={loading}>
-            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={fetchData}
+            disabled={loading}
+          >
+            <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
           </Button>
         </div>
       </div>
@@ -191,10 +221,34 @@ export function EmailAnalytics() {
               <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
               <Tooltip />
               <Legend />
-              <Line type="monotone" dataKey="sent" stroke="#3b82f6" strokeWidth={2} dot={false} />
-              <Line type="monotone" dataKey="delivered" stroke="#22c55e" strokeWidth={2} dot={false} />
-              <Line type="monotone" dataKey="bounced" stroke="#ef4444" strokeWidth={2} dot={false} />
-              <Line type="monotone" dataKey="opened" stroke="#a855f7" strokeWidth={2} dot={false} />
+              <Line
+                type="monotone"
+                dataKey="sent"
+                stroke="#3b82f6"
+                strokeWidth={2}
+                dot={false}
+              />
+              <Line
+                type="monotone"
+                dataKey="delivered"
+                stroke="#22c55e"
+                strokeWidth={2}
+                dot={false}
+              />
+              <Line
+                type="monotone"
+                dataKey="bounced"
+                stroke="#ef4444"
+                strokeWidth={2}
+                dot={false}
+              />
+              <Line
+                type="monotone"
+                dataKey="opened"
+                stroke="#a855f7"
+                strokeWidth={2}
+                dot={false}
+              />
             </LineChart>
           </ResponsiveContainer>
         </CardContent>

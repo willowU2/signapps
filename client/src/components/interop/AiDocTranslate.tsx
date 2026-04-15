@@ -1,31 +1,37 @@
-'use client';
+"use client";
 
 /**
  * Feature 7: AI → translate doc content
  */
 
-import { useState } from 'react';
-import { Languages, Loader2, Copy, CheckCircle2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { useState } from "react";
+import { Languages, Loader2, Copy, CheckCircle2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
-  Popover, PopoverContent, PopoverTrigger,
-} from '@/components/ui/popover';
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from '@/components/ui/select';
-import { toast } from 'sonner';
-import { useTranslateDoc } from '@/hooks/use-cross-module';
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { toast } from "sonner";
+import { useTranslateDoc } from "@/hooks/use-cross-module";
 
 const LANGUAGES = [
-  { code: 'anglais', label: 'Anglais' },
-  { code: 'français', label: 'Français' },
-  { code: 'espagnol', label: 'Espagnol' },
-  { code: 'allemand', label: 'Allemand' },
-  { code: 'italien', label: 'Italien' },
-  { code: 'portugais', label: 'Portugais' },
-  { code: 'japonais', label: 'Japonais' },
-  { code: 'chinois', label: 'Chinois' },
-  { code: 'arabe', label: 'Arabe' },
+  { code: "anglais", label: "Anglais" },
+  { code: "français", label: "Français" },
+  { code: "espagnol", label: "Espagnol" },
+  { code: "allemand", label: "Allemand" },
+  { code: "italien", label: "Italien" },
+  { code: "portugais", label: "Portugais" },
+  { code: "japonais", label: "Japonais" },
+  { code: "chinois", label: "Chinois" },
+  { code: "arabe", label: "Arabe" },
 ];
 
 interface AiDocTranslateProps {
@@ -35,22 +41,25 @@ interface AiDocTranslateProps {
 
 export function AiDocTranslate({ getText, onApply }: AiDocTranslateProps) {
   const [open, setOpen] = useState(false);
-  const [targetLang, setTargetLang] = useState('anglais');
+  const [targetLang, setTargetLang] = useState("anglais");
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState('');
+  const [result, setResult] = useState("");
   const [copied, setCopied] = useState(false);
   const translate = useTranslateDoc();
 
   const handleTranslate = async () => {
     const text = getText();
-    if (!text.trim()) { toast.error('Document vide'); return; }
+    if (!text.trim()) {
+      toast.error("Document vide");
+      return;
+    }
     setLoading(true);
-    setResult('');
+    setResult("");
     try {
       const translated = await translate(text, targetLang);
       setResult(translated);
     } catch {
-      toast.error('Erreur de traduction');
+      toast.error("Erreur de traduction");
     } finally {
       setLoading(false);
     }
@@ -59,7 +68,7 @@ export function AiDocTranslate({ getText, onApply }: AiDocTranslateProps) {
   const handleCopy = () => {
     navigator.clipboard.writeText(result);
     setCopied(true);
-    toast.success('Traduction copiée');
+    toast.success("Traduction copiée");
     setTimeout(() => setCopied(false), 2000);
   };
 
@@ -83,13 +92,24 @@ export function AiDocTranslate({ getText, onApply }: AiDocTranslateProps) {
           </SelectTrigger>
           <SelectContent>
             {LANGUAGES.map((l) => (
-              <SelectItem key={l.code} value={l.code}>{l.label}</SelectItem>
+              <SelectItem key={l.code} value={l.code}>
+                {l.label}
+              </SelectItem>
             ))}
           </SelectContent>
         </Select>
 
-        <Button size="sm" className="w-full gap-1.5" onClick={handleTranslate} disabled={loading}>
-          {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Languages className="h-3.5 w-3.5" />}
+        <Button
+          size="sm"
+          className="w-full gap-1.5"
+          onClick={handleTranslate}
+          disabled={loading}
+        >
+          {loading ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <Languages className="h-3.5 w-3.5" />
+          )}
           Traduire
         </Button>
 
@@ -99,12 +119,28 @@ export function AiDocTranslate({ getText, onApply }: AiDocTranslateProps) {
               {result}
             </div>
             <div className="flex gap-2">
-              <Button size="sm" variant="ghost" className="flex-1 gap-1.5" onClick={handleCopy}>
-                {copied ? <CheckCircle2 className="h-3.5 w-3.5 text-green-600" /> : <Copy className="h-3.5 w-3.5" />}
+              <Button
+                size="sm"
+                variant="ghost"
+                className="flex-1 gap-1.5"
+                onClick={handleCopy}
+              >
+                {copied ? (
+                  <CheckCircle2 className="h-3.5 w-3.5 text-green-600" />
+                ) : (
+                  <Copy className="h-3.5 w-3.5" />
+                )}
                 Copier
               </Button>
               {onApply && (
-                <Button size="sm" className="flex-1" onClick={() => { onApply(result); setOpen(false); }}>
+                <Button
+                  size="sm"
+                  className="flex-1"
+                  onClick={() => {
+                    onApply(result);
+                    setOpen(false);
+                  }}
+                >
                   Appliquer
                 </Button>
               )}

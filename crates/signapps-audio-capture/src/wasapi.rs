@@ -1,6 +1,8 @@
 //! Windows WASAPI loopback capture.
 
-use crate::{AudioBuffer, AudioCaptureBackend, AudioSource, CaptureConfig, CaptureError, SourceType};
+use crate::{
+    AudioBuffer, AudioCaptureBackend, AudioSource, CaptureConfig, CaptureError, SourceType,
+};
 
 /// WASAPI loopback capture backend for Windows.
 pub struct WasapiCapture {
@@ -50,7 +52,11 @@ impl AudioCaptureBackend for WasapiCapture {
         } else {
             0
         };
-        tracing::info!(samples = samples.len(), duration_ms, "WASAPI capture stopped");
+        tracing::info!(
+            samples = samples.len(),
+            duration_ms,
+            "WASAPI capture stopped"
+        );
         Ok(AudioBuffer {
             samples,
             sample_rate,

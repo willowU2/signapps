@@ -265,9 +265,15 @@ mod tests {
     #[test]
     fn preauth_flag() {
         let mut uac = UserAccountControl::normal_user();
-        assert!(uac.requires_preauth(), "preauth should be required by default");
+        assert!(
+            uac.requires_preauth(),
+            "preauth should be required by default"
+        );
 
         uac.set(UserAccountControl::DONT_REQUIRE_PREAUTH);
-        assert!(!uac.requires_preauth(), "preauth should not be required after setting flag");
+        assert!(
+            !uac.requires_preauth(),
+            "preauth should not be required after setting flag"
+        );
     }
 }

@@ -1,13 +1,13 @@
-'use client';
+"use client";
 
-import { useEffect, useState, useCallback, useMemo } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { RefreshCw, Download, Search, Users, ArrowUpDown } from 'lucide-react';
-import { usersApi, auditApi, type User } from '@/lib/api/identity';
-import { exportToCsv } from '@/lib/export-csv';
+import { useEffect, useState, useCallback, useMemo } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { RefreshCw, Download, Search, Users, ArrowUpDown } from "lucide-react";
+import { usersApi, auditApi, type User } from "@/lib/api/identity";
+import { exportToCsv } from "@/lib/export-csv";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -24,25 +24,25 @@ interface UserActivityRow {
   role: number;
 }
 
-type SortKey = 'username' | 'last_login' | 'actions_count' | 'storage_used';
-type SortDir = 'asc' | 'desc';
+type SortKey = "username" | "last_login" | "actions_count" | "storage_used";
+type SortDir = "asc" | "desc";
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
 function formatBytes(bytes: number): string {
-  if (bytes === 0) return '0 B';
+  if (bytes === 0) return "0 B";
   const k = 1024;
-  const sizes = ['B', 'KB', 'MB', 'GB'];
+  const sizes = ["B", "KB", "MB", "GB"];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
 }
 
 function roleName(role: number): string {
-  if (role >= 2) return 'Admin';
-  if (role === 1) return 'User';
-  return 'Guest';
+  if (role >= 2) return "Admin";
+  if (role === 1) return "User";
+  return "Guest";
 }
 
 // ---------------------------------------------------------------------------
@@ -52,9 +52,9 @@ function roleName(role: number): string {
 export function UserActivity() {
   const [rows, setRows] = useState<UserActivityRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
-  const [sortKey, setSortKey] = useState<SortKey>('last_login');
-  const [sortDir, setSortDir] = useState<SortDir>('desc');
+  const [search, setSearch] = useState("");
+  const [sortKey, setSortKey] = useState<SortKey>("last_login");
+  const [sortDir, setSortDir] = useState<SortDir>("desc");
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -77,7 +77,7 @@ export function UserActivity() {
       const result: UserActivityRow[] = users.map((u) => ({
         id: u.id,
         username: u.username,
-        email: u.email || '',
+        email: u.email || "",
         display_name: u.display_name || u.username,
         last_login: u.last_login || null,
         actions_count: auditCounts.get(u.id) || 0,
@@ -99,10 +99,10 @@ export function UserActivity() {
 
   const toggleSort = (key: SortKey) => {
     if (sortKey === key) {
-      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
     } else {
       setSortKey(key);
-      setSortDir('desc');
+      setSortDir("desc");
     }
   };
 
@@ -114,27 +114,27 @@ export function UserActivity() {
         (r) =>
           r.username.toLowerCase().includes(q) ||
           r.email.toLowerCase().includes(q) ||
-          r.display_name.toLowerCase().includes(q)
+          r.display_name.toLowerCase().includes(q),
       );
     }
 
     return [...list].sort((a, b) => {
       let cmp = 0;
       switch (sortKey) {
-        case 'username':
+        case "username":
           cmp = a.username.localeCompare(b.username);
           break;
-        case 'last_login':
-          cmp = (a.last_login || '').localeCompare(b.last_login || '');
+        case "last_login":
+          cmp = (a.last_login || "").localeCompare(b.last_login || "");
           break;
-        case 'actions_count':
+        case "actions_count":
           cmp = a.actions_count - b.actions_count;
           break;
-        case 'storage_used':
+        case "storage_used":
           cmp = a.storage_used - b.storage_used;
           break;
       }
-      return sortDir === 'asc' ? cmp : -cmp;
+      return sortDir === "asc" ? cmp : -cmp;
     });
   }, [rows, search, sortKey, sortDir]);
 
@@ -143,13 +143,15 @@ export function UserActivity() {
       filtered.map((r) => ({
         Username: r.username,
         Email: r.email,
-        'Display Name': r.display_name,
+        "Display Name": r.display_name,
         Role: roleName(r.role),
-        'Last Login': r.last_login ? new Date(r.last_login).toISOString() : 'Never',
-        'Actions Count': r.actions_count,
-        'Storage Used (bytes)': r.storage_used,
+        "Last Login": r.last_login
+          ? new Date(r.last_login).toISOString()
+          : "Never",
+        "Actions Count": r.actions_count,
+        "Storage Used (bytes)": r.storage_used,
       })),
-      `user-activity-${new Date().toISOString().slice(0, 10)}`
+      `user-activity-${new Date().toISOString().slice(0, 10)}`,
     );
   };
 
@@ -162,7 +164,9 @@ export function UserActivity() {
         {label}
         <ArrowUpDown className="h-3 w-3 text-muted-foreground" />
         {sortKey === field && (
-          <span className="text-[10px] text-primary">{sortDir === 'asc' ? 'ASC' : 'DESC'}</span>
+          <span className="text-[10px] text-primary">
+            {sortDir === "asc" ? "ASC" : "DESC"}
+          </span>
         )}
       </div>
     </th>
@@ -177,8 +181,15 @@ export function UserActivity() {
           <h2 className="text-xl font-bold">User Activity Report</h2>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={fetchData} disabled={loading}>
-            <RefreshCw className={`h-4 w-4 mr-1 ${loading ? 'animate-spin' : ''}`} />
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={fetchData}
+            disabled={loading}
+          >
+            <RefreshCw
+              className={`h-4 w-4 mr-1 ${loading ? "animate-spin" : ""}`}
+            />
             Refresh
           </Button>
           <Button variant="outline" size="sm" onClick={handleExport}>
@@ -222,12 +233,17 @@ export function UserActivity() {
               </thead>
               <tbody className="divide-y">
                 {filtered.map((r) => (
-                  <tr key={r.id} className="hover:bg-accent/40 transition-colors">
+                  <tr
+                    key={r.id}
+                    className="hover:bg-accent/40 transition-colors"
+                  >
                     <td className="px-4 py-2 font-medium">{r.username}</td>
-                    <td className="px-4 py-2 text-muted-foreground">{r.email || '—'}</td>
+                    <td className="px-4 py-2 text-muted-foreground">
+                      {r.email || "—"}
+                    </td>
                     <td className="px-4 py-2">
                       <Badge
-                        variant={r.role >= 2 ? 'default' : 'secondary'}
+                        variant={r.role >= 2 ? "default" : "secondary"}
                         className="text-xs"
                       >
                         {roleName(r.role)}
@@ -235,19 +251,22 @@ export function UserActivity() {
                     </td>
                     <td className="px-4 py-2 text-xs text-muted-foreground">
                       {r.last_login
-                        ? new Date(r.last_login).toLocaleString('fr-FR')
-                        : 'Never'}
+                        ? new Date(r.last_login).toLocaleString("fr-FR")
+                        : "Never"}
                     </td>
                     <td className="px-4 py-2 text-center">{r.actions_count}</td>
                     <td className="px-4 py-2 text-muted-foreground">
-                      {r.storage_used > 0 ? formatBytes(r.storage_used) : '—'}
+                      {r.storage_used > 0 ? formatBytes(r.storage_used) : "—"}
                     </td>
                   </tr>
                 ))}
                 {filtered.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">
-                      {loading ? 'Chargement...' : 'No users found'}
+                    <td
+                      colSpan={6}
+                      className="px-4 py-8 text-center text-muted-foreground"
+                    >
+                      {loading ? "Chargement..." : "No users found"}
                     </td>
                   </tr>
                 )}

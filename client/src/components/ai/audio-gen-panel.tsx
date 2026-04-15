@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from "react";
 import {
   Music,
   Loader2,
@@ -8,29 +8,24 @@ import {
   Sparkles,
   Volume2,
   Waves,
-} from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import { Slider } from '@/components/ui/slider';
-import { Separator } from '@/components/ui/separator';
+} from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Slider } from "@/components/ui/slider";
+import { Separator } from "@/components/ui/separator";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from '@/components/ui/tabs';
-import { toast } from 'sonner';
-import { useAiAudioGen } from '@/hooks/use-ai-audio-gen';
+} from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { toast } from "sonner";
+import { useAiAudioGen } from "@/hooks/use-ai-audio-gen";
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
@@ -47,13 +42,13 @@ export function AudioGenPanel() {
   } = useAiAudioGen();
 
   // --- Music tab ---
-  const [musicPrompt, setMusicPrompt] = useState('');
+  const [musicPrompt, setMusicPrompt] = useState("");
   const [musicDuration, setMusicDuration] = useState(30);
   const [musicTemperature, setMusicTemperature] = useState(1.0);
-  const [musicModel, setMusicModel] = useState('');
+  const [musicModel, setMusicModel] = useState("");
 
   // --- SFX tab ---
-  const [sfxPrompt, setSfxPrompt] = useState('');
+  const [sfxPrompt, setSfxPrompt] = useState("");
   const [sfxDuration, setSfxDuration] = useState(5);
 
   useEffect(() => {
@@ -68,7 +63,7 @@ export function AudioGenPanel() {
 
   const handleGenerateMusic = useCallback(() => {
     if (!musicPrompt.trim()) {
-      toast.error('Veuillez saisir un prompt');
+      toast.error("Veuillez saisir un prompt");
       return;
     }
     generateMusic({
@@ -81,7 +76,7 @@ export function AudioGenPanel() {
 
   const handleGenerateSfx = useCallback(() => {
     if (!sfxPrompt.trim()) {
-      toast.error('Veuillez saisir un prompt');
+      toast.error("Veuillez saisir un prompt");
       return;
     }
     generateSfx({
@@ -92,7 +87,7 @@ export function AudioGenPanel() {
 
   const handleDownload = useCallback(() => {
     if (!result?.audio_url) return;
-    const a = document.createElement('a');
+    const a = document.createElement("a");
     a.href = result.audio_url;
     a.download = `audio-${Date.now()}.wav`;
     a.click();
@@ -102,7 +97,7 @@ export function AudioGenPanel() {
     const m = Math.floor(seconds / 60);
     const s = Math.floor(seconds % 60);
     if (m === 0) return `${s}s`;
-    return `${m}m${s > 0 ? ` ${s}s` : ''}`;
+    return `${m}m${s > 0 ? ` ${s}s` : ""}`;
   }
 
   return (
@@ -250,7 +245,9 @@ export function AudioGenPanel() {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label>Durée</Label>
-                <span className="text-xs text-muted-foreground">{sfxDuration}s</span>
+                <span className="text-xs text-muted-foreground">
+                  {sfxDuration}s
+                </span>
               </div>
               <Slider
                 min={1}
@@ -260,9 +257,7 @@ export function AudioGenPanel() {
                 onValueChange={([v]) => setSfxDuration(v)}
                 disabled={generating}
               />
-              <p className="text-xs text-muted-foreground">
-                1 à 30 secondes
-              </p>
+              <p className="text-xs text-muted-foreground">1 à 30 secondes</p>
             </div>
 
             <Button
@@ -310,11 +305,7 @@ export function AudioGenPanel() {
 
               {/* Audio player */}
               <div className="rounded-lg border bg-muted/30 p-4">
-                <audio
-                  src={result.audio_url}
-                  controls
-                  className="w-full"
-                />
+                <audio src={result.audio_url} controls className="w-full" />
               </div>
 
               {/* Simple waveform visualization placeholder */}

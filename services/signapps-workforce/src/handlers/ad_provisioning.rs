@@ -43,7 +43,10 @@ fn make_sam(first: &str, last: &str) -> String {
         ascii_fold(&first.to_lowercase()),
         ascii_fold(&last.to_lowercase())
     );
-    raw.chars().filter(|c| c.is_ascii_alphanumeric() || *c == '.').take(20).collect()
+    raw.chars()
+        .filter(|c| c.is_ascii_alphanumeric() || *c == '.')
+        .take(20)
+        .collect()
 }
 
 /// Generate a distinguished name for the account.
@@ -91,7 +94,9 @@ async fn resolve_provision_data(
         StatusCode::INTERNAL_SERVER_ERROR
     })?;
 
-    let node_id = node_row.map(|(id,)| id).ok_or(StatusCode::UNPROCESSABLE_ENTITY)?;
+    let node_id = node_row
+        .map(|(id,)| id)
+        .ok_or(StatusCode::UNPROCESSABLE_ENTITY)?;
 
     // 3. Walk org_closure ancestors to find a node linked to an AD domain
     let domain_row: Option<(Uuid, String, String, Option<String>)> = sqlx::query_as(
@@ -168,16 +173,15 @@ pub async fn provision_person(
     let pool = &state.pool;
 
     // Check for existing account
-    let existing: Option<(Uuid,)> = sqlx::query_as(
-        "SELECT id FROM ad_user_accounts WHERE person_id = $1 LIMIT 1",
-    )
-    .bind(person_id)
-    .fetch_optional(&**pool)
-    .await
-    .map_err(|e| {
-        tracing::error!(?e, "DB error checking existing account");
-        StatusCode::INTERNAL_SERVER_ERROR
-    })?;
+    let existing: Option<(Uuid,)> =
+        sqlx::query_as("SELECT id FROM ad_user_accounts WHERE person_id = $1 LIMIT 1")
+            .bind(person_id)
+            .fetch_optional(&**pool)
+            .await
+            .map_err(|e| {
+                tracing::error!(?e, "DB error checking existing account");
+                StatusCode::INTERNAL_SERVER_ERROR
+            })?;
 
     if existing.is_some() {
         return Err(StatusCode::CONFLICT);
@@ -273,16 +277,15 @@ pub async fn preview_provision(
     let (sam, upn, dn, domain_id, first_name, last_name, _fqdn) =
         resolve_provision_data(pool, person_id, ctx.tenant_id).await?;
 
-    let has_account: Option<(Uuid,)> = sqlx::query_as(
-        "SELECT id FROM ad_user_accounts WHERE person_id = $1 LIMIT 1",
-    )
-    .bind(person_id)
-    .fetch_optional(&**pool)
-    .await
-    .map_err(|e| {
-        tracing::error!(?e, "DB error checking existing account");
-        StatusCode::INTERNAL_SERVER_ERROR
-    })?;
+    let has_account: Option<(Uuid,)> =
+        sqlx::query_as("SELECT id FROM ad_user_accounts WHERE person_id = $1 LIMIT 1")
+            .bind(person_id)
+            .fetch_optional(&**pool)
+            .await
+            .map_err(|e| {
+                tracing::error!(?e, "DB error checking existing account");
+                StatusCode::INTERNAL_SERVER_ERROR
+            })?;
 
     Ok(Json(json!({
         "person_id": person_id,
@@ -359,7 +362,7 @@ pub async fn bulk_provision(
         match resolve_provision_data(pool, person_id, ctx.tenant_id).await {
             Err(_) => {
                 skipped += 1;
-            }
+            },
             Ok((sam, upn, dn, domain_id, first_name, last_name, _fqdn)) => {
                 let display_name = format!("{} {}", first_name, last_name);
                 let account_id = Uuid::new_v4();
@@ -386,9 +389,9 @@ pub async fn bulk_provision(
                     Err(e) => {
                         tracing::warn!(?e, %person_id, "Failed to provision account");
                         errors.push(json!({ "person_id": person_id, "error": e.to_string() }));
-                    }
+                    },
                 }
-            }
+            },
         }
     }
 

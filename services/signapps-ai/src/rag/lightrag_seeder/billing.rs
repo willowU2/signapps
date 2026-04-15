@@ -50,7 +50,7 @@ where
                 relations_created: 0,
                 source: "billing.invoices".to_string(),
             });
-        }
+        },
     };
 
     let mut count = 0usize;

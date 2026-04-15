@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { CustomKanbanBoard } from '../tasks/CustomKanbanBoard';
+import { CustomKanbanBoard } from "../tasks/CustomKanbanBoard";
 
 export default function TasksView() {
   return (

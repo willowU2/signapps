@@ -1,4 +1,4 @@
-import { SpinnerInfinity } from 'spinners-react';
+import { SpinnerInfinity } from "spinners-react";
 /**
  * Universal Sheet Component
  *
@@ -6,10 +6,10 @@ import { SpinnerInfinity } from 'spinners-react';
  * avec tabs dynamiques, header configurable et footer d'actions.
  */
 
-"use client";
+("use client");
 
 import * as React from "react";
-import { LucideIcon, X, ChevronLeft, MoreVertical } from 'lucide-react';
+import { LucideIcon, X, ChevronLeft, MoreVertical } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 import {
@@ -32,7 +32,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import { usePermissions, type Resource, type ResourceAction } from "@/lib/permissions";
+import {
+  usePermissions,
+  type Resource,
+  type ResourceAction,
+} from "@/lib/permissions";
 
 // ============================================================================
 // Types
@@ -120,7 +124,10 @@ export interface UniversalSheetProps {
 
 function checkPermission(
   requiredPermission: string | undefined,
-  can: (resource: Resource, action: ResourceAction | ResourceAction[]) => boolean
+  can: (
+    resource: Resource,
+    action: ResourceAction | ResourceAction[],
+  ) => boolean,
 ): boolean {
   if (!requiredPermission) return true;
 
@@ -166,10 +173,13 @@ function HeaderActionsMenu({
   can,
 }: {
   actions: SheetAction[];
-  can: (resource: Resource, action: ResourceAction | ResourceAction[]) => boolean;
+  can: (
+    resource: Resource,
+    action: ResourceAction | ResourceAction[],
+  ) => boolean;
 }) {
   const visibleActions = actions.filter((action) =>
-    checkPermission(action.requiredPermission, can)
+    checkPermission(action.requiredPermission, can),
   );
 
   if (visibleActions.length === 0) return null;
@@ -187,7 +197,13 @@ function HeaderActionsMenu({
         disabled={action.disabled || action.loading}
       >
         {action.loading ? (
-          <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />
+          <SpinnerInfinity
+            size={24}
+            secondaryColor="rgba(128,128,128,0.2)"
+            color="currentColor"
+            speed={120}
+            className="mr-2 h-4 w-4 "
+          />
         ) : Icon ? (
           <Icon className="mr-2 h-4 w-4" />
         ) : null}
@@ -219,10 +235,18 @@ function HeaderActionsMenu({
               <DropdownMenuItem
                 onClick={action.onClick}
                 disabled={action.disabled || action.loading}
-                className={cn(isDestructive && "text-destructive focus:text-destructive")}
+                className={cn(
+                  isDestructive && "text-destructive focus:text-destructive",
+                )}
               >
                 {action.loading ? (
-                  <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />
+                  <SpinnerInfinity
+                    size={24}
+                    secondaryColor="rgba(128,128,128,0.2)"
+                    color="currentColor"
+                    speed={120}
+                    className="mr-2 h-4 w-4 "
+                  />
                 ) : Icon ? (
                   <Icon className="mr-2 h-4 w-4" />
                 ) : null}
@@ -245,10 +269,13 @@ function FooterActions({
   can,
 }: {
   actions: SheetAction[];
-  can: (resource: Resource, action: ResourceAction | ResourceAction[]) => boolean;
+  can: (
+    resource: Resource,
+    action: ResourceAction | ResourceAction[],
+  ) => boolean;
 }) {
   const visibleActions = actions.filter((action) =>
-    checkPermission(action.requiredPermission, can)
+    checkPermission(action.requiredPermission, can),
   );
 
   if (visibleActions.length === 0) return null;
@@ -267,7 +294,13 @@ function FooterActions({
               disabled={action.disabled || action.loading}
             >
               {action.loading ? (
-                <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />
+                <SpinnerInfinity
+                  size={24}
+                  secondaryColor="rgba(128,128,128,0.2)"
+                  color="currentColor"
+                  speed={120}
+                  className="mr-2 h-4 w-4 "
+                />
               ) : Icon ? (
                 <Icon className="mr-2 h-4 w-4" />
               ) : null}
@@ -304,17 +337,25 @@ export function UniversalSheet({
   wide,
 }: UniversalSheetProps) {
   const { can } = usePermissions();
-  const [activeTab, setActiveTab] = React.useState(defaultTab ?? tabs?.[0]?.id ?? "");
+  const [activeTab, setActiveTab] = React.useState(
+    defaultTab ?? tabs?.[0]?.id ?? "",
+  );
 
   // Filter tabs by permission
   const visibleTabs = React.useMemo(
-    () => (tabs ?? []).filter((tab) => checkPermission(tab.requiredPermission, can)),
-    [tabs, can]
+    () =>
+      (tabs ?? []).filter((tab) =>
+        checkPermission(tab.requiredPermission, can),
+      ),
+    [tabs, can],
   );
 
   // Update active tab when tabs change
   React.useEffect(() => {
-    if (visibleTabs.length > 0 && !visibleTabs.find((t) => t.id === activeTab)) {
+    if (
+      visibleTabs.length > 0 &&
+      !visibleTabs.find((t) => t.id === activeTab)
+    ) {
       setActiveTab(visibleTabs[0].id);
     }
   }, [visibleTabs, activeTab]);
@@ -334,7 +375,7 @@ export function UniversalSheet({
         className={cn(
           "flex flex-col p-0 gap-0",
           wide && "sm:max-w-lg md:max-w-xl lg:max-w-2xl",
-          className
+          className,
         )}
       >
         {/* Header */}
@@ -368,7 +409,9 @@ export function UniversalSheet({
                   )}
                 </div>
                 {description && (
-                  <SheetDescription className="truncate">{description}</SheetDescription>
+                  <SheetDescription className="truncate">
+                    {description}
+                  </SheetDescription>
                 )}
               </div>
             </div>
@@ -484,10 +527,16 @@ interface DetailsSectionProps {
   className?: string;
 }
 
-export function DetailsSection({ title, fields, className }: DetailsSectionProps) {
+export function DetailsSection({
+  title,
+  fields,
+  className,
+}: DetailsSectionProps) {
   return (
     <div className={cn("space-y-4", className)}>
-      {title && <h4 className="text-sm font-medium text-muted-foreground">{title}</h4>}
+      {title && (
+        <h4 className="text-sm font-medium text-muted-foreground">{title}</h4>
+      )}
       <div className="space-y-3">
         {fields.map((field, index) => {
           const Icon = field.icon;
@@ -521,7 +570,12 @@ interface ActivityItemProps {
   timestamp: string;
 }
 
-export function ActivityItem({ avatar, title, description, timestamp }: ActivityItemProps) {
+export function ActivityItem({
+  avatar,
+  title,
+  description,
+  timestamp,
+}: ActivityItemProps) {
   return (
     <div className="flex gap-3">
       <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">

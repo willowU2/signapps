@@ -1,13 +1,20 @@
 // Comms: Next.js proxy → identity /api/v1/comms/polls/:id (vote/update)
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from "next/server";
 
-const IDENTITY = process.env.IDENTITY_URL ?? 'http://localhost:3001';
+const IDENTITY = process.env.IDENTITY_URL ?? "http://localhost:3001";
 
-async function proxy(req: NextRequest, method: string, id: string, body?: unknown) {
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-  const authHeader = req.headers.get('authorization');
-  if (authHeader) headers['Authorization'] = authHeader;
+async function proxy(
+  req: NextRequest,
+  method: string,
+  id: string,
+  body?: unknown,
+) {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+  const authHeader = req.headers.get("authorization");
+  if (authHeader) headers["Authorization"] = authHeader;
 
   const res = await fetch(`${IDENTITY}/api/v1/comms/polls/${id}`, {
     method,
@@ -25,5 +32,5 @@ export async function PATCH(
 ) {
   const { id } = await params;
   const body = await req.json().catch(() => ({}));
-  return proxy(req, 'PATCH', id, body);
+  return proxy(req, "PATCH", id, body);
 }

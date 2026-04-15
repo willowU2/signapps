@@ -65,8 +65,7 @@ function toScheduleBlock(event: CalendarEvent): ScheduleBlock {
     event.start_time ||
     (typeof event.start === "string" ? event.start : undefined);
   const endValue =
-    event.end_time ||
-    (typeof event.end === "string" ? event.end : undefined);
+    event.end_time || (typeof event.end === "string" ? event.end : undefined);
   return {
     id: event.id,
     type: "event",

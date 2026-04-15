@@ -175,7 +175,9 @@ export function ResizeHandle({
 
   return (
     <div
-      data-testid={edge === "bottom" ? "event-resize-handle" : "event-resize-handle-top"}
+      data-testid={
+        edge === "bottom" ? "event-resize-handle" : "event-resize-handle-top"
+      }
       data-no-dnd="true"
       className={`absolute ${position} left-0 right-0 h-2 cursor-ns-resize z-30 ${rounded} group/resize`}
       onPointerDown={handlePointerDown}
@@ -184,7 +186,11 @@ export function ResizeHandle({
         e.stopPropagation();
         e.preventDefault();
       }}
-      title={edge === "bottom" ? "Glisser pour redimensionner" : "Glisser pour changer l'heure de début"}
+      title={
+        edge === "bottom"
+          ? "Glisser pour redimensionner"
+          : "Glisser pour changer l'heure de début"
+      }
     >
       {/* Subtle visual affordance — line brightens on hover */}
       <div

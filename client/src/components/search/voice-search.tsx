@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { useState, useRef, useCallback } from 'react';
-import { Mic, MicOff, Loader2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { toast } from 'sonner';
+import { useState, useRef, useCallback } from "react";
+import { Mic, MicOff, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -34,11 +34,15 @@ type SpeechRecognitionCtor = new () => any;
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export function VoiceSearch({ onResult, className = '' }: VoiceSearchProps) {
+export function VoiceSearch({ onResult, className = "" }: VoiceSearchProps) {
   const [listening, setListening] = useState(false);
   const getSpeechRecognitionCtor = (): SpeechRecognitionCtor | null => {
-    if (typeof window === 'undefined') return null;
-    return (window.SpeechRecognition ?? window.webkitSpeechRecognition) as SpeechRecognitionCtor | undefined ?? null;
+    if (typeof window === "undefined") return null;
+    return (
+      ((window.SpeechRecognition ?? window.webkitSpeechRecognition) as
+        | SpeechRecognitionCtor
+        | undefined) ?? null
+    );
   };
 
   const [supported] = useState(() => !!getSpeechRecognitionCtor());
@@ -47,7 +51,9 @@ export function VoiceSearch({ onResult, className = '' }: VoiceSearchProps) {
 
   const startListening = useCallback(() => {
     if (!supported) {
-      toast.error('La reconnaissance vocale n\'est pas supportée par ce navigateur');
+      toast.error(
+        "La reconnaissance vocale n'est pas supportée par ce navigateur",
+      );
       return;
     }
 
@@ -55,7 +61,7 @@ export function VoiceSearch({ onResult, className = '' }: VoiceSearchProps) {
     if (!Ctor) return;
 
     const recognition = new Ctor();
-    recognition.lang = 'fr-FR';
+    recognition.lang = "fr-FR";
     recognition.interimResults = false;
     recognition.maxAlternatives = 1;
 
@@ -66,7 +72,7 @@ export function VoiceSearch({ onResult, className = '' }: VoiceSearchProps) {
     };
 
     recognition.onerror = () => {
-      toast.error('Erreur de reconnaissance vocale');
+      toast.error("Erreur de reconnaissance vocale");
       setListening(false);
     };
 
@@ -77,7 +83,7 @@ export function VoiceSearch({ onResult, className = '' }: VoiceSearchProps) {
     recognitionRef.current = recognition;
     recognition.start();
     setListening(true);
-    toast.info('Parlez maintenant…', { duration: 3000 });
+    toast.info("Parlez maintenant…", { duration: 3000 });
   }, [supported, onResult]);
 
   const stopListening = useCallback(() => {
@@ -90,17 +96,13 @@ export function VoiceSearch({ onResult, className = '' }: VoiceSearchProps) {
   return (
     <Button
       type="button"
-      variant={listening ? 'default' : 'ghost'}
+      variant={listening ? "default" : "ghost"}
       size="icon"
-      className={`shrink-0 transition-all ${listening ? 'bg-red-500 hover:bg-red-600 text-white animate-pulse' : 'text-muted-foreground hover:text-foreground'} ${className}`}
+      className={`shrink-0 transition-all ${listening ? "bg-red-500 hover:bg-red-600 text-white animate-pulse" : "text-muted-foreground hover:text-foreground"} ${className}`}
       onClick={listening ? stopListening : startListening}
-      title={listening ? 'Arrêter l\'écoute' : 'Recherche vocale'}
+      title={listening ? "Arrêter l'écoute" : "Recherche vocale"}
     >
-      {listening ? (
-        <MicOff className="h-4 w-4" />
-      ) : (
-        <Mic className="h-4 w-4" />
-      )}
+      {listening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
     </Button>
   );
 }
@@ -115,17 +117,26 @@ interface VoiceSearchBarProps {
   className?: string;
 }
 
-export function VoiceSearchBar({ value, onChange, onSearch, placeholder = 'Rechercher...', className = '' }: VoiceSearchBarProps) {
+export function VoiceSearchBar({
+  value,
+  onChange,
+  onSearch,
+  placeholder = "Rechercher...",
+  className = "",
+}: VoiceSearchBarProps) {
   const [thinking, setThinking] = useState(false);
 
-  const handleVoiceResult = useCallback((transcript: string) => {
-    setThinking(true);
-    onChange(transcript);
-    setTimeout(() => {
-      setThinking(false);
-      onSearch?.(transcript);
-    }, 300);
-  }, [onChange, onSearch]);
+  const handleVoiceResult = useCallback(
+    (transcript: string) => {
+      setThinking(true);
+      onChange(transcript);
+      setTimeout(() => {
+        setThinking(false);
+        onSearch?.(transcript);
+      }, 300);
+    },
+    [onChange, onSearch],
+  );
 
   return (
     <div className={`relative flex items-center gap-1 ${className}`}>
@@ -133,8 +144,10 @@ export function VoiceSearchBar({ value, onChange, onSearch, placeholder = 'Reche
         <input
           type="text"
           value={value}
-          onChange={e => onChange(e.target.value)}
-          onKeyDown={e => { if (e.key === 'Enter') onSearch?.(value); }}
+          onChange={(e) => onChange(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") onSearch?.(value);
+          }}
           placeholder={placeholder}
           className="w-full h-10 pl-3 pr-10 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
         />

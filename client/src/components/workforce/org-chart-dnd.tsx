@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * HR3 — Interactive Org Chart with Drag & Drop
@@ -10,7 +10,7 @@
  * Dependencies: @dnd-kit/core, @dnd-kit/sortable (already used in forms editor)
  */
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect } from "react";
 import {
   DndContext,
   DragEndEvent,
@@ -20,8 +20,8 @@ import {
   useSensor,
   useSensors,
   DragOverlay,
-} from '@dnd-kit/core';
-import { useDraggable, useDroppable } from '@dnd-kit/core';
+} from "@dnd-kit/core";
+import { useDraggable, useDroppable } from "@dnd-kit/core";
 import {
   Building2,
   Users,
@@ -32,12 +32,12 @@ import {
   ChevronDown,
   GripVertical,
   Loader2,
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { Badge } from '@/components/ui/badge';
-import { orgNodesApi } from '@/lib/api/workforce';
-import type { OrgNodeWithStats } from '@/types/workforce';
-import { toast } from 'sonner';
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
+import { orgNodesApi } from "@/lib/api/workforce";
+import type { OrgNodeWithStats } from "@/types/workforce";
+import { toast } from "sonner";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -58,7 +58,10 @@ interface OrgChartDndProps {
 // Icons
 // ---------------------------------------------------------------------------
 
-const NODE_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
+const NODE_ICONS: Record<
+  string,
+  React.ComponentType<{ className?: string }>
+> = {
   company: Building2,
   region: MapPin,
   department: Briefcase,
@@ -67,7 +70,7 @@ const NODE_ICONS: Record<string, React.ComponentType<{ className?: string }>> = 
 };
 
 function NodeIcon({ type, className }: { type?: string; className?: string }) {
-  const Icon = NODE_ICONS[type ?? ''] ?? Building2;
+  const Icon = NODE_ICONS[type ?? ""] ?? Building2;
   return <Icon className={className} />;
 }
 
@@ -83,7 +86,13 @@ interface NodeRowProps {
   onSelect: (node: OrgNodeWithStats) => void;
 }
 
-function NodeRow({ item, depth, isDragTarget, onToggle, onSelect }: NodeRowProps) {
+function NodeRow({
+  item,
+  depth,
+  isDragTarget,
+  onToggle,
+  onSelect,
+}: NodeRowProps) {
   const { node, expanded, children } = item;
 
   const {
@@ -110,10 +119,10 @@ function NodeRow({ item, depth, isDragTarget, onToggle, onSelect }: NodeRowProps
       <div
         ref={setDragRef}
         className={cn(
-          'flex items-center gap-2 rounded-lg px-2 py-1.5 cursor-pointer select-none transition-colors',
-          'hover:bg-accent/60',
-          isDragging && 'opacity-40',
-          isOver && 'bg-primary/10 ring-1 ring-primary/30',
+          "flex items-center gap-2 rounded-lg px-2 py-1.5 cursor-pointer select-none transition-colors",
+          "hover:bg-accent/60",
+          isDragging && "opacity-40",
+          isOver && "bg-primary/10 ring-1 ring-primary/30",
         )}
         style={{ paddingLeft: `${depth * 20 + 8}px` }}
         onClick={() => onSelect(node)}
@@ -123,7 +132,7 @@ function NodeRow({ item, depth, isDragTarget, onToggle, onSelect }: NodeRowProps
           {...attributes}
           {...listeners}
           className="touch-none cursor-grab text-muted-foreground/40 hover:text-muted-foreground shrink-0"
-          onClick={e => e.stopPropagation()}
+          onClick={(e) => e.stopPropagation()}
         >
           <GripVertical className="h-3.5 w-3.5" />
         </span>
@@ -131,7 +140,7 @@ function NodeRow({ item, depth, isDragTarget, onToggle, onSelect }: NodeRowProps
         {/* Expand/collapse toggle */}
         <button
           className="h-5 w-5 shrink-0 flex items-center justify-center"
-          onClick={e => {
+          onClick={(e) => {
             e.stopPropagation();
             if (hasChildren) onToggle(node.id);
           }}
@@ -148,7 +157,10 @@ function NodeRow({ item, depth, isDragTarget, onToggle, onSelect }: NodeRowProps
         </button>
 
         {/* Icon */}
-        <NodeIcon type={node.node_type} className="h-4 w-4 text-primary/70 shrink-0" />
+        <NodeIcon
+          type={node.node_type}
+          className="h-4 w-4 text-primary/70 shrink-0"
+        />
 
         {/* Name */}
         <span className="text-sm font-medium flex-1 truncate">{node.name}</span>
@@ -164,7 +176,7 @@ function NodeRow({ item, depth, isDragTarget, onToggle, onSelect }: NodeRowProps
       {/* Children */}
       {expanded && children.length > 0 && (
         <div>
-          {children.map(child => (
+          {children.map((child) => (
             <NodeRow
               key={child.node.id}
               item={child}
@@ -185,7 +197,7 @@ function NodeRow({ item, depth, isDragTarget, onToggle, onSelect }: NodeRowProps
 // ---------------------------------------------------------------------------
 
 function buildTreeState(nodes: OrgNodeWithStats[]): TreeNode[] {
-  return nodes.map(node => ({
+  return nodes.map((node) => ({
     node,
     expanded: true,
     children: [],
@@ -193,7 +205,7 @@ function buildTreeState(nodes: OrgNodeWithStats[]): TreeNode[] {
 }
 
 function toggleNode(items: TreeNode[], id: string): TreeNode[] {
-  return items.map(item => {
+  return items.map((item) => {
     if (item.node.id === id) {
       return { ...item, expanded: !item.expanded };
     }
@@ -215,7 +227,7 @@ export function OrgChartDnd({ onSelectNode, className }: OrgChartDndProps) {
   const [dropTargetId, setDropTargetId] = useState<string | null>(null);
 
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
   );
 
   const loadTree = useCallback(async () => {
@@ -224,7 +236,7 @@ export function OrgChartDnd({ onSelectNode, className }: OrgChartDndProps) {
       const resp = await orgNodesApi.getTree({ max_depth: 10 });
       setTree(buildTreeState(resp.data));
     } catch {
-      toast.error('Impossible de charger l\'organigramme');
+      toast.error("Impossible de charger l'organigramme");
     } finally {
       setLoading(false);
     }
@@ -235,14 +247,14 @@ export function OrgChartDnd({ onSelectNode, className }: OrgChartDndProps) {
   }, [loadTree]);
 
   const handleToggle = useCallback((id: string) => {
-    setTree(prev => toggleNode(prev, id));
+    setTree((prev) => toggleNode(prev, id));
   }, []);
 
   const handleSelect = useCallback(
     (node: OrgNodeWithStats) => {
       onSelectNode?.(node);
     },
-    [onSelectNode]
+    [onSelectNode],
   );
 
   const handleDragStart = useCallback((event: DragStartEvent) => {
@@ -250,8 +262,8 @@ export function OrgChartDnd({ onSelectNode, className }: OrgChartDndProps) {
   }, []);
 
   const handleDragOver = useCallback((event: DragOverEvent) => {
-    const overId = String(event.over?.id ?? '');
-    setDropTargetId(overId.startsWith('drop:') ? overId.slice(5) : null);
+    const overId = String(event.over?.id ?? "");
+    setDropTargetId(overId.startsWith("drop:") ? overId.slice(5) : null);
   }, []);
 
   const handleDragEnd = useCallback(
@@ -260,22 +272,22 @@ export function OrgChartDnd({ onSelectNode, className }: OrgChartDndProps) {
       setDropTargetId(null);
 
       const nodeId = String(event.active.id);
-      const overId = String(event.over?.id ?? '');
+      const overId = String(event.over?.id ?? "");
 
-      if (!overId.startsWith('drop:')) return;
+      if (!overId.startsWith("drop:")) return;
       const newParentId = overId.slice(5);
 
       if (nodeId === newParentId) return;
 
       try {
         await orgNodesApi.move(nodeId, { new_parent_id: newParentId });
-        toast.success('Nœud déplacé avec succès');
+        toast.success("Nœud déplacé avec succès");
         await loadTree();
       } catch {
-        toast.error('Impossible de déplacer ce nœud');
+        toast.error("Impossible de déplacer ce nœud");
       }
     },
-    [loadTree]
+    [loadTree],
   );
 
   if (loading) {
@@ -302,11 +314,12 @@ export function OrgChartDnd({ onSelectNode, className }: OrgChartDndProps) {
       onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
     >
-      <div className={cn('rounded-lg border bg-card p-2', className)}>
+      <div className={cn("rounded-lg border bg-card p-2", className)}>
         <p className="text-xs text-muted-foreground px-2 pb-2 border-b mb-2">
-          Glissez les nœuds pour réorganiser la hiérarchie. Cliquez pour voir les détails.
+          Glissez les nœuds pour réorganiser la hiérarchie. Cliquez pour voir
+          les détails.
         </p>
-        {tree.map(item => (
+        {tree.map((item) => (
           <NodeRow
             key={item.node.id}
             item={item}

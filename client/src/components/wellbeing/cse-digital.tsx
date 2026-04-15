@@ -86,13 +86,18 @@ export default function CseDigital() {
 
   const toggleBenefit = (id: string) => {
     setMyBenefits((prev) =>
-      prev.includes(id) ? prev.filter((b) => b !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((b) => b !== id) : [...prev, id],
     );
   };
 
-  const displayedBenefits = activeTab === "all" ? benefits : benefits.filter((b) => myBenefits.includes(b.id));
+  const displayedBenefits =
+    activeTab === "all"
+      ? benefits
+      : benefits.filter((b) => myBenefits.includes(b.id));
 
-  const categories = Array.from(new Set(benefits.map((b) => b.category))).sort();
+  const categories = Array.from(
+    new Set(benefits.map((b) => b.category)),
+  ).sort();
 
   return (
     <div className="space-y-6 p-4">
@@ -105,18 +110,26 @@ export default function CseDigital() {
           Your Benefits
         </h3>
         <p className="text-sm text-muted-foreground mb-3">
-          You have {myBenefits.length} active benefit{myBenefits.length !== 1 ? "s" : ""}
+          You have {myBenefits.length} active benefit
+          {myBenefits.length !== 1 ? "s" : ""}
         </p>
         <div className="space-y-2 max-h-32 overflow-y-auto">
           {myBenefits.length === 0 ? (
-            <p className="text-sm text-muted-foreground italic">No benefits selected yet</p>
+            <p className="text-sm text-muted-foreground italic">
+              No benefits selected yet
+            </p>
           ) : (
             myBenefits.map((id) => {
               const benefit = benefits.find((b) => b.id === id);
               return benefit ? (
-                <div key={id} className="flex justify-between items-center bg-card p-2 rounded border border-purple-100">
+                <div
+                  key={id}
+                  className="flex justify-between items-center bg-card p-2 rounded border border-purple-100"
+                >
                   <span className="text-sm font-medium">{benefit.name}</span>
-                  <span className="text-sm font-bold text-pink-600">-{benefit.discount}%</span>
+                  <span className="text-sm font-bold text-pink-600">
+                    -{benefit.discount}%
+                  </span>
                 </div>
               ) : null;
             })
@@ -129,7 +142,9 @@ export default function CseDigital() {
         <button
           onClick={() => setActiveTab("all")}
           className={`px-4 py-2 font-medium border-b-2 transition-all ${
-            activeTab === "all" ? "border-blue-500 text-blue-600" : "border-transparent text-muted-foreground hover:text-foreground"
+            activeTab === "all"
+              ? "border-blue-500 text-blue-600"
+              : "border-transparent text-muted-foreground hover:text-foreground"
           }`}
         >
           All Benefits ({benefits.length})
@@ -137,7 +152,9 @@ export default function CseDigital() {
         <button
           onClick={() => setActiveTab("my")}
           className={`px-4 py-2 font-medium border-b-2 transition-all ${
-            activeTab === "my" ? "border-blue-500 text-blue-600" : "border-transparent text-muted-foreground hover:text-foreground"
+            activeTab === "my"
+              ? "border-blue-500 text-blue-600"
+              : "border-transparent text-muted-foreground hover:text-foreground"
           }`}
         >
           My Benefits ({myBenefits.length})
@@ -163,7 +180,9 @@ export default function CseDigital() {
               <div className="flex justify-between items-start mb-2">
                 <div className="flex-1">
                   <h4 className="font-bold text-foreground">{benefit.name}</h4>
-                  <p className="text-xs text-muted-foreground mt-1">{benefit.description}</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {benefit.description}
+                  </p>
                   <div className="flex items-center gap-4 mt-2">
                     <span className="text-xs bg-muted px-2 py-1 rounded">
                       <ShoppingBag className="w-3 h-3 inline mr-1" />
@@ -182,14 +201,21 @@ export default function CseDigital() {
                       : "bg-gray-200 text-muted-foreground hover:bg-blue-200 hover:text-blue-600"
                   }`}
                 >
-                  {myBenefits.includes(benefit.id) ? <Check className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
+                  {myBenefits.includes(benefit.id) ? (
+                    <Check className="w-5 h-5" />
+                  ) : (
+                    <Plus className="w-5 h-5" />
+                  )}
                 </button>
               </div>
               <div className="flex gap-2 mt-3">
                 <Button size="sm" variant="outline" className="flex-1 text-xs">
                   View Details
                 </Button>
-                <Button size="sm" className="flex-1 text-xs bg-blue-600 hover:bg-blue-700">
+                <Button
+                  size="sm"
+                  className="flex-1 text-xs bg-blue-600 hover:bg-blue-700"
+                >
                   Claim Discount
                 </Button>
               </div>
@@ -205,7 +231,8 @@ export default function CseDigital() {
           About CSE Digital
         </h3>
         <p className="text-sm text-blue-800">
-          Access exclusive employee benefits and discounts through our CSE Digital platform. Select your favorite benefits to start saving today.
+          Access exclusive employee benefits and discounts through our CSE
+          Digital platform. Select your favorite benefits to start saving today.
         </p>
       </div>
     </div>
@@ -214,8 +241,18 @@ export default function CseDigital() {
 
 function Plus({ className }: { className?: string }) {
   return (
-    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+    <svg
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M12 4v16m8-8H4"
+      />
     </svg>
   );
 }

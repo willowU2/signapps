@@ -67,7 +67,12 @@ export default function BurndownChart() {
       </div>
 
       <div className="bg-card p-4 rounded-lg border">
-        <svg width="100%" height={chartHeight + 30} viewBox={`0 0 ${chartWidth + 40} ${chartHeight + 30}`} className="mx-auto">
+        <svg
+          width="100%"
+          height={chartHeight + 30}
+          viewBox={`0 0 ${chartWidth + 40} ${chartHeight + 30}`}
+          className="mx-auto"
+        >
           {/* Grid lines */}
           {[0, 25, 50, 75, 100].map((val) => (
             <line
@@ -83,10 +88,13 @@ export default function BurndownChart() {
 
           {/* Ideal line */}
           <polyline
-            points={`30,${chartHeight + 10} L${idealPath.split("L").map((p) => {
-              const [x, y] = p.split(",");
-              return `${parseFloat(x) + 30},${parseFloat(y) + 10}`;
-            }).join(" L")}`}
+            points={`30,${chartHeight + 10} L${idealPath
+              .split("L")
+              .map((p) => {
+                const [x, y] = p.split(",");
+                return `${parseFloat(x) + 30},${parseFloat(y) + 10}`;
+              })
+              .join(" L")}`}
             fill="none"
             stroke="#9ca3af"
             strokeWidth="2"
@@ -95,25 +103,45 @@ export default function BurndownChart() {
 
           {/* Actual line */}
           <polyline
-            points={`30,${chartHeight + 10} L${actualPath.split("L").map((p) => {
-              const [x, y] = p.split(",");
-              return `${parseFloat(x) + 30},${parseFloat(y) + 10}`;
-            }).join(" L")}`}
+            points={`30,${chartHeight + 10} L${actualPath
+              .split("L")
+              .map((p) => {
+                const [x, y] = p.split(",");
+                return `${parseFloat(x) + 30},${parseFloat(y) + 10}`;
+              })
+              .join(" L")}`}
             fill="none"
             stroke="#3b82f6"
             strokeWidth="2"
           />
 
           {/* Y-axis */}
-          <line x1="30" y1="10" x2="30" y2={chartHeight + 10} stroke="#000" strokeWidth="1" />
+          <line
+            x1="30"
+            y1="10"
+            x2="30"
+            y2={chartHeight + 10}
+            stroke="#000"
+            strokeWidth="1"
+          />
           {/* X-axis */}
-          <line x1="30" y1={chartHeight + 10} x2={chartWidth + 30} y2={chartHeight + 10} stroke="#000" strokeWidth="1" />
+          <line
+            x1="30"
+            y1={chartHeight + 10}
+            x2={chartWidth + 30}
+            y2={chartHeight + 10}
+            stroke="#000"
+            strokeWidth="1"
+          />
         </svg>
       </div>
 
       <div className="flex gap-4 text-sm">
         <div className="flex items-center gap-2">
-          <div className="w-3 h-3 bg-gray-400" style={{ borderTop: "2px dashed #9ca3af" }} />
+          <div
+            className="w-3 h-3 bg-gray-400"
+            style={{ borderTop: "2px dashed #9ca3af" }}
+          />
           <span>Ideal Burndown</span>
         </div>
         <div className="flex items-center gap-2">
@@ -123,8 +151,12 @@ export default function BurndownChart() {
       </div>
 
       <div className="grid grid-cols-2 gap-2 text-sm">
-        <div className="p-2 bg-blue-50 rounded">Remaining: {data[data.length - 1].actual} story points</div>
-        <div className="p-2 bg-muted rounded">Ideal: {data[data.length - 1].ideal} story points</div>
+        <div className="p-2 bg-blue-50 rounded">
+          Remaining: {data[data.length - 1].actual} story points
+        </div>
+        <div className="p-2 bg-muted rounded">
+          Ideal: {data[data.length - 1].ideal} story points
+        </div>
       </div>
     </div>
   );

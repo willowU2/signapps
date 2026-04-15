@@ -14,7 +14,10 @@ export interface Template {
 /**
  * Render a template by replacing {{variables}}
  */
-export function renderTemplate(template: string, data: Record<string, string>): string {
+export function renderTemplate(
+  template: string,
+  data: Record<string, string>,
+): string {
   return template.replace(/\{\{(\w+)\}\}/g, (_, key) => data[key] || "");
 }
 
@@ -24,13 +27,16 @@ export function renderTemplate(template: string, data: Record<string, string>): 
 export function extractVariables(template: string): string[] {
   const matches = template.match(/\{\{(\w+)\}\}/g);
   if (!matches) return [];
-  return [...new Set(matches.map(m => m.replace(/\{\{|\}\}/g, "")))];
+  return [...new Set(matches.map((m) => m.replace(/\{\{|\}\}/g, "")))];
 }
 
 /**
  * Validate all variables in template have values
  */
-export function validateTemplate(template: string, data: Record<string, string>): string[] {
+export function validateTemplate(
+  template: string,
+  data: Record<string, string>,
+): string[] {
   const vars = extractVariables(template);
-  return vars.filter(v => !data[v]);
+  return vars.filter((v) => !data[v]);
 }

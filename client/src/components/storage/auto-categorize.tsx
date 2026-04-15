@@ -12,7 +12,14 @@ interface AutoCategorizeProps {
   onDismiss?: () => void;
 }
 
-const CATEGORIES = ["Document", "Image", "Spreadsheet", "Presentation", "Code", "Other"];
+const CATEGORIES = [
+  "Document",
+  "Image",
+  "Spreadsheet",
+  "Presentation",
+  "Code",
+  "Other",
+];
 const COLORS: Record<string, string> = {
   Document: "bg-blue-500",
   Image: "bg-purple-500",
@@ -50,7 +57,9 @@ export function AutoCategorize({
     return (
       <div className="rounded-lg border border-green-200 bg-green-50 p-3 flex items-center gap-2">
         <Check className="h-4 w-4 text-green-600" />
-        <span className="text-xs font-medium text-green-900">Categorization saved</span>
+        <span className="text-xs font-medium text-green-900">
+          Categorization saved
+        </span>
       </div>
     );
   }

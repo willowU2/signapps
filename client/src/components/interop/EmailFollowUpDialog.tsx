@@ -10,10 +10,19 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { calendarApi } from "@/lib/api/calendar";
@@ -65,22 +74,49 @@ export function EmailFollowUpDialog({ open, onOpenChange, mail }: Props) {
       let eventId = `local_${Date.now()}`;
       if (Array.isArray(calendars) && calendars.length > 0) {
         const { data: ev } = await calendarApi.createEvent(calendars[0].id, {
-          title, start_time: date.toISOString(), end_time: end.toISOString(), is_all_day: false,
+          title,
+          start_time: date.toISOString(),
+          end_time: end.toISOString(),
+          is_all_day: false,
           description: `Rappel de suivi pour l'email de ${mail.email}`,
         });
         eventId = ev?.id ?? eventId;
       } else {
-        const stored = JSON.parse(localStorage.getItem("interop:local_events") || "[]");
-        stored.push({ id: eventId, title, start_time: date.toISOString(), end_time: end.toISOString() });
+        const stored = JSON.parse(
+          localStorage.getItem("interop:local_events") || "[]",
+        );
+        stored.push({
+          id: eventId,
+          title,
+          start_time: date.toISOString(),
+          end_time: end.toISOString(),
+        });
         localStorage.setItem("interop:local_events", JSON.stringify(stored));
       }
-      interopStore.addLink({ sourceType: "mail", sourceId: mail.id, sourceTitle: mail.subject, targetType: "event", targetId: eventId, targetTitle: title, relation: "follow_up" });
-      interopStore.addNotification({ sourceModule: "calendar", type: "follow_up_created", title: "Rappel planifié", body: `Suivi de "${mail.subject}" le ${date.toLocaleDateString("fr-FR")}` });
-      toast.success(`Rappel de suivi créé pour le ${date.toLocaleDateString("fr-FR")}`);
+      interopStore.addLink({
+        sourceType: "mail",
+        sourceId: mail.id,
+        sourceTitle: mail.subject,
+        targetType: "event",
+        targetId: eventId,
+        targetTitle: title,
+        relation: "follow_up",
+      });
+      interopStore.addNotification({
+        sourceModule: "calendar",
+        type: "follow_up_created",
+        title: "Rappel planifié",
+        body: `Suivi de "${mail.subject}" le ${date.toLocaleDateString("fr-FR")}`,
+      });
+      toast.success(
+        `Rappel de suivi créé pour le ${date.toLocaleDateString("fr-FR")}`,
+      );
       onOpenChange(false);
     } catch {
       toast.error("Impossible de créer le rappel");
-    } finally { setSaving(false); }
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -91,16 +127,22 @@ export function EmailFollowUpDialog({ open, onOpenChange, mail }: Props) {
             <Bell className="h-5 w-5 text-amber-500" />
             Rappel de suivi
           </DialogTitle>
-          <DialogDescription>Créer un rappel calendrier pour suivre cet email.</DialogDescription>
+          <DialogDescription>
+            Créer un rappel calendrier pour suivre cet email.
+          </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-2">
           <div className="space-y-1.5">
             <Label>Quand ?</Label>
             <Select value={preset} onValueChange={setPreset}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
-                {PRESETS.map(p => (
-                  <SelectItem key={p.hours} value={String(p.hours)}>{p.label}</SelectItem>
+                {PRESETS.map((p) => (
+                  <SelectItem key={p.hours} value={String(p.hours)}>
+                    {p.label}
+                  </SelectItem>
                 ))}
                 <SelectItem value="custom">Date personnalisée</SelectItem>
               </SelectContent>
@@ -109,12 +151,22 @@ export function EmailFollowUpDialog({ open, onOpenChange, mail }: Props) {
           {preset === "custom" && (
             <div className="space-y-1.5">
               <Label>Date et heure</Label>
-              <Input type="datetime-local" value={customDate} onChange={e => setCustomDate(e.target.value)} />
+              <Input
+                type="datetime-local"
+                value={customDate}
+                onChange={(e) => setCustomDate(e.target.value)}
+              />
             </div>
           )}
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>Annuler</Button>
+          <Button
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={saving}
+          >
+            Annuler
+          </Button>
           <Button onClick={handleSave} disabled={saving}>
             {saving ? "Planification…" : "Planifier le rappel"}
           </Button>

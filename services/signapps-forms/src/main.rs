@@ -733,8 +733,7 @@ fn create_router(state: AppState, sharing_engine: SharingEngine) -> Router {
         ));
 
     // Sharing sub-router: State<SharingEngine> — separate from AppState.
-    let sharing_sub = sharing_routes("forms", ResourceType::Form)
-        .with_state(sharing_engine);
+    let sharing_sub = sharing_routes("forms", ResourceType::Form).with_state(sharing_engine);
 
     public_routes
         .merge(protected_routes)

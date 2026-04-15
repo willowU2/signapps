@@ -1,15 +1,15 @@
-'use client';
+"use client";
 
-import { useMemo, useEffect } from 'react';
-import { Flame } from 'lucide-react';
+import { useMemo, useEffect } from "react";
+import { Flame } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { useSocialStore } from '@/stores/social-store';
-import { startOfDay, subDays, isSameDay, parseISO } from 'date-fns';
+} from "@/components/ui/tooltip";
+import { useSocialStore } from "@/stores/social-store";
+import { startOfDay, subDays, isSameDay, parseISO } from "date-fns";
 
 function computeStreak(publishedDates: Date[]): number {
   if (publishedDates.length === 0) return 0;
@@ -64,7 +64,7 @@ export function StreakCounter() {
 
   const streak = useMemo(() => {
     const publishedDates = posts
-      .filter((p) => p.status === 'published' && p.publishedAt)
+      .filter((p) => p.status === "published" && p.publishedAt)
       .map((p) => parseISO(p.publishedAt!));
 
     return computeStreak(publishedDates);
@@ -74,14 +74,14 @@ export function StreakCounter() {
   const isActive = streak > 0;
 
   const flameColorClass = isGold
-    ? 'text-yellow-400'
+    ? "text-yellow-400"
     : isActive
-      ? 'text-orange-500'
-      : 'text-muted-foreground';
+      ? "text-orange-500"
+      : "text-muted-foreground";
 
   const tooltipText = isActive
-    ? `You've posted for ${streak} consecutive day${streak !== 1 ? 's' : ''}!`
-    : 'Start your streak!';
+    ? `You've posted for ${streak} consecutive day${streak !== 1 ? "s" : ""}!`
+    : "Start your streak!";
 
   return (
     <TooltipProvider delayDuration={200}>
@@ -90,17 +90,17 @@ export function StreakCounter() {
           <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted/60 border cursor-default select-none">
             <Flame
               className={`h-5 w-5 ${flameColorClass} ${
-                isActive ? 'animate-pulse' : ''
-              } ${isGold ? 'drop-shadow-[0_0_4px_rgba(250,204,21,0.5)]' : ''}`}
-              fill={isActive ? 'currentColor' : 'none'}
+                isActive ? "animate-pulse" : ""
+              } ${isGold ? "drop-shadow-[0_0_4px_rgba(250,204,21,0.5)]" : ""}`}
+              fill={isActive ? "currentColor" : "none"}
             />
             <span
               className={`text-sm font-bold tabular-nums ${
                 isGold
-                  ? 'text-yellow-500'
+                  ? "text-yellow-500"
                   : isActive
-                    ? 'text-foreground'
-                    : 'text-muted-foreground'
+                    ? "text-foreground"
+                    : "text-muted-foreground"
               }`}
             >
               {streak}

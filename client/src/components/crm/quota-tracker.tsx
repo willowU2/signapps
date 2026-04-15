@@ -1,50 +1,54 @@
-"use client"
-import { useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Progress } from "@/components/ui/progress"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Badge } from "@/components/ui/badge"
-import { Plus, Target, Trash2 } from "lucide-react"
-import { quotasApi, type Quota } from "@/lib/api/crm"
+"use client";
+import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Plus, Target, Trash2 } from "lucide-react";
+import { quotasApi, type Quota } from "@/lib/api/crm";
 
 function getCurrentPeriod(): string {
-  const d = new Date()
-  const q = Math.ceil((d.getMonth() + 1) / 3)
-  return `${d.getFullYear()}-Q${q}`
+  const d = new Date();
+  const q = Math.ceil((d.getMonth() + 1) / 3);
+  return `${d.getFullYear()}-Q${q}`;
 }
 
 interface Props {
-  currentPeriod?: string
+  currentPeriod?: string;
 }
 
 export function QuotaTracker({ currentPeriod = getCurrentPeriod() }: Props) {
   const [quotas, setQuotas] = useState<Quota[]>(() =>
-    quotasApi.listByPeriod(currentPeriod)
-  )
-  const [adding, setAdding] = useState(false)
-  const [form, setForm] = useState({ salesperson: "", target: "", achieved: "" })
+    quotasApi.listByPeriod(currentPeriod),
+  );
+  const [adding, setAdding] = useState(false);
+  const [form, setForm] = useState({
+    salesperson: "",
+    target: "",
+    achieved: "",
+  });
 
-  const reload = () => setQuotas(quotasApi.listByPeriod(currentPeriod))
+  const reload = () => setQuotas(quotasApi.listByPeriod(currentPeriod));
 
   const save = () => {
-    if (!form.salesperson.trim() || !form.target) return
+    if (!form.salesperson.trim() || !form.target) return;
     quotasApi.upsert({
       salesperson: form.salesperson.trim(),
       period: currentPeriod,
       target: Number(form.target),
       achieved: Number(form.achieved),
-    })
-    setForm({ salesperson: "", target: "", achieved: "" })
-    setAdding(false)
-    reload()
-  }
+    });
+    setForm({ salesperson: "", target: "", achieved: "" });
+    setAdding(false);
+    reload();
+  };
 
   const remove = (id: string) => {
-    quotasApi.delete(id)
-    reload()
-  }
+    quotasApi.delete(id);
+    reload();
+  };
 
   return (
     <Card>
@@ -53,7 +57,11 @@ export function QuotaTracker({ currentPeriod = getCurrentPeriod() }: Props) {
           <Target className="h-4 w-4 text-primary" />
           Quotas — {currentPeriod}
         </CardTitle>
-        <Button size="sm" variant="outline" onClick={() => setAdding(v => !v)}>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => setAdding((v) => !v)}
+        >
           <Plus className="h-3 w-3 mr-1" />
           {adding ? "Annuler" : "Ajouter"}
         </Button>
@@ -69,7 +77,9 @@ export function QuotaTracker({ currentPeriod = getCurrentPeriod() }: Props) {
                   className="h-8 text-sm"
                   placeholder="Jean Dupont"
                   value={form.salesperson}
-                  onChange={e => setForm(f => ({ ...f, salesperson: e.target.value }))}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, salesperson: e.target.value }))
+                  }
                 />
               </div>
               <div className="space-y-1">
@@ -79,7 +89,9 @@ export function QuotaTracker({ currentPeriod = getCurrentPeriod() }: Props) {
                   type="number"
                   placeholder="50000"
                   value={form.target}
-                  onChange={e => setForm(f => ({ ...f, target: e.target.value }))}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, target: e.target.value }))
+                  }
                 />
               </div>
               <div className="space-y-1">
@@ -89,24 +101,35 @@ export function QuotaTracker({ currentPeriod = getCurrentPeriod() }: Props) {
                   type="number"
                   placeholder="0"
                   value={form.achieved}
-                  onChange={e => setForm(f => ({ ...f, achieved: e.target.value }))}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, achieved: e.target.value }))
+                  }
                 />
               </div>
             </div>
-            <Button size="sm" onClick={save} disabled={!form.salesperson || !form.target}>
+            <Button
+              size="sm"
+              onClick={save}
+              disabled={!form.salesperson || !form.target}
+            >
               Enregistrer le quota
             </Button>
           </div>
         )}
 
-        {quotas.map(q => {
-          const pct = q.target > 0 ? Math.min(100, Math.round((q.achieved / q.target) * 100)) : 0
-          const variant = pct >= 100 ? "default" : pct >= 75 ? "secondary" : "outline"
-          const progressColor = pct >= 100
-            ? "[&>div]:bg-emerald-500"
-            : pct >= 75
-              ? "[&>div]:bg-amber-500"
-              : "[&>div]:bg-blue-500"
+        {quotas.map((q) => {
+          const pct =
+            q.target > 0
+              ? Math.min(100, Math.round((q.achieved / q.target) * 100))
+              : 0;
+          const variant =
+            pct >= 100 ? "default" : pct >= 75 ? "secondary" : "outline";
+          const progressColor =
+            pct >= 100
+              ? "[&>div]:bg-emerald-500"
+              : pct >= 75
+                ? "[&>div]:bg-amber-500"
+                : "[&>div]:bg-blue-500";
 
           return (
             <div key={q.id} className="space-y-2 group">
@@ -114,7 +137,8 @@ export function QuotaTracker({ currentPeriod = getCurrentPeriod() }: Props) {
                 <span className="font-medium text-sm">{q.salesperson}</span>
                 <div className="flex items-center gap-2">
                   <Badge variant={variant} className="text-xs tabular-nums">
-                    {pct}% — {q.achieved.toLocaleString("fr-FR")} / {q.target.toLocaleString("fr-FR")} €
+                    {pct}% — {q.achieved.toLocaleString("fr-FR")} /{" "}
+                    {q.target.toLocaleString("fr-FR")} €
                   </Badge>
                   <Button
                     variant="ghost"
@@ -128,7 +152,7 @@ export function QuotaTracker({ currentPeriod = getCurrentPeriod() }: Props) {
               </div>
               <Progress value={pct} className={`h-2 ${progressColor}`} />
             </div>
-          )
+          );
         })}
 
         {quotas.length === 0 && !adding && (
@@ -138,5 +162,5 @@ export function QuotaTracker({ currentPeriod = getCurrentPeriod() }: Props) {
         )}
       </CardContent>
     </Card>
-  )
+  );
 }

@@ -57,7 +57,7 @@
 //! };
 //! ```
 
-pub mod protocol;
-pub mod share;
 pub mod gpo;
 pub mod listener;
+pub mod protocol;
+pub mod share;

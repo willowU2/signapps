@@ -64,7 +64,10 @@ const serwist = new Serwist({
       handler: new CacheFirst({
         cacheName: "static-assets",
         plugins: [
-          new ExpirationPlugin({ maxEntries: 128, maxAgeSeconds: 30 * 24 * 60 * 60 }),
+          new ExpirationPlugin({
+            maxEntries: 128,
+            maxAgeSeconds: 30 * 24 * 60 * 60,
+          }),
         ],
       }),
     },
@@ -107,7 +110,7 @@ self.addEventListener("push", (event) => {
   };
 
   event.waitUntil(
-    self.registration.showNotification(notification.title, notification)
+    self.registration.showNotification(notification.title, notification),
   );
 });
 
@@ -123,7 +126,7 @@ self.addEventListener("notificationclick", (event) => {
         }
       }
       return self.clients.openWindow(targetUrl);
-    })
+    }),
   );
 });
 

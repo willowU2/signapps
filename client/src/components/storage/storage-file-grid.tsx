@@ -1,10 +1,10 @@
-import { FileGridItem } from '@/components/storage/file-grid-item';
-import { FileListItem } from '@/components/storage/file-list-item';
-import { FileItem, DriveView } from '@/components/storage/types';
+import { FileGridItem } from "@/components/storage/file-grid-item";
+import { FileListItem } from "@/components/storage/file-list-item";
+import { FileItem, DriveView } from "@/components/storage/types";
 
 interface StorageFileGridProps {
   files: FileItem[];
-  viewMode: 'grid' | 'list' | 'tree';
+  viewMode: "grid" | "list" | "tree";
   driveView: DriveView;
   onNavigate: (file: FileItem) => void;
   onPreview: (file: FileItem) => void;
@@ -23,7 +23,7 @@ export function StorageFileGrid({
   selectedKeys,
   onToggleSelect,
 }: StorageFileGridProps) {
-  if (viewMode === 'grid' || viewMode === 'tree') {
+  if (viewMode === "grid" || viewMode === "tree") {
     return (
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4">
         {files.map((file) => (
@@ -35,7 +35,9 @@ export function StorageFileGrid({
             onAction={onAction}
             viewMode={driveView}
             selected={selectedKeys?.has(file.key)}
-            onSelect={onToggleSelect ? () => onToggleSelect(file.key) : undefined}
+            onSelect={
+              onToggleSelect ? () => onToggleSelect(file.key) : undefined
+            }
           />
         ))}
       </div>
@@ -60,7 +62,9 @@ export function StorageFileGrid({
             onAction={onAction}
             viewMode={driveView}
             selected={selectedKeys?.has(file.key)}
-            onSelect={onToggleSelect ? () => onToggleSelect(file.key) : undefined}
+            onSelect={
+              onToggleSelect ? () => onToggleSelect(file.key) : undefined
+            }
           />
         ))}
       </div>

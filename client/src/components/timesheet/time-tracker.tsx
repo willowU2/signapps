@@ -13,7 +13,11 @@ import {
 } from "@/components/ui/select";
 
 interface TimeTrackerProps {
-  onEntryComplete: (entry: { project: string; task: string; duration: number }) => void;
+  onEntryComplete: (entry: {
+    project: string;
+    task: string;
+    duration: number;
+  }) => void;
 }
 
 const PROJECTS = ["Web App", "Mobile", "Documentation", "Backend"];
@@ -88,7 +92,11 @@ export function TimeTracker({ onEntryComplete }: TimeTrackerProps) {
       {/* Project Selector */}
       <div className="space-y-2">
         <label className="text-sm font-medium">Project</label>
-        <Select value={selectedProject} onValueChange={setSelectedProject} disabled={isRunning}>
+        <Select
+          value={selectedProject}
+          onValueChange={setSelectedProject}
+          disabled={isRunning}
+        >
           <SelectTrigger>
             <SelectValue placeholder="Select a project" />
           </SelectTrigger>
@@ -105,7 +113,11 @@ export function TimeTracker({ onEntryComplete }: TimeTrackerProps) {
       {/* Task Selector */}
       <div className="space-y-2">
         <label className="text-sm font-medium">Task</label>
-        <Select value={selectedTask} onValueChange={setSelectedTask} disabled={isRunning}>
+        <Select
+          value={selectedTask}
+          onValueChange={setSelectedTask}
+          disabled={isRunning}
+        >
           <SelectTrigger>
             <SelectValue placeholder="Select a task" />
           </SelectTrigger>

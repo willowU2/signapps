@@ -391,7 +391,10 @@ mod tests {
         let sid = SecurityIdentifier::parse("S-1-5-21-3623811015-3361044348-30300820").unwrap();
         assert_eq!(sid.revision(), 1);
         assert_eq!(sid.authority(), 5);
-        assert_eq!(sid.sub_authorities(), &[21u32, 3_623_811_015, 3_361_044_348, 30_300_820]);
+        assert_eq!(
+            sid.sub_authorities(),
+            &[21u32, 3_623_811_015, 3_361_044_348, 30_300_820]
+        );
     }
 
     #[test]
@@ -416,7 +419,10 @@ mod tests {
         let domain = SecurityIdentifier::parse("S-1-5-21-100-200-300").unwrap();
         let user = domain.child(1001);
         assert_eq!(user.rid(), Some(1001));
-        assert_eq!(user.sub_authorities().len(), domain.sub_authorities().len() + 1);
+        assert_eq!(
+            user.sub_authorities().len(),
+            domain.sub_authorities().len() + 1
+        );
         assert_eq!(
             &user.sub_authorities()[..domain.sub_authorities().len()],
             domain.sub_authorities()
@@ -438,8 +444,8 @@ mod tests {
 
     #[test]
     fn binary_roundtrip() {
-        let original = SecurityIdentifier::parse("S-1-5-21-3623811015-3361044348-30300820-1001")
-            .unwrap();
+        let original =
+            SecurityIdentifier::parse("S-1-5-21-3623811015-3361044348-30300820-1001").unwrap();
         let bytes = original.to_bytes();
         let decoded = SecurityIdentifier::from_bytes(&bytes).unwrap();
         assert_eq!(original, decoded);

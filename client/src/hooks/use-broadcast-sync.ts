@@ -1,13 +1,11 @@
-'use client';
+"use client";
 
-import { useEffect, useRef, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useRef, useCallback } from "react";
+import { useRouter } from "next/navigation";
 
-const CHANNEL_NAME = 'signapps-session-sync';
+const CHANNEL_NAME = "signapps-session-sync";
 
-type SyncMessage =
-  | { type: 'logout' }
-  | { type: 'notification'; count: number };
+type SyncMessage = { type: "logout" } | { type: "notification"; count: number };
 
 type NotificationHandler = (count: number) => void;
 
@@ -34,7 +32,7 @@ export function useBroadcastSync(options?: {
   const channelRef = useRef<BroadcastChannel | null>(null);
 
   useEffect(() => {
-    if (typeof window === 'undefined' || !('BroadcastChannel' in window)) {
+    if (typeof window === "undefined" || !("BroadcastChannel" in window)) {
       return;
     }
 
@@ -45,12 +43,12 @@ export function useBroadcastSync(options?: {
       const msg = e.data;
 
       switch (msg.type) {
-        case 'logout':
+        case "logout":
           // Another tab logged out — redirect this tab to login
-          router.push('/login');
+          router.push("/login");
           break;
 
-        case 'notification':
+        case "notification":
           // Another tab received a notification — update badge count
           options?.onNotification?.(msg.count);
           break;
@@ -64,11 +62,14 @@ export function useBroadcastSync(options?: {
   }, [router, options]);
 
   const broadcastLogout = useCallback(() => {
-    channelRef.current?.postMessage({ type: 'logout' } satisfies SyncMessage);
+    channelRef.current?.postMessage({ type: "logout" } satisfies SyncMessage);
   }, []);
 
   const broadcastNotification = useCallback((count: number) => {
-    channelRef.current?.postMessage({ type: 'notification', count } satisfies SyncMessage);
+    channelRef.current?.postMessage({
+      type: "notification",
+      count,
+    } satisfies SyncMessage);
   }, []);
 
   return { broadcastLogout, broadcastNotification };

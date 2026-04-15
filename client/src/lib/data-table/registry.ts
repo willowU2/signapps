@@ -372,7 +372,7 @@ function getPermissionCount(role: RoleEntity): number {
   if (!role.permissions) return 0;
   return Object.values(role.permissions).reduce(
     (acc, actions) => acc + (Array.isArray(actions) ? actions.length : 0),
-    0
+    0,
   );
 }
 
@@ -562,7 +562,7 @@ entityRegistry.set("jobs", jobConfig);
  * Get entity configuration by type
  */
 export function getEntityConfig<TData>(
-  entityType: string
+  entityType: string,
 ): EntityConfig<TData> | undefined {
   return entityRegistry.get(entityType);
 }
@@ -572,7 +572,7 @@ export function getEntityConfig<TData>(
  */
 export function registerEntityConfig<TData>(
   entityType: string,
-  config: EntityConfig<TData>
+  config: EntityConfig<TData>,
 ): void {
   entityRegistry.set(entityType, config);
 }
@@ -582,7 +582,7 @@ export function registerEntityConfig<TData>(
  */
 export function extendEntityConfig<TData>(
   entityType: string,
-  overrides: Partial<EntityConfig<TData>>
+  overrides: Partial<EntityConfig<TData>>,
 ): EntityConfig<TData> {
   const base = entityRegistry.get(entityType);
   if (!base) {

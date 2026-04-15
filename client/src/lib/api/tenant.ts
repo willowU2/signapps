@@ -4,92 +4,92 @@
  * Migrated to use API Factory pattern.
  * @see factory.ts for client creation details
  */
-import { identityClient } from './factory';
+import { identityClient } from "./factory";
 
 // ============================================================================
 // Types
 // ============================================================================
 
 export interface Tenant {
-    id: string;
-    name: string;
-    slug: string;
-    domain?: string;
-    logo_url?: string;
-    plan: string;
-    max_users: number;
-    max_resources: number;
-    max_workspaces: number;
-    is_active: boolean;
-    created_at: string;
+  id: string;
+  name: string;
+  slug: string;
+  domain?: string;
+  logo_url?: string;
+  plan: string;
+  max_users: number;
+  max_resources: number;
+  max_workspaces: number;
+  is_active: boolean;
+  created_at: string;
 }
 
 export interface CreateTenantRequest {
-    name: string;
-    slug: string;
-    domain?: string;
-    logo_url?: string;
-    plan?: string;
+  name: string;
+  slug: string;
+  domain?: string;
+  logo_url?: string;
+  plan?: string;
 }
 
 export interface UpdateTenantRequest {
-    name?: string;
-    domain?: string;
-    logo_url?: string;
-    plan?: string;
-    max_users?: number;
-    max_resources?: number;
-    max_workspaces?: number;
-    is_active?: boolean;
+  name?: string;
+  domain?: string;
+  logo_url?: string;
+  plan?: string;
+  max_users?: number;
+  max_resources?: number;
+  max_workspaces?: number;
+  is_active?: boolean;
 }
 
 export interface Workspace {
-    id: string;
-    tenant_id: string;
-    name: string;
-    description?: string;
-    color: string;
-    icon?: string;
-    is_default: boolean;
-    created_at: string;
+  id: string;
+  tenant_id: string;
+  name: string;
+  description?: string;
+  color: string;
+  icon?: string;
+  is_default: boolean;
+  created_at: string;
 }
 
 export interface CreateWorkspaceRequest {
-    name: string;
-    description?: string;
-    color?: string;
-    icon?: string;
-    is_default?: boolean;
+  name: string;
+  description?: string;
+  color?: string;
+  icon?: string;
+  is_default?: boolean;
 }
 
 export interface UpdateWorkspaceRequest {
-    name?: string;
-    description?: string;
-    color?: string;
-    icon?: string;
-    is_default?: boolean;
+  name?: string;
+  description?: string;
+  color?: string;
+  icon?: string;
+  is_default?: boolean;
 }
 
 export interface WorkspaceMember {
-    id: string;
-    user_id: string;
-    username: string;
-    email?: string;
-    display_name?: string;
-    avatar_url?: string;
-    role: WorkspaceRole;
-    joined_at: string;
+  id: string;
+  user_id: string;
+  username: string;
+  email?: string;
+  display_name?: string;
+  avatar_url?: string;
+  role: WorkspaceRole;
+  joined_at: string;
 }
 
-export type WorkspaceRole = 'owner' | 'admin' | 'member' | 'viewer';
+export type WorkspaceRole = "owner" | "admin" | "member" | "viewer";
 
 export interface AddWorkspaceMemberRequest {
-    user_id: string;
-    role?: WorkspaceRole;
+  user_id: string;
+  role?: WorkspaceRole;
 }
 
 export interface UpdateMemberRoleRequest {
-    role: WorkspaceRole;
+  role: WorkspaceRole;
 }
 
 // ============================================================================
@@ -97,25 +97,23 @@ export interface UpdateMemberRoleRequest {
 // ============================================================================
 
 export const tenantsApi = {
-    /** List all tenants (super-admin only) */
-    list: (limit?: number, offset?: number) =>
-        identityClient().get<Tenant[]>('/tenants', { params: { limit, offset } }),
+  /** List all tenants (super-admin only) */
+  list: (limit?: number, offset?: number) =>
+    identityClient().get<Tenant[]>("/tenants", { params: { limit, offset } }),
 
-    /** Get tenant by ID */
-    get: (id: string) =>
-        identityClient().get<Tenant>(`/tenants/${id}`),
+  /** Get tenant by ID */
+  get: (id: string) => identityClient().get<Tenant>(`/tenants/${id}`),
 
-    /** Create a new tenant (super-admin only) */
-    create: (data: CreateTenantRequest) =>
-        identityClient().post<Tenant>('/tenants', data),
+  /** Create a new tenant (super-admin only) */
+  create: (data: CreateTenantRequest) =>
+    identityClient().post<Tenant>("/tenants", data),
 
-    /** Update a tenant */
-    update: (id: string, data: UpdateTenantRequest) =>
-        identityClient().put<Tenant>(`/tenants/${id}`, data),
+  /** Update a tenant */
+  update: (id: string, data: UpdateTenantRequest) =>
+    identityClient().put<Tenant>(`/tenants/${id}`, data),
 
-    /** Delete (deactivate) a tenant */
-    delete: (id: string) =>
-        identityClient().delete(`/tenants/${id}`),
+  /** Delete (deactivate) a tenant */
+  delete: (id: string) => identityClient().delete(`/tenants/${id}`),
 };
 
 // ============================================================================
@@ -123,9 +121,8 @@ export const tenantsApi = {
 // ============================================================================
 
 export const tenantApi = {
-    /** Get current user's tenant */
-    get: () =>
-        identityClient().get<Tenant>('/tenant'),
+  /** Get current user's tenant */
+  get: () => identityClient().get<Tenant>("/tenant"),
 };
 
 // ============================================================================
@@ -133,44 +130,49 @@ export const tenantApi = {
 // ============================================================================
 
 export const workspacesApi = {
-    /** List all workspaces in current tenant */
-    list: (limit?: number, offset?: number) =>
-        identityClient().get<Workspace[]>('/workspaces', { params: { limit, offset } }),
+  /** List all workspaces in current tenant */
+  list: (limit?: number, offset?: number) =>
+    identityClient().get<Workspace[]>("/workspaces", {
+      params: { limit, offset },
+    }),
 
-    /** List workspaces the current user is a member of */
-    mine: () =>
-        identityClient().get<Workspace[]>('/workspaces/mine'),
+  /** List workspaces the current user is a member of */
+  mine: () => identityClient().get<Workspace[]>("/workspaces/mine"),
 
-    /** Get workspace by ID */
-    get: (id: string) =>
-        identityClient().get<Workspace>(`/workspaces/${id}`),
+  /** Get workspace by ID */
+  get: (id: string) => identityClient().get<Workspace>(`/workspaces/${id}`),
 
-    /** Create a new workspace */
-    create: (data: CreateWorkspaceRequest) =>
-        identityClient().post<Workspace>('/workspaces', data),
+  /** Create a new workspace */
+  create: (data: CreateWorkspaceRequest) =>
+    identityClient().post<Workspace>("/workspaces", data),
 
-    /** Update a workspace */
-    update: (id: string, data: UpdateWorkspaceRequest) =>
-        identityClient().put<Workspace>(`/workspaces/${id}`, data),
+  /** Update a workspace */
+  update: (id: string, data: UpdateWorkspaceRequest) =>
+    identityClient().put<Workspace>(`/workspaces/${id}`, data),
 
-    /** Delete a workspace */
-    delete: (id: string) =>
-        identityClient().delete(`/workspaces/${id}`),
+  /** Delete a workspace */
+  delete: (id: string) => identityClient().delete(`/workspaces/${id}`),
 
-    // Members
-    /** List workspace members */
-    listMembers: (workspaceId: string) =>
-        identityClient().get<WorkspaceMember[]>(`/workspaces/${workspaceId}/members`),
+  // Members
+  /** List workspace members */
+  listMembers: (workspaceId: string) =>
+    identityClient().get<WorkspaceMember[]>(
+      `/workspaces/${workspaceId}/members`,
+    ),
 
-    /** Add member to workspace */
-    addMember: (workspaceId: string, data: AddWorkspaceMemberRequest) =>
-        identityClient().post(`/workspaces/${workspaceId}/members`, data),
+  /** Add member to workspace */
+  addMember: (workspaceId: string, data: AddWorkspaceMemberRequest) =>
+    identityClient().post(`/workspaces/${workspaceId}/members`, data),
 
-    /** Update member role */
-    updateMemberRole: (workspaceId: string, userId: string, data: UpdateMemberRoleRequest) =>
-        identityClient().put(`/workspaces/${workspaceId}/members/${userId}`, data),
+  /** Update member role */
+  updateMemberRole: (
+    workspaceId: string,
+    userId: string,
+    data: UpdateMemberRoleRequest,
+  ) =>
+    identityClient().put(`/workspaces/${workspaceId}/members/${userId}`, data),
 
-    /** Remove member from workspace */
-    removeMember: (workspaceId: string, userId: string) =>
-        identityClient().delete(`/workspaces/${workspaceId}/members/${userId}`),
+  /** Remove member from workspace */
+  removeMember: (workspaceId: string, userId: string) =>
+    identityClient().delete(`/workspaces/${workspaceId}/members/${userId}`),
 };

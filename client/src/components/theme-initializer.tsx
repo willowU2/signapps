@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import { useEffect } from 'react';
+import { useEffect } from "react";
 
-const STORAGE_KEY = 'signapps-theme-preferences';
+const STORAGE_KEY = "signapps-theme-preferences";
 
-const COLOR_IDS = ['blue', 'green', 'purple', 'orange', 'red'];
-const FONT_SIZE_IDS = ['small', 'medium', 'large'];
-const RADIUS_IDS = ['sharp', 'rounded', 'pill'];
+const COLOR_IDS = ["blue", "green", "purple", "orange", "red"];
+const FONT_SIZE_IDS = ["small", "medium", "large"];
+const RADIUS_IDS = ["sharp", "rounded", "pill"];
 
 /**
  * Restores theme customization preferences from localStorage on mount.
@@ -35,9 +35,9 @@ export function ThemeInitializer() {
 
       // Compact mode
       if (prefs.compactMode === true) {
-        root.classList.add('compact-mode');
+        root.classList.add("compact-mode");
       } else {
-        root.classList.remove('compact-mode');
+        root.classList.remove("compact-mode");
       }
 
       // Border radius

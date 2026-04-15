@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * Event Drag & Drop Hooks
@@ -7,15 +7,15 @@
  * Supports both moving and resizing events.
  */
 
-import * as React from 'react';
+import * as React from "react";
 import {
   addMinutes,
   differenceInMinutes,
   setHours,
   setMinutes,
   startOfDay,
-} from 'date-fns';
-import type { ScheduleBlock } from '../types/scheduling';
+} from "date-fns";
+import type { ScheduleBlock } from "../types/scheduling";
 
 // ============================================================================
 // Types
@@ -24,7 +24,7 @@ import type { ScheduleBlock } from '../types/scheduling';
 export interface DragState {
   isDragging: boolean;
   eventId: string | null;
-  type: 'move' | 'resize-top' | 'resize-bottom' | null;
+  type: "move" | "resize-top" | "resize-bottom" | null;
   startY: number;
   startX: number;
   initialEvent: ScheduleBlock | null;
@@ -36,8 +36,8 @@ export interface DragState {
 export interface DragHandlers {
   onDragStart: (
     event: ScheduleBlock,
-    type: 'move' | 'resize-top' | 'resize-bottom',
-    e: React.MouseEvent | React.TouchEvent
+    type: "move" | "resize-top" | "resize-bottom",
+    e: React.MouseEvent | React.TouchEvent,
   ) => void;
   onDragMove: (e: MouseEvent | TouchEvent) => void;
   onDragEnd: () => void;
@@ -56,15 +56,19 @@ export interface UseEventDragOptions {
 // Helper Functions
 // ============================================================================
 
-function getClientY(e: MouseEvent | TouchEvent | React.MouseEvent | React.TouchEvent): number {
-  if ('touches' in e) {
+function getClientY(
+  e: MouseEvent | TouchEvent | React.MouseEvent | React.TouchEvent,
+): number {
+  if ("touches" in e) {
     return e.touches[0]?.clientY ?? 0;
   }
   return e.clientY;
 }
 
-function getClientX(e: MouseEvent | TouchEvent | React.MouseEvent | React.TouchEvent): number {
-  if ('touches' in e) {
+function getClientX(
+  e: MouseEvent | TouchEvent | React.MouseEvent | React.TouchEvent,
+): number {
+  if ("touches" in e) {
     return e.touches[0]?.clientX ?? 0;
   }
   return e.clientX;
@@ -120,18 +124,18 @@ export function useEventDrag(options: UseEventDragOptions) {
       const minutes = workingHoursStart * 60 + relativeY / pixelsPerMinute;
       return Math.max(
         workingHoursStart * 60,
-        Math.min(workingHoursEnd * 60, minutes)
+        Math.min(workingHoursEnd * 60, minutes),
       );
     },
-    [pixelsPerMinute, workingHoursStart, workingHoursEnd]
+    [pixelsPerMinute, workingHoursStart, workingHoursEnd],
   );
 
   // Start dragging
   const onDragStart = React.useCallback(
     (
       event: ScheduleBlock,
-      type: 'move' | 'resize-top' | 'resize-bottom',
-      e: React.MouseEvent | React.TouchEvent
+      type: "move" | "resize-top" | "resize-bottom",
+      e: React.MouseEvent | React.TouchEvent,
     ) => {
       e.preventDefault();
       e.stopPropagation();
@@ -148,7 +152,7 @@ export function useEventDrag(options: UseEventDragOptions) {
         targetDate: event.start,
       });
     },
-    []
+    [],
   );
 
   // Handle drag movement
@@ -169,7 +173,7 @@ export function useEventDrag(options: UseEventDragOptions) {
       let newEnd: Date;
 
       switch (dragState.type) {
-        case 'move': {
+        case "move": {
           // Move the entire event
           let newStartMinutes =
             initialStart.getHours() * 60 +
@@ -183,7 +187,7 @@ export function useEventDrag(options: UseEventDragOptions) {
           // Clamp to working hours
           newStartMinutes = Math.max(
             workingHoursStart * 60,
-            Math.min(workingHoursEnd * 60 - duration, newStartMinutes)
+            Math.min(workingHoursEnd * 60 - duration, newStartMinutes),
           );
 
           newStart = new Date(initialStart);
@@ -193,7 +197,7 @@ export function useEventDrag(options: UseEventDragOptions) {
           break;
         }
 
-        case 'resize-top': {
+        case "resize-top": {
           // Resize from the top (change start time)
           let newStartMinutes =
             initialStart.getHours() * 60 +
@@ -206,12 +210,10 @@ export function useEventDrag(options: UseEventDragOptions) {
 
           // Ensure minimum duration and clamp to working hours
           const maxStartMinutes =
-            initialEnd.getHours() * 60 +
-            initialEnd.getMinutes() -
-            slotDuration;
+            initialEnd.getHours() * 60 + initialEnd.getMinutes() - slotDuration;
           newStartMinutes = Math.max(
             workingHoursStart * 60,
-            Math.min(maxStartMinutes, newStartMinutes)
+            Math.min(maxStartMinutes, newStartMinutes),
           );
 
           newStart = new Date(initialStart);
@@ -221,12 +223,10 @@ export function useEventDrag(options: UseEventDragOptions) {
           break;
         }
 
-        case 'resize-bottom': {
+        case "resize-bottom": {
           // Resize from the bottom (change end time)
           let newEndMinutes =
-            initialEnd.getHours() * 60 +
-            initialEnd.getMinutes() +
-            deltaMinutes;
+            initialEnd.getHours() * 60 + initialEnd.getMinutes() + deltaMinutes;
 
           if (snapToGrid) {
             newEndMinutes = snapToSlot(newEndMinutes, slotDuration);
@@ -239,7 +239,7 @@ export function useEventDrag(options: UseEventDragOptions) {
             slotDuration;
           newEndMinutes = Math.max(
             minEndMinutes,
-            Math.min(workingHoursEnd * 60, newEndMinutes)
+            Math.min(workingHoursEnd * 60, newEndMinutes),
           );
 
           newStart = initialStart;
@@ -269,7 +269,7 @@ export function useEventDrag(options: UseEventDragOptions) {
       snapToGrid,
       workingHoursStart,
       workingHoursEnd,
-    ]
+    ],
   );
 
   // End dragging
@@ -293,7 +293,7 @@ export function useEventDrag(options: UseEventDragOptions) {
         onEventMove?.(
           dragState.eventId,
           dragState.previewStart,
-          dragState.previewEnd
+          dragState.previewEnd,
         );
       }
     }
@@ -323,22 +323,23 @@ export function useEventDrag(options: UseEventDragOptions) {
         onDragEnd();
       };
 
-      window.addEventListener('mousemove', handleMove);
-      window.addEventListener('mouseup', handleEnd);
-      window.addEventListener('touchmove', handleMove, { passive: false });
-      window.addEventListener('touchend', handleEnd);
+      window.addEventListener("mousemove", handleMove);
+      window.addEventListener("mouseup", handleEnd);
+      window.addEventListener("touchmove", handleMove, { passive: false });
+      window.addEventListener("touchend", handleEnd);
 
       // Prevent text selection during drag
-      document.body.style.userSelect = 'none';
-      document.body.style.cursor = dragState.type === 'move' ? 'grabbing' : 'ns-resize';
+      document.body.style.userSelect = "none";
+      document.body.style.cursor =
+        dragState.type === "move" ? "grabbing" : "ns-resize";
 
       return () => {
-        window.removeEventListener('mousemove', handleMove);
-        window.removeEventListener('mouseup', handleEnd);
-        window.removeEventListener('touchmove', handleMove);
-        window.removeEventListener('touchend', handleEnd);
-        document.body.style.userSelect = '';
-        document.body.style.cursor = '';
+        window.removeEventListener("mousemove", handleMove);
+        window.removeEventListener("mouseup", handleEnd);
+        window.removeEventListener("touchmove", handleMove);
+        window.removeEventListener("touchend", handleEnd);
+        document.body.style.userSelect = "";
+        document.body.style.cursor = "";
       };
     }
   }, [dragState.isDragging, dragState.type, onDragMove, onDragEnd]);
@@ -362,10 +363,14 @@ export function useDragPreview(
   dragState: DragState,
   slotHeight: number,
   slotDuration: number,
-  workingHoursStart: number
+  workingHoursStart: number,
 ) {
   return React.useMemo(() => {
-    if (!dragState.isDragging || !dragState.previewStart || !dragState.previewEnd) {
+    if (
+      !dragState.isDragging ||
+      !dragState.previewStart ||
+      !dragState.previewEnd
+    ) {
       return null;
     }
 
@@ -373,8 +378,7 @@ export function useDragPreview(
       dragState.previewStart.getHours() * 60 +
       dragState.previewStart.getMinutes();
     const endMinutes =
-      dragState.previewEnd.getHours() * 60 +
-      dragState.previewEnd.getMinutes();
+      dragState.previewEnd.getHours() * 60 + dragState.previewEnd.getMinutes();
 
     const pixelsPerMinute = slotHeight / slotDuration;
     const top = (startMinutes - workingHoursStart * 60) * pixelsPerMinute;

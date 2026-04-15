@@ -1,57 +1,64 @@
-"use client"
+"use client";
 
 // IDEA-281: Privacy policy generator — template-based legal doc generator
 
-import { useState } from "react"
-import { FileText, Download, Copy, RefreshCw, ChevronDown, ChevronUp } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Switch } from "@/components/ui/switch"
-import { Textarea } from "@/components/ui/textarea"
-import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { useState } from "react";
+import {
+  FileText,
+  Download,
+  Copy,
+  RefreshCw,
+  ChevronDown,
+  ChevronUp,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from "@/components/ui/collapsible"
+} from "@/components/ui/collapsible";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { toast } from "sonner"
+} from "@/components/ui/select";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { toast } from "sonner";
 
 interface PolicyConfig {
   // Company
-  company_name: string
-  company_address: string
-  contact_email: string
-  dpo_email?: string
-  website_url: string
-  jurisdiction: string
+  company_name: string;
+  company_address: string;
+  contact_email: string;
+  dpo_email?: string;
+  website_url: string;
+  jurisdiction: string;
 
   // Data activities
-  collects_analytics: boolean
-  collects_cookies: boolean
-  uses_email_marketing: boolean
-  uses_third_party_integrations: boolean
-  third_parties: string
-  transfers_outside_eu: boolean
-  transfer_countries: string
+  collects_analytics: boolean;
+  collects_cookies: boolean;
+  uses_email_marketing: boolean;
+  uses_third_party_integrations: boolean;
+  third_parties: string;
+  transfers_outside_eu: boolean;
+  transfer_countries: string;
 
   // Rights
-  right_to_erasure: boolean
-  right_to_portability: boolean
-  right_to_object: boolean
+  right_to_erasure: boolean;
+  right_to_portability: boolean;
+  right_to_object: boolean;
 
   // Retention
-  retention_policy: string
-  effective_date: string
+  retention_policy: string;
+  effective_date: string;
 }
 
 const JURISDICTIONS = [
@@ -61,7 +68,7 @@ const JURISDICTIONS = [
   "United States (CCPA)",
   "Canada (PIPEDA)",
   "Generic",
-]
+];
 
 const EMPTY: PolicyConfig = {
   company_name: "",
@@ -80,9 +87,10 @@ const EMPTY: PolicyConfig = {
   right_to_erasure: true,
   right_to_portability: true,
   right_to_object: true,
-  retention_policy: "We retain personal data only for as long as necessary to fulfil the purposes outlined in this policy.",
+  retention_policy:
+    "We retain personal data only for as long as necessary to fulfil the purposes outlined in this policy.",
   effective_date: new Date().toISOString().split("T")[0],
-}
+};
 
 function generatePolicy(c: PolicyConfig): string {
   const rights = [
@@ -92,7 +100,9 @@ function generatePolicy(c: PolicyConfig): string {
     c.right_to_object && "the right to object to processing",
     "the right to restrict processing",
     "the right to lodge a complaint with a supervisory authority",
-  ].filter(Boolean).join("; ")
+  ]
+    .filter(Boolean)
+    .join("; ");
 
   return `# Privacy Policy
 
@@ -141,7 +151,9 @@ We process your data under the following legal bases:
 ${c.uses_email_marketing ? "- **Consent:** marketing communications (you may withdraw at any time)" : ""}
 
 ---
-${c.uses_third_party_integrations ? `
+${
+  c.uses_third_party_integrations
+    ? `
 ## 5. Third Parties
 
 We share data with the following third parties:
@@ -150,7 +162,9 @@ ${c.third_parties || "(list your third parties here)"}
 These parties are bound by data processing agreements and may not use your data for their own purposes.
 
 ---
-` : ""}
+`
+    : ""
+}
 ## ${c.uses_third_party_integrations ? "6" : "5"}. Data Retention
 
 ${c.retention_policy}
@@ -164,13 +178,17 @@ You have the following rights regarding your personal data: ${rights}.
 To exercise these rights, contact us at ${c.contact_email}.
 
 ---
-${c.transfers_outside_eu ? `
+${
+  c.transfers_outside_eu
+    ? `
 ## International Transfers
 
 We may transfer your data to: ${c.transfer_countries || "(specify countries)"}. We ensure appropriate safeguards are in place for such transfers.
 
 ---
-` : ""}
+`
+    : ""
+}
 ## ${c.uses_third_party_integrations ? "8" : "7"}. Security
 
 We implement appropriate technical and organizational measures to protect your personal data against unauthorized access, alteration, disclosure, or destruction.
@@ -183,49 +201,52 @@ We may update this Privacy Policy from time to time. We will notify you of signi
 
 ---
 
-*Last updated: ${c.effective_date} · ${c.company_name}*`
+*Last updated: ${c.effective_date} · ${c.company_name}*`;
 }
 
 export function PrivacyPolicyGenerator() {
-  const [config, setConfig] = useState<PolicyConfig>(EMPTY)
-  const [generated, setGenerated] = useState("")
-  const [generating, setGenerating] = useState(false)
-  const [showPreview, setShowPreview] = useState(false)
+  const [config, setConfig] = useState<PolicyConfig>(EMPTY);
+  const [generated, setGenerated] = useState("");
+  const [generating, setGenerating] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
 
-  function update<K extends keyof PolicyConfig>(key: K, value: PolicyConfig[K]) {
-    setConfig(p => ({ ...p, [key]: value }))
+  function update<K extends keyof PolicyConfig>(
+    key: K,
+    value: PolicyConfig[K],
+  ) {
+    setConfig((p) => ({ ...p, [key]: value }));
   }
 
   async function generate() {
     if (!config.company_name || !config.contact_email) {
-      toast.error("Le nom de l'entreprise et l'email de contact sont requis")
-      return
+      toast.error("Le nom de l'entreprise et l'email de contact sont requis");
+      return;
     }
-    setGenerating(true)
+    setGenerating(true);
     // Try API for AI-enhanced version, fall back to template
     try {
       const res = await fetch("/api/compliance/privacy-policy/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(config),
-      })
+      });
       if (res.ok) {
-        const data = await res.json()
-        setGenerated(data.content)
+        const data = await res.json();
+        setGenerated(data.content);
       } else {
-        setGenerated(generatePolicy(config))
+        setGenerated(generatePolicy(config));
       }
     } catch {
-      setGenerated(generatePolicy(config))
+      setGenerated(generatePolicy(config));
     }
-    setShowPreview(true)
-    setGenerating(false)
-    toast.success("Politique de confidentialité générée")
+    setShowPreview(true);
+    setGenerating(false);
+    toast.success("Politique de confidentialité générée");
   }
 
   function copyToClipboard() {
-    navigator.clipboard.writeText(generated)
-    toast.success("Copié dans le presse-papiers")
+    navigator.clipboard.writeText(generated);
+    toast.success("Copié dans le presse-papiers");
   }
 
   async function downloadPdf() {
@@ -233,16 +254,19 @@ export function PrivacyPolicyGenerator() {
       const res = await fetch("/api/compliance/privacy-policy/export-pdf", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: generated, company: config.company_name }),
-      })
-      const blob = await res.blob()
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement("a")
-      a.href = url
-      a.download = `Privacy_Policy_${config.company_name.replace(/\s+/g, "_")}.pdf`
-      a.click()
+        body: JSON.stringify({
+          content: generated,
+          company: config.company_name,
+        }),
+      });
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Privacy_Policy_${config.company_name.replace(/\s+/g, "_")}.pdf`;
+      a.click();
     } catch {
-      toast.error("PDF export failed")
+      toast.error("PDF export failed");
     }
   }
 
@@ -255,7 +279,7 @@ export function PrivacyPolicyGenerator() {
     { key: "right_to_erasure", label: "Right to erasure" },
     { key: "right_to_portability", label: "Right to portability" },
     { key: "right_to_object", label: "Right to object" },
-  ]
+  ];
 
   return (
     <div className="space-y-4 max-w-2xl">
@@ -271,30 +295,59 @@ export function PrivacyPolicyGenerator() {
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label className="text-xs">Company name *</Label>
-              <Input value={config.company_name} onChange={e => update("company_name", e.target.value)} placeholder="Acme Corp" />
+              <Input
+                value={config.company_name}
+                onChange={(e) => update("company_name", e.target.value)}
+                placeholder="Acme Corp"
+              />
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs">Website URL</Label>
-              <Input value={config.website_url} onChange={e => update("website_url", e.target.value)} placeholder="https://example.com" />
+              <Input
+                value={config.website_url}
+                onChange={(e) => update("website_url", e.target.value)}
+                placeholder="https://example.com"
+              />
             </div>
             <div className="space-y-1.5 col-span-2">
               <Label className="text-xs">Company address</Label>
-              <Input value={config.company_address} onChange={e => update("company_address", e.target.value)} placeholder="123 Main St, City, Country" />
+              <Input
+                value={config.company_address}
+                onChange={(e) => update("company_address", e.target.value)}
+                placeholder="123 Main St, City, Country"
+              />
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs">Contact email *</Label>
-              <Input value={config.contact_email} onChange={e => update("contact_email", e.target.value)} placeholder="privacy@example.com" />
+              <Input
+                value={config.contact_email}
+                onChange={(e) => update("contact_email", e.target.value)}
+                placeholder="privacy@example.com"
+              />
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs">DPO email (optional)</Label>
-              <Input value={config.dpo_email ?? ""} onChange={e => update("dpo_email", e.target.value)} placeholder="dpo@example.com" />
+              <Input
+                value={config.dpo_email ?? ""}
+                onChange={(e) => update("dpo_email", e.target.value)}
+                placeholder="dpo@example.com"
+              />
             </div>
             <div className="space-y-1.5 col-span-2">
               <Label className="text-xs">Jurisdiction</Label>
-              <Select value={config.jurisdiction} onValueChange={v => update("jurisdiction", v)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+              <Select
+                value={config.jurisdiction}
+                onValueChange={(v) => update("jurisdiction", v)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
-                  {JURISDICTIONS.map(j => <SelectItem key={j} value={j}>{j}</SelectItem>)}
+                  {JURISDICTIONS.map((j) => (
+                    <SelectItem key={j} value={j}>
+                      {j}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -306,7 +359,7 @@ export function PrivacyPolicyGenerator() {
                 <Label className="text-xs">{label}</Label>
                 <Switch
                   checked={config[key] as boolean}
-                  onCheckedChange={v => update(key, v)}
+                  onCheckedChange={(v) => update(key, v)}
                 />
               </div>
             ))}
@@ -315,19 +368,29 @@ export function PrivacyPolicyGenerator() {
           {config.uses_third_party_integrations && (
             <div className="space-y-1.5">
               <Label className="text-xs">Third parties list</Label>
-              <Input value={config.third_parties} onChange={e => update("third_parties", e.target.value)} placeholder="Google Analytics, Stripe, Mailchimp…" />
+              <Input
+                value={config.third_parties}
+                onChange={(e) => update("third_parties", e.target.value)}
+                placeholder="Google Analytics, Stripe, Mailchimp…"
+              />
             </div>
           )}
 
           <div className="space-y-1.5">
             <Label className="text-xs">Effective date</Label>
-            <Input type="date" value={config.effective_date} onChange={e => update("effective_date", e.target.value)} />
+            <Input
+              type="date"
+              value={config.effective_date}
+              onChange={(e) => update("effective_date", e.target.value)}
+            />
           </div>
         </CardContent>
       </Card>
 
       <Button onClick={generate} disabled={generating} className="w-full">
-        <RefreshCw className={`h-4 w-4 mr-2 ${generating ? "animate-spin" : ""}`} />
+        <RefreshCw
+          className={`h-4 w-4 mr-2 ${generating ? "animate-spin" : ""}`}
+        />
         {generating ? "Generating…" : "Generate Privacy Policy"}
       </Button>
 
@@ -346,11 +409,13 @@ export function PrivacyPolicyGenerator() {
           </CardHeader>
           <CardContent className="p-0">
             <ScrollArea className="h-64">
-              <pre className="text-xs p-4 whitespace-pre-wrap font-sans">{generated}</pre>
+              <pre className="text-xs p-4 whitespace-pre-wrap font-sans">
+                {generated}
+              </pre>
             </ScrollArea>
           </CardContent>
         </Card>
       )}
     </div>
-  )
+  );
 }

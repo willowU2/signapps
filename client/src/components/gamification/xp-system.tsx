@@ -15,10 +15,30 @@ export default function XpSystem() {
   const [currentXp, setCurrentXp] = useState(2450);
   const [xpToNextLevel] = useState(5000);
   const [recentGains, setRecentGains] = useState<XpGain[]>([
-    { id: "1", action: "Completed task", xp: 250, timestamp: new Date(Date.now() - 5 * 60000) },
-    { id: "2", action: "Helped teammate", xp: 100, timestamp: new Date(Date.now() - 15 * 60000) },
-    { id: "3", action: "Code review", xp: 150, timestamp: new Date(Date.now() - 30 * 60000) },
-    { id: "4", action: "Bug fix", xp: 200, timestamp: new Date(Date.now() - 60 * 60000) },
+    {
+      id: "1",
+      action: "Completed task",
+      xp: 250,
+      timestamp: new Date(Date.now() - 5 * 60000),
+    },
+    {
+      id: "2",
+      action: "Helped teammate",
+      xp: 100,
+      timestamp: new Date(Date.now() - 15 * 60000),
+    },
+    {
+      id: "3",
+      action: "Code review",
+      xp: 150,
+      timestamp: new Date(Date.now() - 30 * 60000),
+    },
+    {
+      id: "4",
+      action: "Bug fix",
+      xp: 200,
+      timestamp: new Date(Date.now() - 60 * 60000),
+    },
   ]);
 
   const progressPercentage = (currentXp / xpToNextLevel) * 100;
@@ -82,12 +102,19 @@ export default function XpSystem() {
         </h3>
         <div className="space-y-2">
           {recentGains.map((gain) => (
-            <div key={gain.id} className="flex justify-between items-center p-2 bg-muted rounded">
+            <div
+              key={gain.id}
+              className="flex justify-between items-center p-2 bg-muted rounded"
+            >
               <div>
                 <p className="text-sm font-medium">{gain.action}</p>
-                <p className="text-xs text-muted-foreground">{formatTime(gain.timestamp)}</p>
+                <p className="text-xs text-muted-foreground">
+                  {formatTime(gain.timestamp)}
+                </p>
               </div>
-              <p className="font-mono font-bold text-yellow-600">+{gain.xp} XP</p>
+              <p className="font-mono font-bold text-yellow-600">
+                +{gain.xp} XP
+              </p>
             </div>
           ))}
         </div>

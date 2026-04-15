@@ -34,7 +34,10 @@ export default function DesignBrandKit() {
 
   const addColor = () => {
     updateKit({
-      colors: [...kit.colors, { id: crypto.randomUUID(), name: "New Color", value: "#000000" }],
+      colors: [
+        ...kit.colors,
+        { id: crypto.randomUUID(), name: "New Color", value: "#000000" },
+      ],
     });
   };
 
@@ -67,7 +70,12 @@ export default function DesignBrandKit() {
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <Label className="text-xs font-medium">Brand Colors</Label>
-          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={addColor}>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6"
+            onClick={addColor}
+          >
             <Plus className="h-3.5 w-3.5" />
           </Button>
         </div>
@@ -77,12 +85,16 @@ export default function DesignBrandKit() {
               <input
                 type="color"
                 value={color.value}
-                onChange={(e) => updateColor(color.id, { value: e.target.value })}
+                onChange={(e) =>
+                  updateColor(color.id, { value: e.target.value })
+                }
                 className="h-7 w-7 rounded border cursor-pointer shrink-0"
               />
               <Input
                 value={color.name}
-                onChange={(e) => updateColor(color.id, { name: e.target.value })}
+                onChange={(e) =>
+                  updateColor(color.id, { name: e.target.value })
+                }
                 className="h-7 text-xs flex-1"
                 placeholder="Color name"
               />
@@ -119,26 +131,34 @@ export default function DesignBrandKit() {
         <Label className="text-xs font-medium">Brand Fonts</Label>
         <div className="space-y-1.5">
           <div>
-            <Label className="text-[10px] text-muted-foreground">Heading Font</Label>
+            <Label className="text-[10px] text-muted-foreground">
+              Heading Font
+            </Label>
             <select
               value={kit.headingFont}
               onChange={(e) => updateKit({ headingFont: e.target.value })}
               className="w-full h-7 text-xs rounded border bg-background px-2"
             >
               {FONT_FAMILIES.map((f) => (
-                <option key={f} value={f}>{f}</option>
+                <option key={f} value={f}>
+                  {f}
+                </option>
               ))}
             </select>
           </div>
           <div>
-            <Label className="text-[10px] text-muted-foreground">Body Font</Label>
+            <Label className="text-[10px] text-muted-foreground">
+              Body Font
+            </Label>
             <select
               value={kit.bodyFont}
               onChange={(e) => updateKit({ bodyFont: e.target.value })}
               className="w-full h-7 text-xs rounded border bg-background px-2"
             >
               {FONT_FAMILIES.map((f) => (
-                <option key={f} value={f}>{f}</option>
+                <option key={f} value={f}>
+                  {f}
+                </option>
               ))}
             </select>
           </div>
@@ -146,7 +166,10 @@ export default function DesignBrandKit() {
 
         {/* Font preview */}
         <div className="bg-muted/30 rounded-lg p-3 space-y-1">
-          <p className="text-sm font-bold" style={{ fontFamily: kit.headingFont }}>
+          <p
+            className="text-sm font-bold"
+            style={{ fontFamily: kit.headingFont }}
+          >
             Heading Preview
           </p>
           <p className="text-xs" style={{ fontFamily: kit.bodyFont }}>
@@ -160,12 +183,18 @@ export default function DesignBrandKit() {
       {/* Logos */}
       <div className="space-y-2">
         <Label className="text-xs font-medium">Logos</Label>
-        <Button variant="outline" size="sm" className="w-full h-8 text-xs gap-1.5">
+        <Button
+          variant="outline"
+          size="sm"
+          className="w-full h-8 text-xs gap-1.5"
+        >
           <Upload className="h-3.5 w-3.5" />
           Upload Logo
         </Button>
         {kit.logos.length === 0 && (
-          <p className="text-[10px] text-muted-foreground text-center py-2">No logos uploaded yet</p>
+          <p className="text-[10px] text-muted-foreground text-center py-2">
+            No logos uploaded yet
+          </p>
         )}
       </div>
     </div>

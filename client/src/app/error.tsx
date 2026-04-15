@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { AlertTriangle, RefreshCw, Home, Copy, Check } from 'lucide-react';
-import Link from 'next/link';
+import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { AlertTriangle, RefreshCw, Home, Copy, Check } from "lucide-react";
+import Link from "next/link";
 
 export default function Error({
   error,
@@ -15,19 +15,19 @@ export default function Error({
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    console.warn('Application error:', error);
+    console.warn("Application error:", error);
   }, [error]);
 
   const copyError = async () => {
     const errorText = [
       `Error: ${error.message}`,
-      error.digest ? `Digest: ${error.digest}` : '',
+      error.digest ? `Digest: ${error.digest}` : "",
       `URL: ${window.location.href}`,
       `Date: ${new Date().toISOString()}`,
-      error.stack ? `\nStack:\n${error.stack}` : '',
+      error.stack ? `\nStack:\n${error.stack}` : "",
     ]
       .filter(Boolean)
-      .join('\n');
+      .join("\n");
 
     try {
       await navigator.clipboard.writeText(errorText);
@@ -35,11 +35,11 @@ export default function Error({
       setTimeout(() => setCopied(false), 2000);
     } catch {
       // Fallback for older browsers
-      const textarea = document.createElement('textarea');
+      const textarea = document.createElement("textarea");
       textarea.value = errorText;
       document.body.appendChild(textarea);
       textarea.select();
-      document.execCommand('copy');
+      document.execCommand("copy");
       document.body.removeChild(textarea);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
@@ -58,14 +58,17 @@ export default function Error({
         <div className="space-y-2">
           <h1 className="text-3xl font-bold">Erreur inattendue</h1>
           <p className="text-muted-foreground">
-            Une erreur inattendue s&apos;est produite. Veuillez recharger la page ou retourner au tableau de bord.
+            Une erreur inattendue s&apos;est produite. Veuillez recharger la
+            page ou retourner au tableau de bord.
           </p>
         </div>
 
         {/* Error details */}
         <div className="rounded-lg border bg-muted/50 p-4 text-left">
           <div className="flex items-center justify-between mb-2">
-            <p className="text-sm font-medium text-destructive">Détails de l&apos;erreur</p>
+            <p className="text-sm font-medium text-destructive">
+              Détails de l&apos;erreur
+            </p>
             <Button
               variant="ghost"
               size="sm"

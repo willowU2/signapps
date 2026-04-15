@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import { AppLayout } from '@/components/layout/app-layout';
-import { UnifiedTrash } from '@/components/crosslinks/UnifiedTrash';
-import { Trash2 } from 'lucide-react';
-import { usePageTitle } from '@/hooks/use-page-title';
+import { AppLayout } from "@/components/layout/app-layout";
+import { UnifiedTrash } from "@/components/crosslinks/UnifiedTrash";
+import { Trash2 } from "lucide-react";
+import { usePageTitle } from "@/hooks/use-page-title";
 
 export default function TrashRoute() {
-  usePageTitle('Corbeille');
+  usePageTitle("Corbeille");
   return (
     <AppLayout>
       <div className="w-full py-6 space-y-6">
@@ -14,7 +14,9 @@ export default function TrashRoute() {
           <Trash2 className="w-6 h-6 text-muted-foreground" />
           <div>
             <h1 className="text-2xl font-bold">Corbeille</h1>
-            <p className="text-sm text-muted-foreground">Éléments supprimés dans tous les modules — restaurez ou purgez</p>
+            <p className="text-sm text-muted-foreground">
+              Éléments supprimés dans tous les modules — restaurez ou purgez
+            </p>
           </div>
         </div>
         <UnifiedTrash />

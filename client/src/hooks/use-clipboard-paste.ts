@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { useEffect, useCallback } from 'react';
-import { toast } from 'sonner';
-import { storageApi } from '@/lib/api/storage';
+import { useEffect, useCallback } from "react";
+import { toast } from "sonner";
+import { storageApi } from "@/lib/api/storage";
 
 export interface ClipboardPasteResult {
   url: string;
@@ -43,7 +43,7 @@ export interface UseClipboardPasteOptions {
 export function useClipboardPaste(options: UseClipboardPasteOptions = {}) {
   const {
     enabled = true,
-    bucket = 'documents',
+    bucket = "documents",
     onImagePasted,
     onFilePasted,
   } = options;
@@ -59,7 +59,7 @@ export function useClipboardPaste(options: UseClipboardPasteOptions = {}) {
         const item = items[i];
 
         // Only handle files (images, etc.)
-        if (item.kind !== 'file') continue;
+        if (item.kind !== "file") continue;
 
         const file = item.getAsFile();
         if (!file) continue;
@@ -67,11 +67,11 @@ export function useClipboardPaste(options: UseClipboardPasteOptions = {}) {
         // Prevent default paste behavior for files
         e.preventDefault();
 
-        const isImage = file.type.startsWith('image/');
+        const isImage = file.type.startsWith("image/");
         const toastId = toast.loading(
           isImage
-            ? 'Upload de l\'image collee...'
-            : `Upload de "${file.name}"...`
+            ? "Upload de l'image collee..."
+            : `Upload de "${file.name}"...`,
         );
 
         try {
@@ -89,8 +89,8 @@ export function useClipboardPaste(options: UseClipboardPasteOptions = {}) {
           };
 
           toast.success(
-            isImage ? 'Image collee et uploadee' : `"${file.name}" uploade`,
-            { id: toastId }
+            isImage ? "Image collee et uploadee" : `"${file.name}" uploade`,
+            { id: toastId },
           );
 
           if (isImage && onImagePasted) {
@@ -99,20 +99,20 @@ export function useClipboardPaste(options: UseClipboardPasteOptions = {}) {
             onFilePasted(result);
           }
         } catch {
-          toast.error('Erreur lors de l\'upload', { id: toastId });
+          toast.error("Erreur lors de l'upload", { id: toastId });
         }
 
         // Only handle the first file
         break;
       }
     },
-    [enabled, bucket, onImagePasted, onFilePasted]
+    [enabled, bucket, onImagePasted, onFilePasted],
   );
 
   useEffect(() => {
     if (!enabled) return;
 
-    document.addEventListener('paste', handlePaste);
-    return () => document.removeEventListener('paste', handlePaste);
+    document.addEventListener("paste", handlePaste);
+    return () => document.removeEventListener("paste", handlePaste);
   }, [enabled, handlePaste]);
 }

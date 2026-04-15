@@ -1,4 +1,4 @@
-'use client'
+"use client";
 
 /**
  * MR1 — Room booking with floor plan
@@ -7,186 +7,198 @@
  * shows availability (green/yellow/red), and creates a calendar event on booking.
  */
 
-import React, { useState, useEffect, useCallback } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
+import React, { useState, useEffect, useCallback } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from '@/components/ui/dialog'
+} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Calendar, Clock, Users, MapPin, Loader2, Building2 } from 'lucide-react'
-import { toast } from 'sonner'
-import { calendarApi } from '@/lib/api'
+} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Calendar,
+  Clock,
+  Users,
+  MapPin,
+  Loader2,
+  Building2,
+} from "lucide-react";
+import { toast } from "sonner";
+import { calendarApi } from "@/lib/api";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface FloorPlanArea {
-  id: string
-  x: number
-  y: number
-  width: number
-  height: number
-  label: string
+  id: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  label: string;
 }
 
 interface FloorPlan {
-  id: string
-  name: string
-  floor: string
-  svg_viewbox?: string
-  areas: FloorPlanArea[]
+  id: string;
+  name: string;
+  floor: string;
+  svg_viewbox?: string;
+  areas: FloorPlanArea[];
 }
 
 interface RoomEvent {
-  id: string
-  title: string
-  start: string
-  end: string
+  id: string;
+  title: string;
+  start: string;
+  end: string;
 }
 
-type RoomStatus = 'free' | 'booked' | 'partial'
+type RoomStatus = "free" | "booked" | "partial";
 
 interface RoomAvailability {
-  room_id: string
-  status: RoomStatus
-  events: RoomEvent[]
+  room_id: string;
+  status: RoomStatus;
+  events: RoomEvent[];
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 const STATUS_COLOR: Record<RoomStatus, string> = {
-  free: '#22c55e',
-  booked: '#ef4444',
-  partial: '#f59e0b',
-}
+  free: "#22c55e",
+  booked: "#ef4444",
+  partial: "#f59e0b",
+};
 
 const STATUS_LABEL: Record<RoomStatus, string> = {
-  free: 'Disponible',
-  booked: 'Occupée',
-  partial: 'Partielle',
-}
+  free: "Disponible",
+  booked: "Occupée",
+  partial: "Partielle",
+};
 
-function statusBadgeVariant(s: RoomStatus): 'default' | 'destructive' | 'secondary' {
-  if (s === 'free') return 'default'
-  if (s === 'booked') return 'destructive'
-  return 'secondary'
+function statusBadgeVariant(
+  s: RoomStatus,
+): "default" | "destructive" | "secondary" {
+  if (s === "free") return "default";
+  if (s === "booked") return "destructive";
+  return "secondary";
 }
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export function RoomBooking() {
-  const [floorPlans, setFloorPlans] = useState<FloorPlan[]>([])
-  const [selectedPlan, setSelectedPlan] = useState<FloorPlan | null>(null)
-  const [availability, setAvailability] = useState<Record<string, RoomAvailability>>({})
-  const [loadingPlans, setLoadingPlans] = useState(true)
-  const [loadingAvail, setLoadingAvail] = useState(false)
+  const [floorPlans, setFloorPlans] = useState<FloorPlan[]>([]);
+  const [selectedPlan, setSelectedPlan] = useState<FloorPlan | null>(null);
+  const [availability, setAvailability] = useState<
+    Record<string, RoomAvailability>
+  >({});
+  const [loadingPlans, setLoadingPlans] = useState(true);
+  const [loadingAvail, setLoadingAvail] = useState(false);
 
   // Booking dialog state
-  const [bookingRoom, setBookingRoom] = useState<FloorPlanArea | null>(null)
-  const [bookingTitle, setBookingTitle] = useState('')
-  const [bookingDate, setBookingDate] = useState(() => new Date().toISOString().split('T')[0])
-  const [bookingStart, setBookingStart] = useState('09:00')
-  const [bookingEnd, setBookingEnd] = useState('10:00')
-  const [bookingLoading, setBookingLoading] = useState(false)
+  const [bookingRoom, setBookingRoom] = useState<FloorPlanArea | null>(null);
+  const [bookingTitle, setBookingTitle] = useState("");
+  const [bookingDate, setBookingDate] = useState(
+    () => new Date().toISOString().split("T")[0],
+  );
+  const [bookingStart, setBookingStart] = useState("09:00");
+  const [bookingEnd, setBookingEnd] = useState("10:00");
+  const [bookingLoading, setBookingLoading] = useState(false);
 
   // Load floor plans
   useEffect(() => {
     calendarApi
-      .get<FloorPlan[]>('/floor-plans')
+      .get<FloorPlan[]>("/floor-plans")
       .then((res) => {
-        const plans: FloorPlan[] = res.data ?? []
-        setFloorPlans(plans)
-        if (plans.length > 0) setSelectedPlan(plans[0])
+        const plans: FloorPlan[] = res.data ?? [];
+        setFloorPlans(plans);
+        if (plans.length > 0) setSelectedPlan(plans[0]);
       })
-      .catch(() => toast.error('Impossible de charger les plans'))
-      .finally(() => setLoadingPlans(false))
-  }, [])
+      .catch(() => toast.error("Impossible de charger les plans"))
+      .finally(() => setLoadingPlans(false));
+  }, []);
 
   // Refresh availability for the current floor plan
-  const refreshAvailability = useCallback(
-    async (plan: FloorPlan) => {
-      if (!plan.areas?.length) return
-      setLoadingAvail(true)
-      try {
-        const now = new Date()
-        const endOfDay = new Date(now)
-        endOfDay.setHours(23, 59, 59, 999)
+  const refreshAvailability = useCallback(async (plan: FloorPlan) => {
+    if (!plan.areas?.length) return;
+    setLoadingAvail(true);
+    try {
+      const now = new Date();
+      const endOfDay = new Date(now);
+      endOfDay.setHours(23, 59, 59, 999);
 
-        const roomIds = plan.areas.map((a) => a.id)
-        const results: Record<string, RoomAvailability> = {}
+      const roomIds = plan.areas.map((a) => a.id);
+      const results: Record<string, RoomAvailability> = {};
 
-        await Promise.all(
-          roomIds.map(async (rid) => {
-            try {
-              const res = await calendarApi.get<RoomEvent[]>('/events', {
-                params: {
-                  resource_id: rid,
-                  start: now.toISOString(),
-                  end: endOfDay.toISOString(),
-                },
-              })
-              const events: RoomEvent[] = res.data ?? []
-              let status: RoomStatus = 'free'
-              if (events.length > 0) {
-                const nowMs = now.getTime()
-                const isCurrentlyBooked = events.some(
-                  (e) => new Date(e.start).getTime() <= nowMs && new Date(e.end).getTime() >= nowMs
-                )
-                status = isCurrentlyBooked ? 'booked' : 'partial'
-              }
-              results[rid] = { room_id: rid, status, events }
-            } catch {
-              results[rid] = { room_id: rid, status: 'free', events: [] }
+      await Promise.all(
+        roomIds.map(async (rid) => {
+          try {
+            const res = await calendarApi.get<RoomEvent[]>("/events", {
+              params: {
+                resource_id: rid,
+                start: now.toISOString(),
+                end: endOfDay.toISOString(),
+              },
+            });
+            const events: RoomEvent[] = res.data ?? [];
+            let status: RoomStatus = "free";
+            if (events.length > 0) {
+              const nowMs = now.getTime();
+              const isCurrentlyBooked = events.some(
+                (e) =>
+                  new Date(e.start).getTime() <= nowMs &&
+                  new Date(e.end).getTime() >= nowMs,
+              );
+              status = isCurrentlyBooked ? "booked" : "partial";
             }
-          })
-        )
-        setAvailability(results)
-      } finally {
-        setLoadingAvail(false)
-      }
-    },
-    []
-  )
+            results[rid] = { room_id: rid, status, events };
+          } catch {
+            results[rid] = { room_id: rid, status: "free", events: [] };
+          }
+        }),
+      );
+      setAvailability(results);
+    } finally {
+      setLoadingAvail(false);
+    }
+  }, []);
 
   useEffect(() => {
-    if (selectedPlan) refreshAvailability(selectedPlan)
-  }, [selectedPlan, refreshAvailability])
+    if (selectedPlan) refreshAvailability(selectedPlan);
+  }, [selectedPlan, refreshAvailability]);
 
   const handleRoomClick = (area: FloorPlanArea) => {
-    setBookingRoom(area)
-    setBookingTitle('')
-    setBookingDate(new Date().toISOString().split('T')[0])
-    setBookingStart('09:00')
-    setBookingEnd('10:00')
-  }
+    setBookingRoom(area);
+    setBookingTitle("");
+    setBookingDate(new Date().toISOString().split("T")[0]);
+    setBookingStart("09:00");
+    setBookingEnd("10:00");
+  };
 
   const handleBook = async () => {
     if (!bookingRoom || !bookingTitle.trim()) {
-      toast.error('Veuillez saisir un titre')
-      return
+      toast.error("Veuillez saisir un titre");
+      return;
     }
-    setBookingLoading(true)
+    setBookingLoading(true);
     try {
       // Find or use the first calendar
-      const cals = await calendarApi.listCalendars()
-      const calendarId = (cals.data as Array<{ id: string }>)?.[0]?.id
-      if (!calendarId) throw new Error('Aucun calendrier disponible')
+      const cals = await calendarApi.listCalendars();
+      const calendarId = (cals.data as Array<{ id: string }>)?.[0]?.id;
+      if (!calendarId) throw new Error("Aucun calendrier disponible");
 
-      const startDt = new Date(`${bookingDate}T${bookingStart}:00`)
-      const endDt = new Date(`${bookingDate}T${bookingEnd}:00`)
+      const startDt = new Date(`${bookingDate}T${bookingStart}:00`);
+      const endDt = new Date(`${bookingDate}T${bookingEnd}:00`);
 
       await calendarApi.createEvent(calendarId, {
         title: bookingTitle,
@@ -194,17 +206,17 @@ export function RoomBooking() {
         end_time: endDt.toISOString(),
         location: bookingRoom.label,
         description: `Réservation salle: ${bookingRoom.label}`,
-      })
+      });
 
-      toast.success(`Salle "${bookingRoom.label}" réservée`)
-      setBookingRoom(null)
-      if (selectedPlan) refreshAvailability(selectedPlan)
+      toast.success(`Salle "${bookingRoom.label}" réservée`);
+      setBookingRoom(null);
+      if (selectedPlan) refreshAvailability(selectedPlan);
     } catch {
-      toast.error('Échec de la réservation')
+      toast.error("Échec de la réservation");
     } finally {
-      setBookingLoading(false)
+      setBookingLoading(false);
     }
-  }
+  };
 
   // ── Render ──────────────────────────────────────────────────────────────────
 
@@ -213,7 +225,7 @@ export function RoomBooking() {
       <div className="flex items-center justify-center p-12">
         <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
       </div>
-    )
+    );
   }
 
   if (floorPlans.length === 0) {
@@ -224,7 +236,7 @@ export function RoomBooking() {
           <p>Aucun plan de salle disponible</p>
         </CardContent>
       </Card>
-    )
+    );
   }
 
   return (
@@ -233,10 +245,10 @@ export function RoomBooking() {
       <div className="flex items-center gap-3">
         <MapPin className="w-5 h-5 text-primary shrink-0" />
         <Select
-          value={selectedPlan?.id ?? ''}
+          value={selectedPlan?.id ?? ""}
           onValueChange={(id) => {
-            const plan = floorPlans.find((p) => p.id === id)
-            if (plan) setSelectedPlan(plan)
+            const plan = floorPlans.find((p) => p.id === id);
+            if (plan) setSelectedPlan(plan);
           }}
         >
           <SelectTrigger className="w-64">
@@ -253,7 +265,7 @@ export function RoomBooking() {
 
         {/* Legend */}
         <div className="flex items-center gap-4 ml-auto text-sm">
-          {(['free', 'partial', 'booked'] as RoomStatus[]).map((s) => (
+          {(["free", "partial", "booked"] as RoomStatus[]).map((s) => (
             <span key={s} className="flex items-center gap-1.5">
               <span
                 className="inline-block w-3 h-3 rounded-sm"
@@ -284,22 +296,32 @@ export function RoomBooking() {
 
             {selectedPlan.areas?.length > 0 ? (
               <svg
-                viewBox={selectedPlan.svg_viewbox ?? '0 0 800 600'}
+                viewBox={selectedPlan.svg_viewbox ?? "0 0 800 600"}
                 className="w-full border rounded-lg bg-muted/20"
                 style={{ maxHeight: 500 }}
               >
                 {/* Background grid */}
                 <defs>
-                  <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-                    <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#e5e7eb" strokeWidth="0.5" />
+                  <pattern
+                    id="grid"
+                    width="40"
+                    height="40"
+                    patternUnits="userSpaceOnUse"
+                  >
+                    <path
+                      d="M 40 0 L 0 0 0 40"
+                      fill="none"
+                      stroke="#e5e7eb"
+                      strokeWidth="0.5"
+                    />
                   </pattern>
                 </defs>
                 <rect width="100%" height="100%" fill="url(#grid)" />
 
                 {selectedPlan.areas.map((area) => {
-                  const avail = availability[area.id]
-                  const status = avail?.status ?? 'free'
-                  const color = STATUS_COLOR[status]
+                  const avail = availability[area.id];
+                  const status = avail?.status ?? "free";
+                  const color = STATUS_COLOR[status];
                   return (
                     <g
                       key={area.id}
@@ -308,7 +330,9 @@ export function RoomBooking() {
                       role="button"
                       tabIndex={0}
                       aria-label={`${area.label} — ${STATUS_LABEL[status]}`}
-                      onKeyDown={(e) => e.key === 'Enter' && handleRoomClick(area)}
+                      onKeyDown={(e) =>
+                        e.key === "Enter" && handleRoomClick(area)
+                      }
                     >
                       <rect
                         x={area.x}
@@ -342,11 +366,12 @@ export function RoomBooking() {
                           fontSize={9}
                           fill={color}
                         >
-                          {avail.events.length} réunion{avail.events.length > 1 ? 's' : ''}
+                          {avail.events.length} réunion
+                          {avail.events.length > 1 ? "s" : ""}
                         </text>
                       ) : null}
                     </g>
-                  )
+                  );
                 })}
               </svg>
             ) : (
@@ -362,8 +387,8 @@ export function RoomBooking() {
       {selectedPlan && selectedPlan.areas?.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {selectedPlan.areas.map((area) => {
-            const avail = availability[area.id]
-            const status = avail?.status ?? 'free'
+            const avail = availability[area.id];
+            const status = avail?.status ?? "free";
             return (
               <Card
                 key={area.id}
@@ -378,19 +403,26 @@ export function RoomBooking() {
                         {avail.events[0].title}
                       </p>
                     ) : (
-                      <p className="text-xs text-muted-foreground mt-0.5">Libre</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Libre
+                      </p>
                     )}
                   </div>
-                  <Badge variant={statusBadgeVariant(status)}>{STATUS_LABEL[status]}</Badge>
+                  <Badge variant={statusBadgeVariant(status)}>
+                    {STATUS_LABEL[status]}
+                  </Badge>
                 </CardContent>
               </Card>
-            )
+            );
           })}
         </div>
       )}
 
       {/* Booking dialog */}
-      <Dialog open={!!bookingRoom} onOpenChange={(o) => !o && setBookingRoom(null)}>
+      <Dialog
+        open={!!bookingRoom}
+        onOpenChange={(o) => !o && setBookingRoom(null)}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -409,11 +441,20 @@ export function RoomBooking() {
                     Réunions du jour
                   </p>
                   {availability[bookingRoom.id].events.map((ev) => (
-                    <div key={ev.id} className="text-xs flex items-center gap-2 text-muted-foreground">
+                    <div
+                      key={ev.id}
+                      className="text-xs flex items-center gap-2 text-muted-foreground"
+                    >
                       <Clock className="w-3 h-3" />
-                      {new Date(ev.start).toLocaleTimeString('fr', { hour: '2-digit', minute: '2-digit' })}
-                      {' – '}
-                      {new Date(ev.end).toLocaleTimeString('fr', { hour: '2-digit', minute: '2-digit' })}
+                      {new Date(ev.start).toLocaleTimeString("fr", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                      {" – "}
+                      {new Date(ev.end).toLocaleTimeString("fr", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
                       <span className="truncate">{ev.title}</span>
                     </div>
                   ))}
@@ -467,13 +508,18 @@ export function RoomBooking() {
             <Button variant="outline" onClick={() => setBookingRoom(null)}>
               Annuler
             </Button>
-            <Button onClick={handleBook} disabled={bookingLoading || !bookingTitle.trim()}>
-              {bookingLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+            <Button
+              onClick={handleBook}
+              disabled={bookingLoading || !bookingTitle.trim()}
+            >
+              {bookingLoading ? (
+                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+              ) : null}
               Réserver
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
-  )
+  );
 }

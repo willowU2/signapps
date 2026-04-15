@@ -4,8 +4,7 @@
 //! response into [`TranscriptionResult`], and generates a Tiptap document.
 
 use signapps_transcription::{
-    tiptap::to_tiptap_doc, Segment, SessionMeta, Speaker, TranscriptionResult,
-    TranscriptionSource,
+    tiptap::to_tiptap_doc, Segment, SessionMeta, Speaker, TranscriptionResult, TranscriptionSource,
 };
 use tauri::State;
 use uuid::Uuid;
@@ -112,9 +111,7 @@ pub async fn transcribe_captured_audio(
     // POST result to server for Tiptap doc creation
     let tiptap_doc = to_tiptap_doc(&result);
     let _ = client
-        .post(format!(
-            "{media_url}/api/v1/stt/transcription-result"
-        ))
+        .post(format!("{media_url}/api/v1/stt/transcription-result"))
         .json(&serde_json::json!({
             "result": result,
             "tiptap_doc": tiptap_doc,

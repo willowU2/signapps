@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * FAB Component (Floating Action Button)
@@ -8,8 +8,8 @@
  * Expands to show multiple action options.
  */
 
-import * as React from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import * as React from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Plus,
   X,
@@ -20,12 +20,12 @@ import {
   Flag,
   Bell,
   XCircle,
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { useCalendarStore } from '@/stores/scheduling/calendar-store';
-import { useSchedulingStore } from '@/stores/scheduling/scheduling-store';
-import type { ViewType, TimeItemType } from '@/lib/scheduling/types';
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { useCalendarStore } from "@/stores/scheduling/calendar-store";
+import { useSchedulingStore } from "@/stores/scheduling/scheduling-store";
+import type { ViewType, TimeItemType } from "@/lib/scheduling/types";
 
 // ============================================================================
 // Types
@@ -38,7 +38,7 @@ interface FABProps {
 }
 
 interface FABAction {
-  id: TimeItemType | 'quick-create';
+  id: TimeItemType | "quick-create";
   icon: React.ElementType;
   label: string;
   color: string;
@@ -49,14 +49,45 @@ interface FABAction {
 // Action Configs
 // ============================================================================
 
-const actionConfigs: Record<TimeItemType, { icon: React.ElementType; label: string; color: string }> = {
-  event: { icon: Calendar, label: 'Événement', color: 'bg-blue-500 hover:bg-blue-600' },
-  task: { icon: CheckSquare, label: 'Tâche', color: 'bg-green-500 hover:bg-green-600' },
-  booking: { icon: Building2, label: 'Réservation', color: 'bg-orange-500 hover:bg-orange-600' },
-  shift: { icon: Calendar, label: 'Shift', color: 'bg-cyan-500 hover:bg-cyan-600' },
-  milestone: { icon: Flag, label: 'Jalon', color: 'bg-purple-500 hover:bg-purple-600' },
-  reminder: { icon: Bell, label: 'Rappel', color: 'bg-yellow-500 hover:bg-yellow-600' },
-  blocker: { icon: XCircle, label: 'Blocage', color: 'bg-red-500 hover:bg-red-600' },
+const actionConfigs: Record<
+  TimeItemType,
+  { icon: React.ElementType; label: string; color: string }
+> = {
+  event: {
+    icon: Calendar,
+    label: "Événement",
+    color: "bg-blue-500 hover:bg-blue-600",
+  },
+  task: {
+    icon: CheckSquare,
+    label: "Tâche",
+    color: "bg-green-500 hover:bg-green-600",
+  },
+  booking: {
+    icon: Building2,
+    label: "Réservation",
+    color: "bg-orange-500 hover:bg-orange-600",
+  },
+  shift: {
+    icon: Calendar,
+    label: "Shift",
+    color: "bg-cyan-500 hover:bg-cyan-600",
+  },
+  milestone: {
+    icon: Flag,
+    label: "Jalon",
+    color: "bg-purple-500 hover:bg-purple-600",
+  },
+  reminder: {
+    icon: Bell,
+    label: "Rappel",
+    color: "bg-yellow-500 hover:bg-yellow-600",
+  },
+  blocker: {
+    icon: XCircle,
+    label: "Blocage",
+    color: "bg-red-500 hover:bg-red-600",
+  },
 };
 
 // ============================================================================
@@ -94,7 +125,7 @@ function FABActionButton({
       </span>
       <Button
         size="icon"
-        className={cn('h-10 w-10 rounded-full shadow-lg', action.color)}
+        className={cn("h-10 w-10 rounded-full shadow-lg", action.color)}
         onClick={action.onClick}
       >
         <Icon className="h-5 w-5" />
@@ -107,11 +138,7 @@ function FABActionButton({
 // Main FAB Component
 // ============================================================================
 
-export function FAB({
-  className,
-  onCreateItem,
-  onQuickCreate,
-}: FABProps) {
+export function FAB({ className, onCreateItem, onQuickCreate }: FABProps) {
   const [isExpanded, setIsExpanded] = React.useState(false);
   const view = useCalendarStore((state) => state.view);
   const scope = useSchedulingStore((state) => state.scope);
@@ -123,10 +150,11 @@ export function FAB({
     // Quick create (AI-powered) is always first
     if (onQuickCreate) {
       result.push({
-        id: 'quick-create',
+        id: "quick-create",
         icon: Sparkles,
-        label: 'Création rapide',
-        color: 'bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600',
+        label: "Création rapide",
+        color:
+          "bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600",
         onClick: () => {
           onQuickCreate();
           setIsExpanded(false);
@@ -137,47 +165,47 @@ export function FAB({
     if (!onCreateItem) return result;
 
     // Context-aware actions based on view
-    if (view === 'day' || view === 'week' || view === 'month') {
+    if (view === "day" || view === "week" || view === "month") {
       result.push({
-        id: 'event',
+        id: "event",
         ...actionConfigs.event,
         onClick: () => {
-          onCreateItem('event');
+          onCreateItem("event");
           setIsExpanded(false);
         },
       });
     }
 
-    if (view === 'kanban' || view === 'agenda') {
+    if (view === "kanban" || view === "agenda") {
       result.push({
-        id: 'task',
+        id: "task",
         ...actionConfigs.task,
         onClick: () => {
-          onCreateItem('task');
+          onCreateItem("task");
           setIsExpanded(false);
         },
       });
     }
 
     // Show booking for EUX scope (team resources)
-    if (scope === 'eux') {
+    if (scope === "eux") {
       result.push({
-        id: 'booking',
+        id: "booking",
         ...actionConfigs.booking,
         onClick: () => {
-          onCreateItem('booking');
+          onCreateItem("booking");
           setIsExpanded(false);
         },
       });
     }
 
     // Show shift for roster view
-    if (view === 'roster') {
+    if (view === "roster") {
       result.push({
-        id: 'shift',
+        id: "shift",
         ...actionConfigs.shift,
         onClick: () => {
-          onCreateItem('shift');
+          onCreateItem("shift");
           setIsExpanded(false);
         },
       });
@@ -185,21 +213,21 @@ export function FAB({
 
     // Add reminder as a common option
     result.push({
-      id: 'reminder',
+      id: "reminder",
       ...actionConfigs.reminder,
       onClick: () => {
-        onCreateItem('reminder');
+        onCreateItem("reminder");
         setIsExpanded(false);
       },
     });
 
     // Blocker for focus view
-    if (view === 'focus') {
+    if (view === "focus") {
       result.push({
-        id: 'blocker',
+        id: "blocker",
         ...actionConfigs.blocker,
         onClick: () => {
-          onCreateItem('blocker');
+          onCreateItem("blocker");
           setIsExpanded(false);
         },
       });
@@ -211,13 +239,13 @@ export function FAB({
   // Close on escape
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isExpanded) {
+      if (e.key === "Escape" && isExpanded) {
         setIsExpanded(false);
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isExpanded]);
 
   // Close when clicking outside
@@ -243,9 +271,9 @@ export function FAB({
       {/* FAB Container */}
       <div
         className={cn(
-          'fixed z-50',
-          'right-4 bottom-20 md:right-6 md:bottom-6', // Above bottom tabs on mobile
-          className
+          "fixed z-50",
+          "right-4 bottom-20 md:right-6 md:bottom-6", // Above bottom tabs on mobile
+          className,
         )}
       >
         {/* Action Buttons */}
@@ -269,13 +297,13 @@ export function FAB({
           <Button
             size="icon"
             className={cn(
-              'h-14 w-14 rounded-full shadow-lg',
+              "h-14 w-14 rounded-full shadow-lg",
               isExpanded
-                ? 'bg-destructive hover:bg-destructive/90'
-                : 'bg-primary hover:bg-primary/90'
+                ? "bg-destructive hover:bg-destructive/90"
+                : "bg-primary hover:bg-primary/90",
             )}
             onClick={() => setIsExpanded(!isExpanded)}
-            aria-label={isExpanded ? 'Fermer' : 'Créer'}
+            aria-label={isExpanded ? "Fermer" : "Créer"}
             aria-expanded={isExpanded}
           >
             <motion.div
@@ -303,7 +331,7 @@ export function SimpleFAB({
   className,
   onClick,
   icon: Icon = Plus,
-  label = 'Créer',
+  label = "Créer",
 }: {
   className?: string;
   onClick: () => void;
@@ -314,10 +342,10 @@ export function SimpleFAB({
     <Button
       size="icon"
       className={cn(
-        'fixed z-50 h-14 w-14 rounded-full shadow-lg',
-        'right-4 bottom-20 md:right-6 md:bottom-6',
-        'bg-primary hover:bg-primary/90',
-        className
+        "fixed z-50 h-14 w-14 rounded-full shadow-lg",
+        "right-4 bottom-20 md:right-6 md:bottom-6",
+        "bg-primary hover:bg-primary/90",
+        className,
       )}
       onClick={onClick}
       aria-label={label}

@@ -1,18 +1,18 @@
-'use client'
+"use client";
 
-import { ReactNode, useRef } from 'react'
-import { Loader2 } from 'lucide-react'
-import { useInfiniteScroll } from '@/hooks/use-infinite-scroll'
-import { cn } from '@/lib/utils'
+import { ReactNode, useRef } from "react";
+import { Loader2 } from "lucide-react";
+import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
+import { cn } from "@/lib/utils";
 
 export interface InfiniteScrollListProps {
-  onLoadMore: () => void
-  hasMore: boolean
-  isLoading: boolean
-  children: ReactNode
-  className?: string
-  threshold?: number
-  endMessage?: string
+  onLoadMore: () => void;
+  hasMore: boolean;
+  isLoading: boolean;
+  children: ReactNode;
+  className?: string;
+  threshold?: number;
+  endMessage?: string;
 }
 
 export function InfiniteScrollList({
@@ -22,9 +22,9 @@ export function InfiniteScrollList({
   children,
   className,
   threshold = 200,
-  endMessage = 'Tous les éléments ont été chargés.',
+  endMessage = "Tous les éléments ont été chargés.",
 }: InfiniteScrollListProps) {
-  const scrollContainerRef = useRef<HTMLDivElement | null>(null)
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
 
   const { sentinelRef } = useInfiniteScroll({
     hasMore,
@@ -32,10 +32,10 @@ export function InfiniteScrollList({
     onLoadMore,
     threshold,
     root: scrollContainerRef.current,
-  })
+  });
 
   return (
-    <div ref={scrollContainerRef} className={cn('overflow-y-auto', className)}>
+    <div ref={scrollContainerRef} className={cn("overflow-y-auto", className)}>
       {children}
       <div ref={sentinelRef} aria-hidden="true" className="h-px" />
       {isLoading && (
@@ -50,5 +50,5 @@ export function InfiniteScrollList({
         </div>
       )}
     </div>
-  )
+  );
 }

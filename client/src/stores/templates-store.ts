@@ -4,16 +4,16 @@
  * Zustand store for document templates management.
  */
 
-import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
 import type {
   TemplateMetadata,
   Template,
   TemplateGalleryFilters,
   TemplateCategory,
   DocumentType,
-} from '@/lib/office/templates/types';
-import { templatesApi } from '@/lib/office/templates/api';
+} from "@/lib/office/templates/types";
+import { templatesApi } from "@/lib/office/templates/api";
 
 // ============================================================================
 // Types
@@ -62,8 +62,8 @@ interface TemplatesState {
   clearSelectedTemplate: () => void;
   setFilters: (filters: Partial<TemplateGalleryFilters>) => void;
   resetFilters: () => void;
-  setCategory: (category: TemplateCategory | 'all') => void;
-  setDocumentType: (documentType: DocumentType | 'all') => void;
+  setCategory: (category: TemplateCategory | "all") => void;
+  setDocumentType: (documentType: DocumentType | "all") => void;
   setSearch: (search: string) => void;
   addToFavorites: (templateId: string) => Promise<void>;
   removeFromFavorites: (templateId: string) => Promise<void>;
@@ -76,14 +76,14 @@ interface TemplatesState {
 // ============================================================================
 
 const DEFAULT_FILTERS: TemplateGalleryFilters = {
-  search: '',
-  category: 'all',
-  documentType: 'all',
-  visibility: 'all',
+  search: "",
+  category: "all",
+  documentType: "all",
+  visibility: "all",
   tags: [],
   featuredOnly: false,
-  sortBy: 'usageCount',
-  sortOrder: 'desc',
+  sortBy: "usageCount",
+  sortOrder: "desc",
 };
 
 const DEFAULT_PAGE_SIZE = 20;
@@ -132,7 +132,11 @@ export const useTemplatesStore = create<TemplatesState>()(
         }
 
         try {
-          const response = await templatesApi.getTemplates(filters, page, pageSize);
+          const response = await templatesApi.getTemplates(
+            filters,
+            page,
+            pageSize,
+          );
           set({
             templates: response.templates,
             totalTemplates: response.total,
@@ -142,21 +146,35 @@ export const useTemplatesStore = create<TemplatesState>()(
           });
         } catch (error) {
           set({
-            error: error instanceof Error ? error.message : 'Erreur lors du chargement',
+            error:
+              error instanceof Error
+                ? error.message
+                : "Erreur lors du chargement",
             isLoading: false,
           });
         }
       },
 
       fetchMoreTemplates: async () => {
-        const { hasMore, isLoadingMore, currentPage, filters, pageSize, templates } = get();
+        const {
+          hasMore,
+          isLoadingMore,
+          currentPage,
+          filters,
+          pageSize,
+          templates,
+        } = get();
 
         if (!hasMore || isLoadingMore) return;
 
         set({ isLoadingMore: true, error: null });
 
         try {
-          const response = await templatesApi.getTemplates(filters, currentPage + 1, pageSize);
+          const response = await templatesApi.getTemplates(
+            filters,
+            currentPage + 1,
+            pageSize,
+          );
           set({
             templates: [...templates, ...response.templates],
             totalTemplates: response.total,
@@ -166,7 +184,10 @@ export const useTemplatesStore = create<TemplatesState>()(
           });
         } catch (error) {
           set({
-            error: error instanceof Error ? error.message : 'Erreur lors du chargement',
+            error:
+              error instanceof Error
+                ? error.message
+                : "Erreur lors du chargement",
             isLoadingMore: false,
           });
         }
@@ -176,7 +197,10 @@ export const useTemplatesStore = create<TemplatesState>()(
         set({ isLoadingFeatured: true });
 
         try {
-          const templates = await templatesApi.getFeaturedTemplates(documentType, 10);
+          const templates = await templatesApi.getFeaturedTemplates(
+            documentType,
+            10,
+          );
           set({ featuredTemplates: templates, isLoadingFeatured: false });
         } catch (error) {
           set({ isLoadingFeatured: false });
@@ -228,7 +252,10 @@ export const useTemplatesStore = create<TemplatesState>()(
           get().addToRecent(metadata);
         } catch (error) {
           set({
-            error: error instanceof Error ? error.message : 'Erreur lors du chargement',
+            error:
+              error instanceof Error
+                ? error.message
+                : "Erreur lors du chargement",
             isLoadingSelected: false,
           });
         }
@@ -250,11 +277,11 @@ export const useTemplatesStore = create<TemplatesState>()(
         get().fetchTemplates(true);
       },
 
-      setCategory: (category: TemplateCategory | 'all') => {
+      setCategory: (category: TemplateCategory | "all") => {
         get().setFilters({ category });
       },
 
-      setDocumentType: (documentType: DocumentType | 'all') => {
+      setDocumentType: (documentType: DocumentType | "all") => {
         get().setFilters({ documentType });
       },
 
@@ -275,7 +302,10 @@ export const useTemplatesStore = create<TemplatesState>()(
           }
         } catch (error) {
           set({
-            error: error instanceof Error ? error.message : 'Erreur lors de l\'ajout aux favoris',
+            error:
+              error instanceof Error
+                ? error.message
+                : "Erreur lors de l'ajout aux favoris",
           });
         }
       },
@@ -286,18 +316,25 @@ export const useTemplatesStore = create<TemplatesState>()(
 
           // Update local state
           set((state) => ({
-            favoriteTemplates: state.favoriteTemplates.filter((t) => t.id !== templateId),
+            favoriteTemplates: state.favoriteTemplates.filter(
+              (t) => t.id !== templateId,
+            ),
           }));
         } catch (error) {
           set({
-            error: error instanceof Error ? error.message : 'Erreur lors de la suppression des favoris',
+            error:
+              error instanceof Error
+                ? error.message
+                : "Erreur lors de la suppression des favoris",
           });
         }
       },
 
       addToRecent: (template: TemplateMetadata) => {
         set((state) => {
-          const filtered = state.recentTemplates.filter((t) => t.id !== template.id);
+          const filtered = state.recentTemplates.filter(
+            (t) => t.id !== template.id,
+          );
           return {
             recentTemplates: [template, ...filtered].slice(0, 10),
           };
@@ -309,13 +346,13 @@ export const useTemplatesStore = create<TemplatesState>()(
       },
     }),
     {
-      name: 'templates-store',
+      name: "templates-store",
       partialize: (state) => ({
         recentTemplates: state.recentTemplates,
         filters: state.filters,
       }),
-    }
-  )
+    },
+  ),
 );
 
 // ============================================================================
@@ -323,11 +360,15 @@ export const useTemplatesStore = create<TemplatesState>()(
 // ============================================================================
 
 export const selectTemplates = (state: TemplatesState) => state.templates;
-export const selectFeaturedTemplates = (state: TemplatesState) => state.featuredTemplates;
-export const selectRecentTemplates = (state: TemplatesState) => state.recentTemplates;
-export const selectFavoriteTemplates = (state: TemplatesState) => state.favoriteTemplates;
+export const selectFeaturedTemplates = (state: TemplatesState) =>
+  state.featuredTemplates;
+export const selectRecentTemplates = (state: TemplatesState) =>
+  state.recentTemplates;
+export const selectFavoriteTemplates = (state: TemplatesState) =>
+  state.favoriteTemplates;
 export const selectMyTemplates = (state: TemplatesState) => state.myTemplates;
-export const selectSelectedTemplate = (state: TemplatesState) => state.selectedTemplate;
+export const selectSelectedTemplate = (state: TemplatesState) =>
+  state.selectedTemplate;
 export const selectFilters = (state: TemplatesState) => state.filters;
 export const selectIsLoading = (state: TemplatesState) => state.isLoading;
 export const selectHasMore = (state: TemplatesState) => state.hasMore;

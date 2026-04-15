@@ -4,7 +4,7 @@
  * Types for event positioning and layout calculations.
  */
 
-import type { TimeItem } from './time-item';
+import type { TimeItem } from "./time-item";
 
 /**
  * Positioned item with calculated layout coordinates

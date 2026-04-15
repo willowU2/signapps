@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { useState, useCallback } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
+import { useState, useCallback } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 
 import {
   Dialog,
@@ -11,7 +11,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 import {
   Form,
   FormControl,
@@ -19,25 +19,25 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Button } from '@/components/ui/button';
-import { Vehicle } from './vehicle-list';
+} from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Vehicle } from "./vehicle-list";
 
 const vehicleSchema = z.object({
-  plateNumber: z.string().min(1, 'Plaque requise'),
-  model: z.string().min(1, 'Modèle requis'),
+  plateNumber: z.string().min(1, "Plaque requise"),
+  model: z.string().min(1, "Modèle requis"),
   assignedDriver: z.string().optional(),
-  status: z.enum(['Available', 'Reserved', 'Maintenance']),
-  nextServiceDate: z.string().min(1, 'Date requise'),
-  kmCounter: z.coerce.number().min(0, 'Kilométrage invalide'),
+  status: z.enum(["Available", "Reserved", "Maintenance"]),
+  nextServiceDate: z.string().min(1, "Date requise"),
+  kmCounter: z.coerce.number().min(0, "Kilométrage invalide"),
 });
 
 type VehicleFormData = z.infer<typeof vehicleSchema>;
@@ -45,7 +45,7 @@ type VehicleFormData = z.infer<typeof vehicleSchema>;
 interface VehicleFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (vehicle: Omit<Vehicle, 'id'>) => void;
+  onSubmit: (vehicle: Omit<Vehicle, "id">) => void;
 }
 
 export function VehicleFormDialog({
@@ -58,11 +58,11 @@ export function VehicleFormDialog({
   const form = useForm({
     resolver: zodResolver(vehicleSchema),
     defaultValues: {
-      plateNumber: '',
-      model: '',
-      assignedDriver: '',
-      status: 'Available' as const,
-      nextServiceDate: '',
+      plateNumber: "",
+      model: "",
+      assignedDriver: "",
+      status: "Available" as const,
+      nextServiceDate: "",
       kmCounter: 0,
     },
   });
@@ -84,7 +84,7 @@ export function VehicleFormDialog({
         setIsSubmitting(false);
       }
     },
-    [form, onSubmit]
+    [form, onSubmit],
   );
 
   return (
@@ -148,7 +148,7 @@ export function VehicleFormDialog({
                     <Input
                       placeholder="Nom du conducteur"
                       {...field}
-                      value={field.value || ''}
+                      value={field.value || ""}
                       disabled={isSubmitting}
                     />
                   </FormControl>
@@ -187,11 +187,7 @@ export function VehicleFormDialog({
                 <FormItem>
                   <FormLabel>Date Prochain Entretien</FormLabel>
                   <FormControl>
-                    <Input
-                      type="date"
-                      {...field}
-                      disabled={isSubmitting}
-                    />
+                    <Input type="date" {...field} disabled={isSubmitting} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -209,7 +205,9 @@ export function VehicleFormDialog({
                       type="number"
                       placeholder="0"
                       value={field.value as number}
-                      onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                      onChange={(e) =>
+                        field.onChange(parseInt(e.target.value) || 0)
+                      }
                       onBlur={field.onBlur}
                       disabled={isSubmitting}
                     />
@@ -229,7 +227,7 @@ export function VehicleFormDialog({
                 Annuler
               </Button>
               <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? 'Ajout...' : 'Ajouter Véhicule'}
+                {isSubmitting ? "Ajout..." : "Ajouter Véhicule"}
               </Button>
             </div>
           </form>

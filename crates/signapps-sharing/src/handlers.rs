@@ -21,11 +21,10 @@ use uuid::Uuid;
 
 use crate::engine::SharingEngine;
 use crate::models::{
-    AuditEntry, BulkGrantRequest, BulkGrantResult, CreateGrant, CreateTemplate, EffectivePermission,
-    Grant, Template,
+    AuditEntry, BulkGrantRequest, BulkGrantResult, CreateGrant, CreateTemplate,
+    EffectivePermission, Grant, Template,
 };
 use crate::types::ResourceType;
-
 
 // ─── Path extractors ─────────────────────────────────────────────────────────
 

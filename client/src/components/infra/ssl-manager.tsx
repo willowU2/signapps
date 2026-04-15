@@ -44,7 +44,8 @@ const SAMPLE_CERTS: Certificate[] = [
 ];
 
 function getStatusIcon(status: string) {
-  if (status === "valid") return <CheckCircle className="w-5 h-5 text-green-600" />;
+  if (status === "valid")
+    return <CheckCircle className="w-5 h-5 text-green-600" />;
   return <AlertCircle className="w-5 h-5 text-amber-600" />;
 }
 
@@ -66,9 +67,7 @@ export function SslManager() {
 
   const toggleAutoRenew = (id: string) => {
     setCerts(
-      certs.map((c) =>
-        c.id === id ? { ...c, autoRenew: !c.autoRenew } : c
-      )
+      certs.map((c) => (c.id === id ? { ...c, autoRenew: !c.autoRenew } : c)),
     );
   };
 
@@ -82,8 +81,12 @@ export function SslManager() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-foreground">SSL/TLS Certificates</h2>
-          <p className="text-muted-foreground">Manage and monitor SSL certificates</p>
+          <h2 className="text-2xl font-bold text-foreground">
+            SSL/TLS Certificates
+          </h2>
+          <p className="text-muted-foreground">
+            Manage and monitor SSL certificates
+          </p>
         </div>
         <button className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded flex items-center gap-2">
           <Plus className="w-4 h-4" />
@@ -96,19 +99,35 @@ export function SslManager() {
           <table className="w-full text-sm">
             <thead className="bg-muted border-b sticky top-0 z-10">
               <tr>
-                <th className="px-4 py-3 text-left font-semibold text-foreground">Domain</th>
-                <th className="px-4 py-3 text-left font-semibold text-foreground">Issuer</th>
-                <th className="px-4 py-3 text-left font-semibold text-foreground">Expiry</th>
-                <th className="px-4 py-3 text-center font-semibold text-foreground">Status</th>
-                <th className="px-4 py-3 text-center font-semibold text-foreground">Auto-Renew</th>
-                <th className="px-4 py-3 text-right font-semibold text-foreground">Actions</th>
+                <th className="px-4 py-3 text-left font-semibold text-foreground">
+                  Domain
+                </th>
+                <th className="px-4 py-3 text-left font-semibold text-foreground">
+                  Issuer
+                </th>
+                <th className="px-4 py-3 text-left font-semibold text-foreground">
+                  Expiry
+                </th>
+                <th className="px-4 py-3 text-center font-semibold text-foreground">
+                  Status
+                </th>
+                <th className="px-4 py-3 text-center font-semibold text-foreground">
+                  Auto-Renew
+                </th>
+                <th className="px-4 py-3 text-right font-semibold text-foreground">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y">
               {certs.map((cert) => (
                 <tr key={cert.id} className="hover:bg-muted">
-                  <td className="px-4 py-3 font-medium text-foreground">{cert.domain}</td>
-                  <td className="px-4 py-3 text-muted-foreground">{cert.issuer}</td>
+                  <td className="px-4 py-3 font-medium text-foreground">
+                    {cert.domain}
+                  </td>
+                  <td className="px-4 py-3 text-muted-foreground">
+                    {cert.issuer}
+                  </td>
                   <td className="px-4 py-3">
                     <div className="flex flex-col">
                       <span className="text-foreground font-medium">
@@ -122,7 +141,9 @@ export function SslManager() {
                   <td className="px-4 py-3 text-center">
                     <div className="flex items-center justify-center gap-2">
                       {getStatusIcon(cert.status)}
-                      <span className={`text-xs font-semibold px-2 py-1 rounded ${getStatusBadge(cert.status)}`}>
+                      <span
+                        className={`text-xs font-semibold px-2 py-1 rounded ${getStatusBadge(cert.status)}`}
+                      >
                         {cert.status}
                       </span>
                     </div>

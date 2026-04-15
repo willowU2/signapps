@@ -1,18 +1,22 @@
-'use client';
+"use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface HealthGaugeProps {
   value: number; // 0-100
   label: string;
-  status?: 'healthy' | 'warning' | 'critical';
+  status?: "healthy" | "warning" | "critical";
 }
 
-export function HealthGauge({ value, label, status = 'healthy' }: HealthGaugeProps) {
+export function HealthGauge({
+  value,
+  label,
+  status = "healthy",
+}: HealthGaugeProps) {
   const getColor = () => {
-    if (status === 'critical' || value < 30) return '#ef4444'; // red
-    if (status === 'warning' || value < 60) return '#eab308'; // yellow
-    return '#22c55e'; // green
+    if (status === "critical" || value < 30) return "#ef4444"; // red
+    if (status === "warning" || value < 60) return "#eab308"; // yellow
+    return "#22c55e"; // green
   };
 
   const color = getColor();
@@ -22,14 +26,13 @@ export function HealthGauge({ value, label, status = 'healthy' }: HealthGaugePro
   return (
     <Card>
       <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">{label}</CardTitle>
+        <CardTitle className="text-sm font-medium text-muted-foreground">
+          {label}
+        </CardTitle>
       </CardHeader>
       <CardContent className="flex items-center justify-center pb-6">
         <div className="relative h-32 w-32">
-          <svg
-            className="h-32 w-32 -rotate-90"
-            viewBox="0 0 36 36"
-          >
+          <svg className="h-32 w-32 -rotate-90" viewBox="0 0 36 36">
             {/* Background circle */}
             <circle
               cx="18"
@@ -51,7 +54,7 @@ export function HealthGauge({ value, label, status = 'healthy' }: HealthGaugePro
               strokeLinecap="round"
               strokeDasharray={circumference}
               strokeDashoffset={strokeDashoffset}
-              style={{ transition: 'stroke-dashoffset 0.5s ease' }}
+              style={{ transition: "stroke-dashoffset 0.5s ease" }}
             />
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center">

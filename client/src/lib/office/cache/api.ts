@@ -4,7 +4,7 @@
  * API client for managing document cache.
  */
 
-import { getClient, ServiceName } from '@/lib/api/factory';
+import { getClient, ServiceName } from "@/lib/api/factory";
 
 const api = getClient(ServiceName.OFFICE);
 import type {
@@ -22,9 +22,9 @@ import type {
   InvalidateCacheResponse,
   PrewarmCacheRequest,
   PrewarmCacheResponse,
-} from './types';
+} from "./types";
 
-const CACHE_BASE = '/api/v1/office/cache';
+const CACHE_BASE = "/api/v1/office/cache";
 
 // ============================================================================
 // Cache Entries
@@ -34,20 +34,20 @@ const CACHE_BASE = '/api/v1/office/cache';
  * List cache entries with optional filters
  */
 export async function listCacheEntries(
-  params?: ListCacheEntriesParams
+  params?: ListCacheEntriesParams,
 ): Promise<ListCacheEntriesResponse> {
   const queryParams = new URLSearchParams();
 
-  if (params?.type) queryParams.append('type', params.type);
-  if (params?.location) queryParams.append('location', params.location);
-  if (params?.documentId) queryParams.append('documentId', params.documentId);
-  if (params?.sortBy) queryParams.append('sortBy', params.sortBy);
-  if (params?.sortOrder) queryParams.append('sortOrder', params.sortOrder);
-  if (params?.limit) queryParams.append('limit', String(params.limit));
-  if (params?.offset) queryParams.append('offset', String(params.offset));
+  if (params?.type) queryParams.append("type", params.type);
+  if (params?.location) queryParams.append("location", params.location);
+  if (params?.documentId) queryParams.append("documentId", params.documentId);
+  if (params?.sortBy) queryParams.append("sortBy", params.sortBy);
+  if (params?.sortOrder) queryParams.append("sortOrder", params.sortOrder);
+  if (params?.limit) queryParams.append("limit", String(params.limit));
+  if (params?.offset) queryParams.append("offset", String(params.offset));
 
   const response = await api.get<ListCacheEntriesResponse>(
-    `${CACHE_BASE}/entries?${queryParams.toString()}`
+    `${CACHE_BASE}/entries?${queryParams.toString()}`,
   );
   return response.data;
 }
@@ -58,7 +58,7 @@ export async function listCacheEntries(
 export async function getCacheEntry(key: string): Promise<CacheEntry | null> {
   try {
     const response = await api.get<CacheEntry>(
-      `${CACHE_BASE}/entries/${encodeURIComponent(key)}`
+      `${CACHE_BASE}/entries/${encodeURIComponent(key)}`,
     );
     return response.data;
   } catch {
@@ -93,11 +93,11 @@ export async function deleteCacheEntry(key: string): Promise<void> {
  * Invalidate cache entries matching criteria
  */
 export async function invalidateCache(
-  options: CacheInvalidateOptions
+  options: CacheInvalidateOptions,
 ): Promise<InvalidateCacheResponse> {
   const response = await api.post<InvalidateCacheResponse>(
     `${CACHE_BASE}/invalidate`,
-    options
+    options,
   );
   return response.data;
 }
@@ -108,7 +108,7 @@ export async function invalidateCache(
 export async function clearCache(): Promise<InvalidateCacheResponse> {
   const response = await api.post<InvalidateCacheResponse>(
     `${CACHE_BASE}/clear`,
-    { force: true }
+    { force: true },
   );
   return response.data;
 }
@@ -117,11 +117,11 @@ export async function clearCache(): Promise<InvalidateCacheResponse> {
  * Prewarm cache with specific content
  */
 export async function prewarmCache(
-  request: PrewarmCacheRequest
+  request: PrewarmCacheRequest,
 ): Promise<PrewarmCacheResponse> {
   const response = await api.post<PrewarmCacheResponse>(
     `${CACHE_BASE}/prewarm`,
-    request
+    request,
   );
   return response.data;
 }
@@ -131,7 +131,7 @@ export async function prewarmCache(
  */
 export async function triggerCleanup(): Promise<InvalidateCacheResponse> {
   const response = await api.post<InvalidateCacheResponse>(
-    `${CACHE_BASE}/cleanup`
+    `${CACHE_BASE}/cleanup`,
   );
   return response.data;
 }
@@ -152,11 +152,11 @@ export async function getCacheStats(): Promise<CacheStats> {
  * Get cache performance metrics
  */
 export async function getCachePerformance(
-  period?: '1h' | '24h' | '7d' | '30d'
+  period?: "1h" | "24h" | "7d" | "30d",
 ): Promise<CachePerformance> {
-  const params = period ? `?period=${period}` : '';
+  const params = period ? `?period=${period}` : "";
   const response = await api.get<CachePerformance>(
-    `${CACHE_BASE}/performance${params}`
+    `${CACHE_BASE}/performance${params}`,
   );
   return response.data;
 }
@@ -165,11 +165,11 @@ export async function getCachePerformance(
  * Get cache performance history
  */
 export async function getCachePerformanceHistory(
-  granularity?: 'hour' | 'day' | 'week'
+  granularity?: "hour" | "day" | "week",
 ): Promise<CachePerformance[]> {
-  const params = granularity ? `?granularity=${granularity}` : '';
+  const params = granularity ? `?granularity=${granularity}` : "";
   const response = await api.get<CachePerformance[]>(
-    `${CACHE_BASE}/performance/history${params}`
+    `${CACHE_BASE}/performance/history${params}`,
   );
   return response.data;
 }
@@ -190,7 +190,7 @@ export async function getCacheConfig(): Promise<CacheConfig> {
  * Update cache configuration
  */
 export async function updateCacheConfig(
-  config: Partial<CacheConfig>
+  config: Partial<CacheConfig>,
 ): Promise<CacheConfig> {
   const response = await api.patch<CacheConfig>(`${CACHE_BASE}/config`, config);
   return response.data;
@@ -204,10 +204,10 @@ export async function updateCacheConfig(
  * Get cache entries for a specific document
  */
 export async function getDocumentCacheEntries(
-  documentId: string
+  documentId: string,
 ): Promise<CacheEntry[]> {
   const response = await api.get<CacheEntry[]>(
-    `${CACHE_BASE}/documents/${documentId}`
+    `${CACHE_BASE}/documents/${documentId}`,
   );
   return response.data;
 }
@@ -216,10 +216,10 @@ export async function getDocumentCacheEntries(
  * Invalidate all cache for a document
  */
 export async function invalidateDocumentCache(
-  documentId: string
+  documentId: string,
 ): Promise<InvalidateCacheResponse> {
   const response = await api.post<InvalidateCacheResponse>(
-    `${CACHE_BASE}/documents/${documentId}/invalidate`
+    `${CACHE_BASE}/documents/${documentId}/invalidate`,
   );
   return response.data;
 }
@@ -229,11 +229,11 @@ export async function invalidateDocumentCache(
  */
 export async function prewarmDocumentCache(
   documentId: string,
-  types?: CacheType[]
+  types?: CacheType[],
 ): Promise<PrewarmCacheResponse> {
   const response = await api.post<PrewarmCacheResponse>(
     `${CACHE_BASE}/documents/${documentId}/prewarm`,
-    { types }
+    { types },
   );
   return response.data;
 }
@@ -248,7 +248,7 @@ export async function prewarmDocumentCache(
 export async function isExportCached(
   documentId: string,
   format: string,
-  version?: string
+  version?: string,
 ): Promise<{ cached: boolean; entry?: CacheEntry }> {
   const params = new URLSearchParams({
     format,
@@ -256,7 +256,7 @@ export async function isExportCached(
   });
 
   const response = await api.get<{ cached: boolean; entry?: CacheEntry }>(
-    `${CACHE_BASE}/documents/${documentId}/export?${params.toString()}`
+    `${CACHE_BASE}/documents/${documentId}/export?${params.toString()}`,
   );
   return response.data;
 }
@@ -267,7 +267,7 @@ export async function isExportCached(
 export async function getCachedExportUrl(
   documentId: string,
   format: string,
-  version?: string
+  version?: string,
 ): Promise<{ url: string; expiresAt: string } | null> {
   try {
     const params = new URLSearchParams({
@@ -276,7 +276,7 @@ export async function getCachedExportUrl(
     });
 
     const response = await api.get<{ url: string; expiresAt: string }>(
-      `${CACHE_BASE}/documents/${documentId}/export/url?${params.toString()}`
+      `${CACHE_BASE}/documents/${documentId}/export/url?${params.toString()}`,
     );
     return response.data;
   } catch {

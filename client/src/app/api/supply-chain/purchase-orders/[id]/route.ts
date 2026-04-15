@@ -1,19 +1,29 @@
 // Supply Chain: Next.js proxy → identity /api/v1/supply-chain/purchase-orders/:id
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from "next/server";
 
-const IDENTITY = process.env.IDENTITY_URL ?? 'http://localhost:3001';
+const IDENTITY = process.env.IDENTITY_URL ?? "http://localhost:3001";
 
-async function proxy(req: NextRequest, method: string, id: string, body?: unknown) {
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-  const authHeader = req.headers.get('authorization');
-  if (authHeader) headers['Authorization'] = authHeader;
+async function proxy(
+  req: NextRequest,
+  method: string,
+  id: string,
+  body?: unknown,
+) {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+  const authHeader = req.headers.get("authorization");
+  if (authHeader) headers["Authorization"] = authHeader;
 
-  const res = await fetch(`${IDENTITY}/api/v1/supply-chain/purchase-orders/${id}`, {
-    method,
-    headers,
-    body: body !== undefined ? JSON.stringify(body) : undefined,
-  });
+  const res = await fetch(
+    `${IDENTITY}/api/v1/supply-chain/purchase-orders/${id}`,
+    {
+      method,
+      headers,
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+    },
+  );
 
   const data = await res.json().catch(() => null);
   return NextResponse.json(data, { status: res.status });
@@ -24,7 +34,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
-  return proxy(req, 'GET', id);
+  return proxy(req, "GET", id);
 }
 
 export async function PATCH(
@@ -33,7 +43,7 @@ export async function PATCH(
 ) {
   const { id } = await params;
   const body = await req.json().catch(() => ({}));
-  return proxy(req, 'PATCH', id, body);
+  return proxy(req, "PATCH", id, body);
 }
 
 export async function DELETE(
@@ -41,5 +51,5 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
-  return proxy(req, 'DELETE', id);
+  return proxy(req, "DELETE", id);
 }

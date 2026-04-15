@@ -1,1 +1,7 @@
-export { RGPDRegister, type RGPDRegisterProps, type DataTreatment, type LegalBasis, type ComplianceStatus } from './rgpd-register';
+export {
+  RGPDRegister,
+  type RGPDRegisterProps,
+  type DataTreatment,
+  type LegalBasis,
+  type ComplianceStatus,
+} from "./rgpd-register";

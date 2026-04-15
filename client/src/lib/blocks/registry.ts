@@ -116,7 +116,7 @@ registry.set("container", {
  */
 export function registerBlockAdapter<T>(
   type: BlockType,
-  entry: Omit<BlockRegistryEntry<T>, "type">
+  entry: Omit<BlockRegistryEntry<T>, "type">,
 ): void {
   registry.set(type, {
     ...entry,
@@ -128,7 +128,9 @@ export function registerBlockAdapter<T>(
 /**
  * Get registry entry for a block type
  */
-export function getBlockRegistry(type: BlockType): BlockRegistryEntry | undefined {
+export function getBlockRegistry(
+  type: BlockType,
+): BlockRegistryEntry | undefined {
   return registry.get(type);
 }
 
@@ -155,7 +157,7 @@ export function getAllBlockRegistries(): BlockRegistryEntry[] {
  */
 export function toBlock<T extends BlockType>(
   type: T,
-  entity: EntityTypeMap[T]
+  entity: EntityTypeMap[T],
 ): UniversalBlock {
   const entry = registry.get(type);
   if (!entry) {
@@ -169,7 +171,7 @@ export function toBlock<T extends BlockType>(
  */
 export function toBlocks<T extends BlockType>(
   type: T,
-  entities: EntityTypeMap[T][]
+  entities: EntityTypeMap[T][],
 ): UniversalBlock[] {
   return entities.map((entity) => toBlock(type, entity));
 }
@@ -179,7 +181,7 @@ export function toBlocks<T extends BlockType>(
  */
 export function getSearchableText<T extends BlockType>(
   type: T,
-  entity: EntityTypeMap[T]
+  entity: EntityTypeMap[T],
 ): string {
   const entry = registry.get(type);
   if (!entry) {
@@ -194,7 +196,7 @@ export function getSearchableText<T extends BlockType>(
 export function getSortValue<T extends BlockType>(
   type: T,
   entity: EntityTypeMap[T],
-  field: string
+  field: string,
 ): unknown {
   const entry = registry.get(type);
   if (!entry) {

@@ -1,9 +1,9 @@
 //! Certificate repository for TLS management.
 
 use crate::models::certificate::{AcmeAccount, Certificate, CreateCertificate};
-use signapps_db_shared::DatabasePool;
 use chrono::{DateTime, Utc};
 use signapps_common::Result;
+use signapps_db_shared::DatabasePool;
 use uuid::Uuid;
 
 /// Repository for certificate operations.

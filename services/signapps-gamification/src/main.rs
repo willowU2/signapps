@@ -10,7 +10,7 @@ use axum::{
     http::StatusCode,
     middleware,
     response::IntoResponse,
-    routing::{get, post},
+    routing::get,
     Extension, Json, Router,
 };
 use chrono::{NaiveDate, Utc};
@@ -216,7 +216,10 @@ async fn get_my_xp(
     .await;
 
     match result {
-        Ok(row) => (StatusCode::OK, Json(serde_json::to_value(row).unwrap_or_default())),
+        Ok(row) => (
+            StatusCode::OK,
+            Json(serde_json::to_value(row).unwrap_or_default()),
+        ),
         Err(e) => {
             tracing::error!(?e, "Failed to get user XP");
             (
@@ -307,7 +310,10 @@ async fn award_xp(
     match result {
         Ok(row) => {
             tracing::info!(user_id = %claims.sub, action = %payload.action, xp, "XP awarded");
-            (StatusCode::OK, Json(serde_json::to_value(row).unwrap_or_default()))
+            (
+                StatusCode::OK,
+                Json(serde_json::to_value(row).unwrap_or_default()),
+            )
         },
         Err(e) => {
             tracing::error!(?e, "Failed to upsert user XP");
@@ -351,7 +357,10 @@ async fn get_my_badges(
     .await;
 
     match result {
-        Ok(rows) => (StatusCode::OK, Json(serde_json::to_value(rows).unwrap_or_default())),
+        Ok(rows) => (
+            StatusCode::OK,
+            Json(serde_json::to_value(rows).unwrap_or_default()),
+        ),
         Err(e) => {
             tracing::error!(?e, "Failed to get badges");
             (
@@ -386,12 +395,11 @@ async fn get_streak(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> impl IntoResponse {
-    let result = sqlx::query_as::<_, UserXpRow>(
-        "SELECT * FROM gamification.user_xp WHERE user_id = $1",
-    )
-    .bind(claims.sub)
-    .fetch_optional(&state.pool)
-    .await;
+    let result =
+        sqlx::query_as::<_, UserXpRow>("SELECT * FROM gamification.user_xp WHERE user_id = $1")
+            .bind(claims.sub)
+            .fetch_optional(&state.pool)
+            .await;
 
     match result {
         Ok(Some(row)) => {
@@ -403,7 +411,10 @@ async fn get_streak(
                     .map(|d| d.to_string())
                     .unwrap_or_default(),
             };
-            (StatusCode::OK, Json(serde_json::to_value(resp).unwrap_or_default()))
+            (
+                StatusCode::OK,
+                Json(serde_json::to_value(resp).unwrap_or_default()),
+            )
         },
         Ok(None) => {
             let resp = StreakResponse {
@@ -411,7 +422,10 @@ async fn get_streak(
                 longest: 0,
                 last_active: String::new(),
             };
-            (StatusCode::OK, Json(serde_json::to_value(resp).unwrap_or_default()))
+            (
+                StatusCode::OK,
+                Json(serde_json::to_value(resp).unwrap_or_default()),
+            )
         },
         Err(e) => {
             tracing::error!(?e, "Failed to get streak");
@@ -469,7 +483,10 @@ async fn get_leaderboard(
     .await;
 
     match result {
-        Ok(rows) => (StatusCode::OK, Json(serde_json::to_value(rows).unwrap_or_default())),
+        Ok(rows) => (
+            StatusCode::OK,
+            Json(serde_json::to_value(rows).unwrap_or_default()),
+        ),
         Err(e) => {
             tracing::error!(?e, "Failed to get leaderboard");
             (
@@ -537,10 +554,7 @@ fn create_router(state: AppState) -> Router {
         .merge(signapps_common::version::router("signapps-gamification"));
 
     let protected_routes = Router::new()
-        .route(
-            "/api/v1/gamification/xp",
-            get(get_my_xp).post(award_xp),
-        )
+        .route("/api/v1/gamification/xp", get(get_my_xp).post(award_xp))
         .route("/api/v1/gamification/badges", get(get_my_badges))
         .route("/api/v1/gamification/streak", get(get_streak))
         .route("/api/v1/gamification/leaderboard", get(get_leaderboard))
@@ -576,7 +590,10 @@ async fn main() -> anyhow::Result<()> {
     let db_pool = signapps_db::create_pool(&config.database_url).await?;
 
     if let Err(e) = signapps_db::run_migrations(&db_pool).await {
-        tracing::warn!("Failed to apply database migrations for Gamification: {}", e);
+        tracing::warn!(
+            "Failed to apply database migrations for Gamification: {}",
+            e
+        );
     }
 
     tracing::info!("Running fallback SQL creation for gamification schema...");

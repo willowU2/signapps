@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * CommandList Component
@@ -7,10 +7,10 @@
  * Groups commands by category with section headers.
  */
 
-import * as React from 'react';
-import { cn } from '@/lib/utils';
-import { CommandItem } from './CommandItem';
-import type { Command } from '@/lib/scheduling/types/scheduling';
+import * as React from "react";
+import { cn } from "@/lib/utils";
+import { CommandItem } from "./CommandItem";
+import type { Command } from "@/lib/scheduling/types/scheduling";
 
 // ============================================================================
 // Types
@@ -35,10 +35,10 @@ interface CommandCategory {
 // ============================================================================
 
 const categoryLabels: Record<string, string> = {
-  navigation: 'Navigation',
-  create: 'Créer',
-  search: 'Recherche',
-  action: 'Actions',
+  navigation: "Navigation",
+  create: "Créer",
+  search: "Recherche",
+  action: "Actions",
 };
 
 // ============================================================================
@@ -65,7 +65,7 @@ export function CommandList({
     }
 
     const result: CommandCategory[] = [];
-    const order = ['navigation', 'create', 'search', 'action'];
+    const order = ["navigation", "create", "search", "action"];
 
     for (const categoryId of order) {
       const categoryCommands = grouped.get(categoryId);
@@ -88,7 +88,12 @@ export function CommandList({
 
   if (commands.length === 0) {
     return (
-      <div className={cn('py-8 text-center text-sm text-muted-foreground', className)}>
+      <div
+        className={cn(
+          "py-8 text-center text-sm text-muted-foreground",
+          className,
+        )}
+      >
         Aucune commande trouvée
       </div>
     );
@@ -97,7 +102,7 @@ export function CommandList({
   let globalIndex = 0;
 
   return (
-    <div className={cn('py-2', className)} role="listbox">
+    <div className={cn("py-2", className)} role="listbox">
       {categories.map((category) => (
         <div key={category.id} className="mb-2 last:mb-0">
           {/* Category Header */}
@@ -139,7 +144,7 @@ export function CommandListEmpty({
   className?: string;
 }) {
   return (
-    <div className={cn('py-12 text-center', className)}>
+    <div className={cn("py-12 text-center", className)}>
       <div className="text-4xl mb-4">🔍</div>
       <h3 className="text-sm font-medium mb-1">Aucun résultat</h3>
       <p className="text-xs text-muted-foreground">

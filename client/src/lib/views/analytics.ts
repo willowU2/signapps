@@ -70,7 +70,7 @@ export function trackViewEvent(
   viewId: string,
   entityType: string,
   action: ViewUsageEvent["action"],
-  metadata?: Record<string, unknown>
+  metadata?: Record<string, unknown>,
 ) {
   const state = getStoredAnalytics();
 
@@ -128,7 +128,7 @@ export function useViewAnalytics(entityType: string) {
       const key = `${entityType}:${viewId}`;
       return state.analytics[key] || null;
     },
-    [entityType, state.analytics]
+    [entityType, state.analytics],
   );
 
   const getMostUsedViews = useCallback(
@@ -138,7 +138,7 @@ export function useViewAnalytics(entityType: string) {
         .sort((a, b) => b.viewCount - a.viewCount)
         .slice(0, limit);
     },
-    [entityType, state.analytics]
+    [entityType, state.analytics],
   );
 
   const getRecentlyUsedViews = useCallback(
@@ -148,7 +148,7 @@ export function useViewAnalytics(entityType: string) {
         .sort((a, b) => b.lastUsed.localeCompare(a.lastUsed))
         .slice(0, limit);
     },
-    [entityType, state.analytics]
+    [entityType, state.analytics],
   );
 
   const getRecentEvents = useCallback(
@@ -158,7 +158,7 @@ export function useViewAnalytics(entityType: string) {
         .slice(-limit)
         .reverse();
     },
-    [entityType, state.events]
+    [entityType, state.events],
   );
 
   return {
@@ -173,10 +173,7 @@ export function useViewAnalytics(entityType: string) {
 // Auto-tracking Hook
 // ============================================================================
 
-export function useTrackViewUsage(
-  entityType: string,
-  viewId: string | null
-) {
+export function useTrackViewUsage(entityType: string, viewId: string | null) {
   useEffect(() => {
     if (viewId) {
       trackViewEvent(viewId, entityType, "view");
@@ -197,9 +194,10 @@ export interface ViewRecommendation {
 export function useViewRecommendations(
   entityType: string,
   currentViewId: string | null,
-  limit = 3
+  limit = 3,
 ): ViewRecommendation[] {
-  const { getMostUsedViews, getRecentlyUsedViews } = useViewAnalytics(entityType);
+  const { getMostUsedViews, getRecentlyUsedViews } =
+    useViewAnalytics(entityType);
 
   const popular = getMostUsedViews(limit);
   const recent = getRecentlyUsedViews(limit);
@@ -234,9 +232,7 @@ export function useViewRecommendations(
   });
 
   // Sort by score and return top N
-  return recommendations
-    .sort((a, b) => b.score - a.score)
-    .slice(0, limit);
+  return recommendations.sort((a, b) => b.score - a.score).slice(0, limit);
 }
 
 // ============================================================================

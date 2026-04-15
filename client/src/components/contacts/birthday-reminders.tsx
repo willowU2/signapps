@@ -29,7 +29,20 @@ function getDaysUntil(birthday: string): number {
 
 function formatBirthday(birthday: string): string {
   const parts = birthday.replace(/^\d{4}-/, "").split("-");
-  const months = ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."];
+  const months = [
+    "janv.",
+    "févr.",
+    "mars",
+    "avr.",
+    "mai",
+    "juin",
+    "juil.",
+    "août",
+    "sept.",
+    "oct.",
+    "nov.",
+    "déc.",
+  ];
   return `${parseInt(parts[1], 10)} ${months[parseInt(parts[0], 10) - 1]}`;
 }
 
@@ -49,7 +62,9 @@ export function BirthdayReminders({ contacts }: BirthdayRemindersProps) {
       <div className="text-center py-8 text-muted-foreground">
         <Gift className="size-8 mx-auto mb-2 opacity-40" />
         <p className="text-sm">Aucun anniversaire enregistré.</p>
-        <p className="text-xs mt-1">Ajoutez un champ "birthday" à vos contacts.</p>
+        <p className="text-xs mt-1">
+          Ajoutez un champ "birthday" à vos contacts.
+        </p>
       </div>
     );
   }
@@ -62,9 +77,20 @@ export function BirthdayReminders({ contacts }: BirthdayRemindersProps) {
   };
 
   const urgencyBadge = (days: number) => {
-    if (days === 0) return <Badge className="bg-red-100 text-red-800 text-xs">Aujourd'hui !</Badge>;
-    if (days === 1) return <Badge className="bg-orange-100 text-orange-800 text-xs">Demain</Badge>;
-    if (days <= 7) return <Badge className="bg-amber-100 text-amber-800 text-xs">Cette semaine</Badge>;
+    if (days === 0)
+      return (
+        <Badge className="bg-red-100 text-red-800 text-xs">Aujourd'hui !</Badge>
+      );
+    if (days === 1)
+      return (
+        <Badge className="bg-orange-100 text-orange-800 text-xs">Demain</Badge>
+      );
+    if (days <= 7)
+      return (
+        <Badge className="bg-amber-100 text-amber-800 text-xs">
+          Cette semaine
+        </Badge>
+      );
     return null;
   };
 
@@ -73,20 +99,28 @@ export function BirthdayReminders({ contacts }: BirthdayRemindersProps) {
       {upcoming.length > 0 && (
         <div className="space-y-2">
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1">
-            <Gift className="size-3" /> Dans les 30 prochains jours ({upcoming.length})
+            <Gift className="size-3" /> Dans les 30 prochains jours (
+            {upcoming.length})
           </p>
           {upcoming.map((c) => (
-            <div key={c.id} className={cn("flex items-center gap-3 border rounded-lg p-2.5",
-              c.daysUntil === 0 && "border-red-200 bg-red-50/50",
-              c.daysUntil <= 7 && c.daysUntil > 0 && "border-amber-200 bg-amber-50/50",
-            )}>
+            <div
+              key={c.id}
+              className={cn(
+                "flex items-center gap-3 border rounded-lg p-2.5",
+                c.daysUntil === 0 && "border-red-200 bg-red-50/50",
+                c.daysUntil <= 7 &&
+                  c.daysUntil > 0 &&
+                  "border-amber-200 bg-amber-50/50",
+              )}
+            >
               <div className="size-8 rounded-full bg-gradient-to-br from-pink-400 to-rose-500 flex items-center justify-center text-white text-xs font-bold shrink-0">
                 {c.name[0]}
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-sm truncate">{c.name}</p>
                 <p className="text-xs text-muted-foreground flex items-center gap-1">
-                  <CalendarDays className="size-3" /> {formatBirthday(c.birthday!)}
+                  <CalendarDays className="size-3" />{" "}
+                  {formatBirthday(c.birthday!)}
                 </p>
               </div>
               <div className="flex items-center gap-2 shrink-0">
@@ -102,12 +136,23 @@ export function BirthdayReminders({ contacts }: BirthdayRemindersProps) {
 
       {later.length > 0 && (
         <div className="space-y-1">
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Plus tard</p>
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+            Plus tard
+          </p>
           {later.map((c) => (
-            <div key={c.id} className="flex items-center gap-3 text-sm py-1.5 border-b last:border-0">
-              <span className="flex-1 text-muted-foreground truncate">{c.name}</span>
-              <span className="text-xs text-muted-foreground">{formatBirthday(c.birthday!)}</span>
-              <span className="text-xs text-muted-foreground w-10 text-right">J-{c.daysUntil}</span>
+            <div
+              key={c.id}
+              className="flex items-center gap-3 text-sm py-1.5 border-b last:border-0"
+            >
+              <span className="flex-1 text-muted-foreground truncate">
+                {c.name}
+              </span>
+              <span className="text-xs text-muted-foreground">
+                {formatBirthday(c.birthday!)}
+              </span>
+              <span className="text-xs text-muted-foreground w-10 text-right">
+                J-{c.daysUntil}
+              </span>
             </div>
           ))}
         </div>

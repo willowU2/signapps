@@ -1,26 +1,21 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { formatDistanceToNow } from 'date-fns';
-import { fr } from 'date-fns/locale';
-import {
-  Check,
-  RotateCcw,
-  Trash2,
-  MoreHorizontal,
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
+import { useState } from "react";
+import { formatDistanceToNow } from "date-fns";
+import { fr } from "date-fns/locale";
+import { Check, RotateCcw, Trash2, MoreHorizontal } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { cn } from '@/lib/utils';
-import type { CommentData, CommentReply } from '../extensions/comment';
-import { CommentInput } from './comment-input';
+} from "@/components/ui/dropdown-menu";
+import { cn } from "@/lib/utils";
+import type { CommentData, CommentReply } from "../extensions/comment";
+import { CommentInput } from "./comment-input";
 
 // ============================================================================
 // Types
@@ -67,10 +62,10 @@ export function CommentThread({
   return (
     <div
       className={cn(
-        'rounded-lg border bg-card transition-all',
-        isActive && 'ring-2 ring-primary shadow-sm',
-        comment.resolved && 'opacity-60',
-        className
+        "rounded-lg border bg-card transition-all",
+        isActive && "ring-2 ring-primary shadow-sm",
+        comment.resolved && "opacity-60",
+        className,
       )}
       onClick={onClick}
     >
@@ -156,7 +151,9 @@ export function CommentThread({
               </div>
             </div>
 
-            <p className="text-sm mt-1 whitespace-pre-wrap">{comment.content}</p>
+            <p className="text-sm mt-1 whitespace-pre-wrap">
+              {comment.content}
+            </p>
           </div>
         </div>
       </div>
@@ -213,7 +210,12 @@ interface ReplyItemProps {
   onDeleteReply?: (commentId: string, replyId: string) => void;
 }
 
-function ReplyItem({ reply, commentId, currentUserId, onDeleteReply }: ReplyItemProps) {
+function ReplyItem({
+  reply,
+  commentId,
+  currentUserId,
+  onDeleteReply,
+}: ReplyItemProps) {
   const isAuthor = currentUserId === reply.authorId;
 
   return (

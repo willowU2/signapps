@@ -117,16 +117,19 @@ export function EnergyTracker() {
         ).toFixed(1)
       : 0;
 
-  const correlation = checkInData.length > 1
-    ? "Strong positive correlation with completed tasks"
-    : "Gathering data...";
+  const correlation =
+    checkInData.length > 1
+      ? "Strong positive correlation with completed tasks"
+      : "Gathering data...";
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-foreground">Energy Tracker</h2>
-          <p className="text-muted-foreground">3-click check-in for daily energy levels</p>
+          <p className="text-muted-foreground">
+            3-click check-in for daily energy levels
+          </p>
         </div>
         <div className="text-right">
           <p className="text-sm text-muted-foreground">Average Energy</p>
@@ -135,14 +138,18 @@ export function EnergyTracker() {
       </div>
 
       <div className="bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-lg p-6">
-        <h3 className="font-semibold text-foreground mb-4">How's your energy?</h3>
+        <h3 className="font-semibold text-foreground mb-4">
+          How's your energy?
+        </h3>
         <div className="flex gap-3 justify-center">
           {[1, 2, 3, 4, 5].map((level) => (
             <button
               key={level}
               onClick={() => handleQuickCheckIn(level)}
               className={`w-16 h-16 rounded-full flex items-center justify-center font-bold text-white transition-all transform hover:scale-110 ${
-                selectedLevel === level ? "ring-4 ring-offset-2 ring-gray-400" : ""
+                selectedLevel === level
+                  ? "ring-4 ring-offset-2 ring-gray-400"
+                  : ""
               } ${getEnergyColor(level)}`}
             >
               {level}
@@ -182,7 +189,9 @@ export function EnergyTracker() {
         <div className="border rounded-lg p-4">
           <div className="flex items-center gap-2 mb-2">
             <Heart className="w-5 h-5 text-red-500" />
-            <p className="text-sm font-medium text-muted-foreground">Check-ins</p>
+            <p className="text-sm font-medium text-muted-foreground">
+              Check-ins
+            </p>
           </div>
           <p className="text-2xl font-bold text-foreground">
             {checkInData.length}
@@ -191,9 +200,13 @@ export function EnergyTracker() {
         <div className="border rounded-lg p-4">
           <div className="flex items-center gap-2 mb-2">
             <Zap className="w-5 h-5 text-yellow-500" />
-            <p className="text-sm font-medium text-muted-foreground">Task Correlation</p>
+            <p className="text-sm font-medium text-muted-foreground">
+              Task Correlation
+            </p>
           </div>
-          <p className="text-sm text-muted-foreground font-medium">{correlation}</p>
+          <p className="text-sm text-muted-foreground font-medium">
+            {correlation}
+          </p>
         </div>
       </div>
 
@@ -202,32 +215,40 @@ export function EnergyTracker() {
           <h3 className="font-semibold text-foreground">Recent Check-ins</h3>
         </div>
         <div className="divide-y">
-          {checkInData.slice().reverse().slice(0, 5).map((data, idx) => (
-            <div
-              key={idx}
-              className="p-4 flex items-center justify-between hover:bg-muted"
-            >
-              <div>
-                <p className="font-medium text-foreground">{data.day}</p>
-                <p className="text-xs text-muted-foreground">{data.timestamp}</p>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="text-right">
-                  <p className="text-sm font-semibold text-foreground">
-                    {getEnergyLabel(data.level)}
+          {checkInData
+            .slice()
+            .reverse()
+            .slice(0, 5)
+            .map((data, idx) => (
+              <div
+                key={idx}
+                className="p-4 flex items-center justify-between hover:bg-muted"
+              >
+                <div>
+                  <p className="font-medium text-foreground">{data.day}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {data.timestamp}
                   </p>
-                  <p className="text-xs text-muted-foreground">{data.taskCount} tasks</p>
                 </div>
-                <div
-                  className={`w-8 h-8 rounded-full ${getEnergyColor(
-                    data.level
-                  )} flex items-center justify-center text-white font-bold text-sm`}
-                >
-                  {data.level}
+                <div className="flex items-center gap-3">
+                  <div className="text-right">
+                    <p className="text-sm font-semibold text-foreground">
+                      {getEnergyLabel(data.level)}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {data.taskCount} tasks
+                    </p>
+                  </div>
+                  <div
+                    className={`w-8 h-8 rounded-full ${getEnergyColor(
+                      data.level,
+                    )} flex items-center justify-center text-white font-bold text-sm`}
+                  >
+                    {data.level}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))}
         </div>
       </div>
     </div>

@@ -1,27 +1,27 @@
-'use client';
+"use client";
 
 // IDEA-122: Quick Notes widget for the extended widget library
 
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { StickyNote, Save, RotateCcw } from 'lucide-react';
-import type { WidgetRenderProps } from '@/lib/dashboard/types';
-import { toast } from 'sonner';
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { StickyNote, Save, RotateCcw } from "lucide-react";
+import type { WidgetRenderProps } from "@/lib/dashboard/types";
+import { toast } from "sonner";
 
-const STORAGE_KEY = 'dashboard_quick_notes';
+const STORAGE_KEY = "dashboard_quick_notes";
 
 export function WidgetQuickNotes({ widget }: WidgetRenderProps) {
   const widgetId = widget.id;
   const storageKey = `${STORAGE_KEY}_${widgetId}`;
 
-  const [content, setContent] = useState('');
-  const [saved, setSaved] = useState('');
+  const [content, setContent] = useState("");
+  const [saved, setSaved] = useState("");
   const [dirty, setDirty] = useState(false);
 
   useEffect(() => {
     try {
-      const stored = localStorage.getItem(storageKey) ?? '';
+      const stored = localStorage.getItem(storageKey) ?? "";
       setContent(stored);
       setSaved(stored);
     } catch {
@@ -39,9 +39,9 @@ export function WidgetQuickNotes({ widget }: WidgetRenderProps) {
       localStorage.setItem(storageKey, content);
       setSaved(content);
       setDirty(false);
-      toast.success('Note sauvegardée');
+      toast.success("Note sauvegardée");
     } catch {
-      toast.error('Impossible de sauvegarder');
+      toast.error("Impossible de sauvegarder");
     }
   };
 
@@ -72,7 +72,7 @@ export function WidgetQuickNotes({ widget }: WidgetRenderProps) {
             )}
             <Button
               size="icon"
-              variant={dirty ? 'default' : 'ghost'}
+              variant={dirty ? "default" : "ghost"}
               className="h-6 w-6"
               onClick={handleSave}
               disabled={!dirty}
@@ -90,7 +90,7 @@ export function WidgetQuickNotes({ widget }: WidgetRenderProps) {
           value={content}
           onChange={(e) => handleChange(e.target.value)}
           onKeyDown={(e) => {
-            if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+            if ((e.ctrlKey || e.metaKey) && e.key === "s") {
               e.preventDefault();
               handleSave();
             }

@@ -1,12 +1,11 @@
-'use client';
-import { SpinnerInfinity } from 'spinners-react';
+"use client";
+import { SpinnerInfinity } from "spinners-react";
 
-
-import { useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { toast } from 'sonner';
+import { useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { toast } from "sonner";
 
 import {
   Sheet,
@@ -14,7 +13,7 @@ import {
   SheetDescription,
   SheetHeader,
   SheetTitle,
-} from '@/components/ui/sheet';
+} from "@/components/ui/sheet";
 import {
   Form,
   FormControl,
@@ -22,14 +21,14 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Button } from '@/components/ui/button';
-import { useCreateGroup, useUpdateGroup, Group } from '@/hooks/use-groups';
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { useCreateGroup, useUpdateGroup, Group } from "@/hooks/use-groups";
 
 const groupSchema = z.object({
-  name: z.string().min(2, 'Le nom doit contenir au moins 2 caractères.'),
+  name: z.string().min(2, "Le nom doit contenir au moins 2 caractères."),
   description: z.string().optional().nullable(),
 });
 
@@ -42,7 +41,11 @@ interface GroupSheetProps {
   initialData?: Group | null;
 }
 
-export function GroupSheet({ open, onOpenChange, initialData }: GroupSheetProps) {
+export function GroupSheet({
+  open,
+  onOpenChange,
+  initialData,
+}: GroupSheetProps) {
   const isEditing = !!initialData;
   const createMutation = useCreateGroup();
   const updateMutation = useUpdateGroup();
@@ -50,8 +53,8 @@ export function GroupSheet({ open, onOpenChange, initialData }: GroupSheetProps)
   const form = useForm<GroupFormValues>({
     resolver: zodResolver(groupSchema),
     defaultValues: {
-      name: '',
-      description: '',
+      name: "",
+      description: "",
     },
   });
 
@@ -59,10 +62,10 @@ export function GroupSheet({ open, onOpenChange, initialData }: GroupSheetProps)
     if (initialData && open) {
       form.reset({
         name: initialData.name,
-        description: initialData.description || '',
+        description: initialData.description || "",
       });
     } else if (!open) {
-      form.reset({ name: '', description: '' });
+      form.reset({ name: "", description: "" });
     }
   }, [initialData, open, form]);
 
@@ -70,14 +73,14 @@ export function GroupSheet({ open, onOpenChange, initialData }: GroupSheetProps)
     try {
       if (isEditing && initialData) {
         await updateMutation.mutateAsync({ id: initialData.id, data: values });
-        toast.success('Groupe mis à jour avec succès');
+        toast.success("Groupe mis à jour avec succès");
       } else {
         await createMutation.mutateAsync(values);
-        toast.success('Groupe créé avec succès');
+        toast.success("Groupe créé avec succès");
       }
       onOpenChange(false);
     } catch (error) {
-      toast.error('Erreur lors de la sauvegarde du groupe');
+      toast.error("Erreur lors de la sauvegarde du groupe");
       console.error(error);
     }
   };
@@ -86,16 +89,21 @@ export function GroupSheet({ open, onOpenChange, initialData }: GroupSheetProps)
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="sm:max-w-md">
         <SheetHeader>
-          <SheetTitle>{isEditing ? 'Modifier le groupe' : 'Ajouter un groupe'}</SheetTitle>
+          <SheetTitle>
+            {isEditing ? "Modifier le groupe" : "Ajouter un groupe"}
+          </SheetTitle>
           <SheetDescription>
             {isEditing
-              ? 'Modifiez les informations de ce groupe.'
-              : 'Remplissez ce formulaire pour créer un nouveau groupe RBAC.'}
+              ? "Modifiez les informations de ce groupe."
+              : "Remplissez ce formulaire pour créer un nouveau groupe RBAC."}
           </SheetDescription>
         </SheetHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 mt-6">
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="space-y-4 mt-6"
+          >
             <FormField
               control={form.control}
               name="name"
@@ -103,7 +111,10 @@ export function GroupSheet({ open, onOpenChange, initialData }: GroupSheetProps)
                 <FormItem>
                   <FormLabel>Nom du groupe</FormLabel>
                   <FormControl>
-                    <Input placeholder="Administrateurs, Utilisateurs..." {...field} />
+                    <Input
+                      placeholder="Administrateurs, Utilisateurs..."
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -121,7 +132,7 @@ export function GroupSheet({ open, onOpenChange, initialData }: GroupSheetProps)
                       placeholder="Description du rôle de ce groupe..."
                       className="resize-none"
                       {...field}
-                      value={field.value || ''}
+                      value={field.value || ""}
                     />
                   </FormControl>
                   <FormMessage />
@@ -142,9 +153,14 @@ export function GroupSheet({ open, onOpenChange, initialData }: GroupSheetProps)
                 disabled={createMutation.isPending || updateMutation.isPending}
               >
                 {(createMutation.isPending || updateMutation.isPending) && (
-                  <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} />
+                  <SpinnerInfinity
+                    size={24}
+                    secondaryColor="rgba(128,128,128,0.2)"
+                    color="currentColor"
+                    speed={120}
+                  />
                 )}
-                {isEditing ? 'Mettre à jour' : 'Créer'}
+                {isEditing ? "Mettre à jour" : "Créer"}
               </Button>
             </div>
           </form>

@@ -1,5 +1,5 @@
-import { useQuery } from '@tanstack/react-query';
-import { containersApi, ContainerInfo } from '@/lib/api';
+import { useQuery } from "@tanstack/react-query";
+import { containersApi, ContainerInfo } from "@/lib/api";
 
 interface ContainerDetailsParams {
   containerId: string;
@@ -21,7 +21,7 @@ export function useContainerDetails({
   enabled,
 }: ContainerDetailsParams) {
   return useQuery<ContainerInfo | null>({
-    queryKey: ['container-details', containerId, dockerId],
+    queryKey: ["container-details", containerId, dockerId],
     queryFn: async () => {
       if (isManaged) {
         // GET /containers/:id returns ContainerResponse with docker_info

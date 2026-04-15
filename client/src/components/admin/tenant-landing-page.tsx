@@ -63,7 +63,7 @@ export function TenantLandingPage({
 
   const toggleModule = (moduleId: string) => {
     const updated = modules.map((m) =>
-      m.id === moduleId ? { ...m, enabled: !m.enabled } : m
+      m.id === moduleId ? { ...m, enabled: !m.enabled } : m,
     );
     onModulesChange?.(updated);
   };
@@ -92,7 +92,10 @@ export function TenantLandingPage({
                   type="text"
                   value={editedWelcome.title}
                   onChange={(e) =>
-                    setEditedWelcome({ ...editedWelcome, title: e.target.value })
+                    setEditedWelcome({
+                      ...editedWelcome,
+                      title: e.target.value,
+                    })
                   }
                   className="w-full border rounded px-3 py-2 text-xl font-bold"
                   placeholder="Welcome title"
@@ -101,7 +104,10 @@ export function TenantLandingPage({
                   type="text"
                   value={editedWelcome.subtitle}
                   onChange={(e) =>
-                    setEditedWelcome({ ...editedWelcome, subtitle: e.target.value })
+                    setEditedWelcome({
+                      ...editedWelcome,
+                      subtitle: e.target.value,
+                    })
                   }
                   className="w-full border rounded px-3 py-2 text-sm"
                   placeholder="Welcome subtitle"
@@ -110,7 +116,11 @@ export function TenantLandingPage({
                   <Button onClick={handleSaveWelcome} size="sm">
                     Save
                   </Button>
-                  <Button onClick={() => setEditMode(false)} variant="outline" size="sm">
+                  <Button
+                    onClick={() => setEditMode(false)}
+                    variant="outline"
+                    size="sm"
+                  >
                     Cancel
                   </Button>
                 </div>
@@ -118,7 +128,9 @@ export function TenantLandingPage({
             ) : (
               <div>
                 <h1 className="text-3xl font-bold">{editedWelcome.title}</h1>
-                <p className="text-muted-foreground mt-2">{editedWelcome.subtitle}</p>
+                <p className="text-muted-foreground mt-2">
+                  {editedWelcome.subtitle}
+                </p>
               </div>
             )}
           </div>
@@ -173,11 +185,16 @@ export function TenantLandingPage({
           </div>
           <div className="space-y-3">
             {announcements.slice(0, 3).map((announcement) => (
-              <div key={announcement.id} className="border-l-4 border-blue-500 pl-4 py-2">
+              <div
+                key={announcement.id}
+                className="border-l-4 border-blue-500 pl-4 py-2"
+              >
                 <div className="flex items-start justify-between">
                   <div>
                     <p className="font-medium">{announcement.title}</p>
-                    <p className="text-sm text-muted-foreground mt-1">{announcement.content}</p>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {announcement.content}
+                    </p>
                   </div>
                   <span
                     className={`px-2 py-1 rounded text-xs font-medium ${
@@ -205,7 +222,10 @@ export function TenantLandingPage({
           </div>
           <div className="space-y-3">
             {modules.map((module) => (
-              <div key={module.id} className="flex items-center justify-between p-3 border rounded">
+              <div
+                key={module.id}
+                className="flex items-center justify-between p-3 border rounded"
+              >
                 <span className="font-medium">{module.name}</span>
                 <button
                   onClick={() => toggleModule(module.id)}

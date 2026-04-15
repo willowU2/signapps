@@ -1,20 +1,27 @@
-'use client';
+"use client";
 
-import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Plus, MessageSquare, Clock, MoreVertical, Edit3, Trash2 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+} from "@/components/ui/dropdown-menu";
+import {
+  Plus,
+  MessageSquare,
+  Clock,
+  MoreVertical,
+  Edit3,
+  Trash2,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface Message {
   id: string;
-  role: 'user' | 'assistant';
+  role: "user" | "assistant";
   content: string;
   sources?: { filename: string; page?: number; score?: number }[];
   timestamp: Date;
@@ -35,13 +42,16 @@ function formatDate(date: Date): string {
   const days = Math.floor(diff / (1000 * 60 * 60 * 24));
 
   if (days === 0) {
-    return date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    return date.toLocaleTimeString("fr-FR", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
   } else if (days === 1) {
-    return 'Hier';
+    return "Hier";
   } else if (days < 7) {
-    return date.toLocaleDateString('fr-FR', { weekday: 'long' });
+    return date.toLocaleDateString("fr-FR", { weekday: "long" });
   } else {
-    return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+    return date.toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
   }
 }
 
@@ -82,12 +92,12 @@ export function ConversationSidebar({
               </Button>
             </div>
           ) : (
-            conversations.map(conversation => (
+            conversations.map((conversation) => (
               <div
                 key={conversation.id}
                 className={cn(
-                  'group flex items-center gap-2 p-2 rounded-lg cursor-pointer hover:bg-muted transition-colors',
-                  activeConversationId === conversation.id && 'bg-muted',
+                  "group flex items-center gap-2 p-2 rounded-lg cursor-pointer hover:bg-muted transition-colors",
+                  activeConversationId === conversation.id && "bg-muted",
                 )}
                 onClick={() => onSelectConversation(conversation)}
               >
@@ -100,7 +110,10 @@ export function ConversationSidebar({
                   </p>
                 </div>
                 <DropdownMenu>
-                  <DropdownMenuTrigger asChild onClick={e => e.stopPropagation()}>
+                  <DropdownMenuTrigger
+                    asChild
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     <Button
                       variant="ghost"
                       size="icon"

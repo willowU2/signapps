@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   HoverCard,
   HoverCardContent,
   HoverCardTrigger,
-} from '@/components/ui/hover-card';
-import { cn } from '@/lib/utils';
+} from "@/components/ui/hover-card";
+import { cn } from "@/lib/utils";
 
 // ============================================================================
 // Types
@@ -44,11 +44,11 @@ export function MentionBadge({
       <HoverCardTrigger asChild>
         <button
           className={cn(
-            'inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md',
-            'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300',
-            'hover:bg-blue-200 dark:hover:bg-blue-900/50',
-            'font-medium text-sm transition-colors cursor-pointer',
-            className
+            "inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md",
+            "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300",
+            "hover:bg-blue-200 dark:hover:bg-blue-900/50",
+            "font-medium text-sm transition-colors cursor-pointer",
+            className,
           )}
           onClick={handleClick}
         >
@@ -83,7 +83,7 @@ export function MentionBadge({
  */
 export function parseMentions(
   text: string,
-  onMentionClick?: (userId: string) => void
+  onMentionClick?: (userId: string) => void,
 ): React.ReactNode[] {
   const mentionRegex = /@(\w+)/g;
   const parts: React.ReactNode[] = [];
@@ -102,7 +102,7 @@ export function parseMentions(
         key={`mention-${match.index}`}
         username={match[1]}
         onClick={onMentionClick}
-      />
+      />,
     );
 
     lastIndex = match.index + match[0].length;

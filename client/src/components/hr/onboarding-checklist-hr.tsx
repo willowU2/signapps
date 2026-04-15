@@ -1,7 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { CheckCircle, Circle, Users, Lock, GraduationCap, User } from "lucide-react";
+import {
+  CheckCircle,
+  Circle,
+  Users,
+  Lock,
+  GraduationCap,
+  User,
+} from "lucide-react";
 
 interface OnboardingTask {
   id: string;
@@ -109,9 +116,7 @@ export function OnboardingChecklistHr() {
 
   const handleToggleTask = (id: string) => {
     setTasks(
-      tasks.map((t) =>
-        t.id === id ? { ...t, completed: !t.completed } : t
-      )
+      tasks.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t)),
     );
   };
 
@@ -125,8 +130,12 @@ export function OnboardingChecklistHr() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-foreground">Onboarding Checklist</h2>
-        <p className="text-muted-foreground">New employee onboarding progress tracking</p>
+        <h2 className="text-2xl font-bold text-foreground">
+          Onboarding Checklist
+        </h2>
+        <p className="text-muted-foreground">
+          New employee onboarding progress tracking
+        </p>
       </div>
 
       <div className="rounded-lg border p-6 bg-card">
@@ -142,7 +151,9 @@ export function OnboardingChecklistHr() {
             style={{ width: `${progressPercent}%` }}
           />
         </div>
-        <p className="text-xs text-muted-foreground mt-2">{progressPercent}% complete</p>
+        <p className="text-xs text-muted-foreground mt-2">
+          {progressPercent}% complete
+        </p>
       </div>
 
       <div className="space-y-4">
@@ -154,7 +165,8 @@ export function OnboardingChecklistHr() {
                 {getCategoryLabel(category)}
               </h3>
               <span className="text-xs text-muted-foreground">
-                ({categoryTasks.filter((t) => t.completed).length}/{categoryTasks.length})
+                ({categoryTasks.filter((t) => t.completed).length}/
+                {categoryTasks.length})
               </span>
             </div>
 
@@ -182,7 +194,9 @@ export function OnboardingChecklistHr() {
                     >
                       {task.title}
                     </p>
-                    <p className="text-xs text-muted-foreground">{task.description}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {task.description}
+                    </p>
                   </div>
                 </div>
               ))}

@@ -2,8 +2,7 @@
 
 use chrono::Utc;
 use signapps_transcription::{
-    tiptap::to_tiptap_doc, Segment, SessionMeta, Speaker, TranscriptionResult,
-    TranscriptionSource,
+    tiptap::to_tiptap_doc, Segment, SessionMeta, Speaker, TranscriptionResult, TranscriptionSource,
 };
 use uuid::Uuid;
 

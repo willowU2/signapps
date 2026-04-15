@@ -45,7 +45,7 @@ export default function Carpooling() {
 
   const handleRegister = (id: string) => {
     setRegistered((prev) =>
-      prev.includes(id) ? prev.filter((r) => r !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((r) => r !== id) : [...prev, id],
     );
   };
 
@@ -69,7 +69,9 @@ export default function Carpooling() {
                   <span className="text-gray-400">→</span>
                   <span className="font-semibold">{trip.to}</span>
                 </div>
-                <p className="text-sm text-muted-foreground mb-3">{trip.date}</p>
+                <p className="text-sm text-muted-foreground mb-3">
+                  {trip.date}
+                </p>
                 <div className="flex gap-4 text-sm">
                   <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded">
                     {trip.seatsAvailable} seats

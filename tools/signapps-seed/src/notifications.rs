@@ -18,23 +18,11 @@ const NOTIFICATION_TYPES: &[&str] = &[
 ];
 
 const MODULES: &[&str] = &[
-    "calendar",
-    "mail",
-    "drive",
-    "chat",
-    "docs",
-    "forms",
-    "tasks",
+    "calendar", "mail", "drive", "chat", "docs", "forms", "tasks",
 ];
 
 const ENTITY_TYPES: &[&str] = &[
-    "task",
-    "document",
-    "email",
-    "event",
-    "file",
-    "form",
-    "channel",
+    "task", "document", "email", "event", "file", "form", "channel",
 ];
 
 /// Seeds Acme Corp notifications (50 items, preferences for all users).
@@ -106,10 +94,7 @@ async fn seed_notifications(
         let is_read = rng.gen_bool(0.4);
         let created_at_offset: i64 = -(rng.gen_range(0i64..=30));
 
-        let title = format!(
-            "Nouvelle notification : {} dans {}",
-            notif_type, module
-        );
+        let title = format!("Nouvelle notification : {} dans {}", notif_type, module);
         let body = format!(
             "Vous avez une nouvelle activité sur votre {} dans le module {}.",
             entity_type, module
@@ -173,8 +158,16 @@ async fn seed_notifications(
     let digest_options = ["none", "daily", "weekly"];
     for (i, (user_id, _, _)) in user_ids.iter().enumerate() {
         let digest = *crate::helpers::pick(&digest_options, i);
-        let quiet_start = if rng.gen_bool(0.5) { Some("22:00") } else { None };
-        let quiet_end = if quiet_start.is_some() { Some("07:00") } else { None };
+        let quiet_start = if rng.gen_bool(0.5) {
+            Some("22:00")
+        } else {
+            None
+        };
+        let quiet_end = if quiet_start.is_some() {
+            Some("07:00")
+        } else {
+            None
+        };
 
         if let (Some(qs), Some(qe)) = (quiet_start, quiet_end) {
             sqlx::query(

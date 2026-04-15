@@ -87,18 +87,25 @@ export default function DeliveryTracker() {
         </div>
         <div className="divide-y">
           {deliveries.map((delivery) => (
-            <div key={delivery.id} className="flex items-center justify-between p-4">
+            <div
+              key={delivery.id}
+              className="flex items-center justify-between p-4"
+            >
               <div className="flex items-center gap-4">
                 <div className="rounded-full bg-muted p-2">
                   {getStatusIcon(delivery.status)}
                 </div>
                 <div>
                   <p className="font-medium">{delivery.poRef}</p>
-                  <p className="text-sm text-muted-foreground">{delivery.supplier}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {delivery.supplier}
+                  </p>
                 </div>
               </div>
               <div className="text-right">
-                <p className="text-sm text-muted-foreground">Expected: {delivery.expectedDate}</p>
+                <p className="text-sm text-muted-foreground">
+                  Expected: {delivery.expectedDate}
+                </p>
                 <div className="mt-1">
                   <span className={getStatusBadge(delivery.status)}>
                     {getStatusText(delivery.status)}

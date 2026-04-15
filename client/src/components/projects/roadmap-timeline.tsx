@@ -31,9 +31,24 @@ const SAMPLE_LANES: ProjectLane[] = [
     name: "Mobile App",
     color: "border-blue-500",
     milestones: [
-      { id: "m1", title: "Authentication", date: "2026-Q1", status: "completed" },
-      { id: "m2", title: "UI Framework", date: "2026-Q2", status: "in-progress" },
-      { id: "m3", title: "Push Notifications", date: "2026-Q3", status: "planned" },
+      {
+        id: "m1",
+        title: "Authentication",
+        date: "2026-Q1",
+        status: "completed",
+      },
+      {
+        id: "m2",
+        title: "UI Framework",
+        date: "2026-Q2",
+        status: "in-progress",
+      },
+      {
+        id: "m3",
+        title: "Push Notifications",
+        date: "2026-Q3",
+        status: "planned",
+      },
     ],
   },
   {
@@ -41,8 +56,18 @@ const SAMPLE_LANES: ProjectLane[] = [
     name: "Backend API",
     color: "border-green-500",
     milestones: [
-      { id: "b1", title: "Core Services", date: "2026-Q1", status: "completed" },
-      { id: "b2", title: "Database Optimization", date: "2026-Q2", status: "completed" },
+      {
+        id: "b1",
+        title: "Core Services",
+        date: "2026-Q1",
+        status: "completed",
+      },
+      {
+        id: "b2",
+        title: "Database Optimization",
+        date: "2026-Q2",
+        status: "completed",
+      },
       { id: "b3", title: "Caching Layer", date: "2026-Q3", status: "planned" },
     ],
   },
@@ -51,7 +76,12 @@ const SAMPLE_LANES: ProjectLane[] = [
     name: "Web Frontend",
     color: "border-purple-500",
     milestones: [
-      { id: "f1", title: "Component Library", date: "2026-Q1", status: "completed" },
+      {
+        id: "f1",
+        title: "Component Library",
+        date: "2026-Q1",
+        status: "completed",
+      },
       { id: "f2", title: "Dashboard", date: "2026-Q2", status: "in-progress" },
       { id: "f3", title: "Analytics", date: "2026-Q3", status: "planned" },
     ],
@@ -88,7 +118,7 @@ function MilestoneDiamond({ milestone }: { milestone: Milestone }) {
         className={cn(
           "w-4 h-4 rotate-45 transition-all",
           config.diamond,
-          "group-hover:scale-125 group-hover:shadow-lg"
+          "group-hover:scale-125 group-hover:shadow-lg",
         )}
         title={`${milestone.title} - ${config.label}`}
       />
@@ -97,7 +127,11 @@ function MilestoneDiamond({ milestone }: { milestone: Milestone }) {
       <div className="hidden group-hover:flex absolute bg-popover text-popover-foreground text-xs rounded border shadow-lg p-2 whitespace-nowrap z-20 bottom-full mb-1">
         <div className="flex flex-col gap-0.5">
           <span className="font-semibold">{milestone.title}</span>
-          <span className="text-muted-foreground">{isQuarter ? milestone.date : new Date(milestone.date).toLocaleDateString("fr-FR")}</span>
+          <span className="text-muted-foreground">
+            {isQuarter
+              ? milestone.date
+              : new Date(milestone.date).toLocaleDateString("fr-FR")}
+          </span>
         </div>
       </div>
     </div>
@@ -110,7 +144,10 @@ function QuarterHeader() {
   return (
     <div className="flex items-end">
       {QUARTERS.map((q) => (
-        <div key={q} className="flex-1 text-center pb-4 border-b font-semibold text-sm text-muted-foreground">
+        <div
+          key={q}
+          className="flex-1 text-center pb-4 border-b font-semibold text-sm text-muted-foreground"
+        >
           {q}
         </div>
       ))}
@@ -125,7 +162,9 @@ function ProjectLaneRow({ lane }: { lane: ProjectLane }) {
     const map: Record<string, Milestone[]> = {};
     QUARTERS.forEach((q) => (map[q] = []));
     lane.milestones.forEach((m) => {
-      const quarter = m.date.includes("Q") ? m.date : `${m.date.substring(0, 4)}-Q${Math.ceil(parseInt(m.date.substring(5, 7)) / 3)}`;
+      const quarter = m.date.includes("Q")
+        ? m.date
+        : `${m.date.substring(0, 4)}-Q${Math.ceil(parseInt(m.date.substring(5, 7)) / 3)}`;
       if (map[quarter]) {
         map[quarter].push(m);
       }
@@ -161,7 +200,9 @@ function ProjectLaneRow({ lane }: { lane: ProjectLane }) {
 
 // ── Main Component ────────────────────────────────────────────────────────────
 
-export function RoadmapTimeline({ lanes = SAMPLE_LANES }: RoadmapTimelineProps) {
+export function RoadmapTimeline({
+  lanes = SAMPLE_LANES,
+}: RoadmapTimelineProps) {
   return (
     <div className="w-full border rounded-lg overflow-hidden bg-background">
       {/* Title */}

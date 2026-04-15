@@ -22,9 +22,7 @@ export function useEvents(calendarId?: string) {
       const description = (e.description ?? "").toLowerCase();
       const location = (e.location ?? "").toLowerCase();
       return (
-        title.includes(q) ||
-        description.includes(q) ||
-        location.includes(q)
+        title.includes(q) || description.includes(q) || location.includes(q)
       );
     });
   }, [rawEvents, searchQuery]);
@@ -40,13 +38,14 @@ export function useEvents(calendarId?: string) {
         const response = await calendarApi.listEvents(calendarId, start, end);
         setEvents(response.data);
       } catch (err) {
-        const message = err instanceof Error ? err.message : "Failed to load events";
+        const message =
+          err instanceof Error ? err.message : "Failed to load events";
         setError(message);
       } finally {
         setIsLoading(false);
       }
     },
-    [calendarId, setEvents]
+    [calendarId, setEvents],
   );
 
   // Create event — read the store at call time instead of from a captured
@@ -63,12 +62,13 @@ export function useEvents(calendarId?: string) {
         setEvents([...current, created]);
         return created;
       } catch (err) {
-        const message = err instanceof Error ? err.message : "Impossible de créer event";
+        const message =
+          err instanceof Error ? err.message : "Impossible de créer event";
         setError(message);
         throw err;
       }
     },
-    [calendarId, setEvents]
+    [calendarId, setEvents],
   );
 
   // Update event — optimistic-style: snapshot previous events, apply server
@@ -87,12 +87,14 @@ export function useEvents(calendarId?: string) {
         // Rollback to the pre-update snapshot
         setEvents(snapshot);
         const message =
-          err instanceof Error ? err.message : "Impossible de mettre à jour event";
+          err instanceof Error
+            ? err.message
+            : "Impossible de mettre à jour event";
         setError(message);
         throw err;
       }
     },
-    [setEvents]
+    [setEvents],
   );
 
   // Delete event — same snapshot/rollback pattern.
@@ -106,12 +108,13 @@ export function useEvents(calendarId?: string) {
         setEvents(current.filter((e) => e.id !== id));
       } catch (err) {
         setEvents(snapshot);
-        const message = err instanceof Error ? err.message : "Impossible de supprimer event";
+        const message =
+          err instanceof Error ? err.message : "Impossible de supprimer event";
         setError(message);
         throw err;
       }
     },
-    [setEvents]
+    [setEvents],
   );
 
   return {

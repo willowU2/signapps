@@ -21,7 +21,11 @@ interface SheetData {
 
 // ── Component ──────────────────────────────────────────────────────────────
 
-export function SheetEmbedView({ node, updateAttributes, selected }: NodeViewProps) {
+export function SheetEmbedView({
+  node,
+  updateAttributes,
+  selected,
+}: NodeViewProps) {
   const { sheetId, sheetName, range, lastRefreshed } = node.attrs;
   const [data, setData] = useState<SheetData | null>(null);
   const [loading, setLoading] = useState(false);
@@ -55,7 +59,9 @@ export function SheetEmbedView({ node, updateAttributes, selected }: NodeViewPro
       setData({ rows: filteredRows, sheetName });
       updateAttributes({ lastRefreshed: new Date().toISOString() });
     } catch (err) {
-      setError("Failed to load sheet data. The sheet may not exist or is inaccessible.");
+      setError(
+        "Failed to load sheet data. The sheet may not exist or is inaccessible.",
+      );
     } finally {
       setLoading(false);
     }
@@ -63,7 +69,7 @@ export function SheetEmbedView({ node, updateAttributes, selected }: NodeViewPro
 
   useEffect(() => {
     fetchData();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sheetId]);
 
   const openSheet = () => {
@@ -74,7 +80,7 @@ export function SheetEmbedView({ node, updateAttributes, selected }: NodeViewPro
     <NodeViewWrapper
       className={cn(
         "my-4 rounded-lg border bg-card shadow-sm overflow-hidden transition-shadow",
-        selected && "ring-2 ring-primary/50 shadow-md"
+        selected && "ring-2 ring-primary/50 shadow-md",
       )}
       data-drag-handle
     >
@@ -82,7 +88,9 @@ export function SheetEmbedView({ node, updateAttributes, selected }: NodeViewPro
       <div className="flex items-center justify-between px-3 py-2 bg-muted/50 border-b">
         <div className="flex items-center gap-2 min-w-0">
           <Table2 className="h-4 w-4 text-green-600 shrink-0" />
-          <span className="text-sm font-medium truncate">{sheetName || "Embedded Sheet"}</span>
+          <span className="text-sm font-medium truncate">
+            {sheetName || "Embedded Sheet"}
+          </span>
           {range && (
             <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
               {range}
@@ -98,7 +106,9 @@ export function SheetEmbedView({ node, updateAttributes, selected }: NodeViewPro
             disabled={loading}
             title="Refresh data"
           >
-            <RefreshCw className={cn("h-3.5 w-3.5", loading && "animate-spin")} />
+            <RefreshCw
+              className={cn("h-3.5 w-3.5", loading && "animate-spin")}
+            />
           </Button>
           <Button
             variant="ghost"
@@ -136,7 +146,7 @@ export function SheetEmbedView({ node, updateAttributes, selected }: NodeViewPro
                   key={rowIdx}
                   className={cn(
                     "border-b last:border-0",
-                    rowIdx === 0 && "bg-muted/30 font-medium"
+                    rowIdx === 0 && "bg-muted/30 font-medium",
                   )}
                 >
                   {row.map((cell, colIdx) => {
@@ -147,10 +157,13 @@ export function SheetEmbedView({ node, updateAttributes, selected }: NodeViewPro
                         className={cn(
                           "px-3 py-1.5 text-left border-r last:border-0 whitespace-nowrap",
                           typeof cell === "number" && "text-right font-mono",
-                          rowIdx === 0 && "text-xs uppercase text-muted-foreground"
+                          rowIdx === 0 &&
+                            "text-xs uppercase text-muted-foreground",
                         )}
                       >
-                        {cell !== null && cell !== undefined ? String(cell) : ""}
+                        {cell !== null && cell !== undefined
+                          ? String(cell)
+                          : ""}
                       </Tag>
                     );
                   })}

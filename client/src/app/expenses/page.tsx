@@ -706,289 +706,289 @@ export default function ExpensesPage() {
 
   return (
     <AppLayout>
-    <div className="container max-w-5xl py-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <Receipt className="h-6 w-6" />
-            Notes de frais
-          </h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            Auto-approuve si montant &lt; {AUTO_APPROVE_THRESHOLD}EUR
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={exportCsv}>
-            <Download className="w-4 h-4 mr-2" />
-            CSV
-          </Button>
-          <Button onClick={() => setFormOpen(true)}>
-            <Plus className="w-4 h-4 mr-2" />
-            Nouvelle note
-          </Button>
-        </div>
-      </div>
-
-      {/* Stats */}
-      <div className="grid grid-cols-4 gap-4">
-        {[
-          { label: "Total", value: totals.total, color: "" },
-          {
-            label: "Approuve",
-            value: totals.approved,
-            color: "text-green-600 dark:text-green-400",
-          },
-          {
-            label: "En attente",
-            value: totals.pending,
-            color: "text-blue-600 dark:text-blue-400",
-          },
-          {
-            label: "Brouillon",
-            value: totals.draft,
-            color: "text-muted-foreground",
-          },
-        ].map((s) => (
-          <Card key={s.label}>
-            <CardContent className="p-4">
-              <p className="text-sm text-muted-foreground">{s.label}</p>
-              <p className={`text-2xl font-bold ${s.color}`}>
-                {s.value.toFixed(2)} EUR
-              </p>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {/* Filters */}
-      <div className="flex gap-4 flex-wrap items-center">
-        {/* Status filter */}
-        <div className="flex gap-1.5 flex-wrap">
-          {(
-            [
-              "all",
-              "draft",
-              "submitted",
-              "approved",
-              "rejected",
-              "paid",
-              "reimbursed",
-            ] as const
-          ).map((s) => (
-            <Button
-              key={s}
-              size="sm"
-              variant={filterStatus === s ? "default" : "outline"}
-              onClick={() => setFilterStatus(s)}
-              className="h-7 text-xs"
-            >
-              {s === "all" ? "Tous" : STATUS_CONFIG[s].label}
-              {s !== "all" && (
-                <span className="ml-1 opacity-60">
-                  ({expenses.filter((e) => e.status === s).length})
-                </span>
-              )}
+      <div className="container max-w-5xl py-6 space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold flex items-center gap-2">
+              <Receipt className="h-6 w-6" />
+              Notes de frais
+            </h1>
+            <p className="text-sm text-muted-foreground mt-0.5">
+              Auto-approuve si montant &lt; {AUTO_APPROVE_THRESHOLD}EUR
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={exportCsv}>
+              <Download className="w-4 h-4 mr-2" />
+              CSV
             </Button>
+            <Button onClick={() => setFormOpen(true)}>
+              <Plus className="w-4 h-4 mr-2" />
+              Nouvelle note
+            </Button>
+          </div>
+        </div>
+
+        {/* Stats */}
+        <div className="grid grid-cols-4 gap-4">
+          {[
+            { label: "Total", value: totals.total, color: "" },
+            {
+              label: "Approuve",
+              value: totals.approved,
+              color: "text-green-600 dark:text-green-400",
+            },
+            {
+              label: "En attente",
+              value: totals.pending,
+              color: "text-blue-600 dark:text-blue-400",
+            },
+            {
+              label: "Brouillon",
+              value: totals.draft,
+              color: "text-muted-foreground",
+            },
+          ].map((s) => (
+            <Card key={s.label}>
+              <CardContent className="p-4">
+                <p className="text-sm text-muted-foreground">{s.label}</p>
+                <p className={`text-2xl font-bold ${s.color}`}>
+                  {s.value.toFixed(2)} EUR
+                </p>
+              </CardContent>
+            </Card>
           ))}
         </div>
 
-        <Separator orientation="vertical" className="h-6" />
+        {/* Filters */}
+        <div className="flex gap-4 flex-wrap items-center">
+          {/* Status filter */}
+          <div className="flex gap-1.5 flex-wrap">
+            {(
+              [
+                "all",
+                "draft",
+                "submitted",
+                "approved",
+                "rejected",
+                "paid",
+                "reimbursed",
+              ] as const
+            ).map((s) => (
+              <Button
+                key={s}
+                size="sm"
+                variant={filterStatus === s ? "default" : "outline"}
+                onClick={() => setFilterStatus(s)}
+                className="h-7 text-xs"
+              >
+                {s === "all" ? "Tous" : STATUS_CONFIG[s].label}
+                {s !== "all" && (
+                  <span className="ml-1 opacity-60">
+                    ({expenses.filter((e) => e.status === s).length})
+                  </span>
+                )}
+              </Button>
+            ))}
+          </div>
 
-        {/* Category filter */}
-        <div className="flex items-center gap-2">
-          <Filter className="h-3.5 w-3.5 text-muted-foreground" />
-          <Select
-            value={filterCategory}
-            onValueChange={(v) =>
-              setFilterCategory(v as ExpenseCategory | "all")
-            }
-          >
-            <SelectTrigger className="h-7 w-[140px] text-xs">
-              <SelectValue placeholder="Categorie" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Toutes</SelectItem>
-              {CATEGORIES.map((c) => (
-                <SelectItem key={c} value={c}>
-                  {c}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+          <Separator orientation="vertical" className="h-6" />
 
-        {/* Filtered total */}
-        <span className="text-sm text-muted-foreground ml-auto">
-          {filtered.length} note(s) - Total:{" "}
-          <span className="font-semibold text-foreground">
-            {filtered.reduce((s, e) => s + e.amount, 0).toFixed(2)} EUR
+          {/* Category filter */}
+          <div className="flex items-center gap-2">
+            <Filter className="h-3.5 w-3.5 text-muted-foreground" />
+            <Select
+              value={filterCategory}
+              onValueChange={(v) =>
+                setFilterCategory(v as ExpenseCategory | "all")
+              }
+            >
+              <SelectTrigger className="h-7 w-[140px] text-xs">
+                <SelectValue placeholder="Categorie" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Toutes</SelectItem>
+                {CATEGORIES.map((c) => (
+                  <SelectItem key={c} value={c}>
+                    {c}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Filtered total */}
+          <span className="text-sm text-muted-foreground ml-auto">
+            {filtered.length} note(s) - Total:{" "}
+            <span className="font-semibold text-foreground">
+              {filtered.reduce((s, e) => s + e.amount, 0).toFixed(2)} EUR
+            </span>
           </span>
-        </span>
-      </div>
-
-      {/* Table */}
-      {isLoading ? (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
-      ) : (
-        <Card>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[40px]">Recu</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Fournisseur</TableHead>
-                <TableHead>Categorie</TableHead>
-                <TableHead>Description</TableHead>
-                <TableHead className="text-right">Montant</TableHead>
-                <TableHead>Statut</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filtered.length === 0 ? (
+
+        {/* Table */}
+        {isLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          </div>
+        ) : (
+          <Card>
+            <Table>
+              <TableHeader>
                 <TableRow>
-                  <TableCell
-                    colSpan={8}
-                    className="text-center py-10 text-muted-foreground"
-                  >
-                    Aucune note de frais
-                  </TableCell>
+                  <TableHead className="w-[40px]">Recu</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Fournisseur</TableHead>
+                  <TableHead>Categorie</TableHead>
+                  <TableHead>Description</TableHead>
+                  <TableHead className="text-right">Montant</TableHead>
+                  <TableHead>Statut</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
-              ) : (
-                filtered.map((e) => {
-                  const cfg = STATUS_CONFIG[e.status];
-                  return (
-                    <TableRow key={e.id}>
-                      {/* Receipt thumbnail */}
-                      <TableCell>
-                        {e.receiptDataUrl ? (
-                          <button
-                            onClick={() =>
-                              setReceiptPreview(e.receiptDataUrl || null)
-                            }
-                            className="relative group"
-                          >
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
-                              src={e.receiptDataUrl}
-                              alt="Recu"
-                              className="w-8 h-8 rounded border object-cover"
-                            />
-                            <div className="absolute inset-0 bg-black/40 rounded flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                              <Eye className="w-3 h-3 text-white" />
+              </TableHeader>
+              <TableBody>
+                {filtered.length === 0 ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={8}
+                      className="text-center py-10 text-muted-foreground"
+                    >
+                      Aucune note de frais
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filtered.map((e) => {
+                    const cfg = STATUS_CONFIG[e.status];
+                    return (
+                      <TableRow key={e.id}>
+                        {/* Receipt thumbnail */}
+                        <TableCell>
+                          {e.receiptDataUrl ? (
+                            <button
+                              onClick={() =>
+                                setReceiptPreview(e.receiptDataUrl || null)
+                              }
+                              className="relative group"
+                            >
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src={e.receiptDataUrl}
+                                alt="Recu"
+                                className="w-8 h-8 rounded border object-cover"
+                              />
+                              <div className="absolute inset-0 bg-black/40 rounded flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                <Eye className="w-3 h-3 text-white" />
+                              </div>
+                            </button>
+                          ) : (
+                            <div className="w-8 h-8 rounded border border-dashed flex items-center justify-center">
+                              <Receipt className="w-3 h-3 text-muted-foreground" />
                             </div>
-                          </button>
-                        ) : (
-                          <div className="w-8 h-8 rounded border border-dashed flex items-center justify-center">
-                            <Receipt className="w-3 h-3 text-muted-foreground" />
-                          </div>
-                        )}
-                      </TableCell>
-                      <TableCell className="whitespace-nowrap">
-                        {format(new Date(e.date), "d MMM", { locale: fr })}
-                      </TableCell>
-                      <TableCell className="max-w-[120px] truncate">
-                        {e.vendor || "-"}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline">{e.category}</Badge>
-                      </TableCell>
-                      <TableCell className="max-w-xs truncate text-muted-foreground text-sm">
-                        {e.description || "-"}
-                      </TableCell>
-                      <TableCell className="text-right font-semibold whitespace-nowrap">
-                        {e.amount.toFixed(2)} {e.currency}
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          className={`${cfg.color} flex items-center gap-1 w-fit`}
-                        >
-                          {cfg.icon}
-                          {cfg.label}
-                        </Badge>
-                        {e.approvalComment && (
-                          <p
-                            className="text-xs text-muted-foreground mt-0.5 truncate max-w-[120px]"
-                            title={e.approvalComment}
+                          )}
+                        </TableCell>
+                        <TableCell className="whitespace-nowrap">
+                          {format(new Date(e.date), "d MMM", { locale: fr })}
+                        </TableCell>
+                        <TableCell className="max-w-[120px] truncate">
+                          {e.vendor || "-"}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline">{e.category}</Badge>
+                        </TableCell>
+                        <TableCell className="max-w-xs truncate text-muted-foreground text-sm">
+                          {e.description || "-"}
+                        </TableCell>
+                        <TableCell className="text-right font-semibold whitespace-nowrap">
+                          {e.amount.toFixed(2)} {e.currency}
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            className={`${cfg.color} flex items-center gap-1 w-fit`}
                           >
-                            {e.approvalComment}
-                          </p>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-1">
-                          {e.status === "draft" && (
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => handleSubmit(e.id)}
-                              title="Soumettre"
+                            {cfg.icon}
+                            {cfg.label}
+                          </Badge>
+                          {e.approvalComment && (
+                            <p
+                              className="text-xs text-muted-foreground mt-0.5 truncate max-w-[120px]"
+                              title={e.approvalComment}
                             >
-                              <Send className="w-4 h-4" />
-                            </Button>
+                              {e.approvalComment}
+                            </p>
                           )}
-                          {e.status === "submitted" && (
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => setApprovalTarget(e)}
-                              title="Decider"
-                            >
-                              <AlertCircle className="w-4 h-4 text-blue-500" />
-                            </Button>
-                          )}
-                          {e.status === "approved" && (
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => handleMarkPaid(e.id)}
-                              title="Marquer paye"
-                            >
-                              <DollarSign className="w-4 h-4 text-purple-500" />
-                            </Button>
-                          )}
-                          {e.status === "draft" && (
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => handleDelete(e.id)}
-                              title="Supprimer"
-                            >
-                              <XCircle className="w-4 h-4 text-destructive" />
-                            </Button>
-                          )}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })
-              )}
-            </TableBody>
-          </Table>
-        </Card>
-      )}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-1">
+                            {e.status === "draft" && (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => handleSubmit(e.id)}
+                                title="Soumettre"
+                              >
+                                <Send className="w-4 h-4" />
+                              </Button>
+                            )}
+                            {e.status === "submitted" && (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => setApprovalTarget(e)}
+                                title="Decider"
+                              >
+                                <AlertCircle className="w-4 h-4 text-blue-500" />
+                              </Button>
+                            )}
+                            {e.status === "approved" && (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => handleMarkPaid(e.id)}
+                                title="Marquer paye"
+                              >
+                                <DollarSign className="w-4 h-4 text-purple-500" />
+                              </Button>
+                            )}
+                            {e.status === "draft" && (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => handleDelete(e.id)}
+                                title="Supprimer"
+                              >
+                                <XCircle className="w-4 h-4 text-destructive" />
+                              </Button>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
+                )}
+              </TableBody>
+            </Table>
+          </Card>
+        )}
 
-      <ExpenseFormDialog
-        open={formOpen}
-        onClose={() => setFormOpen(false)}
-        onSave={handleSave}
-      />
-
-      <ApprovalDialog
-        expense={approvalTarget}
-        onClose={() => setApprovalTarget(null)}
-        onDecision={handleDecision}
-      />
-
-      {receiptPreview && (
-        <ReceiptPreview
-          url={receiptPreview}
-          onClose={() => setReceiptPreview(null)}
+        <ExpenseFormDialog
+          open={formOpen}
+          onClose={() => setFormOpen(false)}
+          onSave={handleSave}
         />
-      )}
-    </div>
+
+        <ApprovalDialog
+          expense={approvalTarget}
+          onClose={() => setApprovalTarget(null)}
+          onDecision={handleDecision}
+        />
+
+        {receiptPreview && (
+          <ReceiptPreview
+            url={receiptPreview}
+            onClose={() => setReceiptPreview(null)}
+          />
+        )}
+      </div>
     </AppLayout>
   );
 }

@@ -1,36 +1,45 @@
-"use client"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import type { FormField } from "@/lib/api/forms"
+"use client";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import type { FormField } from "@/lib/api/forms";
 
 /** Extended field type that may carry scoring data for quiz fields */
-type ScoringField = FormField & { scores?: Record<string, number> }
+type ScoringField = FormField & { scores?: Record<string, number> };
 
 interface Props {
-  field: ScoringField
-  onChange: (scores: Record<string, number>) => void
+  field: ScoringField;
+  onChange: (scores: Record<string, number>) => void;
 }
 
 export function ScoringEditor({ field, onChange }: Props) {
-  if (!field.options?.length) return null
-  const scores: Record<string, number> = field.scores ?? {}
+  if (!field.options?.length) return null;
+  const scores: Record<string, number> = field.scores ?? {};
 
   return (
     <div className="space-y-2 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-md p-3 mt-3">
-      <Label className="text-xs font-semibold text-amber-800 dark:text-amber-300">Points par option (Quiz)</Label>
+      <Label className="text-xs font-semibold text-amber-800 dark:text-amber-300">
+        Points par option (Quiz)
+      </Label>
       <div className="grid grid-cols-2 gap-2">
-        {field.options.map(opt => (
+        {field.options.map((opt) => (
           <div key={opt} className="flex items-center gap-2">
-            <span className="text-xs truncate flex-1 text-muted-foreground" title={opt}>{opt}</span>
+            <span
+              className="text-xs truncate flex-1 text-muted-foreground"
+              title={opt}
+            >
+              {opt}
+            </span>
             <Input
               type="number"
               className="h-7 w-16 text-xs"
               value={scores[opt] ?? 0}
-              onChange={e => onChange({ ...scores, [opt]: Number(e.target.value) })}
+              onChange={(e) =>
+                onChange({ ...scores, [opt]: Number(e.target.value) })
+              }
             />
           </div>
         ))}
       </div>
     </div>
-  )
+  );
 }

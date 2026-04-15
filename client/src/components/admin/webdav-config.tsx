@@ -79,7 +79,7 @@ export function WebDavConfig() {
     try {
       const res = await webdavApi.updateConfig({ enabled: value });
       setConfig((prev) =>
-        prev ? { ...prev, enabled: (res.data as WebDavConfig).enabled } : prev
+        prev ? { ...prev, enabled: (res.data as WebDavConfig).enabled } : prev,
       );
       toast.success(value ? "WebDAV access enabled" : "WebDAV access disabled");
     } catch {
@@ -138,7 +138,9 @@ export function WebDavConfig() {
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
-            <p className="text-sm text-muted-foreground font-medium">WebDAV URL</p>
+            <p className="text-sm text-muted-foreground font-medium">
+              WebDAV URL
+            </p>
             <div className="flex items-center gap-2 bg-muted rounded-md px-3 py-2">
               <code className="flex-1 text-sm font-mono">{webdavUrl}</code>
               <Button
@@ -152,7 +154,8 @@ export function WebDavConfig() {
               </Button>
             </div>
             <p className="text-xs text-muted-foreground">
-              Authenticate with your SignApps username and password (Basic Auth).
+              Authenticate with your SignApps username and password (Basic
+              Auth).
             </p>
           </div>
         </CardContent>
@@ -188,7 +191,12 @@ export function WebDavConfig() {
           <div className="text-sm text-muted-foreground rounded-md bg-muted/50 border px-4 py-3">
             <p className="font-medium mb-1">macOS — Finder (manual)</p>
             <ol className="list-decimal list-inside space-y-1 text-xs">
-              <li>Open Finder and press <kbd className="px-1 py-0.5 rounded border text-xs">Cmd + K</kbd></li>
+              <li>
+                Open Finder and press{" "}
+                <kbd className="px-1 py-0.5 rounded border text-xs">
+                  Cmd + K
+                </kbd>
+              </li>
               <li>
                 Enter the server address:{" "}
                 <code className="font-mono">{webdavUrl}</code>

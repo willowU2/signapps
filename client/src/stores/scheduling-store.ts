@@ -5,9 +5,9 @@
  * Manages state for Calendar, Tasks, Resources, and Team views.
  */
 
-import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
-import { useShallow } from 'zustand/react/shallow';
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
+import { useShallow } from "zustand/react/shallow";
 import {
   addDays,
   addWeeks,
@@ -18,7 +18,7 @@ import {
   endOfDay,
   endOfWeek,
   endOfMonth,
-} from 'date-fns';
+} from "date-fns";
 import type {
   ViewType,
   TabType,
@@ -27,7 +27,7 @@ import type {
   ViewConfig,
   DateRange,
   DEFAULT_VIEW_CONFIG,
-} from '@/lib/scheduling/types/scheduling';
+} from "@/lib/scheduling/types/scheduling";
 
 // ============================================================================
 // State Interface
@@ -129,8 +129,8 @@ export const useSchedulingStore = create<SchedulingState & SchedulingActions>()(
   persist(
     (set, get) => ({
       // Initial State
-      activeTab: 'my-day',
-      activeView: 'week',
+      activeTab: "my-day",
+      activeView: "week",
       currentDate: new Date(),
       selectedBlockId: null,
       selectedBlockIds: new Set(),
@@ -165,19 +165,19 @@ export const useSchedulingStore = create<SchedulingState & SchedulingActions>()(
         let newDate: Date;
 
         switch (activeView) {
-          case 'day':
+          case "day":
             newDate = addDays(currentDate, -1);
             break;
-          case '3-day':
+          case "3-day":
             newDate = addDays(currentDate, -3);
             break;
-          case 'week':
+          case "week":
             newDate = addWeeks(currentDate, -1);
             break;
-          case 'month':
+          case "month":
             newDate = addMonths(currentDate, -1);
             break;
-          case 'agenda':
+          case "agenda":
           default:
             newDate = addWeeks(currentDate, -1);
             break;
@@ -191,19 +191,19 @@ export const useSchedulingStore = create<SchedulingState & SchedulingActions>()(
         let newDate: Date;
 
         switch (activeView) {
-          case 'day':
+          case "day":
             newDate = addDays(currentDate, 1);
             break;
-          case '3-day':
+          case "3-day":
             newDate = addDays(currentDate, 3);
             break;
-          case 'week':
+          case "week":
             newDate = addWeeks(currentDate, 1);
             break;
-          case 'month':
+          case "month":
             newDate = addMonths(currentDate, 1);
             break;
-          case 'agenda':
+          case "agenda":
           default:
             newDate = addWeeks(currentDate, 1);
             break;
@@ -216,27 +216,31 @@ export const useSchedulingStore = create<SchedulingState & SchedulingActions>()(
         const { activeView, currentDate, viewConfig } = get();
 
         switch (activeView) {
-          case 'day':
+          case "day":
             return {
               start: startOfDay(currentDate),
               end: endOfDay(currentDate),
             };
-          case '3-day':
+          case "3-day":
             return {
               start: startOfDay(currentDate),
               end: endOfDay(addDays(currentDate, 2)),
             };
-          case 'week':
+          case "week":
             return {
-              start: startOfWeek(currentDate, { weekStartsOn: viewConfig.firstDayOfWeek }),
-              end: endOfWeek(currentDate, { weekStartsOn: viewConfig.firstDayOfWeek }),
+              start: startOfWeek(currentDate, {
+                weekStartsOn: viewConfig.firstDayOfWeek,
+              }),
+              end: endOfWeek(currentDate, {
+                weekStartsOn: viewConfig.firstDayOfWeek,
+              }),
             };
-          case 'month':
+          case "month":
             return {
               start: startOfMonth(currentDate),
               end: endOfMonth(currentDate),
             };
-          case 'agenda':
+          case "agenda":
           default:
             return {
               start: startOfDay(currentDate),
@@ -249,7 +253,8 @@ export const useSchedulingStore = create<SchedulingState & SchedulingActions>()(
       // Selection
       // ======================================================================
 
-      selectBlock: (id) => set({ selectedBlockId: id, selectedBlockIds: new Set(id ? [id] : []) }),
+      selectBlock: (id) =>
+        set({ selectedBlockId: id, selectedBlockIds: new Set(id ? [id] : []) }),
 
       toggleBlockSelection: (id) => {
         const { selectedBlockIds } = get();
@@ -273,7 +278,8 @@ export const useSchedulingStore = create<SchedulingState & SchedulingActions>()(
         });
       },
 
-      clearSelection: () => set({ selectedBlockId: null, selectedBlockIds: new Set() }),
+      clearSelection: () =>
+        set({ selectedBlockId: null, selectedBlockIds: new Set() }),
 
       // ======================================================================
       // Data Management
@@ -290,7 +296,7 @@ export const useSchedulingStore = create<SchedulingState & SchedulingActions>()(
         get().pushUndoState();
         set((state) => ({
           blocks: state.blocks.map((b) =>
-            b.id === id ? { ...b, ...updates, updatedAt: new Date() } : b
+            b.id === id ? { ...b, ...updates, updatedAt: new Date() } : b,
           ),
         }));
       },
@@ -299,8 +305,11 @@ export const useSchedulingStore = create<SchedulingState & SchedulingActions>()(
         get().pushUndoState();
         set((state) => ({
           blocks: state.blocks.filter((b) => b.id !== id),
-          selectedBlockId: state.selectedBlockId === id ? null : state.selectedBlockId,
-          selectedBlockIds: new Set([...state.selectedBlockIds].filter((i) => i !== id)),
+          selectedBlockId:
+            state.selectedBlockId === id ? null : state.selectedBlockId,
+          selectedBlockIds: new Set(
+            [...state.selectedBlockIds].filter((i) => i !== id),
+          ),
         }));
       },
 
@@ -312,9 +321,11 @@ export const useSchedulingStore = create<SchedulingState & SchedulingActions>()(
       // UI Actions
       // ======================================================================
 
-      toggleSidebar: () => set((state) => ({ isSidebarCollapsed: !state.isSidebarCollapsed })),
+      toggleSidebar: () =>
+        set((state) => ({ isSidebarCollapsed: !state.isSidebarCollapsed })),
 
-      setSidebarCollapsed: (collapsed) => set({ isSidebarCollapsed: collapsed }),
+      setSidebarCollapsed: (collapsed) =>
+        set({ isSidebarCollapsed: collapsed }),
 
       openCommandPalette: () => set({ isCommandPaletteOpen: true }),
 
@@ -372,7 +383,7 @@ export const useSchedulingStore = create<SchedulingState & SchedulingActions>()(
       canRedo: () => get().redoStack.length > 0,
     }),
     {
-      name: 'scheduling-storage',
+      name: "scheduling-storage",
       version: 1,
       partialize: (state) => ({
         activeTab: state.activeTab,
@@ -381,8 +392,8 @@ export const useSchedulingStore = create<SchedulingState & SchedulingActions>()(
         filters: state.filters,
         viewConfig: state.viewConfig,
       }),
-    }
-  )
+    },
+  ),
 );
 
 // ============================================================================
@@ -402,7 +413,7 @@ export const useSchedulingNavigation = () =>
       navigatePrev: state.navigatePrev,
       navigateNext: state.navigateNext,
       getDateRange: state.getDateRange,
-    }))
+    })),
   );
 
 export const useSchedulingSelection = () =>
@@ -413,7 +424,7 @@ export const useSchedulingSelection = () =>
       selectBlock: state.selectBlock,
       toggleBlockSelection: state.toggleBlockSelection,
       clearSelection: state.clearSelection,
-    }))
+    })),
   );
 
 export const useSchedulingData = () =>
@@ -426,7 +437,7 @@ export const useSchedulingData = () =>
       addBlock: state.addBlock,
       updateBlock: state.updateBlock,
       deleteBlock: state.deleteBlock,
-    }))
+    })),
   );
 
 export const useSchedulingUI = () =>
@@ -442,7 +453,7 @@ export const useSchedulingUI = () =>
       toggleCommandPalette: state.toggleCommandPalette,
       setFilters: state.setFilters,
       setViewConfig: state.setViewConfig,
-    }))
+    })),
   );
 
 export const useSchedulingUndo = () =>
@@ -452,5 +463,5 @@ export const useSchedulingUndo = () =>
       redo: state.redo,
       canUndo: state.canUndo,
       canRedo: state.canRedo,
-    }))
+    })),
   );

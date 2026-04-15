@@ -1,17 +1,24 @@
 // Supply Chain: Next.js proxy → identity /api/v1/supply-chain/purchase-orders
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from "next/server";
 
-const IDENTITY = process.env.IDENTITY_URL ?? 'http://localhost:3001';
+const IDENTITY = process.env.IDENTITY_URL ?? "http://localhost:3001";
 
-async function proxy(req: NextRequest, method: string, path = '', body?: unknown) {
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-  const authHeader = req.headers.get('authorization');
-  if (authHeader) headers['Authorization'] = authHeader;
+async function proxy(
+  req: NextRequest,
+  method: string,
+  path = "",
+  body?: unknown,
+) {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+  const authHeader = req.headers.get("authorization");
+  if (authHeader) headers["Authorization"] = authHeader;
 
   const url = new URL(req.url);
   const search = url.searchParams.toString();
-  const upstream = `${IDENTITY}/api/v1/supply-chain/purchase-orders${path}${search ? `?${search}` : ''}`;
+  const upstream = `${IDENTITY}/api/v1/supply-chain/purchase-orders${path}${search ? `?${search}` : ""}`;
 
   const res = await fetch(upstream, {
     method,
@@ -24,10 +31,10 @@ async function proxy(req: NextRequest, method: string, path = '', body?: unknown
 }
 
 export async function GET(req: NextRequest) {
-  return proxy(req, 'GET');
+  return proxy(req, "GET");
 }
 
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}));
-  return proxy(req, 'POST', '', body);
+  return proxy(req, "POST", "", body);
 }

@@ -1,17 +1,20 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { Slider } from '@/components/ui/slider';
-import { Badge } from '@/components/ui/badge';
-import { Database, Save, Info } from 'lucide-react';
+import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Slider } from "@/components/ui/slider";
+import { Badge } from "@/components/ui/badge";
+import { Database, Save, Info } from "lucide-react";
 import {
-  Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { toast } from 'sonner';
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { toast } from "sonner";
 
 interface IncrementalConfig {
   enabled: boolean;
@@ -33,13 +36,17 @@ export function IncrementalBackupSettings() {
 
   const save = async () => {
     setSaving(true);
-    await new Promise(r => setTimeout(r, 600));
+    await new Promise((r) => setTimeout(r, 600));
     setSaving(false);
-    toast.success('Paramètres de sauvegarde incrémentielle enregistrés');
+    toast.success("Paramètres de sauvegarde incrémentielle enregistrés");
   };
 
   const estimatedSavings = config.enabled
-    ? Math.round(((config.fullBackupEveryNth - 1) / config.fullBackupEveryNth) * 100 * (config.deduplication ? 1.2 : 1))
+    ? Math.round(
+        ((config.fullBackupEveryNth - 1) / config.fullBackupEveryNth) *
+          100 *
+          (config.deduplication ? 1.2 : 1),
+      )
     : 0;
 
   return (
@@ -57,11 +64,13 @@ export function IncrementalBackupSettings() {
         <div className="flex items-center justify-between">
           <div>
             <Label className="font-medium">Enable incremental backups</Label>
-            <p className="text-xs text-muted-foreground mt-0.5">Only backup changes since the last full backup</p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Only backup changes since the last full backup
+            </p>
           </div>
           <Switch
             checked={config.enabled}
-            onCheckedChange={v => setConfig(c => ({ ...c, enabled: v }))}
+            onCheckedChange={(v) => setConfig((c) => ({ ...c, enabled: v }))}
           />
         </div>
 
@@ -69,49 +78,74 @@ export function IncrementalBackupSettings() {
           <>
             <div className="space-y-2">
               <div className="flex items-center gap-2">
-                <Label className="text-sm">Full backup every N days: {config.fullBackupEveryNth}</Label>
+                <Label className="text-sm">
+                  Full backup every N days: {config.fullBackupEveryNth}
+                </Label>
                 <TooltipProvider>
                   <Tooltip>
-                    <TooltipTrigger><Info className="h-3.5 w-3.5 text-muted-foreground" /></TooltipTrigger>
-                    <TooltipContent>Run a complete backup every N days; incremental backups in between</TooltipContent>
+                    <TooltipTrigger>
+                      <Info className="h-3.5 w-3.5 text-muted-foreground" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      Run a complete backup every N days; incremental backups in
+                      between
+                    </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
               </div>
               <Slider
-                min={1} max={30} step={1}
+                min={1}
+                max={30}
+                step={1}
                 value={[config.fullBackupEveryNth]}
-                onValueChange={([v]) => setConfig(c => ({ ...c, fullBackupEveryNth: v }))}
+                onValueChange={([v]) =>
+                  setConfig((c) => ({ ...c, fullBackupEveryNth: v }))
+                }
               />
             </div>
 
             <div className="space-y-2">
-              <Label className="text-sm">Retain incrementals: {config.retainIncrementals} days</Label>
+              <Label className="text-sm">
+                Retain incrementals: {config.retainIncrementals} days
+              </Label>
               <Slider
-                min={7} max={90} step={7}
+                min={7}
+                max={90}
+                step={7}
                 value={[config.retainIncrementals]}
-                onValueChange={([v]) => setConfig(c => ({ ...c, retainIncrementals: v }))}
+                onValueChange={([v]) =>
+                  setConfig((c) => ({ ...c, retainIncrementals: v }))
+                }
               />
             </div>
 
             <div className="flex items-center justify-between">
               <div>
                 <Label className="text-sm">Deduplication</Label>
-                <p className="text-xs text-muted-foreground">Remove duplicate data blocks</p>
+                <p className="text-xs text-muted-foreground">
+                  Remove duplicate data blocks
+                </p>
               </div>
               <Switch
                 checked={config.deduplication}
-                onCheckedChange={v => setConfig(c => ({ ...c, deduplication: v }))}
+                onCheckedChange={(v) =>
+                  setConfig((c) => ({ ...c, deduplication: v }))
+                }
               />
             </div>
 
             <div className="flex items-center justify-between">
               <div>
                 <Label className="text-sm">Compression</Label>
-                <p className="text-xs text-muted-foreground">Compress data blocks before writing</p>
+                <p className="text-xs text-muted-foreground">
+                  Compress data blocks before writing
+                </p>
               </div>
               <Switch
                 checked={config.compressionEnabled}
-                onCheckedChange={v => setConfig(c => ({ ...c, compressionEnabled: v }))}
+                onCheckedChange={(v) =>
+                  setConfig((c) => ({ ...c, compressionEnabled: v }))
+                }
               />
             </div>
 
@@ -120,7 +154,8 @@ export function IncrementalBackupSettings() {
                 Estimated storage savings: ~{estimatedSavings}%
               </p>
               <p className="text-xs text-blue-600 dark:text-blue-400 mt-0.5">
-                Based on your configuration (1 full every {config.fullBackupEveryNth} days)
+                Based on your configuration (1 full every{" "}
+                {config.fullBackupEveryNth} days)
               </p>
             </div>
           </>
@@ -128,7 +163,7 @@ export function IncrementalBackupSettings() {
 
         <Button onClick={save} disabled={saving} className="gap-1.5">
           <Save className="h-4 w-4" />
-          {saving ? 'Enregistrement...' : 'Enregistrer les paramètres'}
+          {saving ? "Enregistrement..." : "Enregistrer les paramètres"}
         </Button>
       </CardContent>
     </Card>

@@ -1,5 +1,5 @@
-import { useState, useCallback } from 'react';
-import { favoritesApi } from '@/lib/api';
+import { useState, useCallback } from "react";
+import { favoritesApi } from "@/lib/api";
 
 export interface Favorite {
   id: string;
@@ -22,13 +22,13 @@ export interface UseFavoritesReturn {
     key: string,
     isFolder: boolean,
     displayName?: string,
-    color?: string
+    color?: string,
   ) => Promise<void>;
   removeFavorite: (id: string) => Promise<void>;
   updateFavorite: (
     id: string,
     displayName?: string,
-    color?: string
+    color?: string,
   ) => Promise<void>;
   reorderFavorites: (order: string[]) => Promise<void>;
   checkIsFavorite: (bucket: string, key: string) => Promise<boolean>;
@@ -64,7 +64,7 @@ export function useFavorites(): UseFavoritesReturn {
       key: string,
       isFolder: boolean,
       displayName?: string,
-      color?: string
+      color?: string,
     ) => {
       setError(null);
       try {
@@ -83,7 +83,7 @@ export function useFavorites(): UseFavoritesReturn {
         throw error;
       }
     },
-    [fetchFavorites]
+    [fetchFavorites],
   );
 
   const removeFavorite = useCallback(async (id: string) => {
@@ -114,8 +114,8 @@ export function useFavorites(): UseFavoritesReturn {
                   display_name: displayName,
                   color,
                 }
-              : f
-          )
+              : f,
+          ),
         );
       } catch (err) {
         const error = err instanceof Error ? err : new Error(String(err));
@@ -123,25 +123,28 @@ export function useFavorites(): UseFavoritesReturn {
         throw error;
       }
     },
-    []
+    [],
   );
 
-  const reorderFavorites = useCallback(async (order: string[]) => {
-    setError(null);
-    try {
-      await favoritesApi.reorder(order);
-      // Update local favorites order
-      const favoriteMap = new Map(favorites.map((f) => [f.id, f]));
-      const reordered = order
-        .map((id) => favoriteMap.get(id))
-        .filter((f) => f !== undefined) as Favorite[];
-      setFavorites(reordered);
-    } catch (err) {
-      const error = err instanceof Error ? err : new Error(String(err));
-      setError(error);
-      throw error;
-    }
-  }, [favorites]);
+  const reorderFavorites = useCallback(
+    async (order: string[]) => {
+      setError(null);
+      try {
+        await favoritesApi.reorder(order);
+        // Update local favorites order
+        const favoriteMap = new Map(favorites.map((f) => [f.id, f]));
+        const reordered = order
+          .map((id) => favoriteMap.get(id))
+          .filter((f) => f !== undefined) as Favorite[];
+        setFavorites(reordered);
+      } catch (err) {
+        const error = err instanceof Error ? err : new Error(String(err));
+        setError(error);
+        throw error;
+      }
+    },
+    [favorites],
+  );
 
   const checkIsFavorite = useCallback(
     async (bucket: string, key: string): Promise<boolean> => {
@@ -155,7 +158,7 @@ export function useFavorites(): UseFavoritesReturn {
         return false;
       }
     },
-    []
+    [],
   );
 
   const removeFavoriteByPath = useCallback(
@@ -164,7 +167,7 @@ export function useFavorites(): UseFavoritesReturn {
       try {
         await favoritesApi.removeByPath(bucket, key);
         setFavorites((prev) =>
-          prev.filter((f) => !(f.bucket === bucket && f.key === key))
+          prev.filter((f) => !(f.bucket === bucket && f.key === key)),
         );
       } catch (err) {
         const error = err instanceof Error ? err : new Error(String(err));
@@ -172,7 +175,7 @@ export function useFavorites(): UseFavoritesReturn {
         throw error;
       }
     },
-    []
+    [],
   );
 
   return {

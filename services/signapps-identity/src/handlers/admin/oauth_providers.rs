@@ -170,8 +170,10 @@ pub async fn list_providers(
     .map_err(|e| Error::Internal(format!("query oauth_provider_configs: {e}")))?;
 
     // Index by provider key for O(1) lookup during catalog scan.
-    let by_key: std::collections::HashMap<String, ConfigRow> =
-        configs.into_iter().map(|c| (c.provider_key.clone(), c)).collect();
+    let by_key: std::collections::HashMap<String, ConfigRow> = configs
+        .into_iter()
+        .map(|c| (c.provider_key.clone(), c))
+        .collect();
 
     let summaries: Vec<ProviderConfigSummary> = state
         .oauth_engine_state
@@ -552,7 +554,7 @@ pub async fn test_provider(
                 })?;
             crate::handlers::oauth::creds::resolve_credentials(&cfg, &state.keystore)
                 .map_err(crate::handlers::oauth::error::oauth_error_to_app_error)?
-        }
+        },
     };
 
     let req = StartRequest {

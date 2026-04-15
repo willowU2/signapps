@@ -27,7 +27,7 @@ export function findAvailableSlots(
   participants: Participant[],
   durationMinutes: number,
   searchRange: { start: Date; end: Date },
-  workingHours = { start: 9, end: 18 }
+  workingHours = { start: 9, end: 18 },
 ): SuggestedSlot[] {
   const slots: SuggestedSlot[] = [];
   const step = 30; // 30 min intervals
@@ -40,7 +40,12 @@ export function findAvailableSlots(
     const day = cursor.getDay();
 
     // Skip weekends and outside working hours
-    if (day === 0 || day === 6 || hour < workingHours.start || hour >= workingHours.end) {
+    if (
+      day === 0 ||
+      day === 6 ||
+      hour < workingHours.start ||
+      hour >= workingHours.end
+    ) {
       cursor = new Date(cursor.getTime() + stepMs);
       continue;
     }

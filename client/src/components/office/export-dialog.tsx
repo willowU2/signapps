@@ -38,10 +38,18 @@ interface ExportDialogProps {
   title?: string;
 }
 
-const FORMAT_OPTIONS: { value: ExportFormat; label: string; icon: React.ReactNode }[] = [
+const FORMAT_OPTIONS: {
+  value: ExportFormat;
+  label: string;
+  icon: React.ReactNode;
+}[] = [
   { value: "csv", label: "CSV", icon: <FileText className="h-4 w-4" /> },
   { value: "json", label: "JSON", icon: <FileText className="h-4 w-4" /> },
-  { value: "xlsx", label: "Excel (XLSX)", icon: <FileSpreadsheet className="h-4 w-4" /> },
+  {
+    value: "xlsx",
+    label: "Excel (XLSX)",
+    icon: <FileSpreadsheet className="h-4 w-4" />,
+  },
   { value: "pdf", label: "PDF", icon: <FileImage className="h-4 w-4" /> },
 ];
 
@@ -73,7 +81,7 @@ export function ExportDialog({
       });
 
       if (!res.ok) {
-        throw new Error(await res.text() || `HTTP ${res.status}`);
+        throw new Error((await res.text()) || `HTTP ${res.status}`);
       }
 
       const blob = await res.blob();
@@ -87,7 +95,9 @@ export function ExportDialog({
       toast.success(`Export ${format.toUpperCase()} téléchargé`);
       onOpenChange(false);
     } catch (err) {
-      toast.error(`Erreur export: ${err instanceof Error ? err.message : String(err)}`);
+      toast.error(
+        `Erreur export: ${err instanceof Error ? err.message : String(err)}`,
+      );
     } finally {
       setLoading(false);
     }
@@ -112,7 +122,10 @@ export function ExportDialog({
           {/* Format picker */}
           <div className="space-y-1.5">
             <Label>Format</Label>
-            <Select value={format} onValueChange={(v) => setFormat(v as ExportFormat)}>
+            <Select
+              value={format}
+              onValueChange={(v) => setFormat(v as ExportFormat)}
+            >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>

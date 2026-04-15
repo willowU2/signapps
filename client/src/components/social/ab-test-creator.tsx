@@ -1,30 +1,30 @@
-'use client';
+"use client";
 
-import { useState, useCallback } from 'react';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Label } from '@/components/ui/label';
+import { useState, useCallback } from "react";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Separator } from '@/components/ui/separator';
-import { FlaskConical, TrendingUp, Trophy, Clock, Users } from 'lucide-react';
-import { toast } from 'sonner';
-import { socialApi } from '@/lib/api/social';
+} from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import { FlaskConical, TrendingUp, Trophy, Clock, Users } from "lucide-react";
+import { toast } from "sonner";
+import { socialApi } from "@/lib/api/social";
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
 export interface ABVariant {
-  id: 'A' | 'B';
+  id: "A" | "B";
   content: string;
   hashtags: string;
   imageUrl?: string;
@@ -36,24 +36,24 @@ export interface ABTestConfig {
   id: string;
   variantA: ABVariant;
   variantB: ABVariant;
-  winnerMetric: 'likes' | 'shares' | 'comments' | 'clicks';
+  winnerMetric: "likes" | "shares" | "comments" | "clicks";
   evaluateAfterHours: number;
-  status: 'draft' | 'running' | 'completed';
+  status: "draft" | "running" | "completed";
   createdAt: string;
-  winner?: 'A' | 'B';
+  winner?: "A" | "B";
   stats?: {
     A: { likes: number; shares: number; comments: number; clicks: number };
     B: { likes: number; shares: number; comments: number; clicks: number };
   };
 }
 
-function newVariant(id: 'A' | 'B'): ABVariant {
+function newVariant(id: "A" | "B"): ABVariant {
   return {
     id,
-    content: '',
-    hashtags: '',
+    content: "",
+    hashtags: "",
     audiencePercent: 50,
-    publishOffsetMinutes: id === 'B' ? 30 : 0,
+    publishOffsetMinutes: id === "B" ? 30 : 0,
   };
 }
 
@@ -61,12 +61,12 @@ function newVariant(id: 'A' | 'B'): ABVariant {
 // Storage helpers (localStorage-backed for MVP)
 // ---------------------------------------------------------------------------
 
-const STORAGE_KEY = 'signapps_ab_tests';
+const STORAGE_KEY = "signapps_ab_tests";
 
 function loadTests(): ABTestConfig[] {
-  if (typeof window === 'undefined') return [];
+  if (typeof window === "undefined") return [];
   try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '[]');
+    return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "[]");
   } catch {
     return [];
   }
@@ -92,7 +92,9 @@ function VariantCard({ variant, onChange }: VariantCardProps) {
     <Card className="flex-1">
       <CardHeader className="pb-3">
         <CardTitle className="text-sm flex items-center gap-2">
-          <Badge variant={variant.id === 'A' ? 'default' : 'secondary'}>{label}</Badge>
+          <Badge variant={variant.id === "A" ? "default" : "secondary"}>
+            {label}
+          </Badge>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -104,7 +106,9 @@ function VariantCard({ variant, onChange }: VariantCardProps) {
             onChange={(e) => onChange({ ...variant, content: e.target.value })}
             className="min-h-[120px] resize-none text-sm"
           />
-          <p className="text-xs text-muted-foreground text-right">{variant.content.length} chars</p>
+          <p className="text-xs text-muted-foreground text-right">
+            {variant.content.length} chars
+          </p>
         </div>
 
         <div className="space-y-1">
@@ -126,7 +130,10 @@ function VariantCard({ variant, onChange }: VariantCardProps) {
               max={100}
               value={variant.audiencePercent}
               onChange={(e) =>
-                onChange({ ...variant, audiencePercent: parseInt(e.target.value) || 50 })
+                onChange({
+                  ...variant,
+                  audiencePercent: parseInt(e.target.value) || 50,
+                })
               }
               className="text-sm"
             />
@@ -138,7 +145,10 @@ function VariantCard({ variant, onChange }: VariantCardProps) {
               min={0}
               value={variant.publishOffsetMinutes}
               onChange={(e) =>
-                onChange({ ...variant, publishOffsetMinutes: parseInt(e.target.value) || 0 })
+                onChange({
+                  ...variant,
+                  publishOffsetMinutes: parseInt(e.target.value) || 0,
+                })
               }
               className="text-sm"
             />
@@ -163,15 +173,18 @@ function StatsRow({ test }: StatsRowProps) {
 
   const aVal = test.stats.A[metric];
   const bVal = test.stats.B[metric];
-  const winner = aVal > bVal ? 'A' : bVal > aVal ? 'B' : null;
+  const winner = aVal > bVal ? "A" : bVal > aVal ? "B" : null;
 
   return (
     <div className="grid grid-cols-2 gap-4 p-3 bg-muted/30 rounded-lg text-sm">
-      {(['A', 'B'] as const).map((id) => {
+      {(["A", "B"] as const).map((id) => {
         const stats = test.stats![id];
         const isWinner = winner === id;
         return (
-          <div key={id} className={`space-y-1 ${isWinner ? 'text-green-600' : ''}`}>
+          <div
+            key={id}
+            className={`space-y-1 ${isWinner ? "text-green-600" : ""}`}
+          >
             <div className="font-medium flex items-center gap-1">
               Variant {id}
               {isWinner && <Trophy className="h-3.5 w-3.5" />}
@@ -194,16 +207,17 @@ function StatsRow({ test }: StatsRowProps) {
 // ---------------------------------------------------------------------------
 
 export function ABTestCreator() {
-  const [variantA, setVariantA] = useState<ABVariant>(newVariant('A'));
-  const [variantB, setVariantB] = useState<ABVariant>(newVariant('B'));
-  const [winnerMetric, setWinnerMetric] = useState<ABTestConfig['winnerMetric']>('likes');
+  const [variantA, setVariantA] = useState<ABVariant>(newVariant("A"));
+  const [variantB, setVariantB] = useState<ABVariant>(newVariant("B"));
+  const [winnerMetric, setWinnerMetric] =
+    useState<ABTestConfig["winnerMetric"]>("likes");
   const [evaluateAfterHours, setEvaluateAfterHours] = useState(24);
   const [isSaving, setIsSaving] = useState(false);
   const [tests, setTests] = useState<ABTestConfig[]>(loadTests);
 
   const handleCreate = useCallback(async () => {
     if (!variantA.content.trim() || !variantB.content.trim()) {
-      toast.error('Both variants need content');
+      toast.error("Both variants need content");
       return;
     }
     setIsSaving(true);
@@ -214,60 +228,81 @@ export function ABTestCreator() {
         variantB,
         winnerMetric,
         evaluateAfterHours,
-        status: 'draft',
+        status: "draft",
         createdAt: new Date().toISOString(),
       };
 
       // Store A/B config in post metadata — post both variants as drafts via socialApi
       // For MVP we save config to localStorage and log intent; real backend would create
       // two posts with ab_test_id metadata and schedule them accordingly.
-      await socialApi.posts.create({
-        content: variantA.content,
-        hashtags: variantA.hashtags.split(',').map((h) => h.trim()).filter(Boolean),
-        metadata: { abTestId: newTest.id, variant: 'A', config: newTest },
-      } as any).catch(() => null); // graceful degradation if backend not running
+      await socialApi.posts
+        .create({
+          content: variantA.content,
+          hashtags: variantA.hashtags
+            .split(",")
+            .map((h) => h.trim())
+            .filter(Boolean),
+          metadata: { abTestId: newTest.id, variant: "A", config: newTest },
+        } as any)
+        .catch(() => null); // graceful degradation if backend not running
 
       const updated = [...tests, newTest];
       saveTests(updated);
       setTests(updated);
-      toast.success('A/B test created');
+      toast.success("A/B test created");
 
       // Reset
-      setVariantA(newVariant('A'));
-      setVariantB(newVariant('B'));
+      setVariantA(newVariant("A"));
+      setVariantB(newVariant("B"));
     } catch {
-      toast.error('Failed to create A/B test');
+      toast.error("Failed to create A/B test");
     } finally {
       setIsSaving(false);
     }
   }, [variantA, variantB, winnerMetric, evaluateAfterHours, tests]);
 
-  const handleSimulateWinner = useCallback((testId: string) => {
-    const updated = tests.map((t) => {
-      if (t.id !== testId) return t;
-      const mockStats: ABTestConfig['stats'] = {
-        A: { likes: Math.floor(Math.random() * 500), shares: Math.floor(Math.random() * 100), comments: Math.floor(Math.random() * 80), clicks: Math.floor(Math.random() * 300) },
-        B: { likes: Math.floor(Math.random() * 500), shares: Math.floor(Math.random() * 100), comments: Math.floor(Math.random() * 80), clicks: Math.floor(Math.random() * 300) },
-      };
-      const aVal = mockStats.A[t.winnerMetric];
-      const bVal = mockStats.B[t.winnerMetric];
-      return {
-        ...t,
-        status: 'completed' as const,
-        stats: mockStats,
-        winner: aVal >= bVal ? 'A' as const : 'B' as const,
-      };
-    });
-    saveTests(updated);
-    setTests(updated);
-    toast.success('Test evaluated — winner determined');
-  }, [tests]);
+  const handleSimulateWinner = useCallback(
+    (testId: string) => {
+      const updated = tests.map((t) => {
+        if (t.id !== testId) return t;
+        const mockStats: ABTestConfig["stats"] = {
+          A: {
+            likes: Math.floor(Math.random() * 500),
+            shares: Math.floor(Math.random() * 100),
+            comments: Math.floor(Math.random() * 80),
+            clicks: Math.floor(Math.random() * 300),
+          },
+          B: {
+            likes: Math.floor(Math.random() * 500),
+            shares: Math.floor(Math.random() * 100),
+            comments: Math.floor(Math.random() * 80),
+            clicks: Math.floor(Math.random() * 300),
+          },
+        };
+        const aVal = mockStats.A[t.winnerMetric];
+        const bVal = mockStats.B[t.winnerMetric];
+        return {
+          ...t,
+          status: "completed" as const,
+          stats: mockStats,
+          winner: aVal >= bVal ? ("A" as const) : ("B" as const),
+        };
+      });
+      saveTests(updated);
+      setTests(updated);
+      toast.success("Test evaluated — winner determined");
+    },
+    [tests],
+  );
 
-  const handleDelete = useCallback((testId: string) => {
-    const updated = tests.filter((t) => t.id !== testId);
-    saveTests(updated);
-    setTests(updated);
-  }, [tests]);
+  const handleDelete = useCallback(
+    (testId: string) => {
+      const updated = tests.filter((t) => t.id !== testId);
+      saveTests(updated);
+      setTests(updated);
+    },
+    [tests],
+  );
 
   return (
     <div className="space-y-6">
@@ -295,7 +330,10 @@ export function ABTestCreator() {
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
               <Label className="text-xs">Winner metric</Label>
-              <Select value={winnerMetric} onValueChange={(v) => setWinnerMetric(v as any)}>
+              <Select
+                value={winnerMetric}
+                onValueChange={(v) => setWinnerMetric(v as any)}
+              >
                 <SelectTrigger className="text-sm">
                   <SelectValue />
                 </SelectTrigger>
@@ -314,7 +352,9 @@ export function ABTestCreator() {
                 min={1}
                 max={168}
                 value={evaluateAfterHours}
-                onChange={(e) => setEvaluateAfterHours(parseInt(e.target.value) || 24)}
+                onChange={(e) =>
+                  setEvaluateAfterHours(parseInt(e.target.value) || 24)
+                }
                 className="text-sm"
               />
             </div>
@@ -322,7 +362,7 @@ export function ABTestCreator() {
 
           <Button onClick={handleCreate} disabled={isSaving} className="w-full">
             <FlaskConical className="h-4 w-4 mr-2" />
-            {isSaving ? 'Creating…' : 'Create A/B Test'}
+            {isSaving ? "Creating…" : "Create A/B Test"}
           </Button>
         </CardContent>
       </Card>
@@ -338,11 +378,11 @@ export function ABTestCreator() {
                   <div className="flex items-center gap-2 text-sm">
                     <Badge
                       variant={
-                        test.status === 'completed'
-                          ? 'default'
-                          : test.status === 'running'
-                          ? 'secondary'
-                          : 'outline'
+                        test.status === "completed"
+                          ? "default"
+                          : test.status === "running"
+                            ? "secondary"
+                            : "outline"
                       }
                     >
                       {test.status}
@@ -357,8 +397,12 @@ export function ABTestCreator() {
                     </span>
                   </div>
                   <div className="flex gap-2">
-                    {test.status === 'draft' && (
-                      <Button size="sm" variant="outline" onClick={() => handleSimulateWinner(test.id)}>
+                    {test.status === "draft" && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleSimulateWinner(test.id)}
+                      >
                         <TrendingUp className="h-3.5 w-3.5 mr-1" />
                         Simulate Results
                       </Button>
@@ -377,21 +421,26 @@ export function ABTestCreator() {
                 <div className="grid grid-cols-2 gap-2 text-xs">
                   <div className="bg-muted/30 rounded p-2">
                     <span className="font-medium">A: </span>
-                    <span className="text-muted-foreground line-clamp-2">{test.variantA.content}</span>
+                    <span className="text-muted-foreground line-clamp-2">
+                      {test.variantA.content}
+                    </span>
                   </div>
                   <div className="bg-muted/30 rounded p-2">
                     <span className="font-medium">B: </span>
-                    <span className="text-muted-foreground line-clamp-2">{test.variantB.content}</span>
+                    <span className="text-muted-foreground line-clamp-2">
+                      {test.variantB.content}
+                    </span>
                   </div>
                 </div>
 
-                {test.status === 'completed' && (
+                {test.status === "completed" && (
                   <>
                     <StatsRow test={test} />
                     {test.winner && (
                       <div className="flex items-center gap-2 text-sm text-green-600 font-medium">
                         <Trophy className="h-4 w-4" />
-                        Variant {test.winner} wins — ready to publish to full audience
+                        Variant {test.winner} wins — ready to publish to full
+                        audience
                         <Button size="sm" className="ml-auto" variant="outline">
                           <Users className="h-3.5 w-3.5 mr-1" />
                           Publish Winner

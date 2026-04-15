@@ -58,7 +58,11 @@ interface ResponsiveDialogProps {
   children: React.ReactNode;
 }
 
-export function ResponsiveDialog({ open, onOpenChange, children }: ResponsiveDialogProps) {
+export function ResponsiveDialog({
+  open,
+  onOpenChange,
+  children,
+}: ResponsiveDialogProps) {
   const isMobile = useIsMobile();
 
   if (isMobile) {
@@ -80,7 +84,10 @@ interface ResponsiveDialogContentProps extends React.HTMLAttributes<HTMLDivEleme
   children: React.ReactNode;
 }
 
-export function ResponsiveDialogContent({ children, className }: ResponsiveDialogContentProps) {
+export function ResponsiveDialogContent({
+  children,
+  className,
+}: ResponsiveDialogContentProps) {
   const isMobile = useIsMobile();
 
   if (isMobile) {
@@ -94,7 +101,10 @@ export function ResponsiveDialogContent({ children, className }: ResponsiveDialo
   return <DialogContent className={className}>{children}</DialogContent>;
 }
 
-export function ResponsiveDialogHeader({ children, className }: ResponsiveDialogContentProps) {
+export function ResponsiveDialogHeader({
+  children,
+  className,
+}: ResponsiveDialogContentProps) {
   const isMobile = useIsMobile();
   if (isMobile) {
     return <SheetHeader className={className}>{children}</SheetHeader>;
@@ -125,9 +135,13 @@ export function ResponsiveDialogDescription({
 }) {
   const isMobile = useIsMobile();
   if (isMobile) {
-    return <SheetDescription className={className}>{children}</SheetDescription>;
+    return (
+      <SheetDescription className={className}>{children}</SheetDescription>
+    );
   }
-  return <DialogDescription className={className}>{children}</DialogDescription>;
+  return (
+    <DialogDescription className={className}>{children}</DialogDescription>
+  );
 }
 
 export { DialogFooter as ResponsiveDialogFooter };

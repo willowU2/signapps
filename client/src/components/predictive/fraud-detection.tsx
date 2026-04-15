@@ -1,5 +1,5 @@
-import React from 'react';
-import { AlertTriangle, Shield, ArrowRight } from 'lucide-react';
+import React from "react";
+import { AlertTriangle, Shield, ArrowRight } from "lucide-react";
 
 interface FraudAlert {
   id: string;
@@ -13,47 +13,47 @@ interface FraudAlert {
 export const FraudDetection: React.FC = () => {
   const alerts: FraudAlert[] = [
     {
-      id: '1',
-      transactionId: 'TXN-2026-001',
+      id: "1",
+      transactionId: "TXN-2026-001",
       riskScore: 94,
-      patternType: 'Unusual Location',
+      patternType: "Unusual Location",
       amount: 4500,
-      timestamp: '2026-03-22 14:30',
+      timestamp: "2026-03-22 14:30",
     },
     {
-      id: '2',
-      transactionId: 'TXN-2026-002',
+      id: "2",
+      transactionId: "TXN-2026-002",
       riskScore: 87,
-      patternType: 'Rapid Succession',
+      patternType: "Rapid Succession",
       amount: 2300,
-      timestamp: '2026-03-22 14:25',
+      timestamp: "2026-03-22 14:25",
     },
     {
-      id: '3',
-      transactionId: 'TXN-2026-003',
+      id: "3",
+      transactionId: "TXN-2026-003",
       riskScore: 72,
-      patternType: 'High Value',
+      patternType: "High Value",
       amount: 8900,
-      timestamp: '2026-03-22 13:15',
+      timestamp: "2026-03-22 13:15",
     },
   ];
 
   const getRiskColor = (score: number): string => {
-    if (score >= 85) return 'bg-red-100 border-red-300';
-    if (score >= 70) return 'bg-orange-100 border-orange-300';
-    return 'bg-yellow-100 border-yellow-300';
+    if (score >= 85) return "bg-red-100 border-red-300";
+    if (score >= 70) return "bg-orange-100 border-orange-300";
+    return "bg-yellow-100 border-yellow-300";
   };
 
   const getRiskBadgeColor = (score: number): string => {
-    if (score >= 85) return 'bg-red-600 text-white';
-    if (score >= 70) return 'bg-orange-500 text-white';
-    return 'bg-yellow-500 text-white';
+    if (score >= 85) return "bg-red-600 text-white";
+    if (score >= 70) return "bg-orange-500 text-white";
+    return "bg-yellow-500 text-white";
   };
 
   const getRiskLabel = (score: number): string => {
-    if (score >= 85) return 'CRITICAL';
-    if (score >= 70) return 'HIGH';
-    return 'MEDIUM';
+    if (score >= 85) return "CRITICAL";
+    if (score >= 70) return "HIGH";
+    return "MEDIUM";
   };
 
   return (
@@ -68,7 +68,9 @@ export const FraudDetection: React.FC = () => {
           <AlertTriangle className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" />
           <div>
             <p className="text-sm font-semibold text-red-900">Active Alerts</p>
-            <p className="text-xs text-red-700">{alerts.length} potential fraud detection(s)</p>
+            <p className="text-xs text-red-700">
+              {alerts.length} potential fraud detection(s)
+            </p>
           </div>
         </div>
       )}
@@ -81,10 +83,16 @@ export const FraudDetection: React.FC = () => {
           >
             <div className="flex justify-between items-start mb-3">
               <div className="flex-1">
-                <h3 className="font-semibold text-foreground">{alert.patternType}</h3>
-                <p className="text-xs text-muted-foreground mt-1">ID: {alert.transactionId}</p>
+                <h3 className="font-semibold text-foreground">
+                  {alert.patternType}
+                </h3>
+                <p className="text-xs text-muted-foreground mt-1">
+                  ID: {alert.transactionId}
+                </p>
               </div>
-              <span className={`px-2 py-1 rounded text-xs font-bold ${getRiskBadgeColor(alert.riskScore)}`}>
+              <span
+                className={`px-2 py-1 rounded text-xs font-bold ${getRiskBadgeColor(alert.riskScore)}`}
+              >
                 {getRiskLabel(alert.riskScore)}
               </span>
             </div>
@@ -96,11 +104,15 @@ export const FraudDetection: React.FC = () => {
               </div>
               <div>
                 <p className="text-muted-foreground">Amount</p>
-                <p className="font-bold text-foreground">${alert.amount.toLocaleString()}</p>
+                <p className="font-bold text-foreground">
+                  ${alert.amount.toLocaleString()}
+                </p>
               </div>
               <div>
                 <p className="text-muted-foreground">Time</p>
-                <p className="font-bold text-foreground">{alert.timestamp.split(' ')[1]}</p>
+                <p className="font-bold text-foreground">
+                  {alert.timestamp.split(" ")[1]}
+                </p>
               </div>
             </div>
 
@@ -108,10 +120,10 @@ export const FraudDetection: React.FC = () => {
               <div
                 className={`h-full ${
                   alert.riskScore >= 85
-                    ? 'bg-red-600'
+                    ? "bg-red-600"
                     : alert.riskScore >= 70
-                    ? 'bg-orange-500'
-                    : 'bg-yellow-500'
+                      ? "bg-orange-500"
+                      : "bg-yellow-500"
                 }`}
                 style={{ width: `${alert.riskScore}%` }}
               />
@@ -130,11 +142,18 @@ export const FraudDetection: React.FC = () => {
         <div className="grid grid-cols-3 gap-2 text-center">
           <div className="p-2 bg-muted rounded">
             <p className="text-xs text-muted-foreground">Critical Alerts</p>
-            <p className="text-lg font-bold text-red-600">{alerts.filter((a) => a.riskScore >= 85).length}</p>
+            <p className="text-lg font-bold text-red-600">
+              {alerts.filter((a) => a.riskScore >= 85).length}
+            </p>
           </div>
           <div className="p-2 bg-muted rounded">
             <p className="text-xs text-muted-foreground">High Risk</p>
-            <p className="text-lg font-bold text-orange-600">{alerts.filter((a) => a.riskScore >= 70 && a.riskScore < 85).length}</p>
+            <p className="text-lg font-bold text-orange-600">
+              {
+                alerts.filter((a) => a.riskScore >= 70 && a.riskScore < 85)
+                  .length
+              }
+            </p>
           </div>
           <div className="p-2 bg-muted rounded">
             <p className="text-xs text-muted-foreground">Detection Rate</p>

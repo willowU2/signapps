@@ -6,14 +6,14 @@
  * - Export: JSON → XLSX, CSV, ODS
  */
 
-import { getClient, getServiceBaseUrl, ServiceName } from './factory';
+import { getClient, getServiceBaseUrl, ServiceName } from "./factory";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // TYPES
 // ═══════════════════════════════════════════════════════════════════════════
 
-export type SpreadsheetImportFormat = 'xlsx' | 'xls' | 'csv' | 'ods';
-export type SpreadsheetExportFormat = 'xlsx' | 'csv' | 'ods';
+export type SpreadsheetImportFormat = "xlsx" | "xls" | "csv" | "ods";
+export type SpreadsheetExportFormat = "xlsx" | "csv" | "ods";
 
 export interface SpreadsheetInfo {
   service: string;
@@ -36,8 +36,8 @@ export interface SpreadsheetCellStyle {
   italic?: boolean;
   underline?: boolean;
   strikethrough?: boolean;
-  align?: 'left' | 'center' | 'right';
-  verticalAlign?: 'top' | 'middle' | 'bottom';
+  align?: "left" | "center" | "right";
+  verticalAlign?: "top" | "middle" | "bottom";
   textColor?: string;
   fillColor?: string;
   fontFamily?: string;
@@ -68,9 +68,9 @@ export interface SpreadsheetImportResult {
 
 export interface SpreadsheetExportOptions {
   filename?: string;
-  delimiter?: ',' | ';' | '\t';  // For CSV
-  includeHeaders?: boolean;      // For CSV
-  sheetName?: string;           // For single sheet export
+  delimiter?: "," | ";" | "\t"; // For CSV
+  includeHeaders?: boolean; // For CSV
+  sheetName?: string; // For single sheet export
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -87,20 +87,22 @@ const officeClient = () => getClient(ServiceName.OFFICE);
  * Get spreadsheet service info
  */
 export async function getSpreadsheetInfo(): Promise<SpreadsheetInfo> {
-  const response = await officeClient().get('/spreadsheet/info');
+  const response = await officeClient().get("/spreadsheet/info");
   return response.data;
 }
 
 /**
  * Import a spreadsheet file (XLSX, XLS, CSV, ODS)
  */
-export async function importSpreadsheet(file: File): Promise<SpreadsheetImportResult> {
+export async function importSpreadsheet(
+  file: File,
+): Promise<SpreadsheetImportResult> {
   const formData = new FormData();
-  formData.append('file', file);
+  formData.append("file", file);
 
-  const response = await officeClient().post('/spreadsheet/import', formData, {
+  const response = await officeClient().post("/spreadsheet/import", formData, {
     headers: {
-      'Content-Type': 'multipart/form-data',
+      "Content-Type": "multipart/form-data",
     },
   });
   return response.data;
@@ -111,11 +113,11 @@ export async function importSpreadsheet(file: File): Promise<SpreadsheetImportRe
  */
 export async function importCsvFromText(
   content: string,
-  options?: { delimiter?: ',' | ';' | '\t'; hasHeaders?: boolean }
+  options?: { delimiter?: "," | ";" | "\t"; hasHeaders?: boolean },
 ): Promise<SpreadsheetImportResult> {
-  const response = await officeClient().post('/spreadsheet/import/csv', {
+  const response = await officeClient().post("/spreadsheet/import/csv", {
     content,
-    delimiter: options?.delimiter || ',',
+    delimiter: options?.delimiter || ",",
     has_headers: options?.hasHeaders ?? true,
   });
   return response.data;
@@ -131,16 +133,16 @@ export async function importCsvFromText(
  */
 export async function exportToXlsx(
   data: SpreadsheetSheet | SpreadsheetSheet[],
-  options?: SpreadsheetExportOptions
+  options?: SpreadsheetExportOptions,
 ): Promise<Blob> {
   const payload = {
     data: Array.isArray(data) ? { sheets: data } : data,
-    filename: options?.filename || 'spreadsheet.xlsx',
+    filename: options?.filename || "spreadsheet.xlsx",
   };
 
-  const response = await officeClient().post('/spreadsheet/export', payload, {
-    responseType: 'blob',
-    params: { format: 'xlsx' },
+  const response = await officeClient().post("/spreadsheet/export", payload, {
+    responseType: "blob",
+    params: { format: "xlsx" },
   });
   return response.data;
 }
@@ -150,18 +152,22 @@ export async function exportToXlsx(
  */
 export async function exportToCsv(
   data: (string | number | boolean | null)[][],
-  options?: SpreadsheetExportOptions
+  options?: SpreadsheetExportOptions,
 ): Promise<Blob> {
   const payload = {
     data,
-    filename: options?.filename || 'spreadsheet.csv',
-    delimiter: options?.delimiter || ',',
+    filename: options?.filename || "spreadsheet.csv",
+    delimiter: options?.delimiter || ",",
     include_headers: options?.includeHeaders ?? true,
   };
 
-  const response = await officeClient().post('/spreadsheet/export/csv', payload, {
-    responseType: 'blob',
-  });
+  const response = await officeClient().post(
+    "/spreadsheet/export/csv",
+    payload,
+    {
+      responseType: "blob",
+    },
+  );
   return response.data;
 }
 
@@ -170,16 +176,20 @@ export async function exportToCsv(
  */
 export async function exportToOds(
   data: SpreadsheetSheet | SpreadsheetSheet[],
-  options?: SpreadsheetExportOptions
+  options?: SpreadsheetExportOptions,
 ): Promise<Blob> {
   const payload = {
     data: Array.isArray(data) ? { sheets: data } : data,
-    filename: options?.filename || 'spreadsheet.ods',
+    filename: options?.filename || "spreadsheet.ods",
   };
 
-  const response = await officeClient().post('/spreadsheet/export/ods', payload, {
-    responseType: 'blob',
-  });
+  const response = await officeClient().post(
+    "/spreadsheet/export/ods",
+    payload,
+    {
+      responseType: "blob",
+    },
+  );
   return response.data;
 }
 
@@ -190,20 +200,20 @@ export async function downloadSpreadsheet(
   data: SpreadsheetSheet | SpreadsheetSheet[],
   format: SpreadsheetExportFormat,
   filename: string,
-  options?: SpreadsheetExportOptions
+  options?: SpreadsheetExportOptions,
 ): Promise<void> {
   let blob: Blob;
 
   switch (format) {
-    case 'xlsx':
+    case "xlsx":
       blob = await exportToXlsx(data, { ...options, filename });
       break;
-    case 'csv':
+    case "csv":
       // For CSV, extract data from first sheet
       const csvData = Array.isArray(data) ? data[0].data : data.data;
       blob = await exportToCsv(csvData, { ...options, filename });
       break;
-    case 'ods':
+    case "ods":
       blob = await exportToOds(data, { ...options, filename });
       break;
     default:
@@ -217,7 +227,7 @@ export async function downloadSpreadsheet(
     : `${filename}.${extension}`;
 
   const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
+  const a = document.createElement("a");
   a.href = url;
   a.download = fullFilename;
   document.body.appendChild(a);
@@ -253,7 +263,7 @@ export async function checkSpreadsheetHealth(): Promise<boolean> {
 export function convertToApiFormat(
   data: Record<string, { value: string; formula?: string; style?: any }>,
   rows: number,
-  cols: number
+  cols: number,
 ): (string | number | boolean | null)[][] {
   const result: (string | number | boolean | null)[][] = [];
 
@@ -268,11 +278,11 @@ export function convertToApiFormat(
       } else {
         // Try to parse as number
         const numValue = parseFloat(cell.value);
-        if (!isNaN(numValue) && cell.value.trim() !== '') {
+        if (!isNaN(numValue) && cell.value.trim() !== "") {
           row.push(numValue);
-        } else if (cell.value.toLowerCase() === 'true') {
+        } else if (cell.value.toLowerCase() === "true") {
           row.push(true);
-        } else if (cell.value.toLowerCase() === 'false') {
+        } else if (cell.value.toLowerCase() === "false") {
           row.push(false);
         } else {
           row.push(cell.value);
@@ -283,7 +293,10 @@ export function convertToApiFormat(
   }
 
   // Trim trailing empty rows
-  while (result.length > 0 && result[result.length - 1].every((v) => v === null)) {
+  while (
+    result.length > 0 &&
+    result[result.length - 1].every((v) => v === null)
+  ) {
     result.pop();
   }
 
@@ -310,7 +323,7 @@ export function convertToApiFormat(
  * Convert API format back to frontend data format
  */
 export function convertFromApiFormat(
-  apiData: (string | number | boolean | null)[][]
+  apiData: (string | number | boolean | null)[][],
 ): Record<string, { value: string; formula?: string }> {
   const result: Record<string, { value: string; formula?: string }> = {};
 
@@ -318,7 +331,7 @@ export function convertFromApiFormat(
     const row = apiData[r];
     for (let c = 0; c < row.length; c++) {
       const value = row[c];
-      if (value !== null && value !== undefined && value !== '') {
+      if (value !== null && value !== undefined && value !== "") {
         result[`${r}_${c}`] = {
           value: String(value),
         };
@@ -332,18 +345,20 @@ export function convertFromApiFormat(
 /**
  * Detect file format from extension
  */
-export function detectSpreadsheetFormat(filename: string): SpreadsheetImportFormat | null {
-  const ext = filename.toLowerCase().split('.').pop();
+export function detectSpreadsheetFormat(
+  filename: string,
+): SpreadsheetImportFormat | null {
+  const ext = filename.toLowerCase().split(".").pop();
   switch (ext) {
-    case 'xlsx':
-      return 'xlsx';
-    case 'xls':
-      return 'xls';
-    case 'csv':
-    case 'tsv':
-      return 'csv';
-    case 'ods':
-      return 'ods';
+    case "xlsx":
+      return "xlsx";
+    case "xls":
+      return "xls";
+    case "csv":
+    case "tsv":
+      return "csv";
+    case "ods":
+      return "ods";
     default:
       return null;
   }
@@ -352,15 +367,17 @@ export function detectSpreadsheetFormat(filename: string): SpreadsheetImportForm
 /**
  * Get MIME type for format
  */
-export function getSpreadsheetMimeType(format: SpreadsheetExportFormat): string {
+export function getSpreadsheetMimeType(
+  format: SpreadsheetExportFormat,
+): string {
   switch (format) {
-    case 'xlsx':
-      return 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
-    case 'csv':
-      return 'text/csv';
-    case 'ods':
-      return 'application/vnd.oasis.opendocument.spreadsheet';
+    case "xlsx":
+      return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+    case "csv":
+      return "text/csv";
+    case "ods":
+      return "application/vnd.oasis.opendocument.spreadsheet";
     default:
-      return 'application/octet-stream';
+      return "application/octet-stream";
   }
 }

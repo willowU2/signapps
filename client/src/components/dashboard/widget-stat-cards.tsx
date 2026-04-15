@@ -1,16 +1,17 @@
-'use client';
+"use client";
 
-import { StatCard } from '@/components/dashboard/stat-card';
-import { Container, HardDrive, Network, Activity } from 'lucide-react';
-import Link from 'next/link';
-import { useDashboardData } from '@/hooks/use-dashboard';
+import { StatCard } from "@/components/dashboard/stat-card";
+import { Container, HardDrive, Network, Activity } from "lucide-react";
+import Link from "next/link";
+import { useDashboardData } from "@/hooks/use-dashboard";
 
 export function WidgetStatCards() {
   const { data: dashboardData } = useDashboardData();
 
   const uptimeHours = Math.floor((dashboardData?.uptime || 0) / 3600);
   const uptimeDays = Math.floor(uptimeHours / 24);
-  const uptimeStr = uptimeDays > 0 ? `${uptimeDays}d ${uptimeHours % 24}h` : `${uptimeHours}h`;
+  const uptimeStr =
+    uptimeDays > 0 ? `${uptimeDays}d ${uptimeHours % 24}h` : `${uptimeHours}h`;
 
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -26,7 +27,7 @@ export function WidgetStatCards() {
       <Link href="/storage">
         <StatCard
           title="Storage"
-          value={dashboardData?.storage || '0'}
+          value={dashboardData?.storage || "0"}
           icon={HardDrive}
           description="S3 Buckets"
           className="cursor-pointer hover:border-primary/50 transition-colors"
@@ -43,7 +44,7 @@ export function WidgetStatCards() {
       </Link>
       <StatCard
         title="Uptime"
-        value={uptimeStr || '-'}
+        value={uptimeStr || "-"}
         icon={Activity}
         description="System uptime"
       />

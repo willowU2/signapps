@@ -1,37 +1,45 @@
-'use client';
+"use client";
 
-import { SpinnerInfinity } from 'spinners-react';
+import { SpinnerInfinity } from "spinners-react";
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Badge } from '@/components/ui/badge';
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from '@/components/ui/collapsible';
-import { CheckCircle, AlertCircle, ChevronDown, AlertTriangle, Plus, Trash2, Globe } from 'lucide-react';
-import { storeApi, routesApi } from '@/lib/api';
+} from "@/components/ui/collapsible";
+import {
+  CheckCircle,
+  AlertCircle,
+  ChevronDown,
+  AlertTriangle,
+  Plus,
+  Trash2,
+  Globe,
+} from "lucide-react";
+import { storeApi, routesApi } from "@/lib/api";
 import type {
   StoreApp,
   AppDetails,
   ParsedService,
   PortConflict,
-} from '@/lib/api';
-import { toast } from 'sonner';
-import { getContainerUrl } from '@/lib/utils';
-import { InstallProgress } from './install-progress';
+} from "@/lib/api";
+import { toast } from "sonner";
+import { getContainerUrl } from "@/lib/utils";
+import { InstallProgress } from "./install-progress";
 
 interface InstallDialogProps {
   app: StoreApp | null;
@@ -61,16 +69,16 @@ export function InstallDialog({
   const [details, setDetails] = useState<AppDetails | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [autoStart, setAutoStart] = useState(true);
-  const [groupName, setGroupName] = useState('');
+  const [groupName, setGroupName] = useState("");
 
   // Per-service form state
-  const [serviceForms, setServiceForms] = useState<Map<string, ServiceFormState>>(
-    new Map()
-  );
+  const [serviceForms, setServiceForms] = useState<
+    Map<string, ServiceFormState>
+  >(new Map());
 
   // Port conflicts
   const [portConflicts, setPortConflicts] = useState<Map<number, PortConflict>>(
-    new Map()
+    new Map(),
   );
 
   // Multi-service progress
@@ -101,7 +109,7 @@ export function InstallDialog({
 
         // Initialize per-service forms
         const forms = new Map<string, ServiceFormState>();
-        const baseName = app.id.toLowerCase().replace(/[^a-z0-9-]/g, '-');
+        const baseName = app.id.toLowerCase().replace(/[^a-z0-9-]/g, "-");
         setGroupName(baseName);
 
         data.config.services.forEach((svc) => {
@@ -118,17 +126,17 @@ export function InstallDialog({
           // Resolve {ServiceName} in env defaults
           const envMap: Record<string, string> = {};
           svc.environment.forEach((e) => {
-            envMap[e.key] = resolveServiceName(e.default || '', name);
+            envMap[e.key] = resolveServiceName(e.default || "", name);
           });
 
           // Extract labels from compose, filtering out signapps.app.* keys
           const labelEntries = Object.entries(svc.labels || {})
-            .filter(([k]) => !k.startsWith('signapps.app.'))
+            .filter(([k]) => !k.startsWith("signapps.app."))
             .map(([key, value]) => ({ key, value }));
 
           forms.set(svc.service_name, {
             containerName: name,
-            hostname: '',
+            hostname: "",
             envValues: envMap,
             customEnvValues: [],
             portValues: svc.ports.map((p) => ({ ...p })),
@@ -143,7 +151,9 @@ export function InstallDialog({
       })
       .catch((err) => {
         setError(
-          err.response?.data?.detail || err.message || 'Failed to load app details'
+          err.response?.data?.detail ||
+            err.message ||
+            "Failed to load app details",
         );
       })
       .finally(() => setLoading(false));
@@ -178,7 +188,7 @@ export function InstallDialog({
 
   const updateServiceForm = (
     serviceName: string,
-    update: Partial<ServiceFormState>
+    update: Partial<ServiceFormState>,
   ) => {
     setServiceForms((prev) => {
       const next = new Map(prev);
@@ -217,20 +227,21 @@ export function InstallDialog({
           });
 
           const validPorts = (form?.portValues || []).filter(
-            (p) => p.host > 0 && p.container > 0
+            (p) => p.host > 0 && p.container > 0,
           );
 
           return {
             service_name: svc.service_name,
             container_name: form?.containerName || svc.service_name,
             environment: mergedEnv,
-            ports: validPorts.length > 0
-              ? validPorts.map((p) => ({
-                  host: p.host,
-                  container: p.container,
-                  protocol: p.protocol,
-                }))
-              : undefined,
+            ports:
+              validPorts.length > 0
+                ? validPorts.map((p) => ({
+                    host: p.host,
+                    container: p.container,
+                    protocol: p.protocol,
+                  }))
+                : undefined,
             volumes: form?.volumeValues,
             labels: Object.keys(labelsMap).length > 0 ? labelsMap : undefined,
           };
@@ -259,12 +270,16 @@ export function InstallDialog({
                 name: firstFormWithHostname.containerName,
                 host: firstFormWithHostname.hostname.trim(),
                 target: `http://localhost:${hostPort}`,
-                mode: 'proxy',
+                mode: "proxy",
                 enabled: true,
               });
-              toast.success(`Route créée : ${firstFormWithHostname.hostname.trim()}`);
+              toast.success(
+                `Route créée : ${firstFormWithHostname.hostname.trim()}`,
+              );
             } catch {
-              toast.error('Conteneur installé mais la création de la route a échoué');
+              toast.error(
+                "Conteneur installé mais la création de la route a échoué",
+              );
             }
           }
         }
@@ -290,7 +305,7 @@ export function InstallDialog({
         });
 
         const validPorts = form.portValues.filter(
-          (p) => p.host > 0 && p.container > 0
+          (p) => p.host > 0 && p.container > 0,
         );
 
         const res = await storeApi.install({
@@ -317,12 +332,14 @@ export function InstallDialog({
                 name: form.containerName,
                 host: form.hostname.trim(),
                 target: `http://localhost:${hostPort}`,
-                mode: 'proxy',
+                mode: "proxy",
                 enabled: true,
               });
               toast.success(`Route créée : ${form.hostname.trim()}`);
             } catch {
-              toast.error('Conteneur installé mais la création de la route a échoué');
+              toast.error(
+                "Conteneur installé mais la création de la route a échoué",
+              );
             }
           }
         }
@@ -335,15 +352,15 @@ export function InstallDialog({
           .map((p: any) => ({
             host: p.host_port as number,
             container: p.container_port as number,
-            protocol: (p.protocol as string) || 'tcp',
+            protocol: (p.protocol as string) || "tcp",
           }));
         const appUrl = getContainerUrl(portMappings);
 
         if (appUrl) {
           toast.success(`${app.name} installed`, {
             action: {
-              label: 'Open',
-              onClick: () => window.open(appUrl, '_blank'),
+              label: "Open",
+              onClick: () => window.open(appUrl, "_blank"),
             },
           });
         } else {
@@ -354,7 +371,7 @@ export function InstallDialog({
       }
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : 'Installation failed';
+        err instanceof Error ? err.message : "Installation failed";
       toast.error(message);
     } finally {
       setInstalling(false);
@@ -385,7 +402,11 @@ export function InstallDialog({
           </div>
           <div className="space-y-1.5">
             <Label className="text-xs font-medium">Image</Label>
-            <Input value={svc.image} disabled className="text-muted-foreground" />
+            <Input
+              value={svc.image}
+              disabled
+              className="text-muted-foreground"
+            />
           </div>
         </div>
 
@@ -394,7 +415,9 @@ export function InstallDialog({
           <div className="flex items-center gap-2">
             <Globe className="h-3.5 w-3.5 text-muted-foreground" />
             <Label className="text-xs font-medium">Hostname (URL)</Label>
-            <span className="text-xs text-muted-foreground">- optional, creates a proxy route</span>
+            <span className="text-xs text-muted-foreground">
+              - optional, creates a proxy route
+            </span>
           </div>
           <Input
             value={form.hostname}
@@ -427,7 +450,7 @@ export function InstallDialog({
                 updateServiceForm(svc.service_name, {
                   portValues: [
                     ...form.portValues,
-                    { host: 0, container: 0, protocol: 'tcp' },
+                    { host: 0, container: 0, protocol: "tcp" },
                   ],
                 });
               }}
@@ -438,7 +461,8 @@ export function InstallDialog({
           </div>
           {form.portValues.length === 0 ? (
             <p className="text-xs text-muted-foreground">
-              No ports configured. Exposed ports will be auto-assigned on install.
+              No ports configured. Exposed ports will be auto-assigned on
+              install.
             </p>
           ) : (
             <div className="space-y-1.5">
@@ -450,11 +474,14 @@ export function InstallDialog({
                 <span />
               </div>
               {form.portValues.map((port, i) => (
-                <div key={i} className="grid grid-cols-[1fr_auto_1fr_3.5rem_2rem] items-center gap-2">
+                <div
+                  key={i}
+                  className="grid grid-cols-[1fr_auto_1fr_3.5rem_2rem] items-center gap-2"
+                >
                   <div className="space-y-1">
                     <Input
                       type="number"
-                      value={port.host || ''}
+                      value={port.host || ""}
                       placeholder="Host"
                       onChange={(e) => {
                         const next = [...form.portValues];
@@ -470,15 +497,16 @@ export function InstallDialog({
                     {portConflicts.has(port.host) && (
                       <p className="flex items-center gap-1 text-xs text-destructive">
                         <AlertTriangle className="h-3 w-3" />
-                        In use by{' '}
-                        {portConflicts.get(port.host)?.used_by || 'another container'}
+                        In use by{" "}
+                        {portConflicts.get(port.host)?.used_by ||
+                          "another container"}
                       </p>
                     )}
                   </div>
                   <span className="text-muted-foreground">:</span>
                   <Input
                     type="number"
-                    value={port.container || ''}
+                    value={port.container || ""}
                     placeholder="Container"
                     onChange={(e) => {
                       const next = [...form.portValues];
@@ -521,7 +549,7 @@ export function InstallDialog({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Label className="text-xs font-medium">Environment</Label>
-              {(svc.environment.length + form.customEnvValues.length) > 0 && (
+              {svc.environment.length + form.customEnvValues.length > 0 && (
                 <Badge variant="secondary" className="h-5 text-xs px-1.5">
                   {svc.environment.length + form.customEnvValues.length}
                 </Badge>
@@ -536,7 +564,7 @@ export function InstallDialog({
                 updateServiceForm(svc.service_name, {
                   customEnvValues: [
                     ...form.customEnvValues,
-                    { key: '', value: '' },
+                    { key: "", value: "" },
                   ],
                 });
               }}
@@ -565,13 +593,13 @@ export function InstallDialog({
                   <div className="flex-1">
                     <Input
                       type={
-                        env.key.toLowerCase().includes('password') ||
-                        env.key.toLowerCase().includes('secret')
-                          ? 'password'
-                          : 'text'
+                        env.key.toLowerCase().includes("password") ||
+                        env.key.toLowerCase().includes("secret")
+                          ? "password"
+                          : "text"
                       }
-                      value={form.envValues[env.key] || ''}
-                      placeholder={env.default || ''}
+                      value={form.envValues[env.key] || ""}
+                      placeholder={env.default || ""}
                       onChange={(e) =>
                         updateServiceForm(svc.service_name, {
                           envValues: {
@@ -621,7 +649,9 @@ export function InstallDialog({
                     size="icon"
                     className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
                     onClick={() => {
-                      const next = form.customEnvValues.filter((_, j) => j !== i);
+                      const next = form.customEnvValues.filter(
+                        (_, j) => j !== i,
+                      );
                       updateServiceForm(svc.service_name, {
                         customEnvValues: next,
                       });
@@ -655,7 +685,7 @@ export function InstallDialog({
                 updateServiceForm(svc.service_name, {
                   volumeValues: [
                     ...form.volumeValues,
-                    { source: '', target: '' },
+                    { source: "", target: "" },
                   ],
                 });
               }}
@@ -677,7 +707,10 @@ export function InstallDialog({
                 <span />
               </div>
               {form.volumeValues.map((vol, i) => (
-                <div key={i} className="grid grid-cols-[1fr_auto_1fr_2rem] items-center gap-2">
+                <div
+                  key={i}
+                  className="grid grid-cols-[1fr_auto_1fr_2rem] items-center gap-2"
+                >
                   <Input
                     value={vol.source}
                     onChange={(e) => {
@@ -737,10 +770,7 @@ export function InstallDialog({
               className="h-6 text-xs"
               onClick={() => {
                 updateServiceForm(svc.service_name, {
-                  labelValues: [
-                    ...form.labelValues,
-                    { key: '', value: '' },
-                  ],
+                  labelValues: [...form.labelValues, { key: "", value: "" }],
                 });
               }}
             >
@@ -749,9 +779,7 @@ export function InstallDialog({
             </Button>
           </div>
           {form.labelValues.length === 0 ? (
-            <p className="text-xs text-muted-foreground">
-              No custom labels
-            </p>
+            <p className="text-xs text-muted-foreground">No custom labels</p>
           ) : (
             <div className="space-y-1.5">
               {form.labelValues.map((label, i) => (
@@ -851,7 +879,10 @@ export function InstallDialog({
                     <Collapsible key={svc.service_name} defaultOpen>
                       <CollapsibleTrigger className="flex w-full items-center justify-between rounded-lg border p-3 hover:bg-muted/50">
                         <div className="flex items-center gap-2">
-                          <Badge variant="outline" className="text-xs font-mono">
+                          <Badge
+                            variant="outline"
+                            className="text-xs font-mono"
+                          >
                             {svc.service_name}
                           </Badge>
                           <span className="text-sm text-muted-foreground">
@@ -883,13 +914,20 @@ export function InstallDialog({
             >
               {installing ? (
                 <>
-                  <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />
+                  <SpinnerInfinity
+                    size={24}
+                    secondaryColor="rgba(128,128,128,0.2)"
+                    color="currentColor"
+                    speed={120}
+                    className="mr-2 h-4 w-4 "
+                  />
                   Installing...
                 </>
               ) : (
                 <>
                   <CheckCircle className="mr-2 h-4 w-4" />
-                  Install{isMultiService ? ` (${services.length} services)` : ''}
+                  Install
+                  {isMultiService ? ` (${services.length} services)` : ""}
                 </>
               )}
             </Button>

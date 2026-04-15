@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * AgentIQ Timeline Widget
@@ -6,14 +6,14 @@
  * Scrollable action log: timestamp, agent icon, text, method badge.
  */
 
-import { useQuery } from '@tanstack/react-query';
-import { Clock, WifiOff } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Skeleton } from '@/components/ui/skeleton';
-import { agentiqApi } from '@/lib/api/agentiq';
-import type { WidgetRenderProps } from '@/lib/dashboard/types';
+import { useQuery } from "@tanstack/react-query";
+import { Clock, WifiOff } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Skeleton } from "@/components/ui/skeleton";
+import { agentiqApi } from "@/lib/api/agentiq";
+import type { WidgetRenderProps } from "@/lib/dashboard/types";
 
 interface TimelineEntry {
   id?: string;
@@ -24,29 +24,35 @@ interface TimelineEntry {
 }
 
 const METHOD_COLORS: Record<string, string> = {
-  GET: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
-  POST: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300',
-  PATCH: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300',
-  DELETE: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300',
+  GET: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",
+  POST: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300",
+  PATCH:
+    "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300",
+  DELETE: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300",
 };
 
 const AGENT_INITIALS: Record<string, string> = {
-  Antigravity: 'AG',
-  Claude: 'CL',
-  OpenClaw: 'OC',
+  Antigravity: "AG",
+  Claude: "CL",
+  OpenClaw: "OC",
 };
 
 function formatTime(ts: string): string {
   try {
-    return new Date(ts).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    return new Date(ts).toLocaleTimeString("fr-FR", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
   } catch {
     return ts;
   }
 }
 
-export function AgentiqTimelineWidget({ widget }: Partial<WidgetRenderProps> = {}) {
+export function AgentiqTimelineWidget({
+  widget,
+}: Partial<WidgetRenderProps> = {}) {
   const { data, isLoading, isError } = useQuery({
-    queryKey: ['agentiq-timeline'],
+    queryKey: ["agentiq-timeline"],
     queryFn: () => agentiqApi.dashboard(),
     refetchInterval: 5000,
     retry: false,
@@ -83,16 +89,26 @@ export function AgentiqTimelineWidget({ widget }: Partial<WidgetRenderProps> = {
           <ScrollArea className="h-full px-3 pb-3">
             <div className="space-y-1 pt-1">
               {timeline.map((entry, idx) => (
-                <div key={entry.id ?? idx} className="flex items-start gap-2 py-1">
+                <div
+                  key={entry.id ?? idx}
+                  className="flex items-start gap-2 py-1"
+                >
                   <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center shrink-0 text-[9px] font-bold">
-                    {entry.agent ? (AGENT_INITIALS[entry.agent] ?? entry.agent.slice(0, 2).toUpperCase()) : '?'}
+                    {entry.agent
+                      ? (AGENT_INITIALS[entry.agent] ??
+                        entry.agent.slice(0, 2).toUpperCase())
+                      : "?"}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-[11px] leading-tight">{entry.text}</p>
                     <div className="flex items-center gap-1.5 mt-0.5">
-                      <span className="text-[10px] text-muted-foreground">{formatTime(entry.timestamp)}</span>
+                      <span className="text-[10px] text-muted-foreground">
+                        {formatTime(entry.timestamp)}
+                      </span>
                       {entry.method && (
-                        <Badge className={`text-[9px] h-3.5 px-1 ${METHOD_COLORS[entry.method] ?? ''}`}>
+                        <Badge
+                          className={`text-[9px] h-3.5 px-1 ${METHOD_COLORS[entry.method] ?? ""}`}
+                        >
                           {entry.method}
                         </Badge>
                       )}

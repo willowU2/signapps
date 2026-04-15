@@ -19,16 +19,46 @@ interface Column {
 export default function ScrumBoard() {
   const [board, setBoard] = useState<Record<string, Story[]>>({
     Backlog: [
-      { id: "1", title: "User authentication", points: 8, priority: "high", assignee: "Alice" },
-      { id: "2", title: "Forgot password flow", points: 5, priority: "medium", assignee: "Bob" },
+      {
+        id: "1",
+        title: "User authentication",
+        points: 8,
+        priority: "high",
+        assignee: "Alice",
+      },
+      {
+        id: "2",
+        title: "Forgot password flow",
+        points: 5,
+        priority: "medium",
+        assignee: "Bob",
+      },
       { id: "3", title: "Email verification", points: 3, priority: "low" },
     ],
     Sprint: [
-      { id: "4", title: "Dashboard layout", points: 5, priority: "high", assignee: "Carol" },
-      { id: "5", title: "API integration", points: 8, priority: "high", assignee: "David" },
+      {
+        id: "4",
+        title: "Dashboard layout",
+        points: 5,
+        priority: "high",
+        assignee: "Carol",
+      },
+      {
+        id: "5",
+        title: "API integration",
+        points: 8,
+        priority: "high",
+        assignee: "David",
+      },
     ],
     InProgress: [
-      { id: "6", title: "Database schema", points: 13, priority: "high", assignee: "Eve" },
+      {
+        id: "6",
+        title: "Database schema",
+        points: 13,
+        priority: "high",
+        assignee: "Eve",
+      },
     ],
     Done: [
       { id: "7", title: "Project setup", points: 2, priority: "medium" },
@@ -71,7 +101,9 @@ export default function ScrumBoard() {
     return colors[priority as keyof typeof colors];
   };
 
-  const totalPoints = Object.values(board).flat().reduce((sum, s) => sum + s.points, 0);
+  const totalPoints = Object.values(board)
+    .flat()
+    .reduce((sum, s) => sum + s.points, 0);
   const sprintPoints = board.Sprint.reduce((sum, s) => sum + s.points, 0);
 
   return (
@@ -128,8 +160,11 @@ export default function ScrumBoard() {
                   </div>
 
                   <div className="flex justify-between items-center gap-2">
-                    <span className={`text-xs font-bold px-2 py-1 rounded border ${getPriorityColor(story.priority)}`}>
-                      {story.priority.charAt(0).toUpperCase() + story.priority.slice(1)}
+                    <span
+                      className={`text-xs font-bold px-2 py-1 rounded border ${getPriorityColor(story.priority)}`}
+                    >
+                      {story.priority.charAt(0).toUpperCase() +
+                        story.priority.slice(1)}
                     </span>
                     <span className="text-xs font-bold bg-blue-100 text-blue-800 px-2 py-1 rounded">
                       {story.points}pt
@@ -137,7 +172,9 @@ export default function ScrumBoard() {
                   </div>
 
                   {story.assignee && (
-                    <p className="text-xs text-muted-foreground mt-2">👤 {story.assignee}</p>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      👤 {story.assignee}
+                    </p>
                   )}
                 </div>
               ))}

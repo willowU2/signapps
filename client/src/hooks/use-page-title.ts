@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useEffect } from 'react';
+import { useEffect } from "react";
 
 /**
  * Sets the browser tab title for the current page.
@@ -10,7 +10,7 @@ export function usePageTitle(title: string): void {
   useEffect(() => {
     document.title = `${title} — SignApps`;
     return () => {
-      document.title = 'SignApps';
+      document.title = "SignApps";
     };
   }, [title]);
 }

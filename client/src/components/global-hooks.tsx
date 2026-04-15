@@ -22,13 +22,16 @@ export function GlobalHooks() {
 
   const router = useRouter();
   useTabSync(
-    useCallback((msg) => {
-      if (msg.type === 'logout') {
-        router.push('/login');
-      } else if (msg.type === 'auth-change') {
-        router.refresh();
-      }
-    }, [router])
+    useCallback(
+      (msg) => {
+        if (msg.type === "logout") {
+          router.push("/login");
+        } else if (msg.type === "auth-change") {
+          router.refresh();
+        }
+      },
+      [router],
+    ),
   );
 
   return null;

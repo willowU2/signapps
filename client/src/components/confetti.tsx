@@ -14,7 +14,14 @@ export function Confetti({ trigger }: { trigger: boolean }) {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 
-    const colors = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899"];
+    const colors = [
+      "#3b82f6",
+      "#10b981",
+      "#f59e0b",
+      "#ef4444",
+      "#8b5cf6",
+      "#ec4899",
+    ];
     const particles = Array.from({ length: 80 }, () => ({
       x: Math.random() * canvas.width,
       y: -10 - Math.random() * 50,
@@ -29,9 +36,12 @@ export function Confetti({ trigger }: { trigger: boolean }) {
 
     let frame = 0;
     function animate() {
-      if (!ctx || frame > 120) { ctx?.clearRect(0, 0, canvas.width, canvas.height); return; }
+      if (!ctx || frame > 120) {
+        ctx?.clearRect(0, 0, canvas.width, canvas.height);
+        return;
+      }
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      particles.forEach(p => {
+      particles.forEach((p) => {
         p.x += p.vx;
         p.y += p.vy;
         p.vy += 0.1;
@@ -49,5 +59,10 @@ export function Confetti({ trigger }: { trigger: boolean }) {
     animate();
   }, [trigger]);
 
-  return <canvas ref={canvasRef} className="fixed inset-0 pointer-events-none z-[9999]" />;
+  return (
+    <canvas
+      ref={canvasRef}
+      className="fixed inset-0 pointer-events-none z-[9999]"
+    />
+  );
 }

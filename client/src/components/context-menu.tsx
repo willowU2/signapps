@@ -1,10 +1,10 @@
-'use client';
+"use client";
 import {
   ContextMenu,
   ContextMenuContent,
   ContextMenuItem,
   ContextMenuTrigger,
-} from '@/components/ui/context-menu';
+} from "@/components/ui/context-menu";
 
 interface Action {
   label: string;
@@ -27,7 +27,7 @@ export function EntityContextMenu({ children, actions }: Props) {
           <ContextMenuItem
             key={a.label}
             onClick={a.onClick}
-            variant={a.destructive ? 'destructive' : 'default'}
+            variant={a.destructive ? "destructive" : "default"}
           >
             {a.icon && <span className="mr-2">{a.icon}</span>}
             {a.label}

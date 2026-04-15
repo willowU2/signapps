@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { driveApi, DriveNode } from '@/lib/api';
-import { Badge } from '@/components/ui/badge';
-import { Folder, Image, FileText, Clock, Share2, Loader2 } from 'lucide-react';
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { driveApi, DriveNode } from "@/lib/api";
+import { Badge } from "@/components/ui/badge";
+import { Folder, Image, FileText, Clock, Share2, Loader2 } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -20,29 +20,33 @@ export interface SmartFolder {
 
 const SMART_FOLDERS: SmartFolder[] = [
   {
-    id: 'images',
-    name: 'Images',
+    id: "images",
+    name: "Images",
     icon: <Image className="h-4 w-4" />,
-    color: 'text-pink-600',
-    filter: (n) => !!(n.mime_type?.startsWith('image/')),
+    color: "text-pink-600",
+    filter: (n) => !!n.mime_type?.startsWith("image/"),
   },
   {
-    id: 'documents',
-    name: 'Documents',
+    id: "documents",
+    name: "Documents",
     icon: <FileText className="h-4 w-4" />,
-    color: 'text-blue-600',
+    color: "text-blue-600",
     filter: (n) => {
-      const ext = n.name.split('.').pop()?.toLowerCase() ?? '';
-      const mime = n.mime_type?.toLowerCase() ?? '';
-      return ['pdf', 'docx', 'doc', 'xlsx', 'xls', 'pptx'].includes(ext) ||
-        mime.includes('pdf') || mime.includes('word') || mime.includes('spreadsheet');
+      const ext = n.name.split(".").pop()?.toLowerCase() ?? "";
+      const mime = n.mime_type?.toLowerCase() ?? "";
+      return (
+        ["pdf", "docx", "doc", "xlsx", "xls", "pptx"].includes(ext) ||
+        mime.includes("pdf") ||
+        mime.includes("word") ||
+        mime.includes("spreadsheet")
+      );
     },
   },
   {
-    id: 'recents',
-    name: 'Récents',
+    id: "recents",
+    name: "Récents",
     icon: <Clock className="h-4 w-4" />,
-    color: 'text-amber-600',
+    color: "text-amber-600",
     filter: (n) => {
       const d = new Date(n.updated_at);
       const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 3600 * 1000);
@@ -50,11 +54,11 @@ const SMART_FOLDERS: SmartFolder[] = [
     },
   },
   {
-    id: 'shared',
-    name: 'Partagés',
+    id: "shared",
+    name: "Partagés",
     icon: <Share2 className="h-4 w-4" />,
-    color: 'text-green-600',
-    filter: (n) => !!(n.access_role && n.access_role !== 'owner'),
+    color: "text-green-600",
+    filter: (n) => !!(n.access_role && n.access_role !== "owner"),
   },
 ];
 
@@ -67,7 +71,12 @@ interface SmartFolderViewProps {
   onClose: () => void;
 }
 
-function SmartFolderView({ folder, nodes, onNodeClick, onClose }: SmartFolderViewProps) {
+function SmartFolderView({
+  folder,
+  nodes,
+  onNodeClick,
+  onClose,
+}: SmartFolderViewProps) {
   const filtered = nodes.filter(folder.filter);
 
   return (
@@ -76,7 +85,9 @@ function SmartFolderView({ folder, nodes, onNodeClick, onClose }: SmartFolderVie
         <div className="flex items-center gap-2">
           <span className={folder.color}>{folder.icon}</span>
           <h3 className="font-semibold text-sm">{folder.name}</h3>
-          <Badge variant="secondary" className="text-xs">{filtered.length}</Badge>
+          <Badge variant="secondary" className="text-xs">
+            {filtered.length}
+          </Badge>
         </div>
         <button
           onClick={onClose}
@@ -86,21 +97,25 @@ function SmartFolderView({ folder, nodes, onNodeClick, onClose }: SmartFolderVie
         </button>
       </div>
       {filtered.length === 0 ? (
-        <p className="text-sm text-muted-foreground py-4 text-center">Aucun fichier dans ce dossier intelligent.</p>
+        <p className="text-sm text-muted-foreground py-4 text-center">
+          Aucun fichier dans ce dossier intelligent.
+        </p>
       ) : (
         <div className="divide-y border rounded-lg overflow-hidden">
-          {filtered.map(node => (
+          {filtered.map((node) => (
             <button
               key={node.id}
               onClick={() => onNodeClick(node)}
               className="w-full flex items-center gap-3 px-4 py-3 text-sm hover:bg-muted/40 transition-colors text-left"
             >
-              {node.node_type === 'folder'
-                ? <Folder className="h-4 w-4 text-blue-500 fill-blue-100 shrink-0" />
-                : <FileText className="h-4 w-4 text-blue-600 shrink-0" />}
+              {node.node_type === "folder" ? (
+                <Folder className="h-4 w-4 text-blue-500 fill-blue-100 shrink-0" />
+              ) : (
+                <FileText className="h-4 w-4 text-blue-600 shrink-0" />
+              )}
               <span className="flex-1 truncate font-medium">{node.name}</span>
               <span className="text-xs text-muted-foreground shrink-0">
-                {new Date(node.updated_at).toLocaleDateString('fr-FR')}
+                {new Date(node.updated_at).toLocaleDateString("fr-FR")}
               </span>
             </button>
           ))}
@@ -121,7 +136,7 @@ export function SmartFolders({ onNodeClick }: SmartFoldersProps) {
 
   // Fetch all root nodes to apply filters against
   const { data: nodes = [], isLoading } = useQuery<DriveNode[]>({
-    queryKey: ['drive-smart-folders'],
+    queryKey: ["drive-smart-folders"],
     queryFn: () => driveApi.listNodes(null),
     staleTime: 60_000,
   });
@@ -139,7 +154,8 @@ export function SmartFolders({ onNodeClick }: SmartFoldersProps) {
       {activeFolder ? (
         isLoading ? (
           <div className="flex items-center gap-2 text-sm text-muted-foreground py-3">
-            <Loader2 className="h-4 w-4 animate-spin" />Chargement…
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Chargement…
           </div>
         ) : (
           <SmartFolderView
@@ -151,7 +167,7 @@ export function SmartFolders({ onNodeClick }: SmartFoldersProps) {
         )
       ) : (
         <div className="space-y-1">
-          {SMART_FOLDERS.map(sf => {
+          {SMART_FOLDERS.map((sf) => {
             const count = nodes.filter(sf.filter).length;
             return (
               <button
@@ -164,7 +180,9 @@ export function SmartFolders({ onNodeClick }: SmartFoldersProps) {
                 {isLoading ? (
                   <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground shrink-0" />
                 ) : (
-                  <Badge variant="secondary" className="text-xs shrink-0">{count}</Badge>
+                  <Badge variant="secondary" className="text-xs shrink-0">
+                    {count}
+                  </Badge>
                 )}
               </button>
             );

@@ -55,7 +55,9 @@ export default function MonthlyChallenges() {
 
   const formatDeadline = (date: Date) => {
     const now = new Date();
-    const daysLeft = Math.ceil((date.getTime() - now.getTime()) / (24 * 3600000));
+    const daysLeft = Math.ceil(
+      (date.getTime() - now.getTime()) / (24 * 3600000),
+    );
     return `${daysLeft} days left`;
   };
 
@@ -78,11 +80,16 @@ export default function MonthlyChallenges() {
 
       <div className="space-y-3">
         {challenges.map((challenge) => (
-          <div key={challenge.id} className="p-4 border rounded-lg hover:shadow-md transition-all">
+          <div
+            key={challenge.id}
+            className="p-4 border rounded-lg hover:shadow-md transition-all"
+          >
             <div className="flex justify-between items-start mb-2">
               <div>
                 <h3 className="font-bold text-lg">{challenge.name}</h3>
-                <p className="text-sm text-muted-foreground">{challenge.description}</p>
+                <p className="text-sm text-muted-foreground">
+                  {challenge.description}
+                </p>
               </div>
               <span className="text-xs bg-muted px-2 py-1 rounded font-medium">
                 {challenge.progress}/{challenge.maxProgress}

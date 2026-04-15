@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
 // IDEA-130: Custom Kanban columns — user-defined columns, drag-and-drop cards
 
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback } from "react";
 import {
   DndContext,
   DragOverlay,
@@ -13,25 +13,25 @@ import {
   useSensors,
   DragStartEvent,
   DragEndEvent,
-} from '@dnd-kit/core';
+} from "@dnd-kit/core";
 import {
   SortableContext,
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
-} from '@dnd-kit/sortable';
-import { useDroppable } from '@dnd-kit/core';
-import { useSortable } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
-import { useTasks, useUpdateTask } from '@/lib/scheduling/api/tasks';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Plus, Trash2, GripVertical, Pencil, Check, X } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import type { Task } from '@/lib/scheduling/types/scheduling';
-import { TaskSheet } from './TaskSheet';
+} from "@dnd-kit/sortable";
+import { useDroppable } from "@dnd-kit/core";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { useTasks, useUpdateTask } from "@/lib/scheduling/api/tasks";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Plus, Trash2, GripVertical, Pencil, Check, X } from "lucide-react";
+import { cn } from "@/lib/utils";
+import type { Task } from "@/lib/scheduling/types/scheduling";
+import { TaskSheet } from "./TaskSheet";
 
-const CUSTOM_COLUMNS_KEY = 'kanban_custom_columns';
+const CUSTOM_COLUMNS_KEY = "kanban_custom_columns";
 
 export interface KanbanColumn {
   id: string;
@@ -40,15 +40,21 @@ export interface KanbanColumn {
 }
 
 const DEFAULT_COLUMNS: KanbanColumn[] = [
-  { id: 'backlog', title: 'Backlog', color: 'bg-slate-500' },
-  { id: 'today', title: "Aujourd'hui", color: 'bg-blue-500' },
-  { id: 'in-progress', title: 'En cours', color: 'bg-orange-500' },
-  { id: 'done', title: 'Terminé', color: 'bg-green-500' },
+  { id: "backlog", title: "Backlog", color: "bg-slate-500" },
+  { id: "today", title: "Aujourd'hui", color: "bg-blue-500" },
+  { id: "in-progress", title: "En cours", color: "bg-orange-500" },
+  { id: "done", title: "Terminé", color: "bg-green-500" },
 ];
 
 const COLUMN_COLORS = [
-  'bg-slate-500', 'bg-blue-500', 'bg-orange-500', 'bg-green-500',
-  'bg-purple-500', 'bg-pink-500', 'bg-teal-500', 'bg-red-500',
+  "bg-slate-500",
+  "bg-blue-500",
+  "bg-orange-500",
+  "bg-green-500",
+  "bg-purple-500",
+  "bg-pink-500",
+  "bg-teal-500",
+  "bg-red-500",
 ];
 
 function loadColumns(): KanbanColumn[] {
@@ -67,9 +73,16 @@ function saveColumns(columns: KanbanColumn[]) {
 // ─── Mini Task Card ───────────────────────────────────────────────────────────
 
 function KanbanCard({ task, onClick }: { task: Task; onClick?: () => void }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
     id: task.id,
-    data: { type: 'Task', task },
+    data: { type: "Task", task },
   });
 
   if (isDragging) {
@@ -93,8 +106,18 @@ function KanbanCard({ task, onClick }: { task: Task; onClick?: () => void }) {
     >
       <p className="text-sm font-medium truncate">{task.title}</p>
       {task.dueDate && (
-        <p className={cn('text-xs mt-1', task.dueDate < new Date() ? 'text-red-500' : 'text-muted-foreground')}>
-          {task.dueDate.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })}
+        <p
+          className={cn(
+            "text-xs mt-1",
+            task.dueDate < new Date()
+              ? "text-red-500"
+              : "text-muted-foreground",
+          )}
+        >
+          {task.dueDate.toLocaleDateString("fr-FR", {
+            day: "2-digit",
+            month: "short",
+          })}
         </p>
       )}
     </div>
@@ -113,9 +136,17 @@ interface KanbanColumnComponentProps {
 }
 
 function KanbanColumnComponent({
-  column, tasks, onTaskClick, onRenameColumn, onDeleteColumn, canDelete,
+  column,
+  tasks,
+  onTaskClick,
+  onRenameColumn,
+  onDeleteColumn,
+  canDelete,
 }: KanbanColumnComponentProps) {
-  const { setNodeRef, isOver } = useDroppable({ id: column.id, data: { type: 'Column' } });
+  const { setNodeRef, isOver } = useDroppable({
+    id: column.id,
+    data: { type: "Column" },
+  });
   const taskIds = useMemo(() => tasks.map((t) => t.id), [tasks]);
   const [editing, setEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(column.title);
@@ -135,22 +166,53 @@ function KanbanColumnComponent({
             <Input
               value={editTitle}
               onChange={(e) => setEditTitle(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') commitRename(); if (e.key === 'Escape') setEditing(false); }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") commitRename();
+                if (e.key === "Escape") setEditing(false);
+              }}
               autoFocus
               className="h-6 text-sm flex-1 border-0 shadow-none p-0 focus-visible:ring-0"
             />
-            <Button size="icon" variant="ghost" className="h-5 w-5" onClick={commitRename}><Check className="h-3 w-3" /></Button>
-            <Button size="icon" variant="ghost" className="h-5 w-5" onClick={() => setEditing(false)}><X className="h-3 w-3" /></Button>
+            <Button
+              size="icon"
+              variant="ghost"
+              className="h-5 w-5"
+              onClick={commitRename}
+            >
+              <Check className="h-3 w-3" />
+            </Button>
+            <Button
+              size="icon"
+              variant="ghost"
+              className="h-5 w-5"
+              onClick={() => setEditing(false)}
+            >
+              <X className="h-3 w-3" />
+            </Button>
           </>
         ) : (
           <>
-            <h3 className="font-semibold text-sm flex-1 truncate">{column.title}</h3>
-            <Badge variant="secondary" className="text-xs px-1.5 py-0 h-5">{tasks.length}</Badge>
-            <Button size="icon" variant="ghost" className="h-5 w-5 opacity-0 group-hover:opacity-100 hover:opacity-100" onClick={() => setEditing(true)}>
+            <h3 className="font-semibold text-sm flex-1 truncate">
+              {column.title}
+            </h3>
+            <Badge variant="secondary" className="text-xs px-1.5 py-0 h-5">
+              {tasks.length}
+            </Badge>
+            <Button
+              size="icon"
+              variant="ghost"
+              className="h-5 w-5 opacity-0 group-hover:opacity-100 hover:opacity-100"
+              onClick={() => setEditing(true)}
+            >
               <Pencil className="h-3 w-3" />
             </Button>
             {canDelete && (
-              <Button size="icon" variant="ghost" className="h-5 w-5 text-destructive opacity-0 group-hover:opacity-100 hover:opacity-100" onClick={() => onDeleteColumn(column.id)}>
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-5 w-5 text-destructive opacity-0 group-hover:opacity-100 hover:opacity-100"
+                onClick={() => onDeleteColumn(column.id)}
+              >
                 <Trash2 className="h-3 w-3" />
               </Button>
             )}
@@ -161,13 +223,17 @@ function KanbanColumnComponent({
       <div
         ref={setNodeRef}
         className={cn(
-          'flex-1 p-2.5 overflow-y-auto space-y-2 transition-colors',
-          isOver && 'bg-blue-50/30'
+          "flex-1 p-2.5 overflow-y-auto space-y-2 transition-colors",
+          isOver && "bg-blue-50/30",
         )}
       >
         <SortableContext items={taskIds} strategy={verticalListSortingStrategy}>
           {tasks.map((task) => (
-            <KanbanCard key={task.id} task={task} onClick={() => onTaskClick(task)} />
+            <KanbanCard
+              key={task.id}
+              task={task}
+              onClick={() => onTaskClick(task)}
+            />
           ))}
         </SortableContext>
       </div>
@@ -189,14 +255,18 @@ export function CustomKanbanBoard({ projectId }: CustomKanbanBoardProps) {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [addingColumn, setAddingColumn] = useState(false);
-  const [newColTitle, setNewColTitle] = useState('');
+  const [newColTitle, setNewColTitle] = useState("");
   const [newColColor, setNewColColor] = useState(COLUMN_COLORS[0]);
 
-  const tasks = projectId ? allTasks.filter((t) => t.projectId === projectId) : allTasks;
+  const tasks = projectId
+    ? allTasks.filter((t) => t.projectId === projectId)
+    : allTasks;
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
   );
 
   const updateColumns = useCallback((next: KanbanColumn[]) => {
@@ -206,21 +276,29 @@ export function CustomKanbanBoard({ projectId }: CustomKanbanBoardProps) {
 
   const addColumn = () => {
     if (!newColTitle.trim()) return;
-    const next = [...columns, { id: `col_${Date.now()}`, title: newColTitle.trim(), color: newColColor }];
+    const next = [
+      ...columns,
+      {
+        id: `col_${Date.now()}`,
+        title: newColTitle.trim(),
+        color: newColColor,
+      },
+    ];
     updateColumns(next);
-    setNewColTitle('');
+    setNewColTitle("");
     setAddingColumn(false);
   };
 
   const renameColumn = (id: string, title: string) => {
-    updateColumns(columns.map((c) => c.id === id ? { ...c, title } : c));
+    updateColumns(columns.map((c) => (c.id === id ? { ...c, title } : c)));
   };
 
   const deleteColumn = (id: string) => {
     updateColumns(columns.filter((c) => c.id !== id));
   };
 
-  const handleDragStart = (e: DragStartEvent) => setActiveId(e.active.id as string);
+  const handleDragStart = (e: DragStartEvent) =>
+    setActiveId(e.active.id as string);
 
   const handleDragEnd = (e: DragEndEvent) => {
     setActiveId(null);
@@ -236,14 +314,21 @@ export function CustomKanbanBoard({ projectId }: CustomKanbanBoardProps) {
     const targetStatus: any = overColumn?.id ?? overTask?.status;
 
     if (targetStatus && targetStatus !== activeTask.status) {
-      updateTask.mutate({ id: activeTask.id, updates: { status: targetStatus } });
+      updateTask.mutate({
+        id: activeTask.id,
+        updates: { status: targetStatus },
+      });
     }
   };
 
   const activeTask = tasks.find((t) => t.id === activeId);
 
   if (isLoading) {
-    return <div className="flex items-center justify-center h-full text-muted-foreground text-sm">Chargement…</div>;
+    return (
+      <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
+        Chargement…
+      </div>
+    );
   }
 
   return (
@@ -259,7 +344,10 @@ export function CustomKanbanBoard({ projectId }: CustomKanbanBoardProps) {
             <KanbanColumnComponent
               column={col}
               tasks={tasks.filter((t) => t.status === col.id)}
-              onTaskClick={(task) => { setSelectedTask(task); setSheetOpen(true); }}
+              onTaskClick={(task) => {
+                setSelectedTask(task);
+                setSheetOpen(true);
+              }}
               onRenameColumn={renameColumn}
               onDeleteColumn={deleteColumn}
               canDelete={columns.length > 1}
@@ -276,21 +364,37 @@ export function CustomKanbanBoard({ projectId }: CustomKanbanBoardProps) {
                 placeholder="Nom de la colonne…"
                 value={newColTitle}
                 onChange={(e) => setNewColTitle(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter') addColumn(); if (e.key === 'Escape') setAddingColumn(false); }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") addColumn();
+                  if (e.key === "Escape") setAddingColumn(false);
+                }}
                 className="h-8"
               />
               <div className="flex flex-wrap gap-1.5">
                 {COLUMN_COLORS.map((c) => (
                   <button
                     key={c}
-                    className={cn('h-5 w-5 rounded-full border-2 transition-transform hover:scale-110', c, newColColor === c ? 'border-foreground scale-110' : 'border-transparent')}
+                    className={cn(
+                      "h-5 w-5 rounded-full border-2 transition-transform hover:scale-110",
+                      c,
+                      newColColor === c
+                        ? "border-foreground scale-110"
+                        : "border-transparent",
+                    )}
                     onClick={() => setNewColColor(c)}
                   />
                 ))}
               </div>
               <div className="flex gap-2">
-                <Button size="sm" className="flex-1 h-7" onClick={addColumn}>Ajouter</Button>
-                <Button size="sm" variant="ghost" className="h-7" onClick={() => setAddingColumn(false)}>
+                <Button size="sm" className="flex-1 h-7" onClick={addColumn}>
+                  Ajouter
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-7"
+                  onClick={() => setAddingColumn(false)}
+                >
                   <X className="h-3.5 w-3.5" />
                 </Button>
               </div>
@@ -316,7 +420,11 @@ export function CustomKanbanBoard({ projectId }: CustomKanbanBoardProps) {
         </DragOverlay>
       </DndContext>
 
-      <TaskSheet task={selectedTask} open={sheetOpen} onOpenChange={setSheetOpen} />
+      <TaskSheet
+        task={selectedTask}
+        open={sheetOpen}
+        onOpenChange={setSheetOpen}
+      />
     </div>
   );
 }

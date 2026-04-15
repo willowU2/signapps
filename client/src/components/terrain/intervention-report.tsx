@@ -39,10 +39,15 @@ export function InterventionReport({
     ...initialData,
   });
 
-  const [signaturePad, setSignaturePad] = useState<HTMLCanvasElement | null>(null);
+  const [signaturePad, setSignaturePad] = useState<HTMLCanvasElement | null>(
+    null,
+  );
   const [isExporting, setIsExporting] = useState(false);
 
-  const handleFieldChange = (field: keyof InterventionReportData, value: unknown) => {
+  const handleFieldChange = (
+    field: keyof InterventionReportData,
+    value: unknown,
+  ) => {
     setFormData((prev) => ({
       ...prev,
       [field]: value,
@@ -101,7 +106,9 @@ export function InterventionReport({
       <Card className="p-6 bg-gradient-to-r from-purple-50 to-purple-100 dark:from-purple-950 dark:to-purple-900">
         <h1 className="text-2xl font-bold">Intervention Report</h1>
         {interventionId && (
-          <p className="text-sm text-muted-foreground dark:text-gray-400 mt-1">ID: {interventionId}</p>
+          <p className="text-sm text-muted-foreground dark:text-gray-400 mt-1">
+            ID: {interventionId}
+          </p>
         )}
       </Card>
 
@@ -109,10 +116,14 @@ export function InterventionReport({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Intervention Type */}
         <Card className="p-4">
-          <label className="block text-sm font-medium mb-2">Intervention Type</label>
+          <label className="block text-sm font-medium mb-2">
+            Intervention Type
+          </label>
           <select
             value={formData.interventionType}
-            onChange={(e) => handleFieldChange("interventionType", e.target.value)}
+            onChange={(e) =>
+              handleFieldChange("interventionType", e.target.value)
+            }
             className="w-full px-3 py-2 border rounded bg-card dark:bg-gray-900 dark:border-gray-700"
           >
             <option value="">Select type...</option>
@@ -186,7 +197,10 @@ export function InterventionReport({
         {formData.photos.length > 0 ? (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {formData.photos.map((photo) => (
-              <div key={photo.id} className="relative group aspect-square rounded border overflow-hidden">
+              <div
+                key={photo.id}
+                className="relative group aspect-square rounded border overflow-hidden"
+              >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={photo.url}
@@ -216,7 +230,11 @@ export function InterventionReport({
           {formData.signatureUrl ? (
             <div className="flex flex-col items-center gap-3">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={formData.signatureUrl} alt="Signature" className="h-20 border rounded p-2" />
+              <img
+                src={formData.signatureUrl}
+                alt="Signature"
+                className="h-20 border rounded p-2"
+              />
               <Button
                 variant="outline"
                 size="sm"

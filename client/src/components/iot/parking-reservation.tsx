@@ -17,13 +17,31 @@ interface ParkingSpot {
 export default function ParkingReservation() {
   const [spots, setSpots] = useState<ParkingSpot[]>([
     { id: "1", spotNumber: "A-01", status: "free" },
-    { id: "2", spotNumber: "A-02", status: "reserved", reservedBy: "John Smith", reservedUntil: "12:30" },
+    {
+      id: "2",
+      spotNumber: "A-02",
+      status: "reserved",
+      reservedBy: "John Smith",
+      reservedUntil: "12:30",
+    },
     { id: "3", spotNumber: "A-03", status: "ev-charging" },
     { id: "4", spotNumber: "A-04", status: "free" },
-    { id: "5", spotNumber: "B-01", status: "reserved", reservedBy: "Sarah Johnson", reservedUntil: "14:00" },
+    {
+      id: "5",
+      spotNumber: "B-01",
+      status: "reserved",
+      reservedBy: "Sarah Johnson",
+      reservedUntil: "14:00",
+    },
     { id: "6", spotNumber: "B-02", status: "free" },
     { id: "7", spotNumber: "B-03", status: "ev-charging" },
-    { id: "8", spotNumber: "B-04", status: "reserved", reservedBy: "Mike Davis", reservedUntil: "13:15" },
+    {
+      id: "8",
+      spotNumber: "B-04",
+      status: "reserved",
+      reservedBy: "Mike Davis",
+      reservedUntil: "13:15",
+    },
   ]);
 
   const getStatusColor = (status: string) => {
@@ -46,7 +64,9 @@ export default function ParkingReservation() {
       case "reserved":
         return <Badge className="bg-blue-500">Reserved</Badge>;
       case "ev-charging":
-        return <Badge className="bg-yellow-500 text-foreground">EV Charging</Badge>;
+        return (
+          <Badge className="bg-yellow-500 text-foreground">EV Charging</Badge>
+        );
       default:
         return <Badge>Unknown</Badge>;
     }
@@ -64,7 +84,7 @@ export default function ParkingReservation() {
           };
         }
         return spot;
-      })
+      }),
     );
   };
 
@@ -73,8 +93,8 @@ export default function ParkingReservation() {
       prevSpots.map((spot) =>
         spot.id === id && spot.status === "reserved"
           ? { id: spot.id, spotNumber: spot.spotNumber, status: "free" }
-          : spot
-      )
+          : spot,
+      ),
     );
   };
 
@@ -111,7 +131,7 @@ export default function ParkingReservation() {
             <div key={spot.id} className="flex flex-col gap-2">
               <button
                 className={`border-2 p-4 rounded-lg font-semibold text-center transition-all cursor-pointer ${getStatusColor(
-                  spot.status
+                  spot.status,
                 )}`}
               >
                 <div className="flex flex-col items-center gap-1">
@@ -122,8 +142,12 @@ export default function ParkingReservation() {
               <div className="text-xs">
                 {spot.status === "reserved" ? (
                   <div className="space-y-1">
-                    <p className="font-semibold text-blue-700">{spot.reservedBy}</p>
-                    <p className="text-muted-foreground">Until {spot.reservedUntil}</p>
+                    <p className="font-semibold text-blue-700">
+                      {spot.reservedBy}
+                    </p>
+                    <p className="text-muted-foreground">
+                      Until {spot.reservedUntil}
+                    </p>
                     {spot.reservedBy === "You" && (
                       <Button
                         size="xs"

@@ -222,8 +222,10 @@ impl DirectoryEntry {
     ///
     /// Never panics.
     pub fn set_str(&mut self, name: &str, value: &str) {
-        self.attributes
-            .insert(name.to_owned(), vec![AttributeValue::String(value.to_owned())]);
+        self.attributes.insert(
+            name.to_owned(),
+            vec![AttributeValue::String(value.to_owned())],
+        );
     }
 
     /// Appends `value` to the list of values for attribute `name`.
@@ -254,7 +256,10 @@ impl DirectoryEntry {
     ///
     /// Never panics.
     pub fn add_value(&mut self, name: &str, value: AttributeValue) {
-        self.attributes.entry(name.to_owned()).or_default().push(value);
+        self.attributes
+            .entry(name.to_owned())
+            .or_default()
+            .push(value);
     }
 
     /// Returns `true` if `class_name` appears in `object_classes` (case-insensitive).
@@ -408,8 +413,14 @@ mod tests {
     #[test]
     fn entry_multi_valued() {
         let mut entry = make_entry(vec![]);
-        entry.add_value("member", AttributeValue::String("CN=Alice,DC=example,DC=com".into()));
-        entry.add_value("member", AttributeValue::String("CN=Bob,DC=example,DC=com".into()));
+        entry.add_value(
+            "member",
+            AttributeValue::String("CN=Alice,DC=example,DC=com".into()),
+        );
+        entry.add_value(
+            "member",
+            AttributeValue::String("CN=Bob,DC=example,DC=com".into()),
+        );
         assert_eq!(entry.get_all("member").len(), 2);
     }
 
@@ -425,8 +436,14 @@ mod tests {
     fn lifecycle_from_db() {
         assert_eq!(LifecycleState::from_db(None), LifecycleState::Live);
         assert_eq!(LifecycleState::from_db(Some("live")), LifecycleState::Live);
-        assert_eq!(LifecycleState::from_db(Some("recycled")), LifecycleState::Recycled);
-        assert_eq!(LifecycleState::from_db(Some("tombstone")), LifecycleState::Tombstone);
+        assert_eq!(
+            LifecycleState::from_db(Some("recycled")),
+            LifecycleState::Recycled
+        );
+        assert_eq!(
+            LifecycleState::from_db(Some("tombstone")),
+            LifecycleState::Tombstone
+        );
     }
 
     #[test]
@@ -437,6 +454,9 @@ mod tests {
             ("John Doe".to_string(), "position".to_string()),
         ];
         let dn = build_dn_from_path(&path, "example.com");
-        assert_eq!(dn.to_string(), "CN=John Doe,OU=Backend,OU=Engineering,DC=example,DC=com");
+        assert_eq!(
+            dn.to_string(),
+            "CN=John Doe,OU=Backend,OU=Engineering,DC=example,DC=com"
+        );
     }
 }

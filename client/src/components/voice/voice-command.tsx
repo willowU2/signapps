@@ -1,24 +1,24 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Mic, CheckCircle, Loader2 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Mic, CheckCircle, Loader2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export function VoiceCommand() {
   const [isListening, setIsListening] = useState(false);
-  const [recognizedText, setRecognizedText] = useState('');
+  const [recognizedText, setRecognizedText] = useState("");
   const [isExecuting, setIsExecuting] = useState(false);
-  const [feedbackMessage, setFeedbackMessage] = useState('');
+  const [feedbackMessage, setFeedbackMessage] = useState("");
 
   const handleMicrophoneClick = () => {
     setIsListening(!isListening);
     if (!isListening) {
-      setRecognizedText('');
-      setFeedbackMessage('');
+      setRecognizedText("");
+      setFeedbackMessage("");
       // Simulate listening
       setTimeout(() => {
-        setRecognizedText('Create new project');
+        setRecognizedText("Create new project");
         setIsListening(false);
       }, 2000);
     }
@@ -27,7 +27,7 @@ export function VoiceCommand() {
   const handleExecuteCommand = () => {
     setIsExecuting(true);
     setTimeout(() => {
-      setFeedbackMessage('Command executed: Project created successfully');
+      setFeedbackMessage("Command executed: Project created successfully");
       setIsExecuting(false);
     }, 1500);
   };
@@ -42,12 +42,12 @@ export function VoiceCommand() {
           onClick={handleMicrophoneClick}
           size="lg"
           className={cn(
-            'h-16 w-16 rounded-full transition-all duration-300',
+            "h-16 w-16 rounded-full transition-all duration-300",
             isListening
-              ? 'bg-red-500 hover:bg-red-600 animate-pulse'
-              : 'bg-primary hover:bg-primary/90'
+              ? "bg-red-500 hover:bg-red-600 animate-pulse"
+              : "bg-primary hover:bg-primary/90",
           )}
-          aria-label={isListening ? 'Stop listening' : 'Start listening'}
+          aria-label={isListening ? "Stop listening" : "Start listening"}
         >
           <Mic className="h-6 w-6 text-white" />
         </Button>
@@ -68,7 +68,9 @@ export function VoiceCommand() {
       {/* Recognized Command Display */}
       {recognizedText && (
         <div className="p-3 bg-muted rounded-md border border-input">
-          <p className="text-sm text-muted-foreground mb-1">Recognized Command:</p>
+          <p className="text-sm text-muted-foreground mb-1">
+            Recognized Command:
+          </p>
           <p className="text-foreground font-medium">{recognizedText}</p>
         </div>
       )}
@@ -97,7 +99,9 @@ export function VoiceCommand() {
       {feedbackMessage && (
         <div className="p-3 bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded-md flex items-start gap-2">
           <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" />
-          <p className="text-sm text-green-800 dark:text-green-200">{feedbackMessage}</p>
+          <p className="text-sm text-green-800 dark:text-green-200">
+            {feedbackMessage}
+          </p>
         </div>
       )}
     </div>

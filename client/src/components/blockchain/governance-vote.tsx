@@ -46,7 +46,7 @@ export const GovernanceVote: React.FC<GovernanceVoteProps> = ({
 
   const isDeadlinePassed = deadline < new Date();
   const daysRemaining = Math.ceil(
-    (deadline.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)
+    (deadline.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24),
   );
 
   const handleVote = async (vote: "for" | "against" | "abstain") => {
@@ -91,7 +91,9 @@ export const GovernanceVote: React.FC<GovernanceVoteProps> = ({
               <span className="font-medium">{votesFor}</span>
             </div>
             <Progress value={forPercentage} className="h-2" />
-            <p className="text-xs text-muted-foreground">{forPercentage.toFixed(1)}%</p>
+            <p className="text-xs text-muted-foreground">
+              {forPercentage.toFixed(1)}%
+            </p>
           </div>
 
           <div className="space-y-2">
@@ -103,7 +105,9 @@ export const GovernanceVote: React.FC<GovernanceVoteProps> = ({
               <span className="font-medium">{votesAgainst}</span>
             </div>
             <Progress value={againstPercentage} className="h-2" />
-            <p className="text-xs text-muted-foreground">{againstPercentage.toFixed(1)}%</p>
+            <p className="text-xs text-muted-foreground">
+              {againstPercentage.toFixed(1)}%
+            </p>
           </div>
 
           <div className="space-y-2">
@@ -115,7 +119,9 @@ export const GovernanceVote: React.FC<GovernanceVoteProps> = ({
               <span className="font-medium">{votesAbstain}</span>
             </div>
             <Progress value={abstainPercentage} className="h-2" />
-            <p className="text-xs text-muted-foreground">{abstainPercentage.toFixed(1)}%</p>
+            <p className="text-xs text-muted-foreground">
+              {abstainPercentage.toFixed(1)}%
+            </p>
           </div>
         </div>
 

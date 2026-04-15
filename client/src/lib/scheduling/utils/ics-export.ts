@@ -5,13 +5,13 @@
  * Supports single events, multiple events, and full calendar export.
  */
 
-import { format, formatISO } from 'date-fns';
+import { format, formatISO } from "date-fns";
 import type {
   ScheduleBlock,
   Attendee,
   ScheduleRecurrenceRule,
   EventLocation,
-} from '../types/scheduling';
+} from "../types/scheduling";
 
 // ============================================================================
 // Types
@@ -44,14 +44,18 @@ export interface ICSEvent {
   organizer?: { name: string; email: string };
   attendees?: Array<{ name: string; email: string; rsvp: string }>;
   rrule?: string;
-  status?: 'CONFIRMED' | 'TENTATIVE' | 'CANCELLED';
+  status?: "CONFIRMED" | "TENTATIVE" | "CANCELLED";
   categories?: string[];
   priority?: number;
   url?: string;
   created?: Date;
   lastModified?: Date;
   sequence?: number;
-  alarm?: { trigger: number; action: 'DISPLAY' | 'EMAIL'; description?: string };
+  alarm?: {
+    trigger: number;
+    action: "DISPLAY" | "EMAIL";
+    description?: string;
+  };
 }
 
 // ============================================================================
@@ -59,24 +63,24 @@ export interface ICSEvent {
 // ============================================================================
 
 const DEFAULT_OPTIONS: ICSExportOptions = {
-  calendarName: 'Calendrier SignApps',
-  productId: '-//SignApps//Scheduling//FR',
-  timezone: 'Europe/Paris',
+  calendarName: "Calendrier SignApps",
+  productId: "-//SignApps//Scheduling//FR",
+  timezone: "Europe/Paris",
   includeAttendees: true,
   includeReminders: true,
 };
 
-const STATUS_MAP: Record<string, 'CONFIRMED' | 'TENTATIVE' | 'CANCELLED'> = {
-  confirmed: 'CONFIRMED',
-  tentative: 'TENTATIVE',
-  cancelled: 'CANCELLED',
+const STATUS_MAP: Record<string, "CONFIRMED" | "TENTATIVE" | "CANCELLED"> = {
+  confirmed: "CONFIRMED",
+  tentative: "TENTATIVE",
+  cancelled: "CANCELLED",
 };
 
 const RSVP_MAP: Record<string, string> = {
-  accepted: 'ACCEPTED',
-  declined: 'DECLINED',
-  tentative: 'TENTATIVE',
-  pending: 'NEEDS-ACTION',
+  accepted: "ACCEPTED",
+  declined: "DECLINED",
+  tentative: "TENTATIVE",
+  pending: "NEEDS-ACTION",
 };
 
 const PRIORITY_MAP: Record<string, number> = {
@@ -95,7 +99,7 @@ const PRIORITY_MAP: Record<string, number> = {
  */
 export function exportEventToICS(
   block: ScheduleBlock,
-  options: ICSExportOptions = {}
+  options: ICSExportOptions = {},
 ): string {
   const opts = { ...DEFAULT_OPTIONS, ...options };
   const events = [blockToICSEvent(block, opts)];
@@ -107,7 +111,7 @@ export function exportEventToICS(
  */
 export function exportEventsToICS(
   blocks: ScheduleBlock[],
-  options: ICSExportOptions = {}
+  options: ICSExportOptions = {},
 ): string {
   const opts = { ...DEFAULT_OPTIONS, ...options };
   const events = blocks.map((b) => blockToICSEvent(b, opts));
@@ -119,13 +123,13 @@ export function exportEventsToICS(
  */
 export function downloadICS(
   icsContent: string,
-  filename: string = 'calendar.ics'
+  filename: string = "calendar.ics",
 ): void {
-  const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+  const blob = new Blob([icsContent], { type: "text/calendar;charset=utf-8" });
   const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
+  const link = document.createElement("a");
   link.href = url;
-  link.download = filename.endsWith('.ics') ? filename : `${filename}.ics`;
+  link.download = filename.endsWith(".ics") ? filename : `${filename}.ics`;
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
@@ -137,7 +141,7 @@ export function downloadICS(
  */
 export function downloadEventICS(
   block: ScheduleBlock,
-  options: ICSExportOptions = {}
+  options: ICSExportOptions = {},
 ): void {
   const icsContent = exportEventToICS(block, options);
   const filename = sanitizeFilename(block.title);
@@ -149,8 +153,8 @@ export function downloadEventICS(
  */
 export function downloadEventsICS(
   blocks: ScheduleBlock[],
-  filename: string = 'events',
-  options: ICSExportOptions = {}
+  filename: string = "events",
+  options: ICSExportOptions = {},
 ): void {
   const icsContent = exportEventsToICS(blocks, options);
   downloadICS(icsContent, filename);
@@ -162,7 +166,7 @@ export function downloadEventsICS(
 
 function blockToICSEvent(
   block: ScheduleBlock,
-  options: ICSExportOptions
+  options: ICSExportOptions,
 ): ICSEvent {
   const event: ICSEvent = {
     uid: `${block.id}@signapps.local`,
@@ -171,7 +175,7 @@ function blockToICSEvent(
     dtstart: block.start,
     dtend: block.end,
     allDay: block.allDay,
-    status: block.status ? STATUS_MAP[block.status] : 'CONFIRMED',
+    status: block.status ? STATUS_MAP[block.status] : "CONFIRMED",
     categories: block.tags,
     priority: block.priority ? PRIORITY_MAP[block.priority] : undefined,
     created: block.createdAt,
@@ -194,7 +198,7 @@ function blockToICSEvent(
     event.attendees = block.attendees.map((a) => ({
       name: a.name,
       email: a.email,
-      rsvp: RSVP_MAP[a.status || 'pending'],
+      rsvp: RSVP_MAP[a.status || "pending"],
     }));
   }
 
@@ -207,7 +211,7 @@ function blockToICSEvent(
   if (options.includeReminders && block.reminderMinutes) {
     event.alarm = {
       trigger: -block.reminderMinutes,
-      action: 'DISPLAY',
+      action: "DISPLAY",
       description: `Rappel: ${block.title}`,
     };
   }
@@ -217,16 +221,16 @@ function blockToICSEvent(
 
 function generateICSContent(
   events: ICSEvent[],
-  options: ICSExportOptions
+  options: ICSExportOptions,
 ): string {
   const lines: string[] = [];
 
   // Calendar header
-  lines.push('BEGIN:VCALENDAR');
-  lines.push('VERSION:2.0');
+  lines.push("BEGIN:VCALENDAR");
+  lines.push("VERSION:2.0");
   lines.push(`PRODID:${options.productId}`);
-  lines.push('CALSCALE:GREGORIAN');
-  lines.push('METHOD:PUBLISH');
+  lines.push("CALSCALE:GREGORIAN");
+  lines.push("METHOD:PUBLISH");
   if (options.calendarName) {
     lines.push(`X-WR-CALNAME:${escapeText(options.calendarName)}`);
   }
@@ -240,15 +244,15 @@ function generateICSContent(
   }
 
   // Calendar footer
-  lines.push('END:VCALENDAR');
+  lines.push("END:VCALENDAR");
 
-  return lines.join('\r\n');
+  return lines.join("\r\n");
 }
 
 function generateVEvent(event: ICSEvent): string[] {
   const lines: string[] = [];
 
-  lines.push('BEGIN:VEVENT');
+  lines.push("BEGIN:VEVENT");
   lines.push(`UID:${event.uid}`);
   lines.push(`DTSTAMP:${formatICSDate(new Date())}`);
 
@@ -300,7 +304,7 @@ function generateVEvent(event: ICSEvent): string[] {
 
   // Categories (tags)
   if (event.categories?.length) {
-    lines.push(`CATEGORIES:${event.categories.join(',')}`);
+    lines.push(`CATEGORIES:${event.categories.join(",")}`);
   }
 
   // Recurrence
@@ -312,7 +316,7 @@ function generateVEvent(event: ICSEvent): string[] {
   if (event.attendees?.length) {
     for (const attendee of event.attendees) {
       lines.push(
-        `ATTENDEE;CN=${escapeText(attendee.name)};PARTSTAT=${attendee.rsvp}:mailto:${attendee.email}`
+        `ATTENDEE;CN=${escapeText(attendee.name)};PARTSTAT=${attendee.rsvp}:mailto:${attendee.email}`,
       );
     }
   }
@@ -320,7 +324,7 @@ function generateVEvent(event: ICSEvent): string[] {
   // Organizer
   if (event.organizer) {
     lines.push(
-      `ORGANIZER;CN=${escapeText(event.organizer.name)}:mailto:${event.organizer.email}`
+      `ORGANIZER;CN=${escapeText(event.organizer.name)}:mailto:${event.organizer.email}`,
     );
   }
 
@@ -334,16 +338,16 @@ function generateVEvent(event: ICSEvent): string[] {
 
   // Alarm
   if (event.alarm) {
-    lines.push('BEGIN:VALARM');
+    lines.push("BEGIN:VALARM");
     lines.push(`TRIGGER:${formatTrigger(event.alarm.trigger)}`);
     lines.push(`ACTION:${event.alarm.action}`);
     if (event.alarm.description) {
       lines.push(`DESCRIPTION:${escapeText(event.alarm.description)}`);
     }
-    lines.push('END:VALARM');
+    lines.push("END:VALARM");
   }
 
-  lines.push('END:VEVENT');
+  lines.push("END:VEVENT");
 
   return lines;
 }
@@ -357,12 +361,12 @@ function formatICSDate(date: Date): string {
 }
 
 function formatICSDateOnly(date: Date): string {
-  return format(date, 'yyyyMMdd');
+  return format(date, "yyyyMMdd");
 }
 
 function formatTrigger(minutes: number): string {
   const absMinutes = Math.abs(minutes);
-  const sign = minutes < 0 ? '-' : '';
+  const sign = minutes < 0 ? "-" : "";
 
   if (absMinutes % (60 * 24) === 0) {
     return `${sign}P${absMinutes / (60 * 24)}D`;
@@ -393,20 +397,20 @@ function formatRRule(recurrence: ScheduleRecurrenceRule): string {
 
   // By day
   if (recurrence.byDay?.length) {
-    parts.push(`BYDAY=${recurrence.byDay.join(',')}`);
+    parts.push(`BYDAY=${recurrence.byDay.join(",")}`);
   }
 
   // By month
   if (recurrence.byMonth?.length) {
-    parts.push(`BYMONTH=${recurrence.byMonth.join(',')}`);
+    parts.push(`BYMONTH=${recurrence.byMonth.join(",")}`);
   }
 
   // By month day
   if (recurrence.byMonthDay?.length) {
-    parts.push(`BYMONTHDAY=${recurrence.byMonthDay.join(',')}`);
+    parts.push(`BYMONTHDAY=${recurrence.byMonthDay.join(",")}`);
   }
 
-  return parts.join(';');
+  return parts.join(";");
 }
 
 function formatLocation(location: EventLocation): string {
@@ -414,21 +418,21 @@ function formatLocation(location: EventLocation): string {
   if (location.address) {
     parts.push(location.address);
   }
-  return parts.join(', ');
+  return parts.join(", ");
 }
 
 function escapeText(text: string): string {
   return text
-    .replace(/\\/g, '\\\\')
-    .replace(/;/g, '\\;')
-    .replace(/,/g, '\\,')
-    .replace(/\n/g, '\\n');
+    .replace(/\\/g, "\\\\")
+    .replace(/;/g, "\\;")
+    .replace(/,/g, "\\,")
+    .replace(/\n/g, "\\n");
 }
 
 function sanitizeFilename(name: string): string {
   return name
-    .replace(/[<>:"/\\|?*]/g, '')
-    .replace(/\s+/g, '_')
+    .replace(/[<>:"/\\|?*]/g, "")
+    .replace(/\s+/g, "_")
     .slice(0, 50);
 }
 
@@ -441,7 +445,7 @@ function sanitizeFilename(name: string): string {
  */
 export function generateCalendarSubscriptionUrl(
   calendarId: string,
-  baseUrl: string
+  baseUrl: string,
 ): string {
   return `${baseUrl}/api/v1/calendars/${calendarId}/ics`;
 }
@@ -450,5 +454,5 @@ export function generateCalendarSubscriptionUrl(
  * Get MIME type for ICS files
  */
 export function getICSMimeType(): string {
-  return 'text/calendar';
+  return "text/calendar";
 }

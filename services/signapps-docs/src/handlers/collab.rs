@@ -162,9 +162,15 @@ async fn handle_collab_socket(socket: WebSocket, doc_id: String, state: AppState
                     let d_ref = doc_clone.clone();
 
                     tokio::spawn(async move {
-                        if let Err(e) =
-                            persistence::save_document(pool.inner(), &d_id, doc_type, &d_ref, None, None)
-                                .await
+                        if let Err(e) = persistence::save_document(
+                            pool.inner(),
+                            &d_id,
+                            doc_type,
+                            &d_ref,
+                            None,
+                            None,
+                        )
+                        .await
                         {
                             error!(doc_id = %d_id, error = %e, "Failed to persist collab document");
                         }

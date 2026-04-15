@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { SpinnerInfinity } from 'spinners-react';
+import { SpinnerInfinity } from "spinners-react";
 
 /**
  * VersionHistoryPanel
@@ -8,31 +8,47 @@ import { SpinnerInfinity } from 'spinners-react';
  * Panel for viewing and managing document version history.
  */
 
-import React, { useEffect, useState } from 'react';
-import { formatDistanceToNow, format } from 'date-fns';
-import { fr } from 'date-fns/locale';
-import { History, Star, Clock, User, MoreHorizontal, RotateCcw, Trash2, Edit2, Eye, GitCompare, Download, ChevronDown, Check, Filter, Save } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Checkbox } from '@/components/ui/checkbox';
+import React, { useEffect, useState } from "react";
+import { formatDistanceToNow, format } from "date-fns";
+import { fr } from "date-fns/locale";
+import {
+  History,
+  Star,
+  Clock,
+  User,
+  MoreHorizontal,
+  RotateCcw,
+  Trash2,
+  Edit2,
+  Eye,
+  GitCompare,
+  Download,
+  ChevronDown,
+  Check,
+  Filter,
+  Save,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from "@/components/ui/select";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
+} from "@/components/ui/dropdown-menu";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -42,12 +58,15 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import { cn } from '@/lib/utils';
-import { useVersionsStore } from '@/stores/versions-store';
-import type { DocumentVersion, VersionType } from '@/lib/office/versions/types';
-import { VERSION_TYPE_LABELS, VERSION_TYPE_COLORS } from '@/lib/office/versions/types';
-import { motion, AnimatePresence } from 'framer-motion';
+} from "@/components/ui/alert-dialog";
+import { cn } from "@/lib/utils";
+import { useVersionsStore } from "@/stores/versions-store";
+import type { DocumentVersion, VersionType } from "@/lib/office/versions/types";
+import {
+  VERSION_TYPE_LABELS,
+  VERSION_TYPE_COLORS,
+} from "@/lib/office/versions/types";
+import { motion, AnimatePresence } from "framer-motion";
 
 // ============================================================================
 // Version Item Component
@@ -81,11 +100,11 @@ function VersionItem({
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -10 }}
       className={cn(
-        'group flex items-start gap-3 p-3 rounded-lg border transition-all',
+        "group flex items-start gap-3 p-3 rounded-lg border transition-all",
         isSelected
-          ? 'border-primary bg-primary/5'
-          : 'border-transparent hover:bg-muted/50',
-        version.isCurrent && 'ring-1 ring-green-500/30'
+          ? "border-primary bg-primary/5"
+          : "border-transparent hover:bg-muted/50",
+        version.isCurrent && "ring-1 ring-green-500/30",
       )}
     >
       {/* Selection checkbox */}
@@ -101,12 +120,15 @@ function VersionItem({
           <span className="font-medium">v{version.versionNumber}</span>
           <Badge
             variant="secondary"
-            className={cn('text-xs', VERSION_TYPE_COLORS[version.type])}
+            className={cn("text-xs", VERSION_TYPE_COLORS[version.type])}
           >
             {VERSION_TYPE_LABELS[version.type]}
           </Badge>
           {version.isCurrent && (
-            <Badge variant="secondary" className="bg-green-100 text-green-800 text-xs">
+            <Badge
+              variant="secondary"
+              className="bg-green-100 text-green-800 text-xs"
+            >
               <Check className="mr-1 h-3 w-3" />
               Actuelle
             </Badge>
@@ -165,8 +187,8 @@ function VersionItem({
         >
           <Star
             className={cn(
-              'h-4 w-4',
-              version.isStarred && 'fill-amber-400 text-amber-400'
+              "h-4 w-4",
+              version.isStarred && "fill-amber-400 text-amber-400",
             )}
           />
         </Button>
@@ -249,12 +271,16 @@ export function VersionHistoryPanel({
   } = useVersionsStore();
 
   const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const [createLabel, setCreateLabel] = useState('');
-  const [showRestoreDialog, setShowRestoreDialog] = useState<string | null>(null);
+  const [createLabel, setCreateLabel] = useState("");
+  const [showRestoreDialog, setShowRestoreDialog] = useState<string | null>(
+    null,
+  );
   const [showDeleteDialog, setShowDeleteDialog] = useState<string | null>(null);
-  const [showEditDialog, setShowEditDialog] = useState<DocumentVersion | null>(null);
-  const [editLabel, setEditLabel] = useState('');
-  const [editDescription, setEditDescription] = useState('');
+  const [showEditDialog, setShowEditDialog] = useState<DocumentVersion | null>(
+    null,
+  );
+  const [editLabel, setEditLabel] = useState("");
+  const [editDescription, setEditDescription] = useState("");
   const [isUpdating, setIsUpdating] = useState(false);
 
   // Initialize
@@ -264,7 +290,7 @@ export function VersionHistoryPanel({
 
   const handleCreateVersion = async () => {
     await createVersion(createLabel || undefined);
-    setCreateLabel('');
+    setCreateLabel("");
     setShowCreateDialog(false);
   };
 
@@ -305,7 +331,7 @@ export function VersionHistoryPanel({
   };
 
   return (
-    <div className={cn('flex h-full flex-col', className)}>
+    <div className={cn("flex h-full flex-col", className)}>
       {/* Header */}
       <div className="flex items-center justify-between border-b p-4">
         <div className="flex items-center gap-2">
@@ -313,9 +339,19 @@ export function VersionHistoryPanel({
           <h2 className="font-semibold">Historique</h2>
           <Badge variant="secondary">{versions.length}</Badge>
         </div>
-        <Button size="sm" onClick={() => setShowCreateDialog(true)} disabled={isCreating}>
+        <Button
+          size="sm"
+          onClick={() => setShowCreateDialog(true)}
+          disabled={isCreating}
+        >
           {isCreating ? (
-            <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />
+            <SpinnerInfinity
+              size={24}
+              secondaryColor="rgba(128,128,128,0.2)"
+              color="currentColor"
+              speed={120}
+              className="mr-2 h-4 w-4 "
+            />
           ) : (
             <Save className="mr-2 h-4 w-4" />
           )}
@@ -327,8 +363,9 @@ export function VersionHistoryPanel({
       {selectedVersions.length > 0 && (
         <div className="flex items-center justify-between bg-muted/50 px-4 py-2 border-b">
           <span className="text-sm">
-            {selectedVersions.length} version{selectedVersions.length > 1 ? 's' : ''}{' '}
-            sélectionnée{selectedVersions.length > 1 ? 's' : ''}
+            {selectedVersions.length} version
+            {selectedVersions.length > 1 ? "s" : ""} sélectionnée
+            {selectedVersions.length > 1 ? "s" : ""}
           </span>
           <div className="flex items-center gap-2">
             {selectedVersions.length === 2 && (
@@ -346,7 +383,10 @@ export function VersionHistoryPanel({
 
       {/* Filters */}
       <div className="flex items-center gap-3 p-3 border-b">
-        <Select value={typeFilter} onValueChange={(v) => setTypeFilter(v as VersionType | 'all')}>
+        <Select
+          value={typeFilter}
+          onValueChange={(v) => setTypeFilter(v as VersionType | "all")}
+        >
           <SelectTrigger className="h-8 w-[160px]">
             <SelectValue />
           </SelectTrigger>
@@ -360,12 +400,17 @@ export function VersionHistoryPanel({
         </Select>
 
         <Button
-          variant={starredOnly ? 'secondary' : 'ghost'}
+          variant={starredOnly ? "secondary" : "ghost"}
           size="sm"
           className="h-8"
           onClick={() => setStarredOnly(!starredOnly)}
         >
-          <Star className={cn('h-4 w-4 mr-1', starredOnly && 'fill-amber-400 text-amber-400')} />
+          <Star
+            className={cn(
+              "h-4 w-4 mr-1",
+              starredOnly && "fill-amber-400 text-amber-400",
+            )}
+          />
           Favorites
         </Button>
       </div>
@@ -375,7 +420,13 @@ export function VersionHistoryPanel({
         <div className="p-3 space-y-1">
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
-              <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-8 w-8  text-muted-foreground" />
+              <SpinnerInfinity
+                size={24}
+                secondaryColor="rgba(128,128,128,0.2)"
+                color="currentColor"
+                speed={120}
+                className="h-8 w-8  text-muted-foreground"
+              />
             </div>
           ) : versions.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
@@ -400,8 +451,8 @@ export function VersionHistoryPanel({
                     onDelete={() => setShowDeleteDialog(version.id)}
                     onPreview={() => loadVersionPreview(version.id)}
                     onEdit={() => {
-                      setEditLabel(version.label || '');
-                      setEditDescription(version.description || '');
+                      setEditLabel(version.label || "");
+                      setEditDescription(version.description || "");
                       setShowEditDialog(version);
                     }}
                   />
@@ -417,7 +468,13 @@ export function VersionHistoryPanel({
                     disabled={isLoadingMore}
                   >
                     {isLoadingMore ? (
-                      <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-4 w-4  mr-2" />
+                      <SpinnerInfinity
+                        size={24}
+                        secondaryColor="rgba(128,128,128,0.2)"
+                        color="currentColor"
+                        speed={120}
+                        className="h-4 w-4  mr-2"
+                      />
                     ) : (
                       <ChevronDown className="h-4 w-4 mr-2" />
                     )}
@@ -436,7 +493,8 @@ export function VersionHistoryPanel({
           <AlertDialogHeader>
             <AlertDialogTitle>Créer une version</AlertDialogTitle>
             <AlertDialogDescription>
-              Créez une version nommée pour marquer un état important du document.
+              Créez une version nommée pour marquer un état important du
+              document.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="py-4">
@@ -448,7 +506,9 @@ export function VersionHistoryPanel({
           </div>
           <AlertDialogFooter>
             <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction onClick={handleCreateVersion}>Créer</AlertDialogAction>
+            <AlertDialogAction onClick={handleCreateVersion}>
+              Créer
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -462,15 +522,21 @@ export function VersionHistoryPanel({
           <AlertDialogHeader>
             <AlertDialogTitle>Restaurer cette version ?</AlertDialogTitle>
             <AlertDialogDescription>
-              Le document sera restauré à cette version. Une copie de sauvegarde de la
-              version actuelle sera créée automatiquement.
+              Le document sera restauré à cette version. Une copie de sauvegarde
+              de la version actuelle sera créée automatiquement.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Annuler</AlertDialogCancel>
             <AlertDialogAction onClick={handleRestore} disabled={isRestoring}>
               {isRestoring ? (
-                <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-4 w-4  mr-2" />
+                <SpinnerInfinity
+                  size={24}
+                  secondaryColor="rgba(128,128,128,0.2)"
+                  color="currentColor"
+                  speed={120}
+                  className="h-4 w-4  mr-2"
+                />
               ) : (
                 <RotateCcw className="h-4 w-4 mr-2" />
               )}
@@ -489,7 +555,8 @@ export function VersionHistoryPanel({
           <AlertDialogHeader>
             <AlertDialogTitle>Supprimer cette version ?</AlertDialogTitle>
             <AlertDialogDescription>
-              Cette action est irréversible. La version sera définitivement supprimée.
+              Cette action est irréversible. La version sera définitivement
+              supprimée.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -537,9 +604,18 @@ export function VersionHistoryPanel({
           </div>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isUpdating}>Annuler</AlertDialogCancel>
-            <AlertDialogAction onClick={handleEditVersion} disabled={isUpdating}>
+            <AlertDialogAction
+              onClick={handleEditVersion}
+              disabled={isUpdating}
+            >
               {isUpdating ? (
-                <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-4 w-4  mr-2" />
+                <SpinnerInfinity
+                  size={24}
+                  secondaryColor="rgba(128,128,128,0.2)"
+                  color="currentColor"
+                  speed={120}
+                  className="h-4 w-4  mr-2"
+                />
               ) : (
                 <Save className="h-4 w-4 mr-2" />
               )}

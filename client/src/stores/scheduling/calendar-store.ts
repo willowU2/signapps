@@ -3,9 +3,9 @@
  * Story 1.1.4: Calendar Navigation Store
  */
 
-import { create } from 'zustand';
-import { devtools, persist } from 'zustand/middleware';
-import { immer } from 'zustand/middleware/immer';
+import { create } from "zustand";
+import { devtools, persist } from "zustand/middleware";
+import { immer } from "zustand/middleware/immer";
 import {
   startOfDay,
   startOfWeek,
@@ -19,8 +19,8 @@ import {
   subDays,
   subWeeks,
   subMonths,
-} from 'date-fns';
-import type { ViewType, DateRange } from '@/lib/scheduling/types';
+} from "date-fns";
+import type { ViewType, DateRange } from "@/lib/scheduling/types";
 
 // ============================================================================
 // STATE INTERFACE
@@ -51,7 +51,7 @@ export interface CalendarState {
   setView: (view: ViewType) => void;
   setCurrentDate: (date: Date) => void;
   navigateToDate: (date: Date) => void;
-  navigateRelative: (direction: 'prev' | 'next') => void;
+  navigateRelative: (direction: "prev" | "next") => void;
   goToToday: () => void;
 
   // Settings
@@ -76,7 +76,7 @@ export interface CalendarState {
 
 const initialState = {
   currentDate: new Date(),
-  view: 'week' as ViewType,
+  view: "week" as ViewType,
   hourStart: 0,
   hourEnd: 24,
   slotDuration: 30,
@@ -121,37 +121,41 @@ export const useCalendarStore = create<CalendarState>()(
           });
         },
 
-        navigateRelative: (direction: 'prev' | 'next') => {
+        navigateRelative: (direction: "prev" | "next") => {
           const { view, currentDate } = get();
           let newDate: Date;
 
           switch (view) {
-            case 'day':
-            case 'focus':
-              newDate = direction === 'next'
-                ? addDays(currentDate, 1)
-                : subDays(currentDate, 1);
+            case "day":
+            case "focus":
+              newDate =
+                direction === "next"
+                  ? addDays(currentDate, 1)
+                  : subDays(currentDate, 1);
               break;
-            case 'week':
-            case 'roster':
-              newDate = direction === 'next'
-                ? addWeeks(currentDate, 1)
-                : subWeeks(currentDate, 1);
+            case "week":
+            case "roster":
+              newDate =
+                direction === "next"
+                  ? addWeeks(currentDate, 1)
+                  : subWeeks(currentDate, 1);
               break;
-            case 'month':
-            case 'heatmap':
-              newDate = direction === 'next'
-                ? addMonths(currentDate, 1)
-                : subMonths(currentDate, 1);
+            case "month":
+            case "heatmap":
+              newDate =
+                direction === "next"
+                  ? addMonths(currentDate, 1)
+                  : subMonths(currentDate, 1);
               break;
-            case 'agenda':
-            case 'timeline':
-            case 'kanban':
+            case "agenda":
+            case "timeline":
+            case "kanban":
             default:
               // For these views, navigate by week
-              newDate = direction === 'next'
-                ? addWeeks(currentDate, 1)
-                : subWeeks(currentDate, 1);
+              newDate =
+                direction === "next"
+                  ? addWeeks(currentDate, 1)
+                  : subWeeks(currentDate, 1);
               break;
           }
 
@@ -180,7 +184,9 @@ export const useCalendarStore = create<CalendarState>()(
         setSlotDuration: (duration: number) => {
           set((state) => {
             // Valid durations: 15, 30, 60
-            state.slotDuration = [15, 30, 60].includes(duration) ? duration : 30;
+            state.slotDuration = [15, 30, 60].includes(duration)
+              ? duration
+              : 30;
           });
         },
 
@@ -229,27 +235,27 @@ export const useCalendarStore = create<CalendarState>()(
           const { view, currentDate, weekStartsOn } = get();
 
           switch (view) {
-            case 'day':
-            case 'focus':
+            case "day":
+            case "focus":
               return {
                 start: startOfDay(currentDate),
                 end: endOfDay(currentDate),
               };
-            case 'week':
-            case 'roster':
+            case "week":
+            case "roster":
               return {
                 start: startOfWeek(currentDate, { weekStartsOn }),
                 end: endOfWeek(currentDate, { weekStartsOn }),
               };
-            case 'month':
-            case 'heatmap':
+            case "month":
+            case "heatmap":
               return {
                 start: startOfMonth(currentDate),
                 end: endOfMonth(currentDate),
               };
-            case 'agenda':
-            case 'timeline':
-            case 'kanban':
+            case "agenda":
+            case "timeline":
+            case "kanban":
             default:
               // Show 4 weeks for these views
               return {
@@ -264,12 +270,12 @@ export const useCalendarStore = create<CalendarState>()(
           const days: Date[] = [];
 
           switch (view) {
-            case 'day':
-            case 'focus':
+            case "day":
+            case "focus":
               days.push(startOfDay(currentDate));
               break;
-            case 'week':
-            case 'roster': {
+            case "week":
+            case "roster": {
               const weekStart = startOfWeek(currentDate, { weekStartsOn });
               for (let i = 0; i < 7; i++) {
                 const day = addDays(weekStart, i);
@@ -282,8 +288,8 @@ export const useCalendarStore = create<CalendarState>()(
               }
               break;
             }
-            case 'month':
-            case 'heatmap': {
+            case "month":
+            case "heatmap": {
               const monthStart = startOfMonth(currentDate);
               const monthEnd = endOfMonth(currentDate);
               const gridStart = startOfWeek(monthStart, { weekStartsOn });
@@ -327,7 +333,7 @@ export const useCalendarStore = create<CalendarState>()(
         },
       })),
       {
-        name: 'calendar-store-v2',
+        name: "calendar-store-v2",
         partialize: (state) => ({
           view: state.view,
           hourStart: state.hourStart,
@@ -341,10 +347,10 @@ export const useCalendarStore = create<CalendarState>()(
           showEnergyZones: state.showEnergyZones,
           compactMode: state.compactMode,
         }),
-      }
+      },
     ),
-    { name: 'calendar-store-v2' }
-  )
+    { name: "calendar-store-v2" },
+  ),
 );
 
 // ============================================================================
@@ -361,7 +367,8 @@ export const selectSlotDuration = (state: CalendarState) => state.slotDuration;
 export const selectWeekStartsOn = (state: CalendarState) => state.weekStartsOn;
 export const selectShowWeekends = (state: CalendarState) => state.showWeekends;
 export const selectShow24Hour = (state: CalendarState) => state.show24Hour;
-export const selectShowEnergyZones = (state: CalendarState) => state.showEnergyZones;
+export const selectShowEnergyZones = (state: CalendarState) =>
+  state.showEnergyZones;
 export const selectCompactMode = (state: CalendarState) => state.compactMode;
 export const selectEnergyZones = (state: CalendarState) => ({
   morningEnd: state.morningEnd,

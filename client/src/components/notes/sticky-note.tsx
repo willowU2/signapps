@@ -1,13 +1,13 @@
-'use client';
+"use client";
 
-import { useState, useRef } from 'react';
-import { Trash2, GripHorizontal } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { useState, useRef } from "react";
+import { Trash2, GripHorizontal } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export interface StickyNoteData {
   id: string;
   text: string;
-  color: 'yellow' | 'green' | 'blue' | 'pink';
+  color: "yellow" | "green" | "blue" | "pink";
 }
 
 interface StickyNoteProps {
@@ -17,10 +17,10 @@ interface StickyNoteProps {
 }
 
 const colorClasses = {
-  yellow: 'bg-yellow-100 border-yellow-300',
-  green: 'bg-green-100 border-green-300',
-  blue: 'bg-blue-100 border-blue-300',
-  pink: 'bg-pink-100 border-pink-300',
+  yellow: "bg-yellow-100 border-yellow-300",
+  green: "bg-green-100 border-green-300",
+  blue: "bg-blue-100 border-blue-300",
+  pink: "bg-pink-100 border-pink-300",
 };
 
 export function StickyNote({ note, onUpdate, onDelete }: StickyNoteProps) {
@@ -39,16 +39,18 @@ export function StickyNote({ note, onUpdate, onDelete }: StickyNoteProps) {
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && e.ctrlKey) {
+    if (e.key === "Enter" && e.ctrlKey) {
       handleSave();
     }
-    if (e.key === 'Escape') {
+    if (e.key === "Escape") {
       handleCancel();
     }
   };
 
   return (
-    <div className={`${colorClasses[note.color]} relative w-full rounded-lg border-2 p-4 shadow-md transition-shadow hover:shadow-lg`}>
+    <div
+      className={`${colorClasses[note.color]} relative w-full rounded-lg border-2 p-4 shadow-md transition-shadow hover:shadow-lg`}
+    >
       {/* Drag Handle */}
       <div className="absolute top-2 right-12 cursor-grab active:cursor-grabbing">
         <GripHorizontal className="h-4 w-4 text-gray-400" />
@@ -98,7 +100,9 @@ export function StickyNote({ note, onUpdate, onDelete }: StickyNoteProps) {
           onClick={() => setIsEditing(true)}
           className="min-h-[120px] cursor-text whitespace-pre-wrap break-words text-sm leading-relaxed text-gray-800"
         >
-          {tempText || <span className="text-gray-400 italic">Click to add text...</span>}
+          {tempText || (
+            <span className="text-gray-400 italic">Click to add text...</span>
+          )}
         </div>
       )}
     </div>

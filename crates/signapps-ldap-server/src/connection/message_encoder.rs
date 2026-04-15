@@ -22,11 +22,9 @@ pub(crate) fn encode_ldap_message(msg: &LdapMessage) -> BerElement {
 fn encode_operation(op: &LdapOperation) -> BerElement {
     match op {
         // BindResponse [APPLICATION 1]
-        LdapOperation::BindResponse(result) => ber::encode_application(
-            1,
-            true,
-            BerData::Constructed(encode_ldap_result(result)),
-        ),
+        LdapOperation::BindResponse(result) => {
+            ber::encode_application(1, true, BerData::Constructed(encode_ldap_result(result)))
+        },
 
         // SearchResultEntry [APPLICATION 4]
         LdapOperation::SearchResultEntry(entry) => {
@@ -54,49 +52,37 @@ fn encode_operation(op: &LdapOperation) -> BerElement {
                     ber::encode_sequence(attrs),
                 ]),
             )
-        }
+        },
 
         // SearchResultDone [APPLICATION 5]
-        LdapOperation::SearchResultDone(result) => ber::encode_application(
-            5,
-            true,
-            BerData::Constructed(encode_ldap_result(result)),
-        ),
+        LdapOperation::SearchResultDone(result) => {
+            ber::encode_application(5, true, BerData::Constructed(encode_ldap_result(result)))
+        },
 
         // ModifyResponse [APPLICATION 7]
-        LdapOperation::ModifyResponse(result) => ber::encode_application(
-            7,
-            true,
-            BerData::Constructed(encode_ldap_result(result)),
-        ),
+        LdapOperation::ModifyResponse(result) => {
+            ber::encode_application(7, true, BerData::Constructed(encode_ldap_result(result)))
+        },
 
         // AddResponse [APPLICATION 9]
-        LdapOperation::AddResponse(result) => ber::encode_application(
-            9,
-            true,
-            BerData::Constructed(encode_ldap_result(result)),
-        ),
+        LdapOperation::AddResponse(result) => {
+            ber::encode_application(9, true, BerData::Constructed(encode_ldap_result(result)))
+        },
 
         // DeleteResponse [APPLICATION 11]
-        LdapOperation::DeleteResponse(result) => ber::encode_application(
-            11,
-            true,
-            BerData::Constructed(encode_ldap_result(result)),
-        ),
+        LdapOperation::DeleteResponse(result) => {
+            ber::encode_application(11, true, BerData::Constructed(encode_ldap_result(result)))
+        },
 
         // ModifyDNResponse [APPLICATION 13]
-        LdapOperation::ModifyDnResponse(result) => ber::encode_application(
-            13,
-            true,
-            BerData::Constructed(encode_ldap_result(result)),
-        ),
+        LdapOperation::ModifyDnResponse(result) => {
+            ber::encode_application(13, true, BerData::Constructed(encode_ldap_result(result)))
+        },
 
         // CompareResponse [APPLICATION 15]
-        LdapOperation::CompareResponse(result) => ber::encode_application(
-            15,
-            true,
-            BerData::Constructed(encode_ldap_result(result)),
-        ),
+        LdapOperation::CompareResponse(result) => {
+            ber::encode_application(15, true, BerData::Constructed(encode_ldap_result(result)))
+        },
 
         // ExtendedResponse [APPLICATION 24]
         LdapOperation::ExtendedResponse(resp) => {
@@ -116,12 +102,12 @@ fn encode_operation(op: &LdapOperation) -> BerElement {
                 ));
             }
             ber::encode_application(24, true, BerData::Constructed(children))
-        }
+        },
 
         _ => {
             // Server never sends request-type operations.
             ber::encode_sequence(vec![])
-        }
+        },
     }
 }
 

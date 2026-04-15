@@ -28,16 +28,9 @@ export {
 } from "./column-selector";
 
 // Filters
-export {
-  FilterChip,
-  FilterChips,
-  operatorLabels,
-} from "./filter-chip";
+export { FilterChip, FilterChips, operatorLabels } from "./filter-chip";
 
-export {
-  FilterBuilder,
-  type FilterBuilderProps,
-} from "./filter-builder";
+export { FilterBuilder, type FilterBuilderProps } from "./filter-builder";
 
 // Types
 export type {

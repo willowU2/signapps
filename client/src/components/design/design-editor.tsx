@@ -37,12 +37,8 @@ export default function DesignEditor() {
   const fabricCanvasRef = useRef<any>(null);
   const [exportOpen, setExportOpen] = useState(false);
   const [resizeOpen, setResizeOpen] = useState(false);
-  const {
-    currentDesign,
-    rightPanel,
-    selectedObjectIds,
-    saveDesign,
-  } = useDesignStore();
+  const { currentDesign, rightPanel, selectedObjectIds, saveDesign } =
+    useDesignStore();
 
   // DW1: Auto-save debounced 3s on design changes
   const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -55,7 +51,7 @@ export default function DesignEditor() {
     return () => {
       if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentDesign]);
 
   const [leftTab, setLeftTab] = useState("layers");
@@ -81,27 +77,59 @@ export default function DesignEditor() {
       <div className="flex flex-1 overflow-hidden">
         {/* Left Sidebar — 7 tabs */}
         <div className="w-56 border-r bg-background/95 flex flex-col shrink-0 overflow-hidden">
-          <Tabs value={leftTab} onValueChange={setLeftTab} className="flex flex-col h-full">
+          <Tabs
+            value={leftTab}
+            onValueChange={setLeftTab}
+            className="flex flex-col h-full"
+          >
             <TabsList className="grid grid-cols-7 gap-0 rounded-none border-b bg-transparent h-9 px-0.5">
-              <TabsTrigger value="layers" className="h-7 px-0 data-[state=active]:bg-muted rounded-md" title="Layers">
+              <TabsTrigger
+                value="layers"
+                className="h-7 px-0 data-[state=active]:bg-muted rounded-md"
+                title="Layers"
+              >
                 <Layers className="h-3.5 w-3.5" />
               </TabsTrigger>
-              <TabsTrigger value="history" className="h-7 px-0 data-[state=active]:bg-muted rounded-md" title="History">
+              <TabsTrigger
+                value="history"
+                className="h-7 px-0 data-[state=active]:bg-muted rounded-md"
+                title="History"
+              >
                 <History className="h-3.5 w-3.5" />
               </TabsTrigger>
-              <TabsTrigger value="pages" className="h-7 px-0 data-[state=active]:bg-muted rounded-md" title="Pages">
+              <TabsTrigger
+                value="pages"
+                className="h-7 px-0 data-[state=active]:bg-muted rounded-md"
+                title="Pages"
+              >
                 <FileStack className="h-3.5 w-3.5" />
               </TabsTrigger>
-              <TabsTrigger value="shapes" className="h-7 px-0 data-[state=active]:bg-muted rounded-md" title="Shapes">
+              <TabsTrigger
+                value="shapes"
+                className="h-7 px-0 data-[state=active]:bg-muted rounded-md"
+                title="Shapes"
+              >
                 <Shapes className="h-3.5 w-3.5" />
               </TabsTrigger>
-              <TabsTrigger value="text" className="h-7 px-0 data-[state=active]:bg-muted rounded-md" title="Text & Fonts">
+              <TabsTrigger
+                value="text"
+                className="h-7 px-0 data-[state=active]:bg-muted rounded-md"
+                title="Text & Fonts"
+              >
                 <Type className="h-3.5 w-3.5" />
               </TabsTrigger>
-              <TabsTrigger value="photos" className="h-7 px-0 data-[state=active]:bg-muted rounded-md" title="Photos">
+              <TabsTrigger
+                value="photos"
+                className="h-7 px-0 data-[state=active]:bg-muted rounded-md"
+                title="Photos"
+              >
                 <Image className="h-3.5 w-3.5" />
               </TabsTrigger>
-              <TabsTrigger value="brand" className="h-7 px-0 data-[state=active]:bg-muted rounded-md" title="Brand Kit">
+              <TabsTrigger
+                value="brand"
+                className="h-7 px-0 data-[state=active]:bg-muted rounded-md"
+                title="Brand Kit"
+              >
                 <Palette className="h-3.5 w-3.5" />
               </TabsTrigger>
             </TabsList>
@@ -122,13 +150,26 @@ export default function DesignEditor() {
               <TabsContent value="text" className="m-0 h-full">
                 <Tabs defaultValue="styles" className="flex flex-col h-full">
                   <TabsList className="grid grid-cols-2 gap-0 rounded-none border-b bg-transparent h-8 mx-2 mt-1">
-                    <TabsTrigger value="styles" className="text-[10px] h-6 data-[state=active]:bg-muted rounded-md">Styles</TabsTrigger>
-                    <TabsTrigger value="fonts" className="text-[10px] h-6 data-[state=active]:bg-muted rounded-md">Fonts</TabsTrigger>
+                    <TabsTrigger
+                      value="styles"
+                      className="text-[10px] h-6 data-[state=active]:bg-muted rounded-md"
+                    >
+                      Styles
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value="fonts"
+                      className="text-[10px] h-6 data-[state=active]:bg-muted rounded-md"
+                    >
+                      Fonts
+                    </TabsTrigger>
                   </TabsList>
                   <TabsContent value="styles" className="m-0 p-3 flex-1">
                     <DesignTextStyles fabricCanvasRef={fabricCanvasRef} />
                   </TabsContent>
-                  <TabsContent value="fonts" className="m-0 flex-1 overflow-hidden">
+                  <TabsContent
+                    value="fonts"
+                    className="m-0 flex-1 overflow-hidden"
+                  >
                     <DesignFontsLibrary fabricCanvasRef={fabricCanvasRef} />
                   </TabsContent>
                 </Tabs>
@@ -150,19 +191,47 @@ export default function DesignEditor() {
         {rightPanel && (
           <div className="shrink-0 overflow-hidden">
             {selectedObjectIds.length > 0 ? (
-              <Tabs value={rightTab} onValueChange={setRightTab} className="flex flex-col h-full w-64">
+              <Tabs
+                value={rightTab}
+                onValueChange={setRightTab}
+                className="flex flex-col h-full w-64"
+              >
                 <TabsList className="grid grid-cols-5 gap-0 rounded-none border-b bg-transparent h-9 px-0.5">
-                  <TabsTrigger value="properties" className="h-7 text-[10px] data-[state=active]:bg-muted rounded-md" title="Properties">Props</TabsTrigger>
-                  <TabsTrigger value="effects" className="h-7 text-[10px] data-[state=active]:bg-muted rounded-md" title="Layer Effects">
+                  <TabsTrigger
+                    value="properties"
+                    className="h-7 text-[10px] data-[state=active]:bg-muted rounded-md"
+                    title="Properties"
+                  >
+                    Props
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="effects"
+                    className="h-7 text-[10px] data-[state=active]:bg-muted rounded-md"
+                    title="Layer Effects"
+                  >
                     <Sparkles className="h-3 w-3" />
                   </TabsTrigger>
-                  <TabsTrigger value="gradient" className="h-7 text-[10px] data-[state=active]:bg-muted rounded-md" title="Gradient">
+                  <TabsTrigger
+                    value="gradient"
+                    className="h-7 text-[10px] data-[state=active]:bg-muted rounded-md"
+                    title="Gradient"
+                  >
                     <Palette className="h-3 w-3" />
                   </TabsTrigger>
-                  <TabsTrigger value="crop" className="h-7 text-[10px] data-[state=active]:bg-muted rounded-md" title="Crop">
+                  <TabsTrigger
+                    value="crop"
+                    className="h-7 text-[10px] data-[state=active]:bg-muted rounded-md"
+                    title="Crop"
+                  >
                     <Crop className="h-3 w-3" />
                   </TabsTrigger>
-                  <TabsTrigger value="filters" className="h-7 text-[10px] data-[state=active]:bg-muted rounded-md" title="Filters">Filters</TabsTrigger>
+                  <TabsTrigger
+                    value="filters"
+                    className="h-7 text-[10px] data-[state=active]:bg-muted rounded-md"
+                    title="Filters"
+                  >
+                    Filters
+                  </TabsTrigger>
                 </TabsList>
                 <div className="flex-1 overflow-y-auto">
                   <TabsContent value="properties" className="m-0">
@@ -195,10 +264,7 @@ export default function DesignEditor() {
         onOpenChange={setExportOpen}
         fabricCanvasRef={fabricCanvasRef}
       />
-      <DesignResizeDialog
-        open={resizeOpen}
-        onOpenChange={setResizeOpen}
-      />
+      <DesignResizeDialog open={resizeOpen} onOpenChange={setResizeOpen} />
     </div>
   );
 }

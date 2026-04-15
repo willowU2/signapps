@@ -13,10 +13,10 @@ interface GanttTask {
   id: string;
   title: string;
   startDate: string; // ISO date
-  endDate: string;   // ISO date
-  progress: number;  // 0-100
+  endDate: string; // ISO date
+  progress: number; // 0-100
   dependsOn?: string; // task ID
-  color?: string;    // tailwind color
+  color?: string; // tailwind color
 }
 
 interface GanttChartProps {
@@ -73,7 +73,10 @@ const ZOOM_CONFIG = {
 // ── Utilities ──────────────────────────────────────────────────────────────
 
 function getDateRange(tasks: GanttTask[]) {
-  const dates = tasks.flatMap((t) => [new Date(t.startDate), new Date(t.endDate)]);
+  const dates = tasks.flatMap((t) => [
+    new Date(t.startDate),
+    new Date(t.endDate),
+  ]);
   const minDate = new Date(Math.min(...dates.map((d) => d.getTime())));
   const maxDate = new Date(Math.max(...dates.map((d) => d.getTime())));
   minDate.setDate(minDate.getDate() - 2);
@@ -86,7 +89,9 @@ function daysBetween(start: Date, end: Date): number {
 }
 
 function daysFromStart(date: Date, startDate: Date): number {
-  return Math.floor((date.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+  return Math.floor(
+    (date.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24),
+  );
 }
 
 // ── Timeline Header ─────────────────────────────────────────────────────────
@@ -115,7 +120,9 @@ function TimelineHeader({
         day: "2-digit",
       }),
     });
-    current.setDate(current.getDate() + (zoom === "month" ? 7 : zoom === "week" ? 1 : 1));
+    current.setDate(
+      current.getDate() + (zoom === "month" ? 7 : zoom === "week" ? 1 : 1),
+    );
   }
 
   return (
@@ -123,7 +130,10 @@ function TimelineHeader({
       <div className="flex">
         <div className="w-48 border-r p-3 font-semibold text-sm">Task</div>
         <div className="flex-1 overflow-x-auto">
-          <div style={{ width: totalWidth }} className="flex border-l text-xs text-muted-foreground">
+          <div
+            style={{ width: totalWidth }}
+            className="flex border-l text-xs text-muted-foreground"
+          >
             {dateLabels.map((item, idx) => (
               <div
                 key={idx}
@@ -148,17 +158,31 @@ interface TaskRowProps {
   zoom: ZoomLevel;
   hasDependency: boolean;
   onTaskClick?: (taskId: string) => void;
-  onTaskDrag?: (taskId: string, newStartDate: string, newEndDate: string) => void;
+  onTaskDrag?: (
+    taskId: string,
+    newStartDate: string,
+    newEndDate: string,
+  ) => void;
 }
 
-function TaskRow({ task, minDate, zoom, hasDependency, onTaskClick, onTaskDrag }: TaskRowProps) {
+function TaskRow({
+  task,
+  minDate,
+  zoom,
+  hasDependency,
+  onTaskClick,
+  onTaskDrag,
+}: TaskRowProps) {
   const pixelsPerDay = ZOOM_CONFIG[zoom].pixelsPerDay;
   const taskStart = daysFromStart(new Date(task.startDate), minDate);
-  const taskDuration = daysBetween(new Date(task.startDate), new Date(task.endDate)) + 1;
+  const taskDuration =
+    daysBetween(new Date(task.startDate), new Date(task.endDate)) + 1;
   const barWidth = taskDuration * pixelsPerDay;
   const barLeft = taskStart * pixelsPerDay;
 
-  const dragRef = React.useRef<{ startX: number; origLeft: number } | null>(null);
+  const dragRef = React.useRef<{ startX: number; origLeft: number } | null>(
+    null,
+  );
   const barRef = React.useRef<HTMLDivElement>(null);
 
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -179,7 +203,11 @@ function TaskRow({ task, minDate, zoom, hasDependency, onTaskClick, onTaskDrag }
         const end = new Date(task.endDate);
         s.setDate(s.getDate() + dayShift);
         end.setDate(end.getDate() + dayShift);
-        onTaskDrag(task.id, s.toISOString().split("T")[0], end.toISOString().split("T")[0]);
+        onTaskDrag(
+          task.id,
+          s.toISOString().split("T")[0],
+          end.toISOString().split("T")[0],
+        );
       }
       dragRef.current = null;
       document.removeEventListener("mousemove", onMove);
@@ -192,22 +220,37 @@ function TaskRow({ task, minDate, zoom, hasDependency, onTaskClick, onTaskDrag }
   return (
     <div className="flex border-b hover:bg-muted/30 transition-colors">
       <div className="w-48 border-r p-3 text-sm font-medium truncate flex items-center gap-2">
-        {hasDependency && <ChevronDown className="size-3 text-muted-foreground shrink-0" />}
+        {hasDependency && (
+          <ChevronDown className="size-3 text-muted-foreground shrink-0" />
+        )}
         <span className="truncate">{task.title}</span>
       </div>
       <div className="flex-1 relative overflow-x-auto h-16 flex items-center">
-        {task.dependsOn && <div className="absolute left-0 top-1 text-xs text-amber-600 ml-2">→</div>}
+        {task.dependsOn && (
+          <div className="absolute left-0 top-1 text-xs text-amber-600 ml-2">
+            →
+          </div>
+        )}
         <div
           ref={barRef}
           style={{ left: barLeft, width: barWidth, minWidth: "2px" }}
-          className={cn("absolute h-8 rounded cursor-grab active:cursor-grabbing transition-shadow hover:shadow-lg select-none opacity-80 hover:opacity-100", task.color || "bg-blue-500")}
+          className={cn(
+            "absolute h-8 rounded cursor-grab active:cursor-grabbing transition-shadow hover:shadow-lg select-none opacity-80 hover:opacity-100",
+            task.color || "bg-blue-500",
+          )}
           onMouseDown={handleMouseDown}
           onClick={() => onTaskClick?.(task.id)}
-          role="button" tabIndex={0}
+          role="button"
+          tabIndex={0}
         >
-          <div className="h-full rounded bg-black/20 transition-all" style={{ width: `${task.progress}%` }} />
+          <div
+            className="h-full rounded bg-black/20 transition-all"
+            style={{ width: `${task.progress}%` }}
+          />
           {barWidth > 80 && (
-            <div className="absolute inset-0 flex items-center px-2 text-[10px] font-bold text-white truncate">{task.progress}%</div>
+            <div className="absolute inset-0 flex items-center px-2 text-[10px] font-bold text-white truncate">
+              {task.progress}%
+            </div>
           )}
         </div>
       </div>
@@ -217,22 +260,37 @@ function TaskRow({ task, minDate, zoom, hasDependency, onTaskClick, onTaskDrag }
 
 // ── Main Component ────────────────────────────────────────────────────────────
 
-export function GanttChart({ tasks: initialTasks = SAMPLE_TASKS, onTaskClick }: GanttChartProps) {
+export function GanttChart({
+  tasks: initialTasks = SAMPLE_TASKS,
+  onTaskClick,
+}: GanttChartProps) {
   const [zoom, setZoom] = useState<ZoomLevel>("week");
-  const [tasks, setTasks] = useState(initialTasks.length > 0 ? initialTasks : SAMPLE_TASKS);
+  const [tasks, setTasks] = useState(
+    initialTasks.length > 0 ? initialTasks : SAMPLE_TASKS,
+  );
   const { minDate, maxDate } = useMemo(() => getDateRange(tasks), [tasks]);
 
-  const handleTaskDrag = useCallback((id: string, newStart: string, newEnd: string) => {
-    setTasks((prev) => prev.map((t) => t.id === id ? { ...t, startDate: newStart, endDate: newEnd } : t));
-  }, []);
+  const handleTaskDrag = useCallback(
+    (id: string, newStart: string, newEnd: string) => {
+      setTasks((prev) =>
+        prev.map((t) =>
+          t.id === id ? { ...t, startDate: newStart, endDate: newEnd } : t,
+        ),
+      );
+    },
+    [],
+  );
 
   const dependencyMap = useMemo(() => {
-    return tasks.reduce((acc, task) => {
-      if (task.dependsOn) {
-        acc[task.dependsOn] = (acc[task.dependsOn] || 0) + 1;
-      }
-      return acc;
-    }, {} as Record<string, number>);
+    return tasks.reduce(
+      (acc, task) => {
+        if (task.dependsOn) {
+          acc[task.dependsOn] = (acc[task.dependsOn] || 0) + 1;
+        }
+        return acc;
+      },
+      {} as Record<string, number>,
+    );
   }, [tasks]);
 
   return (
@@ -255,7 +313,11 @@ export function GanttChart({ tasks: initialTasks = SAMPLE_TASKS, onTaskClick }: 
           <Button
             variant="outline"
             size="icon-sm"
-            onClick={() => setZoom((z) => (z === "day" ? "week" : z === "week" ? "month" : "day"))}
+            onClick={() =>
+              setZoom((z) =>
+                z === "day" ? "week" : z === "week" ? "month" : "day",
+              )
+            }
             title="Zoom in"
           >
             <ZoomIn className="size-4" />
@@ -263,7 +325,11 @@ export function GanttChart({ tasks: initialTasks = SAMPLE_TASKS, onTaskClick }: 
           <Button
             variant="outline"
             size="icon-sm"
-            onClick={() => setZoom((z) => (z === "month" ? "week" : z === "week" ? "day" : "month"))}
+            onClick={() =>
+              setZoom((z) =>
+                z === "month" ? "week" : z === "week" ? "day" : "month",
+              )
+            }
             title="Zoom out"
           >
             <ZoomOut className="size-4" />

@@ -3,7 +3,15 @@
 // IDEA-053: Competitor monitoring — add competitor accounts, track their post frequency/engagement
 
 import { useState } from "react";
-import { Plus, Trash2, BarChart2, RefreshCw, Users, TrendingUp, MessageSquare } from "lucide-react";
+import {
+  Plus,
+  Trash2,
+  BarChart2,
+  RefreshCw,
+  Users,
+  TrendingUp,
+  MessageSquare,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -50,13 +58,38 @@ const PLATFORM_COLORS: Record<string, string> = {
 };
 
 const DEMO_COMPETITORS: Competitor[] = [
-  { id: "c1", handle: "@rivaltech", platform: "twitter", followers: 12400, postsPerWeek: 14, avgEngagement: 2.8, lastUpdated: "2026-03-27" },
-  { id: "c2", handle: "AlterSuite", platform: "linkedin", followers: 8900, postsPerWeek: 5, avgEngagement: 4.1, lastUpdated: "2026-03-27" },
-  { id: "c3", handle: "opensuiteco", platform: "instagram", followers: 5200, postsPerWeek: 9, avgEngagement: 6.3, lastUpdated: "2026-03-26" },
+  {
+    id: "c1",
+    handle: "@rivaltech",
+    platform: "twitter",
+    followers: 12400,
+    postsPerWeek: 14,
+    avgEngagement: 2.8,
+    lastUpdated: "2026-03-27",
+  },
+  {
+    id: "c2",
+    handle: "AlterSuite",
+    platform: "linkedin",
+    followers: 8900,
+    postsPerWeek: 5,
+    avgEngagement: 4.1,
+    lastUpdated: "2026-03-27",
+  },
+  {
+    id: "c3",
+    handle: "opensuiteco",
+    platform: "instagram",
+    followers: 5200,
+    postsPerWeek: 9,
+    avgEngagement: 6.3,
+    lastUpdated: "2026-03-26",
+  },
 ];
 
 export function CompetitorMonitor() {
-  const [competitors, setCompetitors] = useState<Competitor[]>(DEMO_COMPETITORS);
+  const [competitors, setCompetitors] =
+    useState<Competitor[]>(DEMO_COMPETITORS);
   const [handle, setHandle] = useState("");
   const [platform, setPlatform] = useState("twitter");
   const [refreshingId, setRefreshingId] = useState<string | null>(null);
@@ -85,21 +118,30 @@ export function CompetitorMonitor() {
   const handleRefresh = async (id: string) => {
     setRefreshingId(id);
     try {
-      const res = await fetch(`${getServiceUrl(ServiceName.SOCIAL)}/social/competitors/${id}/refresh`, {
-        method: "POST",
-      });
+      const res = await fetch(
+        `${getServiceUrl(ServiceName.SOCIAL)}/social/competitors/${id}/refresh`,
+        {
+          method: "POST",
+        },
+      );
       if (!res.ok) throw new Error();
       const updated = await res.json();
-      setCompetitors((prev) => prev.map((c) => (c.id === id ? { ...c, ...updated } : c)));
+      setCompetitors((prev) =>
+        prev.map((c) => (c.id === id ? { ...c, ...updated } : c)),
+      );
       toast.success("Statistiques actualisées");
     } catch {
       // Update with simulated fresh data
       setCompetitors((prev) =>
         prev.map((c) =>
           c.id === id
-            ? { ...c, lastUpdated: new Date().toISOString().slice(0, 10), followers: c.followers + Math.floor(Math.random() * 100) }
-            : c
-        )
+            ? {
+                ...c,
+                lastUpdated: new Date().toISOString().slice(0, 10),
+                followers: c.followers + Math.floor(Math.random() * 100),
+              }
+            : c,
+        ),
       );
       toast.info("Actualisé localement (API indisponible)");
     } finally {
@@ -143,7 +185,11 @@ export function CompetitorMonitor() {
                 </SelectTrigger>
                 <SelectContent>
                   {PLATFORMS.map((p) => (
-                    <SelectItem key={p} value={p} className="text-xs capitalize">
+                    <SelectItem
+                      key={p}
+                      value={p}
+                      className="text-xs capitalize"
+                    >
                       {p}
                     </SelectItem>
                   ))}
@@ -151,7 +197,12 @@ export function CompetitorMonitor() {
               </Select>
             </div>
             <div className="flex items-end">
-              <Button size="sm" onClick={handleAdd} disabled={!handle.trim()} className="h-8">
+              <Button
+                size="sm"
+                onClick={handleAdd}
+                disabled={!handle.trim()}
+                className="h-8"
+              >
                 <Plus className="w-3 h-3" />
               </Button>
             </div>
@@ -164,12 +215,19 @@ export function CompetitorMonitor() {
           ) : (
             <div className="space-y-2">
               {competitors.map((c) => (
-                <div key={c.id} className="flex items-center gap-2 p-2 rounded-md border bg-muted/20 text-xs">
+                <div
+                  key={c.id}
+                  className="flex items-center gap-2 p-2 rounded-md border bg-muted/20 text-xs"
+                >
                   <span
                     className="w-2 h-2 rounded-full shrink-0"
-                    style={{ backgroundColor: PLATFORM_COLORS[c.platform] ?? "#888" }}
+                    style={{
+                      backgroundColor: PLATFORM_COLORS[c.platform] ?? "#888",
+                    }}
                   />
-                  <span className="font-medium flex-1 truncate">{c.handle}</span>
+                  <span className="font-medium flex-1 truncate">
+                    {c.handle}
+                  </span>
                   <div className="flex items-center gap-3 text-muted-foreground">
                     <span className="flex items-center gap-1">
                       <Users className="w-3 h-3" />
@@ -184,7 +242,12 @@ export function CompetitorMonitor() {
                       {c.avgEngagement}%
                     </span>
                   </div>
-                  <Badge variant="outline" className="text-[10px] capitalize px-1">{c.platform}</Badge>
+                  <Badge
+                    variant="outline"
+                    className="text-[10px] capitalize px-1"
+                  >
+                    {c.platform}
+                  </Badge>
                   <Button
                     variant="ghost"
                     size="icon"
@@ -193,7 +256,9 @@ export function CompetitorMonitor() {
                     disabled={refreshingId === c.id}
                     title="Refresh stats"
                   >
-                    <RefreshCw className={`w-3 h-3 ${refreshingId === c.id ? "animate-spin" : ""}`} />
+                    <RefreshCw
+                      className={`w-3 h-3 ${refreshingId === c.id ? "animate-spin" : ""}`}
+                    />
                   </Button>
                   <Button
                     variant="ghost"
@@ -219,14 +284,25 @@ export function CompetitorMonitor() {
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={160}>
-              <BarChart data={chartData} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
+              <BarChart
+                data={chartData}
+                margin={{ top: 5, right: 5, left: 0, bottom: 5 }}
+              >
                 <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
                 <XAxis dataKey="name" tick={{ fontSize: 9 }} />
                 <YAxis tick={{ fontSize: 9 }} width={28} />
                 <Tooltip contentStyle={{ fontSize: "10px" }} />
                 <Legend wrapperStyle={{ fontSize: "10px" }} />
-                <Bar dataKey="Posts/week" fill="#6366f1" radius={[3, 3, 0, 0]} />
-                <Bar dataKey="Engagement%" fill="#22c55e" radius={[3, 3, 0, 0]} />
+                <Bar
+                  dataKey="Posts/week"
+                  fill="#6366f1"
+                  radius={[3, 3, 0, 0]}
+                />
+                <Bar
+                  dataKey="Engagement%"
+                  fill="#22c55e"
+                  radius={[3, 3, 0, 0]}
+                />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>

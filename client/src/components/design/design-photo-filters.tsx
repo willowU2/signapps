@@ -12,10 +12,14 @@ interface DesignPhotoFiltersProps {
   fabricCanvasRef: React.MutableRefObject<any | null>;
 }
 
-export default function DesignPhotoFilters({ fabricCanvasRef }: DesignPhotoFiltersProps) {
+export default function DesignPhotoFilters({
+  fabricCanvasRef,
+}: DesignPhotoFiltersProps) {
   const { selectedObjectIds } = useDesignStore();
   const [activePreset, setActivePreset] = useState<string>("original");
-  const [manualFilters, setManualFilters] = useState<PhotoFilter>(PHOTO_FILTER_PRESETS[0]);
+  const [manualFilters, setManualFilters] = useState<PhotoFilter>(
+    PHOTO_FILTER_PRESETS[0],
+  );
 
   const applyFilter = async (filter: PhotoFilter) => {
     const canvas = fabricCanvasRef.current;
@@ -31,16 +35,30 @@ export default function DesignPhotoFilters({ fabricCanvasRef }: DesignPhotoFilte
 
     // Apply filters using fabric.js built-in filters
     if (filter.brightness !== 100) {
-      obj.filters.push(new fabricModule.filters.Brightness({ brightness: (filter.brightness - 100) / 100 }));
+      obj.filters.push(
+        new fabricModule.filters.Brightness({
+          brightness: (filter.brightness - 100) / 100,
+        }),
+      );
     }
     if (filter.contrast !== 100) {
-      obj.filters.push(new fabricModule.filters.Contrast({ contrast: (filter.contrast - 100) / 100 }));
+      obj.filters.push(
+        new fabricModule.filters.Contrast({
+          contrast: (filter.contrast - 100) / 100,
+        }),
+      );
     }
     if (filter.saturation !== 100) {
-      obj.filters.push(new fabricModule.filters.Saturation({ saturation: (filter.saturation - 100) / 100 }));
+      obj.filters.push(
+        new fabricModule.filters.Saturation({
+          saturation: (filter.saturation - 100) / 100,
+        }),
+      );
     }
     if (filter.blur > 0) {
-      obj.filters.push(new fabricModule.filters.Blur({ blur: filter.blur / 100 }));
+      obj.filters.push(
+        new fabricModule.filters.Blur({ blur: filter.blur / 100 }),
+      );
     }
     if (filter.grayscale > 0) {
       obj.filters.push(new fabricModule.filters.Grayscale());
@@ -49,7 +67,11 @@ export default function DesignPhotoFilters({ fabricCanvasRef }: DesignPhotoFilte
       obj.filters.push(new fabricModule.filters.Sepia());
     }
     if (filter.hueRotate !== 0) {
-      obj.filters.push(new fabricModule.filters.HueRotation({ rotation: filter.hueRotate / 360 }));
+      obj.filters.push(
+        new fabricModule.filters.HueRotation({
+          rotation: filter.hueRotate / 360,
+        }),
+      );
     }
 
     obj.applyFilters();
@@ -81,7 +103,9 @@ export default function DesignPhotoFilters({ fabricCanvasRef }: DesignPhotoFilte
     <div className="space-y-4">
       {/* Presets */}
       <div className="space-y-2">
-        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Presets</p>
+        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+          Presets
+        </p>
         <div className="grid grid-cols-4 gap-1.5">
           {PHOTO_FILTER_PRESETS.map((preset) => (
             <button
@@ -91,7 +115,7 @@ export default function DesignPhotoFilters({ fabricCanvasRef }: DesignPhotoFilte
                 "flex flex-col items-center gap-1 rounded-lg border p-2 transition-all",
                 activePreset === preset.id
                   ? "border-primary bg-primary/5"
-                  : "border-border hover:border-muted-foreground/30"
+                  : "border-border hover:border-muted-foreground/30",
               )}
             >
               <div
@@ -100,7 +124,9 @@ export default function DesignPhotoFilters({ fabricCanvasRef }: DesignPhotoFilte
                   filter: `brightness(${preset.brightness}%) contrast(${preset.contrast}%) saturate(${preset.saturation}%) blur(${preset.blur / 10}px) sepia(${preset.sepia}%) grayscale(${preset.grayscale}%) hue-rotate(${preset.hueRotate}deg)`,
                 }}
               />
-              <span className="text-[10px] font-medium truncate w-full text-center">{preset.name}</span>
+              <span className="text-[10px] font-medium truncate w-full text-center">
+                {preset.name}
+              </span>
             </button>
           ))}
         </div>
@@ -110,7 +136,9 @@ export default function DesignPhotoFilters({ fabricCanvasRef }: DesignPhotoFilte
 
       {/* Manual controls */}
       <div className="space-y-3">
-        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Manual</p>
+        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+          Manual
+        </p>
 
         <SliderControl
           label="Brightness"
@@ -183,9 +211,17 @@ function SliderControl({
     <div className="space-y-1">
       <div className="flex items-center justify-between">
         <Label className="text-[10px] text-muted-foreground">{label}</Label>
-        <span className="text-[10px] tabular-nums text-muted-foreground">{value}</span>
+        <span className="text-[10px] tabular-nums text-muted-foreground">
+          {value}
+        </span>
       </div>
-      <Slider value={[value]} min={min} max={max} step={1} onValueChange={([v]) => onChange(v)} />
+      <Slider
+        value={[value]}
+        min={min}
+        max={max}
+        step={1}
+        onValueChange={([v]) => onChange(v)}
+      />
     </div>
   );
 }

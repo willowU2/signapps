@@ -1,17 +1,23 @@
-'use client';
+"use client";
 
-import { SpinnerInfinity } from 'spinners-react';
+import { SpinnerInfinity } from "spinners-react";
 
-import { useEffect, useState, useCallback, useMemo } from 'react';
-import { AppLayout } from '@/components/layout/app-layout';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Skeleton } from '@/components/ui/skeleton';
-import { CardGridSkeleton } from '@/components/ui/skeleton-loader';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useEffect, useState, useCallback, useMemo } from "react";
+import { AppLayout } from "@/components/layout/app-layout";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Skeleton } from "@/components/ui/skeleton";
+import { CardGridSkeleton } from "@/components/ui/skeleton-loader";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table,
   TableBody,
@@ -19,7 +25,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
+} from "@/components/ui/table";
 import {
   Dialog,
   DialogContent,
@@ -27,14 +33,14 @@ import {
   DialogTitle,
   DialogFooter,
   DialogDescription,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from "@/components/ui/dropdown-menu";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -44,15 +50,37 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+} from "@/components/ui/alert-dialog";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Plus, Wifi, WifiOff, Shield, MoreVertical, Trash2, CheckCircle, RefreshCw, Copy, Globe, Radio, Activity, ArrowDownUp, ExternalLink, Pencil, PlugZap, ShieldCheck, Ban, CircleDot, X, Gauge } from 'lucide-react';
+} from "@/components/ui/select";
+import {
+  Plus,
+  Wifi,
+  WifiOff,
+  Shield,
+  MoreVertical,
+  Trash2,
+  CheckCircle,
+  RefreshCw,
+  Copy,
+  Globe,
+  Radio,
+  Activity,
+  ArrowDownUp,
+  ExternalLink,
+  Pencil,
+  PlugZap,
+  ShieldCheck,
+  Ban,
+  CircleDot,
+  X,
+  Gauge,
+} from "lucide-react";
 import {
   tunnelApi,
   Tunnel,
@@ -63,20 +91,20 @@ import {
   CustomDnsRecord,
   TunnelDashboardStats,
   TrafficDataPoint,
-} from '@/lib/api';
-import { toast } from 'sonner';
-import { Switch } from '@/components/ui/switch';
-import { VpnDashboardTab } from '@/components/vpn/vpn-dashboard-tab';
-import { VpnDnsTab } from '@/components/vpn/vpn-dns-tab';
-import { usePageTitle } from '@/hooks/use-page-title';
+} from "@/lib/api";
+import { toast } from "sonner";
+import { Switch } from "@/components/ui/switch";
+import { VpnDashboardTab } from "@/components/vpn/vpn-dashboard-tab";
+import { VpnDnsTab } from "@/components/vpn/vpn-dns-tab";
+import { usePageTitle } from "@/hooks/use-page-title";
 
 // Utility function to format bytes
 function formatBytes(bytes: number): string {
-  if (bytes === 0) return '0 B';
+  if (bytes === 0) return "0 B";
   const k = 1024;
-  const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+  const sizes = ["B", "KB", "MB", "GB", "TB"];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
 }
 
 // Utility function to format number with comma separators
@@ -85,9 +113,10 @@ function formatNumber(num: number): string {
 }
 
 export default function VpnPage() {
-  usePageTitle('VPN');
+  usePageTitle("VPN");
   // Dashboard state
-  const [dashboardStats, setDashboardStats] = useState<TunnelDashboardStats | null>(null);
+  const [dashboardStats, setDashboardStats] =
+    useState<TunnelDashboardStats | null>(null);
   const [trafficData, setTrafficData] = useState<TrafficDataPoint[]>([]);
 
   // Tunnels state
@@ -95,10 +124,10 @@ export default function VpnPage() {
   const [tunnelDialogOpen, setTunnelDialogOpen] = useState(false);
   const [editingTunnel, setEditingTunnel] = useState<Tunnel | null>(null);
   const [tunnelForm, setTunnelForm] = useState({
-    name: '',
-    local_addr: 'localhost:',
-    subdomain: '',
-    relay_id: '',
+    name: "",
+    local_addr: "localhost:",
+    subdomain: "",
+    relay_id: "",
   });
 
   // Relays state
@@ -106,9 +135,9 @@ export default function VpnPage() {
   const [relayDialogOpen, setRelayDialogOpen] = useState(false);
   const [editingRelay, setEditingRelay] = useState<Relay | null>(null);
   const [relayForm, setRelayForm] = useState({
-    name: '',
-    url: 'wss://',
-    token: '',
+    name: "",
+    url: "wss://",
+    token: "",
     is_primary: false,
   });
 
@@ -116,29 +145,30 @@ export default function VpnPage() {
   const [dnsConfig, setDnsConfig] = useState<DnsConfig | null>(null);
   const [dnsStats, setDnsStats] = useState<DnsStats | null>(null);
   const [blocklistDialogOpen, setBlocklistDialogOpen] = useState(false);
-  const [blocklistForm, setBlocklistForm] = useState({ name: '', url: '' });
+  const [blocklistForm, setBlocklistForm] = useState({ name: "", url: "" });
   const [dnsRecordDialogOpen, setDnsRecordDialogOpen] = useState(false);
-  const [editingDnsRecord, setEditingDnsRecord] = useState<CustomDnsRecord | null>(null);
+  const [editingDnsRecord, setEditingDnsRecord] =
+    useState<CustomDnsRecord | null>(null);
   const [dnsRecordForm, setDnsRecordForm] = useState<CustomDnsRecord>({
-    type: 'A',
-    name: '',
-    value: '',
+    type: "A",
+    name: "",
+    value: "",
     ttl: 3600,
   });
-  const [upstreamInput, setUpstreamInput] = useState('');
+  const [upstreamInput, setUpstreamInput] = useState("");
 
   // General state
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeTab, setActiveTab] = useState("dashboard");
   const [quickConnecting, setQuickConnecting] = useState(false);
-  const [quickConnectAddr, setQuickConnectAddr] = useState('localhost:3000');
+  const [quickConnectAddr, setQuickConnectAddr] = useState("localhost:3000");
   const [quickTunnel, setQuickTunnel] = useState<Tunnel | null>(null);
   const [deleteDialog, setDeleteDialog] = useState<{
     open: boolean;
-    type: 'tunnel' | 'relay' | 'blocklist' | 'dns-record';
+    type: "tunnel" | "relay" | "blocklist" | "dns-record";
     item: Tunnel | Relay | Blocklist | CustomDnsRecord | null;
-  }>({ open: false, type: 'tunnel', item: null });
+  }>({ open: false, type: "tunnel", item: null });
 
   // Fetch all data
   const fetchData = useCallback(async () => {
@@ -153,31 +183,35 @@ export default function VpnPage() {
         dnsStatsRes,
       ] = await Promise.allSettled([
         tunnelApi.getDashboardStats(),
-        tunnelApi.getTrafficHistory('24h'),
+        tunnelApi.getTrafficHistory("24h"),
         tunnelApi.listTunnels(),
         tunnelApi.listRelays(),
         tunnelApi.getDnsConfig(),
         tunnelApi.getDnsStats(),
       ]);
 
-      if (dashboardRes.status === 'fulfilled') {
+      if (dashboardRes.status === "fulfilled") {
         setDashboardStats(dashboardRes.value.data);
       }
-      if (trafficRes.status === 'fulfilled') {
+      if (trafficRes.status === "fulfilled") {
         setTrafficData(trafficRes.value.data || []);
       }
-      if (tunnelsRes.status === 'fulfilled') {
+      if (tunnelsRes.status === "fulfilled") {
         const tunnelData = tunnelsRes.value.data;
-        setTunnels(Array.isArray(tunnelData) ? tunnelData : tunnelData?.tunnels || []);
+        setTunnels(
+          Array.isArray(tunnelData) ? tunnelData : tunnelData?.tunnels || [],
+        );
       }
-      if (relaysRes.status === 'fulfilled') {
+      if (relaysRes.status === "fulfilled") {
         const relayData = relaysRes.value.data;
-        setRelays(Array.isArray(relayData) ? relayData : relayData?.relays || []);
+        setRelays(
+          Array.isArray(relayData) ? relayData : relayData?.relays || [],
+        );
       }
-      if (dnsConfigRes.status === 'fulfilled') {
+      if (dnsConfigRes.status === "fulfilled") {
         setDnsConfig(dnsConfigRes.value.data);
       }
-      if (dnsStatsRes.status === 'fulfilled') {
+      if (dnsStatsRes.status === "fulfilled") {
         setDnsStats(dnsStatsRes.value.data);
       }
     } catch {
@@ -192,7 +226,10 @@ export default function VpnPage() {
   }, [fetchData]);
 
   // Primary relay for selection
-  const primaryRelay = useMemo(() => relays.find(r => r.is_primary), [relays]);
+  const primaryRelay = useMemo(
+    () => relays.find((r) => r.is_primary),
+    [relays],
+  );
 
   // Tunnel handlers
   const handleOpenTunnelDialog = (tunnel?: Tunnel) => {
@@ -207,18 +244,22 @@ export default function VpnPage() {
     } else {
       setEditingTunnel(null);
       setTunnelForm({
-        name: '',
-        local_addr: 'localhost:',
-        subdomain: '',
-        relay_id: primaryRelay?.id || '',
+        name: "",
+        local_addr: "localhost:",
+        subdomain: "",
+        relay_id: primaryRelay?.id || "",
       });
     }
     setTunnelDialogOpen(true);
   };
 
   const handleSaveTunnel = async () => {
-    if (!tunnelForm.name.trim() || !tunnelForm.local_addr.trim() || !tunnelForm.subdomain.trim()) {
-      toast.error('Please fill all required fields');
+    if (
+      !tunnelForm.name.trim() ||
+      !tunnelForm.local_addr.trim() ||
+      !tunnelForm.subdomain.trim()
+    ) {
+      toast.error("Please fill all required fields");
       return;
     }
 
@@ -226,15 +267,15 @@ export default function VpnPage() {
     try {
       if (editingTunnel) {
         await tunnelApi.updateTunnel(editingTunnel.id, tunnelForm);
-        toast.success('Tunnel updated');
+        toast.success("Tunnel updated");
       } else {
         await tunnelApi.createTunnel(tunnelForm);
-        toast.success('Tunnel created');
+        toast.success("Tunnel created");
       }
       setTunnelDialogOpen(false);
       fetchData();
     } catch {
-      toast.error('Impossible d\'enregistrer le tunnel');
+      toast.error("Impossible d'enregistrer le tunnel");
     } finally {
       setSubmitting(false);
     }
@@ -243,16 +284,16 @@ export default function VpnPage() {
   const handleReconnectTunnel = async (tunnel: Tunnel) => {
     try {
       await tunnelApi.reconnectTunnel(tunnel.id);
-      toast.success('Reconnexion du tunnel en cours...');
+      toast.success("Reconnexion du tunnel en cours...");
       setTimeout(fetchData, 2000);
     } catch {
-      toast.error('Impossible de reconnecter le tunnel');
+      toast.error("Impossible de reconnecter le tunnel");
     }
   };
 
   const copyPublicUrl = (url: string) => {
     navigator.clipboard.writeText(url);
-    toast.success('URL copied to clipboard');
+    toast.success("URL copied to clipboard");
   };
 
   // Relay handlers
@@ -262,15 +303,15 @@ export default function VpnPage() {
       setRelayForm({
         name: relay.name,
         url: relay.url,
-        token: '',
+        token: "",
         is_primary: relay.is_primary,
       });
     } else {
       setEditingRelay(null);
       setRelayForm({
-        name: '',
-        url: 'wss://',
-        token: '',
+        name: "",
+        url: "wss://",
+        token: "",
         is_primary: relays.length === 0,
       });
     }
@@ -279,7 +320,7 @@ export default function VpnPage() {
 
   const handleSaveRelay = async () => {
     if (!relayForm.name.trim() || !relayForm.url.trim()) {
-      toast.error('Please fill all required fields');
+      toast.error("Please fill all required fields");
       return;
     }
 
@@ -287,10 +328,10 @@ export default function VpnPage() {
     try {
       if (editingRelay) {
         await tunnelApi.updateRelay(editingRelay.id, relayForm);
-        toast.success('Relay updated');
+        toast.success("Relay updated");
       } else {
         await tunnelApi.addRelay(relayForm);
-        toast.success('Relay added');
+        toast.success("Relay added");
       }
       setRelayDialogOpen(false);
       fetchData();
@@ -310,17 +351,17 @@ export default function VpnPage() {
         toast.error(`Relay test failed: ${result.data.error}`);
       }
     } catch {
-      toast.error('Failed to test relay');
+      toast.error("Failed to test relay");
     }
   };
 
   const handleSetPrimaryRelay = async (relay: Relay) => {
     try {
       await tunnelApi.setPrimaryRelay(relay.id);
-      toast.success('Primary relay updated');
+      toast.success("Primary relay updated");
       fetchData();
     } catch {
-      toast.error('Failed to set primary relay');
+      toast.error("Failed to set primary relay");
     }
   };
 
@@ -328,20 +369,22 @@ export default function VpnPage() {
   const handleToggleDns = async (enabled: boolean) => {
     try {
       await tunnelApi.updateDnsConfig({ enabled });
-      setDnsConfig(prev => prev ? { ...prev, enabled } : null);
-      toast.success(enabled ? 'DNS enabled' : 'DNS disabled');
+      setDnsConfig((prev) => (prev ? { ...prev, enabled } : null));
+      toast.success(enabled ? "DNS enabled" : "DNS disabled");
     } catch {
-      toast.error('Impossible de mettre à jour DNS settings');
+      toast.error("Impossible de mettre à jour DNS settings");
     }
   };
 
   const handleToggleAdblock = async (enabled: boolean) => {
     try {
       await tunnelApi.updateDnsConfig({ adblock_enabled: enabled });
-      setDnsConfig(prev => prev ? { ...prev, adblock_enabled: enabled } : null);
-      toast.success(enabled ? 'Ad blocking enabled' : 'Ad blocking disabled');
+      setDnsConfig((prev) =>
+        prev ? { ...prev, adblock_enabled: enabled } : null,
+      );
+      toast.success(enabled ? "Ad blocking enabled" : "Ad blocking disabled");
     } catch {
-      toast.error('Impossible de mettre à jour ad blocking settings');
+      toast.error("Impossible de mettre à jour ad blocking settings");
     }
   };
 
@@ -350,40 +393,44 @@ export default function VpnPage() {
     const newUpstream = [...(dnsConfig?.upstream || []), upstreamInput.trim()];
     try {
       await tunnelApi.updateDnsConfig({ upstream: newUpstream });
-      setDnsConfig(prev => prev ? { ...prev, upstream: newUpstream } : null);
-      setUpstreamInput('');
-      toast.success('Upstream DNS added');
+      setDnsConfig((prev) =>
+        prev ? { ...prev, upstream: newUpstream } : null,
+      );
+      setUpstreamInput("");
+      toast.success("Upstream DNS added");
     } catch {
-      toast.error('Failed to add upstream DNS');
+      toast.error("Failed to add upstream DNS");
     }
   };
 
   const handleRemoveUpstream = async (dns: string) => {
-    const newUpstream = (dnsConfig?.upstream || []).filter(u => u !== dns);
+    const newUpstream = (dnsConfig?.upstream || []).filter((u) => u !== dns);
     try {
       await tunnelApi.updateDnsConfig({ upstream: newUpstream });
-      setDnsConfig(prev => prev ? { ...prev, upstream: newUpstream } : null);
-      toast.success('Upstream DNS removed');
+      setDnsConfig((prev) =>
+        prev ? { ...prev, upstream: newUpstream } : null,
+      );
+      toast.success("Upstream DNS removed");
     } catch {
-      toast.error('Failed to remove upstream DNS');
+      toast.error("Failed to remove upstream DNS");
     }
   };
 
   const handleAddBlocklist = async () => {
     if (!blocklistForm.name.trim() || !blocklistForm.url.trim()) {
-      toast.error('Please fill all required fields');
+      toast.error("Please fill all required fields");
       return;
     }
 
     setSubmitting(true);
     try {
       await tunnelApi.addBlocklist({ ...blocklistForm, enabled: true });
-      toast.success('Blocklist added');
+      toast.success("Blocklist added");
       setBlocklistDialogOpen(false);
-      setBlocklistForm({ name: '', url: '' });
+      setBlocklistForm({ name: "", url: "" });
       fetchData();
     } catch {
-      toast.error('Failed to add blocklist');
+      toast.error("Failed to add blocklist");
     } finally {
       setSubmitting(false);
     }
@@ -392,18 +439,20 @@ export default function VpnPage() {
   const handleToggleBlocklist = async (blocklist: Blocklist) => {
     try {
       await tunnelApi.toggleBlocklist(blocklist.id, !blocklist.enabled);
-      setDnsConfig(prev => {
+      setDnsConfig((prev) => {
         if (!prev) return null;
         return {
           ...prev,
-          blocklists: prev.blocklists.map(b =>
-            b.id === blocklist.id ? { ...b, enabled: !b.enabled } : b
+          blocklists: prev.blocklists.map((b) =>
+            b.id === blocklist.id ? { ...b, enabled: !b.enabled } : b,
           ),
         };
       });
-      toast.success(blocklist.enabled ? 'Blocklist disabled' : 'Blocklist enabled');
+      toast.success(
+        blocklist.enabled ? "Blocklist disabled" : "Blocklist enabled",
+      );
     } catch {
-      toast.error('Failed to toggle blocklist');
+      toast.error("Failed to toggle blocklist");
     }
   };
 
@@ -413,14 +462,14 @@ export default function VpnPage() {
       setDnsRecordForm({ ...record });
     } else {
       setEditingDnsRecord(null);
-      setDnsRecordForm({ type: 'A', name: '', value: '', ttl: 3600 });
+      setDnsRecordForm({ type: "A", name: "", value: "", ttl: 3600 });
     }
     setDnsRecordDialogOpen(true);
   };
 
   const handleSaveDnsRecord = async () => {
     if (!dnsRecordForm.name.trim() || !dnsRecordForm.value.trim()) {
-      toast.error('Please fill all required fields');
+      toast.error("Please fill all required fields");
       return;
     }
 
@@ -428,10 +477,10 @@ export default function VpnPage() {
     try {
       if (editingDnsRecord?.id) {
         await tunnelApi.updateDnsRecord(editingDnsRecord.id, dnsRecordForm);
-        toast.success('DNS record updated');
+        toast.success("DNS record updated");
       } else {
         await tunnelApi.addDnsRecord(dnsRecordForm);
-        toast.success('DNS record added');
+        toast.success("DNS record added");
       }
       setDnsRecordDialogOpen(false);
       fetchData();
@@ -448,55 +497,69 @@ export default function VpnPage() {
 
     try {
       switch (deleteDialog.type) {
-        case 'tunnel':
+        case "tunnel":
           await tunnelApi.deleteTunnel((deleteDialog.item as Tunnel).id);
-          toast.success('Tunnel deleted');
+          toast.success("Tunnel deleted");
           break;
-        case 'relay':
+        case "relay":
           await tunnelApi.deleteRelay((deleteDialog.item as Relay).id);
-          toast.success('Relay deleted');
+          toast.success("Relay deleted");
           break;
-        case 'blocklist':
+        case "blocklist":
           await tunnelApi.removeBlocklist((deleteDialog.item as Blocklist).id);
-          toast.success('Blocklist removed');
+          toast.success("Blocklist removed");
           break;
-        case 'dns-record':
-          await tunnelApi.deleteDnsRecord((deleteDialog.item as CustomDnsRecord).id!);
-          toast.success('DNS record deleted');
+        case "dns-record":
+          await tunnelApi.deleteDnsRecord(
+            (deleteDialog.item as CustomDnsRecord).id!,
+          );
+          toast.success("DNS record deleted");
           break;
       }
-      setDeleteDialog({ open: false, type: 'tunnel', item: null });
+      setDeleteDialog({ open: false, type: "tunnel", item: null });
       fetchData();
     } catch {
-      toast.error('Impossible de supprimer');
+      toast.error("Impossible de supprimer");
     }
   };
 
   // Status badge helper
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'connected':
+      case "connected":
         return (
-          <Badge className="bg-green-500/10 text-green-600 border-green-600" variant="outline">
+          <Badge
+            className="bg-green-500/10 text-green-600 border-green-600"
+            variant="outline"
+          >
             <CircleDot className="mr-1 h-3 w-3" />
             Connecté
           </Badge>
         );
-      case 'connecting':
+      case "connecting":
         return (
-          <Badge className="bg-yellow-500/10 text-yellow-600 border-yellow-600" variant="outline">
-            <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-1 h-3 w-3 " />
+          <Badge
+            className="bg-yellow-500/10 text-yellow-600 border-yellow-600"
+            variant="outline"
+          >
+            <SpinnerInfinity
+              size={24}
+              secondaryColor="rgba(128,128,128,0.2)"
+              color="currentColor"
+              speed={120}
+              className="mr-1 h-3 w-3 "
+            />
             Connecting
           </Badge>
         );
-      case 'disconnected':
+      case "disconnected":
         return (
           <Badge variant="secondary">
             <WifiOff className="mr-1 h-3 w-3" />
             Déconnecté
           </Badge>
         );
-      case 'error':
+      case "error":
         return (
           <Badge variant="destructive">
             <Ban className="mr-1 h-3 w-3" />
@@ -511,12 +574,14 @@ export default function VpnPage() {
   const handleQuickConnect = async () => {
     setQuickConnecting(true);
     try {
-      const result = await tunnelApi.quickConnect({ local_addr: quickConnectAddr });
+      const result = await tunnelApi.quickConnect({
+        local_addr: quickConnectAddr,
+      });
       setQuickTunnel(result.data);
-      toast.success('Quick tunnel created!');
+      toast.success("Quick tunnel created!");
       fetchData();
     } catch {
-      toast.error('Quick connect failed. Make sure a relay is configured.');
+      toast.error("Quick connect failed. Make sure a relay is configured.");
     } finally {
       setQuickConnecting(false);
     }
@@ -527,10 +592,10 @@ export default function VpnPage() {
       try {
         await tunnelApi.deleteTunnel(quickTunnel.id);
         setQuickTunnel(null);
-        toast.success('Tunnel disconnected');
+        toast.success("Tunnel disconnected");
         fetchData();
       } catch {
-        toast.error('Failed to disconnect tunnel');
+        toast.error("Failed to disconnect tunnel");
       }
     }
   };
@@ -554,7 +619,8 @@ export default function VpnPage() {
           <div>
             <h1 className="text-3xl font-bold">Tunnels Web</h1>
             <p className="text-muted-foreground">
-              Exposez vos services locaux de manière sécurisée sans ouvrir de ports
+              Exposez vos services locaux de manière sécurisée sans ouvrir de
+              ports
             </p>
           </div>
           <div className="flex gap-2">
@@ -565,7 +631,11 @@ export default function VpnPage() {
           </div>
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+        <Tabs
+          value={activeTab}
+          onValueChange={setActiveTab}
+          className="space-y-4"
+        >
           <TabsList>
             <TabsTrigger value="dashboard">
               <Gauge className="mr-2 h-4 w-4" />
@@ -598,7 +668,7 @@ export default function VpnPage() {
               onQuickConnect={handleQuickConnect}
               onDisconnectQuick={handleDisconnectQuick}
               onCopyPublicUrl={copyPublicUrl}
-              onNavigateToTunnels={() => setActiveTab('tunnels')}
+              onNavigateToTunnels={() => setActiveTab("tunnels")}
               onOpenTunnelDialog={handleOpenTunnelDialog}
             />
           </TabsContent>
@@ -637,7 +707,7 @@ export default function VpnPage() {
                         <TableCell>
                           <div className="font-medium">{tunnel.name}</div>
                           <div className="text-xs text-muted-foreground">
-                            Relais : {tunnel.relay_name || 'Défaut'}
+                            Relais : {tunnel.relay_name || "Défaut"}
                           </div>
                         </TableCell>
                         <TableCell className="font-mono text-sm">
@@ -660,7 +730,9 @@ export default function VpnPage() {
                               variant="ghost"
                               size="icon"
                               className="h-6 w-6"
-                              onClick={() => window.open(tunnel.public_url, '_blank')}
+                              onClick={() =>
+                                window.open(tunnel.public_url, "_blank")
+                              }
                             >
                               <ExternalLink className="h-3 w-3" />
                             </Button>
@@ -681,18 +753,28 @@ export default function VpnPage() {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => handleOpenTunnelDialog(tunnel)}>
+                              <DropdownMenuItem
+                                onClick={() => handleOpenTunnelDialog(tunnel)}
+                              >
                                 <Pencil className="mr-2 h-4 w-4" />
                                 Modifier
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleReconnectTunnel(tunnel)}>
+                              <DropdownMenuItem
+                                onClick={() => handleReconnectTunnel(tunnel)}
+                              >
                                 <RefreshCw className="mr-2 h-4 w-4" />
                                 Reconnecter
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem
                                 className="text-destructive"
-                                onClick={() => setDeleteDialog({ open: true, type: 'tunnel', item: tunnel })}
+                                onClick={() =>
+                                  setDeleteDialog({
+                                    open: true,
+                                    type: "tunnel",
+                                    item: tunnel,
+                                  })
+                                }
                               >
                                 <Trash2 className="mr-2 h-4 w-4" />
                                 Supprimer
@@ -704,8 +786,12 @@ export default function VpnPage() {
                     ))}
                     {tunnels.length === 0 && (
                       <TableRow>
-                        <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                          Aucun tunnel configuré. Cliquez sur &quot;Nouveau tunnel&quot; pour en créer un.
+                        <TableCell
+                          colSpan={6}
+                          className="text-center py-8 text-muted-foreground"
+                        >
+                          Aucun tunnel configuré. Cliquez sur &quot;Nouveau
+                          tunnel&quot; pour en créer un.
                         </TableCell>
                       </TableRow>
                     )}
@@ -729,11 +815,15 @@ export default function VpnPage() {
               <CardContent className="flex items-start gap-4 p-4">
                 <Radio className="h-5 w-5 text-blue-500 mt-0.5" />
                 <div>
-                  <h4 className="font-medium">Qu&apos;est-ce qu&apos;un relais ?</h4>
+                  <h4 className="font-medium">
+                    Qu&apos;est-ce qu&apos;un relais ?
+                  </h4>
                   <p className="text-sm text-muted-foreground mt-1">
-                    Un relais est un serveur sur internet qui fait le pont entre vos services locaux
-                    et le monde extérieur. Il reçoit les connexions entrantes et les achemine via
-                    votre tunnel, sans nécessiter l&apos;ouverture de ports sur votre routeur ou pare-feu.
+                    Un relais est un serveur sur internet qui fait le pont entre
+                    vos services locaux et le monde extérieur. Il reçoit les
+                    connexions entrantes et les achemine via votre tunnel, sans
+                    nécessiter l&apos;ouverture de ports sur votre routeur ou
+                    pare-feu.
                   </p>
                 </div>
               </CardContent>
@@ -765,18 +855,24 @@ export default function VpnPage() {
                           <div className="flex items-center gap-2">
                             <span className="font-medium">{relay.name}</span>
                             {relay.is_primary && (
-                              <Badge variant="outline" className="text-xs">Primary</Badge>
+                              <Badge variant="outline" className="text-xs">
+                                Primary
+                              </Badge>
                             )}
                           </div>
                           {relay.region && (
-                            <div className="text-xs text-muted-foreground">{relay.region}</div>
+                            <div className="text-xs text-muted-foreground">
+                              {relay.region}
+                            </div>
                           )}
                         </TableCell>
-                        <TableCell className="font-mono text-sm">{relay.url}</TableCell>
+                        <TableCell className="font-mono text-sm">
+                          {relay.url}
+                        </TableCell>
                         <TableCell>{getStatusBadge(relay.status)}</TableCell>
                         <TableCell>{relay.tunnels_count}</TableCell>
                         <TableCell className="text-muted-foreground">
-                          {relay.latency_ms ? `${relay.latency_ms}ms` : '-'}
+                          {relay.latency_ms ? `${relay.latency_ms}ms` : "-"}
                         </TableCell>
                         <TableCell>
                           <DropdownMenu>
@@ -786,16 +882,22 @@ export default function VpnPage() {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => handleOpenRelayDialog(relay)}>
+                              <DropdownMenuItem
+                                onClick={() => handleOpenRelayDialog(relay)}
+                              >
                                 <Pencil className="mr-2 h-4 w-4" />
                                 Modifier
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleTestRelay(relay)}>
+                              <DropdownMenuItem
+                                onClick={() => handleTestRelay(relay)}
+                              >
                                 <Activity className="mr-2 h-4 w-4" />
                                 Tester la connexion
                               </DropdownMenuItem>
                               {!relay.is_primary && (
-                                <DropdownMenuItem onClick={() => handleSetPrimaryRelay(relay)}>
+                                <DropdownMenuItem
+                                  onClick={() => handleSetPrimaryRelay(relay)}
+                                >
                                   <CheckCircle className="mr-2 h-4 w-4" />
                                   Définir comme principal
                                 </DropdownMenuItem>
@@ -803,7 +905,13 @@ export default function VpnPage() {
                               <DropdownMenuSeparator />
                               <DropdownMenuItem
                                 className="text-destructive"
-                                onClick={() => setDeleteDialog({ open: true, type: 'relay', item: relay })}
+                                onClick={() =>
+                                  setDeleteDialog({
+                                    open: true,
+                                    type: "relay",
+                                    item: relay,
+                                  })
+                                }
                               >
                                 <Trash2 className="mr-2 h-4 w-4" />
                                 Supprimer
@@ -815,8 +923,12 @@ export default function VpnPage() {
                     ))}
                     {relays.length === 0 && (
                       <TableRow>
-                        <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                          Aucun relais configuré. Ajoutez un relais pour commencer à créer des tunnels.
+                        <TableCell
+                          colSpan={6}
+                          className="text-center py-8 text-muted-foreground"
+                        >
+                          Aucun relais configuré. Ajoutez un relais pour
+                          commencer à créer des tunnels.
                         </TableCell>
                       </TableRow>
                     )}
@@ -839,9 +951,21 @@ export default function VpnPage() {
               onRemoveUpstream={handleRemoveUpstream}
               onOpenBlocklistDialog={() => setBlocklistDialogOpen(true)}
               onToggleBlocklist={handleToggleBlocklist}
-              onDeleteBlocklist={(blocklist) => setDeleteDialog({ open: true, type: 'blocklist', item: blocklist })}
+              onDeleteBlocklist={(blocklist) =>
+                setDeleteDialog({
+                  open: true,
+                  type: "blocklist",
+                  item: blocklist,
+                })
+              }
               onOpenDnsRecordDialog={handleOpenDnsRecordDialog}
-              onDeleteDnsRecord={(record) => setDeleteDialog({ open: true, type: 'dns-record', item: record })}
+              onDeleteDnsRecord={(record) =>
+                setDeleteDialog({
+                  open: true,
+                  type: "dns-record",
+                  item: record,
+                })
+              }
             />
           </TabsContent>
         </Tabs>
@@ -851,7 +975,9 @@ export default function VpnPage() {
       <Dialog open={tunnelDialogOpen} onOpenChange={setTunnelDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{editingTunnel ? 'Modifier le tunnel' : 'Nouveau tunnel'}</DialogTitle>
+            <DialogTitle>
+              {editingTunnel ? "Modifier le tunnel" : "Nouveau tunnel"}
+            </DialogTitle>
             <DialogDescription>
               Créez un tunnel pour exposer un service local via une URL publique
             </DialogDescription>
@@ -863,7 +989,9 @@ export default function VpnPage() {
                 id="tunnelName"
                 placeholder="my-webapp"
                 value={tunnelForm.name}
-                onChange={(e) => setTunnelForm({ ...tunnelForm, name: e.target.value })}
+                onChange={(e) =>
+                  setTunnelForm({ ...tunnelForm, name: e.target.value })
+                }
               />
             </div>
             <div className="space-y-2">
@@ -872,7 +1000,9 @@ export default function VpnPage() {
                 id="localAddr"
                 placeholder="localhost:3000"
                 value={tunnelForm.local_addr}
-                onChange={(e) => setTunnelForm({ ...tunnelForm, local_addr: e.target.value })}
+                onChange={(e) =>
+                  setTunnelForm({ ...tunnelForm, local_addr: e.target.value })
+                }
               />
               <p className="text-xs text-muted-foreground">
                 Le service local à exposer (ex : localhost:8080)
@@ -885,16 +1015,22 @@ export default function VpnPage() {
                   id="subdomain"
                   placeholder="myapp"
                   value={tunnelForm.subdomain}
-                  onChange={(e) => setTunnelForm({ ...tunnelForm, subdomain: e.target.value })}
+                  onChange={(e) =>
+                    setTunnelForm({ ...tunnelForm, subdomain: e.target.value })
+                  }
                 />
-                <span className="text-muted-foreground whitespace-nowrap">.relay.domain</span>
+                <span className="text-muted-foreground whitespace-nowrap">
+                  .relay.domain
+                </span>
               </div>
             </div>
             <div className="space-y-2">
               <Label htmlFor="relay">Relais</Label>
               <Select
                 value={tunnelForm.relay_id}
-                onValueChange={(value) => setTunnelForm({ ...tunnelForm, relay_id: value })}
+                onValueChange={(value) =>
+                  setTunnelForm({ ...tunnelForm, relay_id: value })
+                }
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Sélectionner un relais" />
@@ -905,7 +1041,9 @@ export default function VpnPage() {
                       <div className="flex items-center gap-2">
                         {relay.name}
                         {relay.is_primary && (
-                          <Badge variant="outline" className="text-xs">Primary</Badge>
+                          <Badge variant="outline" className="text-xs">
+                            Primary
+                          </Badge>
                         )}
                       </div>
                     </SelectItem>
@@ -915,12 +1053,23 @@ export default function VpnPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setTunnelDialogOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setTunnelDialogOpen(false)}
+            >
               Annuler
             </Button>
             <Button onClick={handleSaveTunnel} disabled={submitting}>
-              {submitting && <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />}
-              {editingTunnel ? 'Enregistrer' : 'Créer le tunnel'}
+              {submitting && (
+                <SpinnerInfinity
+                  size={24}
+                  secondaryColor="rgba(128,128,128,0.2)"
+                  color="currentColor"
+                  speed={120}
+                  className="mr-2 h-4 w-4 "
+                />
+              )}
+              {editingTunnel ? "Enregistrer" : "Créer le tunnel"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -930,7 +1079,9 @@ export default function VpnPage() {
       <Dialog open={relayDialogOpen} onOpenChange={setRelayDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{editingRelay ? 'Modifier le relais' : 'Ajouter un relais'}</DialogTitle>
+            <DialogTitle>
+              {editingRelay ? "Modifier le relais" : "Ajouter un relais"}
+            </DialogTitle>
             <DialogDescription>
               Configurer un serveur relais pour vos tunnels
             </DialogDescription>
@@ -942,7 +1093,9 @@ export default function VpnPage() {
                 id="relayName"
                 placeholder="My Relay"
                 value={relayForm.name}
-                onChange={(e) => setRelayForm({ ...relayForm, name: e.target.value })}
+                onChange={(e) =>
+                  setRelayForm({ ...relayForm, name: e.target.value })
+                }
               />
             </div>
             <div className="space-y-2">
@@ -951,20 +1104,26 @@ export default function VpnPage() {
                 id="relayUrl"
                 placeholder="wss://relay.example.com"
                 value={relayForm.url}
-                onChange={(e) => setRelayForm({ ...relayForm, url: e.target.value })}
+                onChange={(e) =>
+                  setRelayForm({ ...relayForm, url: e.target.value })
+                }
               />
               <p className="text-xs text-muted-foreground">
                 URL WebSocket du serveur relais
               </p>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="relayToken">Jeton d&apos;authentification (optionnel)</Label>
+              <Label htmlFor="relayToken">
+                Jeton d&apos;authentification (optionnel)
+              </Label>
               <Input
                 id="relayToken"
                 type="password"
                 placeholder="Enter token if required"
                 value={relayForm.token}
-                onChange={(e) => setRelayForm({ ...relayForm, token: e.target.value })}
+                onChange={(e) =>
+                  setRelayForm({ ...relayForm, token: e.target.value })
+                }
               />
             </div>
             <div className="flex items-center justify-between">
@@ -976,7 +1135,9 @@ export default function VpnPage() {
               </div>
               <Switch
                 checked={relayForm.is_primary}
-                onCheckedChange={(checked) => setRelayForm({ ...relayForm, is_primary: checked })}
+                onCheckedChange={(checked) =>
+                  setRelayForm({ ...relayForm, is_primary: checked })
+                }
               />
             </div>
           </div>
@@ -985,8 +1146,16 @@ export default function VpnPage() {
               Annuler
             </Button>
             <Button onClick={handleSaveRelay} disabled={submitting}>
-              {submitting && <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />}
-              {editingRelay ? 'Enregistrer' : 'Ajouter un relais'}
+              {submitting && (
+                <SpinnerInfinity
+                  size={24}
+                  secondaryColor="rgba(128,128,128,0.2)"
+                  color="currentColor"
+                  speed={120}
+                  className="mr-2 h-4 w-4 "
+                />
+              )}
+              {editingRelay ? "Enregistrer" : "Ajouter un relais"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -998,7 +1167,8 @@ export default function VpnPage() {
           <DialogHeader>
             <DialogTitle>Ajouter une liste de blocage</DialogTitle>
             <DialogDescription>
-              Ajouter une URL de liste de blocage pour bloquer les publicités et traceurs
+              Ajouter une URL de liste de blocage pour bloquer les publicités et
+              traceurs
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
@@ -1008,7 +1178,9 @@ export default function VpnPage() {
                 id="blocklistName"
                 placeholder="AdGuard DNS filter"
                 value={blocklistForm.name}
-                onChange={(e) => setBlocklistForm({ ...blocklistForm, name: e.target.value })}
+                onChange={(e) =>
+                  setBlocklistForm({ ...blocklistForm, name: e.target.value })
+                }
               />
             </div>
             <div className="space-y-2">
@@ -1017,7 +1189,9 @@ export default function VpnPage() {
                 id="blocklistUrl"
                 placeholder="https://example.com/blocklist.txt"
                 value={blocklistForm.url}
-                onChange={(e) => setBlocklistForm({ ...blocklistForm, url: e.target.value })}
+                onChange={(e) =>
+                  setBlocklistForm({ ...blocklistForm, url: e.target.value })
+                }
               />
               <p className="text-xs text-muted-foreground">
                 URL vers un fichier de liste de blocage au format hosts
@@ -1025,11 +1199,22 @@ export default function VpnPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setBlocklistDialogOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setBlocklistDialogOpen(false)}
+            >
               Annuler
             </Button>
             <Button onClick={handleAddBlocklist} disabled={submitting}>
-              {submitting && <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />}
+              {submitting && (
+                <SpinnerInfinity
+                  size={24}
+                  secondaryColor="rgba(128,128,128,0.2)"
+                  color="currentColor"
+                  speed={120}
+                  className="mr-2 h-4 w-4 "
+                />
+              )}
               Ajouter la liste
             </Button>
           </DialogFooter>
@@ -1040,7 +1225,11 @@ export default function VpnPage() {
       <Dialog open={dnsRecordDialogOpen} onOpenChange={setDnsRecordDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{editingDnsRecord ? 'Modifier l\'enregistrement DNS' : 'Ajouter un enregistrement DNS'}</DialogTitle>
+            <DialogTitle>
+              {editingDnsRecord
+                ? "Modifier l'enregistrement DNS"
+                : "Ajouter un enregistrement DNS"}
+            </DialogTitle>
             <DialogDescription>
               Créer une substitution d&apos;enregistrement DNS personnalisé
             </DialogDescription>
@@ -1050,7 +1239,7 @@ export default function VpnPage() {
               <Label htmlFor="recordType">Type d&apos;enregistrement</Label>
               <Select
                 value={dnsRecordForm.type}
-                onValueChange={(value: 'A' | 'AAAA' | 'CNAME' | 'TXT') =>
+                onValueChange={(value: "A" | "AAAA" | "CNAME" | "TXT") =>
                   setDnsRecordForm({ ...dnsRecordForm, type: value })
                 }
               >
@@ -1071,16 +1260,22 @@ export default function VpnPage() {
                 id="recordName"
                 placeholder="example.local"
                 value={dnsRecordForm.name}
-                onChange={(e) => setDnsRecordForm({ ...dnsRecordForm, name: e.target.value })}
+                onChange={(e) =>
+                  setDnsRecordForm({ ...dnsRecordForm, name: e.target.value })
+                }
               />
             </div>
             <div className="space-y-2">
               <Label htmlFor="recordValue">Value</Label>
               <Input
                 id="recordValue"
-                placeholder={dnsRecordForm.type === 'A' ? '192.168.1.100' : 'value'}
+                placeholder={
+                  dnsRecordForm.type === "A" ? "192.168.1.100" : "value"
+                }
                 value={dnsRecordForm.value}
-                onChange={(e) => setDnsRecordForm({ ...dnsRecordForm, value: e.target.value })}
+                onChange={(e) =>
+                  setDnsRecordForm({ ...dnsRecordForm, value: e.target.value })
+                }
               />
             </div>
             <div className="space-y-2">
@@ -1089,18 +1284,34 @@ export default function VpnPage() {
                 id="recordTtl"
                 type="number"
                 placeholder="3600"
-                value={dnsRecordForm.ttl || ''}
-                onChange={(e) => setDnsRecordForm({ ...dnsRecordForm, ttl: parseInt(e.target.value) || 3600 })}
+                value={dnsRecordForm.ttl || ""}
+                onChange={(e) =>
+                  setDnsRecordForm({
+                    ...dnsRecordForm,
+                    ttl: parseInt(e.target.value) || 3600,
+                  })
+                }
               />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDnsRecordDialogOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setDnsRecordDialogOpen(false)}
+            >
               Annuler
             </Button>
             <Button onClick={handleSaveDnsRecord} disabled={submitting}>
-              {submitting && <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />}
-              {editingDnsRecord ? 'Enregistrer' : 'Ajouter'}
+              {submitting && (
+                <SpinnerInfinity
+                  size={24}
+                  secondaryColor="rgba(128,128,128,0.2)"
+                  color="currentColor"
+                  speed={120}
+                  className="mr-2 h-4 w-4 "
+                />
+              )}
+              {editingDnsRecord ? "Enregistrer" : "Ajouter"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1114,20 +1325,43 @@ export default function VpnPage() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              Supprimer {deleteDialog.type === 'dns-record' ? 'l\'enregistrement DNS' : deleteDialog.type === 'tunnel' ? 'le tunnel' : deleteDialog.type === 'relay' ? 'le relais' : 'la liste'} ?
+              Supprimer{" "}
+              {deleteDialog.type === "dns-record"
+                ? "l'enregistrement DNS"
+                : deleteDialog.type === "tunnel"
+                  ? "le tunnel"
+                  : deleteDialog.type === "relay"
+                    ? "le relais"
+                    : "la liste"}{" "}
+              ?
             </AlertDialogTitle>
             <AlertDialogDescription>
-              {deleteDialog.type === 'tunnel' && (
-                <>Êtes-vous sûr de vouloir supprimer le tunnel &quot;{(deleteDialog.item as Tunnel)?.name}&quot; ? Toutes les connexions actives seront déconnectées.</>
+              {deleteDialog.type === "tunnel" && (
+                <>
+                  Êtes-vous sûr de vouloir supprimer le tunnel &quot;
+                  {(deleteDialog.item as Tunnel)?.name}&quot; ? Toutes les
+                  connexions actives seront déconnectées.
+                </>
               )}
-              {deleteDialog.type === 'relay' && (
-                <>Êtes-vous sûr de vouloir supprimer le relais &quot;{(deleteDialog.item as Relay)?.name}&quot; ? Tous les tunnels utilisant ce relais seront déconnectés.</>
+              {deleteDialog.type === "relay" && (
+                <>
+                  Êtes-vous sûr de vouloir supprimer le relais &quot;
+                  {(deleteDialog.item as Relay)?.name}&quot; ? Tous les tunnels
+                  utilisant ce relais seront déconnectés.
+                </>
               )}
-              {deleteDialog.type === 'blocklist' && (
-                <>Êtes-vous sûr de vouloir supprimer la liste &quot;{(deleteDialog.item as Blocklist)?.name}&quot; ?</>
+              {deleteDialog.type === "blocklist" && (
+                <>
+                  Êtes-vous sûr de vouloir supprimer la liste &quot;
+                  {(deleteDialog.item as Blocklist)?.name}&quot; ?
+                </>
               )}
-              {deleteDialog.type === 'dns-record' && (
-                <>Êtes-vous sûr de vouloir supprimer l&apos;enregistrement DNS pour &quot;{(deleteDialog.item as CustomDnsRecord)?.name}&quot; ?</>
+              {deleteDialog.type === "dns-record" && (
+                <>
+                  Êtes-vous sûr de vouloir supprimer l&apos;enregistrement DNS
+                  pour &quot;{(deleteDialog.item as CustomDnsRecord)?.name}
+                  &quot; ?
+                </>
               )}
             </AlertDialogDescription>
           </AlertDialogHeader>

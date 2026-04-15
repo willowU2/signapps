@@ -1,17 +1,10 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import {
-  Share2,
-  Mail,
-  Calendar,
-  CheckSquare,
-  Link2,
-  Plus
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Share2, Mail, Calendar, CheckSquare, Link2, Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 interface QuickAction {
   id: string;
@@ -39,8 +32,8 @@ export function QuickActions({
 
   const actions: QuickAction[] = [
     {
-      id: 'share',
-      label: 'Partager',
+      id: "share",
+      label: "Partager",
       icon: <Share2 className="h-5 w-5" />,
       onClick: () => {
         onShare?.();
@@ -48,8 +41,8 @@ export function QuickActions({
       },
     },
     {
-      id: 'email',
-      label: 'Envoyer par email',
+      id: "email",
+      label: "Envoyer par email",
       icon: <Mail className="h-5 w-5" />,
       onClick: () => {
         onEmail?.();
@@ -57,8 +50,8 @@ export function QuickActions({
       },
     },
     {
-      id: 'schedule',
-      label: 'Planifier réunion',
+      id: "schedule",
+      label: "Planifier réunion",
       icon: <Calendar className="h-5 w-5" />,
       onClick: () => {
         onSchedule?.();
@@ -66,8 +59,8 @@ export function QuickActions({
       },
     },
     {
-      id: 'task',
-      label: 'Créer tâche',
+      id: "task",
+      label: "Créer tâche",
       icon: <CheckSquare className="h-5 w-5" />,
       onClick: () => {
         onCreateTask?.();
@@ -75,8 +68,8 @@ export function QuickActions({
       },
     },
     {
-      id: 'copy',
-      label: 'Copier lien',
+      id: "copy",
+      label: "Copier lien",
       icon: <Link2 className="h-5 w-5" />,
       onClick: () => {
         onCopyLink?.();
@@ -146,7 +139,7 @@ export function QuickActions({
             "rounded-full h-14 w-14 shadow-xl hover:shadow-2xl transition-all border border-border/50",
             isOpen
               ? "bg-accent hover:bg-accent/90 text-accent-foreground"
-              : "bg-primary hover:bg-primary/90 text-primary-foreground"
+              : "bg-primary hover:bg-primary/90 text-primary-foreground",
           )}
           onClick={() => setIsOpen(!isOpen)}
         >

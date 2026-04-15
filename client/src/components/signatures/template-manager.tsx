@@ -1,30 +1,30 @@
-'use client';
+"use client";
 
-import { useState, useCallback } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
+import { useState, useCallback } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
+} from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from "@/components/ui/dropdown-menu";
 import {
   LayoutTemplate,
   Plus,
@@ -33,9 +33,9 @@ import {
   FilePlus,
   Users,
   GripVertical,
-} from 'lucide-react';
-import { toast } from 'sonner';
-import { cn } from '@/lib/utils';
+} from "lucide-react";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 // ---------------------------------------------------------------------------
 // Types — stored client-side in localStorage (no backend for templates yet)
@@ -67,7 +67,7 @@ export interface EnvelopeTemplate {
 // Persistence helpers
 // ---------------------------------------------------------------------------
 
-const STORAGE_KEY = 'signapps.signature_templates';
+const STORAGE_KEY = "signapps.signature_templates";
 
 function loadTemplates(): EnvelopeTemplate[] {
   try {
@@ -87,10 +87,10 @@ function saveTemplates(templates: EnvelopeTemplate[]) {
 // ---------------------------------------------------------------------------
 
 const SIGNER_COLORS = [
-  'bg-blue-100 border-blue-300 text-blue-700',
-  'bg-green-100 border-green-300 text-green-700',
-  'bg-purple-100 border-purple-300 text-purple-700',
-  'bg-orange-100 border-orange-300 text-orange-700',
+  "bg-blue-100 border-blue-300 text-blue-700",
+  "bg-green-100 border-green-300 text-green-700",
+  "bg-purple-100 border-purple-300 text-purple-700",
+  "bg-orange-100 border-orange-300 text-orange-700",
 ];
 
 // ---------------------------------------------------------------------------
@@ -103,9 +103,13 @@ interface CreateTemplateDialogProps {
   onCreated: (tpl: EnvelopeTemplate) => void;
 }
 
-function CreateTemplateDialog({ open, onOpenChange, onCreated }: CreateTemplateDialogProps) {
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
+function CreateTemplateDialog({
+  open,
+  onOpenChange,
+  onCreated,
+}: CreateTemplateDialogProps) {
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
   const [signerCount, setSignerCount] = useState(1);
   const [fields, setFields] = useState<SignatureField[]>([]);
 
@@ -122,11 +126,12 @@ function CreateTemplateDialog({ open, onOpenChange, onCreated }: CreateTemplateD
     setFields((prev) => [...prev, newField]);
   };
 
-  const removeField = (id: string) => setFields((prev) => prev.filter((f) => f.id !== id));
+  const removeField = (id: string) =>
+    setFields((prev) => prev.filter((f) => f.id !== id));
 
   const handleCreate = () => {
     if (!name.trim()) {
-      toast.error('Le nom du modèle est requis');
+      toast.error("Le nom du modèle est requis");
       return;
     }
     const tpl: EnvelopeTemplate = {
@@ -140,12 +145,12 @@ function CreateTemplateDialog({ open, onOpenChange, onCreated }: CreateTemplateD
     const existing = loadTemplates();
     saveTemplates([...existing, tpl]);
     onCreated(tpl);
-    setName('');
-    setDescription('');
+    setName("");
+    setDescription("");
     setSignerCount(1);
     setFields([]);
     onOpenChange(false);
-    toast.success('Modèle créé');
+    toast.success("Modèle créé");
   };
 
   return (
@@ -185,7 +190,9 @@ function CreateTemplateDialog({ open, onOpenChange, onCreated }: CreateTemplateD
               >
                 –
               </Button>
-              <span className="text-lg font-semibold w-8 text-center">{signerCount}</span>
+              <span className="text-lg font-semibold w-8 text-center">
+                {signerCount}
+              </span>
               <Button
                 variant="outline"
                 size="icon"
@@ -202,25 +209,34 @@ function CreateTemplateDialog({ open, onOpenChange, onCreated }: CreateTemplateD
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label>Zones de signature</Label>
-              <Button variant="outline" size="sm" onClick={addField} className="gap-1 h-7 text-xs">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={addField}
+                className="gap-1 h-7 text-xs"
+              >
                 <Plus className="h-3 w-3" />
                 Ajouter
               </Button>
             </div>
             {fields.length === 0 ? (
-              <p className="text-sm text-muted-foreground py-2">Aucune zone définie</p>
+              <p className="text-sm text-muted-foreground py-2">
+                Aucune zone définie
+              </p>
             ) : (
               <div className="space-y-2">
                 {fields.map((field, i) => (
                   <div
                     key={field.id}
                     className={cn(
-                      'flex items-center gap-2 px-3 py-2 rounded-md border',
-                      SIGNER_COLORS[field.signerIndex % SIGNER_COLORS.length]
+                      "flex items-center gap-2 px-3 py-2 rounded-md border",
+                      SIGNER_COLORS[field.signerIndex % SIGNER_COLORS.length],
                     )}
                   >
                     <GripVertical className="h-4 w-4 shrink-0 opacity-40" />
-                    <span className="flex-1 text-sm font-medium">{field.label}</span>
+                    <span className="flex-1 text-sm font-medium">
+                      {field.label}
+                    </span>
                     <Badge variant="secondary" className="text-xs">
                       Signataire {field.signerIndex + 1}
                     </Badge>
@@ -260,7 +276,10 @@ interface TemplateManagerProps {
   className?: string;
 }
 
-export function TemplateManager({ onUseTemplate, className }: TemplateManagerProps) {
+export function TemplateManager({
+  onUseTemplate,
+  className,
+}: TemplateManagerProps) {
   const [templates, setTemplates] = useState<EnvelopeTemplate[]>(loadTemplates);
   const [createOpen, setCreateOpen] = useState(false);
 
@@ -272,16 +291,18 @@ export function TemplateManager({ onUseTemplate, className }: TemplateManagerPro
     const updated = templates.filter((t) => t.id !== id);
     saveTemplates(updated);
     setTemplates(updated);
-    toast.success('Modèle supprimé');
+    toast.success("Modèle supprimé");
   };
 
   return (
-    <div className={cn('space-y-4', className)}>
+    <div className={cn("space-y-4", className)}>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <LayoutTemplate className="h-5 w-5 text-muted-foreground" />
           <h3 className="font-semibold">Modèles de signature</h3>
-          <Badge variant="secondary" className="text-xs">{templates.length}</Badge>
+          <Badge variant="secondary" className="text-xs">
+            {templates.length}
+          </Badge>
         </div>
         <Button size="sm" onClick={() => setCreateOpen(true)} className="gap-2">
           <Plus className="h-4 w-4" />
@@ -309,7 +330,9 @@ export function TemplateManager({ onUseTemplate, className }: TemplateManagerPro
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
                   <div className="min-w-0">
-                    <CardTitle className="text-sm truncate">{tpl.name}</CardTitle>
+                    <CardTitle className="text-sm truncate">
+                      {tpl.name}
+                    </CardTitle>
                     {tpl.description && (
                       <CardDescription className="text-xs mt-0.5 truncate">
                         {tpl.description}
@@ -318,7 +341,11 @@ export function TemplateManager({ onUseTemplate, className }: TemplateManagerPro
                   </div>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 shrink-0"
+                      >
                         <MoreVertical className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
@@ -344,10 +371,10 @@ export function TemplateManager({ onUseTemplate, className }: TemplateManagerPro
                 <div className="flex items-center gap-3 text-xs text-muted-foreground">
                   <span className="flex items-center gap-1">
                     <Users className="h-3 w-3" />
-                    {tpl.signerCount} signataire{tpl.signerCount > 1 ? 's' : ''}
+                    {tpl.signerCount} signataire{tpl.signerCount > 1 ? "s" : ""}
                   </span>
                   <span>
-                    {tpl.fields.length} zone{tpl.fields.length !== 1 ? 's' : ''}
+                    {tpl.fields.length} zone{tpl.fields.length !== 1 ? "s" : ""}
                   </span>
                 </div>
                 {onUseTemplate && (

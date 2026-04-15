@@ -47,7 +47,7 @@ where
                 relations_created: 0,
                 source: "workforce.courses".to_string(),
             });
-        }
+        },
     };
 
     let mut count = 0usize;

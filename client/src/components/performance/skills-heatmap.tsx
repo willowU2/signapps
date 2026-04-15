@@ -135,13 +135,18 @@ function getProficiencyLabel(level: number): string {
 }
 
 export function SkillsHeatmap() {
-  const [hoveredCell, setHoveredCell] = useState<{ emp: number; skill: string } | null>(null);
+  const [hoveredCell, setHoveredCell] = useState<{
+    emp: number;
+    skill: string;
+  } | null>(null);
 
   return (
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-bold text-foreground">Skills Heatmap</h2>
-        <p className="text-muted-foreground">Team proficiency across key competencies</p>
+        <p className="text-muted-foreground">
+          Team proficiency across key competencies
+        </p>
       </div>
 
       <div className="border rounded-lg overflow-x-auto bg-card">
@@ -203,14 +208,20 @@ export function SkillsHeatmap() {
 
       <div className="grid grid-cols-2 gap-6">
         <div className="border rounded-lg p-6 bg-card">
-          <h3 className="font-semibold text-foreground mb-4">Proficiency Legend</h3>
+          <h3 className="font-semibold text-foreground mb-4">
+            Proficiency Legend
+          </h3>
           <div className="space-y-3">
             {[5, 4, 3, 2, 1].map((level) => (
               <div key={level} className="flex items-center gap-3">
-                <div className={`w-8 h-8 rounded ${getProficiencyColor(level)}`} />
+                <div
+                  className={`w-8 h-8 rounded ${getProficiencyColor(level)}`}
+                />
                 <div>
                   <p className="font-medium text-foreground">{level}</p>
-                  <p className="text-sm text-muted-foreground">{getProficiencyLabel(level)}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {getProficiencyLabel(level)}
+                  </p>
                 </div>
               </div>
             ))}
@@ -218,11 +229,15 @@ export function SkillsHeatmap() {
         </div>
 
         <div className="border rounded-lg p-6 bg-card">
-          <h3 className="font-semibold text-foreground mb-4">Team Statistics</h3>
+          <h3 className="font-semibold text-foreground mb-4">
+            Team Statistics
+          </h3>
           <div className="space-y-3 text-sm">
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground">Total Employees</span>
-              <span className="font-bold text-foreground">{EMPLOYEES.length}</span>
+              <span className="font-bold text-foreground">
+                {EMPLOYEES.length}
+              </span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground">Skills Tracked</span>

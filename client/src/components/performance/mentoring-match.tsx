@@ -94,7 +94,7 @@ const DEFAULT_PAIRS: MentoringPair[] = [
 function calculateMatchScore(mentor: Person, mentee: Person): number {
   if (!mentor.expertise || !mentee.growthAreas) return 0;
   const matches = mentor.expertise.filter((skill) =>
-    mentee.growthAreas?.includes(skill)
+    mentee.growthAreas?.includes(skill),
   ).length;
   const totalSkills = mentee.growthAreas.length;
   return totalSkills > 0 ? Math.round((matches / totalSkills) * 100) : 0;
@@ -113,15 +113,15 @@ export function MentoringMatch() {
   const [mentees] = useState<Person[]>(DEFAULT_MENTEES);
 
   const availableMentees = mentees.filter(
-    (m) => !pairs.some((p) => p.mentee.name === m.name)
+    (m) => !pairs.some((p) => p.mentee.name === m.name),
   );
 
   const availableMentorsForMatching = mentors.filter((m) =>
     availableMentees.some(
       (mentee) =>
         calculateMatchScore(m, mentee) >= 60 &&
-        !pairs.some((p) => p.mentor.name === m.name && p.status === "paired")
-    )
+        !pairs.some((p) => p.mentor.name === m.name && p.status === "paired"),
+    ),
   );
 
   const handleCreatePair = (mentor: Person, mentee: Person) => {
@@ -152,28 +152,39 @@ export function MentoringMatch() {
       <div className="flex items-center gap-3">
         <Heart className="w-6 h-6 text-red-600" />
         <div>
-          <h2 className="text-2xl font-bold text-foreground">Mentoring Matches</h2>
-          <p className="text-muted-foreground">AI-powered mentor-mentee pairing system</p>
+          <h2 className="text-2xl font-bold text-foreground">
+            Mentoring Matches
+          </h2>
+          <p className="text-muted-foreground">
+            AI-powered mentor-mentee pairing system
+          </p>
         </div>
       </div>
 
       <div className="grid grid-cols-3 gap-4">
         <div className="rounded-lg border bg-blue-50 p-4">
-          <p className="text-sm text-muted-foreground font-medium">Active Pairs</p>
+          <p className="text-sm text-muted-foreground font-medium">
+            Active Pairs
+          </p>
           <p className="text-3xl font-bold text-blue-900">{pairs.length}</p>
         </div>
         <div className="rounded-lg border bg-purple-50 p-4">
-          <p className="text-sm text-muted-foreground font-medium">Available Mentors</p>
+          <p className="text-sm text-muted-foreground font-medium">
+            Available Mentors
+          </p>
           <p className="text-3xl font-bold text-purple-900">
             {availableMentorsForMatching.length}
           </p>
         </div>
         <div className="rounded-lg border bg-green-50 p-4">
-          <p className="text-sm text-muted-foreground font-medium">Avg Match Score</p>
+          <p className="text-sm text-muted-foreground font-medium">
+            Avg Match Score
+          </p>
           <p className="text-3xl font-bold text-green-900">
             {pairs.length > 0
               ? Math.round(
-                  pairs.reduce((sum, p) => sum + p.matchScore, 0) / pairs.length
+                  pairs.reduce((sum, p) => sum + p.matchScore, 0) /
+                    pairs.length,
                 )
               : "—"}
           </p>
@@ -245,7 +256,9 @@ export function MentoringMatch() {
 
               <div className="border-t pt-4 flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground mb-1">Match Score</p>
+                  <p className="text-sm text-muted-foreground mb-1">
+                    Match Score
+                  </p>
                   <span
                     className={`inline-block text-sm font-bold px-3 py-1 rounded ${getScoreColor(pair.matchScore)}`}
                   >
@@ -303,7 +316,7 @@ export function MentoringMatch() {
                     </button>
                   </div>
                 );
-              })
+              }),
             )}
           </div>
         </div>

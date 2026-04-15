@@ -1,33 +1,60 @@
-'use client';
+"use client";
 
 /**
  * Notification History Component
  * Display and manage sent notifications
  */
 
-import { SpinnerInfinity } from 'spinners-react';
+import { SpinnerInfinity } from "spinners-react";
 
-import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Mail, MessageSquare, Bell, RotateCcw, AlertCircle } from 'lucide-react';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { formatDistanceToNow } from 'date-fns';
-import useNotificationHistory, { Notification as HistoryNotification } from '@/hooks/use-notification-history';
+import { useState } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Mail,
+  MessageSquare,
+  Bell,
+  RotateCcw,
+  AlertCircle,
+} from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { formatDistanceToNow } from "date-fns";
+import useNotificationHistory, {
+  Notification as HistoryNotification,
+} from "@/hooks/use-notification-history";
 
 interface NotificationHistoryProps {
   limit?: number;
 }
 
 const statusColors: Record<string, string> = {
-  pending: 'bg-yellow-100 text-yellow-800',
-  sent: 'bg-green-100 text-green-800',
-  delivered: 'bg-green-100 text-green-800',
-  failed: 'bg-red-100 text-red-800',
-  bounced: 'bg-red-100 text-red-800',
+  pending: "bg-yellow-100 text-yellow-800",
+  sent: "bg-green-100 text-green-800",
+  delivered: "bg-green-100 text-green-800",
+  failed: "bg-red-100 text-red-800",
+  bounced: "bg-red-100 text-red-800",
 };
 
 const channelIcons: Record<string, any> = {
@@ -39,8 +66,8 @@ const channelIcons: Record<string, any> = {
 export function NotificationHistory({ limit = 50 }: NotificationHistoryProps) {
   const { notifications, loading, error, refetch, resendNotification } =
     useNotificationHistory(limit);
-  const [filterType, setFilterType] = useState<string>('all');
-  const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [filterType, setFilterType] = useState<string>("all");
+  const [filterStatus, setFilterStatus] = useState<string>("all");
   const [resendingId, setResendingId] = useState<string | null>(null);
 
   const handleResend = async (id: string) => {
@@ -56,10 +83,10 @@ export function NotificationHistory({ limit = 50 }: NotificationHistoryProps) {
 
   // Filter notifications
   let filtered = notifications;
-  if (filterType !== 'all') {
+  if (filterType !== "all") {
     filtered = filtered.filter((n) => n.channel === filterType);
   }
-  if (filterStatus !== 'all') {
+  if (filterStatus !== "all") {
     filtered = filtered.filter((n) => n.delivery_status === filterStatus);
   }
 
@@ -70,7 +97,13 @@ export function NotificationHistory({ limit = 50 }: NotificationHistoryProps) {
           <CardTitle>Notification History</CardTitle>
         </CardHeader>
         <CardContent className="flex items-center justify-center py-10">
-          <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-8 w-8  text-muted-foreground" />
+          <SpinnerInfinity
+            size={24}
+            secondaryColor="rgba(128,128,128,0.2)"
+            color="currentColor"
+            speed={120}
+            className="h-8 w-8  text-muted-foreground"
+          />
         </CardContent>
       </Card>
     );
@@ -102,7 +135,9 @@ export function NotificationHistory({ limit = 50 }: NotificationHistoryProps) {
                 <SelectItem value="all">All Channels</SelectItem>
                 <SelectItem value="event_reminder">Event Reminder</SelectItem>
                 <SelectItem value="task_due">Task Due</SelectItem>
-                <SelectItem value="attendee_response">Attendee Response</SelectItem>
+                <SelectItem value="attendee_response">
+                  Attendee Response
+                </SelectItem>
                 <SelectItem value="calendar_invite">Calendar Invite</SelectItem>
               </SelectContent>
             </Select>
@@ -144,15 +179,27 @@ export function NotificationHistory({ limit = 50 }: NotificationHistoryProps) {
             <div className="text-muted-foreground text-xs">Total</div>
           </div>
           <div className="p-3 bg-muted rounded">
-            <div className="font-semibold">{notifications.filter((n) => n.delivery_status === 'sent').length}</div>
+            <div className="font-semibold">
+              {notifications.filter((n) => n.delivery_status === "sent").length}
+            </div>
             <div className="text-muted-foreground text-xs">Sent</div>
           </div>
           <div className="p-3 bg-muted rounded">
-            <div className="font-semibold">{notifications.filter((n) => n.delivery_status === 'pending').length}</div>
+            <div className="font-semibold">
+              {
+                notifications.filter((n) => n.delivery_status === "pending")
+                  .length
+              }
+            </div>
             <div className="text-muted-foreground text-xs">Pending</div>
           </div>
           <div className="p-3 bg-muted rounded">
-            <div className="font-semibold">{notifications.filter((n) => n.delivery_status === 'failed').length}</div>
+            <div className="font-semibold">
+              {
+                notifications.filter((n) => n.delivery_status === "failed")
+                  .length
+              }
+            </div>
             <div className="text-muted-foreground text-xs">Failed</div>
           </div>
         </div>
@@ -160,7 +207,9 @@ export function NotificationHistory({ limit = 50 }: NotificationHistoryProps) {
         {/* TABLE */}
         {filtered.length === 0 ? (
           <div className="text-center py-10 text-muted-foreground">
-            {notifications.length === 0 ? 'No notifications yet' : 'No notifications match filters'}
+            {notifications.length === 0
+              ? "No notifications yet"
+              : "No notifications match filters"}
           </div>
         ) : (
           <div className="border rounded-lg overflow-hidden">
@@ -180,26 +229,34 @@ export function NotificationHistory({ limit = 50 }: NotificationHistoryProps) {
                   <TableRow key={notification.id} className="hover:bg-muted/50">
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        {channelIcons[notification.type] || <Bell className="h-4 w-4" />}
+                        {channelIcons[notification.type] || (
+                          <Bell className="h-4 w-4" />
+                        )}
                         <span className="text-sm">{notification.channel}</span>
                       </div>
                     </TableCell>
                     <TableCell className="text-sm font-medium max-w-xs truncate">
-                      {notification.title || '-'}
+                      {notification.title || "-"}
                     </TableCell>
                     <TableCell className="text-sm">
                       {notification.type}
                     </TableCell>
                     <TableCell>
-                      <Badge className={statusColors[notification.delivery_status || 'sent']}>
-                        {notification.delivery_status || 'sent'}
+                      <Badge
+                        className={
+                          statusColors[notification.delivery_status || "sent"]
+                        }
+                      >
+                        {notification.delivery_status || "sent"}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
-                      {formatDistanceToNow(new Date(notification.sent_at), { addSuffix: true })}
+                      {formatDistanceToNow(new Date(notification.sent_at), {
+                        addSuffix: true,
+                      })}
                     </TableCell>
                     <TableCell className="text-right">
-                      {notification.delivery_status === 'failed' && (
+                      {notification.delivery_status === "failed" && (
                         <Button
                           onClick={() => handleResend(notification.id)}
                           disabled={resendingId === notification.id}
@@ -207,7 +264,13 @@ export function NotificationHistory({ limit = 50 }: NotificationHistoryProps) {
                           variant="outline"
                         >
                           {resendingId === notification.id ? (
-                            <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-3 w-3 " />
+                            <SpinnerInfinity
+                              size={24}
+                              secondaryColor="rgba(128,128,128,0.2)"
+                              color="currentColor"
+                              speed={120}
+                              className="h-3 w-3 "
+                            />
                           ) : (
                             <RotateCcw className="h-3 w-3" />
                           )}

@@ -9,29 +9,29 @@
 
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 const MAX_NOTIFICATIONS = 200;
-const CLEANUP_FLAG_KEY = 'signapps:last-cleanup';
+const CLEANUP_FLAG_KEY = "signapps:last-cleanup";
 const CLEANUP_INTERVAL_MS = 24 * 60 * 60 * 1000; // run at most once per day
 
 /** Keys that are safe to prune when stale */
 const STALE_PREFIXES = [
-  'notification',
-  'activity-log',
-  'recent-',
-  'draft-',
-  'cache:',
-  'signapps:temp:',
+  "notification",
+  "activity-log",
+  "recent-",
+  "draft-",
+  "cache:",
+  "signapps:temp:",
 ];
 
 /** Keys that should never be removed */
 const PROTECTED_KEYS = new Set([
-  'auth-storage',
-  'ui-store',
-  'labels-store',
-  'pinned-apps',
-  'preferences',
-  'theme',
-  'onboarding-complete',
-  'react-query-cache',
+  "auth-storage",
+  "ui-store",
+  "labels-store",
+  "pinned-apps",
+  "preferences",
+  "theme",
+  "onboarding-complete",
+  "react-query-cache",
   CLEANUP_FLAG_KEY,
 ]);
 
@@ -47,19 +47,26 @@ function extractTimestamp(value: string): number | null {
   try {
     const parsed = JSON.parse(value);
     // Check common timestamp fields
-    for (const field of ['timestamp', 'created_at', 'createdAt', 'updatedAt', 'updated_at', 'date']) {
-      if (parsed && typeof parsed[field] === 'string') {
+    for (const field of [
+      "timestamp",
+      "created_at",
+      "createdAt",
+      "updatedAt",
+      "updated_at",
+      "date",
+    ]) {
+      if (parsed && typeof parsed[field] === "string") {
         const ts = new Date(parsed[field]).getTime();
         if (!isNaN(ts)) return ts;
       }
-      if (parsed && typeof parsed[field] === 'number') {
+      if (parsed && typeof parsed[field] === "number") {
         return parsed[field];
       }
     }
     // Check if it's an array — look at the first element
     if (Array.isArray(parsed) && parsed.length > 0 && parsed[0]) {
-      for (const field of ['timestamp', 'created_at', 'createdAt', 'date']) {
-        if (typeof parsed[0][field] === 'string') {
+      for (const field of ["timestamp", "created_at", "createdAt", "date"]) {
+        if (typeof parsed[0][field] === "string") {
           const ts = new Date(parsed[0][field]).getTime();
           if (!isNaN(ts)) return ts;
         }
@@ -75,7 +82,7 @@ function trimNotifications(): void {
   try {
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
-      if (!key || !key.toLowerCase().includes('notification')) continue;
+      if (!key || !key.toLowerCase().includes("notification")) continue;
       const raw = localStorage.getItem(key);
       if (!raw) continue;
       try {
@@ -128,7 +135,7 @@ function removeStaleEntries(): void {
  * internally debounced to run at most once per day.
  */
 export function cleanupLocalStorage(): void {
-  if (typeof window === 'undefined') return;
+  if (typeof window === "undefined") return;
 
   try {
     const lastCleanup = localStorage.getItem(CLEANUP_FLAG_KEY);

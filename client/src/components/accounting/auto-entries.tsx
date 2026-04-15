@@ -63,17 +63,13 @@ export function AutoEntries() {
 
   const handleApprove = (id: string) => {
     setEntries(
-      entries.map((e) =>
-        e.id === id ? { ...e, status: "approved" } : e
-      )
+      entries.map((e) => (e.id === id ? { ...e, status: "approved" } : e)),
     );
   };
 
   const handleReject = (id: string) => {
     setEntries(
-      entries.map((e) =>
-        e.id === id ? { ...e, status: "rejected" } : e
-      )
+      entries.map((e) => (e.id === id ? { ...e, status: "rejected" } : e)),
     );
   };
 
@@ -81,8 +77,8 @@ export function AutoEntries() {
     if (selectedIds.size === 0) return;
     setEntries(
       entries.map((e) =>
-        selectedIds.has(e.id) ? { ...e, status: "approved" } : e
-      )
+        selectedIds.has(e.id) ? { ...e, status: "approved" } : e,
+      ),
     );
     setSelectedIds(new Set());
   };
@@ -106,7 +102,9 @@ export function AutoEntries() {
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="rounded-lg border bg-amber-50 p-4">
-          <p className="text-sm text-muted-foreground font-medium">Pending Review</p>
+          <p className="text-sm text-muted-foreground font-medium">
+            Pending Review
+          </p>
           <p className="text-2xl font-bold text-amber-900">{pendingCount}</p>
         </div>
         <div className="rounded-lg border bg-green-50 p-4">
@@ -147,8 +145,8 @@ export function AutoEntries() {
                           new Set(
                             entries
                               .filter((e) => e.status === "pending")
-                              .map((e) => e.id)
-                          )
+                              .map((e) => e.id),
+                          ),
                         );
                       } else {
                         setSelectedIds(new Set());
@@ -178,7 +176,10 @@ export function AutoEntries() {
             </thead>
             <tbody className="divide-y">
               {entries.map((entry) => (
-                <tr key={entry.id} className={`border-l-4 ${getStatusBg(entry.status)}`}>
+                <tr
+                  key={entry.id}
+                  className={`border-l-4 ${getStatusBg(entry.status)}`}
+                >
                   <td className="px-4 py-3">
                     {entry.status === "pending" && (
                       <input
@@ -193,7 +194,9 @@ export function AutoEntries() {
                     <p className="font-mono font-semibold text-foreground">
                       {entry.sourceDoc}
                     </p>
-                    <p className="text-xs text-muted-foreground">{entry.date}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {entry.date}
+                    </p>
                   </td>
                   <td className="px-4 py-3">
                     <p className="font-medium text-foreground">

@@ -8,68 +8,68 @@
 // ============================================================================
 
 export type TimeItemType =
-  | 'task'
-  | 'event'
-  | 'booking'
-  | 'shift'
-  | 'milestone'
-  | 'reminder'
-  | 'blocker';
+  | "task"
+  | "event"
+  | "booking"
+  | "shift"
+  | "milestone"
+  | "reminder"
+  | "blocker";
 
-export type Scope = 'moi' | 'eux' | 'nous';
+export type Scope = "moi" | "eux" | "nous";
 
 // Alias for backwards compatibility
 export type ScopeType = Scope;
 
 export type Visibility =
-  | 'private'
-  | 'group'
-  | 'service'
-  | 'bu'
-  | 'company'
-  | 'public';
+  | "private"
+  | "group"
+  | "service"
+  | "bu"
+  | "company"
+  | "public";
 
-export type Priority = 'low' | 'medium' | 'high' | 'urgent';
+export type Priority = "low" | "medium" | "high" | "urgent";
 
-export type Status = 'todo' | 'in_progress' | 'done' | 'cancelled';
+export type Status = "todo" | "in_progress" | "done" | "cancelled";
 
-export type FocusLevel = 'deep' | 'medium' | 'shallow' | 'break';
+export type FocusLevel = "deep" | "medium" | "shallow" | "break";
 
-export type EnergyRequired = 'high' | 'medium' | 'low';
+export type EnergyRequired = "high" | "medium" | "low";
 
-export type TimeOfDay = 'morning' | 'midday' | 'afternoon' | 'evening';
+export type TimeOfDay = "morning" | "midday" | "afternoon" | "evening";
 
 export type ViewType =
-  | 'day'
-  | '3-day'
-  | 'week'
-  | 'month'
-  | 'agenda'
-  | 'timeline'
-  | 'kanban'
-  | 'heatmap'
-  | 'focus'
-  | 'roster';
+  | "day"
+  | "3-day"
+  | "week"
+  | "month"
+  | "agenda"
+  | "timeline"
+  | "kanban"
+  | "heatmap"
+  | "focus"
+  | "roster";
 
 export type RecurrenceFrequency =
-  | 'daily'
-  | 'weekly'
-  | 'monthly'
-  | 'yearly'
-  | 'custom';
+  | "daily"
+  | "weekly"
+  | "monthly"
+  | "yearly"
+  | "custom";
 
 export type DependencyType =
-  | 'finish_to_start'
-  | 'start_to_start'
-  | 'finish_to_finish'
-  | 'start_to_finish';
+  | "finish_to_start"
+  | "start_to_start"
+  | "finish_to_finish"
+  | "start_to_finish";
 
 // ============================================================================
 // COMPLEX TYPES
 // ============================================================================
 
 export interface Location {
-  type: 'text' | 'address' | 'virtual';
+  type: "text" | "address" | "virtual";
   value: string;
   coordinates?: {
     lat: number;
@@ -116,8 +116,8 @@ export interface Dependency {
 export interface Participant {
   id: string;
   userId: string;
-  role: 'owner' | 'editor' | 'participant' | 'viewer';
-  status?: 'pending' | 'accepted' | 'declined' | 'tentative';
+  role: "owner" | "editor" | "participant" | "viewer";
+  status?: "pending" | "accepted" | "declined" | "tentative";
 }
 
 export interface GroupParticipant {
@@ -302,7 +302,7 @@ export interface TimeItemsQuery {
   end?: string; // ISO8601
 
   // Scope filter
-  scope?: Scope | 'all';
+  scope?: Scope | "all";
 
   // Type filters
   types?: TimeItemType[];
@@ -334,8 +334,8 @@ export interface TimeItemsQuery {
   offset?: number;
 
   // Sort
-  sortBy?: 'start_time' | 'deadline' | 'priority' | 'created_at' | 'updated_at';
-  sortOrder?: 'asc' | 'desc';
+  sortBy?: "start_time" | "deadline" | "priority" | "created_at" | "updated_at";
+  sortOrder?: "asc" | "desc";
 }
 
 export interface TimeItemsResponse {
@@ -367,13 +367,13 @@ export interface OverlapGroup {
 }
 
 export interface DragData {
-  type: 'time-item' | 'unscheduled-task';
+  type: "time-item" | "unscheduled-task";
   item: TimeItem;
   sourceView: ViewType;
 }
 
 export interface DropData {
-  type: 'time-slot' | 'kanban-column' | 'user' | 'group' | 'date';
+  type: "time-slot" | "kanban-column" | "user" | "group" | "date";
   date?: Date;
   hour?: number;
   minute?: number;
@@ -387,81 +387,81 @@ export interface DropData {
 // ============================================================================
 
 export const TIME_ITEM_TYPE_LABELS: Record<TimeItemType, string> = {
-  task: 'Tâche',
-  event: 'Événement',
-  booking: 'Réservation',
-  shift: 'Shift',
-  milestone: 'Jalon',
-  reminder: 'Rappel',
-  blocker: 'Bloqueur',
+  task: "Tâche",
+  event: "Événement",
+  booking: "Réservation",
+  shift: "Shift",
+  milestone: "Jalon",
+  reminder: "Rappel",
+  blocker: "Bloqueur",
 };
 
 export const TIME_ITEM_TYPE_ICONS: Record<TimeItemType, string> = {
-  task: 'CheckSquare',
-  event: 'Calendar',
-  booking: 'Clock',
-  shift: 'Users',
-  milestone: 'Flag',
-  reminder: 'Bell',
-  blocker: 'Ban',
+  task: "CheckSquare",
+  event: "Calendar",
+  booking: "Clock",
+  shift: "Users",
+  milestone: "Flag",
+  reminder: "Bell",
+  blocker: "Ban",
 };
 
 export const PRIORITY_LABELS: Record<Priority, string> = {
-  low: 'Basse',
-  medium: 'Moyenne',
-  high: 'Haute',
-  urgent: 'Urgente',
+  low: "Basse",
+  medium: "Moyenne",
+  high: "Haute",
+  urgent: "Urgente",
 };
 
 export const PRIORITY_COLORS: Record<Priority, string> = {
-  low: '#94a3b8', // slate-400
-  medium: '#3b82f6', // blue-500
-  high: '#f97316', // orange-500
-  urgent: '#ef4444', // red-500
+  low: "#94a3b8", // slate-400
+  medium: "#3b82f6", // blue-500
+  high: "#f97316", // orange-500
+  urgent: "#ef4444", // red-500
 };
 
 export const STATUS_LABELS: Record<Status, string> = {
-  todo: 'À faire',
-  in_progress: 'En cours',
-  done: 'Terminé',
-  cancelled: 'Annulé',
+  todo: "À faire",
+  in_progress: "En cours",
+  done: "Terminé",
+  cancelled: "Annulé",
 };
 
 export const SCOPE_LABELS: Record<Scope, string> = {
-  moi: 'Moi',
-  eux: 'Eux',
-  nous: 'Nous',
+  moi: "Moi",
+  eux: "Eux",
+  nous: "Nous",
 };
 
 export const VIEW_TYPE_LABELS: Record<ViewType, string> = {
-  day: 'Jour',
-  '3-day': '3 Jours',
-  week: 'Semaine',
-  month: 'Mois',
-  agenda: 'Agenda',
-  timeline: 'Timeline',
-  kanban: 'Kanban',
-  heatmap: 'Disponibilités',
-  focus: 'Focus',
-  roster: 'Planning',
+  day: "Jour",
+  "3-day": "3 Jours",
+  week: "Semaine",
+  month: "Mois",
+  agenda: "Agenda",
+  timeline: "Timeline",
+  kanban: "Kanban",
+  heatmap: "Disponibilités",
+  focus: "Focus",
+  roster: "Planning",
 };
 
 export const FOCUS_LEVEL_LABELS: Record<FocusLevel, string> = {
-  deep: 'Profond',
-  medium: 'Moyen',
-  shallow: 'Léger',
-  break: 'Pause',
+  deep: "Profond",
+  medium: "Moyen",
+  shallow: "Léger",
+  break: "Pause",
 };
 
 export const ENERGY_LABELS: Record<EnergyRequired, string> = {
-  high: 'Haute énergie',
-  medium: 'Énergie moyenne',
-  low: 'Basse énergie',
+  high: "Haute énergie",
+  medium: "Énergie moyenne",
+  low: "Basse énergie",
 };
 
 export const TIME_OF_DAY_LABELS: Record<TimeOfDay, string> = {
-  morning: 'Matin',
-  midday: 'Midi',
-  afternoon: 'Après-midi',
-  evening: 'Soir',
+  morning: "Matin",
+  midday: "Midi",
+  afternoon: "Après-midi",
+  evening: "Soir",
 };

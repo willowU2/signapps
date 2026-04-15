@@ -32,47 +32,58 @@ function runDomAudit(): AuditResult[] {
       rule: "Image alt text missing (WCAG 1.1.1)",
       severity: "error",
       element: serializeElement(el),
-      fixSuggestion: 'Add alt="descriptive text" or alt="" for decorative images',
+      fixSuggestion:
+        'Add alt="descriptive text" or alt="" for decorative images',
     });
   });
 
   // 2. Buttons without accessible label
-  document.querySelectorAll("button:not([aria-label]):not([aria-labelledby])").forEach((el) => {
-    const text = el.textContent?.trim();
-    if (!text) {
-      results.push({
-        id: String(++idx),
-        rule: "Button has no accessible label (WCAG 4.1.2)",
-        severity: "error",
-        element: serializeElement(el),
-        fixSuggestion: "Add aria-label or visible text content to the button",
-      });
-    }
-  });
+  document
+    .querySelectorAll("button:not([aria-label]):not([aria-labelledby])")
+    .forEach((el) => {
+      const text = el.textContent?.trim();
+      if (!text) {
+        results.push({
+          id: String(++idx),
+          rule: "Button has no accessible label (WCAG 4.1.2)",
+          severity: "error",
+          element: serializeElement(el),
+          fixSuggestion: "Add aria-label or visible text content to the button",
+        });
+      }
+    });
 
   // 3. Inputs without a label (not hidden, not submit/button/image)
-  const labelledInputTypes = new Set(["submit", "button", "image", "hidden", "reset"]);
-  document.querySelectorAll("input:not([aria-label]):not([aria-labelledby])").forEach((el) => {
-    const input = el as HTMLInputElement;
-    if (labelledInputTypes.has(input.type)) return;
-    // Check if a <label> references this input by id
-    const id = input.id;
-    if (id && document.querySelector(`label[for="${id}"]`)) return;
-    // Check if input is wrapped in a label
-    if (input.closest("label")) return;
-    results.push({
-      id: String(++idx),
-      rule: "Form input has no label (WCAG 1.3.1)",
-      severity: "error",
-      element: serializeElement(el),
-      fixSuggestion: `Add <label for="${input.id || "input-id"}"> or aria-label to the input`,
+  const labelledInputTypes = new Set([
+    "submit",
+    "button",
+    "image",
+    "hidden",
+    "reset",
+  ]);
+  document
+    .querySelectorAll("input:not([aria-label]):not([aria-labelledby])")
+    .forEach((el) => {
+      const input = el as HTMLInputElement;
+      if (labelledInputTypes.has(input.type)) return;
+      // Check if a <label> references this input by id
+      const id = input.id;
+      if (id && document.querySelector(`label[for="${id}"]`)) return;
+      // Check if input is wrapped in a label
+      if (input.closest("label")) return;
+      results.push({
+        id: String(++idx),
+        rule: "Form input has no label (WCAG 1.3.1)",
+        severity: "error",
+        element: serializeElement(el),
+        fixSuggestion: `Add <label for="${input.id || "input-id"}"> or aria-label to the input`,
+      });
     });
-  });
 
   // 4. Heading hierarchy — detect skipped levels (h1→h3, h2→h4, etc.)
-  const headings = Array.from(document.querySelectorAll("h1,h2,h3,h4,h5,h6")).map(
-    (h) => parseInt(h.tagName[1], 10)
-  );
+  const headings = Array.from(
+    document.querySelectorAll("h1,h2,h3,h4,h5,h6"),
+  ).map((h) => parseInt(h.tagName[1], 10));
   for (let i = 1; i < headings.length; i++) {
     if (headings[i] - headings[i - 1] > 1) {
       results.push({
@@ -111,10 +122,13 @@ export default function WcagChecker() {
       const auditResults = runDomAudit();
       setResults(auditResults);
       const errors = auditResults.filter((r) => r.severity === "error").length;
-      const warnings = auditResults.filter((r) => r.severity === "warning").length;
+      const warnings = auditResults.filter(
+        (r) => r.severity === "warning",
+      ).length;
       const total = auditResults.filter((r) => r.id !== "ok").length;
       // Score: start at 100, deduct 10 per error, 5 per warning (min 0)
-      const score = total === 0 ? 100 : Math.max(0, 100 - errors * 10 - warnings * 5);
+      const score =
+        total === 0 ? 100 : Math.max(0, 100 - errors * 10 - warnings * 5);
       setComplianceScore(score);
       setIsScanning(false);
     }, 0);
@@ -131,7 +145,9 @@ export default function WcagChecker() {
 
       {results.length > 0 && (
         <div className="bg-blue-50 p-4 rounded-lg">
-          <p className="text-sm font-medium">Compliance Score: {complianceScore}%</p>
+          <p className="text-sm font-medium">
+            Compliance Score: {complianceScore}%
+          </p>
           <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
             <div
               className="bg-blue-600 h-2 rounded-full transition-all"
@@ -165,8 +181,12 @@ export default function WcagChecker() {
               )}
               <div className="flex-1">
                 <p className="font-medium text-sm">{result.rule}</p>
-                <p className="text-xs text-muted-foreground mt-1">Element: {result.element}</p>
-                <p className="text-xs text-muted-foreground mt-1">Fix: {result.fixSuggestion}</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Element: {result.element}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Fix: {result.fixSuggestion}
+                </p>
               </div>
             </div>
           </div>

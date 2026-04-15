@@ -8,33 +8,20 @@
 // Metric Types
 // ============================================================================
 
-export type MetricType =
-  | 'counter'
-  | 'gauge'
-  | 'histogram'
-  | 'summary';
+export type MetricType = "counter" | "gauge" | "histogram" | "summary";
 
 export type MetricCategory =
-  | 'document'
-  | 'editor'
-  | 'conversion'
-  | 'cache'
-  | 'sync'
-  | 'performance'
-  | 'error';
+  | "document"
+  | "editor"
+  | "conversion"
+  | "cache"
+  | "sync"
+  | "performance"
+  | "error";
 
-export type TimeRange =
-  | '1h'
-  | '6h'
-  | '24h'
-  | '7d'
-  | '30d';
+export type TimeRange = "1h" | "6h" | "24h" | "7d" | "30d";
 
-export type Granularity =
-  | 'minute'
-  | 'hour'
-  | 'day'
-  | 'week';
+export type Granularity = "minute" | "hour" | "day" | "week";
 
 // ============================================================================
 // Metrics
@@ -122,7 +109,7 @@ export interface OfficeMetricsSummary {
 }
 
 export interface DocumentTypeBreakdown {
-  type: 'document' | 'spreadsheet' | 'presentation' | 'form';
+  type: "document" | "spreadsheet" | "presentation" | "form";
   count: number;
   percentage: number;
   trend: number; // percentage change
@@ -144,25 +131,25 @@ export interface UserActivityMetrics {
 // Events
 // ============================================================================
 
-export type EventSeverity = 'info' | 'warning' | 'error' | 'critical';
+export type EventSeverity = "info" | "warning" | "error" | "critical";
 
 export type EventType =
-  | 'document_created'
-  | 'document_edited'
-  | 'document_deleted'
-  | 'document_exported'
-  | 'conversion_started'
-  | 'conversion_completed'
-  | 'conversion_failed'
-  | 'sync_started'
-  | 'sync_completed'
-  | 'sync_conflict'
-  | 'cache_miss'
-  | 'cache_eviction'
-  | 'error_occurred'
-  | 'performance_degraded'
-  | 'quota_warning'
-  | 'quota_exceeded';
+  | "document_created"
+  | "document_edited"
+  | "document_deleted"
+  | "document_exported"
+  | "conversion_started"
+  | "conversion_completed"
+  | "conversion_failed"
+  | "sync_started"
+  | "sync_completed"
+  | "sync_conflict"
+  | "cache_miss"
+  | "cache_eviction"
+  | "error_occurred"
+  | "performance_degraded"
+  | "quota_warning"
+  | "quota_exceeded";
 
 export interface MonitoringEvent {
   id: string;
@@ -201,7 +188,7 @@ export interface EventFilter {
 // Alerts
 // ============================================================================
 
-export type AlertStatus = 'active' | 'resolved' | 'silenced';
+export type AlertStatus = "active" | "resolved" | "silenced";
 
 export interface AlertRule {
   id: string;
@@ -211,7 +198,7 @@ export interface AlertRule {
 
   // Condition
   metric: string;
-  operator: 'gt' | 'gte' | 'lt' | 'lte' | 'eq' | 'ne';
+  operator: "gt" | "gte" | "lt" | "lte" | "eq" | "ne";
   threshold: number;
   duration: number; // seconds
 
@@ -245,7 +232,7 @@ export interface Alert {
 // Health Check
 // ============================================================================
 
-export type HealthStatus = 'healthy' | 'degraded' | 'unhealthy';
+export type HealthStatus = "healthy" | "degraded" | "unhealthy";
 
 export interface HealthCheck {
   component: string;
@@ -285,7 +272,7 @@ export interface GetEventsParams {
   filter?: EventFilter;
   limit?: number;
   offset?: number;
-  sortOrder?: 'asc' | 'desc';
+  sortOrder?: "asc" | "desc";
 }
 
 export interface GetEventsResponse {
@@ -299,64 +286,64 @@ export interface GetEventsResponse {
 // ============================================================================
 
 export const EVENT_SEVERITY_LABELS: Record<EventSeverity, string> = {
-  info: 'Info',
-  warning: 'Avertissement',
-  error: 'Erreur',
-  critical: 'Critique',
+  info: "Info",
+  warning: "Avertissement",
+  error: "Erreur",
+  critical: "Critique",
 };
 
 export const EVENT_SEVERITY_COLORS: Record<EventSeverity, string> = {
-  info: 'bg-blue-100 text-blue-800',
-  warning: 'bg-yellow-100 text-yellow-800',
-  error: 'bg-red-100 text-red-800',
-  critical: 'bg-red-200 text-red-900',
+  info: "bg-blue-100 text-blue-800",
+  warning: "bg-yellow-100 text-yellow-800",
+  error: "bg-red-100 text-red-800",
+  critical: "bg-red-200 text-red-900",
 };
 
 export const EVENT_TYPE_LABELS: Record<EventType, string> = {
-  document_created: 'Document créé',
-  document_edited: 'Document modifié',
-  document_deleted: 'Document supprimé',
-  document_exported: 'Document exporté',
-  conversion_started: 'Conversion démarrée',
-  conversion_completed: 'Conversion terminée',
-  conversion_failed: 'Conversion échouée',
-  sync_started: 'Sync démarrée',
-  sync_completed: 'Sync terminée',
-  sync_conflict: 'Conflit de sync',
-  cache_miss: 'Cache miss',
-  cache_eviction: 'Éviction cache',
-  error_occurred: 'Erreur',
-  performance_degraded: 'Performance dégradée',
-  quota_warning: 'Quota bientôt atteint',
-  quota_exceeded: 'Quota dépassé',
+  document_created: "Document créé",
+  document_edited: "Document modifié",
+  document_deleted: "Document supprimé",
+  document_exported: "Document exporté",
+  conversion_started: "Conversion démarrée",
+  conversion_completed: "Conversion terminée",
+  conversion_failed: "Conversion échouée",
+  sync_started: "Sync démarrée",
+  sync_completed: "Sync terminée",
+  sync_conflict: "Conflit de sync",
+  cache_miss: "Cache miss",
+  cache_eviction: "Éviction cache",
+  error_occurred: "Erreur",
+  performance_degraded: "Performance dégradée",
+  quota_warning: "Quota bientôt atteint",
+  quota_exceeded: "Quota dépassé",
 };
 
 export const HEALTH_STATUS_LABELS: Record<HealthStatus, string> = {
-  healthy: 'Opérationnel',
-  degraded: 'Dégradé',
-  unhealthy: 'Hors service',
+  healthy: "Opérationnel",
+  degraded: "Dégradé",
+  unhealthy: "Hors service",
 };
 
 export const HEALTH_STATUS_COLORS: Record<HealthStatus, string> = {
-  healthy: 'bg-green-100 text-green-800',
-  degraded: 'bg-yellow-100 text-yellow-800',
-  unhealthy: 'bg-red-100 text-red-800',
+  healthy: "bg-green-100 text-green-800",
+  degraded: "bg-yellow-100 text-yellow-800",
+  unhealthy: "bg-red-100 text-red-800",
 };
 
 export const TIME_RANGE_LABELS: Record<TimeRange, string> = {
-  '1h': 'Dernière heure',
-  '6h': '6 dernières heures',
-  '24h': 'Dernières 24h',
-  '7d': '7 derniers jours',
-  '30d': '30 derniers jours',
+  "1h": "Dernière heure",
+  "6h": "6 dernières heures",
+  "24h": "Dernières 24h",
+  "7d": "7 derniers jours",
+  "30d": "30 derniers jours",
 };
 
 export const METRIC_CATEGORY_LABELS: Record<MetricCategory, string> = {
-  document: 'Documents',
-  editor: 'Éditeur',
-  conversion: 'Conversion',
-  cache: 'Cache',
-  sync: 'Synchronisation',
-  performance: 'Performance',
-  error: 'Erreurs',
+  document: "Documents",
+  editor: "Éditeur",
+  conversion: "Conversion",
+  cache: "Cache",
+  sync: "Synchronisation",
+  performance: "Performance",
+  error: "Erreurs",
 };

@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
+import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Usb,
   Server,
@@ -14,14 +14,14 @@ import {
   Power,
   MoreVertical,
   Unplug,
-} from 'lucide-react';
+} from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import type { ExternalStorage } from '@/lib/api';
+} from "@/components/ui/dropdown-menu";
+import type { ExternalStorage } from "@/lib/api";
 
 interface ExternalListProps {
   storages: ExternalStorage[];
@@ -33,9 +33,9 @@ interface ExternalListProps {
 }
 
 function formatBytes(bytes?: number): string {
-  if (!bytes) return '-';
+  if (!bytes) return "-";
   const k = 1024;
-  const sizes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB'];
+  const sizes = ["B", "KB", "MB", "GB", "TB", "PB"];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
 }
@@ -62,14 +62,14 @@ export function ExternalList({
 
   const getTypeIcon = (type: string) => {
     switch (type) {
-      case 'usb':
+      case "usb":
         return <Usb className="h-5 w-5 text-orange-500" />;
-      case 'nas':
-      case 'smb':
-      case 'nfs':
+      case "nas":
+      case "smb":
+      case "nfs":
         return <Server className="h-5 w-5 text-blue-500" />;
-      case 's3':
-      case 'cloud':
+      case "s3":
+      case "cloud":
         return <Cloud className="h-5 w-5 text-purple-500" />;
       default:
         return <Server className="h-5 w-5" />;
@@ -77,17 +77,21 @@ export function ExternalList({
   };
 
   const getStatusBadge = (status: string) => {
-    const variants: Record<string, 'default' | 'secondary' | 'destructive'> = {
-      connected: 'default',
-      disconnected: 'secondary',
-      mounting: 'secondary',
-      error: 'destructive',
+    const variants: Record<string, "default" | "secondary" | "destructive"> = {
+      connected: "default",
+      disconnected: "secondary",
+      mounting: "secondary",
+      error: "destructive",
     };
     return (
-      <Badge variant={variants[status] || 'secondary'} className="capitalize">
-        {status === 'connected' ? 'Connecté' :
-         status === 'disconnected' ? 'Déconnecté' :
-         status === 'mounting' ? 'Montage...' : 'Erreur'}
+      <Badge variant={variants[status] || "secondary"} className="capitalize">
+        {status === "connected"
+          ? "Connecté"
+          : status === "disconnected"
+            ? "Déconnecté"
+            : status === "mounting"
+              ? "Montage..."
+              : "Erreur"}
       </Badge>
     );
   };
@@ -114,8 +118,15 @@ export function ExternalList({
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>Stockages Externes ({storages.length})</CardTitle>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={handleDetect} disabled={detecting}>
-            <RefreshCw className={`mr-2 h-4 w-4 ${detecting ? 'animate-spin' : ''}`} />
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleDetect}
+            disabled={detecting}
+          >
+            <RefreshCw
+              className={`mr-2 h-4 w-4 ${detecting ? "animate-spin" : ""}`}
+            />
             Détecter
           </Button>
           <Button size="sm" onClick={onConnect}>
@@ -159,14 +170,14 @@ export function ExternalList({
                     </Badge>
                   </div>
                   <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground">
-                    {storage.mount_point && (
-                      <span>{storage.mount_point}</span>
-                    )}
+                    {storage.mount_point && <span>{storage.mount_point}</span>}
                     {storage.size_bytes && (
                       <span>{formatBytes(storage.size_bytes)}</span>
                     )}
                     {storage.error_message && (
-                      <span className="text-red-500">{storage.error_message}</span>
+                      <span className="text-red-500">
+                        {storage.error_message}
+                      </span>
                     )}
                   </div>
                 </div>
@@ -177,12 +188,14 @@ export function ExternalList({
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    {storage.status === 'connected' && storage.type === 'usb' && onEject && (
-                      <DropdownMenuItem onClick={() => onEject(storage.id)}>
-                        <Power className="mr-2 h-4 w-4" />
-                        Éjecter
-                      </DropdownMenuItem>
-                    )}
+                    {storage.status === "connected" &&
+                      storage.type === "usb" &&
+                      onEject && (
+                        <DropdownMenuItem onClick={() => onEject(storage.id)}>
+                          <Power className="mr-2 h-4 w-4" />
+                          Éjecter
+                        </DropdownMenuItem>
+                      )}
                     {onDisconnect && (
                       <DropdownMenuItem
                         onClick={() => onDisconnect(storage.id)}

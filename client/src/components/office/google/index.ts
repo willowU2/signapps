@@ -5,7 +5,7 @@
  */
 
 // Components
-export { GoogleDriveBrowser } from './google-drive-browser';
+export { GoogleDriveBrowser } from "./google-drive-browser";
 
 // Types
 export type {
@@ -22,7 +22,7 @@ export type {
   ExportToGoogleRequest,
   ExportToGoogleResponse,
   GoogleIntegrationSettings,
-} from '@/lib/office/google/types';
+} from "@/lib/office/google/types";
 
 // Constants
 export {
@@ -30,10 +30,10 @@ export {
   SYNC_STATUS_LABELS,
   SYNC_STATUS_COLORS,
   DEFAULT_GOOGLE_SETTINGS,
-} from '@/lib/office/google/types';
+} from "@/lib/office/google/types";
 
 // API
-export { googleApi } from '@/lib/office/google/api';
+export { googleApi } from "@/lib/office/google/api";
 
 // Store
-export { useGoogleStore } from '@/stores/google-store';
+export { useGoogleStore } from "@/stores/google-store";

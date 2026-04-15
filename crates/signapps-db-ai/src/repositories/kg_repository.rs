@@ -6,9 +6,9 @@
 use crate::models::kg::{
     CreateRelation, EntityWithNeighbors, KgCommunity, KgEntity, KgRelation, KgStats, UpsertEntity,
 };
-use signapps_db_shared::DatabasePool;
 use pgvector::Vector;
 use signapps_common::{Error, Result};
+use signapps_db_shared::DatabasePool;
 use uuid::Uuid;
 
 type EntityRow = (

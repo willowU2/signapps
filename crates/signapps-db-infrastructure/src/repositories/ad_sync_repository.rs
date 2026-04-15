@@ -253,14 +253,13 @@ impl AdOuRepository {
         domain_id: Uuid,
         node_id: Uuid,
     ) -> Result<Option<AdOu>> {
-        let ou = sqlx::query_as::<_, AdOu>(
-            "SELECT * FROM ad_ous WHERE domain_id = $1 AND node_id = $2",
-        )
-        .bind(domain_id)
-        .bind(node_id)
-        .fetch_optional(pool)
-        .await
-        .map_err(|e| Error::Database(e.to_string()))?;
+        let ou =
+            sqlx::query_as::<_, AdOu>("SELECT * FROM ad_ous WHERE domain_id = $1 AND node_id = $2")
+                .bind(domain_id)
+                .bind(node_id)
+                .fetch_optional(pool)
+                .await
+                .map_err(|e| Error::Database(e.to_string()))?;
 
         Ok(ou)
     }

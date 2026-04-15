@@ -240,12 +240,11 @@ pub async fn create_reservation(
     Json(payload): Json<CreateResourceReservation>,
 ) -> Result<(StatusCode, Json<ResourceReservation>)> {
     // Verify resource exists and is available
-    let resource =
-        ResourceBookingRepository::find_item_by_id(&state.pool, payload.resource_id)
-            .await?
-            .ok_or_else(|| {
-                signapps_common::Error::NotFound(format!("Resource {}", payload.resource_id))
-            })?;
+    let resource = ResourceBookingRepository::find_item_by_id(&state.pool, payload.resource_id)
+        .await?
+        .ok_or_else(|| {
+            signapps_common::Error::NotFound(format!("Resource {}", payload.resource_id))
+        })?;
 
     if !resource.available {
         return Err(signapps_common::Error::BadRequest(
@@ -261,8 +260,7 @@ pub async fn create_reservation(
     }
 
     let reservation =
-        ResourceBookingRepository::create_reservation(&state.pool, claims.sub, payload)
-            .await?;
+        ResourceBookingRepository::create_reservation(&state.pool, claims.sub, payload).await?;
     tracing::info!(
         reservation_id = %reservation.id,
         resource_id = %reservation.resource_id,
@@ -323,8 +321,7 @@ pub async fn list_my_reservations(
     Extension(claims): Extension<Claims>,
 ) -> Result<Json<Vec<ResourceReservation>>> {
     let reservations =
-        ResourceBookingRepository::list_reservations_for_user(&state.pool, claims.sub)
-            .await?;
+        ResourceBookingRepository::list_reservations_for_user(&state.pool, claims.sub).await?;
     Ok(Json(reservations))
 }
 

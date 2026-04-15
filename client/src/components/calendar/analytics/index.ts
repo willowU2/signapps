@@ -9,4 +9,4 @@ export {
   analyzeTimeUsage,
   computeDailyStats,
   generateInsights,
-} from './AnalyticsDashboard';
+} from "./AnalyticsDashboard";

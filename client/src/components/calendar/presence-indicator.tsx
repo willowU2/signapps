@@ -3,16 +3,20 @@
  * Displays active users, their status, and what they're editing
  */
 
-import React from 'react';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { Users, Edit3, Eye, Clock } from 'lucide-react';
+import React from "react";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { Users, Edit3, Eye, Clock } from "lucide-react";
 
 interface PresenceUser {
   user_id: string;
   username: string;
-  status: 'join' | 'leave' | 'viewing' | 'editing' | 'idle';
+  status: "join" | "leave" | "viewing" | "editing" | "idle";
   editing_item_id?: string;
   timestamp: number;
 }
@@ -27,18 +31,18 @@ interface PresenceIndicatorProps {
  */
 function getStatusLabel(status: string, editingItemId?: string): string {
   switch (status) {
-    case 'viewing':
-      return 'Viewing';
-    case 'editing':
-      return editingItemId ? `Editing...` : 'Editing';
-    case 'idle':
-      return 'Idle';
-    case 'join':
-      return 'Joined';
-    case 'leave':
-      return 'Left';
+    case "viewing":
+      return "Viewing";
+    case "editing":
+      return editingItemId ? `Editing...` : "Editing";
+    case "idle":
+      return "Idle";
+    case "join":
+      return "Joined";
+    case "leave":
+      return "Left";
     default:
-      return 'Online';
+      return "Online";
   }
 }
 
@@ -47,17 +51,17 @@ function getStatusLabel(status: string, editingItemId?: string): string {
  */
 function getStatusColor(status: string): string {
   switch (status) {
-    case 'viewing':
-      return 'bg-blue-500';
-    case 'editing':
-      return 'bg-yellow-500';
-    case 'idle':
-      return 'bg-gray-400';
-    case 'join':
-    case 'leave':
-      return 'bg-green-500';
+    case "viewing":
+      return "bg-blue-500";
+    case "editing":
+      return "bg-yellow-500";
+    case "idle":
+      return "bg-gray-400";
+    case "join":
+    case "leave":
+      return "bg-green-500";
     default:
-      return 'bg-gray-300';
+      return "bg-gray-300";
   }
 }
 
@@ -66,11 +70,11 @@ function getStatusColor(status: string): string {
  */
 function getStatusIcon(status: string) {
   switch (status) {
-    case 'viewing':
+    case "viewing":
       return <Eye className="h-3 w-3" />;
-    case 'editing':
+    case "editing":
       return <Edit3 className="h-3 w-3" />;
-    case 'idle':
+    case "idle":
       return <Clock className="h-3 w-3" />;
     default:
       return null;
@@ -82,9 +86,9 @@ function getStatusIcon(status: string) {
  */
 function getUserInitials(username: string): string {
   return username
-    .split(' ')
+    .split(" ")
     .map((n) => n[0])
-    .join('')
+    .join("")
     .toUpperCase()
     .slice(0, 2);
 }
@@ -104,7 +108,7 @@ function PresenceUserBadge({
   const statusIcon = getStatusIcon(user.status);
 
   const tooltip = `${user.username} - ${statusLabel}${
-    user.editing_item_id ? ` (${user.editing_item_id})` : ''
+    user.editing_item_id ? ` (${user.editing_item_id})` : ""
   }`;
 
   return (
@@ -138,16 +142,19 @@ function PresenceUserBadge({
 /**
  * Main presence indicator component
  */
-export function PresenceIndicator({ users, currentUserId }: PresenceIndicatorProps) {
+export function PresenceIndicator({
+  users,
+  currentUserId,
+}: PresenceIndicatorProps) {
   // Filter out left users
-  const activeUsers = users.filter((u) => u.status !== 'leave');
+  const activeUsers = users.filter((u) => u.status !== "leave");
 
   if (activeUsers.length === 0) {
     return null;
   }
 
-  const editingUsers = activeUsers.filter((u) => u.status === 'editing');
-  const viewingUsers = activeUsers.filter((u) => u.status === 'viewing');
+  const editingUsers = activeUsers.filter((u) => u.status === "editing");
+  const viewingUsers = activeUsers.filter((u) => u.status === "viewing");
 
   return (
     <div className="flex items-center gap-3 rounded-lg bg-gradient-to-r from-blue-50 to-indigo-50 px-3 py-2 dark:from-blue-950/30 dark:to-indigo-950/30">
@@ -204,7 +211,7 @@ export function CompactPresenceIndicator({
   users,
   currentUserId,
 }: PresenceIndicatorProps) {
-  const activeUsers = users.filter((u) => u.status !== 'leave');
+  const activeUsers = users.filter((u) => u.status !== "leave");
 
   if (activeUsers.length === 0) {
     return null;
@@ -224,11 +231,11 @@ export function CompactPresenceIndicator({
         <div className="space-y-1">
           {activeUsers.map((user) => (
             <div key={user.user_id} className="text-xs">
-              {user.username}{' '}
+              {user.username}{" "}
               <span className="text-muted-foreground">
                 ({getStatusLabel(user.status)})
               </span>
-              {user.user_id === currentUserId && ' (you)'}
+              {user.user_id === currentUserId && " (you)"}
             </div>
           ))}
         </div>
@@ -248,7 +255,7 @@ export function ItemEditingIndicator({
   itemId: string;
 }) {
   const editingUsers = users.filter(
-    (u) => u.status === 'editing' && u.editing_item_id === itemId
+    (u) => u.status === "editing" && u.editing_item_id === itemId,
   );
 
   if (editingUsers.length === 0) {
@@ -259,7 +266,7 @@ export function ItemEditingIndicator({
     <div className="flex items-center gap-2 rounded bg-yellow-50 px-2 py-1 text-xs dark:bg-yellow-950/30">
       <Edit3 className="h-3 w-3 text-yellow-600 dark:text-yellow-400" />
       <span className="text-yellow-700 dark:text-yellow-300">
-        {editingUsers.map((u) => u.username).join(', ')} editing...
+        {editingUsers.map((u) => u.username).join(", ")} editing...
       </span>
     </div>
   );

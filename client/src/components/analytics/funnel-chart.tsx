@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import React from 'react';
+import React from "react";
 
 interface FunnelStep {
   id: string;
@@ -15,15 +15,15 @@ interface FunnelChartProps {
 
 const FunnelChart: React.FC<FunnelChartProps> = ({
   steps: customSteps,
-  title = 'Conversion Funnel',
+  title = "Conversion Funnel",
 }) => {
   // Default sample data
   const defaultSteps: FunnelStep[] = [
-    { id: 'visitors', label: 'Visitors', count: 10000 },
-    { id: 'signup', label: 'Sign Up', count: 7500 },
-    { id: 'active', label: 'Active Users', count: 4200 },
-    { id: 'premium', label: 'Premium Users', count: 1800 },
-    { id: 'retained', label: '90d Retained', count: 950 },
+    { id: "visitors", label: "Visitors", count: 10000 },
+    { id: "signup", label: "Sign Up", count: 7500 },
+    { id: "active", label: "Active Users", count: 4200 },
+    { id: "premium", label: "Premium Users", count: 1800 },
+    { id: "retained", label: "90d Retained", count: 950 },
   ];
 
   const steps = customSteps || defaultSteps;
@@ -119,10 +119,9 @@ const FunnelChart: React.FC<FunnelChartProps> = ({
           <div>
             <p className="text-xs text-muted-foreground">Overall Conversion</p>
             <p className="text-lg font-bold text-foreground">
-              {(
-                (steps[steps.length - 1].count / steps[0].count) *
-                100
-              ).toFixed(1)}
+              {((steps[steps.length - 1].count / steps[0].count) * 100).toFixed(
+                1,
+              )}
               %
             </p>
           </div>

@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { SpinnerInfinity } from 'spinners-react';
+import { SpinnerInfinity } from "spinners-react";
 
 /**
  * Quick Search Component
@@ -8,13 +8,23 @@ import { SpinnerInfinity } from 'spinners-react';
  * Lightweight search component for instant results in the command palette.
  */
 
-import * as React from 'react';
-import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
-import { Search, Calendar, CheckSquare, Building, Clock, ArrowRight } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { useQuickSearch } from '@/lib/scheduling/hooks/use-schedule-search';
-import type { ScheduleBlock, BlockType } from '@/lib/scheduling/types/scheduling';
+import * as React from "react";
+import { format } from "date-fns";
+import { fr } from "date-fns/locale";
+import {
+  Search,
+  Calendar,
+  CheckSquare,
+  Building,
+  Clock,
+  ArrowRight,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { useQuickSearch } from "@/lib/scheduling/hooks/use-schedule-search";
+import type {
+  ScheduleBlock,
+  BlockType,
+} from "@/lib/scheduling/types/scheduling";
 
 // ============================================================================
 // Types
@@ -58,7 +68,7 @@ const TYPE_ICONS: Record<BlockType, React.ElementType> = {
 export function QuickSearch({
   onSelect,
   onOpenFullSearch,
-  placeholder = 'Rechercher...',
+  placeholder = "Rechercher...",
   className,
 }: QuickSearchProps) {
   const inputRef = React.useRef<HTMLInputElement>(null);
@@ -82,15 +92,15 @@ export function QuickSearch({
     if (!showResults) return;
 
     switch (e.key) {
-      case 'ArrowDown':
+      case "ArrowDown":
         e.preventDefault();
         setSelectedIndex((i) => Math.min(i + 1, results.length - 1));
         break;
-      case 'ArrowUp':
+      case "ArrowUp":
         e.preventDefault();
         setSelectedIndex((i) => Math.max(i - 1, -1));
         break;
-      case 'Enter':
+      case "Enter":
         e.preventDefault();
         if (selectedIndex >= 0 && results[selectedIndex]) {
           onSelect(results[selectedIndex].block);
@@ -100,7 +110,7 @@ export function QuickSearch({
           onOpenFullSearch();
         }
         break;
-      case 'Escape':
+      case "Escape":
         clear();
         setIsFocused(false);
         inputRef.current?.blur();
@@ -109,7 +119,7 @@ export function QuickSearch({
   };
 
   return (
-    <div className={cn('relative', className)}>
+    <div className={cn("relative", className)}>
       <QuickSearchInput
         value={query}
         onChange={setQuery}
@@ -130,7 +140,13 @@ export function QuickSearch({
         >
           {isLoading && (
             <div className="flex items-center justify-center p-4 text-sm text-muted-foreground">
-              <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-4 w-4  mr-2" />
+              <SpinnerInfinity
+                size={24}
+                secondaryColor="rgba(128,128,128,0.2)"
+                color="currentColor"
+                speed={120}
+                className="h-4 w-4  mr-2"
+              />
               Recherche...
             </div>
           )}
@@ -156,13 +172,15 @@ export function QuickSearch({
                       clear();
                     }}
                     className={cn(
-                      'w-full px-3 py-2 flex items-center gap-3 text-left hover:bg-muted/50',
-                      index === selectedIndex && 'bg-muted'
+                      "w-full px-3 py-2 flex items-center gap-3 text-left hover:bg-muted/50",
+                      index === selectedIndex && "bg-muted",
                     )}
                   >
                     <TypeIcon className="h-4 w-4 text-muted-foreground shrink-0" />
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{block.title}</p>
+                      <p className="text-sm font-medium truncate">
+                        {block.title}
+                      </p>
                       <p className="text-xs text-muted-foreground flex items-center gap-1">
                         <Clock className="h-3 w-3" />
                         {format(new Date(block.start), "d MMM 'à' HH:mm", {
@@ -201,14 +219,14 @@ export function QuickSearch({
 export function QuickSearchInput({
   value,
   onChange,
-  placeholder = 'Rechercher...',
+  placeholder = "Rechercher...",
   className,
   onFocus,
   onBlur,
   inputRef,
 }: QuickSearchInputProps) {
   return (
-    <div className={cn('relative', className)}>
+    <div className={cn("relative", className)}>
       <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
       <input
         ref={inputRef}
@@ -219,10 +237,10 @@ export function QuickSearchInput({
         onFocus={onFocus}
         onBlur={onBlur}
         className={cn(
-          'w-full h-9 pl-9 pr-3 rounded-md border bg-transparent',
-          'text-sm placeholder:text-muted-foreground',
-          'focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1',
-          className
+          "w-full h-9 pl-9 pr-3 rounded-md border bg-transparent",
+          "text-sm placeholder:text-muted-foreground",
+          "focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1",
+          className,
         )}
       />
     </div>
@@ -241,7 +259,7 @@ interface SearchTriggerProps {
 
 export function SearchTrigger({
   onClick,
-  shortcut = '⌘K',
+  shortcut = "⌘K",
   className,
 }: SearchTriggerProps) {
   return (
@@ -249,9 +267,9 @@ export function SearchTrigger({
       type="button"
       onClick={onClick}
       className={cn(
-        'flex items-center gap-2 px-3 h-9 rounded-md border bg-muted/30',
-        'text-sm text-muted-foreground hover:bg-muted/50 transition-colors',
-        className
+        "flex items-center gap-2 px-3 h-9 rounded-md border bg-muted/30",
+        "text-sm text-muted-foreground hover:bg-muted/50 transition-colors",
+        className,
       )}
     >
       <Search className="h-4 w-4" />

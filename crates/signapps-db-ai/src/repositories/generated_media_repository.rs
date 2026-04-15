@@ -1,8 +1,8 @@
 //! Repository for AI-generated media persistence.
 
 use crate::models::generated_media::GeneratedMedia;
-use signapps_db_shared::DatabasePool;
 use signapps_common::{Error, Result};
+use signapps_db_shared::DatabasePool;
 use uuid::Uuid;
 
 /// Repository for generated media CRUD operations.

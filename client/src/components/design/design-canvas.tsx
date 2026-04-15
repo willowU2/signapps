@@ -91,14 +91,24 @@ export default function DesignCanvas({ fabricCanvasRef }: DesignCanvasProps) {
       fabricCanvasRef.current = canvas;
 
       // Selection handling
-      canvas.on("selection:created", (e: { selected?: FabricCanvasObject[] }) => {
-        const ids = (e.selected || []).map((o) => o.id).filter((id): id is string => Boolean(id));
-        setSelectedObjects(ids);
-      });
-      canvas.on("selection:updated", (e: { selected?: FabricCanvasObject[] }) => {
-        const ids = (e.selected || []).map((o) => o.id).filter((id): id is string => Boolean(id));
-        setSelectedObjects(ids);
-      });
+      canvas.on(
+        "selection:created",
+        (e: { selected?: FabricCanvasObject[] }) => {
+          const ids = (e.selected || [])
+            .map((o) => o.id)
+            .filter((id): id is string => Boolean(id));
+          setSelectedObjects(ids);
+        },
+      );
+      canvas.on(
+        "selection:updated",
+        (e: { selected?: FabricCanvasObject[] }) => {
+          const ids = (e.selected || [])
+            .map((o) => o.id)
+            .filter((id): id is string => Boolean(id));
+          setSelectedObjects(ids);
+        },
+      );
       canvas.on("selection:cleared", () => {
         setSelectedObjects([]);
       });
@@ -174,7 +184,9 @@ export default function DesignCanvas({ fabricCanvasRef }: DesignCanvasProps) {
       // Sync objects
       const canvasObjs = canvas.getObjects() as FabricCanvasObject[];
       const pageObjIds = new Set(page.objects.map((o) => o.id));
-      const canvasObjMap = new Map<string, FabricCanvasObject>(canvasObjs.map((o) => [o.id ?? '', o]));
+      const canvasObjMap = new Map<string, FabricCanvasObject>(
+        canvasObjs.map((o) => [o.id ?? "", o]),
+      );
 
       // Remove objects no longer in page
       canvasObjs.forEach((co) => {
@@ -193,13 +205,17 @@ export default function DesignCanvas({ fabricCanvasRef }: DesignCanvasProps) {
             evented: !obj.locked,
             visible: obj.visible,
           });
-          (existing as FabricCanvasObject & { moveTo?: (index: number) => void }).moveTo?.(idx);
+          (
+            existing as FabricCanvasObject & {
+              moveTo?: (index: number) => void;
+            }
+          ).moveTo?.(idx);
         }
       });
 
       canvas.requestRenderAll();
     });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page?.objects, page?.background, fabricCanvasRef]);
 
   // Keyboard shortcuts
@@ -243,7 +259,10 @@ export default function DesignCanvas({ fabricCanvasRef }: DesignCanvasProps) {
         useDesignStore.getState().undo();
       }
       // Ctrl+Y or Ctrl+Shift+Z redo
-      if ((e.ctrlKey || e.metaKey) && (e.key === "y" || (e.key === "z" && e.shiftKey))) {
+      if (
+        (e.ctrlKey || e.metaKey) &&
+        (e.key === "y" || (e.key === "z" && e.shiftKey))
+      ) {
         e.preventDefault();
         useDesignStore.getState().redo();
       }
@@ -252,16 +271,20 @@ export default function DesignCanvas({ fabricCanvasRef }: DesignCanvasProps) {
       if ((e.ctrlKey || e.metaKey) && e.key === "c") {
         const active = canvas.getActiveObject() as FabricCanvasObject | null;
         if (active) {
-          const cloned = await active.clone() as FabricCanvasObject;
-          (window as unknown as Record<string, FabricCanvasObject>).__designClipboard = cloned;
+          const cloned = (await active.clone()) as FabricCanvasObject;
+          (
+            window as unknown as Record<string, FabricCanvasObject>
+          ).__designClipboard = cloned;
         }
       }
 
       // Ctrl+V paste
       if ((e.ctrlKey || e.metaKey) && e.key === "v") {
-        const clipped = (window as unknown as Record<string, FabricCanvasObject>).__designClipboard;
+        const clipped = (
+          window as unknown as Record<string, FabricCanvasObject>
+        ).__designClipboard;
         if (clipped) {
-          const pasted = await clipped.clone() as FabricCanvasObject;
+          const pasted = (await clipped.clone()) as FabricCanvasObject;
           pasted.set({
             left: (pasted.left || 0) + 20,
             top: (pasted.top || 0) + 20,
@@ -272,7 +295,12 @@ export default function DesignCanvas({ fabricCanvasRef }: DesignCanvasProps) {
           canvas.requestRenderAll();
           const newObj: DesignObject = {
             id: pasted.id ?? crypto.randomUUID(),
-            type: pasted.type === "i-text" || pasted.type === "textbox" ? "text" : pasted.type === "image" ? "image" : "shape",
+            type:
+              pasted.type === "i-text" || pasted.type === "textbox"
+                ? "text"
+                : pasted.type === "image"
+                  ? "image"
+                  : "shape",
             name: `${pasted.type} copy`,
             fabricData: pasted.toObject(["id"]),
             locked: false,
@@ -289,9 +317,12 @@ export default function DesignCanvas({ fabricCanvasRef }: DesignCanvasProps) {
         if (active) {
           e.preventDefault();
           if (e.key === "ArrowUp") active.set("top", (active.top || 0) - nudge);
-          if (e.key === "ArrowDown") active.set("top", (active.top || 0) + nudge);
-          if (e.key === "ArrowLeft") active.set("left", (active.left || 0) - nudge);
-          if (e.key === "ArrowRight") active.set("left", (active.left || 0) + nudge);
+          if (e.key === "ArrowDown")
+            active.set("top", (active.top || 0) + nudge);
+          if (e.key === "ArrowLeft")
+            active.set("left", (active.left || 0) - nudge);
+          if (e.key === "ArrowRight")
+            active.set("left", (active.left || 0) + nudge);
           active.setCoords();
           canvas.requestRenderAll();
           if (active.id) {
@@ -315,7 +346,14 @@ export default function DesignCanvas({ fabricCanvasRef }: DesignCanvasProps) {
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
     };
-  }, [fabricCanvasRef, pushUndo, removeObject, updateObject, addObject, setSelectedObjects]);
+  }, [
+    fabricCanvasRef,
+    pushUndo,
+    removeObject,
+    updateObject,
+    addObject,
+    setSelectedObjects,
+  ]);
 
   // Pan with spacebar + mouse drag
   useEffect(() => {
@@ -369,7 +407,10 @@ export default function DesignCanvas({ fabricCanvasRef }: DesignCanvasProps) {
             orientation="horizontal"
             length={containerSize.w - RULER_SIZE}
             scale={totalScale}
-            offset={scrollPos.x + (containerSize.w - RULER_SIZE - canvasW * totalScale) / 2}
+            offset={
+              scrollPos.x +
+              (containerSize.w - RULER_SIZE - canvasW * totalScale) / 2
+            }
           />
         </div>
       )}
@@ -381,7 +422,10 @@ export default function DesignCanvas({ fabricCanvasRef }: DesignCanvasProps) {
             orientation="vertical"
             length={containerSize.h - RULER_SIZE}
             scale={totalScale}
-            offset={scrollPos.y + (containerSize.h - RULER_SIZE - canvasH * totalScale) / 2}
+            offset={
+              scrollPos.y +
+              (containerSize.h - RULER_SIZE - canvasH * totalScale) / 2
+            }
           />
         )}
 
@@ -403,18 +447,35 @@ export default function DesignCanvas({ fabricCanvasRef }: DesignCanvasProps) {
               onClick={() => setShowRulers((r) => !r)}
               title={showRulers ? "Hide rulers" : "Show rulers"}
             >
-              <Ruler className={`h-3.5 w-3.5 ${showRulers ? "text-primary" : ""}`} />
+              <Ruler
+                className={`h-3.5 w-3.5 ${showRulers ? "text-primary" : ""}`}
+              />
             </Button>
-            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleZoomOut}>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7"
+              onClick={handleZoomOut}
+            >
               <ZoomOut className="h-3.5 w-3.5" />
             </Button>
             <span className="text-xs font-medium w-12 text-center tabular-nums">
               {Math.round(totalScale * 100)}%
             </span>
-            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleZoomIn}>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7"
+              onClick={handleZoomIn}
+            >
               <ZoomIn className="h-3.5 w-3.5" />
             </Button>
-            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleZoomFit}>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7"
+              onClick={handleZoomFit}
+            >
               <Maximize className="h-3.5 w-3.5" />
             </Button>
           </div>
@@ -450,9 +511,11 @@ export default function DesignCanvas({ fabricCanvasRef }: DesignCanvasProps) {
 }
 
 function addFabricObject(
-  fabricModule: { util: { enlivenObjects: (objects: unknown[]) => Promise<fabric.Object[]> } },
+  fabricModule: {
+    util: { enlivenObjects: (objects: unknown[]) => Promise<fabric.Object[]> };
+  },
   canvas: fabric.Canvas,
-  obj: DesignObject
+  obj: DesignObject,
 ) {
   if (obj.fabricData && Object.keys(obj.fabricData).length > 0) {
     fabricModule.util.enlivenObjects([obj.fabricData]).then((enlivened) => {

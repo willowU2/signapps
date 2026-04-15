@@ -1,30 +1,45 @@
-'use client';
+"use client";
 
-import { SpinnerInfinity } from 'spinners-react';
+import { SpinnerInfinity } from "spinners-react";
 
-import { useState, useCallback, useEffect } from 'react';
-import { ChevronRight, ChevronDown, MoreHorizontal, Plus, Edit, Trash2, Users, Building2, MapPin, Briefcase, UserCircle } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { useState, useCallback, useEffect } from "react";
+import {
+  ChevronRight,
+  ChevronDown,
+  MoreHorizontal,
+  Plus,
+  Edit,
+  Trash2,
+  Users,
+  Building2,
+  MapPin,
+  Briefcase,
+  UserCircle,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from "@/components/ui/dropdown-menu";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { orgNodesApi } from '@/lib/api/workforce';
-import type { OrgNodeWithStats } from '@/types/workforce';
+} from "@/components/ui/tooltip";
+import { orgNodesApi } from "@/lib/api/workforce";
+import type { OrgNodeWithStats } from "@/types/workforce";
 
 // Icon mapping for node types
-const NODE_TYPE_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
+const NODE_TYPE_ICONS: Record<
+  string,
+  React.ComponentType<{ className?: string }>
+> = {
   company: Building2,
   region: MapPin,
   department: Briefcase,
@@ -87,12 +102,15 @@ export function OrgTreeList({
             loading: false,
             children: [],
           })),
-        }))
+        })),
       );
     } catch (err) {
-      setError('Erreur lors du chargement de l\'arborescence');
-      if ((err as any)?.response?.status !== 401 && (err as any)?.response?.status !== 403) {
-        console.error('Failed to load org tree:', err);
+      setError("Erreur lors du chargement de l'arborescence");
+      if (
+        (err as any)?.response?.status !== 401 &&
+        (err as any)?.response?.status !== 403
+      ) {
+        console.error("Failed to load org tree:", err);
       }
     } finally {
       setLoading(false);
@@ -109,7 +127,7 @@ export function OrgTreeList({
       const response = await orgNodesApi.getChildren(nodeId);
       return response.data;
     } catch (err) {
-      console.error('Failed to load children:', err);
+      console.error("Failed to load children:", err);
       return [];
     }
   }, []);
@@ -118,7 +136,7 @@ export function OrgTreeList({
   const toggleNode = useCallback(
     async (nodeId: string) => {
       const updateTree = async (
-        nodes: TreeNodeState[]
+        nodes: TreeNodeState[],
       ): Promise<TreeNodeState[]> => {
         const result: TreeNodeState[] = [];
         for (const item of nodes) {
@@ -151,7 +169,7 @@ export function OrgTreeList({
 
       setTree(await updateTree(tree));
     },
-    [tree, loadChildren]
+    [tree, loadChildren],
   );
 
   // Get icon for node type
@@ -172,10 +190,10 @@ export function OrgTreeList({
       <div key={node.id} className="group">
         <div
           className={cn(
-            'flex items-center gap-1 rounded-md px-2 py-1.5 transition-colors',
-            'hover:bg-muted/50',
-            isSelected && 'bg-primary/10 text-primary',
-            !node.is_active && 'opacity-50'
+            "flex items-center gap-1 rounded-md px-2 py-1.5 transition-colors",
+            "hover:bg-muted/50",
+            isSelected && "bg-primary/10 text-primary",
+            !node.is_active && "opacity-50",
           )}
           style={{ paddingLeft: `${depth * 16 + 8}px` }}
         >
@@ -186,7 +204,13 @@ export function OrgTreeList({
             disabled={!hasChildren}
           >
             {nodeLoading ? (
-              <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-3.5 w-3.5  text-muted-foreground" />
+              <SpinnerInfinity
+                size={24}
+                secondaryColor="rgba(128,128,128,0.2)"
+                color="currentColor"
+                speed={120}
+                className="h-3.5 w-3.5  text-muted-foreground"
+              />
             ) : hasChildren ? (
               expanded ? (
                 <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
@@ -205,8 +229,8 @@ export function OrgTreeList({
           >
             <Icon
               className={cn(
-                'h-4 w-4 shrink-0',
-                node.is_active ? 'text-primary' : 'text-muted-foreground'
+                "h-4 w-4 shrink-0",
+                node.is_active ? "text-primary" : "text-muted-foreground",
               )}
             />
             <span className="truncate text-sm font-medium">{node.name}</span>
@@ -277,9 +301,7 @@ export function OrgTreeList({
 
         {/* Children */}
         {expanded && children.length > 0 && (
-          <div>
-            {children.map((child) => renderNode(child, depth + 1))}
-          </div>
+          <div>{children.map((child) => renderNode(child, depth + 1))}</div>
         )}
       </div>
     );
@@ -287,16 +309,29 @@ export function OrgTreeList({
 
   if (loading) {
     return (
-      <div className={cn('flex items-center justify-center py-8', className)}>
-        <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-6 w-6  text-muted-foreground" />
-        <span className="ml-2 text-sm text-muted-foreground">Chargement...</span>
+      <div className={cn("flex items-center justify-center py-8", className)}>
+        <SpinnerInfinity
+          size={24}
+          secondaryColor="rgba(128,128,128,0.2)"
+          color="currentColor"
+          speed={120}
+          className="h-6 w-6  text-muted-foreground"
+        />
+        <span className="ml-2 text-sm text-muted-foreground">
+          Chargement...
+        </span>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className={cn('flex flex-col items-center justify-center py-8', className)}>
+      <div
+        className={cn(
+          "flex flex-col items-center justify-center py-8",
+          className,
+        )}
+      >
         <p className="text-sm text-destructive">{error}</p>
         <Button variant="outline" size="sm" className="mt-2" onClick={loadTree}>
           Réessayer
@@ -307,13 +342,23 @@ export function OrgTreeList({
 
   if (tree.length === 0) {
     return (
-      <div className={cn('flex flex-col items-center justify-center py-8', className)}>
+      <div
+        className={cn(
+          "flex flex-col items-center justify-center py-8",
+          className,
+        )}
+      >
         <Building2 className="h-12 w-12 text-muted-foreground/50" />
         <p className="mt-2 text-sm text-muted-foreground">
           Aucun noeud d'organisation
         </p>
         {onAddNode && (
-          <Button variant="outline" size="sm" className="mt-4" onClick={() => onAddNode()}>
+          <Button
+            variant="outline"
+            size="sm"
+            className="mt-4"
+            onClick={() => onAddNode()}
+          >
             <Plus className="mr-2 h-4 w-4" />
             Créer le premier noeud
           </Button>
@@ -323,14 +368,19 @@ export function OrgTreeList({
   }
 
   return (
-    <div className={cn('space-y-0.5', className)}>
+    <div className={cn("space-y-0.5", className)}>
       {/* Header with add button */}
       {onAddNode && (
         <div className="mb-2 flex items-center justify-between px-2">
           <span className="text-xs font-medium uppercase text-muted-foreground">
             Organisation
           </span>
-          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onAddNode()}>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6"
+            onClick={() => onAddNode()}
+          >
             <Plus className="h-4 w-4" />
             <span className="sr-only">Ajouter un noeud racine</span>
           </Button>

@@ -1,16 +1,16 @@
-'use client';
+"use client";
 
-import { useEffect, useRef, useState } from 'react';
-import { Globe, Mic, Square } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { useEffect, useRef, useState } from "react";
+import { Globe, Mic, Square } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const SUPPORTED_LANGUAGES = [
-  { code: 'fr', label: 'Français' },
-  { code: 'en', label: 'English' },
-  { code: 'es', label: 'Español' },
-  { code: 'de', label: 'Deutsch' },
-  { code: 'it', label: 'Italiano' },
-  { code: 'pt', label: 'Português' },
+  { code: "fr", label: "Français" },
+  { code: "en", label: "English" },
+  { code: "es", label: "Español" },
+  { code: "de", label: "Deutsch" },
+  { code: "it", label: "Italiano" },
+  { code: "pt", label: "Português" },
 ];
 
 interface TranslationSegment {
@@ -28,8 +28,8 @@ interface TranslationSegment {
  * Falls back to a clear status message on unsupported browsers.
  */
 export function SimultaneousTranslationStub() {
-  const [sourceLang, setSourceLang] = useState('fr');
-  const [targetLang, setTargetLang] = useState('en');
+  const [sourceLang, setSourceLang] = useState("fr");
+  const [targetLang, setTargetLang] = useState("en");
   const [isListening, setIsListening] = useState(false);
   const [segments, setSegments] = useState<TranslationSegment[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -37,18 +37,22 @@ export function SimultaneousTranslationStub() {
   const counterRef = useRef(0);
 
   const SpeechRecognitionCtor =
-    typeof window !== 'undefined'
-      ? window.SpeechRecognition ?? window.webkitSpeechRecognition ?? null
+    typeof window !== "undefined"
+      ? (window.SpeechRecognition ?? window.webkitSpeechRecognition ?? null)
       : null;
 
   const isSupported = !!SpeechRecognitionCtor;
 
   const translateText = async (text: string): Promise<string> => {
     try {
-      const res = await fetch('/api/v1/ai/translate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text, source_lang: sourceLang, target_lang: targetLang }),
+      const res = await fetch("/api/v1/ai/translate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          text,
+          source_lang: sourceLang,
+          target_lang: targetLang,
+        }),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
@@ -78,7 +82,7 @@ export function SimultaneousTranslationStub() {
             id: ++counterRef.current,
             original: transcript,
             translated,
-            timestamp: new Date().toLocaleTimeString('fr-FR'),
+            timestamp: new Date().toLocaleTimeString("fr-FR"),
           };
           setSegments((prev) => [segment, ...prev].slice(0, 50));
         }
@@ -110,7 +114,9 @@ export function SimultaneousTranslationStub() {
     <div className="w-full max-w-lg mx-auto p-6 bg-card border border-input rounded-lg shadow-sm space-y-4">
       <div className="flex items-center gap-2">
         <Globe className="h-5 w-5 text-primary" />
-        <h2 className="text-lg font-semibold text-foreground">Traduction Simultanée</h2>
+        <h2 className="text-lg font-semibold text-foreground">
+          Traduction Simultanée
+        </h2>
       </div>
 
       {!isSupported && (
@@ -123,7 +129,9 @@ export function SimultaneousTranslationStub() {
       {/* Language selectors */}
       <div className="flex items-center gap-3">
         <div className="flex-1">
-          <label className="text-xs text-muted-foreground mb-1 block">Source</label>
+          <label className="text-xs text-muted-foreground mb-1 block">
+            Source
+          </label>
           <select
             value={sourceLang}
             onChange={(e) => setSourceLang(e.target.value)}
@@ -131,13 +139,17 @@ export function SimultaneousTranslationStub() {
             disabled={isListening}
           >
             {SUPPORTED_LANGUAGES.map((l) => (
-              <option key={l.code} value={l.code}>{l.label}</option>
+              <option key={l.code} value={l.code}>
+                {l.label}
+              </option>
             ))}
           </select>
         </div>
         <span className="text-muted-foreground mt-4">→</span>
         <div className="flex-1">
-          <label className="text-xs text-muted-foreground mb-1 block">Cible</label>
+          <label className="text-xs text-muted-foreground mb-1 block">
+            Cible
+          </label>
           <select
             value={targetLang}
             onChange={(e) => setTargetLang(e.target.value)}
@@ -145,7 +157,9 @@ export function SimultaneousTranslationStub() {
             disabled={isListening}
           >
             {SUPPORTED_LANGUAGES.map((l) => (
-              <option key={l.code} value={l.code}>{l.label}</option>
+              <option key={l.code} value={l.code}>
+                {l.label}
+              </option>
             ))}
           </select>
         </div>
@@ -155,24 +169,31 @@ export function SimultaneousTranslationStub() {
       <Button
         onClick={isListening ? stopListening : startListening}
         disabled={!isSupported}
-        variant={isListening ? 'destructive' : 'default'}
+        variant={isListening ? "destructive" : "default"}
         className="w-full"
       >
         {isListening ? (
-          <><Square className="h-4 w-4 mr-2" />Arrêter la traduction</>
+          <>
+            <Square className="h-4 w-4 mr-2" />
+            Arrêter la traduction
+          </>
         ) : (
-          <><Mic className="h-4 w-4 mr-2" />Démarrer la traduction</>
+          <>
+            <Mic className="h-4 w-4 mr-2" />
+            Démarrer la traduction
+          </>
         )}
       </Button>
 
-      {error && (
-        <p className="text-sm text-red-600">{error}</p>
-      )}
+      {error && <p className="text-sm text-red-600">{error}</p>}
 
       {/* Segments */}
       <div className="space-y-2 max-h-64 overflow-y-auto">
         {segments.map((seg) => (
-          <div key={seg.id} className="p-3 bg-muted/50 rounded-md text-sm space-y-1">
+          <div
+            key={seg.id}
+            className="p-3 bg-muted/50 rounded-md text-sm space-y-1"
+          >
             <p className="text-muted-foreground text-xs">{seg.timestamp}</p>
             <p className="text-foreground">{seg.original}</p>
             <p className="text-primary font-medium">{seg.translated}</p>

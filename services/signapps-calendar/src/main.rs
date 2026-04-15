@@ -410,10 +410,10 @@ fn build_router(state: AppState, sharing_engine: SharingEngine) -> Router {
 
     // Sharing sub-routers: State<SharingEngine> — additive, isolated from AppState.
     // The existing calendar.members / shares system is NOT touched.
-    let sharing_sub = sharing_routes("calendars", ResourceType::Calendar)
-        .with_state(sharing_engine.clone());
-    let events_sharing_sub = sharing_routes("events", ResourceType::Event)
-        .with_state(sharing_engine);
+    let sharing_sub =
+        sharing_routes("calendars", ResourceType::Calendar).with_state(sharing_engine.clone());
+    let events_sharing_sub =
+        sharing_routes("events", ResourceType::Event).with_state(sharing_engine);
 
     public_routes
         .merge(protected_routes)

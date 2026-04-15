@@ -1,22 +1,25 @@
-'use client';
+"use client";
 
-import { useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { ArrowUpCircle, TrendingUp, Cloud, Server } from 'lucide-react';
-import { useAiCapabilities, type Capability } from '@/hooks/use-ai-capabilities';
+import { useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { ArrowUpCircle, TrendingUp, Cloud, Server } from "lucide-react";
+import {
+  useAiCapabilities,
+  type Capability,
+} from "@/hooks/use-ai-capabilities";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // HELPERS
 // ═══════════════════════════════════════════════════════════════════════════
 
 const CAPABILITY_LABELS: Record<string, string> = {
-  llm: 'LLM',
-  stt: 'Speech-to-Text',
-  tts: 'Text-to-Speech',
-  ocr: 'OCR',
-  embeddings: 'Embeddings',
+  llm: "LLM",
+  stt: "Speech-to-Text",
+  tts: "Text-to-Speech",
+  ocr: "OCR",
+  embeddings: "Embeddings",
 };
 
 function getLabel(capability: string): string {
@@ -67,7 +70,10 @@ function RecommendationCard({ cap }: { cap: Capability }) {
               </span>
               <span className="font-medium">{cap.cloud_quality}%</span>
             </div>
-            <Progress value={cap.cloud_quality} className="h-2 [&>div]:bg-blue-500" />
+            <Progress
+              value={cap.cloud_quality}
+              className="h-2 [&>div]:bg-blue-500"
+            />
           </div>
         )}
       </div>
@@ -77,15 +83,19 @@ function RecommendationCard({ cap }: { cap: Capability }) {
         {delta !== null && delta > 0 ? (
           <p className="flex items-center gap-1">
             <TrendingUp className="h-3 w-3 text-green-600" />
-            Un backend cloud offrirait <span className="font-semibold text-foreground">+{delta} pts</span> de qualite
-            pour {getLabel(cap.capability)}.
-            {cap.active_backend !== 'cloud' && (
+            Un backend cloud offrirait{" "}
+            <span className="font-semibold text-foreground">
+              +{delta} pts
+            </span>{" "}
+            de qualite pour {getLabel(cap.capability)}.
+            {cap.active_backend !== "cloud" && (
               <> Configurez une cle API pour activer le mode cloud.</>
             )}
           </p>
         ) : (
           <p>
-            Un backend cloud pourrait ameliorer les resultats pour {getLabel(cap.capability)}.
+            Un backend cloud pourrait ameliorer les resultats pour{" "}
+            {getLabel(cap.capability)}.
           </p>
         )}
       </div>
@@ -120,8 +130,8 @@ export function QualityAdvisor() {
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground">
-            Toutes les capacites sont a leur niveau optimal.
-            Aucune recommandation de mise a niveau.
+            Toutes les capacites sont a leur niveau optimal. Aucune
+            recommandation de mise a niveau.
           </p>
         </CardContent>
       </Card>
@@ -137,7 +147,8 @@ export function QualityAdvisor() {
             Conseiller qualite
           </CardTitle>
           <Badge variant="outline" className="text-xs">
-            {upgradeCapabilities.length} recommandation{upgradeCapabilities.length > 1 ? 's' : ''}
+            {upgradeCapabilities.length} recommandation
+            {upgradeCapabilities.length > 1 ? "s" : ""}
           </Badge>
         </div>
       </CardHeader>

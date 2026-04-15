@@ -5,10 +5,10 @@
  * Supports swipe, pinch-to-zoom, long press, and pull-to-refresh.
  */
 
-'use client';
+"use client";
 
-import * as React from 'react';
-import type { ViewType } from '@/lib/scheduling/types/scheduling';
+import * as React from "react";
+import type { ViewType } from "@/lib/scheduling/types/scheduling";
 
 // ============================================================================
 // Types
@@ -47,14 +47,14 @@ export interface GestureCallbacks {
   /** Called when pull-to-refresh triggered */
   onRefresh?: () => Promise<void>;
   /** Called when view zoom should change */
-  onViewZoom?: (direction: 'in' | 'out') => void;
+  onViewZoom?: (direction: "in" | "out") => void;
 }
 
 export interface GestureState {
   /** Whether currently swiping */
   isSwiping: boolean;
   /** Current swipe direction */
-  swipeDirection: 'left' | 'right' | null;
+  swipeDirection: "left" | "right" | null;
   /** Current swipe offset */
   swipeOffset: number;
   /** Whether pinching */
@@ -94,7 +94,7 @@ const DEFAULT_CONFIG: Required<GestureConfig> = {
 };
 
 // View zoom order for pinch gestures
-const VIEW_ZOOM_ORDER: ViewType[] = ['day', '3-day', 'week', 'month'];
+const VIEW_ZOOM_ORDER: ViewType[] = ["day", "3-day", "week", "month"];
 
 // ============================================================================
 // Hook
@@ -102,20 +102,24 @@ const VIEW_ZOOM_ORDER: ViewType[] = ['day', '3-day', 'week', 'month'];
 
 export function useGestureNavigation(
   callbacks: GestureCallbacks,
-  config: GestureConfig = {}
+  config: GestureConfig = {},
 ): UseGestureNavigationResult {
   const gestureRef = React.useRef<HTMLDivElement>(null);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const mergedConfig = React.useMemo(() => ({ ...DEFAULT_CONFIG, ...config }), [
-    config.swipeThreshold,
-    config.velocityThreshold,
-    config.longPressDuration,
-    config.pullToRefreshThreshold,
-    config.enableSwipe,
-    config.enablePinch,
-    config.enableLongPress,
-    config.enablePullToRefresh,
-  ]);
+
+  const mergedConfig = React.useMemo(
+    () => ({ ...DEFAULT_CONFIG, ...config }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [
+      config.swipeThreshold,
+      config.velocityThreshold,
+      config.longPressDuration,
+      config.pullToRefreshThreshold,
+      config.enableSwipe,
+      config.enablePinch,
+      config.enableLongPress,
+      config.enablePullToRefresh,
+    ],
+  );
 
   // Gesture state
   const [state, setState] = React.useState<GestureState>({
@@ -197,14 +201,14 @@ export function useGestureNavigation(
             callbacks.onLongPress?.(
               touchStartRef.current.x,
               touchStartRef.current.y,
-              touchStartRef.current.target!
+              touchStartRef.current.target!,
             );
             cancelGesture();
           }
         }, mergedConfig.longPressDuration);
       }
     },
-    [callbacks, mergedConfig, cancelGesture]
+    [callbacks, mergedConfig, cancelGesture],
   );
 
   // Touch move handler
@@ -225,7 +229,11 @@ export function useGestureNavigation(
       }
 
       // Handle pinch
-      if (e.touches.length === 2 && mergedConfig.enablePinch && initialPinchDistanceRef.current) {
+      if (
+        e.touches.length === 2 &&
+        mergedConfig.enablePinch &&
+        initialPinchDistanceRef.current
+      ) {
         const currentDistance = getTouchDistance(e.touches);
         const scale = currentDistance / initialPinchDistanceRef.current;
         setState((prev) => ({ ...prev, pinchScale: scale }));
@@ -235,7 +243,7 @@ export function useGestureNavigation(
 
       // Handle swipe (only if primarily horizontal)
       if (mergedConfig.enableSwipe && Math.abs(deltaX) > Math.abs(deltaY)) {
-        const direction = deltaX > 0 ? 'right' : 'left';
+        const direction = deltaX > 0 ? "right" : "left";
         setState((prev) => ({
           ...prev,
           isSwiping: true,
@@ -254,7 +262,10 @@ export function useGestureNavigation(
       ) {
         const element = gestureRef.current;
         if (element && element.scrollTop === 0) {
-          const pullOffset = Math.min(deltaY * 0.5, mergedConfig.pullToRefreshThreshold * 1.5);
+          const pullOffset = Math.min(
+            deltaY * 0.5,
+            mergedConfig.pullToRefreshThreshold * 1.5,
+          );
           setState((prev) => ({ ...prev, pullOffset }));
           e.preventDefault();
         }
@@ -262,7 +273,7 @@ export function useGestureNavigation(
 
       lastTouchRef.current = { x: touch.clientX, y: touch.clientY };
     },
-    [mergedConfig]
+    [mergedConfig],
   );
 
   // Touch end handler
@@ -290,11 +301,11 @@ export function useGestureNavigation(
         if (finalScale < 0.8) {
           // Pinch in - zoom out
           callbacks.onPinchIn?.();
-          callbacks.onViewZoom?.('out');
+          callbacks.onViewZoom?.("out");
         } else if (finalScale > 1.2) {
           // Pinch out - zoom in
           callbacks.onPinchOut?.();
-          callbacks.onViewZoom?.('in');
+          callbacks.onViewZoom?.("in");
         }
       }
 
@@ -325,7 +336,7 @@ export function useGestureNavigation(
 
       cancelGesture();
     },
-    [state, callbacks, mergedConfig, cancelGesture]
+    [state, callbacks, mergedConfig, cancelGesture],
   );
 
   // Touch cancel handler
@@ -339,16 +350,18 @@ export function useGestureNavigation(
     if (!element) return;
 
     // Add event listeners with passive: false for preventDefault
-    element.addEventListener('touchstart', handleTouchStart, { passive: true });
-    element.addEventListener('touchmove', handleTouchMove, { passive: false });
-    element.addEventListener('touchend', handleTouchEnd, { passive: true });
-    element.addEventListener('touchcancel', handleTouchCancel, { passive: true });
+    element.addEventListener("touchstart", handleTouchStart, { passive: true });
+    element.addEventListener("touchmove", handleTouchMove, { passive: false });
+    element.addEventListener("touchend", handleTouchEnd, { passive: true });
+    element.addEventListener("touchcancel", handleTouchCancel, {
+      passive: true,
+    });
 
     return () => {
-      element.removeEventListener('touchstart', handleTouchStart);
-      element.removeEventListener('touchmove', handleTouchMove);
-      element.removeEventListener('touchend', handleTouchEnd);
-      element.removeEventListener('touchcancel', handleTouchCancel);
+      element.removeEventListener("touchstart", handleTouchStart);
+      element.removeEventListener("touchmove", handleTouchMove);
+      element.removeEventListener("touchend", handleTouchEnd);
+      element.removeEventListener("touchcancel", handleTouchCancel);
     };
   }, [handleTouchStart, handleTouchMove, handleTouchEnd, handleTouchCancel]);
 
@@ -370,12 +383,12 @@ export interface UseViewZoomOptions {
 
 export function useViewZoom({ currentView, onViewChange }: UseViewZoomOptions) {
   const handleViewZoom = React.useCallback(
-    (direction: 'in' | 'out') => {
+    (direction: "in" | "out") => {
       const currentIndex = VIEW_ZOOM_ORDER.indexOf(currentView);
       if (currentIndex === -1) return;
 
       let newIndex: number;
-      if (direction === 'in') {
+      if (direction === "in") {
         // Zoom in = more detail = lower index
         newIndex = Math.max(0, currentIndex - 1);
       } else {
@@ -387,7 +400,7 @@ export function useViewZoom({ currentView, onViewChange }: UseViewZoomOptions) {
         onViewChange(VIEW_ZOOM_ORDER[newIndex]);
       }
     },
-    [currentView, onViewChange]
+    [currentView, onViewChange],
   );
 
   return { handleViewZoom };
@@ -405,12 +418,12 @@ export interface SwipeAnimationStyles {
 
 export function getSwipeAnimationStyles(
   offset: number,
-  isSwiping: boolean
+  isSwiping: boolean,
 ): SwipeAnimationStyles {
   if (!isSwiping) {
     return {
-      transform: 'translateX(0)',
-      transition: 'transform 0.3s ease-out',
+      transform: "translateX(0)",
+      transition: "transform 0.3s ease-out",
       opacity: 1,
     };
   }
@@ -421,7 +434,7 @@ export function getSwipeAnimationStyles(
 
   return {
     transform: `translateX(${dampenedOffset}px)`,
-    transition: 'none',
+    transition: "none",
     opacity,
   };
 }
@@ -438,24 +451,24 @@ export interface PullToRefreshStyles {
 export function getPullToRefreshStyles(
   pullOffset: number,
   isRefreshing: boolean,
-  threshold: number
+  threshold: number,
 ): PullToRefreshStyles {
   if (isRefreshing) {
     return {
       transform: `translateY(${threshold}px)`,
-      transition: 'transform 0.3s ease-out',
+      transition: "transform 0.3s ease-out",
     };
   }
 
   if (pullOffset > 0) {
     return {
       transform: `translateY(${pullOffset}px)`,
-      transition: 'none',
+      transition: "none",
     };
   }
 
   return {
-    transform: 'translateY(0)',
-    transition: 'transform 0.3s ease-out',
+    transform: "translateY(0)",
+    transition: "transform 0.3s ease-out",
   };
 }

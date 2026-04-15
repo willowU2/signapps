@@ -149,8 +149,7 @@ async fn seed_gamification(
     // ── xp_events ─────────────────────────────────────────────────────────
     for evt_idx in 0..xp_event_count {
         let (user_id, _, _) = crate::helpers::pick(user_ids, rng.gen_range(0..user_ids.len()));
-        let (action, source_module, xp_amount) =
-            crate::helpers::pick(XP_ACTIONS, evt_idx);
+        let (action, source_module, xp_amount) = crate::helpers::pick(XP_ACTIONS, evt_idx);
         let source_id = if rng.gen_bool(0.6) {
             Some(Uuid::new_v4())
         } else {

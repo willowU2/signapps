@@ -1,12 +1,12 @@
-"use client"
+"use client";
 // Feature 1: Contact → show linked CRM deals
 
-import { useState, useEffect } from "react"
-import { TrendingUp, ExternalLink } from "lucide-react"
-import { Badge } from "@/components/ui/badge"
-import { getDealsForContact } from "@/lib/api/interop"
-import { STAGE_LABELS, type Deal } from "@/lib/api/crm"
-import Link from "next/link"
+import { useState, useEffect } from "react";
+import { TrendingUp, ExternalLink } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { getDealsForContact } from "@/lib/api/interop";
+import { STAGE_LABELS, type Deal } from "@/lib/api/crm";
+import Link from "next/link";
 
 const STAGE_COLORS: Record<string, string> = {
   prospect: "bg-slate-100 text-slate-700",
@@ -15,28 +15,32 @@ const STAGE_COLORS: Record<string, string> = {
   negotiation: "bg-orange-100 text-orange-700",
   won: "bg-emerald-100 text-emerald-700",
   lost: "bg-red-100 text-red-700",
-}
+};
 
 const fmt = (v: number) =>
-  new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(v)
+  new Intl.NumberFormat("fr-FR", {
+    style: "currency",
+    currency: "EUR",
+    maximumFractionDigits: 0,
+  }).format(v);
 
 interface Props {
-  contactId: string
-  contactEmail?: string
+  contactId: string;
+  contactEmail?: string;
 }
 
 export function ContactDealsPanel({ contactId, contactEmail }: Props) {
-  const [deals, setDeals] = useState<Deal[]>([])
+  const [deals, setDeals] = useState<Deal[]>([]);
   useEffect(() => {
-    getDealsForContact(contactId, contactEmail).then(setDeals)
-  }, [contactId, contactEmail])
+    getDealsForContact(contactId, contactEmail).then(setDeals);
+  }, [contactId, contactEmail]);
 
   if (deals.length === 0) {
     return (
       <div className="text-xs text-muted-foreground italic py-2">
         Aucune opportunité CRM liée.
       </div>
-    )
+    );
   }
 
   return (
@@ -56,10 +60,16 @@ export function ContactDealsPanel({ contactId, contactEmail }: Props) {
             </div>
             <div className="flex items-center gap-2 flex-shrink-0">
               <span className="text-xs font-semibold">{fmt(deal.value)}</span>
-              <span className={`text-xs rounded-full px-2 py-0.5 font-medium ${STAGE_COLORS[deal.stage] ?? ""}`}>
-                {STAGE_LABELS[deal.stage as keyof typeof STAGE_LABELS] ?? deal.stage}
+              <span
+                className={`text-xs rounded-full px-2 py-0.5 font-medium ${STAGE_COLORS[deal.stage] ?? ""}`}
+              >
+                {STAGE_LABELS[deal.stage as keyof typeof STAGE_LABELS] ??
+                  deal.stage}
               </span>
-              <Link href="/crm" className="text-muted-foreground hover:text-foreground">
+              <Link
+                href="/crm"
+                className="text-muted-foreground hover:text-foreground"
+              >
                 <ExternalLink className="h-3 w-3" />
               </Link>
             </div>
@@ -67,5 +77,5 @@ export function ContactDealsPanel({ contactId, contactEmail }: Props) {
         ))}
       </div>
     </div>
-  )
+  );
 }

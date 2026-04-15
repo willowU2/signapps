@@ -1,15 +1,21 @@
-'use client';
+"use client";
 
-import { SpinnerInfinity } from 'spinners-react';
+import { SpinnerInfinity } from "spinners-react";
 
-import { useEffect, useState } from 'react';
-import { AppLayout } from '@/components/layout/app-layout';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
+import { useEffect, useState } from "react";
+import { AppLayout } from "@/components/layout/app-layout";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 import {
   Dialog,
   DialogContent,
@@ -17,7 +23,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -27,36 +33,48 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import { User, Shield, Key, Check, Copy, ArrowLeft, Upload, Trash2, Clock, Monitor, CalendarDays } from 'lucide-react';
-import { useAuthStore } from '@/lib/store';
-import { authApi, usersApi } from '@/lib/api';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { toast } from 'sonner';
-import Link from 'next/link';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { FileUploadProgressBar } from '@/components/application/file-upload/file-upload-progress-bar';
-import { PasswordStrength } from '@/components/auth/password-strength';
-import { usePageTitle } from '@/hooks/use-page-title';
+} from "@/components/ui/alert-dialog";
+import {
+  User,
+  Shield,
+  Key,
+  Check,
+  Copy,
+  ArrowLeft,
+  Upload,
+  Trash2,
+  Clock,
+  Monitor,
+  CalendarDays,
+} from "lucide-react";
+import { useAuthStore } from "@/lib/store";
+import { authApi, usersApi } from "@/lib/api";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { toast } from "sonner";
+import Link from "next/link";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { FileUploadProgressBar } from "@/components/application/file-upload/file-upload-progress-bar";
+import { PasswordStrength } from "@/components/auth/password-strength";
+import { usePageTitle } from "@/hooks/use-page-title";
 
 const roleLabels: Record<number, string> = {
-  0: 'Administrator',
-  1: 'User',
-  2: 'Viewer',
+  0: "Administrator",
+  1: "User",
+  2: "Viewer",
 };
 
 export default function ProfilePage() {
-  usePageTitle('Profil');
+  usePageTitle("Profil");
   const { user, setUser } = useAuthStore();
-  const [displayName, setDisplayName] = useState('');
-  const [email, setEmail] = useState('');
-  const [avatarUrl, setAvatarUrl] = useState('');
+  const [displayName, setDisplayName] = useState("");
+  const [email, setEmail] = useState("");
+  const [avatarUrl, setAvatarUrl] = useState("");
   const [saving, setSaving] = useState(false);
 
   // Password change
-  const [currentPassword, setCurrentPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [changingPassword, setChangingPassword] = useState(false);
 
   // MFA setup
@@ -68,47 +86,66 @@ export default function ProfilePage() {
     qr_code_url?: string;
     backup_codes: string[];
   } | null>(null);
-  const [mfaCode, setMfaCode] = useState('');
+  const [mfaCode, setMfaCode] = useState("");
   const [mfaLoading, setMfaLoading] = useState(false);
   const [copiedCodes, setCopiedCodes] = useState(false);
   const [avatarDialogOpen, setAvatarDialogOpen] = useState(false);
 
   // Session history (from localStorage)
-  const [sessionHistory, setSessionHistory] = useState<Array<{ date: string; browser: string; ip: string }>>([]);
+  const [sessionHistory, setSessionHistory] = useState<
+    Array<{ date: string; browser: string; ip: string }>
+  >([]);
 
   useEffect(() => {
     // Track current session
-    const sessions = JSON.parse(localStorage.getItem('signapps_session_history') || '[]');
+    const sessions = JSON.parse(
+      localStorage.getItem("signapps_session_history") || "[]",
+    );
     const currentSession = {
       date: new Date().toISOString(),
-      browser: navigator.userAgent.replace(/.*?(Chrome|Firefox|Safari|Edge|Opera)[/\s](\d+).*/, '$1 $2') || 'Unknown',
-      ip: 'local',
+      browser:
+        navigator.userAgent.replace(
+          /.*?(Chrome|Firefox|Safari|Edge|Opera)[/\s](\d+).*/,
+          "$1 $2",
+        ) || "Unknown",
+      ip: "local",
     };
     // Only add if last session was more than 5 minutes ago
     const lastSession = sessions[0];
-    if (!lastSession || new Date().getTime() - new Date(lastSession.date).getTime() > 300000) {
+    if (
+      !lastSession ||
+      new Date().getTime() - new Date(lastSession.date).getTime() > 300000
+    ) {
       sessions.unshift(currentSession);
       if (sessions.length > 20) sessions.length = 20;
-      localStorage.setItem('signapps_session_history', JSON.stringify(sessions));
+      localStorage.setItem(
+        "signapps_session_history",
+        JSON.stringify(sessions),
+      );
     }
     setSessionHistory(sessions);
   }, []);
 
   const formatDate = (dateStr?: string) => {
-    if (!dateStr) return 'Never';
+    if (!dateStr) return "Never";
     try {
-      return new Date(dateStr).toLocaleDateString('en-US', {
-        year: 'numeric', month: 'short', day: 'numeric',
-        hour: '2-digit', minute: '2-digit',
+      return new Date(dateStr).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
       });
-    } catch { return dateStr; }
+    } catch {
+      return dateStr;
+    }
   };
 
   const formatTimeAgo = (dateStr?: string) => {
-    if (!dateStr) return '';
+    if (!dateStr) return "";
     const diff = Date.now() - new Date(dateStr).getTime();
     const mins = Math.floor(diff / 60000);
-    if (mins < 1) return 'just now';
+    if (mins < 1) return "just now";
     if (mins < 60) return `${mins}m ago`;
     const hours = Math.floor(mins / 60);
     if (hours < 24) return `${hours}h ago`;
@@ -121,45 +158,45 @@ export default function ProfilePage() {
     file: File,
     onProgress: (progress: number) => void,
     onSuccess: () => void,
-    onError: (error: string) => void
+    onError: (error: string) => void,
   ) => {
     try {
       onProgress(10);
       const reader = new FileReader();
       reader.onload = (event) => {
-          const img = new Image();
-          img.onload = () => {
-              onProgress(50);
-              const canvas = document.createElement('canvas');
-              const ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
-              const MAX_SIZE = 256;
-              let width = img.width;
-              let height = img.height;
+        const img = new Image();
+        img.onload = () => {
+          onProgress(50);
+          const canvas = document.createElement("canvas");
+          const ctx = canvas.getContext("2d") as CanvasRenderingContext2D;
+          const MAX_SIZE = 256;
+          let width = img.width;
+          let height = img.height;
 
-              if (width > height) {
-                  if (width > MAX_SIZE) {
-                      height *= MAX_SIZE / width;
-                      width = MAX_SIZE;
-                  }
-              } else {
-                  if (height > MAX_SIZE) {
-                      width *= MAX_SIZE / height;
-                      height = MAX_SIZE;
-                  }
-              }
+          if (width > height) {
+            if (width > MAX_SIZE) {
+              height *= MAX_SIZE / width;
+              width = MAX_SIZE;
+            }
+          } else {
+            if (height > MAX_SIZE) {
+              width *= MAX_SIZE / height;
+              height = MAX_SIZE;
+            }
+          }
 
-              canvas.width = width;
-              canvas.height = height;
-              ctx.drawImage(img, 0, 0, width, height);
+          canvas.width = width;
+          canvas.height = height;
+          ctx.drawImage(img, 0, 0, width, height);
 
-              const dataUrl = canvas.toDataURL('image/webp', 0.8);
-              setAvatarUrl(dataUrl);
-              onProgress(100);
-              onSuccess();
-              setAvatarDialogOpen(false);
-          };
-          img.onerror = () => onError("Failed to load image");
-          img.src = event.target?.result as string;
+          const dataUrl = canvas.toDataURL("image/webp", 0.8);
+          setAvatarUrl(dataUrl);
+          onProgress(100);
+          onSuccess();
+          setAvatarDialogOpen(false);
+        };
+        img.onerror = () => onError("Failed to load image");
+        img.src = event.target?.result as string;
       };
       reader.onerror = () => onError("Failed to read file");
       reader.readAsDataURL(file);
@@ -170,9 +207,9 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (user) {
-      setDisplayName(user.display_name || '');
-      setEmail(user.email || '');
-      setAvatarUrl(user.avatar_url || '');
+      setDisplayName(user.display_name || "");
+      setEmail(user.email || "");
+      setAvatarUrl(user.avatar_url || "");
     }
   }, [user]);
 
@@ -195,9 +232,9 @@ export default function ProfilePage() {
         avatar_url: avatarUrl,
       });
 
-      toast.success('Profil mis à jour successfully');
+      toast.success("Profil mis à jour successfully");
     } catch {
-      toast.error('Impossible de mettre à jour profile');
+      toast.error("Impossible de mettre à jour profile");
     } finally {
       setSaving(false);
     }
@@ -205,12 +242,12 @@ export default function ProfilePage() {
 
   const handleChangePassword = async () => {
     if (newPassword !== confirmPassword) {
-      toast.error('Passwords do not match');
+      toast.error("Passwords do not match");
       return;
     }
 
     if (newPassword.length < 8) {
-      toast.error('Password must be at least 8 characters');
+      toast.error("Password must be at least 8 characters");
       return;
     }
 
@@ -220,12 +257,12 @@ export default function ProfilePage() {
         password: newPassword,
       });
 
-      setCurrentPassword('');
-      setNewPassword('');
-      setConfirmPassword('');
-      toast.success('Mot de passe modifié successfully');
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      toast.success("Mot de passe modifié successfully");
     } catch {
-      toast.error('Failed to change password');
+      toast.error("Failed to change password");
     } finally {
       setChangingPassword(false);
     }
@@ -238,7 +275,7 @@ export default function ProfilePage() {
       setMfaSetupData(response.data);
       setMfaDialogOpen(true);
     } catch {
-      toast.error('Failed to initialize MFA setup');
+      toast.error("Failed to initialize MFA setup");
     } finally {
       setMfaLoading(false);
     }
@@ -249,7 +286,7 @@ export default function ProfilePage() {
 
     setMfaLoading(true);
     try {
-      await authApi.mfaVerify('setup', mfaCode);
+      await authApi.mfaVerify("setup", mfaCode);
 
       // Update local user state
       if (user) {
@@ -258,10 +295,10 @@ export default function ProfilePage() {
 
       setMfaDialogOpen(false);
       setMfaSetupData(null);
-      setMfaCode('');
-      toast.success('Authentification à deux facteurs activée');
+      setMfaCode("");
+      toast.success("Authentification à deux facteurs activée");
     } catch {
-      toast.error('Invalid verification code');
+      toast.error("Invalid verification code");
     } finally {
       setMfaLoading(false);
     }
@@ -276,9 +313,9 @@ export default function ProfilePage() {
         setUser({ ...user, mfa_enabled: false });
       }
       setMfaDisableDialog(false);
-      toast.success('Two-factor authentication disabled');
+      toast.success("Two-factor authentication disabled");
     } catch {
-      toast.error('Failed to disable MFA');
+      toast.error("Failed to disable MFA");
     } finally {
       setMfaLoading(false);
     }
@@ -286,9 +323,9 @@ export default function ProfilePage() {
 
   const copyBackupCodes = () => {
     if (!mfaSetupData) return;
-    navigator.clipboard.writeText(mfaSetupData.backup_codes.join('\n'));
+    navigator.clipboard.writeText(mfaSetupData.backup_codes.join("\n"));
     setCopiedCodes(true);
-    toast.success('Backup codes copied to clipboard');
+    toast.success("Backup codes copied to clipboard");
     setTimeout(() => setCopiedCodes(false), 2000);
   };
 
@@ -296,7 +333,13 @@ export default function ProfilePage() {
     return (
       <AppLayout>
         <div className="flex items-center justify-center h-64">
-          <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-8 w-8 " />
+          <SpinnerInfinity
+            size={24}
+            secondaryColor="rgba(128,128,128,0.2)"
+            color="currentColor"
+            speed={120}
+            className="h-8 w-8 "
+          />
         </div>
       </AppLayout>
     );
@@ -326,9 +369,7 @@ export default function ProfilePage() {
               <User className="h-5 w-5" />
               Profile Information
             </CardTitle>
-            <CardDescription>
-              Update your personal details
-            </CardDescription>
+            <CardDescription>Update your personal details</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center gap-6 pb-4">
@@ -338,20 +379,27 @@ export default function ProfilePage() {
                     <AvatarImage src={avatarUrl} className="object-cover" />
                   ) : (
                     <AvatarFallback className="bg-primary/10 text-3xl font-bold text-primary">
-                      {(user.display_name || user.username || 'U').charAt(0).toUpperCase()}
+                      {(user.display_name || user.username || "U")
+                        .charAt(0)
+                        .toUpperCase()}
                     </AvatarFallback>
                   )}
                 </Avatar>
-                
-                <div 
+
+                <div
                   className="absolute inset-0 bg-black/60 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center cursor-pointer overflow-hidden backdrop-blur-sm"
                   onClick={() => setAvatarDialogOpen(true)}
                 >
                   <Upload className="h-5 w-5 text-white mb-1" />
-                  <span className="text-[9px] text-white font-medium uppercase tracking-wider">Change</span>
+                  <span className="text-[9px] text-white font-medium uppercase tracking-wider">
+                    Change
+                  </span>
                 </div>
-                
-                <Dialog open={avatarDialogOpen} onOpenChange={setAvatarDialogOpen}>
+
+                <Dialog
+                  open={avatarDialogOpen}
+                  onOpenChange={setAvatarDialogOpen}
+                >
                   <DialogContent className="sm:max-w-[500px]">
                     <DialogHeader>
                       <DialogTitle>Update Profile Picture</DialogTitle>
@@ -360,7 +408,7 @@ export default function ProfilePage() {
                       </DialogDescription>
                     </DialogHeader>
                     <div className="py-2">
-                      <FileUploadProgressBar 
+                      <FileUploadProgressBar
                         customUploadStrategy={handleAvatarUploadStrategy}
                         acceptedTypes="image/*"
                       />
@@ -372,10 +420,10 @@ export default function ProfilePage() {
                 <div className="flex items-center justify-between w-full">
                   <p className="font-semibold text-lg">{user.username}</p>
                   {avatarUrl && (
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      onClick={() => setAvatarUrl('')} 
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setAvatarUrl("")}
                       className="text-destructive h-8 px-2 hover:bg-destructive/10 hover:text-destructive"
                     >
                       <Trash2 className="h-4 w-4 mr-1.5" />
@@ -384,10 +432,10 @@ export default function ProfilePage() {
                   )}
                 </div>
                 <div className="flex items-center gap-2">
-                  <Badge variant={user.role === 0 ? 'default' : 'secondary'}>
-                    {roleLabels[user.role] || 'Unknown'}
+                  <Badge variant={user.role === 0 ? "default" : "secondary"}>
+                    {roleLabels[user.role] || "Unknown"}
                   </Badge>
-                  {user.auth_provider === 'ldap' && (
+                  {user.auth_provider === "ldap" && (
                     <Badge variant="outline">LDAP</Badge>
                   )}
                 </div>
@@ -432,7 +480,15 @@ export default function ProfilePage() {
               </div>
 
               <Button onClick={handleSaveProfile} disabled={saving}>
-                {saving && <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />}
+                {saving && (
+                  <SpinnerInfinity
+                    size={24}
+                    secondaryColor="rgba(128,128,128,0.2)"
+                    color="currentColor"
+                    speed={120}
+                    className="mr-2 h-4 w-4 "
+                  />
+                )}
                 Save Changes
               </Button>
             </div>
@@ -454,24 +510,34 @@ export default function ProfilePage() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1">
                 <p className="text-sm text-muted-foreground">Account Created</p>
-                <p className="text-sm font-medium">{formatDate(user.created_at)}</p>
+                <p className="text-sm font-medium">
+                  {formatDate(user.created_at)}
+                </p>
               </div>
               <div className="space-y-1">
                 <p className="text-sm text-muted-foreground">Last Login</p>
                 <div className="flex items-center gap-2">
-                  <p className="text-sm font-medium">{formatDate(user.last_login)}</p>
+                  <p className="text-sm font-medium">
+                    {formatDate(user.last_login)}
+                  </p>
                   {user.last_login && (
-                    <span className="text-xs text-muted-foreground">({formatTimeAgo(user.last_login)})</span>
+                    <span className="text-xs text-muted-foreground">
+                      ({formatTimeAgo(user.last_login)})
+                    </span>
                   )}
                 </div>
               </div>
               <div className="space-y-1">
                 <p className="text-sm text-muted-foreground">Auth Provider</p>
-                <Badge variant="outline" className="capitalize">{user.auth_provider || 'local'}</Badge>
+                <Badge variant="outline" className="capitalize">
+                  {user.auth_provider || "local"}
+                </Badge>
               </div>
               <div className="space-y-1">
                 <p className="text-sm text-muted-foreground">User ID</p>
-                <p className="text-xs font-mono text-muted-foreground truncate">{user.id}</p>
+                <p className="text-xs font-mono text-muted-foreground truncate">
+                  {user.id}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -490,25 +556,37 @@ export default function ProfilePage() {
           </CardHeader>
           <CardContent>
             {sessionHistory.length === 0 ? (
-              <p className="text-sm text-muted-foreground py-4 text-center">No session history available</p>
+              <p className="text-sm text-muted-foreground py-4 text-center">
+                No session history available
+              </p>
             ) : (
               <ScrollArea className="h-48">
                 <div className="space-y-2">
                   {sessionHistory.map((session, i) => (
                     <div
                       key={`${session.date}-${i}`}
-                      className={`flex items-center justify-between rounded-lg border p-3 ${i === 0 ? 'border-primary/30 bg-primary/5' : ''}`}
+                      className={`flex items-center justify-between rounded-lg border p-3 ${i === 0 ? "border-primary/30 bg-primary/5" : ""}`}
                     >
                       <div className="flex items-center gap-3">
-                        <div className={`flex h-8 w-8 items-center justify-center rounded-md ${i === 0 ? 'bg-primary/10' : 'bg-muted'}`}>
-                          <Monitor className={`h-4 w-4 ${i === 0 ? 'text-primary' : 'text-muted-foreground'}`} />
+                        <div
+                          className={`flex h-8 w-8 items-center justify-center rounded-md ${i === 0 ? "bg-primary/10" : "bg-muted"}`}
+                        >
+                          <Monitor
+                            className={`h-4 w-4 ${i === 0 ? "text-primary" : "text-muted-foreground"}`}
+                          />
                         </div>
                         <div>
                           <p className="text-sm font-medium flex items-center gap-2">
                             {session.browser}
-                            {i === 0 && <Badge className="bg-green-500/10 text-green-600 text-[10px] h-4 px-1.5">Current</Badge>}
+                            {i === 0 && (
+                              <Badge className="bg-green-500/10 text-green-600 text-[10px] h-4 px-1.5">
+                                Current
+                              </Badge>
+                            )}
                           </p>
-                          <p className="text-xs text-muted-foreground">{formatDate(session.date)}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {formatDate(session.date)}
+                          </p>
                         </div>
                       </div>
                       <div className="text-xs text-muted-foreground">
@@ -530,9 +608,7 @@ export default function ProfilePage() {
               <Shield className="h-5 w-5" />
               Security
             </CardTitle>
-            <CardDescription>
-              Manage your security settings
-            </CardDescription>
+            <CardDescription>Manage your security settings</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Two-Factor Authentication */}
@@ -541,7 +617,9 @@ export default function ProfilePage() {
                 <div className="flex items-center gap-2">
                   <p className="font-medium">Two-Factor Authentication</p>
                   {user.mfa_enabled ? (
-                    <Badge className="bg-green-500/10 text-green-600">Enabled</Badge>
+                    <Badge className="bg-green-500/10 text-green-600">
+                      Enabled
+                    </Badge>
                   ) : (
                     <Badge variant="secondary">Disabled</Badge>
                   )}
@@ -559,7 +637,15 @@ export default function ProfilePage() {
                 </Button>
               ) : (
                 <Button onClick={handleSetupMfa} disabled={mfaLoading}>
-                  {mfaLoading && <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />}
+                  {mfaLoading && (
+                    <SpinnerInfinity
+                      size={24}
+                      secondaryColor="rgba(128,128,128,0.2)"
+                      color="currentColor"
+                      speed={120}
+                      className="mr-2 h-4 w-4 "
+                    />
+                  )}
                   Enable 2FA
                 </Button>
               )}
@@ -568,7 +654,7 @@ export default function ProfilePage() {
             <Separator />
 
             {/* Change Password */}
-            {user.auth_provider !== 'ldap' && (
+            {user.auth_provider !== "ldap" && (
               <div className="space-y-4">
                 <div className="flex items-center gap-2">
                   <Key className="h-4 w-4" />
@@ -594,11 +680,18 @@ export default function ProfilePage() {
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
                     />
-                    {newPassword && <PasswordStrength password={newPassword} showRequirements={true} />}
+                    {newPassword && (
+                      <PasswordStrength
+                        password={newPassword}
+                        showRequirements={true}
+                      />
+                    )}
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="confirmPassword">Confirm New Password</Label>
+                    <Label htmlFor="confirmPassword">
+                      Confirm New Password
+                    </Label>
                     <Input
                       id="confirmPassword"
                       type="password"
@@ -609,16 +702,26 @@ export default function ProfilePage() {
 
                   <Button
                     onClick={handleChangePassword}
-                    disabled={changingPassword || !newPassword || !confirmPassword}
+                    disabled={
+                      changingPassword || !newPassword || !confirmPassword
+                    }
                   >
-                    {changingPassword && <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />}
+                    {changingPassword && (
+                      <SpinnerInfinity
+                        size={24}
+                        secondaryColor="rgba(128,128,128,0.2)"
+                        color="currentColor"
+                        speed={120}
+                        className="mr-2 h-4 w-4 "
+                      />
+                    )}
                     Change Password
                   </Button>
                 </div>
               </div>
             )}
 
-            {user.auth_provider === 'ldap' && (
+            {user.auth_provider === "ldap" && (
               <div className="rounded-lg border p-4 bg-muted/50">
                 <p className="text-sm text-muted-foreground">
                   Password is managed by your organization's Active Directory.
@@ -664,7 +767,7 @@ export default function ProfilePage() {
                     size="icon"
                     onClick={() => {
                       navigator.clipboard.writeText(mfaSetupData.secret);
-                      toast.success('Secret copied');
+                      toast.success("Secret copied");
                     }}
                   >
                     <Copy className="h-4 w-4" />
@@ -682,7 +785,7 @@ export default function ProfilePage() {
                     ) : (
                       <Copy className="h-4 w-4 mr-1" />
                     )}
-                    {copiedCodes ? 'Copied' : 'Copy'}
+                    {copiedCodes ? "Copied" : "Copy"}
                   </Button>
                 </div>
                 <div className="grid grid-cols-2 gap-2 p-3 bg-muted rounded-lg">
@@ -693,7 +796,8 @@ export default function ProfilePage() {
                   ))}
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Save these codes in a safe place. You can use them to access your account if you lose your device.
+                  Save these codes in a safe place. You can use them to access
+                  your account if you lose your device.
                 </p>
               </div>
 
@@ -704,7 +808,9 @@ export default function ProfilePage() {
                   id="mfaCode"
                   placeholder="Enter 6-digit code"
                   value={mfaCode}
-                  onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  onChange={(e) =>
+                    setMfaCode(e.target.value.replace(/\D/g, "").slice(0, 6))
+                  }
                   className="text-center text-lg tracking-widest"
                 />
               </div>
@@ -719,7 +825,15 @@ export default function ProfilePage() {
               onClick={handleVerifyMfa}
               disabled={mfaLoading || mfaCode.length !== 6}
             >
-              {mfaLoading && <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />}
+              {mfaLoading && (
+                <SpinnerInfinity
+                  size={24}
+                  secondaryColor="rgba(128,128,128,0.2)"
+                  color="currentColor"
+                  speed={120}
+                  className="mr-2 h-4 w-4 "
+                />
+              )}
               Verify & Enable
             </Button>
           </DialogFooter>
@@ -730,7 +844,9 @@ export default function ProfilePage() {
       <AlertDialog open={mfaDisableDialog} onOpenChange={setMfaDisableDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Disable Two-Factor Authentication?</AlertDialogTitle>
+            <AlertDialogTitle>
+              Disable Two-Factor Authentication?
+            </AlertDialogTitle>
             <AlertDialogDescription>
               This will remove the extra security layer from your account.
               You'll only need your password to log in.
@@ -742,7 +858,15 @@ export default function ProfilePage() {
               onClick={handleDisableMfa}
               className="bg-destructive text-destructive-foreground"
             >
-              {mfaLoading && <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />}
+              {mfaLoading && (
+                <SpinnerInfinity
+                  size={24}
+                  secondaryColor="rgba(128,128,128,0.2)"
+                  color="currentColor"
+                  speed={120}
+                  className="mr-2 h-4 w-4 "
+                />
+              )}
               Disable 2FA
             </AlertDialogAction>
           </AlertDialogFooter>

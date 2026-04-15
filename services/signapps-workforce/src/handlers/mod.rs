@@ -22,10 +22,10 @@ pub mod groups;
 pub mod learning;
 pub mod lms;
 pub mod my_team;
-pub mod supply_chain;
 pub mod openapi;
 pub mod org;
 pub mod policies;
+pub mod supply_chain;
 pub mod timesheet;
 pub mod validation;
 

@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useState } from "react";
+import { useForm } from "react-hook-form";
 import {
   Dialog,
   DialogContent,
@@ -9,20 +9,20 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
-import { Badge } from '@/components/ui/badge';
-import { Card } from '@/components/ui/card';
+} from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
 import {
   Cpu,
   MemoryStick,
@@ -33,8 +33,14 @@ import {
   Bell,
   Plus,
   Trash2,
-} from 'lucide-react';
-import { AlertConfig, AlertAction, CreateAlertConfigRequest, alertsApi, type MetricType as ApiMetricType } from '@/lib/api';
+} from "lucide-react";
+import {
+  AlertConfig,
+  AlertAction,
+  CreateAlertConfigRequest,
+  alertsApi,
+  type MetricType as ApiMetricType,
+} from "@/lib/api";
 
 interface AlertConfigDialogProps {
   open: boolean;
@@ -43,26 +49,59 @@ interface AlertConfigDialogProps {
   onSuccess?: () => void;
 }
 
-type MetricType = 'cpu' | 'memory' | 'disk' | 'network';
-type ActionType = 'email' | 'webhook' | 'browser';
+type MetricType = "cpu" | "memory" | "disk" | "network";
+type ActionType = "email" | "webhook" | "browser";
 
-const metricOptions: { value: MetricType; label: string; icon: React.ReactNode; defaultThreshold: number }[] = [
-  { value: 'cpu', label: 'CPU Usage', icon: <Cpu className="h-4 w-4" />, defaultThreshold: 80 },
-  { value: 'memory', label: 'Memory Usage', icon: <MemoryStick className="h-4 w-4" />, defaultThreshold: 90 },
-  { value: 'disk', label: 'Disk Usage', icon: <HardDrive className="h-4 w-4" />, defaultThreshold: 85 },
-  { value: 'network', label: 'Network Traffic', icon: <Network className="h-4 w-4" />, defaultThreshold: 1000 },
+const metricOptions: {
+  value: MetricType;
+  label: string;
+  icon: React.ReactNode;
+  defaultThreshold: number;
+}[] = [
+  {
+    value: "cpu",
+    label: "CPU Usage",
+    icon: <Cpu className="h-4 w-4" />,
+    defaultThreshold: 80,
+  },
+  {
+    value: "memory",
+    label: "Memory Usage",
+    icon: <MemoryStick className="h-4 w-4" />,
+    defaultThreshold: 90,
+  },
+  {
+    value: "disk",
+    label: "Disk Usage",
+    icon: <HardDrive className="h-4 w-4" />,
+    defaultThreshold: 85,
+  },
+  {
+    value: "network",
+    label: "Network Traffic",
+    icon: <Network className="h-4 w-4" />,
+    defaultThreshold: 1000,
+  },
 ];
 
-const actionTypeOptions: { value: ActionType; label: string; icon: React.ReactNode }[] = [
-  { value: 'email', label: 'Email', icon: <Mail className="h-4 w-4" /> },
-  { value: 'webhook', label: 'Webhook', icon: <Webhook className="h-4 w-4" /> },
-  { value: 'browser', label: 'Browser Notification', icon: <Bell className="h-4 w-4" /> },
+const actionTypeOptions: {
+  value: ActionType;
+  label: string;
+  icon: React.ReactNode;
+}[] = [
+  { value: "email", label: "Email", icon: <Mail className="h-4 w-4" /> },
+  { value: "webhook", label: "Webhook", icon: <Webhook className="h-4 w-4" /> },
+  {
+    value: "browser",
+    label: "Browser Notification",
+    icon: <Bell className="h-4 w-4" />,
+  },
 ];
 
 interface FormData {
   name: string;
   metric: MetricType;
-  condition: 'above' | 'below';
+  condition: "above" | "below";
   threshold: number;
   duration_seconds: number;
 }
@@ -74,25 +113,31 @@ export function AlertConfigDialog({
   onSuccess,
 }: AlertConfigDialogProps) {
   const [actions, setActions] = useState<AlertAction[]>(
-    config?.actions || [{ type: 'browser', config: {} }]
+    config?.actions || [{ type: "browser", config: {} }],
   );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<FormData>({
+  const {
+    register,
+    handleSubmit,
+    watch,
+    setValue,
+    formState: { errors },
+  } = useForm<FormData>({
     defaultValues: {
-      name: config?.name || '',
-      metric: (config?.metric as MetricType) || 'cpu',
-      condition: (config?.condition as 'above' | 'below') || 'above',
+      name: config?.name || "",
+      metric: (config?.metric as MetricType) || "cpu",
+      condition: (config?.condition as "above" | "below") || "above",
       threshold: config?.threshold || 80,
       duration_seconds: config?.duration_seconds || 60,
     },
   });
 
-  const selectedMetric = watch('metric');
+  const selectedMetric = watch("metric");
 
   const addAction = () => {
-    setActions([...actions, { type: 'browser', config: {} }]);
+    setActions([...actions, { type: "browser", config: {} }]);
   };
 
   const removeAction = (index: number) => {
@@ -122,11 +167,13 @@ export function AlertConfigDialog({
       const payload: CreateAlertConfigRequest = {
         name: data.name,
         metric: data.metric,
-        metric_type: (data.metric === 'network' ? 'network_in' : `${data.metric}_usage`) as ApiMetricType,
+        metric_type: (data.metric === "network"
+          ? "network_in"
+          : `${data.metric}_usage`) as ApiMetricType,
         condition: data.condition,
-        operator: data.condition === 'above' ? 'greater_than' : 'less_than',
+        operator: data.condition === "above" ? "greater_than" : "less_than",
         threshold: data.threshold,
-        severity: 'warning',
+        severity: "warning",
         duration_seconds: data.duration_seconds,
         actions,
       };
@@ -151,7 +198,7 @@ export function AlertConfigDialog({
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>
-            {config ? 'Edit Alert Configuration' : 'Create Alert Configuration'}
+            {config ? "Edit Alert Configuration" : "Create Alert Configuration"}
           </DialogTitle>
           <DialogDescription>
             Define thresholds and notification actions for system metrics.
@@ -165,7 +212,7 @@ export function AlertConfigDialog({
             <Input
               id="name"
               placeholder="e.g., High CPU Alert"
-              {...register('name', { required: 'Name is required' })}
+              {...register("name", { required: "Name is required" })}
             />
             {errors.name && (
               <p className="text-sm text-destructive">{errors.name.message}</p>
@@ -177,7 +224,7 @@ export function AlertConfigDialog({
             <Label>Metric</Label>
             <Select
               value={selectedMetric}
-              onValueChange={(v) => setValue('metric', v as MetricType)}
+              onValueChange={(v) => setValue("metric", v as MetricType)}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select metric" />
@@ -200,8 +247,10 @@ export function AlertConfigDialog({
             <div className="space-y-2">
               <Label>Condition</Label>
               <Select
-                value={watch('condition')}
-                onValueChange={(v) => setValue('condition', v as 'above' | 'below')}
+                value={watch("condition")}
+                onValueChange={(v) =>
+                  setValue("condition", v as "above" | "below")
+                }
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -214,17 +263,17 @@ export function AlertConfigDialog({
             </div>
             <div className="space-y-2">
               <Label htmlFor="threshold">
-                Threshold {selectedMetric !== 'network' ? '(%)' : '(MB/s)'}
+                Threshold {selectedMetric !== "network" ? "(%)" : "(MB/s)"}
               </Label>
               <Input
                 id="threshold"
                 type="number"
                 min={0}
-                max={selectedMetric !== 'network' ? 100 : undefined}
-                {...register('threshold', {
-                  required: 'Threshold is required',
+                max={selectedMetric !== "network" ? 100 : undefined}
+                {...register("threshold", {
+                  required: "Threshold is required",
                   valueAsNumber: true,
-                  min: { value: 0, message: 'Must be positive' },
+                  min: { value: 0, message: "Must be positive" },
                 })}
               />
             </div>
@@ -240,9 +289,9 @@ export function AlertConfigDialog({
               id="duration"
               type="number"
               min={10}
-              {...register('duration_seconds', {
+              {...register("duration_seconds", {
                 valueAsNumber: true,
-                min: { value: 10, message: 'Minimum 10 seconds' },
+                min: { value: 10, message: "Minimum 10 seconds" },
               })}
             />
           </div>
@@ -268,7 +317,9 @@ export function AlertConfigDialog({
                   <div className="flex-1 space-y-2">
                     <Select
                       value={action.type}
-                      onValueChange={(v) => updateActionType(index, v as ActionType)}
+                      onValueChange={(v) =>
+                        updateActionType(index, v as ActionType)
+                      }
                     >
                       <SelectTrigger className="w-full">
                         <SelectValue />
@@ -285,27 +336,31 @@ export function AlertConfigDialog({
                       </SelectContent>
                     </Select>
 
-                    {action.type === 'email' && (
+                    {action.type === "email" && (
                       <Input
                         placeholder="Email address"
-                        value={action.config.email || ''}
+                        value={action.config.email || ""}
                         onChange={(e) =>
-                          updateActionConfig(index, 'email', e.target.value)
+                          updateActionConfig(index, "email", e.target.value)
                         }
                       />
                     )}
 
-                    {action.type === 'webhook' && (
+                    {action.type === "webhook" && (
                       <Input
                         placeholder="https://your-webhook-url.com"
-                        value={action.config.webhook_url || ''}
+                        value={action.config.webhook_url || ""}
                         onChange={(e) =>
-                          updateActionConfig(index, 'webhook_url', e.target.value)
+                          updateActionConfig(
+                            index,
+                            "webhook_url",
+                            e.target.value,
+                          )
                         }
                       />
                     )}
 
-                    {action.type === 'browser' && (
+                    {action.type === "browser" && (
                       <p className="text-xs text-muted-foreground">
                         Browser notifications will be shown when alert triggers
                       </p>
@@ -328,9 +383,7 @@ export function AlertConfigDialog({
             ))}
           </div>
 
-          {error && (
-            <p className="text-sm text-destructive">{error}</p>
-          )}
+          {error && <p className="text-sm text-destructive">{error}</p>}
 
           <DialogFooter>
             <Button
@@ -341,7 +394,11 @@ export function AlertConfigDialog({
               Annuler
             </Button>
             <Button type="submit" disabled={loading}>
-              {loading ? 'Enregistrement...' : config ? 'Mettre à jour' : 'Créer'}
+              {loading
+                ? "Enregistrement..."
+                : config
+                  ? "Mettre à jour"
+                  : "Créer"}
             </Button>
           </DialogFooter>
         </form>

@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * RGPD Register Component
@@ -8,10 +8,10 @@
  * Includes form to add new treatments.
  */
 
-import * as React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import * as React from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -19,7 +19,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 import {
   Form,
   FormControl,
@@ -27,24 +27,28 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Plus, AlertCircle } from 'lucide-react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { toast } from 'sonner';
+} from "@/components/ui/select";
+import { Plus, AlertCircle } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { toast } from "sonner";
 
-export type LegalBasis = 'Consentement' | 'Contrat' | 'Obligation légale' | 'Intérêt légitime';
-export type ComplianceStatus = 'Conforme' | 'Non-conforme';
+export type LegalBasis =
+  | "Consentement"
+  | "Contrat"
+  | "Obligation légale"
+  | "Intérêt légitime";
+export type ComplianceStatus = "Conforme" | "Non-conforme";
 
 export interface DataTreatment {
   id: string;
@@ -58,31 +62,42 @@ export interface DataTreatment {
 
 export interface RGPDRegisterProps {
   treatments: DataTreatment[];
-  onAddTreatment?: (data: Omit<DataTreatment, 'id'>) => void;
+  onAddTreatment?: (data: Omit<DataTreatment, "id">) => void;
   className?: string;
 }
 
 const treatmentSchema = z.object({
-  name: z.string().min(2, 'Le nom doit contenir au moins 2 caractères'),
-  purpose: z.string().min(10, 'L\'objectif doit contenir au moins 10 caractères'),
-  legalBasis: z.enum(['Consentement', 'Contrat', 'Obligation légale', 'Intérêt légitime']),
-  dataCategories: z.string().min(5, 'Spécifiez au moins une catégorie de données'),
-  retentionPeriod: z.string().min(2, 'Spécifiez la durée de conservation'),
-  status: z.enum(['Conforme', 'Non-conforme']),
+  name: z.string().min(2, "Le nom doit contenir au moins 2 caractères"),
+  purpose: z
+    .string()
+    .min(10, "L'objectif doit contenir au moins 10 caractères"),
+  legalBasis: z.enum([
+    "Consentement",
+    "Contrat",
+    "Obligation légale",
+    "Intérêt légitime",
+  ]),
+  dataCategories: z
+    .string()
+    .min(5, "Spécifiez au moins une catégorie de données"),
+  retentionPeriod: z.string().min(2, "Spécifiez la durée de conservation"),
+  status: z.enum(["Conforme", "Non-conforme"]),
 });
 
 type TreatmentFormValues = z.infer<typeof treatmentSchema>;
 
 const LEGAL_BASIS_COLORS: Record<LegalBasis, string> = {
-  'Consentement': 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
-  'Contrat': 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
-  'Obligation légale': 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
-  'Intérêt légitime': 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
+  Consentement: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
+  Contrat: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
+  "Obligation légale":
+    "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200",
+  "Intérêt légitime":
+    "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
 };
 
 const STATUS_COLORS: Record<ComplianceStatus, string> = {
-  'Conforme': 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
-  'Non-conforme': 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
+  Conforme: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
+  "Non-conforme": "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
 };
 
 function AddTreatmentDialog({
@@ -97,12 +112,12 @@ function AddTreatmentDialog({
   const form = useForm<TreatmentFormValues>({
     resolver: zodResolver(treatmentSchema),
     defaultValues: {
-      name: '',
-      purpose: '',
-      legalBasis: 'Consentement',
-      dataCategories: '',
-      retentionPeriod: '',
-      status: 'Conforme',
+      name: "",
+      purpose: "",
+      legalBasis: "Consentement",
+      dataCategories: "",
+      retentionPeriod: "",
+      status: "Conforme",
     },
   });
 
@@ -118,12 +133,16 @@ function AddTreatmentDialog({
         <DialogHeader>
           <DialogTitle>Ajouter un traitement de données</DialogTitle>
           <DialogDescription>
-            Documentez un nouveau traitement de données personnelles pour le registre RGPD
+            Documentez un nouveau traitement de données personnelles pour le
+            registre RGPD
           </DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+          <form
+            onSubmit={form.handleSubmit(handleSubmit)}
+            className="space-y-4"
+          >
             <FormField
               control={form.control}
               name="name"
@@ -163,17 +182,26 @@ function AddTreatmentDialog({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Base légale</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="Consentement">Consentement</SelectItem>
+                        <SelectItem value="Consentement">
+                          Consentement
+                        </SelectItem>
                         <SelectItem value="Contrat">Contrat</SelectItem>
-                        <SelectItem value="Obligation légale">Obligation légale</SelectItem>
-                        <SelectItem value="Intérêt légitime">Intérêt légitime</SelectItem>
+                        <SelectItem value="Obligation légale">
+                          Obligation légale
+                        </SelectItem>
+                        <SelectItem value="Intérêt légitime">
+                          Intérêt légitime
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -187,7 +215,10 @@ function AddTreatmentDialog({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>État de conformité</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue />
@@ -195,7 +226,9 @@ function AddTreatmentDialog({
                       </FormControl>
                       <SelectContent>
                         <SelectItem value="Conforme">Conforme</SelectItem>
-                        <SelectItem value="Non-conforme">Non-conforme</SelectItem>
+                        <SelectItem value="Non-conforme">
+                          Non-conforme
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -255,7 +288,11 @@ function AddTreatmentDialog({
   );
 }
 
-export function RGPDRegister({ treatments, onAddTreatment, className }: RGPDRegisterProps) {
+export function RGPDRegister({
+  treatments,
+  onAddTreatment,
+  className,
+}: RGPDRegisterProps) {
   const [dialogOpen, setDialogOpen] = React.useState(false);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
@@ -263,7 +300,7 @@ export function RGPDRegister({ treatments, onAddTreatment, className }: RGPDRegi
     setIsSubmitting(true);
     try {
       const categories = data.dataCategories
-        .split(',')
+        .split(",")
         .map((cat) => cat.trim())
         .filter((cat) => cat.length > 0);
 
@@ -271,15 +308,17 @@ export function RGPDRegister({ treatments, onAddTreatment, className }: RGPDRegi
         ...data,
         dataCategories: categories,
       });
-      toast.success('Traitement ajouté au registre RGPD');
+      toast.success("Traitement ajouté au registre RGPD");
     } catch (error) {
-      toast.error('Erreur lors de l\'ajout du traitement');
+      toast.error("Erreur lors de l'ajout du traitement");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const nonCompliantCount = treatments.filter((t) => t.status === 'Non-conforme').length;
+  const nonCompliantCount = treatments.filter(
+    (t) => t.status === "Non-conforme",
+  ).length;
 
   return (
     <div className={`space-y-4 ${className}`}>
@@ -316,33 +355,58 @@ export function RGPDRegister({ treatments, onAddTreatment, className }: RGPDRegi
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b bg-muted/50">
-                    <th className="px-4 py-3 text-left font-semibold">Nom du traitement</th>
-                    <th className="px-4 py-3 text-left font-semibold">Objectif</th>
-                    <th className="px-4 py-3 text-left font-semibold">Base légale</th>
-                    <th className="px-4 py-3 text-left font-semibold">Catégories de données</th>
-                    <th className="px-4 py-3 text-left font-semibold">Durée de conservation</th>
-                    <th className="px-4 py-3 text-left font-semibold">Conformité</th>
+                    <th className="px-4 py-3 text-left font-semibold">
+                      Nom du traitement
+                    </th>
+                    <th className="px-4 py-3 text-left font-semibold">
+                      Objectif
+                    </th>
+                    <th className="px-4 py-3 text-left font-semibold">
+                      Base légale
+                    </th>
+                    <th className="px-4 py-3 text-left font-semibold">
+                      Catégories de données
+                    </th>
+                    <th className="px-4 py-3 text-left font-semibold">
+                      Durée de conservation
+                    </th>
+                    <th className="px-4 py-3 text-left font-semibold">
+                      Conformité
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
                   {treatments.map((treatment) => (
-                    <tr key={treatment.id} className="border-b hover:bg-muted/50 transition-colors">
-                      <td className="px-4 py-3 font-medium">{treatment.name}</td>
+                    <tr
+                      key={treatment.id}
+                      className="border-b hover:bg-muted/50 transition-colors"
+                    >
+                      <td className="px-4 py-3 font-medium">
+                        {treatment.name}
+                      </td>
                       <td className="px-4 py-3 text-muted-foreground max-w-xs truncate">
                         {treatment.purpose}
                       </td>
                       <td className="px-4 py-3">
-                        <Badge className={LEGAL_BASIS_COLORS[treatment.legalBasis]}>
+                        <Badge
+                          className={LEGAL_BASIS_COLORS[treatment.legalBasis]}
+                        >
                           {treatment.legalBasis}
                         </Badge>
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex flex-wrap gap-2">
-                          {treatment.dataCategories.slice(0, 2).map((cat, idx) => (
-                            <Badge key={idx} variant="outline" className="text-xs">
-                              {cat}
-                            </Badge>
-                          ))}
+                          {treatment.dataCategories
+                            .slice(0, 2)
+                            .map((cat, idx) => (
+                              <Badge
+                                key={idx}
+                                variant="outline"
+                                className="text-xs"
+                              >
+                                {cat}
+                              </Badge>
+                            ))}
                           {treatment.dataCategories.length > 2 && (
                             <Badge variant="outline" className="text-xs">
                               +{treatment.dataCategories.length - 2}

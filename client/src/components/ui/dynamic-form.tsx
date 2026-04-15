@@ -1,4 +1,4 @@
-import { SpinnerInfinity } from 'spinners-react';
+import { SpinnerInfinity } from "spinners-react";
 /**
  * Dynamic Form Component
  *
@@ -6,12 +6,12 @@ import { SpinnerInfinity } from 'spinners-react';
  * sections collapsibles et rendu de champs dynamique.
  */
 
-"use client";
+("use client");
 
 import * as React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 import { Button } from "@/components/ui/button";
@@ -21,7 +21,11 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
-import { usePermissions, type Resource, type ResourceAction } from "@/lib/permissions";
+import {
+  usePermissions,
+  type Resource,
+  type ResourceAction,
+} from "@/lib/permissions";
 
 import {
   type FormSchema,
@@ -38,7 +42,10 @@ import { renderField } from "@/lib/forms/field-renderers";
 
 function checkPermission(
   requiredPermission: string | undefined,
-  can: (resource: Resource, action: ResourceAction | ResourceAction[]) => boolean
+  can: (
+    resource: Resource,
+    action: ResourceAction | ResourceAction[],
+  ) => boolean,
 ): boolean {
   if (!requiredPermission) return true;
 
@@ -62,7 +69,10 @@ interface FormSectionComponentProps {
   onChange: (fieldId: string, value: unknown) => void;
   disabled?: boolean;
   columns?: 1 | 2 | 3 | 4;
-  can: (resource: Resource, action: ResourceAction | ResourceAction[]) => boolean;
+  can: (
+    resource: Resource,
+    action: ResourceAction | ResourceAction[],
+  ) => boolean;
 }
 
 function FormSectionComponent({
@@ -92,17 +102,19 @@ function FormSectionComponent({
         columns === 1 && "grid-cols-1",
         columns === 2 && "grid-cols-1 sm:grid-cols-2",
         columns === 3 && "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3",
-        columns === 4 && "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4"
+        columns === 4 && "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4",
       )}
     >
       {visibleFields.map((field) => (
         <div
           key={field.id}
           className={cn(
-            field.colSpan && `col-span-${Math.min(field.colSpan, columns)}`
+            field.colSpan && `col-span-${Math.min(field.colSpan, columns)}`,
           )}
           style={{
-            gridColumn: field.colSpan ? `span ${Math.min(field.colSpan, columns)}` : undefined,
+            gridColumn: field.colSpan
+              ? `span ${Math.min(field.colSpan, columns)}`
+              : undefined,
           }}
         >
           {renderField({
@@ -126,7 +138,9 @@ function FormSectionComponent({
               <h3 className="text-lg font-medium">{section.title}</h3>
             )}
             {section.description && (
-              <p className="text-sm text-muted-foreground">{section.description}</p>
+              <p className="text-sm text-muted-foreground">
+                {section.description}
+              </p>
             )}
           </div>
         )}
@@ -142,7 +156,9 @@ function FormSectionComponent({
           <button className="flex w-full items-center justify-between p-4 hover:bg-muted/50 transition-colors">
             <div>
               {section.title && (
-                <h3 className="text-lg font-medium text-left">{section.title}</h3>
+                <h3 className="text-lg font-medium text-left">
+                  {section.title}
+                </h3>
               )}
               {section.description && (
                 <p className="text-sm text-muted-foreground text-left">
@@ -153,7 +169,7 @@ function FormSectionComponent({
             <ChevronDown
               className={cn(
                 "h-5 w-5 text-muted-foreground transition-transform",
-                isOpen && "rotate-180"
+                isOpen && "rotate-180",
               )}
             />
           </button>
@@ -193,10 +209,7 @@ export function DynamicForm({
   }, [schema]);
 
   // Build Zod schema
-  const zodSchema = React.useMemo(
-    () => buildZodSchema(allFields),
-    [allFields]
-  );
+  const zodSchema = React.useMemo(() => buildZodSchema(allFields), [allFields]);
 
   // Initialize form
   const {
@@ -217,7 +230,7 @@ export function DynamicForm({
     (fieldId: string, value: unknown) => {
       setValue(fieldId, value, { shouldValidate: true, shouldDirty: true });
     },
-    [setValue]
+    [setValue],
   );
 
   // Notify parent of changes
@@ -244,7 +257,9 @@ export function DynamicForm({
   // Filter sections by permission
   const visibleSections = React.useMemo(() => {
     if (!schema.sections) return [];
-    return schema.sections.filter((s) => checkPermission(s.requiredPermission, can));
+    return schema.sections.filter((s) =>
+      checkPermission(s.requiredPermission, can),
+    );
   }, [schema.sections, can]);
 
   // Filter direct fields by permission and visibility
@@ -262,9 +277,13 @@ export function DynamicForm({
       {/* Form header */}
       {(schema.title || schema.description) && (
         <div className="space-y-1">
-          {schema.title && <h2 className="text-xl font-semibold">{schema.title}</h2>}
+          {schema.title && (
+            <h2 className="text-xl font-semibold">{schema.title}</h2>
+          )}
           {schema.description && (
-            <p className="text-sm text-muted-foreground">{schema.description}</p>
+            <p className="text-sm text-muted-foreground">
+              {schema.description}
+            </p>
           )}
         </div>
       )}
@@ -293,9 +312,10 @@ export function DynamicForm({
           className={cn(
             "grid gap-4",
             schema.columns === 1 && "grid-cols-1",
-            (!schema.columns || schema.columns === 2) && "grid-cols-1 sm:grid-cols-2",
+            (!schema.columns || schema.columns === 2) &&
+              "grid-cols-1 sm:grid-cols-2",
             schema.columns === 3 && "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3",
-            schema.columns === 4 && "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4"
+            schema.columns === 4 && "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4",
           )}
         >
           {visibleDirectFields.map((field) => (
@@ -335,9 +355,18 @@ export function DynamicForm({
                   {schema.cancelLabel ?? "Annuler"}
                 </Button>
               )}
-              <Button type="submit" disabled={isLoading || isSubmitting || readOnly}>
+              <Button
+                type="submit"
+                disabled={isLoading || isSubmitting || readOnly}
+              >
                 {(isLoading || isSubmitting) && (
-                  <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />
+                  <SpinnerInfinity
+                    size={24}
+                    secondaryColor="rgba(128,128,128,0.2)"
+                    color="currentColor"
+                    speed={120}
+                    className="mr-2 h-4 w-4 "
+                  />
                 )}
                 {schema.submitLabel ?? "Enregistrer"}
               </Button>
@@ -353,7 +382,9 @@ export function DynamicForm({
 // Schema Builder Helpers
 // ============================================================================
 
-export function createFormSchema(config: Partial<FormSchema> & { id: string }): FormSchema {
+export function createFormSchema(
+  config: Partial<FormSchema> & { id: string },
+): FormSchema {
   return {
     columns: 2,
     submitLabel: "Enregistrer",
@@ -363,7 +394,9 @@ export function createFormSchema(config: Partial<FormSchema> & { id: string }): 
   };
 }
 
-export function createField(config: Partial<FieldConfig> & { id: string; label: string }): FieldConfig {
+export function createField(
+  config: Partial<FieldConfig> & { id: string; label: string },
+): FieldConfig {
   return {
     type: "text",
     ...config,
@@ -371,7 +404,7 @@ export function createField(config: Partial<FieldConfig> & { id: string; label: 
 }
 
 export function createSection(
-  config: Partial<FormSection> & { id: string; fields: FieldConfig[] }
+  config: Partial<FormSection> & { id: string; fields: FieldConfig[] },
 ): FormSection {
   return {
     collapsible: false,

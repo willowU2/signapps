@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { cn } from '@/lib/utils';
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { cn } from "@/lib/utils";
 
 export interface TimeEntryFormValues {
   taskName: string;
@@ -21,28 +21,38 @@ interface TimeEntryFormProps {
   className?: string;
 }
 
-export function TimeEntryForm({ onSubmit, onCancel, className }: TimeEntryFormProps) {
+export function TimeEntryForm({
+  onSubmit,
+  onCancel,
+  className,
+}: TimeEntryFormProps) {
   const today = new Date().toISOString().slice(0, 10);
-  const [taskName, setTaskName] = useState('');
+  const [taskName, setTaskName] = useState("");
   const [date, setDate] = useState(today);
   const [hours, setHours] = useState(0);
   const [minutes, setMinutes] = useState(30);
   const [billable, setBillable] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!taskName.trim()) { setError('Le nom de la tache est requis.'); return; }
-    if (hours === 0 && minutes === 0) { setError('La duree doit etre superieure a 0.'); return; }
-    setError('');
+    if (!taskName.trim()) {
+      setError("Le nom de la tache est requis.");
+      return;
+    }
+    if (hours === 0 && minutes === 0) {
+      setError("La duree doit etre superieure a 0.");
+      return;
+    }
+    setError("");
     onSubmit({ taskName: taskName.trim(), date, hours, minutes, billable });
-    setTaskName('');
+    setTaskName("");
     setHours(0);
     setMinutes(30);
   }
 
   return (
-    <form onSubmit={handleSubmit} className={cn('space-y-4', className)}>
+    <form onSubmit={handleSubmit} className={cn("space-y-4", className)}>
       <div className="space-y-1">
         <Label htmlFor="task-name">Tache</Label>
         <Input
@@ -89,8 +99,14 @@ export function TimeEntryForm({ onSubmit, onCancel, className }: TimeEntryFormPr
       </div>
 
       <div className="flex items-center gap-3">
-        <Switch id="billable" checked={billable} onCheckedChange={setBillable} />
-        <Label htmlFor="billable" className="cursor-pointer">Facturable</Label>
+        <Switch
+          id="billable"
+          checked={billable}
+          onCheckedChange={setBillable}
+        />
+        <Label htmlFor="billable" className="cursor-pointer">
+          Facturable
+        </Label>
       </div>
 
       {error && <p className="text-xs text-destructive">{error}</p>}
@@ -101,7 +117,9 @@ export function TimeEntryForm({ onSubmit, onCancel, className }: TimeEntryFormPr
             Annuler
           </Button>
         )}
-        <Button type="submit" size="sm">Ajouter</Button>
+        <Button type="submit" size="sm">
+          Ajouter
+        </Button>
       </div>
     </form>
   );

@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * BookingSheet Component
@@ -6,9 +6,9 @@
  * Side sheet for creating resource bookings.
  */
 
-import * as React from 'react';
-import { format, addHours, setHours, setMinutes, startOfHour } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import * as React from "react";
+import { format, addHours, setHours, setMinutes, startOfHour } from "date-fns";
+import { fr } from "date-fns/locale";
 import {
   Building2,
   Calendar as CalendarIcon,
@@ -16,12 +16,12 @@ import {
   Users,
   FileText,
   Repeat,
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Sheet,
   SheetContent,
@@ -29,22 +29,22 @@ import {
   SheetFooter,
   SheetHeader,
   SheetTitle,
-} from '@/components/ui/sheet';
+} from "@/components/ui/sheet";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from "@/components/ui/select";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from '@/components/ui/popover';
-import { Calendar } from '@/components/ui/calendar';
-import { Switch } from '@/components/ui/switch';
-import type { Resource, Booking } from '@/lib/scheduling/types/scheduling';
+} from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { Switch } from "@/components/ui/switch";
+import type { Resource, Booking } from "@/lib/scheduling/types/scheduling";
 
 // ============================================================================
 // Types
@@ -68,8 +68,8 @@ const timeSlots = Array.from({ length: 24 * 2 }, (_, i) => {
   const hour = Math.floor(i / 2);
   const minute = (i % 2) * 30;
   return {
-    value: `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`,
-    label: `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`,
+    value: `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`,
+    label: `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`,
   };
 });
 
@@ -89,15 +89,18 @@ export function BookingSheet({
   const isEditing = !!booking;
 
   // Form state
-  const [title, setTitle] = React.useState('');
-  const [selectedResourceId, setSelectedResourceId] = React.useState<string>('');
+  const [title, setTitle] = React.useState("");
+  const [selectedResourceId, setSelectedResourceId] =
+    React.useState<string>("");
   const [date, setDate] = React.useState<Date>(new Date());
-  const [startTime, setStartTime] = React.useState('09:00');
-  const [endTime, setEndTime] = React.useState('10:00');
-  const [purpose, setPurpose] = React.useState('');
-  const [attendeesCount, setAttendeesCount] = React.useState<string>('');
+  const [startTime, setStartTime] = React.useState("09:00");
+  const [endTime, setEndTime] = React.useState("10:00");
+  const [purpose, setPurpose] = React.useState("");
+  const [attendeesCount, setAttendeesCount] = React.useState<string>("");
   const [isRecurring, setIsRecurring] = React.useState(false);
-  const [recurrenceType, setRecurrenceType] = React.useState<'daily' | 'weekly'>('weekly');
+  const [recurrenceType, setRecurrenceType] = React.useState<
+    "daily" | "weekly"
+  >("weekly");
 
   // Initialize form
   React.useEffect(() => {
@@ -105,33 +108,34 @@ export function BookingSheet({
       setTitle(booking.title);
       setSelectedResourceId(booking.resourceId);
       setDate(new Date(booking.start));
-      setStartTime(format(new Date(booking.start), 'HH:mm'));
-      setEndTime(booking.end ? format(new Date(booking.end), 'HH:mm') : '10:00');
-      setPurpose(booking.purpose ?? '');
-      setAttendeesCount(booking.attendees?.length?.toString() ?? '');
+      setStartTime(format(new Date(booking.start), "HH:mm"));
+      setEndTime(
+        booking.end ? format(new Date(booking.end), "HH:mm") : "10:00",
+      );
+      setPurpose(booking.purpose ?? "");
+      setAttendeesCount(booking.attendees?.length?.toString() ?? "");
     } else {
       // Set defaults for new booking
       const now = new Date();
       const nextHour = startOfHour(addHours(now, 1));
-      setTitle('');
-      setSelectedResourceId(resource?.id ?? '');
+      setTitle("");
+      setSelectedResourceId(resource?.id ?? "");
       setDate(now);
-      setStartTime(format(nextHour, 'HH:mm'));
-      setEndTime(format(addHours(nextHour, 1), 'HH:mm'));
-      setPurpose('');
-      setAttendeesCount('');
+      setStartTime(format(nextHour, "HH:mm"));
+      setEndTime(format(addHours(nextHour, 1), "HH:mm"));
+      setPurpose("");
+      setAttendeesCount("");
       setIsRecurring(false);
     }
   }, [booking, resource, isOpen]);
 
   // Get selected resource
   const selectedResource =
-    resource ??
-    availableResources.find((r) => r.id === selectedResourceId);
+    resource ?? availableResources.find((r) => r.id === selectedResourceId);
 
   // Build date-time from date and time strings
   const buildDateTime = (date: Date, timeStr: string): Date => {
-    const [hours, minutes] = timeStr.split(':').map(Number);
+    const [hours, minutes] = timeStr.split(":").map(Number);
     const result = new Date(date);
     result.setHours(hours, minutes, 0, 0);
     return result;
@@ -160,12 +164,12 @@ export function BookingSheet({
       <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
         <SheetHeader>
           <SheetTitle>
-            {isEditing ? 'Modifier la réservation' : 'Nouvelle réservation'}
+            {isEditing ? "Modifier la réservation" : "Nouvelle réservation"}
           </SheetTitle>
           <SheetDescription>
             {selectedResource
               ? `Réserver ${selectedResource.name}`
-              : 'Sélectionnez une ressource à réserver'}
+              : "Sélectionnez une ressource à réserver"}
           </SheetDescription>
         </SheetHeader>
 
@@ -239,14 +243,14 @@ export function BookingSheet({
                 <Button
                   variant="outline"
                   className={cn(
-                    'w-full justify-start text-left font-normal',
-                    !date && 'text-muted-foreground'
+                    "w-full justify-start text-left font-normal",
+                    !date && "text-muted-foreground",
                   )}
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
                   {date
-                    ? format(date, 'EEEE d MMMM yyyy', { locale: fr })
-                    : 'Sélectionner une date'}
+                    ? format(date, "EEEE d MMMM yyyy", { locale: fr })
+                    : "Sélectionner une date"}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
@@ -255,7 +259,9 @@ export function BookingSheet({
                   selected={date}
                   onSelect={(d) => d && setDate(d)}
                   locale={fr}
-                  disabled={(d) => d < new Date(new Date().setHours(0, 0, 0, 0))}
+                  disabled={(d) =>
+                    d < new Date(new Date().setHours(0, 0, 0, 0))
+                  }
                 />
               </PopoverContent>
             </Popover>
@@ -357,7 +363,9 @@ export function BookingSheet({
               <Label>Fréquence</Label>
               <Select
                 value={recurrenceType}
-                onValueChange={(v) => setRecurrenceType(v as 'daily' | 'weekly')}
+                onValueChange={(v) =>
+                  setRecurrenceType(v as "daily" | "weekly")
+                }
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -390,7 +398,7 @@ export function BookingSheet({
             onClick={handleSave}
             disabled={!title.trim() || !selectedResourceId}
           >
-            {isEditing ? 'Modifier' : 'Réserver'}
+            {isEditing ? "Modifier" : "Réserver"}
           </Button>
         </SheetFooter>
       </SheetContent>

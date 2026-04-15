@@ -5,20 +5,20 @@
  * Server-side rendering safe: all localStorage access is guarded.
  */
 
-export const STORAGE_KEY = 'signapps-points';
+export const STORAGE_KEY = "signapps-points";
 
 // ── Point values per action ──────────────────────────────────
 export const POINT_VALUES: Record<string, number> = {
-  'email.sent': 1,
-  'task.completed': 5,
-  'deal.closed': 50,
-  'doc.created': 3,
-  'calendar.event_created': 2,
-  'contact.created': 2,
-  'file.uploaded': 1,
-  'meeting.attended': 10,
-  'comment.created': 1,
-  'login.daily': 2,
+  "email.sent": 1,
+  "task.completed": 5,
+  "deal.closed": 50,
+  "doc.created": 3,
+  "calendar.event_created": 2,
+  "contact.created": 2,
+  "file.uploaded": 1,
+  "meeting.attended": 10,
+  "comment.created": 1,
+  "login.daily": 2,
 };
 
 // ── Badge definitions ────────────────────────────────────────
@@ -34,44 +34,44 @@ export interface BadgeDef {
 
 export const BADGE_DEFINITIONS: BadgeDef[] = [
   {
-    id: 'email-master',
-    name: 'Maître des emails',
-    nameEn: 'Email Master',
-    icon: '✉️',
-    description: 'Envoyer 100 emails',
-    trigger: { action: 'email.sent', threshold: 100 },
+    id: "email-master",
+    name: "Maître des emails",
+    nameEn: "Email Master",
+    icon: "✉️",
+    description: "Envoyer 100 emails",
+    trigger: { action: "email.sent", threshold: 100 },
   },
   {
-    id: 'closer',
-    name: 'Closer',
-    nameEn: 'Closer',
-    icon: '🤝',
-    description: 'Clôturer 10 deals',
-    trigger: { action: 'deal.closed', threshold: 10 },
+    id: "closer",
+    name: "Closer",
+    nameEn: "Closer",
+    icon: "🤝",
+    description: "Clôturer 10 deals",
+    trigger: { action: "deal.closed", threshold: 10 },
   },
   {
-    id: 'organizer',
-    name: 'Organisateur',
-    nameEn: 'Organizer',
-    icon: '📅',
-    description: 'Créer 50 événements',
-    trigger: { action: 'calendar.event_created', threshold: 50 },
+    id: "organizer",
+    name: "Organisateur",
+    nameEn: "Organizer",
+    icon: "📅",
+    description: "Créer 50 événements",
+    trigger: { action: "calendar.event_created", threshold: 50 },
   },
   {
-    id: 'task-crusher',
-    name: 'Briseur de tâches',
-    nameEn: 'Task Crusher',
-    icon: '⚡',
-    description: 'Terminer 100 tâches',
-    trigger: { action: 'task.completed', threshold: 100 },
+    id: "task-crusher",
+    name: "Briseur de tâches",
+    nameEn: "Task Crusher",
+    icon: "⚡",
+    description: "Terminer 100 tâches",
+    trigger: { action: "task.completed", threshold: 100 },
   },
   {
-    id: 'doc-wizard',
-    name: 'Magicien des docs',
-    nameEn: 'Doc Wizard',
-    icon: '📄',
-    description: 'Créer 20 documents',
-    trigger: { action: 'doc.created', threshold: 20 },
+    id: "doc-wizard",
+    name: "Magicien des docs",
+    nameEn: "Doc Wizard",
+    icon: "📄",
+    description: "Créer 20 documents",
+    trigger: { action: "doc.created", threshold: 20 },
   },
 ];
 
@@ -100,7 +100,7 @@ function defaultState(): PointsState {
 
 // ── Persistence ──────────────────────────────────────────────
 export function loadPoints(): PointsState {
-  if (typeof window === 'undefined') return defaultState();
+  if (typeof window === "undefined") return defaultState();
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (!stored) return defaultState();
@@ -111,7 +111,7 @@ export function loadPoints(): PointsState {
 }
 
 function savePoints(state: PointsState): void {
-  if (typeof window === 'undefined') return;
+  if (typeof window === "undefined") return;
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   } catch {
@@ -149,7 +149,10 @@ export function awardPoints(
 
   const earnedBadges: EarnedBadge[] = [
     ...prev.badges,
-    ...newBadges.map((b) => ({ id: b.id, unlockedAt: new Date().toISOString() })),
+    ...newBadges.map((b) => ({
+      id: b.id,
+      unlockedAt: new Date().toISOString(),
+    })),
   ];
 
   const next: PointsState = {
@@ -166,7 +169,9 @@ export function awardPoints(
 /**
  * Get all unlocked badge definitions (resolved from IDs).
  */
-export function getEarnedBadges(state: PointsState): (BadgeDef & { unlockedAt: string })[] {
+export function getEarnedBadges(
+  state: PointsState,
+): (BadgeDef & { unlockedAt: string })[] {
   return state.badges
     .map((earned) => {
       const def = BADGE_DEFINITIONS.find((b) => b.id === earned.id);

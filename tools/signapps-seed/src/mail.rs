@@ -35,9 +35,26 @@ pub async fn seed_acme(
     // ── Mail accounts — one per user ─────────────────────────────────────────
     let domains = ["acme.corp", "acme.internal", "acmecorp.fr"];
     let first_names = [
-        "alice", "bob", "charlie", "diana", "etienne", "fanny", "gabriel",
-        "helene", "ivan", "juliette", "kevin", "laura", "marc", "nadia",
-        "olivier", "pauline", "quentin", "rachel", "sebastien", "thomas",
+        "alice",
+        "bob",
+        "charlie",
+        "diana",
+        "etienne",
+        "fanny",
+        "gabriel",
+        "helene",
+        "ivan",
+        "juliette",
+        "kevin",
+        "laura",
+        "marc",
+        "nadia",
+        "olivier",
+        "pauline",
+        "quentin",
+        "rachel",
+        "sebastien",
+        "thomas",
     ];
 
     let mut account_ids: Vec<(Uuid, Uuid)> = Vec::with_capacity(user_ids.len());
@@ -47,11 +64,7 @@ pub async fn seed_acme(
         let first = first_names[idx % first_names.len()];
         let domain = domains[idx % domains.len()];
         let email = format!("{}@{}", first, domain);
-        let display = format!(
-            "{} {}",
-            &first[0..1].to_uppercase(),
-            &first[1..]
-        );
+        let display = format!("{} {}", &first[0..1].to_uppercase(), &first[1..]);
 
         sqlx::query(
             r#"
@@ -158,10 +171,7 @@ pub async fn seed_acme(
             } else {
                 account_ids[(thread_idx + 1) % account_ids.len()]
             };
-            let sender_email = format!(
-                "{}@acme.corp",
-                first_names[thread_idx % first_names.len()]
-            );
+            let sender_email = format!("{}@acme.corp", first_names[thread_idx % first_names.len()]);
             let recip_email = format!(
                 "{}@acme.corp",
                 first_names[(thread_idx + 1) % first_names.len()]
@@ -336,8 +346,8 @@ pub async fn seed_startup(
     let mut rng = rand::thread_rng();
 
     let first_names = [
-        "lea", "alex", "sofia", "noah", "emma", "lucas", "jade",
-        "ethan", "chloe", "liam", "maya", "hugo", "amelia", "leo", "zoe",
+        "lea", "alex", "sofia", "noah", "emma", "lucas", "jade", "ethan", "chloe", "liam", "maya",
+        "hugo", "amelia", "leo", "zoe",
     ];
 
     let mut account_ids: Vec<(Uuid, Uuid)> = Vec::with_capacity(user_ids.len());
@@ -346,11 +356,7 @@ pub async fn seed_startup(
         let account_id = Uuid::new_v4();
         let first = first_names[idx % first_names.len()];
         let email = format!("{}@startup.signapps.dev", first);
-        let display = format!(
-            "{} {}",
-            &first[0..1].to_uppercase(),
-            &first[1..]
-        );
+        let display = format!("{} {}", &first[0..1].to_uppercase(), &first[1..]);
 
         sqlx::query(
             r#"
@@ -377,7 +383,10 @@ pub async fn seed_startup(
         account_ids.push((account_id, *user_id));
     }
 
-    info!(accounts = account_ids.len(), "startup mail accounts created");
+    info!(
+        accounts = account_ids.len(),
+        "startup mail accounts created"
+    );
 
     // Labels per account
     let label_defs = [

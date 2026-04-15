@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Archive, RotateCcw, Folder, Lightbulb } from 'lucide-react';
-import { toast } from 'sonner';
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Archive, RotateCcw, Folder, Lightbulb } from "lucide-react";
+import { toast } from "sonner";
 
 interface ArchiverEmail {
   id: string;
@@ -19,17 +19,23 @@ interface SmartEmailArchiverProps {
   onArchive?: (emailId: string, folder: string) => void;
 }
 
-export function SmartEmailArchiver({ emails = [], onArchive }: SmartEmailArchiverProps) {
+export function SmartEmailArchiver({
+  emails = [],
+  onArchive,
+}: SmartEmailArchiverProps) {
   const [items, setItems] = useState<ArchiverEmail[]>(emails);
   const [undoStack, setUndoStack] = useState<ArchiverEmail[][]>([]);
   const [archived, setArchived] = useState<Set<string>>(new Set());
 
   const suggestFolders = (email: ArchiverEmail): string[] => {
     const keywords = email.subject.toLowerCase();
-    if (keywords.includes('invoice') || keywords.includes('bill')) return ['Finance', 'Invoices'];
-    if (keywords.includes('project') || keywords.includes('task')) return ['Projects', 'Work'];
-    if (keywords.includes('contract') || keywords.includes('agreement')) return ['Legal', 'Contracts'];
-    return ['Archive', 'General'];
+    if (keywords.includes("invoice") || keywords.includes("bill"))
+      return ["Finance", "Invoices"];
+    if (keywords.includes("project") || keywords.includes("task"))
+      return ["Projects", "Work"];
+    if (keywords.includes("contract") || keywords.includes("agreement"))
+      return ["Legal", "Contracts"];
+    return ["Archive", "General"];
   };
 
   const archiveEmail = (emailId: string, folder: string) => {
@@ -44,18 +50,20 @@ export function SmartEmailArchiver({ emails = [], onArchive }: SmartEmailArchive
 
   const undoArchive = () => {
     if (undoStack.length === 0) {
-      toast.error('Rien à annuler');
+      toast.error("Rien à annuler");
       return;
     }
     const prevState = undoStack[undoStack.length - 1];
     setItems(prevState);
     setUndoStack((prev) => prev.slice(0, -1));
     setArchived(new Set());
-    toast.info('Action undone');
+    toast.info("Action undone");
   };
 
   const getEmailFolders = (email: ArchiverEmail): string[] => {
-    return email.suggestedFolder ? [email.suggestedFolder] : suggestFolders(email);
+    return email.suggestedFolder
+      ? [email.suggestedFolder]
+      : suggestFolders(email);
   };
 
   return (
@@ -78,7 +86,9 @@ export function SmartEmailArchiver({ emails = [], onArchive }: SmartEmailArchive
       <CardContent>
         <div className="space-y-2 max-h-96 overflow-y-auto">
           {items.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-8">No emails to archive</p>
+            <p className="text-sm text-muted-foreground text-center py-8">
+              No emails to archive
+            </p>
           ) : (
             items.map((email) => {
               const folders = getEmailFolders(email);
@@ -88,15 +98,19 @@ export function SmartEmailArchiver({ emails = [], onArchive }: SmartEmailArchive
                 <div
                   key={email.id}
                   className={`p-3 border rounded-lg transition-colors ${
-                    isArchived ? 'bg-muted opacity-60' : 'hover:bg-muted'
+                    isArchived ? "bg-muted opacity-60" : "hover:bg-muted"
                   }`}
                 >
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex-1">
                       <p className="text-sm font-medium">{email.subject}</p>
                       <div className="flex items-center gap-2 mt-1">
-                        <span className="text-xs text-muted-foreground">{email.from}</span>
-                        <span className="text-xs text-gray-400">{email.date}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {email.from}
+                        </span>
+                        <span className="text-xs text-gray-400">
+                          {email.date}
+                        </span>
                       </div>
                     </div>
                   </div>

@@ -1,7 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { CheckCircle2, Circle, Upload, MessageSquare, Wifi, WifiOff } from "lucide-react";
+import {
+  CheckCircle2,
+  Circle,
+  Upload,
+  MessageSquare,
+  Wifi,
+  WifiOff,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
@@ -34,11 +41,13 @@ export function FieldChecklist({
 }: FieldChecklistProps) {
   const [localItems, setLocalItems] = useState(items);
   const [expandedItem, setExpandedItem] = useState<string | null>(null);
-  const [photoInputs, setPhotoInputs] = useState<Record<string, File | null>>({});
+  const [photoInputs, setPhotoInputs] = useState<Record<string, File | null>>(
+    {},
+  );
 
   const handleToggleItem = (itemId: string) => {
     const updated = localItems.map((item) =>
-      item.id === itemId ? { ...item, completed: !item.completed } : item
+      item.id === itemId ? { ...item, completed: !item.completed } : item,
     );
     setLocalItems(updated);
     onItemToggle?.(itemId);
@@ -46,7 +55,7 @@ export function FieldChecklist({
 
   const handleNotesChange = (itemId: string, notes: string) => {
     const updated = localItems.map((item) =>
-      item.id === itemId ? { ...item, notes } : item
+      item.id === itemId ? { ...item, notes } : item,
     );
     setLocalItems(updated);
     onNotesChange?.(itemId, notes);
@@ -59,7 +68,7 @@ export function FieldChecklist({
       const updated = localItems.map((item) =>
         item.id === itemId
           ? { ...item, photos: [...(item.photos || []), photoUrl] }
-          : item
+          : item,
       );
       setLocalItems(updated);
       onPhotoAdd?.(itemId, photoUrl);
@@ -68,7 +77,7 @@ export function FieldChecklist({
   };
 
   const completionRate = Math.round(
-    (localItems.filter((i) => i.completed).length / localItems.length) * 100
+    (localItems.filter((i) => i.completed).length / localItems.length) * 100,
   );
 
   return (
@@ -79,7 +88,9 @@ export function FieldChecklist({
           <div>
             <h1 className="text-2xl font-bold">{checklistName}</h1>
             <p className="text-sm text-muted-foreground dark:text-gray-400 mt-1">
-              {completionRate}% Complete ({localItems.filter((i) => i.completed).length}/{localItems.length})
+              {completionRate}% Complete (
+              {localItems.filter((i) => i.completed).length}/{localItems.length}
+              )
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -124,10 +135,14 @@ export function FieldChecklist({
               {/* Item Label and Expandable Content */}
               <div className="flex-1 min-w-0">
                 <button
-                  onClick={() => setExpandedItem(expandedItem === item.id ? null : item.id)}
+                  onClick={() =>
+                    setExpandedItem(expandedItem === item.id ? null : item.id)
+                  }
                   className="w-full text-left"
                 >
-                  <p className={`font-medium ${item.completed ? "line-through text-muted-foreground" : ""}`}>
+                  <p
+                    className={`font-medium ${item.completed ? "line-through text-muted-foreground" : ""}`}
+                  >
                     {item.label}
                   </p>
                 </button>
@@ -143,7 +158,9 @@ export function FieldChecklist({
                       </div>
                       <textarea
                         value={item.notes || ""}
-                        onChange={(e) => handleNotesChange(item.id, e.target.value)}
+                        onChange={(e) =>
+                          handleNotesChange(item.id, e.target.value)
+                        }
                         placeholder="Add notes for this item..."
                         className="w-full px-3 py-2 border rounded text-sm bg-card dark:bg-gray-900 dark:border-gray-700"
                         rows={2}
@@ -159,7 +176,10 @@ export function FieldChecklist({
                       {item.photos && item.photos.length > 0 && (
                         <div className="grid grid-cols-3 gap-2 mb-3">
                           {item.photos.map((photo, idx) => (
-                            <div key={idx} className="aspect-square rounded border overflow-hidden">
+                            <div
+                              key={idx}
+                              className="aspect-square rounded border overflow-hidden"
+                            >
                               {/* eslint-disable-next-line @next/next/no-img-element */}
                               <img
                                 src={photo}

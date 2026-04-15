@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { cn } from '@/lib/utils';
+import { cn } from "@/lib/utils";
 
-const TIME_FORMATTER = new Intl.DateTimeFormat('fr-FR', {
-  hour: '2-digit',
-  minute: '2-digit',
+const TIME_FORMATTER = new Intl.DateTimeFormat("fr-FR", {
+  hour: "2-digit",
+  minute: "2-digit",
   hour12: false,
 });
 
@@ -21,7 +21,7 @@ interface TimeDisplayProps {
  *        <TimeDisplay time="09:05" />      → "09:05"
  */
 export function TimeDisplay({ date, time, className }: TimeDisplayProps) {
-  let display = '—';
+  let display = "—";
 
   if (time) {
     display = time;
@@ -29,13 +29,13 @@ export function TimeDisplay({ date, time, className }: TimeDisplayProps) {
     try {
       display = TIME_FORMATTER.format(new Date(date));
     } catch {
-      display = '—';
+      display = "—";
     }
   }
 
   return (
     <time
-      className={cn('tabular-nums', className)}
+      className={cn("tabular-nums", className)}
       dateTime={date ? new Date(date).toISOString() : undefined}
     >
       {display}

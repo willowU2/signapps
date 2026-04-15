@@ -1,8 +1,8 @@
 //! SchedulingPreferencesRepository — user scheduling preferences CRUD operations.
 
 use crate::models::{SchedulingPreferences, UpdateSchedulingPreferences};
-use signapps_db_shared::DatabasePool;
 use signapps_common::Result;
+use signapps_db_shared::DatabasePool;
 use uuid::Uuid;
 
 /// Repository for user scheduling preferences CRUD operations.

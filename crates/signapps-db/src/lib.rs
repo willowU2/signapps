@@ -18,11 +18,11 @@ pub use models::{
 };
 pub use pool::DatabasePool;
 pub use repositories::{
-    CalendarRepository, CategoryRepository, EventAttendeeRepository,
-    EventRepository, FloorPlanRepository, QuotaRepository, RecurrenceRuleRepository,
-    ResourceRepository, SchedulingPreferencesRepository, SchedulingResourceRepository,
-    SchedulingTemplateRepository, TaskRepository, TimeItemDependencyRepository,
-    TimeItemGroupRepository, TimeItemRepository, TimeItemUserRepository,
+    CalendarRepository, CategoryRepository, EventAttendeeRepository, EventRepository,
+    FloorPlanRepository, QuotaRepository, RecurrenceRuleRepository, ResourceRepository,
+    SchedulingPreferencesRepository, SchedulingResourceRepository, SchedulingTemplateRepository,
+    TaskRepository, TimeItemDependencyRepository, TimeItemGroupRepository, TimeItemRepository,
+    TimeItemUserRepository,
 };
 
 use sqlx::postgres::PgPoolOptions;

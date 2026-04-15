@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from "react";
 import {
   Users,
   UserPlus,
@@ -13,42 +13,42 @@ import {
   Loader2,
   Copy,
   Check,
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from "@/components/ui/select";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Separator } from '@/components/ui/separator';
-import { toast } from 'sonner';
-import { cn } from '@/lib/utils';
+} from "@/components/ui/dropdown-menu";
+import { Separator } from "@/components/ui/separator";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 import {
   workspacesApi,
   type WorkspaceMember,
   type WorkspaceRole,
-} from '@/lib/api/tenant';
-import { usersApi, type User } from '@/lib/api/identity';
+} from "@/lib/api/tenant";
+import { usersApi, type User } from "@/lib/api/identity";
 
 // ============================================================================
 // Types
@@ -71,24 +71,24 @@ const ROLE_CONFIG: Record<
   { label: string; icon: React.ElementType; color: string }
 > = {
   owner: {
-    label: 'Proprietaire',
+    label: "Proprietaire",
     icon: Crown,
-    color: 'text-amber-600 dark:text-amber-400',
+    color: "text-amber-600 dark:text-amber-400",
   },
   admin: {
-    label: 'Administrateur',
+    label: "Administrateur",
     icon: Shield,
-    color: 'text-blue-600 dark:text-blue-400',
+    color: "text-blue-600 dark:text-blue-400",
   },
   member: {
-    label: 'Membre',
+    label: "Membre",
     icon: Users,
-    color: 'text-green-600 dark:text-green-400',
+    color: "text-green-600 dark:text-green-400",
   },
   viewer: {
-    label: 'Lecteur',
+    label: "Lecteur",
     icon: Eye,
-    color: 'text-muted-foreground',
+    color: "text-muted-foreground",
   },
 };
 
@@ -105,8 +105,8 @@ export function WorkspaceSharing({
 }: WorkspaceSharingProps) {
   const [members, setMembers] = useState<WorkspaceMember[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [inviteEmail, setInviteEmail] = useState('');
-  const [inviteRole, setInviteRole] = useState<WorkspaceRole>('member');
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteRole, setInviteRole] = useState<WorkspaceRole>("member");
   const [isInviting, setIsInviting] = useState(false);
   const [searchResults, setSearchResults] = useState<User[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -118,7 +118,7 @@ export function WorkspaceSharing({
       const response = await workspacesApi.listMembers(workspaceId);
       setMembers(response.data || []);
     } catch {
-      toast.error('Erreur lors du chargement des membres');
+      toast.error("Erreur lors du chargement des membres");
     } finally {
       setIsLoading(false);
     }
@@ -142,11 +142,13 @@ export function WorkspaceSharing({
       try {
         const response = await usersApi.list(0, 10);
         const ud = response.data as { users?: User[] } | User[];
-        const users: User[] = (ud as { users?: User[] })?.users || (Array.isArray(ud) ? (ud as User[]) : []);
+        const users: User[] =
+          (ud as { users?: User[] })?.users ||
+          (Array.isArray(ud) ? (ud as User[]) : []);
         const filtered = users.filter(
           (u: User) =>
-            (u.email || '').toLowerCase().includes(inviteEmail.toLowerCase()) ||
-            u.username.toLowerCase().includes(inviteEmail.toLowerCase())
+            (u.email || "").toLowerCase().includes(inviteEmail.toLowerCase()) ||
+            u.username.toLowerCase().includes(inviteEmail.toLowerCase()),
         );
         // Exclude already-invited members
         const memberIds = new Set(members.map((m) => m.user_id));
@@ -164,7 +166,7 @@ export function WorkspaceSharing({
   const handleInvite = async (userId?: string) => {
     const targetUserId = userId;
     if (!targetUserId) {
-      toast.error('Selectionnez un utilisateur');
+      toast.error("Selectionnez un utilisateur");
       return;
     }
 
@@ -174,12 +176,12 @@ export function WorkspaceSharing({
         user_id: targetUserId,
         role: inviteRole,
       });
-      toast.success('Membre ajoute');
-      setInviteEmail('');
+      toast.success("Membre ajoute");
+      setInviteEmail("");
       setSearchResults([]);
       await loadMembers();
     } catch {
-      toast.error('Erreur lors de l\'invitation');
+      toast.error("Erreur lors de l'invitation");
     } finally {
       setIsInviting(false);
     }
@@ -191,13 +193,11 @@ export function WorkspaceSharing({
         role: newRole,
       });
       setMembers((prev) =>
-        prev.map((m) =>
-          m.user_id === userId ? { ...m, role: newRole } : m
-        )
+        prev.map((m) => (m.user_id === userId ? { ...m, role: newRole } : m)),
       );
-      toast.success('Role mis a jour');
+      toast.success("Role mis a jour");
     } catch {
-      toast.error('Erreur lors de la mise a jour du role');
+      toast.error("Erreur lors de la mise a jour du role");
     }
   };
 
@@ -205,17 +205,16 @@ export function WorkspaceSharing({
     try {
       await workspacesApi.removeMember(workspaceId, userId);
       setMembers((prev) => prev.filter((m) => m.user_id !== userId));
-      toast.success('Membre retire');
+      toast.success("Membre retire");
     } catch {
-      toast.error('Erreur lors du retrait du membre');
+      toast.error("Erreur lors du retrait du membre");
     }
   };
 
   const currentUserRole = members.find(
-    (m) => m.user_id === currentUserId
+    (m) => m.user_id === currentUserId,
   )?.role;
-  const canManage =
-    currentUserRole === 'owner' || currentUserRole === 'admin';
+  const canManage = currentUserRole === "owner" || currentUserRole === "admin";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -333,7 +332,7 @@ export function WorkspaceSharing({
                   <MemberItem
                     key={member.user_id}
                     member={member}
-                    canManage={canManage && member.role !== 'owner'}
+                    canManage={canManage && member.role !== "owner"}
                     isCurrentUser={member.user_id === currentUserId}
                     onRoleChange={(role) =>
                       handleRoleChange(member.user_id, role)
@@ -377,9 +376,7 @@ function MemberItem({
       <Avatar className="h-8 w-8">
         <AvatarImage src={member.avatar_url} />
         <AvatarFallback className="text-xs">
-          {(member.display_name || member.username)
-            .slice(0, 2)
-            .toUpperCase()}
+          {(member.display_name || member.username).slice(0, 2).toUpperCase()}
         </AvatarFallback>
       </Avatar>
 
@@ -432,7 +429,7 @@ function MemberItem({
         ) : (
           <Badge
             variant="secondary"
-            className={cn('text-xs gap-1', roleConfig.color)}
+            className={cn("text-xs gap-1", roleConfig.color)}
           >
             <RoleIcon className="h-3 w-3" />
             {roleConfig.label}
@@ -447,10 +444,7 @@ function MemberItem({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem
-                className="text-destructive"
-                onClick={onRemove}
-              >
+              <DropdownMenuItem className="text-destructive" onClick={onRemove}>
                 <Trash2 className="h-4 w-4 mr-2" />
                 Retirer
               </DropdownMenuItem>

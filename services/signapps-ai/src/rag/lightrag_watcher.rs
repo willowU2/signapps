@@ -59,7 +59,7 @@ impl Default for WatcherConfig {
             channel: "kg_data_change".to_string(),
             collection: "signapps".to_string(),
             debounce_ms: 2000,
-            full_reseed_interval_secs: 86400, // 24 hours
+            full_reseed_interval_secs: 86400,  // 24 hours
             auto_discover_interval_secs: 3600, // 1 hour
         }
     }
@@ -157,7 +157,7 @@ pub async fn start_watcher<E, EFut>(
             Err(e) => {
                 tracing::error!(error = %e, "Failed to create PG listener for LightRAG watcher");
                 return;
-            }
+            },
         };
 
         if let Err(e) = listener.listen(&config_listen.channel).await {
@@ -250,10 +250,7 @@ pub async fn start_watcher<E, EFut>(
         let mut shutdown_reseed = shutdown.clone();
 
         tokio::spawn(async move {
-            tracing::info!(
-                interval_secs,
-                "Periodic full re-seed enabled"
-            );
+            tracing::info!(interval_secs, "Periodic full re-seed enabled");
 
             // Run initial seed on startup
             tracing::info!("Running initial full seed");
@@ -274,10 +271,10 @@ pub async fn start_watcher<E, EFut>(
                         sources = results.len(),
                         "Initial LightRAG seed complete"
                     );
-                }
+                },
                 Err(e) => {
                     tracing::error!(error = %e, "Initial LightRAG seed failed");
-                }
+                },
             }
 
             loop {
@@ -412,9 +409,9 @@ async fn discover_and_attach_triggers(pool: &DatabasePool) -> signapps_common::R
     let mut attached = 0usize;
     for (schema, table) in &new_tables {
         // Double-check: never attach to sensitive tables (defense-in-depth)
-        let is_sensitive = AUTO_DISCOVER_EXCLUDED.iter().any(|exc| {
-            table.to_lowercase().contains(exc) || schema.to_lowercase().contains(exc)
-        });
+        let is_sensitive = AUTO_DISCOVER_EXCLUDED
+            .iter()
+            .any(|exc| table.to_lowercase().contains(exc) || schema.to_lowercase().contains(exc));
         if is_sensitive {
             tracing::trace!(
                 table = %table,
@@ -439,14 +436,14 @@ async fn discover_and_attach_triggers(pool: &DatabasePool) -> signapps_common::R
             Ok(_) => {
                 tracing::info!(table = %full_name, "Attached KG trigger to new table");
                 attached += 1;
-            }
+            },
             Err(e) => {
                 tracing::trace!(
                     table = %full_name,
                     error = %e,
                     "Could not attach trigger (likely a view, partition, or system table)"
                 );
-            }
+            },
         }
     }
 
@@ -517,12 +514,22 @@ mod tests {
 
     #[test]
     fn sensitive_table_is_detected() {
-        let sensitive_names = &["sessions", "api_keys", "user_tokens", "vault_entries", "sso_configs"];
+        let sensitive_names = &[
+            "sessions",
+            "api_keys",
+            "user_tokens",
+            "vault_entries",
+            "sso_configs",
+        ];
         for name in sensitive_names {
-            let is_sensitive = AUTO_DISCOVER_EXCLUDED.iter().any(|exc| {
-                name.to_lowercase().contains(exc)
-            });
-            assert!(is_sensitive, "Expected '{}' to be detected as sensitive", name);
+            let is_sensitive = AUTO_DISCOVER_EXCLUDED
+                .iter()
+                .any(|exc| name.to_lowercase().contains(exc));
+            assert!(
+                is_sensitive,
+                "Expected '{}' to be detected as sensitive",
+                name
+            );
         }
     }
 
@@ -530,10 +537,14 @@ mod tests {
     fn safe_table_is_not_excluded() {
         let safe_names = &["users", "org_nodes", "calendar_events", "invoices"];
         for name in safe_names {
-            let is_sensitive = AUTO_DISCOVER_EXCLUDED.iter().any(|exc| {
-                name.to_lowercase().contains(exc)
-            });
-            assert!(!is_sensitive, "Expected '{}' NOT to be detected as sensitive", name);
+            let is_sensitive = AUTO_DISCOVER_EXCLUDED
+                .iter()
+                .any(|exc| name.to_lowercase().contains(exc));
+            assert!(
+                !is_sensitive,
+                "Expected '{}' NOT to be detected as sensitive",
+                name
+            );
         }
     }
 
@@ -557,6 +568,9 @@ mod tests {
             .get(seeder)
             .map(|last| now.duration_since(*last) > debounce)
             .unwrap_or(true);
-        assert!(!should_trigger2, "Immediate second call should be debounced");
+        assert!(
+            !should_trigger2,
+            "Immediate second call should be debounced"
+        );
     }
 }

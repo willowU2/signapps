@@ -758,224 +758,290 @@ export default function MeetPage() {
               <div className="space-y-4">
                 {selectedRoom && (
                   <div>
-                    <p className="text-xs text-muted-foreground mb-1.5">Liens croisés</p>
+                    <p className="text-xs text-muted-foreground mb-1.5">
+                      Liens croisés
+                    </p>
                     <CrossLinks
                       links={[
-                        crossLinkHelpers.toCalendarEvent(selectedRoom.id, `Événement calendrier`),
-                        ...(recordings.filter((r) => r.status === "ready").map((r) => crossLinkHelpers.toDoc(r.id, `Enregistrement`)))
+                        crossLinkHelpers.toCalendarEvent(
+                          selectedRoom.id,
+                          `Événement calendrier`,
+                        ),
+                        ...recordings
+                          .filter((r) => r.status === "ready")
+                          .map((r) =>
+                            crossLinkHelpers.toDoc(r.id, `Enregistrement`),
+                          ),
                       ]}
                     />
                   </div>
                 )}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Participants */}
-                <Card>
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Participants */}
+                  <Card>
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-base flex items-center gap-2">
+                          <Users className="w-4 h-4" />
+                          Participants ({participants.length})
+                        </CardTitle>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() =>
+                            selectedRoom && loadRoomDetail(selectedRoom)
+                          }
+                        >
+                          <RefreshCw className="w-3.5 h-3.5" />
+                        </Button>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="p-0">
+                      <ScrollArea className="h-64">
+                        {participants.length === 0 ? (
+                          <div className="flex flex-col items-center justify-center py-8 text-muted-foreground text-sm">
+                            <Users className="w-8 h-8 opacity-30 mb-2" />
+                            Aucun participant
+                          </div>
+                        ) : (
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead>Nom</TableHead>
+                                <TableHead>Rôle</TableHead>
+                                <TableHead>Statut</TableHead>
+                                <TableHead className="text-right">
+                                  Actions
+                                </TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {participants.map((p) => (
+                                <TableRow key={p.id}>
+                                  <TableCell className="font-medium">
+                                    {p.display_name}
+                                  </TableCell>
+                                  <TableCell>
+                                    <Badge
+                                      variant="outline"
+                                      className="text-xs"
+                                    >
+                                      {p.role}
+                                    </Badge>
+                                  </TableCell>
+                                  <TableCell>
+                                    <div className="flex gap-1">
+                                      {p.is_muted && (
+                                        <Badge
+                                          variant="secondary"
+                                          className="text-xs"
+                                        >
+                                          <MicOff className="w-3 h-3 mr-1" />
+                                          Muet
+                                        </Badge>
+                                      )}
+                                      {p.is_screen_sharing && (
+                                        <Badge
+                                          variant="secondary"
+                                          className="text-xs"
+                                        >
+                                          Partage
+                                        </Badge>
+                                      )}
+                                    </div>
+                                  </TableCell>
+                                  <TableCell className="text-right">
+                                    {p.role !== "host" && (
+                                      <div className="flex justify-end gap-1">
+                                        {!p.is_muted && (
+                                          <Button
+                                            size="sm"
+                                            variant="ghost"
+                                            onClick={() => handleMute(p.id)}
+                                            title="Couper le micro"
+                                          >
+                                            <MicOff className="w-3.5 h-3.5" />
+                                          </Button>
+                                        )}
+                                        <Button
+                                          size="sm"
+                                          variant="ghost"
+                                          className="text-destructive hover:text-destructive"
+                                          onClick={() => handleKick(p.id)}
+                                          title="Expulser"
+                                        >
+                                          <UserX className="w-3.5 h-3.5" />
+                                        </Button>
+                                      </div>
+                                    )}
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        )}
+                      </ScrollArea>
+                    </CardContent>
+                  </Card>
+
+                  {/* Recordings */}
+                  <Card>
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-base flex items-center gap-2">
+                          <Circle className="w-4 h-4" />
+                          Enregistrements ({recordings.length})
+                        </CardTitle>
+                        {selectedRoom.status === "active" &&
+                        !activeRecording ? (
+                          <Button size="sm" onClick={handleStartRecording}>
+                            <Play className="w-3.5 h-3.5 mr-1.5" />
+                            Enregistrer
+                          </Button>
+                        ) : activeRecording ? (
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() =>
+                              handleStopRecording(activeRecording.id)
+                            }
+                          >
+                            <Square className="w-3.5 h-3.5 mr-1.5" />
+                            Arrêter
+                          </Button>
+                        ) : null}
+                      </div>
+                    </CardHeader>
+                    <CardContent className="p-0">
+                      <ScrollArea className="h-64">
+                        {recordings.length === 0 ? (
+                          <div className="flex flex-col items-center justify-center py-8 text-muted-foreground text-sm">
+                            <Circle className="w-8 h-8 opacity-30 mb-2" />
+                            Aucun enregistrement
+                          </div>
+                        ) : (
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead>Statut</TableHead>
+                                <TableHead>Durée</TableHead>
+                                <TableHead>Taille</TableHead>
+                                <TableHead className="text-right">
+                                  Actions
+                                </TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {recordings.map((rec) => (
+                                <TableRow key={rec.id}>
+                                  <TableCell>
+                                    <RecordingStatusBadge status={rec.status} />
+                                  </TableCell>
+                                  <TableCell>
+                                    {fmtDuration(rec.duration_seconds)}
+                                  </TableCell>
+                                  <TableCell>
+                                    {fmtBytes(rec.file_size_bytes)}
+                                  </TableCell>
+                                  <TableCell className="text-right">
+                                    <div className="flex justify-end gap-1">
+                                      {rec.status === "recording" && (
+                                        <Button
+                                          size="sm"
+                                          variant="ghost"
+                                          onClick={() =>
+                                            handleStopRecording(rec.id)
+                                          }
+                                          title="Arrêter"
+                                        >
+                                          <Square className="w-3.5 h-3.5" />
+                                        </Button>
+                                      )}
+                                      {rec.download_url && (
+                                        <Button
+                                          size="sm"
+                                          variant="ghost"
+                                          asChild
+                                          title="Télécharger"
+                                        >
+                                          <a href={rec.download_url} download>
+                                            <Download className="w-3.5 h-3.5" />
+                                          </a>
+                                        </Button>
+                                      )}
+                                      {/* Idea 7: Create doc from recording */}
+                                      {rec.status === "ready" && (
+                                        <MeetRecordingToDoc
+                                          meetingId={rec.id}
+                                          meetingTitle={
+                                            selectedRoom?.name || "Réunion"
+                                          }
+                                          transcript=""
+                                        />
+                                      )}
+                                      <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        className="text-destructive hover:text-destructive"
+                                        onClick={() =>
+                                          handleDeleteRecording(rec.id)
+                                        }
+                                        title="Supprimer"
+                                      >
+                                        <Trash2 className="w-3.5 h-3.5" />
+                                      </Button>
+                                    </div>
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        )}
+                      </ScrollArea>
+                    </CardContent>
+                  </Card>
+
+                  {/* Waiting room */}
+                  <Card className="lg:col-span-2">
+                    <CardHeader>
                       <CardTitle className="text-base flex items-center gap-2">
-                        <Users className="w-4 h-4" />
-                        Participants ({participants.length})
+                        <Clock className="w-4 h-4" />
+                        Salle d'attente ({waitingRoom.length})
                       </CardTitle>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() =>
-                          selectedRoom && loadRoomDetail(selectedRoom)
-                        }
-                      >
-                        <RefreshCw className="w-3.5 h-3.5" />
-                      </Button>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="p-0">
-                    <ScrollArea className="h-64">
-                      {participants.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center py-8 text-muted-foreground text-sm">
-                          <Users className="w-8 h-8 opacity-30 mb-2" />
-                          Aucun participant
+                    </CardHeader>
+                    <CardContent>
+                      {waitingRoom.length === 0 ? (
+                        <div className="flex items-center gap-2 text-muted-foreground text-sm py-4 justify-center">
+                          <CheckCircle className="w-4 h-4" />
+                          Salle d'attente vide
                         </div>
                       ) : (
                         <Table>
                           <TableHeader>
                             <TableRow>
                               <TableHead>Nom</TableHead>
-                              <TableHead>Rôle</TableHead>
-                              <TableHead>Statut</TableHead>
+                              <TableHead>Arrivée</TableHead>
                               <TableHead className="text-right">
                                 Actions
                               </TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
-                            {participants.map((p) => (
+                            {waitingRoom.map((p) => (
                               <TableRow key={p.id}>
                                 <TableCell className="font-medium">
                                   {p.display_name}
                                 </TableCell>
-                                <TableCell>
-                                  <Badge variant="outline" className="text-xs">
-                                    {p.role}
-                                  </Badge>
-                                </TableCell>
-                                <TableCell>
-                                  <div className="flex gap-1">
-                                    {p.is_muted && (
-                                      <Badge
-                                        variant="secondary"
-                                        className="text-xs"
-                                      >
-                                        <MicOff className="w-3 h-3 mr-1" />
-                                        Muet
-                                      </Badge>
-                                    )}
-                                    {p.is_screen_sharing && (
-                                      <Badge
-                                        variant="secondary"
-                                        className="text-xs"
-                                      >
-                                        Partage
-                                      </Badge>
-                                    )}
-                                  </div>
-                                </TableCell>
+                                <TableCell>{fmtDate(p.joined_at)}</TableCell>
                                 <TableCell className="text-right">
-                                  {p.role !== "host" && (
-                                    <div className="flex justify-end gap-1">
-                                      {!p.is_muted && (
-                                        <Button
-                                          size="sm"
-                                          variant="ghost"
-                                          onClick={() => handleMute(p.id)}
-                                          title="Couper le micro"
-                                        >
-                                          <MicOff className="w-3.5 h-3.5" />
-                                        </Button>
-                                      )}
-                                      <Button
-                                        size="sm"
-                                        variant="ghost"
-                                        className="text-destructive hover:text-destructive"
-                                        onClick={() => handleKick(p.id)}
-                                        title="Expulser"
-                                      >
-                                        <UserX className="w-3.5 h-3.5" />
-                                      </Button>
-                                    </div>
-                                  )}
-                                </TableCell>
-                              </TableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
-                      )}
-                    </ScrollArea>
-                  </CardContent>
-                </Card>
-
-                {/* Recordings */}
-                <Card>
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-base flex items-center gap-2">
-                        <Circle className="w-4 h-4" />
-                        Enregistrements ({recordings.length})
-                      </CardTitle>
-                      {selectedRoom.status === "active" && !activeRecording ? (
-                        <Button size="sm" onClick={handleStartRecording}>
-                          <Play className="w-3.5 h-3.5 mr-1.5" />
-                          Enregistrer
-                        </Button>
-                      ) : activeRecording ? (
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          onClick={() =>
-                            handleStopRecording(activeRecording.id)
-                          }
-                        >
-                          <Square className="w-3.5 h-3.5 mr-1.5" />
-                          Arrêter
-                        </Button>
-                      ) : null}
-                    </div>
-                  </CardHeader>
-                  <CardContent className="p-0">
-                    <ScrollArea className="h-64">
-                      {recordings.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center py-8 text-muted-foreground text-sm">
-                          <Circle className="w-8 h-8 opacity-30 mb-2" />
-                          Aucun enregistrement
-                        </div>
-                      ) : (
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead>Statut</TableHead>
-                              <TableHead>Durée</TableHead>
-                              <TableHead>Taille</TableHead>
-                              <TableHead className="text-right">
-                                Actions
-                              </TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {recordings.map((rec) => (
-                              <TableRow key={rec.id}>
-                                <TableCell>
-                                  <RecordingStatusBadge status={rec.status} />
-                                </TableCell>
-                                <TableCell>
-                                  {fmtDuration(rec.duration_seconds)}
-                                </TableCell>
-                                <TableCell>
-                                  {fmtBytes(rec.file_size_bytes)}
-                                </TableCell>
-                                <TableCell className="text-right">
-                                  <div className="flex justify-end gap-1">
-                                    {rec.status === "recording" && (
-                                      <Button
-                                        size="sm"
-                                        variant="ghost"
-                                        onClick={() =>
-                                          handleStopRecording(rec.id)
-                                        }
-                                        title="Arrêter"
-                                      >
-                                        <Square className="w-3.5 h-3.5" />
-                                      </Button>
-                                    )}
-                                    {rec.download_url && (
-                                      <Button
-                                        size="sm"
-                                        variant="ghost"
-                                        asChild
-                                        title="Télécharger"
-                                      >
-                                        <a href={rec.download_url} download>
-                                          <Download className="w-3.5 h-3.5" />
-                                        </a>
-                                      </Button>
-                                    )}
-                                    {/* Idea 7: Create doc from recording */}
-                                    {rec.status === "ready" && (
-                                      <MeetRecordingToDoc
-                                        meetingId={rec.id}
-                                        meetingTitle={
-                                          selectedRoom?.name || "Réunion"
-                                        }
-                                        transcript=""
-                                      />
-                                    )}
-                                    <Button
-                                      size="sm"
-                                      variant="ghost"
-                                      className="text-destructive hover:text-destructive"
-                                      onClick={() =>
-                                        handleDeleteRecording(rec.id)
-                                      }
-                                      title="Supprimer"
-                                    >
-                                      <Trash2 className="w-3.5 h-3.5" />
+                                  <div className="flex justify-end gap-2">
+                                    <Button size="sm" variant="default">
+                                      <CheckCircle className="w-3.5 h-3.5 mr-1.5" />
+                                      Admettre
+                                    </Button>
+                                    <Button size="sm" variant="destructive">
+                                      <XCircle className="w-3.5 h-3.5 mr-1.5" />
+                                      Refuser
                                     </Button>
                                   </div>
                                 </TableCell>
@@ -984,62 +1050,9 @@ export default function MeetPage() {
                           </TableBody>
                         </Table>
                       )}
-                    </ScrollArea>
-                  </CardContent>
-                </Card>
-
-                {/* Waiting room */}
-                <Card className="lg:col-span-2">
-                  <CardHeader>
-                    <CardTitle className="text-base flex items-center gap-2">
-                      <Clock className="w-4 h-4" />
-                      Salle d'attente ({waitingRoom.length})
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {waitingRoom.length === 0 ? (
-                      <div className="flex items-center gap-2 text-muted-foreground text-sm py-4 justify-center">
-                        <CheckCircle className="w-4 h-4" />
-                        Salle d'attente vide
-                      </div>
-                    ) : (
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Nom</TableHead>
-                            <TableHead>Arrivée</TableHead>
-                            <TableHead className="text-right">
-                              Actions
-                            </TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {waitingRoom.map((p) => (
-                            <TableRow key={p.id}>
-                              <TableCell className="font-medium">
-                                {p.display_name}
-                              </TableCell>
-                              <TableCell>{fmtDate(p.joined_at)}</TableCell>
-                              <TableCell className="text-right">
-                                <div className="flex justify-end gap-2">
-                                  <Button size="sm" variant="default">
-                                    <CheckCircle className="w-3.5 h-3.5 mr-1.5" />
-                                    Admettre
-                                  </Button>
-                                  <Button size="sm" variant="destructive">
-                                    <XCircle className="w-3.5 h-3.5 mr-1.5" />
-                                    Refuser
-                                  </Button>
-                                </div>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    )}
-                  </CardContent>
-                </Card>
-              </div>
+                    </CardContent>
+                  </Card>
+                </div>
               </div>
             )}
           </TabsContent>

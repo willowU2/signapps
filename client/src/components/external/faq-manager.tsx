@@ -1,14 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import {
-  ChevronDown,
-  Plus,
-  Edit2,
-  Trash2,
-  Search,
-  X,
-} from "lucide-react";
+import { ChevronDown, Plus, Edit2, Trash2, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -33,7 +26,8 @@ export function FAQManager({ onSave }: FAQManagerProps) {
       id: "1",
       category: "General",
       question: "What is SignApps?",
-      answer: "SignApps is a secure, open-source alternative to Google Workspace.",
+      answer:
+        "SignApps is a secure, open-source alternative to Google Workspace.",
     },
     {
       id: "2",
@@ -46,7 +40,7 @@ export function FAQManager({ onSave }: FAQManagerProps) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedCategory, setExpandedCategory] = useState<string | null>(
-    "General"
+    "General",
   );
   const [formData, setFormData] = useState({
     category: "",
@@ -58,7 +52,7 @@ export function FAQManager({ onSave }: FAQManagerProps) {
   const filteredFaqs = faqs.filter(
     (f) =>
       f.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      f.answer.toLowerCase().includes(searchQuery.toLowerCase())
+      f.answer.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   const handleAddClick = () => {
@@ -76,7 +70,11 @@ export function FAQManager({ onSave }: FAQManagerProps) {
   };
 
   const handleSave = () => {
-    if (!formData.category.trim() || !formData.question.trim() || !formData.answer.trim()) {
+    if (
+      !formData.category.trim() ||
+      !formData.question.trim() ||
+      !formData.answer.trim()
+    ) {
       toast.error("Tous les champs sont obligatoires");
       return;
     }
@@ -100,8 +98,8 @@ export function FAQManager({ onSave }: FAQManagerProps) {
                 question: formData.question,
                 answer: formData.answer,
               }
-            : f
-        )
+            : f,
+        ),
       );
       toast.success("FAQ updated successfully");
     }
@@ -188,7 +186,10 @@ export function FAQManager({ onSave }: FAQManagerProps) {
             </div>
 
             <div className="flex gap-2">
-              <Button onClick={handleSave} className="bg-blue-600 hover:bg-blue-700">
+              <Button
+                onClick={handleSave}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
                 {editingId === "new" ? "Add FAQ" : "Update FAQ"}
               </Button>
               <Button onClick={handleCancel} variant="outline">
@@ -213,7 +214,7 @@ export function FAQManager({ onSave }: FAQManagerProps) {
               className="cursor-pointer hover:bg-muted dark:hover:bg-gray-900"
               onClick={() =>
                 setExpandedCategory(
-                  expandedCategory === category ? null : category
+                  expandedCategory === category ? null : category,
                 )
               }
             >

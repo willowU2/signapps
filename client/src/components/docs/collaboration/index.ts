@@ -1,8 +1,8 @@
 export {
-    UserPresenceList,
-    ConnectionStatus,
-    RemoteCursor,
-    RemoteCursors,
-} from './user-presence';
+  UserPresenceList,
+  ConnectionStatus,
+  RemoteCursor,
+  RemoteCursors,
+} from "./user-presence";
 
-export { ConflictIndicator, SyncHistoryPanel } from './conflict-indicator';
+export { ConflictIndicator, SyncHistoryPanel } from "./conflict-indicator";

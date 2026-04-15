@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef, useCallback } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -10,22 +10,22 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import { Button } from '@/components/ui/button';
-import { Clock, BellOff } from 'lucide-react';
-import { authApi } from '@/lib/api';
-import { useAuthStore } from '@/lib/store';
-import { toast } from 'sonner';
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import { Clock, BellOff } from "lucide-react";
+import { authApi } from "@/lib/api";
+import { useAuthStore } from "@/lib/store";
+import { toast } from "sonner";
 
 const WARN_BEFORE_MS = 5 * 60 * 1000; // 5 minutes
-const CHECK_INTERVAL_MS = 30 * 1000;   // check every 30 seconds
-const SNOOZE_KEY = 'session_warning_snoozed_until';
+const CHECK_INTERVAL_MS = 30 * 1000; // check every 30 seconds
+const SNOOZE_KEY = "session_warning_snoozed_until";
 const SNOOZE_DURATION_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 /** Decode JWT expiry from access_token without verifying signature */
 function getTokenExpiry(token: string): number | null {
   try {
-    const payload = JSON.parse(atob(token.split('.')[1]));
+    const payload = JSON.parse(atob(token.split(".")[1]));
     return payload.exp ? payload.exp * 1000 : null;
   } catch {
     return null;
@@ -59,26 +59,32 @@ export function SessionTimeoutWarning() {
   const startCountdown = (expiresAt: number) => {
     stopCountdown();
     countdownRef.current = setInterval(() => {
-      const remaining = Math.max(0, Math.floor((expiresAt - Date.now()) / 1000));
+      const remaining = Math.max(
+        0,
+        Math.floor((expiresAt - Date.now()) / 1000),
+      );
       setSecondsLeft(remaining);
       if (remaining <= 0) {
         stopCountdown();
         setShowWarning(false);
         logout();
-        toast.error('Votre session a expiré. Veuillez vous reconnecter.');
+        toast.error("Votre session a expiré. Veuillez vous reconnecter.");
       }
     }, 1000);
   };
 
   const handleExtend = useCallback(async () => {
     try {
-      const refreshToken = localStorage.getItem('refresh_token');
-      if (!refreshToken) { logout(); return; }
+      const refreshToken = localStorage.getItem("refresh_token");
+      if (!refreshToken) {
+        logout();
+        return;
+      }
       const res = await authApi.me();
       void res;
       stopCountdown();
       setShowWarning(false);
-      toast.success('Session prolongée');
+      toast.success("Session prolongée");
     } catch {
       logout();
     }
@@ -96,14 +102,20 @@ export function SessionTimeoutWarning() {
     localStorage.setItem(SNOOZE_KEY, String(until));
     stopCountdown();
     setShowWarning(false);
-    toast.info('Rappel désactivé pour 24h. La session sera prolongée automatiquement.');
+    toast.info(
+      "Rappel désactivé pour 24h. La session sera prolongée automatiquement.",
+    );
 
     // Also try to extend the session silently
     authApi.me().catch(() => {});
   }, []);
 
   useEffect(() => {
-    if (!isAuthenticated) { setShowWarning(false); stopCountdown(); return; }
+    if (!isAuthenticated) {
+      setShowWarning(false);
+      stopCountdown();
+      return;
+    }
 
     const check = () => {
       // Skip if snoozed
@@ -113,7 +125,7 @@ export function SessionTimeoutWarning() {
         return;
       }
 
-      const token = localStorage.getItem('access_token');
+      const token = localStorage.getItem("access_token");
       if (!token) return;
       const expiry = getTokenExpiry(token);
       if (!expiry) return;
@@ -135,13 +147,13 @@ export function SessionTimeoutWarning() {
       clearInterval(interval);
       stopCountdown();
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated]);
 
   if (!showWarning) return null;
 
   const mins = Math.floor(secondsLeft / 60);
-  const secs = (secondsLeft % 60).toString().padStart(2, '0');
+  const secs = (secondsLeft % 60).toString().padStart(2, "0");
 
   return (
     <AlertDialog open={showWarning}>
@@ -152,7 +164,7 @@ export function SessionTimeoutWarning() {
             Session bientôt expirée
           </AlertDialogTitle>
           <AlertDialogDescription>
-            Votre session expire dans{' '}
+            Votre session expire dans{" "}
             <span className="font-semibold text-amber-600">
               {mins}:{secs}
             </span>
@@ -170,7 +182,9 @@ export function SessionTimeoutWarning() {
             Ne plus afficher (24h)
           </Button>
           <div className="flex gap-2 ml-auto">
-            <AlertDialogCancel onClick={handleLogout}>Se déconnecter</AlertDialogCancel>
+            <AlertDialogCancel onClick={handleLogout}>
+              Se déconnecter
+            </AlertDialogCancel>
             <AlertDialogAction onClick={handleExtend}>
               Prolonger la session
             </AlertDialogAction>

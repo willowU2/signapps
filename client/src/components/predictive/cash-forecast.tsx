@@ -1,5 +1,5 @@
-import React from 'react';
-import { AlertTriangle, BarChart3 } from 'lucide-react';
+import React from "react";
+import { AlertTriangle, BarChart3 } from "lucide-react";
 
 interface CashForecastData {
   day: number;
@@ -32,12 +32,20 @@ export const CashForecast: React.FC = () => {
       <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <p className="text-xs text-muted-foreground mb-1">Current Balance</p>
-            <p className="text-2xl font-bold text-foreground">${(currentBalance / 1000).toFixed(1)}k</p>
+            <p className="text-xs text-muted-foreground mb-1">
+              Current Balance
+            </p>
+            <p className="text-2xl font-bold text-foreground">
+              ${(currentBalance / 1000).toFixed(1)}k
+            </p>
           </div>
           <div>
-            <p className="text-xs text-muted-foreground mb-1">Projected Balance (90d)</p>
-            <p className={`text-2xl font-bold ${isNegative ? 'text-red-600' : 'text-green-600'}`}>
+            <p className="text-xs text-muted-foreground mb-1">
+              Projected Balance (90d)
+            </p>
+            <p
+              className={`text-2xl font-bold ${isNegative ? "text-red-600" : "text-green-600"}`}
+            >
               ${(projectedBalance / 1000).toFixed(1)}k
             </p>
           </div>
@@ -48,14 +56,20 @@ export const CashForecast: React.FC = () => {
         <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2">
           <AlertTriangle className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" />
           <div>
-            <p className="text-sm font-semibold text-red-900">Cash Flow Alert</p>
-            <p className="text-xs text-red-700">Projected balance may turn negative</p>
+            <p className="text-sm font-semibold text-red-900">
+              Cash Flow Alert
+            </p>
+            <p className="text-xs text-red-700">
+              Projected balance may turn negative
+            </p>
           </div>
         </div>
       )}
 
       <div className="border-t pt-4">
-        <p className="text-sm font-semibold text-muted-foreground mb-3">Forecast Chart</p>
+        <p className="text-sm font-semibold text-muted-foreground mb-3">
+          Forecast Chart
+        </p>
         <div className="flex items-end justify-between h-32 gap-2 px-2">
           {forecastData.map((data, idx) => {
             const barHeight = (data.projected / maxValue) * chartHeight;
@@ -67,8 +81,12 @@ export const CashForecast: React.FC = () => {
                     style={{ height: `${barHeight}px` }}
                   />
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">Day {data.day}</p>
-                <p className="text-xs font-semibold text-foreground">${(data.projected / 1000).toFixed(0)}k</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Day {data.day}
+                </p>
+                <p className="text-xs font-semibold text-foreground">
+                  ${(data.projected / 1000).toFixed(0)}k
+                </p>
               </div>
             );
           })}
@@ -77,7 +95,10 @@ export const CashForecast: React.FC = () => {
 
       <div className="mt-4 p-3 bg-muted rounded-lg">
         <p className="text-xs text-muted-foreground">
-          Minimum projected balance: <span className="font-bold text-foreground">${(minBalance / 1000).toFixed(1)}k</span>
+          Minimum projected balance:{" "}
+          <span className="font-bold text-foreground">
+            ${(minBalance / 1000).toFixed(1)}k
+          </span>
         </p>
       </div>
     </div>

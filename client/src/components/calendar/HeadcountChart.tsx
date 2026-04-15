@@ -78,7 +78,12 @@ interface CustomTooltipProps {
   thresholds?: Array<{ role: string; min: number }>;
 }
 
-function CustomTooltip({ active, payload, label, thresholds }: CustomTooltipProps) {
+function CustomTooltip({
+  active,
+  payload,
+  label,
+  thresholds,
+}: CustomTooltipProps) {
   if (!active || !payload || payload.length === 0) return null;
 
   const total = payload.reduce((sum, p) => sum + (p.value ?? 0), 0);
@@ -92,7 +97,10 @@ function CustomTooltip({ active, payload, label, thresholds }: CustomTooltipProp
         const threshold = thresholds?.find((t) => t.role === p.name);
         const isBelowThreshold = threshold && p.value < threshold.min;
         return (
-          <div key={p.name} className="flex items-center justify-between gap-3 py-0.5">
+          <div
+            key={p.name}
+            className="flex items-center justify-between gap-3 py-0.5"
+          >
             <span className="flex items-center gap-1.5">
               <span
                 className="w-2.5 h-2.5 rounded-sm shrink-0"
@@ -103,7 +111,7 @@ function CustomTooltip({ active, payload, label, thresholds }: CustomTooltipProp
             <span
               className={cn(
                 "font-medium tabular-nums",
-                isBelowThreshold ? "text-red-500" : "text-foreground"
+                isBelowThreshold ? "text-red-500" : "text-foreground",
               )}
             >
               {p.value}
@@ -254,7 +262,7 @@ export default function HeadcountChart({
       <div
         className={cn(
           "flex items-center justify-center text-muted-foreground text-sm",
-          className
+          className,
         )}
         style={{ height }}
       >
@@ -276,7 +284,14 @@ export default function HeadcountChart({
             {roles.map((role, i) => {
               const color = getRoleColor(role, i);
               return (
-                <linearGradient key={role} id={`grad-${role}`} x1="0" y1="0" x2="0" y2="1">
+                <linearGradient
+                  key={role}
+                  id={`grad-${role}`}
+                  x1="0"
+                  y1="0"
+                  x2="0"
+                  y2="1"
+                >
                   <stop offset="5%" stopColor={color} stopOpacity={0.35} />
                   <stop offset="95%" stopColor={color} stopOpacity={0.05} />
                 </linearGradient>
@@ -284,7 +299,11 @@ export default function HeadcountChart({
             })}
           </defs>
 
-          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.5} />
+          <CartesianGrid
+            strokeDasharray="3 3"
+            stroke="hsl(var(--border))"
+            opacity={0.5}
+          />
 
           <XAxis
             dataKey="time"
@@ -305,7 +324,11 @@ export default function HeadcountChart({
 
           <Tooltip
             content={<CustomTooltip thresholds={thresholds} />}
-            cursor={{ stroke: "hsl(var(--muted-foreground))", strokeWidth: 1, strokeDasharray: "4 2" }}
+            cursor={{
+              stroke: "hsl(var(--muted-foreground))",
+              strokeWidth: 1,
+              strokeDasharray: "4 2",
+            }}
           />
 
           {/* Threshold reference lines */}

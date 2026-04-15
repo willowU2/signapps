@@ -242,10 +242,7 @@ export function ShareDialog({
   onOpenChange,
 }: ShareDialogProps) {
   const { grants, loading, createGrant, revokeGrant, updateGrantRole } =
-    useSharing(
-      open ? resourceType : null,
-      open ? resourceId : null,
-    );
+    useSharing(open ? resourceType : null, open ? resourceId : null);
 
   // Form state
   const [granteeType, setGranteeType] = useState<SharingGranteeType>("user");

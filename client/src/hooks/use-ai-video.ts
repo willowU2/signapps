@@ -1,5 +1,5 @@
-import { create } from 'zustand';
-import { getClient, ServiceName } from '@/lib/api/factory';
+import { create } from "zustand";
+import { getClient, ServiceName } from "@/lib/api/factory";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -76,7 +76,11 @@ interface VideoState {
   models: ModelInfo[];
 
   generateVideo: (params: VideoGenParams) => Promise<void>;
-  imgToVideo: (image: File, prompt?: string, duration?: number) => Promise<void>;
+  imgToVideo: (
+    image: File,
+    prompt?: string,
+    duration?: number,
+  ) => Promise<void>;
   analyzeVideo: (video: File, prompt?: string) => Promise<void>;
   extractFrames: (video: File, maxFrames?: number) => Promise<void>;
   transcribeVideo: (video: File) => Promise<void>;
@@ -100,13 +104,13 @@ export const useAiVideo = create<VideoState>()((set) => ({
     set({ generating: true, error: null, result: null });
     try {
       const res = await aiClient.post<VideoResult>(
-        '/ai/video/generate',
+        "/ai/video/generate",
         params,
       );
       set({ result: res.data, generating: false });
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : 'Video generation failed';
+        err instanceof Error ? err.message : "Video generation failed";
       set({ error: message, generating: false });
     }
   },
@@ -115,19 +119,19 @@ export const useAiVideo = create<VideoState>()((set) => ({
     set({ generating: true, error: null, result: null });
     try {
       const formData = new FormData();
-      formData.append('image', image);
-      if (prompt) formData.append('prompt', prompt);
-      if (duration !== undefined) formData.append('duration', String(duration));
+      formData.append("image", image);
+      if (prompt) formData.append("prompt", prompt);
+      if (duration !== undefined) formData.append("duration", String(duration));
 
       const res = await aiClient.post<VideoResult>(
-        '/ai/video/img2video',
+        "/ai/video/img2video",
         formData,
-        { headers: { 'Content-Type': 'multipart/form-data' } },
+        { headers: { "Content-Type": "multipart/form-data" } },
       );
       set({ result: res.data, generating: false });
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : 'Image-to-video failed';
+        err instanceof Error ? err.message : "Image-to-video failed";
       set({ error: message, generating: false });
     }
   },
@@ -136,18 +140,18 @@ export const useAiVideo = create<VideoState>()((set) => ({
     set({ analyzing: true, error: null, analysis: null });
     try {
       const formData = new FormData();
-      formData.append('video', video);
-      if (prompt) formData.append('prompt', prompt);
+      formData.append("video", video);
+      if (prompt) formData.append("prompt", prompt);
 
       const res = await aiClient.post<VideoAnalysis>(
-        '/ai/video/analyze',
+        "/ai/video/analyze",
         formData,
-        { headers: { 'Content-Type': 'multipart/form-data' } },
+        { headers: { "Content-Type": "multipart/form-data" } },
       );
       set({ analysis: res.data, analyzing: false });
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : 'Video analysis failed';
+        err instanceof Error ? err.message : "Video analysis failed";
       set({ error: message, analyzing: false });
     }
   },
@@ -156,20 +160,20 @@ export const useAiVideo = create<VideoState>()((set) => ({
     set({ analyzing: true, error: null, frames: null });
     try {
       const formData = new FormData();
-      formData.append('video', video);
+      formData.append("video", video);
       if (maxFrames !== undefined) {
-        formData.append('max_frames', String(maxFrames));
+        formData.append("max_frames", String(maxFrames));
       }
 
       const res = await aiClient.post<ExtractedFrames>(
-        '/ai/video/extract-frames',
+        "/ai/video/extract-frames",
         formData,
-        { headers: { 'Content-Type': 'multipart/form-data' } },
+        { headers: { "Content-Type": "multipart/form-data" } },
       );
       set({ frames: res.data, analyzing: false });
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : 'Frame extraction failed';
+        err instanceof Error ? err.message : "Frame extraction failed";
       set({ error: message, analyzing: false });
     }
   },
@@ -178,17 +182,17 @@ export const useAiVideo = create<VideoState>()((set) => ({
     set({ analyzing: true, error: null, transcript: null });
     try {
       const formData = new FormData();
-      formData.append('video', video);
+      formData.append("video", video);
 
       const res = await aiClient.post<VideoTranscript>(
-        '/ai/video/transcribe',
+        "/ai/video/transcribe",
         formData,
-        { headers: { 'Content-Type': 'multipart/form-data' } },
+        { headers: { "Content-Type": "multipart/form-data" } },
       );
       set({ transcript: res.data, analyzing: false });
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : 'Video transcription failed';
+        err instanceof Error ? err.message : "Video transcription failed";
       set({ error: message, analyzing: false });
     }
   },
@@ -196,7 +200,7 @@ export const useAiVideo = create<VideoState>()((set) => ({
   fetchModels: async () => {
     try {
       const res = await aiClient.get<{ models: ModelInfo[] }>(
-        '/ai/video/models',
+        "/ai/video/models",
       );
       set({ models: res.data.models ?? [] });
     } catch {

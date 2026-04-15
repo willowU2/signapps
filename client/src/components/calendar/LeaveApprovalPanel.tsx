@@ -121,7 +121,8 @@ function computeDays(start: string, end: string): number {
 const LEAVE_TYPE_COLORS: Record<string, string> = {
   CP: "bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300",
   RTT: "bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-300",
-  Maladie: "bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-300",
+  Maladie:
+    "bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-300",
   "Sans solde": "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300",
   Autre: "bg-teal-100 text-teal-800 dark:bg-teal-900/40 dark:text-teal-300",
 };
@@ -143,7 +144,9 @@ export function LeaveApprovalPanel({
 
   // Remote data
   const [balances, setBalances] = useState<LeaveBalance[]>([]);
-  const [prediction, setPrediction] = useState<LeaveBalancePrediction | null>(null);
+  const [prediction, setPrediction] = useState<LeaveBalancePrediction | null>(
+    null,
+  );
   const [teamConflicts, setTeamConflicts] = useState<TeamConflict[]>([]);
   const [coverage, setCoverage] = useState<CoverageCheck | null>(null);
   const [loadingData, setLoadingData] = useState(false);
@@ -169,31 +172,43 @@ export function LeaveApprovalPanel({
         ]);
 
       if (balancesRes.status === "fulfilled") {
-        const data: unknown = (balancesRes.value as { data?: unknown })?.data ?? balancesRes.value;
+        const data: unknown =
+          (balancesRes.value as { data?: unknown })?.data ?? balancesRes.value;
         setBalances(Array.isArray(data) ? (data as LeaveBalance[]) : []);
       }
       if (predRes.status === "fulfilled") {
-        const data: unknown = (predRes.value as { data?: unknown })?.data ?? predRes.value;
+        const data: unknown =
+          (predRes.value as { data?: unknown })?.data ?? predRes.value;
         setPrediction((data as LeaveBalancePrediction) ?? null);
       }
       if (conflictsRes.status === "fulfilled") {
-        const data: unknown = (conflictsRes.value as { data?: unknown })?.data ?? conflictsRes.value;
+        const data: unknown =
+          (conflictsRes.value as { data?: unknown })?.data ??
+          conflictsRes.value;
         const dataObj = data as { conflicts?: TeamConflict[] };
         const list = Array.isArray(data)
           ? (data as TeamConflict[])
           : Array.isArray(dataObj?.conflicts)
-          ? dataObj.conflicts
-          : [];
+            ? dataObj.conflicts
+            : [];
         setTeamConflicts(list);
       }
       if (coverageRes.status === "fulfilled") {
-        const data: unknown = (coverageRes.value as { data?: unknown })?.data ?? coverageRes.value;
+        const data: unknown =
+          (coverageRes.value as { data?: unknown })?.data ?? coverageRes.value;
         // Map headcount response to coverage check
         if (data && typeof data === "object") {
-          const dataObj = data as { team_size?: number; total?: number; available?: number; present?: number; min_required?: number };
+          const dataObj = data as {
+            team_size?: number;
+            total?: number;
+            available?: number;
+            present?: number;
+            min_required?: number;
+          };
           const teamSize: number = dataObj.team_size ?? dataObj.total ?? 0;
           const available: number = dataObj.available ?? dataObj.present ?? 0;
-          const minRequired: number = dataObj.min_required ?? Math.ceil(teamSize * 0.3);
+          const minRequired: number =
+            dataObj.min_required ?? Math.ceil(teamSize * 0.3);
           const availableAfter = Math.max(0, available - 1);
           setCoverage({
             team_size: teamSize,
@@ -227,7 +242,7 @@ export function LeaveApprovalPanel({
       onOpenChange(false);
     } catch (err) {
       toast.error(
-        err instanceof Error ? err.message : "Erreur lors de l'approbation."
+        err instanceof Error ? err.message : "Erreur lors de l'approbation.",
       );
     } finally {
       setIsApproving(false);
@@ -247,9 +262,7 @@ export function LeaveApprovalPanel({
       onRejected?.(event.id);
       onOpenChange(false);
     } catch (err) {
-      toast.error(
-        err instanceof Error ? err.message : "Erreur lors du refus."
-      );
+      toast.error(err instanceof Error ? err.message : "Erreur lors du refus.");
     } finally {
       setIsRejecting(false);
     }
@@ -265,7 +278,7 @@ export function LeaveApprovalPanel({
     "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300";
 
   const currentBalance = balances.find(
-    (b) => b.leave_type === leaveType || b.label === leaveType
+    (b) => b.leave_type === leaveType || b.label === leaveType,
   );
 
   const isBusy = isApproving || isRejecting;
@@ -287,7 +300,9 @@ export function LeaveApprovalPanel({
                 En attente d'approbation
               </SheetDescription>
             </div>
-            <Badge className={`ml-auto text-xs px-2 py-0.5 rounded-full ${badgeClass}`}>
+            <Badge
+              className={`ml-auto text-xs px-2 py-0.5 rounded-full ${badgeClass}`}
+            >
               {leaveType}
             </Badge>
           </div>
@@ -379,7 +394,9 @@ export function LeaveApprovalPanel({
             ) : currentBalance ? (
               <div className="rounded-lg border bg-card space-y-0 divide-y">
                 <div className="flex items-center justify-between px-4 py-3">
-                  <span className="text-sm text-muted-foreground">Solde actuel</span>
+                  <span className="text-sm text-muted-foreground">
+                    Solde actuel
+                  </span>
                   <Badge
                     variant={
                       currentBalance.days_remaining >= days
@@ -437,7 +454,7 @@ export function LeaveApprovalPanel({
                           100,
                           (currentBalance.days_remaining /
                             currentBalance.days_total) *
-                            100
+                            100,
                         )}%`,
                       }}
                     />
@@ -465,7 +482,8 @@ export function LeaveApprovalPanel({
               </h3>
               {!loadingData && (
                 <Badge variant="outline" className="text-xs">
-                  {teamConflicts.length} collègue{teamConflicts.length !== 1 ? "s" : ""}
+                  {teamConflicts.length} collègue
+                  {teamConflicts.length !== 1 ? "s" : ""}
                 </Badge>
               )}
             </div>
@@ -545,8 +563,12 @@ export function LeaveApprovalPanel({
               <>
                 <div className="rounded-lg border bg-card divide-y">
                   <div className="flex items-center justify-between px-4 py-3 text-sm">
-                    <span className="text-muted-foreground">Effectif total</span>
-                    <span className="font-medium">{coverage.team_size} personnes</span>
+                    <span className="text-muted-foreground">
+                      Effectif total
+                    </span>
+                    <span className="font-medium">
+                      {coverage.team_size} personnes
+                    </span>
                   </div>
                   <div className="flex items-center justify-between px-4 py-3 text-sm">
                     <span className="text-muted-foreground">
@@ -587,7 +609,8 @@ export function LeaveApprovalPanel({
                     </AlertTitle>
                     <AlertDescription className="text-xs">
                       Approuver ce congé amènerait l'effectif en dessous du
-                      minimum requis ({coverage.min_coverage_required} personnes).
+                      minimum requis ({coverage.min_coverage_required}{" "}
+                      personnes).
                     </AlertDescription>
                   </Alert>
                 )}
@@ -625,7 +648,10 @@ export function LeaveApprovalPanel({
 
           {/* ── Coverage warning (soft) ───────────────────────────────────── */}
           {!loadingData && hasCoverageIssue && (
-            <Alert variant="default" className="border-yellow-400/60 bg-yellow-50 dark:bg-yellow-950/30">
+            <Alert
+              variant="default"
+              className="border-yellow-400/60 bg-yellow-50 dark:bg-yellow-950/30"
+            >
               <AlertTriangle className="h-4 w-4 text-yellow-600" />
               <AlertTitle className="text-yellow-800 dark:text-yellow-300 text-sm">
                 Attention

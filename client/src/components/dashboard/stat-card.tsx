@@ -1,6 +1,6 @@
-import { Card, CardContent } from '@/components/ui/card';
-import { cn } from '@/lib/utils';
-import { LucideIcon } from 'lucide-react';
+import { Card, CardContent } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
+import { LucideIcon } from "lucide-react";
 
 interface StatCardProps {
   title: string;
@@ -23,7 +23,7 @@ export function StatCard({
   className,
 }: StatCardProps) {
   return (
-    <Card className={cn('', className)}>
+    <Card className={cn("", className)}>
       <CardContent className="p-6">
         <div className="flex items-center justify-between">
           <div>
@@ -35,11 +35,11 @@ export function StatCard({
             {trend && (
               <p
                 className={cn(
-                  'mt-1 text-xs',
-                  trend.isPositive ? 'text-green-600' : 'text-red-600'
+                  "mt-1 text-xs",
+                  trend.isPositive ? "text-green-600" : "text-red-600",
                 )}
               >
-                {trend.isPositive ? '+' : ''}
+                {trend.isPositive ? "+" : ""}
                 {trend.value}% from last week
               </p>
             )}

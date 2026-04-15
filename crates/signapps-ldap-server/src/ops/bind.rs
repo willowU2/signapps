@@ -65,7 +65,7 @@ pub async fn handle_simple_bind(pool: &PgPool, bind_dn: &str, password: &[u8]) -
                 bound_dn: None,
                 error_message: format!("Invalid DN syntax: {e}"),
             };
-        }
+        },
     };
 
     // Extract username from CN component (first RDN value)
@@ -100,7 +100,7 @@ pub async fn handle_simple_bind(pool: &PgPool, bind_dn: &str, password: &[u8]) -
                 bound_dn: None,
                 error_message: "Invalid credentials".to_string(),
             };
-        }
+        },
     };
 
     // Reject LDAP-only users that have no local password hash
@@ -130,22 +130,20 @@ pub async fn handle_simple_bind(pool: &PgPool, bind_dn: &str, password: &[u8]) -
                 bound_dn: None,
                 error_message: "Invalid credentials".to_string(),
             };
-        }
+        },
     };
 
     // Verify password with Argon2 — runs on the calling task (bind handler is already
     // dispatched to a Tokio thread; CPU cost is bounded by Argon2 default params).
     let password_bytes = password.to_vec();
-    let hash_valid = tokio::task::spawn_blocking(move || {
-        match PasswordHash::new(&password_hash) {
-            Ok(parsed_hash) => Argon2::default()
-                .verify_password(&password_bytes, &parsed_hash)
-                .is_ok(),
-            Err(e) => {
-                tracing::error!(?e, "Failed to parse stored password hash");
-                false
-            }
-        }
+    let hash_valid = tokio::task::spawn_blocking(move || match PasswordHash::new(&password_hash) {
+        Ok(parsed_hash) => Argon2::default()
+            .verify_password(&password_bytes, &parsed_hash)
+            .is_ok(),
+        Err(e) => {
+            tracing::error!(?e, "Failed to parse stored password hash");
+            false
+        },
     })
     .await
     .unwrap_or(false);

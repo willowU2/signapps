@@ -1,5 +1,5 @@
-import { useCallback } from 'react';
-import { extractApiError } from '@/lib/errors';
+import { useCallback } from "react";
+import { extractApiError } from "@/lib/errors";
 
 /**
  * COH-063 — useApiError: extracts a localized message from axios/fetch errors
@@ -14,7 +14,7 @@ export function useApiError() {
   }, []);
 
   const isUnauthorized = useCallback((error: unknown): boolean => {
-    if (typeof error === 'object' && error !== null && 'response' in error) {
+    if (typeof error === "object" && error !== null && "response" in error) {
       const e = error as { response?: { status?: number } };
       return e.response?.status === 401;
     }
@@ -22,7 +22,7 @@ export function useApiError() {
   }, []);
 
   const isForbidden = useCallback((error: unknown): boolean => {
-    if (typeof error === 'object' && error !== null && 'response' in error) {
+    if (typeof error === "object" && error !== null && "response" in error) {
       const e = error as { response?: { status?: number } };
       return e.response?.status === 403;
     }
@@ -30,7 +30,7 @@ export function useApiError() {
   }, []);
 
   const isNotFound = useCallback((error: unknown): boolean => {
-    if (typeof error === 'object' && error !== null && 'response' in error) {
+    if (typeof error === "object" && error !== null && "response" in error) {
       const e = error as { response?: { status?: number } };
       return e.response?.status === 404;
     }
@@ -38,7 +38,7 @@ export function useApiError() {
   }, []);
 
   const isServerError = useCallback((error: unknown): boolean => {
-    if (typeof error === 'object' && error !== null && 'response' in error) {
+    if (typeof error === "object" && error !== null && "response" in error) {
       const e = error as { response?: { status?: number } };
       const status = e.response?.status ?? 0;
       return status >= 500;
@@ -46,5 +46,11 @@ export function useApiError() {
     return false;
   }, []);
 
-  return { getErrorMessage, isUnauthorized, isForbidden, isNotFound, isServerError };
+  return {
+    getErrorMessage,
+    isUnauthorized,
+    isForbidden,
+    isNotFound,
+    isServerError,
+  };
 }

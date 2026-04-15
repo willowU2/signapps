@@ -159,7 +159,9 @@ export default function BCorporTracker() {
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="font-bold text-sm text-foreground">{percentage}%</p>
+                  <p className="font-bold text-sm text-foreground">
+                    {percentage}%
+                  </p>
                   <span className="text-xs">{isExpanded ? "▲" : "▼"}</span>
                 </div>
               </button>
@@ -215,7 +217,9 @@ export default function BCorporTracker() {
       {/* Gap Analysis */}
       {gaps.length > 0 && (
         <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
-          <p className="font-semibold text-sm text-blue-900 mb-2">Gap Analysis</p>
+          <p className="font-semibold text-sm text-blue-900 mb-2">
+            Gap Analysis
+          </p>
           <ul className="space-y-1 text-xs text-blue-900">
             {gaps.map((gap) => (
               <li key={gap.id}>

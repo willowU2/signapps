@@ -184,44 +184,38 @@ impl MultimodalEmbedWorker for NativeSigLIP {
         // Offload blocking ONNX inference off the tokio runtime thread.
         let session = Arc::clone(&self.text_session);
         let dimension = self.dimension;
-        let all_embeddings =
-            tokio::task::spawn_blocking(move || -> Result<Vec<Vec<f32>>> {
-                let mut embeddings = Vec::with_capacity(token_pairs.len());
+        let all_embeddings = tokio::task::spawn_blocking(move || -> Result<Vec<Vec<f32>>> {
+            let mut embeddings = Vec::with_capacity(token_pairs.len());
 
-                for (input_ids, attention_mask) in token_pairs {
-                    let input_ids_tensor = Tensor::from_array((
-                        vec![1i64, SIGLIP_MAX_TEXT_LEN as i64],
-                        input_ids,
-                    ))
-                    .context("failed to create input_ids tensor")?;
+            for (input_ids, attention_mask) in token_pairs {
+                let input_ids_tensor =
+                    Tensor::from_array((vec![1i64, SIGLIP_MAX_TEXT_LEN as i64], input_ids))
+                        .context("failed to create input_ids tensor")?;
 
-                    let attention_mask_tensor = Tensor::from_array((
-                        vec![1i64, SIGLIP_MAX_TEXT_LEN as i64],
-                        attention_mask,
-                    ))
-                    .context("failed to create attention_mask tensor")?;
+                let attention_mask_tensor =
+                    Tensor::from_array((vec![1i64, SIGLIP_MAX_TEXT_LEN as i64], attention_mask))
+                        .context("failed to create attention_mask tensor")?;
 
-                    let mut s = session
-                        .lock()
-                        .map_err(|e| anyhow::anyhow!("text session lock poisoned: {e}"))?;
-                    let outputs = s
-                        .run(ort::inputs![input_ids_tensor, attention_mask_tensor])
-                        .context("SigLIP text encoder inference failed")?;
+                let mut s = session
+                    .lock()
+                    .map_err(|e| anyhow::anyhow!("text session lock poisoned: {e}"))?;
+                let outputs = s
+                    .run(ort::inputs![input_ids_tensor, attention_mask_tensor])
+                    .context("SigLIP text encoder inference failed")?;
 
-                    let (_shape, data) = outputs[0]
-                        .try_extract_tensor::<f32>()
-                        .context("failed to extract text embedding tensor")?;
+                let (_shape, data) = outputs[0]
+                    .try_extract_tensor::<f32>()
+                    .context("failed to extract text embedding tensor")?;
 
-                    let mut embedding: Vec<f32> =
-                        data.iter().take(dimension).copied().collect();
-                    l2_normalize(&mut embedding);
-                    embeddings.push(embedding);
-                }
+                let mut embedding: Vec<f32> = data.iter().take(dimension).copied().collect();
+                l2_normalize(&mut embedding);
+                embeddings.push(embedding);
+            }
 
-                Ok(embeddings)
-            })
-            .await
-            .map_err(|e| anyhow::anyhow!("spawn_blocking join error: {e}"))??;
+            Ok(embeddings)
+        })
+        .await
+        .map_err(|e| anyhow::anyhow!("spawn_blocking join error: {e}"))??;
 
         Ok(all_embeddings)
     }
@@ -232,46 +226,44 @@ impl MultimodalEmbedWorker for NativeSigLIP {
         // Preprocess images on the async thread (CPU-bound but short).
         let mut pixel_bufs: Vec<Vec<f32>> = Vec::with_capacity(images.len());
         for image_bytes in &images {
-            let pixels = preprocess_image(image_bytes)
-                .context("failed to preprocess image for SigLIP")?;
+            let pixels =
+                preprocess_image(image_bytes).context("failed to preprocess image for SigLIP")?;
             pixel_bufs.push(pixels);
         }
 
         // Offload blocking ONNX inference off the tokio runtime thread.
         let session = Arc::clone(&self.vision_session);
         let dimension = self.dimension;
-        let all_embeddings =
-            tokio::task::spawn_blocking(move || -> Result<Vec<Vec<f32>>> {
-                let mut embeddings = Vec::with_capacity(pixel_bufs.len());
+        let all_embeddings = tokio::task::spawn_blocking(move || -> Result<Vec<Vec<f32>>> {
+            let mut embeddings = Vec::with_capacity(pixel_bufs.len());
 
-                for pixels in pixel_bufs {
-                    let pixel_values = Tensor::from_array((
-                        vec![1i64, 3, SIGLIP_IMAGE_SIZE as i64, SIGLIP_IMAGE_SIZE as i64],
-                        pixels,
-                    ))
-                    .context("failed to create pixel_values tensor")?;
+            for pixels in pixel_bufs {
+                let pixel_values = Tensor::from_array((
+                    vec![1i64, 3, SIGLIP_IMAGE_SIZE as i64, SIGLIP_IMAGE_SIZE as i64],
+                    pixels,
+                ))
+                .context("failed to create pixel_values tensor")?;
 
-                    let mut s = session
-                        .lock()
-                        .map_err(|e| anyhow::anyhow!("vision session lock poisoned: {e}"))?;
-                    let outputs = s
-                        .run(ort::inputs![pixel_values])
-                        .context("SigLIP vision encoder inference failed")?;
+                let mut s = session
+                    .lock()
+                    .map_err(|e| anyhow::anyhow!("vision session lock poisoned: {e}"))?;
+                let outputs = s
+                    .run(ort::inputs![pixel_values])
+                    .context("SigLIP vision encoder inference failed")?;
 
-                    let (_shape, data) = outputs[0]
-                        .try_extract_tensor::<f32>()
-                        .context("failed to extract image embedding tensor")?;
+                let (_shape, data) = outputs[0]
+                    .try_extract_tensor::<f32>()
+                    .context("failed to extract image embedding tensor")?;
 
-                    let mut embedding: Vec<f32> =
-                        data.iter().take(dimension).copied().collect();
-                    l2_normalize(&mut embedding);
-                    embeddings.push(embedding);
-                }
+                let mut embedding: Vec<f32> = data.iter().take(dimension).copied().collect();
+                l2_normalize(&mut embedding);
+                embeddings.push(embedding);
+            }
 
-                Ok(embeddings)
-            })
-            .await
-            .map_err(|e| anyhow::anyhow!("spawn_blocking join error: {e}"))??;
+            Ok(embeddings)
+        })
+        .await
+        .map_err(|e| anyhow::anyhow!("spawn_blocking join error: {e}"))??;
 
         Ok(all_embeddings)
     }

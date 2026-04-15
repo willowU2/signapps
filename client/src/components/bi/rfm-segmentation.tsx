@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Users } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Users } from "lucide-react";
 
 interface RFMSegment {
   name: string;
@@ -15,46 +15,46 @@ interface RFMSegment {
 export default function RFMSegmentation() {
   const segments: RFMSegment[] = [
     {
-      name: 'Champions',
-      color: 'bg-emerald-500',
+      name: "Champions",
+      color: "bg-emerald-500",
       customers: 245,
       avgSpend: 8500,
-      description: 'High R, F, M',
+      description: "High R, F, M",
     },
     {
-      name: 'Loyal Customers',
-      color: 'bg-blue-500',
+      name: "Loyal Customers",
+      color: "bg-blue-500",
       customers: 512,
       avgSpend: 5200,
-      description: 'High F, M',
+      description: "High F, M",
     },
     {
-      name: 'At Risk',
-      color: 'bg-amber-500',
+      name: "At Risk",
+      color: "bg-amber-500",
       customers: 318,
       avgSpend: 3100,
-      description: 'Low R, high F, M',
+      description: "Low R, high F, M",
     },
     {
-      name: 'Lost Customers',
-      color: 'bg-red-500',
+      name: "Lost Customers",
+      color: "bg-red-500",
       customers: 164,
       avgSpend: 1200,
-      description: 'Very low R, F, M',
+      description: "Very low R, F, M",
     },
     {
-      name: 'Potential Loyalists',
-      color: 'bg-indigo-500',
+      name: "Potential Loyalists",
+      color: "bg-indigo-500",
       customers: 389,
       avgSpend: 4100,
-      description: 'Recent, good spend',
+      description: "Recent, good spend",
     },
     {
-      name: 'New Customers',
-      color: 'bg-pink-500',
+      name: "New Customers",
+      color: "bg-pink-500",
       customers: 156,
       avgSpend: 2400,
-      description: 'High R, low F, M',
+      description: "High R, low F, M",
     },
   ];
 
@@ -75,12 +75,21 @@ export default function RFMSegmentation() {
             {segments.map((segment, idx) => {
               const percentage = ((segment.customers / total) * 100).toFixed(1);
               return (
-                <div key={idx} className="p-3 border border-border rounded-lg hover:bg-muted">
+                <div
+                  key={idx}
+                  className="p-3 border border-border rounded-lg hover:bg-muted"
+                >
                   <div className="flex items-start gap-2">
-                    <div className={`w-3 h-3 rounded-full ${segment.color} flex-shrink-0 mt-1`}></div>
+                    <div
+                      className={`w-3 h-3 rounded-full ${segment.color} flex-shrink-0 mt-1`}
+                    ></div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-medium text-sm text-foreground">{segment.name}</h3>
-                      <p className="text-xs text-muted-foreground mt-0.5">{segment.description}</p>
+                      <h3 className="font-medium text-sm text-foreground">
+                        {segment.name}
+                      </h3>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {segment.description}
+                      </p>
                       <div className="flex gap-2 mt-2">
                         <Badge variant="outline" className="text-xs">
                           {segment.customers}
@@ -95,7 +104,9 @@ export default function RFMSegmentation() {
                           style={{ width: `${percentage}%` }}
                         ></div>
                       </div>
-                      <p className="text-xs text-muted-foreground mt-1">{percentage}%</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {percentage}%
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -106,7 +117,8 @@ export default function RFMSegmentation() {
           {/* Summary */}
           <div className="pt-3 border-t">
             <p className="text-xs text-muted-foreground">
-              <strong>{total.toLocaleString()}</strong> total customers across <strong>6</strong> segments
+              <strong>{total.toLocaleString()}</strong> total customers across{" "}
+              <strong>6</strong> segments
             </p>
           </div>
         </div>

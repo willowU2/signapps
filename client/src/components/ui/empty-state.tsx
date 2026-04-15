@@ -35,8 +35,7 @@ export function EmptyState({
   context = "empty",
 }: EmptyStateProps) {
   const resolvedTitle =
-    title ||
-    (context === "search" ? "Aucun résultat" : "Aucun élément");
+    title || (context === "search" ? "Aucun résultat" : "Aucun élément");
 
   const iconEl = (
     <motion.div
@@ -68,7 +67,7 @@ export function EmptyState({
     <div
       className={cn(
         "flex flex-col items-center justify-center text-center p-8 rounded-2xl border border-dashed border-border/60 bg-muted/10",
-        className
+        className,
       )}
     >
       {iconEl}

@@ -4,7 +4,7 @@
  * Zustand store for managing office cache state.
  */
 
-import { create } from 'zustand';
+import { create } from "zustand";
 import type {
   CacheEntry,
   CacheStats,
@@ -14,8 +14,8 @@ import type {
   CacheLocation,
   CacheInvalidateOptions,
   ListCacheEntriesParams,
-} from '@/lib/office/cache/types';
-import { cacheApi } from '@/lib/office/cache/api';
+} from "@/lib/office/cache/types";
+import { cacheApi } from "@/lib/office/cache/api";
 
 // ============================================================================
 // Types
@@ -39,8 +39,8 @@ interface CacheState {
   // Filters
   typeFilter: CacheType | null;
   locationFilter: CacheLocation | null;
-  sortBy: 'size' | 'accessedAt' | 'hitCount' | 'priority';
-  sortOrder: 'asc' | 'desc';
+  sortBy: "size" | "accessedAt" | "hitCount" | "priority";
+  sortOrder: "asc" | "desc";
 
   // Loading states
   isLoading: boolean;
@@ -65,12 +65,15 @@ interface CacheState {
   // Actions - Cache Operations
   invalidateCache: (options: CacheInvalidateOptions) => Promise<number>;
   clearCache: () => Promise<number>;
-  prewarmCache: (documentIds?: string[], types?: CacheType[]) => Promise<number>;
+  prewarmCache: (
+    documentIds?: string[],
+    types?: CacheType[],
+  ) => Promise<number>;
   triggerCleanup: () => Promise<number>;
 
   // Actions - Stats
   loadStats: () => Promise<void>;
-  loadPerformance: (period?: '1h' | '24h' | '7d' | '30d') => Promise<void>;
+  loadPerformance: (period?: "1h" | "24h" | "7d" | "30d") => Promise<void>;
   loadPerformanceHistory: () => Promise<void>;
 
   // Actions - Config
@@ -80,7 +83,10 @@ interface CacheState {
   // Actions - Filters
   setTypeFilter: (type: CacheType | null) => void;
   setLocationFilter: (location: CacheLocation | null) => void;
-  setSorting: (sortBy: 'size' | 'accessedAt' | 'hitCount' | 'priority', sortOrder: 'asc' | 'desc') => void;
+  setSorting: (
+    sortBy: "size" | "accessedAt" | "hitCount" | "priority",
+    sortOrder: "asc" | "desc",
+  ) => void;
 
   // Utility
   clearError: () => void;
@@ -106,8 +112,8 @@ export const useCacheStore = create<CacheState>()((set, get) => ({
 
   typeFilter: null,
   locationFilter: null,
-  sortBy: 'accessedAt',
-  sortOrder: 'desc',
+  sortBy: "accessedAt",
+  sortOrder: "desc",
 
   isLoading: false,
   isLoadingStats: false,
@@ -145,7 +151,7 @@ export const useCacheStore = create<CacheState>()((set, get) => ({
     } catch (error) {
       set({
         isLoading: false,
-        error: error instanceof Error ? error.message : 'Erreur de chargement',
+        error: error instanceof Error ? error.message : "Erreur de chargement",
       });
     }
   },
@@ -185,7 +191,7 @@ export const useCacheStore = create<CacheState>()((set, get) => ({
     } catch (error) {
       set({
         isLoading: false,
-        error: error instanceof Error ? error.message : 'Erreur de chargement',
+        error: error instanceof Error ? error.message : "Erreur de chargement",
       });
     }
   },
@@ -205,7 +211,8 @@ export const useCacheStore = create<CacheState>()((set, get) => ({
       set((state) => ({
         entries: state.entries.filter((e) => e.key !== key),
         totalEntries: state.totalEntries - 1,
-        selectedEntry: state.selectedEntry?.key === key ? null : state.selectedEntry,
+        selectedEntry:
+          state.selectedEntry?.key === key ? null : state.selectedEntry,
       }));
 
       // Refresh stats
@@ -214,7 +221,7 @@ export const useCacheStore = create<CacheState>()((set, get) => ({
       return true;
     } catch (error) {
       set({
-        error: error instanceof Error ? error.message : 'Erreur de suppression',
+        error: error instanceof Error ? error.message : "Erreur de suppression",
       });
       return false;
     }
@@ -235,7 +242,7 @@ export const useCacheStore = create<CacheState>()((set, get) => ({
     } catch (error) {
       set({
         isInvalidating: false,
-        error: error instanceof Error ? error.message : 'Erreur d\'invalidation',
+        error: error instanceof Error ? error.message : "Erreur d'invalidation",
       });
       return 0;
     }
@@ -262,7 +269,7 @@ export const useCacheStore = create<CacheState>()((set, get) => ({
     } catch (error) {
       set({
         isInvalidating: false,
-        error: error instanceof Error ? error.message : 'Erreur de vidage',
+        error: error instanceof Error ? error.message : "Erreur de vidage",
       });
       return 0;
     }
@@ -278,7 +285,8 @@ export const useCacheStore = create<CacheState>()((set, get) => ({
     } catch (error) {
       set({
         isPrewarming: false,
-        error: error instanceof Error ? error.message : 'Erreur de préchauffage',
+        error:
+          error instanceof Error ? error.message : "Erreur de préchauffage",
       });
       return 0;
     }
@@ -298,7 +306,7 @@ export const useCacheStore = create<CacheState>()((set, get) => ({
     } catch (error) {
       set({
         isInvalidating: false,
-        error: error instanceof Error ? error.message : 'Erreur de nettoyage',
+        error: error instanceof Error ? error.message : "Erreur de nettoyage",
       });
       return 0;
     }
@@ -316,7 +324,7 @@ export const useCacheStore = create<CacheState>()((set, get) => ({
     }
   },
 
-  loadPerformance: async (period?: '1h' | '24h' | '7d' | '30d') => {
+  loadPerformance: async (period?: "1h" | "24h" | "7d" | "30d") => {
     try {
       const performance = await cacheApi.getCachePerformance(period);
       set({ performance });
@@ -327,7 +335,7 @@ export const useCacheStore = create<CacheState>()((set, get) => ({
 
   loadPerformanceHistory: async () => {
     try {
-      const history = await cacheApi.getCachePerformanceHistory('hour');
+      const history = await cacheApi.getCachePerformanceHistory("hour");
       set({ performanceHistory: history });
     } catch (error) {
       // Silent fail
@@ -341,7 +349,7 @@ export const useCacheStore = create<CacheState>()((set, get) => ({
       set({ config });
     } catch (error) {
       set({
-        error: error instanceof Error ? error.message : 'Erreur de chargement',
+        error: error instanceof Error ? error.message : "Erreur de chargement",
       });
     }
   },
@@ -353,7 +361,7 @@ export const useCacheStore = create<CacheState>()((set, get) => ({
       return true;
     } catch (error) {
       set({
-        error: error instanceof Error ? error.message : 'Erreur de mise à jour',
+        error: error instanceof Error ? error.message : "Erreur de mise à jour",
       });
       return false;
     }
@@ -392,8 +400,8 @@ export const useCacheStore = create<CacheState>()((set, get) => ({
       config: null,
       typeFilter: null,
       locationFilter: null,
-      sortBy: 'accessedAt',
-      sortOrder: 'desc',
+      sortBy: "accessedAt",
+      sortOrder: "desc",
       error: null,
       currentOffset: 0,
     });

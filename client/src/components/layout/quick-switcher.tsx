@@ -1,16 +1,16 @@
-'use client';
+"use client";
 
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { FileText, Table2, Presentation, Clock, X } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import { FileText, Table2, Presentation, Clock, X } from "lucide-react";
+import { cn } from "@/lib/utils";
 import {
   type RecentDocument,
   type DocKind,
   getRecentDocs,
   trackDocVisit,
-} from '@/components/ui/quick-switcher';
-import { getClient, ServiceName } from '@/lib/api/factory';
+} from "@/components/ui/quick-switcher";
+import { getClient, ServiceName } from "@/lib/api/factory";
 
 const identityClient = getClient(ServiceName.IDENTITY);
 
@@ -18,9 +18,9 @@ const identityClient = getClient(ServiceName.IDENTITY);
 
 function kindIcon(kind: DocKind) {
   switch (kind) {
-    case 'sheet':
+    case "sheet":
       return Table2;
-    case 'slide':
+    case "slide":
       return Presentation;
     default:
       return FileText;
@@ -29,34 +29,34 @@ function kindIcon(kind: DocKind) {
 
 function kindColor(kind: DocKind) {
   switch (kind) {
-    case 'sheet':
-      return 'text-green-500';
-    case 'slide':
-      return 'text-amber-500';
+    case "sheet":
+      return "text-green-500";
+    case "slide":
+      return "text-amber-500";
     default:
-      return 'text-blue-500';
+      return "text-blue-500";
   }
 }
 
 function kindBg(kind: DocKind) {
   switch (kind) {
-    case 'sheet':
-      return 'bg-green-500/10';
-    case 'slide':
-      return 'bg-amber-500/10';
+    case "sheet":
+      return "bg-green-500/10";
+    case "slide":
+      return "bg-amber-500/10";
     default:
-      return 'bg-blue-500/10';
+      return "bg-blue-500/10";
   }
 }
 
 function kindLabel(kind: DocKind) {
   switch (kind) {
-    case 'sheet':
-      return 'Sheet';
-    case 'slide':
-      return 'Slide';
+    case "sheet":
+      return "Sheet";
+    case "slide":
+      return "Slide";
     default:
-      return 'Doc';
+      return "Doc";
   }
 }
 
@@ -69,7 +69,7 @@ function timeAgo(isoDate: string): string {
   if (hours < 24) return `il y a ${hours}h`;
   const days = Math.floor(hours / 24);
   if (days < 7) return `il y a ${days}j`;
-  return new Date(isoDate).toLocaleDateString('fr-FR');
+  return new Date(isoDate).toLocaleDateString("fr-FR");
 }
 
 const MAX_VISIBLE = 8;
@@ -87,13 +87,13 @@ export function QuickDocumentSwitcher() {
   // Load recent docs from API / localStorage
   const loadDocs = useCallback(async () => {
     try {
-      const res = await identityClient.get<any[]>('/users/me/recent-docs');
+      const res = await identityClient.get<any[]>("/users/me/recent-docs");
       const loaded: RecentDocument[] = (res.data ?? []).map((d: any) => ({
         id: d.doc_id ?? d.id,
-        name: d.name ?? '',
-        kind: (['text', 'sheet', 'slide'].includes(d.kind)
+        name: d.name ?? "",
+        kind: (["text", "sheet", "slide"].includes(d.kind)
           ? d.kind
-          : 'text') as DocKind,
+          : "text") as DocKind,
         href: d.href ?? `/docs/${d.doc_id ?? d.id}`,
         lastOpenedAt:
           d.last_opened_at ?? d.lastOpenedAt ?? new Date().toISOString(),
@@ -108,7 +108,7 @@ export function QuickDocumentSwitcher() {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Ctrl+Tab → open switcher
-      if (e.ctrlKey && e.key === 'Tab') {
+      if (e.ctrlKey && e.key === "Tab") {
         e.preventDefault();
         e.stopPropagation();
 
@@ -132,17 +132,13 @@ export function QuickDocumentSwitcher() {
 
       // Arrow keys while open
       if (isOpen) {
-        if (e.key === 'ArrowDown') {
+        if (e.key === "ArrowDown") {
           e.preventDefault();
-          setSelectedIndex((prev) =>
-            prev >= docs.length - 1 ? 0 : prev + 1
-          );
-        } else if (e.key === 'ArrowUp') {
+          setSelectedIndex((prev) => (prev >= docs.length - 1 ? 0 : prev + 1));
+        } else if (e.key === "ArrowUp") {
           e.preventDefault();
-          setSelectedIndex((prev) =>
-            prev <= 0 ? docs.length - 1 : prev - 1
-          );
-        } else if (e.key === 'Enter') {
+          setSelectedIndex((prev) => (prev <= 0 ? docs.length - 1 : prev - 1));
+        } else if (e.key === "Enter") {
           e.preventDefault();
           // Navigate to selected doc
           const doc = docs[selectedIndex];
@@ -156,7 +152,7 @@ export function QuickDocumentSwitcher() {
             setIsOpen(false);
             router.push(doc.href);
           }
-        } else if (e.key === 'Escape') {
+        } else if (e.key === "Escape") {
           e.preventDefault();
           setIsOpen(false);
         }
@@ -166,7 +162,7 @@ export function QuickDocumentSwitcher() {
     const handleKeyUp = (e: KeyboardEvent) => {
       // When Ctrl is released while switcher is open, navigate to selected
       if (
-        (e.key === 'Control' || e.key === 'Meta') &&
+        (e.key === "Control" || e.key === "Meta") &&
         isOpen &&
         isCtrlHeld.current
       ) {
@@ -187,19 +183,19 @@ export function QuickDocumentSwitcher() {
       }
     };
 
-    document.addEventListener('keydown', handleKeyDown, true);
-    document.addEventListener('keyup', handleKeyUp, true);
+    document.addEventListener("keydown", handleKeyDown, true);
+    document.addEventListener("keyup", handleKeyUp, true);
     return () => {
-      document.removeEventListener('keydown', handleKeyDown, true);
-      document.removeEventListener('keyup', handleKeyUp, true);
+      document.removeEventListener("keydown", handleKeyDown, true);
+      document.removeEventListener("keyup", handleKeyUp, true);
     };
   }, [isOpen, docs, selectedIndex, loadDocs, router]);
 
   // Scroll selected item into view
   useEffect(() => {
     if (!isOpen || !containerRef.current) return;
-    const items = containerRef.current.querySelectorAll('[data-switcher-item]');
-    items[selectedIndex]?.scrollIntoView({ block: 'nearest' });
+    const items = containerRef.current.querySelectorAll("[data-switcher-item]");
+    items[selectedIndex]?.scrollIntoView({ block: "nearest" });
   }, [selectedIndex, isOpen]);
 
   if (!isOpen) return null;
@@ -273,20 +269,20 @@ export function QuickDocumentSwitcher() {
                     router.push(doc.href);
                   }}
                   className={cn(
-                    'flex items-center gap-3 px-4 py-2.5 mx-1 rounded-lg cursor-pointer transition-colors',
+                    "flex items-center gap-3 px-4 py-2.5 mx-1 rounded-lg cursor-pointer transition-colors",
                     isSelected
-                      ? 'bg-primary/10 text-foreground ring-1 ring-primary/30'
-                      : 'hover:bg-muted/60 text-foreground/80'
+                      ? "bg-primary/10 text-foreground ring-1 ring-primary/30"
+                      : "hover:bg-muted/60 text-foreground/80",
                   )}
                 >
                   {/* Doc type icon */}
                   <div
                     className={cn(
-                      'flex h-9 w-9 shrink-0 items-center justify-center rounded-lg',
-                      kindBg(doc.kind)
+                      "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg",
+                      kindBg(doc.kind),
                     )}
                   >
-                    <Icon className={cn('h-4.5 w-4.5', kindColor(doc.kind))} />
+                    <Icon className={cn("h-4.5 w-4.5", kindColor(doc.kind))} />
                   </div>
 
                   {/* Doc info */}

@@ -106,11 +106,11 @@ pub async fn handle_tgs_req(
             18 if key_data.len() >= 32 => {
                 let key: [u8; 32] = key_data[..32].try_into().unwrap_or([0u8; 32]);
                 Some(crate::crypto::aes_cts::encrypt(&key, &ticket_plaintext))
-            }
+            },
             23 if key_data.len() >= 16 => {
                 let key: [u8; 16] = key_data[..16].try_into().unwrap_or([0u8; 16]);
                 Some(crate::crypto::rc4_hmac::encrypt(&key, 2, &ticket_plaintext))
-            }
+            },
             _ => None,
         }
     } else {

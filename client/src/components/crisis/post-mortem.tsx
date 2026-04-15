@@ -26,10 +26,26 @@ const DEFAULT_REPORT: PostMortemReport = {
   date: "2026-03-21",
   status: "published",
   timeline: [
-    { id: "1", time: "14:30", description: "Database connection pool exhausted" },
-    { id: "2", time: "14:35", description: "Alert triggered - manual investigation started" },
-    { id: "3", time: "14:50", description: "Root cause identified: connection leak" },
-    { id: "4", time: "15:15", description: "Service restarted, connections normalized" },
+    {
+      id: "1",
+      time: "14:30",
+      description: "Database connection pool exhausted",
+    },
+    {
+      id: "2",
+      time: "14:35",
+      description: "Alert triggered - manual investigation started",
+    },
+    {
+      id: "3",
+      time: "14:50",
+      description: "Root cause identified: connection leak",
+    },
+    {
+      id: "4",
+      time: "15:15",
+      description: "Service restarted, connections normalized",
+    },
   ],
   rootCauses: [
     "Connection leak in ORM layer not releasing idle connections",
@@ -133,7 +149,9 @@ export function PostMortem() {
       <div className="grid grid-cols-1 gap-6">
         {/* Timeline Section */}
         <div className="border rounded-lg p-6 bg-background">
-          <h3 className="text-lg font-semibold text-foreground mb-4">Incident Timeline</h3>
+          <h3 className="text-lg font-semibold text-foreground mb-4">
+            Incident Timeline
+          </h3>
           <div className="space-y-4">
             {report.timeline.map((event, idx) => (
               <div key={event.id} className="flex gap-4">
@@ -156,7 +174,9 @@ export function PostMortem() {
 
         {/* Root Causes Section */}
         <div className="border rounded-lg p-6 bg-background">
-          <h3 className="text-lg font-semibold text-foreground mb-4">Root Causes</h3>
+          <h3 className="text-lg font-semibold text-foreground mb-4">
+            Root Causes
+          </h3>
           <div className="space-y-2">
             {report.rootCauses.map((cause, idx) => (
               <div
@@ -197,7 +217,9 @@ export function PostMortem() {
 
         {/* Actions Taken Section */}
         <div className="border rounded-lg p-6 bg-background">
-          <h3 className="text-lg font-semibold text-foreground mb-4">Actions Taken</h3>
+          <h3 className="text-lg font-semibold text-foreground mb-4">
+            Actions Taken
+          </h3>
           <div className="space-y-2">
             {report.actionsTaken.map((action, idx) => (
               <div
@@ -241,7 +263,9 @@ export function PostMortem() {
 
         {/* Lessons Learned Section */}
         <div className="border rounded-lg p-6 bg-background">
-          <h3 className="text-lg font-semibold text-foreground mb-4">Lessons Learned</h3>
+          <h3 className="text-lg font-semibold text-foreground mb-4">
+            Lessons Learned
+          </h3>
           <div className="space-y-2">
             {report.lessonsLearned.map((lesson, idx) => (
               <div

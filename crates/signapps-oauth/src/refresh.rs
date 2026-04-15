@@ -42,7 +42,10 @@ pub async fn try_refresh(
     client_secret: &str,
     refresh_token: &str,
 ) -> RefreshOutcome {
-    let endpoint = provider.refresh_url.as_deref().unwrap_or(&provider.access_url);
+    let endpoint = provider
+        .refresh_url
+        .as_deref()
+        .unwrap_or(&provider.access_url);
 
     let resp = match http
         .post(endpoint)
@@ -56,7 +59,11 @@ pub async fn try_refresh(
         .await
     {
         Ok(r) => r,
-        Err(e) => return RefreshOutcome::Transient { reason: format!("network: {e}") },
+        Err(e) => {
+            return RefreshOutcome::Transient {
+                reason: format!("network: {e}"),
+            }
+        },
     };
 
     let status = resp.status();

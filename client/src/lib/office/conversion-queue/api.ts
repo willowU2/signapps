@@ -4,7 +4,7 @@
  * API client for managing asynchronous conversion jobs.
  */
 
-import { getClient, ServiceName } from '@/lib/api/factory';
+import { getClient, ServiceName } from "@/lib/api/factory";
 
 const api = getClient(ServiceName.OFFICE);
 import type {
@@ -19,9 +19,9 @@ import type {
   ListJobsParams,
   ListJobsResponse,
   JobEvent,
-} from './types';
+} from "./types";
 
-const QUEUE_BASE = '/api/v1/office/conversion-queue';
+const QUEUE_BASE = "/api/v1/office/conversion-queue";
 
 // ============================================================================
 // Job Management
@@ -31,9 +31,12 @@ const QUEUE_BASE = '/api/v1/office/conversion-queue';
  * Create a new conversion job
  */
 export async function createJob(
-  request: CreateJobRequest
+  request: CreateJobRequest,
 ): Promise<CreateJobResponse> {
-  const response = await api.post<CreateJobResponse>(`${QUEUE_BASE}/jobs`, request);
+  const response = await api.post<CreateJobResponse>(
+    `${QUEUE_BASE}/jobs`,
+    request,
+  );
   return response.data;
 }
 
@@ -48,18 +51,20 @@ export async function getJob(jobId: string): Promise<ConversionJob> {
 /**
  * List jobs with optional filters
  */
-export async function listJobs(params?: ListJobsParams): Promise<ListJobsResponse> {
+export async function listJobs(
+  params?: ListJobsParams,
+): Promise<ListJobsResponse> {
   const queryParams = new URLSearchParams();
 
-  if (params?.status) queryParams.append('status', params.status);
-  if (params?.type) queryParams.append('type', params.type);
-  if (params?.limit) queryParams.append('limit', String(params.limit));
-  if (params?.offset) queryParams.append('offset', String(params.offset));
-  if (params?.sortBy) queryParams.append('sortBy', params.sortBy);
-  if (params?.sortOrder) queryParams.append('sortOrder', params.sortOrder);
+  if (params?.status) queryParams.append("status", params.status);
+  if (params?.type) queryParams.append("type", params.type);
+  if (params?.limit) queryParams.append("limit", String(params.limit));
+  if (params?.offset) queryParams.append("offset", String(params.offset));
+  if (params?.sortBy) queryParams.append("sortBy", params.sortBy);
+  if (params?.sortOrder) queryParams.append("sortOrder", params.sortOrder);
 
   const response = await api.get<ListJobsResponse>(
-    `${QUEUE_BASE}/jobs?${queryParams.toString()}`
+    `${QUEUE_BASE}/jobs?${queryParams.toString()}`,
   );
   return response.data;
 }
@@ -68,7 +73,9 @@ export async function listJobs(params?: ListJobsParams): Promise<ListJobsRespons
  * Cancel a pending or queued job
  */
 export async function cancelJob(jobId: string): Promise<ConversionJob> {
-  const response = await api.post<ConversionJob>(`${QUEUE_BASE}/jobs/${jobId}/cancel`);
+  const response = await api.post<ConversionJob>(
+    `${QUEUE_BASE}/jobs/${jobId}/cancel`,
+  );
   return response.data;
 }
 
@@ -76,7 +83,9 @@ export async function cancelJob(jobId: string): Promise<ConversionJob> {
  * Retry a failed job
  */
 export async function retryJob(jobId: string): Promise<ConversionJob> {
-  const response = await api.post<ConversionJob>(`${QUEUE_BASE}/jobs/${jobId}/retry`);
+  const response = await api.post<ConversionJob>(
+    `${QUEUE_BASE}/jobs/${jobId}/retry`,
+  );
   return response.data;
 }
 
@@ -90,9 +99,11 @@ export async function deleteJob(jobId: string): Promise<void> {
 /**
  * Get download URL for completed job
  */
-export async function getJobDownloadUrl(jobId: string): Promise<{ url: string; expiresAt: string }> {
+export async function getJobDownloadUrl(
+  jobId: string,
+): Promise<{ url: string; expiresAt: string }> {
   const response = await api.get<{ url: string; expiresAt: string }>(
-    `${QUEUE_BASE}/jobs/${jobId}/download`
+    `${QUEUE_BASE}/jobs/${jobId}/download`,
   );
   return response.data;
 }
@@ -105,11 +116,11 @@ export async function getJobDownloadUrl(jobId: string): Promise<{ url: string; e
  * Create a batch conversion job
  */
 export async function createBatchJob(
-  request: CreateBatchJobRequest
+  request: CreateBatchJobRequest,
 ): Promise<CreateBatchJobResponse> {
   const response = await api.post<CreateBatchJobResponse>(
     `${QUEUE_BASE}/batch`,
-    request
+    request,
   );
   return response.data;
 }
@@ -131,11 +142,11 @@ export async function listBatchJobs(params?: {
 }): Promise<{ batches: BatchJob[]; total: number }> {
   const queryParams = new URLSearchParams();
 
-  if (params?.limit) queryParams.append('limit', String(params.limit));
-  if (params?.offset) queryParams.append('offset', String(params.offset));
+  if (params?.limit) queryParams.append("limit", String(params.limit));
+  if (params?.offset) queryParams.append("offset", String(params.offset));
 
   const response = await api.get<{ batches: BatchJob[]; total: number }>(
-    `${QUEUE_BASE}/batch?${queryParams.toString()}`
+    `${QUEUE_BASE}/batch?${queryParams.toString()}`,
   );
   return response.data;
 }
@@ -144,7 +155,9 @@ export async function listBatchJobs(params?: {
  * Cancel a batch job (cancels all pending jobs in batch)
  */
 export async function cancelBatchJob(batchId: string): Promise<BatchJob> {
-  const response = await api.post<BatchJob>(`${QUEUE_BASE}/batch/${batchId}/cancel`);
+  const response = await api.post<BatchJob>(
+    `${QUEUE_BASE}/batch/${batchId}/cancel`,
+  );
   return response.data;
 }
 
@@ -152,10 +165,10 @@ export async function cancelBatchJob(batchId: string): Promise<BatchJob> {
  * Get download URL for completed batch (ZIP file)
  */
 export async function getBatchDownloadUrl(
-  batchId: string
+  batchId: string,
 ): Promise<{ url: string; expiresAt: string }> {
   const response = await api.get<{ url: string; expiresAt: string }>(
-    `${QUEUE_BASE}/batch/${batchId}/download`
+    `${QUEUE_BASE}/batch/${batchId}/download`,
   );
   return response.data;
 }
@@ -190,7 +203,7 @@ export async function getQueueHealth(): Promise<QueueHealth> {
 export function subscribeToJobUpdates(
   jobId: string,
   onEvent: (event: JobEvent) => void,
-  onError?: (error: Event) => void
+  onError?: (error: Event) => void,
 ): () => void {
   const eventSource = new EventSource(`${QUEUE_BASE}/jobs/${jobId}/events`);
 
@@ -199,7 +212,7 @@ export function subscribeToJobUpdates(
       const jobEvent: JobEvent = JSON.parse(event.data);
       onEvent(jobEvent);
     } catch (e) {
-      console.error('Failed to parse job event:', e);
+      console.error("Failed to parse job event:", e);
     }
   };
 
@@ -217,7 +230,7 @@ export function subscribeToJobUpdates(
  */
 export function subscribeToAllJobUpdates(
   onEvent: (event: JobEvent) => void,
-  onError?: (error: Event) => void
+  onError?: (error: Event) => void,
 ): () => void {
   const eventSource = new EventSource(`${QUEUE_BASE}/events`);
 
@@ -226,7 +239,7 @@ export function subscribeToAllJobUpdates(
       const jobEvent: JobEvent = JSON.parse(event.data);
       onEvent(jobEvent);
     } catch (e) {
-      console.error('Failed to parse job event:', e);
+      console.error("Failed to parse job event:", e);
     }
   };
 
@@ -248,12 +261,12 @@ export function subscribeToAllJobUpdates(
  */
 export async function estimateConversionTime(
   documentId: string,
-  targetFormat: string
+  targetFormat: string,
 ): Promise<{ estimatedSeconds: number; queuePosition: number }> {
-  const response = await api.post<{ estimatedSeconds: number; queuePosition: number }>(
-    `${QUEUE_BASE}/estimate`,
-    { documentId, targetFormat }
-  );
+  const response = await api.post<{
+    estimatedSeconds: number;
+    queuePosition: number;
+  }>(`${QUEUE_BASE}/estimate`, { documentId, targetFormat });
   return response.data;
 }
 

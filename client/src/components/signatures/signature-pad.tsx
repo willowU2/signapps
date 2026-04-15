@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import { useRef, useState, useEffect, useCallback } from 'react';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { PenLine, Trash2, Upload, Image } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { useRef, useState, useEffect, useCallback } from "react";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { PenLine, Trash2, Upload, Image } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface SignaturePadProps {
   /** Called when a signature data URL is ready (SVG or PNG). */
@@ -26,7 +26,7 @@ interface Point {
 function pointsToSvgPath(points: Point[][]): string {
   return points
     .map((stroke) => {
-      if (stroke.length === 0) return '';
+      if (stroke.length === 0) return "";
       if (stroke.length === 1) {
         const { x, y } = stroke[0];
         return `M ${x} ${y} l 0.01 0`;
@@ -41,9 +41,9 @@ function pointsToSvgPath(points: Point[][]): string {
         const my = ((prev.y + curr.y) / 2).toFixed(1);
         cmds.push(`Q ${prev.x.toFixed(1)} ${prev.y.toFixed(1)} ${mx} ${my}`);
       }
-      return cmds.join(' ');
+      return cmds.join(" ");
     })
-    .join(' ');
+    .join(" ");
 }
 
 // ---------------------------------------------------------------------------
@@ -63,13 +63,13 @@ export function SignaturePad({ onSignature, className }: SignaturePadProps) {
   const redraw = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext("2d");
     if (!ctx) return;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.strokeStyle = '#1a1a2e';
+    ctx.strokeStyle = "#1a1a2e";
     ctx.lineWidth = 2;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
 
     const allStrokes = [...strokes, currentStroke].filter((s) => s.length > 0);
     for (const stroke of allStrokes) {
@@ -103,7 +103,7 @@ export function SignaturePad({ onSignature, className }: SignaturePadProps) {
     const scaleX = canvas.width / rect.width;
     const scaleY = canvas.height / rect.height;
 
-    if ('touches' in e) {
+    if ("touches" in e) {
       const touch = e.touches[0];
       return {
         x: (touch.clientX - rect.left) * scaleX,
@@ -149,7 +149,7 @@ export function SignaturePad({ onSignature, className }: SignaturePadProps) {
     setHasDrawing(false);
     const canvas = canvasRef.current;
     if (canvas) {
-      const ctx = canvas.getContext('2d');
+      const ctx = canvas.getContext("2d");
       ctx?.clearRect(0, 0, canvas.width, canvas.height);
     }
   };
@@ -171,7 +171,7 @@ export function SignaturePad({ onSignature, className }: SignaturePadProps) {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (!file.type.startsWith('image/')) return;
+    if (!file.type.startsWith("image/")) return;
     const reader = new FileReader();
     reader.onload = (ev) => {
       const result = ev.target?.result as string;
@@ -186,7 +186,7 @@ export function SignaturePad({ onSignature, className }: SignaturePadProps) {
   };
 
   return (
-    <div className={cn('space-y-3', className)}>
+    <div className={cn("space-y-3", className)}>
       <Tabs defaultValue="draw">
         <TabsList className="w-full">
           <TabsTrigger value="draw" className="flex-1 gap-2">
@@ -214,7 +214,7 @@ export function SignaturePad({ onSignature, className }: SignaturePadProps) {
               onTouchStart={handlePointerDown}
               onTouchMove={handlePointerMove}
               onTouchEnd={handlePointerUp}
-              style={{ touchAction: 'none' }}
+              style={{ touchAction: "none" }}
             />
           </div>
           <p className="text-xs text-muted-foreground text-center">
@@ -246,7 +246,10 @@ export function SignaturePad({ onSignature, className }: SignaturePadProps) {
         {/* Upload tab */}
         <TabsContent value="upload" className="space-y-3">
           {uploadPreview ? (
-            <div className="rounded-lg border bg-white dark:bg-zinc-950 overflow-hidden flex items-center justify-center p-4" style={{ minHeight: 160 }}>
+            <div
+              className="rounded-lg border bg-white dark:bg-zinc-950 overflow-hidden flex items-center justify-center p-4"
+              style={{ minHeight: 160 }}
+            >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={uploadPreview}
@@ -262,7 +265,9 @@ export function SignaturePad({ onSignature, className }: SignaturePadProps) {
               <Upload className="h-8 w-8 text-muted-foreground/50" />
               <div className="text-center">
                 <p className="text-sm font-medium">Cliquez pour importer</p>
-                <p className="text-xs text-muted-foreground mt-1">PNG, JPG, GIF, SVG (max 2 Mo)</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  PNG, JPG, GIF, SVG (max 2 Mo)
+                </p>
               </div>
             </div>
           )}
@@ -279,7 +284,7 @@ export function SignaturePad({ onSignature, className }: SignaturePadProps) {
               size="sm"
               onClick={() => {
                 setUploadPreview(null);
-                if (fileRef.current) fileRef.current.value = '';
+                if (fileRef.current) fileRef.current.value = "";
               }}
               disabled={!uploadPreview}
             >

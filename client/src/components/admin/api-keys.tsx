@@ -1,7 +1,17 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { Plus, Trash2, Copy, Check, RefreshCw, Key, Loader2, Eye, EyeOff } from "lucide-react";
+import {
+  Plus,
+  Trash2,
+  Copy,
+  Check,
+  RefreshCw,
+  Key,
+  Loader2,
+  Eye,
+  EyeOff,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -31,16 +41,25 @@ interface CreateApiKeyResponse {
 }
 
 const AVAILABLE_SCOPES = [
-  "documents.read", "documents.write",
-  "mail.read", "mail.write",
-  "calendar.read", "calendar.write",
-  "storage.read", "storage.write",
-  "users.read", "admin.read",
+  "documents.read",
+  "documents.write",
+  "mail.read",
+  "mail.write",
+  "calendar.read",
+  "calendar.write",
+  "storage.read",
+  "storage.write",
+  "users.read",
+  "admin.read",
 ];
 
 function formatDate(iso: string | null): string {
   if (!iso) return "Never";
-  return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+  return new Date(iso).toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
 }
 
 export function ApiKeys() {
@@ -49,9 +68,13 @@ export function ApiKeys() {
   const [isCreating, setIsCreating] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [newKeyName, setNewKeyName] = useState("");
-  const [selectedScopes, setSelectedScopes] = useState<string[]>(["documents.read"]);
+  const [selectedScopes, setSelectedScopes] = useState<string[]>([
+    "documents.read",
+  ]);
   const [expiryDays, setExpiryDays] = useState<string>("365");
-  const [newKeyResult, setNewKeyResult] = useState<CreateApiKeyResponse | null>(null);
+  const [newKeyResult, setNewKeyResult] = useState<CreateApiKeyResponse | null>(
+    null,
+  );
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [showKey, setShowKey] = useState(false);
   const [revoking, setRevoking] = useState<Set<string>>(new Set());
@@ -59,7 +82,9 @@ export function ApiKeys() {
   const fetchKeys = useCallback(async () => {
     setIsLoading(true);
     try {
-      const res = await axios.get(`${IDENTITY_URL}/api-keys`, { withCredentials: true });
+      const res = await axios.get(`${IDENTITY_URL}/api-keys`, {
+        withCredentials: true,
+      });
       setKeys(res.data);
     } catch {
       toast.error("Impossible de charger les clés API");
@@ -86,12 +111,14 @@ export function ApiKeys() {
           scopes: selectedScopes,
           expires_in_days: expiryDays ? parseInt(expiryDays, 10) : null,
         },
-        { withCredentials: true }
+        { withCredentials: true },
       );
       setNewKeyResult(res.data);
       setShowForm(false);
       await fetchKeys();
-      toast.success("Clé API créée — copiez-la maintenant, elle ne sera plus affichée");
+      toast.success(
+        "Clé API créée — copiez-la maintenant, elle ne sera plus affichée",
+      );
     } catch {
       toast.error("Impossible de créer la clé API");
     } finally {
@@ -102,7 +129,9 @@ export function ApiKeys() {
   const revokeKey = async (id: string) => {
     setRevoking((prev) => new Set(prev).add(id));
     try {
-      await axios.delete(`${IDENTITY_URL}/api-keys/${id}`, { withCredentials: true });
+      await axios.delete(`${IDENTITY_URL}/api-keys/${id}`, {
+        withCredentials: true,
+      });
       setKeys((prev) => prev.filter((k) => k.id !== id));
       toast.success("Clé API révoquée");
     } catch {
@@ -124,7 +153,7 @@ export function ApiKeys() {
 
   const toggleScope = (scope: string) => {
     setSelectedScopes((prev) =>
-      prev.includes(scope) ? prev.filter((s) => s !== scope) : [...prev, scope]
+      prev.includes(scope) ? prev.filter((s) => s !== scope) : [...prev, scope],
     );
   };
 
@@ -135,15 +164,32 @@ export function ApiKeys() {
           <Key className="h-6 w-6 text-blue-600" />
           <div>
             <h2 className="text-xl font-bold">API Keys</h2>
-            <p className="text-sm text-muted-foreground">{keys.filter((k) => k.is_active).length} active keys</p>
+            <p className="text-sm text-muted-foreground">
+              {keys.filter((k) => k.is_active).length} active keys
+            </p>
           </div>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={fetchKeys} disabled={isLoading} className="gap-1">
-            <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? "animate-spin" : ""}`} />
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={fetchKeys}
+            disabled={isLoading}
+            className="gap-1"
+          >
+            <RefreshCw
+              className={`h-3.5 w-3.5 ${isLoading ? "animate-spin" : ""}`}
+            />
             Refresh
           </Button>
-          <Button size="sm" onClick={() => { setShowForm(true); setNewKeyResult(null); }} className="gap-1">
+          <Button
+            size="sm"
+            onClick={() => {
+              setShowForm(true);
+              setNewKeyResult(null);
+            }}
+            className="gap-1"
+          >
             <Plus className="h-4 w-4" />
             New Key
           </Button>
@@ -153,23 +199,42 @@ export function ApiKeys() {
       {/* New key revealed result */}
       {newKeyResult && (
         <div className="rounded-lg border border-green-200 bg-green-50 p-4 space-y-3">
-          <p className="font-medium text-green-800">Key created — copy it now. It will not be shown again.</p>
+          <p className="font-medium text-green-800">
+            Key created — copy it now. It will not be shown again.
+          </p>
           <div className="flex items-center gap-2">
             <code className="flex-1 rounded bg-card border border-green-200 px-3 py-2 font-mono text-sm break-all">
               {showKey ? newKeyResult.key : "•".repeat(40)}
             </code>
-            <Button variant="outline" size="sm" onClick={() => setShowKey((v) => !v)}>
-              {showKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowKey((v) => !v)}
+            >
+              {showKey ? (
+                <EyeOff className="h-4 w-4" />
+              ) : (
+                <Eye className="h-4 w-4" />
+              )}
             </Button>
             <Button
               variant="outline"
               size="sm"
               onClick={() => copyKey(newKeyResult.key, "new")}
             >
-              {copiedId === "new" ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
+              {copiedId === "new" ? (
+                <Check className="h-4 w-4 text-green-600" />
+              ) : (
+                <Copy className="h-4 w-4" />
+              )}
             </Button>
           </div>
-          <Button variant="ghost" size="sm" onClick={() => setNewKeyResult(null)} className="text-xs text-muted-foreground">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setNewKeyResult(null)}
+            className="text-xs text-muted-foreground"
+          >
             Dismiss
           </Button>
         </div>
@@ -185,7 +250,9 @@ export function ApiKeys() {
             onChange={(e) => setNewKeyName(e.target.value)}
           />
           <div>
-            <p className="mb-2 text-sm font-medium text-muted-foreground">Scopes</p>
+            <p className="mb-2 text-sm font-medium text-muted-foreground">
+              Scopes
+            </p>
             <div className="flex flex-wrap gap-2">
               {AVAILABLE_SCOPES.map((scope) => (
                 <button
@@ -205,7 +272,9 @@ export function ApiKeys() {
           </div>
           <div className="flex items-center gap-3">
             <div className="flex-1">
-              <label className="mb-1 block text-sm font-medium text-muted-foreground">Expires in days</label>
+              <label className="mb-1 block text-sm font-medium text-muted-foreground">
+                Expires in days
+              </label>
               <Input
                 type="number"
                 min="1"
@@ -217,8 +286,18 @@ export function ApiKeys() {
             </div>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => setShowForm(false)} className="flex-1">Annuler</Button>
-            <Button onClick={createKey} disabled={isCreating} className="flex-1 gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setShowForm(false)}
+              className="flex-1"
+            >
+              Annuler
+            </Button>
+            <Button
+              onClick={createKey}
+              disabled={isCreating}
+              className="flex-1 gap-2"
+            >
               {isCreating && <Loader2 className="h-4 w-4 animate-spin" />}
               Create Key
             </Button>
@@ -245,22 +324,40 @@ export function ApiKeys() {
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-medium text-foreground">{key.name}</span>
-                    {!key.is_active && <Badge variant="destructive" className="text-xs">Revoked</Badge>}
-                    {key.expires_at && new Date(key.expires_at) < new Date() && (
-                      <Badge variant="outline" className="text-xs text-orange-600 border-orange-300">Expired</Badge>
+                    <span className="font-medium text-foreground">
+                      {key.name}
+                    </span>
+                    {!key.is_active && (
+                      <Badge variant="destructive" className="text-xs">
+                        Revoked
+                      </Badge>
                     )}
+                    {key.expires_at &&
+                      new Date(key.expires_at) < new Date() && (
+                        <Badge
+                          variant="outline"
+                          className="text-xs text-orange-600 border-orange-300"
+                        >
+                          Expired
+                        </Badge>
+                      )}
                   </div>
-                  <code className="mt-1 block font-mono text-xs text-muted-foreground">{key.prefix}…</code>
+                  <code className="mt-1 block font-mono text-xs text-muted-foreground">
+                    {key.prefix}…
+                  </code>
                   <div className="mt-1.5 flex flex-wrap gap-1">
                     {key.scopes.map((s) => (
-                      <Badge key={s} variant="secondary" className="text-xs">{s}</Badge>
+                      <Badge key={s} variant="secondary" className="text-xs">
+                        {s}
+                      </Badge>
                     ))}
                   </div>
                   <div className="mt-2 flex gap-4 text-xs text-gray-400">
                     <span>Created {formatDate(key.created_at)}</span>
                     <span>Last used {formatDate(key.last_used)}</span>
-                    {key.expires_at && <span>Expires {formatDate(key.expires_at)}</span>}
+                    {key.expires_at && (
+                      <span>Expires {formatDate(key.expires_at)}</span>
+                    )}
                   </div>
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
@@ -270,7 +367,11 @@ export function ApiKeys() {
                     onClick={() => copyKey(key.prefix, key.id)}
                     title="Copy prefix"
                   >
-                    {copiedId === key.id ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+                    {copiedId === key.id ? (
+                      <Check className="h-4 w-4 text-green-500" />
+                    ) : (
+                      <Copy className="h-4 w-4" />
+                    )}
                   </Button>
                   {key.is_active && (
                     <Button
@@ -280,7 +381,11 @@ export function ApiKeys() {
                       disabled={revoking.has(key.id)}
                       className="text-red-600 hover:bg-red-50"
                     >
-                      {revoking.has(key.id) ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                      {revoking.has(key.id) ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Trash2 className="h-4 w-4" />
+                      )}
                     </Button>
                   )}
                 </div>

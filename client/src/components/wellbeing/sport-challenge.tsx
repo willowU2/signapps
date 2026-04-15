@@ -34,15 +34,37 @@ export default function SportChallenge() {
   ];
 
   const challenges: Challenge[] = [
-    { id: "daily", name: "Daily Steps", unit: "steps", target: 10000, deadline: "Today" },
-    { id: "weekly", name: "Weekly Distance", unit: "km", target: 50, deadline: "This Week" },
-    { id: "monthly", name: "Monthly Challenge", unit: "steps", target: 300000, deadline: "This Month" },
+    {
+      id: "daily",
+      name: "Daily Steps",
+      unit: "steps",
+      target: 10000,
+      deadline: "Today",
+    },
+    {
+      id: "weekly",
+      name: "Weekly Distance",
+      unit: "km",
+      target: 50,
+      deadline: "This Week",
+    },
+    {
+      id: "monthly",
+      name: "Monthly Challenge",
+      unit: "steps",
+      target: 300000,
+      deadline: "This Month",
+    },
   ];
 
-  const currentChallenge = challenges.find((c) => c.id === selectedChallenge) || challenges[0];
+  const currentChallenge =
+    challenges.find((c) => c.id === selectedChallenge) || challenges[0];
   const isSteps = currentChallenge.unit === "steps";
   const currentProgress = isSteps ? personalSteps : personalKm;
-  const progressPercent = Math.min((currentProgress / currentChallenge.target) * 100, 100);
+  const progressPercent = Math.min(
+    (currentProgress / currentChallenge.target) * 100,
+    100,
+  );
 
   const logActivity = (isSteps: boolean, value: number) => {
     if (isSteps) {
@@ -78,7 +100,9 @@ export default function SportChallenge() {
                     {challenge.deadline}
                   </p>
                 </div>
-                <span className="text-sm font-bold text-blue-600">{challenge.target.toLocaleString()} {challenge.unit}</span>
+                <span className="text-sm font-bold text-blue-600">
+                  {challenge.target.toLocaleString()} {challenge.unit}
+                </span>
               </div>
             </button>
           ))}
@@ -88,12 +112,18 @@ export default function SportChallenge() {
       {/* Challenge Progress */}
       <div className="bg-gradient-to-br from-green-50 to-emerald-50 p-6 rounded-lg border border-green-200">
         <div className="text-center">
-          <h3 className="text-sm text-muted-foreground mb-2">{currentChallenge.name}</h3>
+          <h3 className="text-sm text-muted-foreground mb-2">
+            {currentChallenge.name}
+          </h3>
           <div className="text-4xl font-bold text-green-600 mb-2">
-            {currentProgress.toLocaleString()} <span className="text-lg text-muted-foreground">{currentChallenge.unit}</span>
+            {currentProgress.toLocaleString()}{" "}
+            <span className="text-lg text-muted-foreground">
+              {currentChallenge.unit}
+            </span>
           </div>
           <p className="text-sm text-muted-foreground mb-4">
-            Goal: {currentChallenge.target.toLocaleString()} {currentChallenge.unit}
+            Goal: {currentChallenge.target.toLocaleString()}{" "}
+            {currentChallenge.unit}
           </p>
 
           <div className="w-full bg-gray-200 rounded-full h-3 mb-4">
@@ -108,11 +138,19 @@ export default function SportChallenge() {
           </p>
 
           <div className="flex gap-2 justify-center">
-            <Button size="sm" onClick={() => logActivity(isSteps, isSteps ? 500 : 0.5)} className="bg-green-600 hover:bg-green-700">
-              <TrendingUp className="w-4 h-4 mr-1" />
-              +{isSteps ? "500 steps" : "0.5 km"}
+            <Button
+              size="sm"
+              onClick={() => logActivity(isSteps, isSteps ? 500 : 0.5)}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              <TrendingUp className="w-4 h-4 mr-1" />+
+              {isSteps ? "500 steps" : "0.5 km"}
             </Button>
-            <Button size="sm" variant="outline" onClick={() => logActivity(isSteps, isSteps ? 1000 : 1)}>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => logActivity(isSteps, isSteps ? 1000 : 1)}
+            >
               +{isSteps ? "1K steps" : "1 km"}
             </Button>
           </div>
@@ -127,19 +165,34 @@ export default function SportChallenge() {
         </h3>
         <div className="space-y-2 bg-card rounded-lg border border-border overflow-hidden">
           {teamMembers.map((member) => (
-            <div key={member.id} className={`p-3 flex justify-between items-center ${member.rank <= 3 ? "bg-yellow-50" : ""}`}>
+            <div
+              key={member.id}
+              className={`p-3 flex justify-between items-center ${member.rank <= 3 ? "bg-yellow-50" : ""}`}
+            >
               <div className="flex items-center gap-3 flex-1">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${
-                  member.rank === 1 ? "bg-yellow-400 text-white" : member.rank === 2 ? "bg-gray-300 text-white" : member.rank === 3 ? "bg-orange-400 text-white" : "bg-muted"
-                }`}>
+                <div
+                  className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${
+                    member.rank === 1
+                      ? "bg-yellow-400 text-white"
+                      : member.rank === 2
+                        ? "bg-gray-300 text-white"
+                        : member.rank === 3
+                          ? "bg-orange-400 text-white"
+                          : "bg-muted"
+                  }`}
+                >
                   {member.rank}
                 </div>
-                <p className={`font-medium ${member.id === "3" ? "text-blue-600 font-bold" : ""}`}>
+                <p
+                  className={`font-medium ${member.id === "3" ? "text-blue-600 font-bold" : ""}`}
+                >
                   {member.name}
                 </p>
               </div>
               <div className="text-right text-sm">
-                <p className="font-semibold text-foreground">{member.steps.toLocaleString()} steps</p>
+                <p className="font-semibold text-foreground">
+                  {member.steps.toLocaleString()} steps
+                </p>
                 <p className="text-xs text-muted-foreground">{member.km} km</p>
               </div>
             </div>
@@ -156,7 +209,9 @@ export default function SportChallenge() {
         <div className="grid grid-cols-2 gap-4">
           <div>
             <p className="text-xs text-blue-700">Total Steps Today</p>
-            <p className="text-2xl font-bold text-blue-900">{personalSteps.toLocaleString()}</p>
+            <p className="text-2xl font-bold text-blue-900">
+              {personalSteps.toLocaleString()}
+            </p>
           </div>
           <div>
             <p className="text-xs text-blue-700">Distance Covered</p>

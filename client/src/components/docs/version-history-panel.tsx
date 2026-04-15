@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useCallback } from 'react';
-import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { History, RotateCcw, X } from 'lucide-react';
-import { toast } from 'sonner';
-import { formatDistanceToNow } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { useState, useEffect, useCallback } from "react";
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { History, RotateCcw, X } from "lucide-react";
+import { toast } from "sonner";
+import { formatDistanceToNow } from "date-fns";
+import { fr } from "date-fns/locale";
 
 interface Version {
   id: string;
@@ -16,19 +16,21 @@ interface Version {
   content: string;
 }
 
-const STORAGE_KEY = 'signapps-doc-versions';
+const STORAGE_KEY = "signapps-doc-versions";
 const MAX_VERSIONS = 10;
 
 function getVersions(docId: string): Version[] {
   try {
-    const all = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+    const all = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
     return all[docId] || [];
-  } catch { return []; }
+  } catch {
+    return [];
+  }
 }
 
-function saveVersion(docId: string, content: string, author: string = 'admin') {
+function saveVersion(docId: string, content: string, author: string = "admin") {
   try {
-    const all = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+    const all = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
     const versions: Version[] = all[docId] || [];
     // Don't save if content is the same as the last version
     if (versions.length > 0 && versions[0].content === content) return;
@@ -47,7 +49,10 @@ function saveVersion(docId: string, content: string, author: string = 'admin') {
 export { saveVersion };
 
 export function VersionHistoryPanel({
-  open, onClose, docId, onRestore,
+  open,
+  onClose,
+  docId,
+  onRestore,
 }: {
   open: boolean;
   onClose: () => void;
@@ -61,11 +66,14 @@ export function VersionHistoryPanel({
     if (open) setVersions(getVersions(docId));
   }, [open, docId]);
 
-  const handleRestore = useCallback((v: Version) => {
-    onRestore(v.content);
-    toast.success('Version restaurée');
-    onClose();
-  }, [onRestore, onClose]);
+  const handleRestore = useCallback(
+    (v: Version) => {
+      onRestore(v.content);
+      toast.success("Version restaurée");
+      onClose();
+    },
+    [onRestore, onClose],
+  );
 
   if (!open) return null;
 
@@ -76,7 +84,9 @@ export function VersionHistoryPanel({
           <History className="h-5 w-5" />
           <h3 className="font-semibold">Historique des versions</h3>
         </div>
-        <Button variant="ghost" size="sm" onClick={onClose}><X className="h-4 w-4" /></Button>
+        <Button variant="ghost" size="sm" onClick={onClose}>
+          <X className="h-4 w-4" />
+        </Button>
       </div>
 
       <ScrollArea className="flex-1">
@@ -84,30 +94,42 @@ export function VersionHistoryPanel({
           <div className="p-6 text-center text-muted-foreground">
             <History className="h-10 w-10 mx-auto mb-2 opacity-30" />
             <p className="text-sm">Aucune version sauvegardée</p>
-            <p className="text-xs mt-1">Les versions sont créées automatiquement toutes les 5 minutes</p>
+            <p className="text-xs mt-1">
+              Les versions sont créées automatiquement toutes les 5 minutes
+            </p>
           </div>
         ) : (
           <div className="p-2 space-y-1">
             {versions.map((v, i) => (
               <div
                 key={v.id}
-                className={`p-3 rounded-lg cursor-pointer transition-colors ${selected === v.id ? 'bg-primary/10 border border-primary/30' : 'hover:bg-muted/50'}`}
+                className={`p-3 rounded-lg cursor-pointer transition-colors ${selected === v.id ? "bg-primary/10 border border-primary/30" : "hover:bg-muted/50"}`}
                 onClick={() => setSelected(selected === v.id ? null : v.id)}
               >
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium">
-                    {i === 0 ? 'Version actuelle' : `Version ${versions.length - i}`}
+                    {i === 0
+                      ? "Version actuelle"
+                      : `Version ${versions.length - i}`}
                   </span>
                   <span className="text-xs text-muted-foreground">
                     {(v.size / 1024).toFixed(1)} KB
                   </span>
                 </div>
                 <div className="text-xs text-muted-foreground mt-1">
-                  {formatDistanceToNow(new Date(v.timestamp), { addSuffix: true, locale: fr })}
-                  {' par '}{v.author}
+                  {formatDistanceToNow(new Date(v.timestamp), {
+                    addSuffix: true,
+                    locale: fr,
+                  })}
+                  {" par "}
+                  {v.author}
                 </div>
                 {selected === v.id && i > 0 && (
-                  <Button size="sm" className="mt-2 w-full" onClick={() => handleRestore(v)}>
+                  <Button
+                    size="sm"
+                    className="mt-2 w-full"
+                    onClick={() => handleRestore(v)}
+                  >
                     <RotateCcw className="h-3 w-3 mr-1" />
                     Restaurer cette version
                   </Button>

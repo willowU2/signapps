@@ -215,34 +215,30 @@ async fn main() -> anyhow::Result<()> {
         .with_state(app_state);
 
     // Use run_server_with_shutdown so we can also signal DC listeners on exit.
-    let result = signapps_common::bootstrap::run_server_with_shutdown(
-        app,
-        &config,
-        async move {
-            // Mirror the same shutdown triggers as run_server (Ctrl+C + SIGTERM on Unix)
-            let ctrl_c = async {
-                tokio::signal::ctrl_c()
-                    .await
-                    .expect("Failed to install Ctrl+C handler");
-            };
+    let result = signapps_common::bootstrap::run_server_with_shutdown(app, &config, async move {
+        // Mirror the same shutdown triggers as run_server (Ctrl+C + SIGTERM on Unix)
+        let ctrl_c = async {
+            tokio::signal::ctrl_c()
+                .await
+                .expect("Failed to install Ctrl+C handler");
+        };
 
-            #[cfg(unix)]
-            {
-                use tokio::signal::unix::{signal, SignalKind};
-                let mut terminate =
-                    signal(SignalKind::terminate()).expect("Failed to install SIGTERM handler");
-                tokio::select! {
-                    _ = ctrl_c => {},
-                    _ = terminate.recv() => {},
-                }
+        #[cfg(unix)]
+        {
+            use tokio::signal::unix::{signal, SignalKind};
+            let mut terminate =
+                signal(SignalKind::terminate()).expect("Failed to install SIGTERM handler");
+            tokio::select! {
+                _ = ctrl_c => {},
+                _ = terminate.recv() => {},
             }
-            #[cfg(not(unix))]
-            ctrl_c.await;
+        }
+        #[cfg(not(unix))]
+        ctrl_c.await;
 
-            tracing::info!("Shutdown signal received — stopping DC protocol listeners");
-            let _ = shutdown_tx.send(true);
-        },
-    )
+        tracing::info!("Shutdown signal received — stopping DC protocol listeners");
+        let _ = shutdown_tx.send(true);
+    })
     .await;
 
     tracing::info!("=== signapps-pxe stopped ===");

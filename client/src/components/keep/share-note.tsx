@@ -4,7 +4,15 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Share2, Copy, Check, Trash2, UserPlus, Globe, Lock } from "lucide-react";
+import {
+  Share2,
+  Copy,
+  Check,
+  Trash2,
+  UserPlus,
+  Globe,
+  Lock,
+} from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -46,8 +54,10 @@ export function ShareNote({ noteId, noteTitle, onClose }: ShareNoteProps) {
       return;
     }
     const entry: ShareEntry = {
-      id: crypto.randomUUID(), email: newEmail.toLowerCase().trim(),
-      permission, sharedAt: new Date().toISOString(),
+      id: crypto.randomUUID(),
+      email: newEmail.toLowerCase().trim(),
+      permission,
+      sharedAt: new Date().toISOString(),
     };
     setShares((p) => [...p, entry]);
     setNewEmail("");
@@ -59,36 +69,52 @@ export function ShareNote({ noteId, noteTitle, onClose }: ShareNoteProps) {
   };
 
   const handlePermissionChange = (id: string, perm: Permission) => {
-    setShares((p) => p.map((s) => s.id === id ? { ...s, permission: perm } : s));
+    setShares((p) =>
+      p.map((s) => (s.id === id ? { ...s, permission: perm } : s)),
+    );
   };
 
   const handleCopyLink = () => {
-    navigator.clipboard.writeText(shareLink).then(() => {
-      setCopied(true);
-      toast.success("Lien copié !");
-      setTimeout(() => setCopied(false), 2000);
-    }).catch(() => toast.error("Impossible de copier."));
+    navigator.clipboard
+      .writeText(shareLink)
+      .then(() => {
+        setCopied(true);
+        toast.success("Lien copié !");
+        setTimeout(() => setCopied(false), 2000);
+      })
+      .catch(() => toast.error("Impossible de copier."));
   };
 
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2 pb-2 border-b">
         <Share2 className="size-4 text-primary" />
-        <h3 className="font-semibold text-sm">Partager « {noteTitle || "Note"} »</h3>
+        <h3 className="font-semibold text-sm">
+          Partager « {noteTitle || "Note"} »
+        </h3>
       </div>
 
       {/* Add user */}
       <div className="space-y-2">
-        <p className="text-xs font-medium text-muted-foreground">Inviter par email</p>
+        <p className="text-xs font-medium text-muted-foreground">
+          Inviter par email
+        </p>
         <div className="flex gap-2">
           <Input
-            type="email" placeholder="colleague@example.com"
-            value={newEmail} onChange={(e) => setNewEmail(e.target.value)}
-            onKeyDown={(e) => { if (e.key === "Enter") handleAdd(); }}
+            type="email"
+            placeholder="colleague@example.com"
+            value={newEmail}
+            onChange={(e) => setNewEmail(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") handleAdd();
+            }}
             className="flex-1 h-8 text-sm"
           />
-          <select value={permission} onChange={(e) => setPermission(e.target.value as Permission)}
-            className="h-8 rounded-md border text-sm px-2 bg-background">
+          <select
+            value={permission}
+            onChange={(e) => setPermission(e.target.value as Permission)}
+            className="h-8 rounded-md border text-sm px-2 bg-background"
+          >
             <option value="view">Voir</option>
             <option value="edit">Modifier</option>
           </select>
@@ -101,20 +127,31 @@ export function ShareNote({ noteId, noteTitle, onClose }: ShareNoteProps) {
       {/* Share list */}
       {shares.length > 0 && (
         <div className="space-y-2">
-          <p className="text-xs font-medium text-muted-foreground">Accès partagé ({shares.length})</p>
+          <p className="text-xs font-medium text-muted-foreground">
+            Accès partagé ({shares.length})
+          </p>
           {shares.map((s) => (
             <div key={s.id} className="flex items-center gap-2 text-sm">
               <div className="size-7 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary shrink-0">
                 {s.email[0].toUpperCase()}
               </div>
               <span className="flex-1 truncate text-xs">{s.email}</span>
-              <select value={s.permission} onChange={(e) => handlePermissionChange(s.id, e.target.value as Permission)}
-                className="h-6 text-xs rounded border px-1 bg-background">
+              <select
+                value={s.permission}
+                onChange={(e) =>
+                  handlePermissionChange(s.id, e.target.value as Permission)
+                }
+                className="h-6 text-xs rounded border px-1 bg-background"
+              >
                 <option value="view">Voir</option>
                 <option value="edit">Modifier</option>
               </select>
-              <Button size="icon" variant="ghost" className="size-6 text-muted-foreground hover:text-destructive"
-                onClick={() => handleRemove(s.id)}>
+              <Button
+                size="icon"
+                variant="ghost"
+                className="size-6 text-muted-foreground hover:text-destructive"
+                onClick={() => handleRemove(s.id)}
+              >
                 <Trash2 className="size-3" />
               </Button>
             </div>
@@ -126,11 +163,22 @@ export function ShareNote({ noteId, noteTitle, onClose }: ShareNoteProps) {
       <div className="space-y-2 border-t pt-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-sm">
-            {isPublic ? <Globe className="size-4 text-green-500" /> : <Lock className="size-4 text-muted-foreground" />}
-            <span className="font-medium">{isPublic ? "Lien public actif" : "Lien privé"}</span>
+            {isPublic ? (
+              <Globe className="size-4 text-green-500" />
+            ) : (
+              <Lock className="size-4 text-muted-foreground" />
+            )}
+            <span className="font-medium">
+              {isPublic ? "Lien public actif" : "Lien privé"}
+            </span>
           </div>
           <label className="relative inline-flex items-center cursor-pointer">
-            <input type="checkbox" checked={isPublic} onChange={(e) => setIsPublic(e.target.checked)} className="sr-only peer" />
+            <input
+              type="checkbox"
+              checked={isPublic}
+              onChange={(e) => setIsPublic(e.target.checked)}
+              className="sr-only peer"
+            />
             <div className="w-9 h-5 bg-muted rounded-full peer peer-checked:bg-primary transition-colors" />
             <div className="absolute left-0.5 top-0.5 w-4 h-4 bg-card rounded-full shadow transition-transform peer-checked:translate-x-4" />
           </label>
@@ -138,16 +186,31 @@ export function ShareNote({ noteId, noteTitle, onClose }: ShareNoteProps) {
 
         {isPublic && (
           <div className="flex gap-2">
-            <Input value={shareLink} readOnly className="h-7 text-xs flex-1 font-mono bg-muted/30" />
-            <Button size="sm" variant="outline" onClick={handleCopyLink} className={cn("h-7 gap-1 text-xs", copied && "text-green-600")}>
-              {copied ? <Check className="size-3" /> : <Copy className="size-3" />}
+            <Input
+              value={shareLink}
+              readOnly
+              className="h-7 text-xs flex-1 font-mono bg-muted/30"
+            />
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleCopyLink}
+              className={cn("h-7 gap-1 text-xs", copied && "text-green-600")}
+            >
+              {copied ? (
+                <Check className="size-3" />
+              ) : (
+                <Copy className="size-3" />
+              )}
               {copied ? "Copié" : "Copier"}
             </Button>
           </div>
         )}
       </div>
 
-      <Button variant="outline" className="w-full" onClick={onClose}>Fermer</Button>
+      <Button variant="outline" className="w-full" onClick={onClose}>
+        Fermer
+      </Button>
     </div>
   );
 }

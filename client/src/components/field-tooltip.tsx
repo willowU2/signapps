@@ -13,7 +13,9 @@ export function FieldTooltip({ text }: { text: string }) {
         onMouseLeave={() => setShow(false)}
         onClick={() => setShow(!show)}
         aria-label="Aide"
-      >?</button>
+      >
+        ?
+      </button>
       {show && (
         <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 text-xs bg-popover text-popover-foreground border rounded-md shadow-md whitespace-nowrap z-50">
           {text}

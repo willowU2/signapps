@@ -11,7 +11,13 @@ interface HeatmapCell {
 export default function CapacityHeatmap() {
   const [hoveredCell, setHoveredCell] = useState<string | null>(null);
 
-  const teamMembers = ["Alice Chen", "Bob Martinez", "Carol Smith", "David Lee", "Eve Wilson"];
+  const teamMembers = [
+    "Alice Chen",
+    "Bob Martinez",
+    "Carol Smith",
+    "David Lee",
+    "Eve Wilson",
+  ];
   const weeks = ["W1", "W2", "W3", "W4", "W5", "W6", "W7", "W8"];
 
   const heatmapData: HeatmapCell[] = [
@@ -52,9 +58,14 @@ export default function CapacityHeatmap() {
         <table className="border-collapse">
           <thead>
             <tr>
-              <th className="border p-2 bg-muted text-left font-bold w-24">Team</th>
+              <th className="border p-2 bg-muted text-left font-bold w-24">
+                Team
+              </th>
               {weeks.map((week) => (
-                <th key={week} className="border p-2 bg-muted text-center font-bold w-12">
+                <th
+                  key={week}
+                  className="border p-2 bg-muted text-center font-bold w-12"
+                >
                   {week}
                 </th>
               ))}
@@ -63,7 +74,9 @@ export default function CapacityHeatmap() {
           <tbody>
             {teamMembers.map((member) => (
               <tr key={member}>
-                <td className="border p-2 font-medium text-sm bg-muted">{member}</td>
+                <td className="border p-2 font-medium text-sm bg-muted">
+                  {member}
+                </td>
                 {weeks.map((week) => {
                   const cell = getCellData(member, week);
                   const key = `${member}-${week}`;
@@ -90,11 +103,21 @@ export default function CapacityHeatmap() {
       </div>
 
       <div className="grid grid-cols-5 gap-2 text-xs">
-        <div className="p-2 bg-red-500 text-white rounded font-medium text-center">&gt;=100%</div>
-        <div className="p-2 bg-orange-500 text-white rounded font-medium text-center">85-99%</div>
-        <div className="p-2 bg-yellow-400 text-foreground rounded font-medium text-center">70-84%</div>
-        <div className="p-2 bg-green-300 text-foreground rounded font-medium text-center">50-69%</div>
-        <div className="p-2 bg-green-100 text-foreground rounded font-medium text-center">&lt;50%</div>
+        <div className="p-2 bg-red-500 text-white rounded font-medium text-center">
+          &gt;=100%
+        </div>
+        <div className="p-2 bg-orange-500 text-white rounded font-medium text-center">
+          85-99%
+        </div>
+        <div className="p-2 bg-yellow-400 text-foreground rounded font-medium text-center">
+          70-84%
+        </div>
+        <div className="p-2 bg-green-300 text-foreground rounded font-medium text-center">
+          50-69%
+        </div>
+        <div className="p-2 bg-green-100 text-foreground rounded font-medium text-center">
+          &lt;50%
+        </div>
       </div>
     </div>
   );

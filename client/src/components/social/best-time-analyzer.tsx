@@ -26,21 +26,21 @@ const FALLBACK_DATA: Record<string, number[][]> = {
       if (h >= 9 && h <= 11) return Math.random() * 40 + 60;
       if (h >= 17 && h <= 19) return Math.random() * 30 + 50;
       return Math.random() * 30 + 15;
-    })
+    }),
   ),
   facebook: DAYS.map((_, d) =>
     HOURS.map((h) => {
       if (h >= 13 && h <= 16) return Math.random() * 30 + 65;
       if (h >= 9 && h <= 11) return Math.random() * 25 + 45;
       return Math.random() * 25 + 10;
-    })
+    }),
   ),
   instagram: DAYS.map((_, d) =>
     HOURS.map((h) => {
       if (h >= 11 && h <= 13) return Math.random() * 35 + 60;
       if (h === 19 || h === 20) return Math.random() * 30 + 55;
       return Math.random() * 25 + 10;
-    })
+    }),
   ),
   linkedin: DAYS.map((_, d) =>
     HOURS.map((h) => {
@@ -48,7 +48,7 @@ const FALLBACK_DATA: Record<string, number[][]> = {
       if (h === 8 || h === 9) return Math.random() * 35 + 60;
       if (h >= 17 && h <= 18) return Math.random() * 30 + 50;
       return Math.random() * 25 + 15;
-    })
+    }),
   ),
 };
 
@@ -96,7 +96,9 @@ export function BestTimeAnalyzer({ onSchedule }: BestTimeAnalyzerProps) {
   const load = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${getServiceUrl(ServiceName.SOCIAL)}/social/ai/best-time`);
+      const res = await fetch(
+        `${getServiceUrl(ServiceName.SOCIAL)}/social/ai/best-time`,
+      );
       if (!res.ok) throw new Error("Not available");
       const json = await res.json();
       const parsed: Record<string, BestTimeData> = {};
@@ -150,7 +152,11 @@ export function BestTimeAnalyzer({ onSchedule }: BestTimeAnalyzerProps) {
           <Tabs defaultValue={platforms[0]}>
             <TabsList className="w-full h-8 mb-4">
               {platforms.map((p) => (
-                <TabsTrigger key={p} value={p} className="flex-1 text-xs capitalize">
+                <TabsTrigger
+                  key={p}
+                  value={p}
+                  className="flex-1 text-xs capitalize"
+                >
                   {p}
                 </TabsTrigger>
               ))}
@@ -165,7 +171,9 @@ export function BestTimeAnalyzer({ onSchedule }: BestTimeAnalyzerProps) {
                     <table className="w-full text-xs border-separate border-spacing-0.5">
                       <thead>
                         <tr>
-                          <th className="text-left text-muted-foreground w-10 pr-2">Hour</th>
+                          <th className="text-left text-muted-foreground w-10 pr-2">
+                            Hour
+                          </th>
                           {DAYS.map((day) => (
                             <th
                               key={day}
@@ -179,15 +187,20 @@ export function BestTimeAnalyzer({ onSchedule }: BestTimeAnalyzerProps) {
                       <tbody>
                         {HOURS.map((hour, hi) => (
                           <tr key={hour}>
-                            <td className="text-muted-foreground pr-2 text-right">{hour}h</td>
+                            <td className="text-muted-foreground pr-2 text-right">
+                              {hour}h
+                            </td>
                             {DAYS.map((_, di) => {
                               const val = d.grid[di]?.[hi] ?? 0;
-                              const isBest = di === d.bestDay && hi === d.bestHour;
+                              const isBest =
+                                di === d.bestDay && hi === d.bestHour;
                               return (
                                 <td key={di} className="text-center">
                                   <div
                                     className={`w-full h-5 rounded-sm flex items-center justify-center text-xs transition-all ${getColor(val)} ${
-                                      isBest ? "ring-2 ring-offset-1 ring-orange-400" : ""
+                                      isBest
+                                        ? "ring-2 ring-offset-1 ring-orange-400"
+                                        : ""
                                     }`}
                                     title={`${Math.round(val)}% engagement`}
                                   />
@@ -211,7 +224,9 @@ export function BestTimeAnalyzer({ onSchedule }: BestTimeAnalyzerProps) {
                       size="sm"
                       variant="outline"
                       className="gap-1 text-xs h-7"
-                      onClick={() => onSchedule?.(p, d.bestDay, HOURS[d.bestHour])}
+                      onClick={() =>
+                        onSchedule?.(p, d.bestDay, HOURS[d.bestHour])
+                      }
                     >
                       <TrendingUp className="w-3 h-3" />
                       Schedule at best time
@@ -221,11 +236,15 @@ export function BestTimeAnalyzer({ onSchedule }: BestTimeAnalyzerProps) {
                   <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
                     <span>Low</span>
                     <div className="flex gap-0.5">
-                      {["bg-slate-100", "bg-blue-100", "bg-blue-300", "bg-blue-500", "bg-blue-700"].map(
-                        (c, i) => (
-                          <div key={i} className={`w-4 h-3 rounded-sm ${c}`} />
-                        )
-                      )}
+                      {[
+                        "bg-slate-100",
+                        "bg-blue-100",
+                        "bg-blue-300",
+                        "bg-blue-500",
+                        "bg-blue-700",
+                      ].map((c, i) => (
+                        <div key={i} className={`w-4 h-3 rounded-sm ${c}`} />
+                      ))}
                     </div>
                     <span>High</span>
                   </div>

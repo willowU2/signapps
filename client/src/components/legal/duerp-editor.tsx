@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Trash2 } from 'lucide-react';
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Trash2 } from "lucide-react";
 
 interface AssessedRisk {
   id: string;
@@ -21,11 +21,11 @@ interface AssessedRisk {
 
 export function DuerpEditor() {
   const [risks, setRisks] = useState<AssessedRisk[]>([]);
-  const [workUnitName, setWorkUnitName] = useState('');
-  const [riskDescription, setRiskDescription] = useState('');
+  const [workUnitName, setWorkUnitName] = useState("");
+  const [riskDescription, setRiskDescription] = useState("");
   const [frequency, setFrequency] = useState(3);
   const [severity, setSeverity] = useState(3);
-  const [actionPlan, setActionPlan] = useState('');
+  const [actionPlan, setActionPlan] = useState("");
 
   const riskScore = frequency * severity;
 
@@ -45,7 +45,9 @@ export function DuerpEditor() {
       createdAt: new Date(),
     };
 
-    setRisks((prev) => [...prev, newRisk].sort((a, b) => b.riskScore - a.riskScore));
+    setRisks((prev) =>
+      [...prev, newRisk].sort((a, b) => b.riskScore - a.riskScore),
+    );
     resetForm();
   };
 
@@ -54,17 +56,17 @@ export function DuerpEditor() {
   };
 
   const resetForm = () => {
-    setWorkUnitName('');
-    setRiskDescription('');
+    setWorkUnitName("");
+    setRiskDescription("");
     setFrequency(3);
     setSeverity(3);
-    setActionPlan('');
+    setActionPlan("");
   };
 
   const getSeverityColor = (score: number) => {
-    if (score <= 5) return 'bg-green-100 text-green-800';
-    if (score <= 12) return 'bg-yellow-100 text-yellow-800';
-    return 'bg-red-100 text-red-800';
+    if (score <= 5) return "bg-green-100 text-green-800";
+    if (score <= 12) return "bg-yellow-100 text-yellow-800";
+    return "bg-red-100 text-red-800";
   };
 
   return (
@@ -76,7 +78,9 @@ export function DuerpEditor() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-1">Unité de Travail</label>
+            <label className="block text-sm font-medium mb-1">
+              Unité de Travail
+            </label>
             <Input
               placeholder="Ex: Production, Logistique, RH..."
               value={workUnitName}
@@ -85,7 +89,9 @@ export function DuerpEditor() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">Description du Risque</label>
+            <label className="block text-sm font-medium mb-1">
+              Description du Risque
+            </label>
             <Textarea
               placeholder="Détailler le risque identifié..."
               value={riskDescription}
@@ -107,7 +113,9 @@ export function DuerpEditor() {
                 onChange={(e) => setFrequency(parseInt(e.target.value))}
                 className="w-full"
               />
-              <p className="text-xs text-muted-foreground mt-1">1 = Rare, 5 = Très fréquent</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                1 = Rare, 5 = Très fréquent
+              </p>
             </div>
 
             <div>
@@ -122,7 +130,9 @@ export function DuerpEditor() {
                 onChange={(e) => setSeverity(parseInt(e.target.value))}
                 className="w-full"
               />
-              <p className="text-xs text-muted-foreground mt-1">1 = Mineure, 5 = Critique</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                1 = Mineure, 5 = Critique
+              </p>
             </div>
           </div>
 
@@ -139,7 +149,9 @@ export function DuerpEditor() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">Plan d'Action</label>
+            <label className="block text-sm font-medium mb-1">
+              Plan d'Action
+            </label>
             <Textarea
               placeholder="Mesures à mettre en place pour réduire le risque..."
               value={actionPlan}
@@ -150,7 +162,11 @@ export function DuerpEditor() {
 
           <Button
             onClick={handleAddRisk}
-            disabled={!workUnitName.trim() || !riskDescription.trim() || !actionPlan.trim()}
+            disabled={
+              !workUnitName.trim() ||
+              !riskDescription.trim() ||
+              !actionPlan.trim()
+            }
             className="w-full"
           >
             Enregistrer l'Évaluation
@@ -173,10 +189,16 @@ export function DuerpEditor() {
                 >
                   <div className="flex justify-between items-start mb-2">
                     <div className="flex-1">
-                      <h3 className="font-semibold text-base">{risk.workUnitName}</h3>
-                      <p className="text-sm text-muted-foreground">{risk.riskDescription}</p>
+                      <h3 className="font-semibold text-base">
+                        {risk.workUnitName}
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        {risk.riskDescription}
+                      </p>
                     </div>
-                    <Badge className={`${getSeverityColor(risk.riskScore)} ml-2`}>
+                    <Badge
+                      className={`${getSeverityColor(risk.riskScore)} ml-2`}
+                    >
                       Score: {risk.riskScore}
                     </Badge>
                   </div>
@@ -198,7 +220,7 @@ export function DuerpEditor() {
 
                   <div className="flex justify-between items-center">
                     <span className="text-xs text-muted-foreground">
-                      {risk.createdAt.toLocaleString('fr-FR')}
+                      {risk.createdAt.toLocaleString("fr-FR")}
                     </span>
                     <Button
                       variant="ghost"

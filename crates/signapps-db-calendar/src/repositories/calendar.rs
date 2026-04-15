@@ -1,8 +1,8 @@
 //! Calendar repository for database operations.
 
 use crate::models::*;
-use signapps_db_shared::DatabasePool;
 use signapps_common::Result;
+use signapps_db_shared::DatabasePool;
 use uuid::Uuid;
 
 // ============================================================================

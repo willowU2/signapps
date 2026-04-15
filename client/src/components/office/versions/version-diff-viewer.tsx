@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { SpinnerInfinity } from 'spinners-react';
+import { SpinnerInfinity } from "spinners-react";
 
 /**
  * VersionDiffViewer
@@ -8,21 +8,33 @@ import { SpinnerInfinity } from 'spinners-react';
  * Component for viewing differences between two document versions.
  */
 
-import React, { useMemo } from 'react';
-import { GitCompare, Plus, Minus, Edit3, ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
+import React, { useMemo } from "react";
+import {
+  GitCompare,
+  Plus,
+  Minus,
+  Edit3,
+  ArrowRight,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { cn } from '@/lib/utils';
-import { useVersionsStore } from '@/stores/versions-store';
-import type { VersionDiff, DiffLine, DiffChangeType } from '@/lib/office/versions/types';
+} from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
+import { useVersionsStore } from "@/stores/versions-store";
+import type {
+  VersionDiff,
+  DiffLine,
+  DiffChangeType,
+} from "@/lib/office/versions/types";
 
 // ============================================================================
 // Diff Line Component
@@ -30,46 +42,46 @@ import type { VersionDiff, DiffLine, DiffChangeType } from '@/lib/office/version
 
 interface DiffLineProps {
   line: DiffLine;
-  viewMode: 'unified' | 'sideBySide';
+  viewMode: "unified" | "sideBySide";
 }
 
 function DiffLineComponent({ line, viewMode }: DiffLineProps) {
   const getBgColor = (type: DiffChangeType) => {
     switch (type) {
-      case 'added':
-        return 'bg-green-50 dark:bg-green-900/20';
-      case 'removed':
-        return 'bg-red-50 dark:bg-red-900/20';
-      case 'modified':
-        return 'bg-amber-50 dark:bg-amber-900/20';
+      case "added":
+        return "bg-green-50 dark:bg-green-900/20";
+      case "removed":
+        return "bg-red-50 dark:bg-red-900/20";
+      case "modified":
+        return "bg-amber-50 dark:bg-amber-900/20";
       default:
-        return '';
+        return "";
     }
   };
 
   const getTextColor = (type: DiffChangeType) => {
     switch (type) {
-      case 'added':
-        return 'text-green-700 dark:text-green-400';
-      case 'removed':
-        return 'text-red-700 dark:text-red-400';
-      case 'modified':
-        return 'text-amber-700 dark:text-amber-400';
+      case "added":
+        return "text-green-700 dark:text-green-400";
+      case "removed":
+        return "text-red-700 dark:text-red-400";
+      case "modified":
+        return "text-amber-700 dark:text-amber-400";
       default:
-        return '';
+        return "";
     }
   };
 
   const getLinePrefix = (type: DiffChangeType) => {
     switch (type) {
-      case 'added':
-        return '+';
-      case 'removed':
-        return '-';
-      case 'modified':
-        return '~';
+      case "added":
+        return "+";
+      case "removed":
+        return "-";
+      case "modified":
+        return "~";
       default:
-        return ' ';
+        return " ";
     }
   };
 
@@ -88,7 +100,7 @@ function DiffLineComponent({ line, viewMode }: DiffLineProps) {
         parts.push(
           <span key={`text-${i}`}>
             {line.content.slice(lastIndex, change.start)}
-          </span>
+          </span>,
         );
       }
 
@@ -97,14 +109,14 @@ function DiffLineComponent({ line, viewMode }: DiffLineProps) {
         <span
           key={`change-${i}`}
           className={cn(
-            'rounded px-0.5',
-            change.type === 'added'
-              ? 'bg-green-200 dark:bg-green-800'
-              : 'bg-red-200 dark:bg-red-800 line-through'
+            "rounded px-0.5",
+            change.type === "added"
+              ? "bg-green-200 dark:bg-green-800"
+              : "bg-red-200 dark:bg-red-800 line-through",
           )}
         >
           {change.text}
-        </span>
+        </span>,
       );
 
       lastIndex = change.end;
@@ -121,32 +133,37 @@ function DiffLineComponent({ line, viewMode }: DiffLineProps) {
   return (
     <div
       className={cn(
-        'flex items-stretch font-mono text-sm',
-        getBgColor(line.type)
+        "flex items-stretch font-mono text-sm",
+        getBgColor(line.type),
       )}
     >
       {/* Line numbers */}
       <div className="flex-shrink-0 w-20 flex border-r border-border/50">
         <div className="w-10 px-2 py-0.5 text-right text-muted-foreground text-xs border-r border-border/50">
-          {line.sourceLineNumber ?? ''}
+          {line.sourceLineNumber ?? ""}
         </div>
         <div className="w-10 px-2 py-0.5 text-right text-muted-foreground text-xs">
-          {line.targetLineNumber ?? ''}
+          {line.targetLineNumber ?? ""}
         </div>
       </div>
 
       {/* Prefix */}
       <div
         className={cn(
-          'flex-shrink-0 w-6 px-2 py-0.5 font-bold',
-          getTextColor(line.type)
+          "flex-shrink-0 w-6 px-2 py-0.5 font-bold",
+          getTextColor(line.type),
         )}
       >
         {getLinePrefix(line.type)}
       </div>
 
       {/* Content */}
-      <div className={cn('flex-1 px-2 py-0.5 whitespace-pre-wrap break-all', getTextColor(line.type))}>
+      <div
+        className={cn(
+          "flex-1 px-2 py-0.5 whitespace-pre-wrap break-all",
+          getTextColor(line.type),
+        )}
+      >
         {renderContent()}
       </div>
     </div>
@@ -158,7 +175,7 @@ function DiffLineComponent({ line, viewMode }: DiffLineProps) {
 // ============================================================================
 
 interface DiffStatsProps {
-  stats: VersionDiff['stats'];
+  stats: VersionDiff["stats"];
 }
 
 function DiffStats({ stats }: DiffStatsProps) {
@@ -173,7 +190,8 @@ function DiffStats({ stats }: DiffStatsProps) {
             </div>
           </TooltipTrigger>
           <TooltipContent>
-            {stats.linesAdded} lignes ajoutées ({stats.wordsAdded} mots, {stats.charsAdded} caractères)
+            {stats.linesAdded} lignes ajoutées ({stats.wordsAdded} mots,{" "}
+            {stats.charsAdded} caractères)
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
@@ -187,7 +205,8 @@ function DiffStats({ stats }: DiffStatsProps) {
             </div>
           </TooltipTrigger>
           <TooltipContent>
-            {stats.linesRetiré} lignes supprimées ({stats.wordsRetiré} mots, {stats.charsRetiré} caractères)
+            {stats.linesRetiré} lignes supprimées ({stats.wordsRetiré} mots,{" "}
+            {stats.charsRetiré} caractères)
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
@@ -201,7 +220,9 @@ function DiffStats({ stats }: DiffStatsProps) {
                 <span>~{stats.linesModified}</span>
               </div>
             </TooltipTrigger>
-            <TooltipContent>{stats.linesModified} lignes modifiées</TooltipContent>
+            <TooltipContent>
+              {stats.linesModified} lignes modifiées
+            </TooltipContent>
           </Tooltip>
         </TooltipProvider>
       )}
@@ -262,13 +283,12 @@ interface VersionDiffViewerProps {
   onClose?: () => void;
 }
 
-export function VersionDiffViewer({ className, onClose }: VersionDiffViewerProps) {
-  const {
-    comparisonResult,
-    isComparing,
-    versions,
-    clearComparison,
-  } = useVersionsStore();
+export function VersionDiffViewer({
+  className,
+  onClose,
+}: VersionDiffViewerProps) {
+  const { comparisonResult, isComparing, versions, clearComparison } =
+    useVersionsStore();
 
   const [currentChangeIndex, setCurrentChangeIndex] = React.useState(1);
 
@@ -277,15 +297,15 @@ export function VersionDiffViewer({ className, onClose }: VersionDiffViewerProps
     if (!comparisonResult) return [];
     return comparisonResult.lines
       .map((line, index) => ({ line, index }))
-      .filter(({ line }) => line.type !== 'unchanged');
+      .filter(({ line }) => line.type !== "unchanged");
   }, [comparisonResult]);
 
   // Get version info
   const sourceVersion = versions.find(
-    (v) => v.id === comparisonResult?.sourceVersionId
+    (v) => v.id === comparisonResult?.sourceVersionId,
   );
   const targetVersion = versions.find(
-    (v) => v.id === comparisonResult?.targetVersionId
+    (v) => v.id === comparisonResult?.targetVersionId,
   );
 
   const handlePreviousChange = () => {
@@ -303,15 +323,26 @@ export function VersionDiffViewer({ className, onClose }: VersionDiffViewerProps
 
   if (isComparing) {
     return (
-      <div className={cn('flex items-center justify-center h-64', className)}>
-        <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-8 w-8  text-muted-foreground" />
+      <div className={cn("flex items-center justify-center h-64", className)}>
+        <SpinnerInfinity
+          size={24}
+          secondaryColor="rgba(128,128,128,0.2)"
+          color="currentColor"
+          speed={120}
+          className="h-8 w-8  text-muted-foreground"
+        />
       </div>
     );
   }
 
   if (!comparisonResult) {
     return (
-      <div className={cn('flex flex-col items-center justify-center h-64 text-muted-foreground', className)}>
+      <div
+        className={cn(
+          "flex flex-col items-center justify-center h-64 text-muted-foreground",
+          className,
+        )}
+      >
         <GitCompare className="h-12 w-12 mb-3 opacity-50" />
         <p className="text-sm">Sélectionnez deux versions pour comparer</p>
       </div>
@@ -319,7 +350,7 @@ export function VersionDiffViewer({ className, onClose }: VersionDiffViewerProps
   }
 
   return (
-    <div className={cn('flex flex-col h-full', className)}>
+    <div className={cn("flex flex-col h-full", className)}>
       {/* Header */}
       <div className="flex items-center justify-between border-b p-4">
         <div className="flex items-center gap-3">

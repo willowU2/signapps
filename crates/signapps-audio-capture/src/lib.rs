@@ -5,12 +5,12 @@
 
 pub mod vad;
 
-#[cfg(target_os = "windows")]
-pub mod wasapi;
 #[cfg(target_os = "macos")]
 pub mod coreaudio;
 #[cfg(target_os = "linux")]
 pub mod pulseaudio;
+#[cfg(target_os = "windows")]
+pub mod wasapi;
 
 use thiserror::Error;
 
@@ -146,7 +146,7 @@ impl AudioBuffer {
 pub fn create_capture() -> Result<Box<dyn AudioCaptureBackend>, CaptureError> {
     #[cfg(target_os = "windows")]
     {
-        return Ok(Box::new(wasapi::WasapiCapture::new()?));
+        Ok(Box::new(wasapi::WasapiCapture::new()?))
     }
 
     #[cfg(target_os = "macos")]

@@ -1,18 +1,28 @@
-'use client';
+"use client";
 
 /**
  * Performance Chart widget — self-contained.
  * Shows CPU/RAM/Disk metrics from the metrics service.
  */
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Badge } from '@/components/ui/badge';
-import { TrendingUp, Cpu, MemoryStick, HardDrive, Wifi } from 'lucide-react';
-import { useDashboardData } from '@/hooks/use-dashboard';
-import type { WidgetRenderProps } from '@/lib/dashboard/types';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
+import { TrendingUp, Cpu, MemoryStick, HardDrive, Wifi } from "lucide-react";
+import { useDashboardData } from "@/hooks/use-dashboard";
+import type { WidgetRenderProps } from "@/lib/dashboard/types";
 
-function MetricBar({ label, value, icon: Icon, color }: { label: string; value: number; icon: React.ElementType; color: string }) {
+function MetricBar({
+  label,
+  value,
+  icon: Icon,
+  color,
+}: {
+  label: string;
+  value: number;
+  icon: React.ElementType;
+  color: string;
+}) {
   return (
     <div className="space-y-1">
       <div className="flex items-center justify-between text-xs">
@@ -32,7 +42,9 @@ function MetricBar({ label, value, icon: Icon, color }: { label: string; value: 
   );
 }
 
-export function WidgetPerformanceChart({ widget }: Partial<WidgetRenderProps> = {}) {
+export function WidgetPerformanceChart({
+  widget,
+}: Partial<WidgetRenderProps> = {}) {
   const { data, isLoading } = useDashboardData();
 
   if (isLoading) {
@@ -62,9 +74,24 @@ export function WidgetPerformanceChart({ widget }: Partial<WidgetRenderProps> = 
         </CardTitle>
       </CardHeader>
       <CardContent className="flex-1 space-y-4">
-        <MetricBar label="CPU" value={data?.cpu ?? 0} icon={Cpu} color="bg-blue-500" />
-        <MetricBar label="Mémoire" value={data?.memory ?? 0} icon={MemoryStick} color="bg-purple-500" />
-        <MetricBar label="Disque" value={data?.disk ?? 0} icon={HardDrive} color="bg-amber-500" />
+        <MetricBar
+          label="CPU"
+          value={data?.cpu ?? 0}
+          icon={Cpu}
+          color="bg-blue-500"
+        />
+        <MetricBar
+          label="Mémoire"
+          value={data?.memory ?? 0}
+          icon={MemoryStick}
+          color="bg-purple-500"
+        />
+        <MetricBar
+          label="Disque"
+          value={data?.disk ?? 0}
+          icon={HardDrive}
+          color="bg-amber-500"
+        />
       </CardContent>
     </Card>
   );

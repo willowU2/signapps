@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { Moon, Sun } from 'lucide-react';
-import { useThemeStore } from '@/hooks/use-theme';
-import { Button } from '@/components/ui/button';
+import { useEffect, useState } from "react";
+import { Moon, Sun } from "lucide-react";
+import { useThemeStore } from "@/hooks/use-theme";
+import { Button } from "@/components/ui/button";
 
 export function ThemeToggle() {
   const { theme, resolvedTheme, toggle } = useThemeStore();

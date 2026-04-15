@@ -113,13 +113,17 @@ export default function ScannerHub() {
           Scanner Hub
         </h2>
         <span className="text-sm text-muted-foreground">
-          {scanners.filter((s) => s.status === "ready").length}/{scanners.length} Ready
+          {scanners.filter((s) => s.status === "ready").length}/
+          {scanners.length} Ready
         </span>
       </div>
 
       <div className="space-y-4">
         {scanners.map((scanner) => (
-          <div key={scanner.id} className={`p-4 rounded-lg border-2 ${getStatusColor(scanner.status)}`}>
+          <div
+            key={scanner.id}
+            className={`p-4 rounded-lg border-2 ${getStatusColor(scanner.status)}`}
+          >
             <div className="flex justify-between items-start mb-3">
               <div>
                 <h3 className="font-bold text-lg">{scanner.name}</h3>
@@ -148,7 +152,9 @@ export default function ScannerHub() {
             <Button
               size="sm"
               onClick={() => startScan(scanner.id)}
-              disabled={scanner.status !== "ready" || activeScanId === scanner.id}
+              disabled={
+                scanner.status !== "ready" || activeScanId === scanner.id
+              }
               className="w-full mb-3 gap-2"
             >
               <Scan className="w-4 h-4" />
@@ -159,7 +165,10 @@ export default function ScannerHub() {
               <div className="space-y-2 bg-card bg-opacity-50 p-2 rounded">
                 <p className="text-xs font-medium">Recent Scans</p>
                 {scanner.lastScans.slice(0, 2).map((scan) => (
-                  <div key={scan.id} className="flex items-center justify-between text-xs p-1 bg-card rounded">
+                  <div
+                    key={scan.id}
+                    className="flex items-center justify-between text-xs p-1 bg-card rounded"
+                  >
                     <div>
                       <p className="font-mono">{scan.filename}</p>
                       <p className="opacity-75">{scan.pages} pages</p>
@@ -195,7 +204,9 @@ export default function ScannerHub() {
           <p className="text-sm">
             <span className="font-medium">Preview:</span> {previewFile}
           </p>
-          <p className="text-xs text-muted-foreground mt-1">Document preview would display here</p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Document preview would display here
+          </p>
         </div>
       )}
     </div>

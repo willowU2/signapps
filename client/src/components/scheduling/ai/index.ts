@@ -5,4 +5,7 @@
  * and smart suggestions.
  */
 
-export { AutoSchedulePanel, default as AutoSchedulePanelDefault } from './AutoSchedulePanel';
+export {
+  AutoSchedulePanel,
+  default as AutoSchedulePanelDefault,
+} from "./AutoSchedulePanel";

@@ -1,24 +1,24 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from "react";
 import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
-} from '@/components/ui/sheet';
+} from "@/components/ui/sheet";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Separator } from '@/components/ui/separator';
-import { toast } from 'sonner';
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
+import { toast } from "sonner";
 import {
   X,
   UserRound,
@@ -28,13 +28,13 @@ import {
   ShieldCheck,
   ShieldOff,
   Loader2,
-} from 'lucide-react';
+} from "lucide-react";
 import {
   driveAclApi,
   type DriveAcl,
   type AclRole,
   type GranteeType,
-} from '@/lib/api/storage';
+} from "@/lib/api/storage";
 
 // ─── Role config ────────────────────────────────────────────
 
@@ -46,59 +46,63 @@ interface RoleConfig {
 
 const ROLE_CONFIG: Record<AclRole, RoleConfig> = {
   viewer: {
-    label: 'Lecteur',
-    color: 'gray',
-    badgeCls: 'bg-muted text-muted-foreground border-border',
+    label: "Lecteur",
+    color: "gray",
+    badgeCls: "bg-muted text-muted-foreground border-border",
   },
   downloader: {
-    label: 'Téléchargeur',
-    color: 'blue',
-    badgeCls: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 border-blue-200 dark:border-blue-800',
+    label: "Téléchargeur",
+    color: "blue",
+    badgeCls:
+      "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 border-blue-200 dark:border-blue-800",
   },
   editor: {
-    label: 'Éditeur',
-    color: 'green',
-    badgeCls: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300 border-green-200 dark:border-green-800',
+    label: "Éditeur",
+    color: "green",
+    badgeCls:
+      "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300 border-green-200 dark:border-green-800",
   },
   contributor: {
-    label: 'Contributeur',
-    color: 'amber',
-    badgeCls: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300 border-amber-200 dark:border-amber-800',
+    label: "Contributeur",
+    color: "amber",
+    badgeCls:
+      "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300 border-amber-200 dark:border-amber-800",
   },
   manager: {
-    label: 'Gestionnaire',
-    color: 'red',
-    badgeCls: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300 border-red-200 dark:border-red-800',
+    label: "Gestionnaire",
+    color: "red",
+    badgeCls:
+      "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300 border-red-200 dark:border-red-800",
   },
 };
 
 const GRANTEE_TYPE_LABELS: Record<GranteeType, string> = {
-  user: 'Utilisateur',
-  group: 'Groupe',
-  everyone: 'Tous',
+  user: "Utilisateur",
+  group: "Groupe",
+  everyone: "Tous",
 };
 
 // ─── Helper: initials from name ──────────────────────────────
 
 function getInitials(name: string): string {
   return name
-    .split(' ')
-    .map((w) => w[0] ?? '')
+    .split(" ")
+    .map((w) => w[0] ?? "")
     .slice(0, 2)
-    .join('')
+    .join("")
     .toUpperCase();
 }
 
 function getAvatarColor(name: string): string {
   const colors = [
-    'bg-blue-500',
-    'bg-green-500',
-    'bg-amber-500',
-    'bg-purple-500',
-    'bg-pink-500',
-    'bg-teal-500',
-    'bg-indigo-500',
-    'bg-orange-500',
+    "bg-blue-500",
+    "bg-green-500",
+    "bg-amber-500",
+    "bg-purple-500",
+    "bg-pink-500",
+    "bg-teal-500",
+    "bg-indigo-500",
+    "bg-orange-500",
   ];
   let hash = 0;
   for (let i = 0; i < name.length; i++) {
@@ -128,20 +132,30 @@ interface GrantRowProps {
   loading: boolean;
 }
 
-function GrantRow({ grant, onRoleChange, onDelete, isInherited, loading }: GrantRowProps) {
-  const displayName = grant.grantee_name ?? grant.grantee_id ?? 'Tous les utilisateurs';
+function GrantRow({
+  grant,
+  onRoleChange,
+  onDelete,
+  isInherited,
+  loading,
+}: GrantRowProps) {
+  const displayName =
+    grant.grantee_name ?? grant.grantee_id ?? "Tous les utilisateurs";
   const avatarColor = getAvatarColor(displayName);
-  const initials = grant.grantee_type === 'everyone' ? '★' : getInitials(displayName);
+  const initials =
+    grant.grantee_type === "everyone" ? "★" : getInitials(displayName);
 
   return (
     <div className="flex items-center gap-3 py-2.5 group">
       {/* Avatar */}
       <div
         className={`h-8 w-8 shrink-0 rounded-full flex items-center justify-center text-white text-xs font-semibold ${
-          grant.grantee_type === 'everyone' ? 'bg-muted text-muted-foreground' : avatarColor
+          grant.grantee_type === "everyone"
+            ? "bg-muted text-muted-foreground"
+            : avatarColor
         }`}
       >
-        {grant.grantee_type === 'everyone' ? (
+        {grant.grantee_type === "everyone" ? (
           <Globe className="h-4 w-4" />
         ) : (
           initials
@@ -154,7 +168,10 @@ function GrantRow({ grant, onRoleChange, onDelete, isInherited, loading }: Grant
           <span className="text-sm font-medium text-foreground truncate max-w-[140px]">
             {displayName}
           </span>
-          <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 bg-muted/50">
+          <Badge
+            variant="outline"
+            className="text-[10px] px-1.5 py-0 h-4 bg-muted/50"
+          >
             {GRANTEE_TYPE_LABELS[grant.grantee_type]}
           </Badge>
           {isInherited && (
@@ -169,7 +186,7 @@ function GrantRow({ grant, onRoleChange, onDelete, isInherited, loading }: Grant
         {grant.expires_at && (
           <div className="flex items-center gap-1 mt-0.5 text-[10px] text-muted-foreground">
             <CalendarDays className="h-3 w-3" />
-            Expire le {new Date(grant.expires_at).toLocaleDateString('fr-FR')}
+            Expire le {new Date(grant.expires_at).toLocaleDateString("fr-FR")}
           </div>
         )}
       </div>
@@ -222,17 +239,22 @@ export interface AclPanelProps {
   onOpenChange: (open: boolean) => void;
 }
 
-export function AclPanel({ nodeId, nodeName, open, onOpenChange }: AclPanelProps) {
+export function AclPanel({
+  nodeId,
+  nodeName,
+  open,
+  onOpenChange,
+}: AclPanelProps) {
   const [grants, setGrants] = useState<DriveAcl[]>([]);
   const [inheritanceActive, setInheritanceActive] = useState(true);
   const [loading, setLoading] = useState(false);
   const [mutating, setMutating] = useState(false);
 
   // Add grant form
-  const [newGrantee, setNewGrantee] = useState('');
-  const [newGranteeType, setNewGranteeType] = useState<GranteeType>('user');
-  const [newRole, setNewRole] = useState<AclRole>('viewer');
-  const [newExpiry, setNewExpiry] = useState('');
+  const [newGrantee, setNewGrantee] = useState("");
+  const [newGranteeType, setNewGranteeType] = useState<GranteeType>("user");
+  const [newRole, setNewRole] = useState<AclRole>("viewer");
+  const [newExpiry, setNewExpiry] = useState("");
   const [adding, setAdding] = useState(false);
 
   const loadAcl = useCallback(async () => {
@@ -253,7 +275,7 @@ export function AclPanel({ nodeId, nodeName, open, onOpenChange }: AclPanelProps
         const res = await driveAclApi.list(nodeId);
         setGrants(res.data ?? []);
       } catch {
-        toast.error('Impossible de charger les permissions');
+        toast.error("Impossible de charger les permissions");
       }
     } finally {
       setLoading(false);
@@ -270,10 +292,12 @@ export function AclPanel({ nodeId, nodeName, open, onOpenChange }: AclPanelProps
     setMutating(true);
     try {
       await driveAclApi.update(nodeId, aclId, { role });
-      setGrants((prev) => prev.map((g) => (g.id === aclId ? { ...g, role } : g)));
-      toast.success('Rôle mis à jour');
+      setGrants((prev) =>
+        prev.map((g) => (g.id === aclId ? { ...g, role } : g)),
+      );
+      toast.success("Rôle mis à jour");
     } catch {
-      toast.error('Erreur lors de la mise à jour du rôle');
+      toast.error("Erreur lors de la mise à jour du rôle");
     } finally {
       setMutating(false);
     }
@@ -284,9 +308,9 @@ export function AclPanel({ nodeId, nodeName, open, onOpenChange }: AclPanelProps
     try {
       await driveAclApi.delete(nodeId, aclId);
       setGrants((prev) => prev.filter((g) => g.id !== aclId));
-      toast.success('Permission supprimée');
+      toast.success("Permission supprimée");
     } catch {
-      toast.error('Erreur lors de la suppression');
+      toast.error("Erreur lors de la suppression");
     } finally {
       setMutating(false);
     }
@@ -298,11 +322,13 @@ export function AclPanel({ nodeId, nodeName, open, onOpenChange }: AclPanelProps
       if (inheritanceActive) {
         await driveAclApi.breakInheritance(nodeId);
         setInheritanceActive(false);
-        toast.success('Héritage cassé — les permissions sont maintenant indépendantes');
+        toast.success(
+          "Héritage cassé — les permissions sont maintenant indépendantes",
+        );
       } else {
         await driveAclApi.restoreInheritance(nodeId);
         setInheritanceActive(true);
-        toast.success('Héritage restauré');
+        toast.success("Héritage restauré");
         await loadAcl();
       }
     } catch {
@@ -313,23 +339,24 @@ export function AclPanel({ nodeId, nodeName, open, onOpenChange }: AclPanelProps
   };
 
   const handleAddGrant = async () => {
-    if (newGranteeType !== 'everyone' && !newGrantee.trim()) {
-      toast.error('Veuillez saisir un identifiant');
+    if (newGranteeType !== "everyone" && !newGrantee.trim()) {
+      toast.error("Veuillez saisir un identifiant");
       return;
     }
     setAdding(true);
     try {
       const res = await driveAclApi.create(nodeId, {
         grantee_type: newGranteeType,
-        grantee_id: newGranteeType !== 'everyone' ? newGrantee.trim() : undefined,
+        grantee_id:
+          newGranteeType !== "everyone" ? newGrantee.trim() : undefined,
         role: newRole,
         inherit: false,
         expires_at: newExpiry || undefined,
       });
       setGrants((prev) => [...prev, res.data]);
-      setNewGrantee('');
-      setNewExpiry('');
-      toast.success('Permission ajoutée');
+      setNewGrantee("");
+      setNewExpiry("");
+      toast.success("Permission ajoutée");
     } catch {
       toast.error("Erreur lors de l'ajout de la permission");
     } finally {
@@ -342,7 +369,10 @@ export function AclPanel({ nodeId, nodeName, open, onOpenChange }: AclPanelProps
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-[420px] sm:w-[480px] flex flex-col overflow-hidden p-0">
+      <SheetContent
+        side="right"
+        className="w-[420px] sm:w-[480px] flex flex-col overflow-hidden p-0"
+      >
         <SheetHeader className="px-6 pt-6 pb-4 border-b border-border shrink-0">
           <SheetTitle className="flex items-center gap-2 text-base truncate">
             <ShieldCheck className="h-5 w-5 text-primary shrink-0" />
@@ -365,8 +395,8 @@ export function AclPanel({ nodeId, nodeName, open, onOpenChange }: AclPanelProps
               size="sm"
               className={`text-xs h-7 ${
                 inheritanceActive
-                  ? 'border-amber-300 text-amber-700 hover:bg-amber-50 dark:border-amber-700 dark:text-amber-400 dark:hover:bg-amber-900/20'
-                  : 'border-green-300 text-green-700 hover:bg-green-50 dark:border-green-700 dark:text-green-400 dark:hover:bg-green-900/20'
+                  ? "border-amber-300 text-amber-700 hover:bg-amber-50 dark:border-amber-700 dark:text-amber-400 dark:hover:bg-amber-900/20"
+                  : "border-green-300 text-green-700 hover:bg-green-50 dark:border-green-700 dark:text-green-400 dark:hover:bg-green-900/20"
               }`}
               onClick={handleToggleInheritance}
               disabled={mutating}
@@ -424,7 +454,7 @@ export function AclPanel({ nodeId, nodeName, open, onOpenChange }: AclPanelProps
 
               {/* Inherited grants */}
               {inheritedGrants.length > 0 && (
-                <div className={directGrants.length > 0 ? 'mt-4' : ''}>
+                <div className={directGrants.length > 0 ? "mt-4" : ""}>
                   <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5 px-0.5">
                     Permissions héritées
                   </p>
@@ -448,7 +478,9 @@ export function AclPanel({ nodeId, nodeName, open, onOpenChange }: AclPanelProps
 
         {/* Add grant section */}
         <div className="shrink-0 border-t border-border bg-muted/30 px-6 py-4 space-y-3">
-          <p className="text-xs font-semibold text-foreground">Ajouter une permission</p>
+          <p className="text-xs font-semibold text-foreground">
+            Ajouter une permission
+          </p>
 
           {/* Grantee type + search */}
           <div className="flex gap-2">
@@ -478,9 +510,13 @@ export function AclPanel({ nodeId, nodeName, open, onOpenChange }: AclPanelProps
               </SelectContent>
             </Select>
 
-            {newGranteeType !== 'everyone' && (
+            {newGranteeType !== "everyone" && (
               <Input
-                placeholder={newGranteeType === 'user' ? "ID ou nom d'utilisateur" : 'ID du groupe'}
+                placeholder={
+                  newGranteeType === "user"
+                    ? "ID ou nom d'utilisateur"
+                    : "ID du groupe"
+                }
                 value={newGrantee}
                 onChange={(e) => setNewGrantee(e.target.value)}
                 className="h-8 text-xs flex-1"
@@ -490,7 +526,10 @@ export function AclPanel({ nodeId, nodeName, open, onOpenChange }: AclPanelProps
 
           {/* Role + expiry */}
           <div className="flex gap-2">
-            <Select value={newRole} onValueChange={(v) => setNewRole(v as AclRole)}>
+            <Select
+              value={newRole}
+              onValueChange={(v) => setNewRole(v as AclRole)}
+            >
               <SelectTrigger className="h-8 text-xs flex-1">
                 <SelectValue />
               </SelectTrigger>
@@ -516,9 +555,13 @@ export function AclPanel({ nodeId, nodeName, open, onOpenChange }: AclPanelProps
             size="sm"
             className="w-full h-8 text-xs"
             onClick={handleAddGrant}
-            disabled={adding || (newGranteeType !== 'everyone' && !newGrantee.trim())}
+            disabled={
+              adding || (newGranteeType !== "everyone" && !newGrantee.trim())
+            }
           >
-            {adding ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> : null}
+            {adding ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
+            ) : null}
             Ajouter
           </Button>
         </div>

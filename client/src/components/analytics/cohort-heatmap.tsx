@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import React from 'react';
+import React from "react";
 
 interface CohortData {
   weekIndex: number;
@@ -15,7 +15,7 @@ interface CohortHeatmapProps {
 
 const CohortHeatmap: React.FC<CohortHeatmapProps> = ({
   data: customData,
-  title = 'Cohort Retention Heatmap',
+  title = "Cohort Retention Heatmap",
 }) => {
   // Default sample data: 8 weeks x 7 days
   const defaultData: CohortData[] = Array.from({ length: 8 }, (_, weekIdx) => ({
@@ -25,7 +25,7 @@ const CohortHeatmap: React.FC<CohortHeatmapProps> = ({
       // Simulated retention: starts at 100%, decreases exponentially
       const retention = Math.max(
         30,
-        100 * Math.exp(-dayIdx * 0.15 - weekIdx * 0.05)
+        100 * Math.exp(-dayIdx * 0.15 - weekIdx * 0.05),
       );
       return Math.round(retention);
     }),
@@ -94,7 +94,7 @@ const CohortHeatmap: React.FC<CohortHeatmapProps> = ({
                 <div
                   key={dayIdx}
                   // Text turns white only over very dark/opaque primary backgrounds to keep contrast sharp
-                  className={`w-12 h-12 flex-shrink-0 rounded-md flex items-center justify-center text-xs font-semibold transition-all hover:scale-110 cursor-pointer ring-1 ring-inset ring-black/5 dark:ring-white/5 ${value > 60 ? 'text-primary-foreground' : 'text-foreground/80'}`}
+                  className={`w-12 h-12 flex-shrink-0 rounded-md flex items-center justify-center text-xs font-semibold transition-all hover:scale-110 cursor-pointer ring-1 ring-inset ring-black/5 dark:ring-white/5 ${value > 60 ? "text-primary-foreground" : "text-foreground/80"}`}
                   style={{
                     backgroundColor: getHeatmapColor(value),
                   }}
@@ -133,16 +133,23 @@ const CohortHeatmap: React.FC<CohortHeatmapProps> = ({
       <div className="mt-6 pt-6 border-t border-border grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div>
           <p className="text-xs text-muted-foreground">Min Retention</p>
-          <p className="text-lg font-bold text-foreground">{Math.round(minValue)}%</p>
+          <p className="text-lg font-bold text-foreground">
+            {Math.round(minValue)}%
+          </p>
         </div>
         <div>
           <p className="text-xs text-muted-foreground">Max Retention</p>
-          <p className="text-lg font-bold text-foreground">{Math.round(maxValue)}%</p>
+          <p className="text-lg font-bold text-foreground">
+            {Math.round(maxValue)}%
+          </p>
         </div>
         <div>
           <p className="text-xs text-muted-foreground">Avg Retention</p>
           <p className="text-lg font-bold text-foreground">
-            {Math.round(allValues.reduce((a, b) => a + b, 0) / allValues.length)}%
+            {Math.round(
+              allValues.reduce((a, b) => a + b, 0) / allValues.length,
+            )}
+            %
           </p>
         </div>
       </div>

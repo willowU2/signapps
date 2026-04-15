@@ -114,7 +114,9 @@ impl SharingEngine {
     ) -> Result<Option<EffectivePermission>> {
         let chain = self.parent_chain(&resource).await;
         let resolver = PermissionResolver::with_cache(&self.pool, &self.cache);
-        resolver.resolve_with_parents(user_ctx, &chain, owner_id).await
+        resolver
+            .resolve_with_parents(user_ctx, &chain, owner_id)
+            .await
     }
 
     // ─── Grant management ─────────────────────────────────────────────────
@@ -584,11 +586,7 @@ impl SharingEngine {
         actor_id    = %actor_ctx.user_id,
         template_id = %template_id,
     ))]
-    pub async fn delete_template(
-        &self,
-        actor_ctx: &UserContext,
-        template_id: Uuid,
-    ) -> Result<()> {
+    pub async fn delete_template(&self, actor_ctx: &UserContext, template_id: Uuid) -> Result<()> {
         if !actor_ctx.is_admin() {
             return Err(Error::Forbidden(
                 "only admins can delete templates".to_string(),
@@ -641,13 +639,11 @@ impl SharingEngine {
 
         match (resource_type, resource_id) {
             (Some(rt), Some(rid)) => {
-                SharingRepository::list_audit(&self.pool, user_ctx.tenant_id, &rt, rid, limit)
-                    .await
-            }
+                SharingRepository::list_audit(&self.pool, user_ctx.tenant_id, &rt, rid, limit).await
+            },
             _ => {
-                SharingRepository::list_audit_by_tenant(&self.pool, user_ctx.tenant_id, limit)
-                    .await
-            }
+                SharingRepository::list_audit_by_tenant(&self.pool, user_ctx.tenant_id, limit).await
+            },
         }
     }
 
@@ -690,9 +686,7 @@ impl SharingEngine {
                 ids
             } else {
                 let ids = self.fetch_org_ancestors(user_id, tenant_id).await?;
-                self.cache
-                    .set_org_ancestors(tenant_id, user_id, &ids)
-                    .await;
+                self.cache.set_org_ancestors(tenant_id, user_id, &ids).await;
                 ids
             };
 
@@ -786,12 +780,8 @@ impl SharingEngine {
     /// No panics — all errors are handled internally.
     async fn parent_chain(&self, resource: &ResourceRef) -> Vec<ResourceRef> {
         match resource.resource_type {
-            ResourceType::File | ResourceType::Folder => {
-                self.walk_drive_nodes(resource).await
-            }
-            ResourceType::Event => {
-                self.event_with_calendar(resource).await
-            }
+            ResourceType::File | ResourceType::Folder => self.walk_drive_nodes(resource).await,
+            ResourceType::Event => self.event_with_calendar(resource).await,
             _ => vec![resource.clone()],
         }
     }
@@ -840,7 +830,7 @@ impl SharingEngine {
                         }
                     })
                     .collect()
-            }
+            },
             Err(e) => {
                 tracing::warn!(
                     resource_id = %resource.resource_id,
@@ -849,7 +839,7 @@ impl SharingEngine {
                      returning single-element chain"
                 );
                 vec![resource.clone()]
-            }
+            },
         }
     }
 
@@ -858,21 +848,20 @@ impl SharingEngine {
     /// If the event row is not found or the query fails, returns only
     /// `[event_ref]` so the permission check still works via direct grants.
     async fn event_with_calendar(&self, resource: &ResourceRef) -> Vec<ResourceRef> {
-        let result: std::result::Result<Option<Uuid>, sqlx::Error> = sqlx::query_scalar(
-            "SELECT calendar_id FROM calendar.events WHERE id = $1",
-        )
-        .bind(resource.resource_id)
-        .fetch_optional(&self.pool)
-        .await;
+        let result: std::result::Result<Option<Uuid>, sqlx::Error> =
+            sqlx::query_scalar("SELECT calendar_id FROM calendar.events WHERE id = $1")
+                .bind(resource.resource_id)
+                .fetch_optional(&self.pool)
+                .await;
 
         match result {
             Ok(Some(calendar_id)) => {
                 vec![resource.clone(), ResourceRef::calendar(calendar_id)]
-            }
+            },
             Ok(None) => {
                 // Event not found — direct grant check only.
                 vec![resource.clone()]
-            }
+            },
             Err(e) => {
                 tracing::warn!(
                     resource_id = %resource.resource_id,
@@ -881,7 +870,7 @@ impl SharingEngine {
                      returning single-element chain"
                 );
                 vec![resource.clone()]
-            }
+            },
         }
     }
 
@@ -1635,11 +1624,12 @@ mod tests {
         // Verify File and Folder are covered by the DB-walk arm.
         let id = Uuid::new_v4();
         for rr in [ResourceRef::file(id), ResourceRef::folder(id)] {
-            let hits_db_arm = matches!(
-                rr.resource_type,
-                ResourceType::File | ResourceType::Folder
+            let hits_db_arm = matches!(rr.resource_type, ResourceType::File | ResourceType::Folder);
+            assert!(
+                hits_db_arm,
+                "{:?} must use the drive.nodes walk",
+                rr.resource_type
             );
-            assert!(hits_db_arm, "{:?} must use the drive.nodes walk", rr.resource_type);
         }
     }
 

@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { offlineSyncQueue } from '@/lib/offline-sync';
+import { useState, useEffect } from "react";
+import { offlineSyncQueue } from "@/lib/offline-sync";
 
 interface OnlineStatus {
   /** Whether the browser currently reports a network connection */
@@ -19,9 +19,11 @@ interface OnlineStatus {
  */
 export function useOnlineStatus(): OnlineStatus {
   const [isOnline, setIsOnline] = useState<boolean>(
-    typeof navigator !== 'undefined' ? navigator.onLine : true,
+    typeof navigator !== "undefined" ? navigator.onLine : true,
   );
-  const [queueSize, setQueueSize] = useState<number>(offlineSyncQueue.getQueueSize());
+  const [queueSize, setQueueSize] = useState<number>(
+    offlineSyncQueue.getQueueSize(),
+  );
 
   useEffect(() => {
     const handleOnline = () => {
@@ -36,12 +38,12 @@ export function useOnlineStatus(): OnlineStatus {
       setQueueSize(offlineSyncQueue.getQueueSize());
     };
 
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
 
     return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
     };
   }, []);
 

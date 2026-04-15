@@ -1,30 +1,40 @@
-"use client"
+"use client";
 
 // Document Automation page — 269–276
 
-import { AppLayout } from "@/components/layout/app-layout"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Database, Zap, FileText, Package, GitBranch, Stamp, Hash, Calendar } from "lucide-react"
-import { DocMergeFields } from "@/components/documents/doc-merge-fields"
-import { FormToDocMapper } from "@/components/documents/form-to-doc"
-import { PdfFormFiller } from "@/components/documents/pdf-form-filler"
-import { BulkPdfGenerator } from "@/components/documents/bulk-pdf-generator"
-import { DocWorkflowStatus } from "@/components/documents/doc-workflow-status"
-import { DigitalStampConfig } from "@/components/documents/digital-stamp"
-import { DocNumberingSchemes } from "@/components/documents/doc-numbering"
-import { DocExpiryAlerts } from "@/components/documents/doc-expiry-alerts"
-import { toast } from "sonner"
-import { usePageTitle } from '@/hooks/use-page-title';
+import { AppLayout } from "@/components/layout/app-layout";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Database,
+  Zap,
+  FileText,
+  Package,
+  GitBranch,
+  Stamp,
+  Hash,
+  Calendar,
+} from "lucide-react";
+import { DocMergeFields } from "@/components/documents/doc-merge-fields";
+import { FormToDocMapper } from "@/components/documents/form-to-doc";
+import { PdfFormFiller } from "@/components/documents/pdf-form-filler";
+import { BulkPdfGenerator } from "@/components/documents/bulk-pdf-generator";
+import { DocWorkflowStatus } from "@/components/documents/doc-workflow-status";
+import { DigitalStampConfig } from "@/components/documents/digital-stamp";
+import { DocNumberingSchemes } from "@/components/documents/doc-numbering";
+import { DocExpiryAlerts } from "@/components/documents/doc-expiry-alerts";
+import { toast } from "sonner";
+import { usePageTitle } from "@/hooks/use-page-title";
 
 export default function DocumentAutomationPage() {
-  usePageTitle('Automatisation documents');
+  usePageTitle("Automatisation documents");
   return (
     <AppLayout>
       <div className="w-full space-y-6 p-6">
         <div>
           <h1 className="text-2xl font-bold">Document Automation</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Merge fields, form-to-doc, PDF filling, bulk generation, workflows, stamps, numbering, and expiry tracking.
+            Merge fields, form-to-doc, PDF filling, bulk generation, workflows,
+            stamps, numbering, and expiry tracking.
           </p>
         </div>
 
@@ -60,9 +70,12 @@ export default function DocumentAutomationPage() {
             <TabsContent value="merge-fields">
               <div className="space-y-3">
                 <p className="text-sm text-muted-foreground">
-                  Insert DB-backed variables into document templates. Click a field to insert its token.
+                  Insert DB-backed variables into document templates. Click a
+                  field to insert its token.
                 </p>
-                <DocMergeFields onInsert={token => toast.info(`Token copié : ${token}`)} />
+                <DocMergeFields
+                  onInsert={(token) => toast.info(`Token copié : ${token}`)}
+                />
               </div>
             </TabsContent>
 
@@ -81,14 +94,17 @@ export default function DocumentAutomationPage() {
             <TabsContent value="workflow">
               <div className="space-y-3">
                 <p className="text-sm text-muted-foreground">
-                  Example document workflow. In production, pass real documentId and history from the document context.
+                  Example document workflow. In production, pass real documentId
+                  and history from the document context.
                 </p>
                 <DocWorkflowStatus
                   documentId="demo-doc"
                   currentStep="draft"
                   history={[]}
                   onTransition={async (id, step, comment) => {
-                    toast.success(`Moved to ${step}${comment ? ` · ${comment}` : ""}`)
+                    toast.success(
+                      `Moved to ${step}${comment ? ` · ${comment}` : ""}`,
+                    );
                   }}
                 />
               </div>
@@ -109,5 +125,5 @@ export default function DocumentAutomationPage() {
         </Tabs>
       </div>
     </AppLayout>
-  )
+  );
 }

@@ -1,17 +1,17 @@
-'use client';
+"use client";
 
-import { useState, useCallback } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
+import { useState, useCallback } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from "@/components/ui/select";
 import {
   FileText,
   Users,
@@ -22,20 +22,20 @@ import {
   ChevronLeft,
   Loader2,
   CheckCircle2,
-} from 'lucide-react';
-import { signaturesApi } from '@/lib/api/crosslinks';
-import { toast } from 'sonner';
-import { cn } from '@/lib/utils';
-import type { EnvelopeTemplate } from './template-manager';
+} from "lucide-react";
+import { signaturesApi } from "@/lib/api/crosslinks";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
+import type { EnvelopeTemplate } from "./template-manager";
 
 // ---------------------------------------------------------------------------
 // Step indicators
 // ---------------------------------------------------------------------------
 
 const STEPS = [
-  { id: 1, label: 'Document', icon: FileText },
-  { id: 2, label: 'Signataires', icon: Users },
-  { id: 3, label: 'Envoi', icon: Send },
+  { id: 1, label: "Document", icon: FileText },
+  { id: 2, label: "Signataires", icon: Users },
+  { id: 3, label: "Envoi", icon: Send },
 ];
 
 interface StepIndicatorProps {
@@ -53,18 +53,24 @@ function StepIndicator({ current }: StepIndicatorProps) {
           <div key={step.id} className="flex items-center gap-2">
             <div
               className={cn(
-                'flex items-center justify-center w-8 h-8 rounded-full text-sm font-semibold transition-colors',
-                done && 'bg-green-500 text-white',
-                active && 'bg-primary text-primary-foreground',
-                !done && !active && 'bg-muted text-muted-foreground'
+                "flex items-center justify-center w-8 h-8 rounded-full text-sm font-semibold transition-colors",
+                done && "bg-green-500 text-white",
+                active && "bg-primary text-primary-foreground",
+                !done && !active && "bg-muted text-muted-foreground",
               )}
             >
-              {done ? <CheckCircle2 className="h-4 w-4" /> : <Icon className="h-4 w-4" />}
+              {done ? (
+                <CheckCircle2 className="h-4 w-4" />
+              ) : (
+                <Icon className="h-4 w-4" />
+              )}
             </div>
             <span
               className={cn(
-                'text-sm',
-                active ? 'font-medium text-foreground' : 'text-muted-foreground'
+                "text-sm",
+                active
+                  ? "font-medium text-foreground"
+                  : "text-muted-foreground",
               )}
             >
               {step.label}
@@ -87,14 +93,14 @@ interface Signer {
   id: string;
   email: string;
   name: string;
-  action: 'sign' | 'approve' | 'witness' | 'acknowledge';
+  action: "sign" | "approve" | "witness" | "acknowledge";
 }
 
 const ACTION_LABELS = {
-  sign: 'Signer',
-  approve: 'Approuver',
-  witness: 'Témoin',
-  acknowledge: 'Accuser réception',
+  sign: "Signer",
+  approve: "Approuver",
+  witness: "Témoin",
+  acknowledge: "Accuser réception",
 };
 
 // ---------------------------------------------------------------------------
@@ -108,31 +114,35 @@ interface EnvelopeWizardProps {
   template?: EnvelopeTemplate;
 }
 
-export function EnvelopeWizard({ onSuccess, onCancel, template }: EnvelopeWizardProps) {
+export function EnvelopeWizard({
+  onSuccess,
+  onCancel,
+  template,
+}: EnvelopeWizardProps) {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
 
   // Step 1 — Document info
-  const [title, setTitle] = useState(template?.name ?? '');
-  const [documentId, setDocumentId] = useState('');
-  const [expiresAt, setExpiresAt] = useState('');
+  const [title, setTitle] = useState(template?.name ?? "");
+  const [documentId, setDocumentId] = useState("");
+  const [expiresAt, setExpiresAt] = useState("");
 
   // Step 2 — Signers
   const [signers, setSigners] = useState<Signer[]>(
     template
       ? Array.from({ length: template.signerCount }, (_, i) => ({
           id: crypto.randomUUID(),
-          email: '',
-          name: '',
-          action: 'sign' as const,
+          email: "",
+          name: "",
+          action: "sign" as const,
         }))
-      : [{ id: crypto.randomUUID(), email: '', name: '', action: 'sign' }]
+      : [{ id: crypto.randomUUID(), email: "", name: "", action: "sign" }],
   );
 
   const addSigner = () => {
     setSigners((prev) => [
       ...prev,
-      { id: crypto.randomUUID(), email: '', name: '', action: 'sign' },
+      { id: crypto.randomUUID(), email: "", name: "", action: "sign" },
     ]);
   };
 
@@ -143,7 +153,7 @@ export function EnvelopeWizard({ onSuccess, onCancel, template }: EnvelopeWizard
 
   const updateSigner = (id: string, field: keyof Signer, value: string) => {
     setSigners((prev) =>
-      prev.map((s) => (s.id === id ? { ...s, [field]: value } : s))
+      prev.map((s) => (s.id === id ? { ...s, [field]: value } : s)),
     );
   };
 
@@ -152,7 +162,7 @@ export function EnvelopeWizard({ onSuccess, onCancel, template }: EnvelopeWizard
 
   // Step 2 validation
   const step2Valid =
-    signers.length > 0 && signers.every((s) => s.email.trim().includes('@'));
+    signers.length > 0 && signers.every((s) => s.email.trim().includes("@"));
 
   const handleSubmit = useCallback(async () => {
     setLoading(true);
@@ -178,10 +188,11 @@ export function EnvelopeWizard({ onSuccess, onCancel, template }: EnvelopeWizard
       // Send envelope
       await signaturesApi.send(envelopeId);
 
-      toast.success('Enveloppe créée et envoyée aux signataires');
+      toast.success("Enveloppe créée et envoyée aux signataires");
       onSuccess();
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Erreur lors de la création';
+      const message =
+        err instanceof Error ? err.message : "Erreur lors de la création";
       toast.error(message);
     } finally {
       setLoading(false);
@@ -218,7 +229,9 @@ export function EnvelopeWizard({ onSuccess, onCancel, template }: EnvelopeWizard
             </p>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="env-expires">Date d&apos;expiration (optionnel)</Label>
+            <Label htmlFor="env-expires">
+              Date d&apos;expiration (optionnel)
+            </Label>
             <Input
               id="env-expires"
               type="datetime-local"
@@ -233,7 +246,8 @@ export function EnvelopeWizard({ onSuccess, onCancel, template }: EnvelopeWizard
       {step === 2 && (
         <div className="space-y-4">
           <p className="text-sm text-muted-foreground">
-            Les signataires seront notifiés dans l&apos;ordre indiqué ci-dessous.
+            Les signataires seront notifiés dans l&apos;ordre indiqué
+            ci-dessous.
           </p>
           <div className="space-y-3">
             {signers.map((signer, idx) => (
@@ -262,7 +276,9 @@ export function EnvelopeWizard({ onSuccess, onCancel, template }: EnvelopeWizard
                       type="email"
                       placeholder="signataire@exemple.com"
                       value={signer.email}
-                      onChange={(e) => updateSigner(signer.id, 'email', e.target.value)}
+                      onChange={(e) =>
+                        updateSigner(signer.id, "email", e.target.value)
+                      }
                       className="h-8 text-sm"
                     />
                   </div>
@@ -271,7 +287,9 @@ export function EnvelopeWizard({ onSuccess, onCancel, template }: EnvelopeWizard
                     <Input
                       placeholder="Prénom Nom"
                       value={signer.name}
-                      onChange={(e) => updateSigner(signer.id, 'name', e.target.value)}
+                      onChange={(e) =>
+                        updateSigner(signer.id, "name", e.target.value)
+                      }
                       className="h-8 text-sm"
                     />
                   </div>
@@ -280,7 +298,7 @@ export function EnvelopeWizard({ onSuccess, onCancel, template }: EnvelopeWizard
                   <Label className="text-xs">Action requise</Label>
                   <Select
                     value={signer.action}
-                    onValueChange={(v) => updateSigner(signer.id, 'action', v)}
+                    onValueChange={(v) => updateSigner(signer.id, "action", v)}
                   >
                     <SelectTrigger className="h-8 text-sm">
                       <SelectValue />
@@ -297,7 +315,12 @@ export function EnvelopeWizard({ onSuccess, onCancel, template }: EnvelopeWizard
               </div>
             ))}
           </div>
-          <Button variant="outline" size="sm" onClick={addSigner} className="gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={addSigner}
+            className="gap-2"
+          >
             <Plus className="h-4 w-4" />
             Ajouter un signataire
           </Button>
@@ -311,23 +334,31 @@ export function EnvelopeWizard({ onSuccess, onCancel, template }: EnvelopeWizard
             <h4 className="font-medium text-sm">Résumé de l&apos;enveloppe</h4>
             <div className="space-y-1 text-sm text-muted-foreground">
               <p>
-                <span className="font-medium text-foreground">Titre :</span> {title}
+                <span className="font-medium text-foreground">Titre :</span>{" "}
+                {title}
               </p>
               <p>
-                <span className="font-medium text-foreground">Document :</span>{' '}
+                <span className="font-medium text-foreground">Document :</span>{" "}
                 <span className="font-mono text-xs">{documentId}</span>
               </p>
               {expiresAt && (
                 <p>
-                  <span className="font-medium text-foreground">Expire le :</span>{' '}
-                  {new Date(expiresAt).toLocaleString('fr-FR')}
+                  <span className="font-medium text-foreground">
+                    Expire le :
+                  </span>{" "}
+                  {new Date(expiresAt).toLocaleString("fr-FR")}
                 </p>
               )}
             </div>
             <div className="pt-2 space-y-1">
-              <p className="text-xs font-medium text-foreground">Signataires :</p>
+              <p className="text-xs font-medium text-foreground">
+                Signataires :
+              </p>
               {signers.map((s, i) => (
-                <div key={s.id} className="flex items-center gap-2 text-xs text-muted-foreground">
+                <div
+                  key={s.id}
+                  className="flex items-center gap-2 text-xs text-muted-foreground"
+                >
                   <Badge variant="outline" className="text-xs h-4">
                     {i + 1}
                   </Badge>
@@ -341,7 +372,8 @@ export function EnvelopeWizard({ onSuccess, onCancel, template }: EnvelopeWizard
             </div>
           </div>
           <div className="bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 rounded-lg p-3 text-sm text-blue-800 dark:text-blue-200">
-            Les signataires recevront une notification par email pour signer le document.
+            Les signataires recevront une notification par email pour signer le
+            document.
           </div>
         </div>
       )}
@@ -353,7 +385,7 @@ export function EnvelopeWizard({ onSuccess, onCancel, template }: EnvelopeWizard
           onClick={step === 1 ? onCancel : () => setStep((s) => s - 1)}
         >
           {step === 1 ? (
-            'Annuler'
+            "Annuler"
           ) : (
             <>
               <ChevronLeft className="h-4 w-4 mr-1" />

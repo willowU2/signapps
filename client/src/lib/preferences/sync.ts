@@ -38,7 +38,7 @@ const SYNC_ENDPOINT = "/api/v1/users/me/preferences/sync/stream";
  */
 export function createSyncConnection(
   onEvent: (event: SyncEvent) => void,
-  onError?: (error: Error) => void
+  onError?: (error: Error) => void,
 ): SyncConnection {
   let eventSource: EventSource | null = null;
   let reconnectTimeout: NodeJS.Timeout | null = null;
@@ -79,14 +79,19 @@ export function createSyncConnection(
         // Attempt to reconnect
         if (reconnectAttempts < maxReconnectAttempts) {
           reconnectAttempts++;
-          reconnectTimeout = setTimeout(connect, reconnectDelay * reconnectAttempts);
+          reconnectTimeout = setTimeout(
+            connect,
+            reconnectDelay * reconnectAttempts,
+          );
         } else {
           onError?.(new Error("Max reconnect attempts reached"));
         }
       };
     } catch (err) {
       console.error("[Preferences Sync] Failed to connect:", err);
-      onError?.(err instanceof Error ? err : new Error("Échec de la connexion"));
+      onError?.(
+        err instanceof Error ? err : new Error("Échec de la connexion"),
+      );
     }
   };
 
@@ -153,7 +158,7 @@ export function useCrossDeviceSync(enabled = true) {
           break;
       }
     },
-    [sync]
+    [sync],
   );
 
   const handleError = useCallback((error: Error) => {
@@ -259,7 +264,11 @@ export function useBroadcastSync() {
   }, []);
 
   const broadcast = useCallback(
-    (type: "update" | "reset", section?: PreferencesSection, data?: Record<string, unknown>) => {
+    (
+      type: "update" | "reset",
+      section?: PreferencesSection,
+      data?: Record<string, unknown>,
+    ) => {
       if (!channelRef.current) return;
 
       const message: BroadcastMessage = {
@@ -272,7 +281,7 @@ export function useBroadcastSync() {
 
       channelRef.current.postMessage(message);
     },
-    []
+    [],
   );
 
   return { broadcast };

@@ -36,16 +36,30 @@ export function DateRangePicker({ onChange }: DateRangePickerProps) {
   return (
     <div className="flex items-center gap-2 flex-wrap">
       <div className="flex gap-1">
-        {PRESETS.map(p => (
-          <button key={p.label} onClick={() => applyPreset(p.days)} className="px-2 py-1 text-xs rounded bg-muted text-muted-foreground hover:bg-accent transition-colors">
+        {PRESETS.map((p) => (
+          <button
+            key={p.label}
+            onClick={() => applyPreset(p.days)}
+            className="px-2 py-1 text-xs rounded bg-muted text-muted-foreground hover:bg-accent transition-colors"
+          >
             {p.label}
           </button>
         ))}
       </div>
       <div className="flex items-center gap-1 text-xs">
-        <input type="date" value={from} onChange={e => handleChange(e.target.value, to)} className="px-2 py-1 rounded border bg-background text-sm" />
+        <input
+          type="date"
+          value={from}
+          onChange={(e) => handleChange(e.target.value, to)}
+          className="px-2 py-1 rounded border bg-background text-sm"
+        />
         <span className="text-muted-foreground">→</span>
-        <input type="date" value={to} onChange={e => handleChange(from, e.target.value)} className="px-2 py-1 rounded border bg-background text-sm" />
+        <input
+          type="date"
+          value={to}
+          onChange={(e) => handleChange(from, e.target.value)}
+          className="px-2 py-1 rounded border bg-background text-sm"
+        />
       </div>
     </div>
   );

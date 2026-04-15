@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * TrackChangesSidebar
@@ -6,9 +6,9 @@
  * Enhanced track changes panel with filtering, grouping, and accept/reject actions.
  */
 
-import React, { useState, useMemo } from 'react';
-import { formatDistanceToNow } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import React, { useState, useMemo } from "react";
+import { formatDistanceToNow } from "date-fns";
+import { fr } from "date-fns/locale";
 import {
   GitCommit,
   Check,
@@ -24,34 +24,34 @@ import {
   ChevronDown,
   ChevronRight,
   Undo2,
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { ScrollArea } from '@/components/ui/scroll-area';
+} from "@/components/ui/select";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { Separator } from '@/components/ui/separator';
-import { cn } from '@/lib/utils';
-import { motion, AnimatePresence } from 'framer-motion';
+} from "@/components/ui/tooltip";
+import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
+import { motion, AnimatePresence } from "framer-motion";
 
 // ============================================================================
 // Types
 // ============================================================================
 
-export type ChangeType = 'insertion' | 'deletion' | 'format' | 'replacement';
+export type ChangeType = "insertion" | "deletion" | "format" | "replacement";
 
 export interface TrackChange {
   id: string;
@@ -67,12 +67,12 @@ export interface TrackChange {
   // Position in document
   position: { from: number; to: number };
   // Status
-  status: 'pending' | 'accepted' | 'rejected';
+  status: "pending" | "accepted" | "rejected";
 }
 
-type FilterType = 'all' | 'insertion' | 'deletion' | 'format';
-type FilterStatus = 'all' | 'pending' | 'accepted' | 'rejected';
-type GroupBy = 'none' | 'author' | 'type' | 'date';
+type FilterType = "all" | "insertion" | "deletion" | "format";
+type FilterStatus = "all" | "pending" | "accepted" | "rejected";
+type GroupBy = "none" | "author" | "type" | "date";
 
 interface TrackChangesSidebarProps {
   changes: TrackChange[];
@@ -91,51 +91,51 @@ interface TrackChangesSidebarProps {
 
 function getChangeIcon(type: ChangeType) {
   switch (type) {
-    case 'insertion':
+    case "insertion":
       return <Plus className="h-3.5 w-3.5 text-green-600" />;
-    case 'deletion':
+    case "deletion":
       return <Minus className="h-3.5 w-3.5 text-red-600" />;
-    case 'format':
+    case "format":
       return <Type className="h-3.5 w-3.5 text-blue-600" />;
-    case 'replacement':
+    case "replacement":
       return <GitCommit className="h-3.5 w-3.5 text-amber-600" />;
   }
 }
 
 function getChangeLabel(type: ChangeType): string {
   switch (type) {
-    case 'insertion':
-      return 'Insertion';
-    case 'deletion':
-      return 'Suppression';
-    case 'format':
-      return 'Formatage';
-    case 'replacement':
-      return 'Remplacement';
+    case "insertion":
+      return "Insertion";
+    case "deletion":
+      return "Suppression";
+    case "format":
+      return "Formatage";
+    case "replacement":
+      return "Remplacement";
   }
 }
 
 function getChangeColor(type: ChangeType): string {
   switch (type) {
-    case 'insertion':
-      return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400';
-    case 'deletion':
-      return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400';
-    case 'format':
-      return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400';
-    case 'replacement':
-      return 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400';
+    case "insertion":
+      return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400";
+    case "deletion":
+      return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400";
+    case "format":
+      return "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400";
+    case "replacement":
+      return "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400";
   }
 }
 
 function groupChangesByKey(
   changes: TrackChange[],
-  groupBy: GroupBy
+  groupBy: GroupBy,
 ): Map<string, TrackChange[]> {
   const groups = new Map<string, TrackChange[]>();
 
-  if (groupBy === 'none') {
-    groups.set('all', changes);
+  if (groupBy === "none") {
+    groups.set("all", changes);
     return groups;
   }
 
@@ -143,21 +143,21 @@ function groupChangesByKey(
     let key: string;
 
     switch (groupBy) {
-      case 'author':
+      case "author":
         key = change.authorName;
         break;
-      case 'type':
+      case "type":
         key = getChangeLabel(change.type);
         break;
-      case 'date':
-        key = new Date(change.createdAt).toLocaleDateString('fr-FR', {
-          day: 'numeric',
-          month: 'long',
-          year: 'numeric',
+      case "date":
+        key = new Date(change.createdAt).toLocaleDateString("fr-FR", {
+          day: "numeric",
+          month: "long",
+          year: "numeric",
         });
         break;
       default:
-        key = 'all';
+        key = "all";
     }
 
     if (!groups.has(key)) {
@@ -181,7 +181,7 @@ interface ChangeItemProps {
 }
 
 function ChangeItem({ change, onAccept, onReject, onClick }: ChangeItemProps) {
-  const isPending = change.status === 'pending';
+  const isPending = change.status === "pending";
 
   return (
     <motion.div
@@ -190,12 +190,12 @@ function ChangeItem({ change, onAccept, onReject, onClick }: ChangeItemProps) {
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: 10 }}
       className={cn(
-        'group rounded-lg border p-3 transition-all cursor-pointer',
+        "group rounded-lg border p-3 transition-all cursor-pointer",
         isPending
-          ? 'bg-card hover:border-primary/50'
-          : change.status === 'accepted'
-            ? 'bg-green-50/50 border-green-200 dark:bg-green-900/10 dark:border-green-900/30'
-            : 'bg-red-50/50 border-red-200 dark:bg-red-900/10 dark:border-red-900/30'
+          ? "bg-card hover:border-primary/50"
+          : change.status === "accepted"
+            ? "bg-green-50/50 border-green-200 dark:bg-green-900/10 dark:border-green-900/30"
+            : "bg-red-50/50 border-red-200 dark:bg-red-900/10 dark:border-red-900/30",
       )}
       onClick={onClick}
     >
@@ -205,7 +205,10 @@ function ChangeItem({ change, onAccept, onReject, onClick }: ChangeItemProps) {
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <Badge variant="secondary" className={cn('text-xs', getChangeColor(change.type))}>
+            <Badge
+              variant="secondary"
+              className={cn("text-xs", getChangeColor(change.type))}
+            >
               {getChangeLabel(change.type)}
             </Badge>
             {change.formatChange && (
@@ -217,13 +220,13 @@ function ChangeItem({ change, onAccept, onReject, onClick }: ChangeItemProps) {
               <Badge
                 variant="secondary"
                 className={cn(
-                  'text-xs ml-auto',
-                  change.status === 'accepted'
-                    ? 'bg-green-100 text-green-800'
-                    : 'bg-red-100 text-red-800'
+                  "text-xs ml-auto",
+                  change.status === "accepted"
+                    ? "bg-green-100 text-green-800"
+                    : "bg-red-100 text-red-800",
                 )}
               >
-                {change.status === 'accepted' ? (
+                {change.status === "accepted" ? (
                   <>
                     <CheckCheck className="mr-1 h-3 w-3" />
                     Accepté
@@ -258,7 +261,7 @@ function ChangeItem({ change, onAccept, onReject, onClick }: ChangeItemProps) {
 
           {/* Content preview */}
           <div className="mt-2 text-sm">
-            {change.type === 'deletion' && change.originalText && (
+            {change.type === "deletion" && change.originalText && (
               <div className="flex items-start gap-1">
                 <Minus className="h-3.5 w-3.5 text-red-600 mt-0.5 flex-shrink-0" />
                 <span className="line-through text-red-600/80 break-words">
@@ -268,7 +271,7 @@ function ChangeItem({ change, onAccept, onReject, onClick }: ChangeItemProps) {
                 </span>
               </div>
             )}
-            {change.type === 'insertion' && change.newText && (
+            {change.type === "insertion" && change.newText && (
               <div className="flex items-start gap-1">
                 <Plus className="h-3.5 w-3.5 text-green-600 mt-0.5 flex-shrink-0" />
                 <span className="text-green-600/80 break-words">
@@ -278,7 +281,7 @@ function ChangeItem({ change, onAccept, onReject, onClick }: ChangeItemProps) {
                 </span>
               </div>
             )}
-            {change.type === 'replacement' && (
+            {change.type === "replacement" && (
               <div className="space-y-1">
                 {change.originalText && (
                   <div className="flex items-start gap-1">
@@ -302,7 +305,7 @@ function ChangeItem({ change, onAccept, onReject, onClick }: ChangeItemProps) {
                 )}
               </div>
             )}
-            {change.type === 'format' && change.formatChange && (
+            {change.type === "format" && change.formatChange && (
               <div className="flex items-center gap-1 text-muted-foreground">
                 <Type className="h-3.5 w-3.5" />
                 <span>Appliqué : {change.formatChange}</span>
@@ -402,23 +405,25 @@ export function TrackChangesSidebar({
   onChangeClick,
   className,
 }: TrackChangesSidebarProps) {
-  const [filterType, setFilterType] = useState<FilterType>('all');
-  const [filterStatus, setFilterStatus] = useState<FilterStatus>('pending');
-  const [groupBy, setGroupBy] = useState<GroupBy>('none');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set(['all']));
+  const [filterType, setFilterType] = useState<FilterType>("all");
+  const [filterStatus, setFilterStatus] = useState<FilterStatus>("pending");
+  const [groupBy, setGroupBy] = useState<GroupBy>("none");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(
+    new Set(["all"]),
+  );
 
   // Filter changes
   const filteredChanges = useMemo(() => {
     let result = [...changes];
 
     // Filter by type
-    if (filterType !== 'all') {
+    if (filterType !== "all") {
       result = result.filter((c) => c.type === filterType);
     }
 
     // Filter by status
-    if (filterStatus !== 'all') {
+    if (filterStatus !== "all") {
       result = result.filter((c) => c.status === filterStatus);
     }
 
@@ -429,7 +434,7 @@ export function TrackChangesSidebar({
         (c) =>
           c.authorName.toLowerCase().includes(query) ||
           c.originalText?.toLowerCase().includes(query) ||
-          c.newText?.toLowerCase().includes(query)
+          c.newText?.toLowerCase().includes(query),
       );
     }
 
@@ -442,13 +447,13 @@ export function TrackChangesSidebar({
   // Group changes
   const groupedChanges = useMemo(
     () => groupChangesByKey(filteredChanges, groupBy),
-    [filteredChanges, groupBy]
+    [filteredChanges, groupBy],
   );
 
   // Stats
-  const pendingCount = changes.filter((c) => c.status === 'pending').length;
-  const insertionCount = changes.filter((c) => c.type === 'insertion').length;
-  const deletionCount = changes.filter((c) => c.type === 'deletion').length;
+  const pendingCount = changes.filter((c) => c.status === "pending").length;
+  const insertionCount = changes.filter((c) => c.type === "insertion").length;
+  const deletionCount = changes.filter((c) => c.type === "deletion").length;
 
   const toggleGroup = (key: string) => {
     setExpandedGroups((prev) => {
@@ -463,7 +468,7 @@ export function TrackChangesSidebar({
   };
 
   return (
-    <div className={cn('flex h-full flex-col', className)}>
+    <div className={cn("flex h-full flex-col", className)}>
       {/* Header */}
       <div className="flex items-center justify-between border-b p-4">
         <div className="flex items-center gap-2">
@@ -523,7 +528,10 @@ export function TrackChangesSidebar({
         />
 
         <div className="flex gap-2">
-          <Select value={filterType} onValueChange={(v) => setFilterType(v as FilterType)}>
+          <Select
+            value={filterType}
+            onValueChange={(v) => setFilterType(v as FilterType)}
+          >
             <SelectTrigger className="h-8 flex-1">
               <SelectValue />
             </SelectTrigger>
@@ -535,18 +543,25 @@ export function TrackChangesSidebar({
             </SelectContent>
           </Select>
 
-          <Select value={filterStatus} onValueChange={(v) => setFilterStatus(v as FilterStatus)}>
+          <Select
+            value={filterStatus}
+            onValueChange={(v) => setFilterStatus(v as FilterStatus)}
+          >
             <SelectTrigger className="h-8 flex-1">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Tous ({changes.length})</SelectItem>
-              <SelectItem value="pending">En attente ({pendingCount})</SelectItem>
+              <SelectItem value="pending">
+                En attente ({pendingCount})
+              </SelectItem>
               <SelectItem value="accepted">
-                Acceptés ({changes.filter((c) => c.status === 'accepted').length})
+                Acceptés (
+                {changes.filter((c) => c.status === "accepted").length})
               </SelectItem>
               <SelectItem value="rejected">
-                Rejetés ({changes.filter((c) => c.status === 'rejected').length})
+                Rejetés ({changes.filter((c) => c.status === "rejected").length}
+                )
               </SelectItem>
             </SelectContent>
           </Select>
@@ -574,7 +589,7 @@ export function TrackChangesSidebar({
                 <GitCommit className="h-12 w-12 mb-3 opacity-50" />
                 <p className="text-sm">Aucune modification</p>
               </div>
-            ) : groupBy === 'none' ? (
+            ) : groupBy === "none" ? (
               <div className="space-y-2">
                 {filteredChanges.map((change) => (
                   <ChangeItem
@@ -588,37 +603,39 @@ export function TrackChangesSidebar({
               </div>
             ) : (
               <div className="space-y-1">
-                {Array.from(groupedChanges.entries()).map(([groupKey, groupChanges]) => (
-                  <div key={groupKey}>
-                    <GroupHeader
-                      title={groupKey}
-                      count={groupChanges.length}
-                      isExpanded={expandedGroups.has(groupKey)}
-                      onToggle={() => toggleGroup(groupKey)}
-                    />
-                    <AnimatePresence>
-                      {expandedGroups.has(groupKey) && (
-                        <motion.div
-                          initial={{ height: 0, opacity: 0 }}
-                          animate={{ height: 'auto', opacity: 1 }}
-                          exit={{ height: 0, opacity: 0 }}
-                          transition={{ duration: 0.2 }}
-                          className="space-y-2 pl-6 pb-2"
-                        >
-                          {groupChanges.map((change) => (
-                            <ChangeItem
-                              key={change.id}
-                              change={change}
-                              onAccept={() => onAccept(change.id)}
-                              onReject={() => onReject(change.id)}
-                              onClick={() => onChangeClick?.(change)}
-                            />
-                          ))}
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
-                ))}
+                {Array.from(groupedChanges.entries()).map(
+                  ([groupKey, groupChanges]) => (
+                    <div key={groupKey}>
+                      <GroupHeader
+                        title={groupKey}
+                        count={groupChanges.length}
+                        isExpanded={expandedGroups.has(groupKey)}
+                        onToggle={() => toggleGroup(groupKey)}
+                      />
+                      <AnimatePresence>
+                        {expandedGroups.has(groupKey) && (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: "auto", opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            transition={{ duration: 0.2 }}
+                            className="space-y-2 pl-6 pb-2"
+                          >
+                            {groupChanges.map((change) => (
+                              <ChangeItem
+                                key={change.id}
+                                change={change}
+                                onAccept={() => onAccept(change.id)}
+                                onReject={() => onReject(change.id)}
+                                onClick={() => onChangeClick?.(change)}
+                              />
+                            ))}
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  ),
+                )}
               </div>
             )}
           </AnimatePresence>

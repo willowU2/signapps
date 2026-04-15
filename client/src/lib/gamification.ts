@@ -35,16 +35,36 @@ export function addXp(stats: UserStats, action: string): UserStats {
 
 export function checkBadges(stats: UserStats): Badge[] {
   const newBadges: Badge[] = [];
-  const has = (id: string) => stats.badges.some(b => b.id === id);
+  const has = (id: string) => stats.badges.some((b) => b.id === id);
 
   if (stats.streak >= 7 && !has("streak-7"))
-    newBadges.push({ id: "streak-7", name: "Semaine parfaite", icon: "🔥", unlockedAt: new Date().toISOString() });
+    newBadges.push({
+      id: "streak-7",
+      name: "Semaine parfaite",
+      icon: "🔥",
+      unlockedAt: new Date().toISOString(),
+    });
   if (stats.streak >= 30 && !has("streak-30"))
-    newBadges.push({ id: "streak-30", name: "Mois consecutif", icon: "⚡", unlockedAt: new Date().toISOString() });
+    newBadges.push({
+      id: "streak-30",
+      name: "Mois consecutif",
+      icon: "⚡",
+      unlockedAt: new Date().toISOString(),
+    });
   if (stats.level >= 5 && !has("level-5"))
-    newBadges.push({ id: "level-5", name: "Expert", icon: "🏆", unlockedAt: new Date().toISOString() });
+    newBadges.push({
+      id: "level-5",
+      name: "Expert",
+      icon: "🏆",
+      unlockedAt: new Date().toISOString(),
+    });
   if (stats.level >= 10 && !has("level-10"))
-    newBadges.push({ id: "level-10", name: "Maitre", icon: "👑", unlockedAt: new Date().toISOString() });
+    newBadges.push({
+      id: "level-10",
+      name: "Maitre",
+      icon: "👑",
+      unlockedAt: new Date().toISOString(),
+    });
 
   return newBadges;
 }

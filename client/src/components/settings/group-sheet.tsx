@@ -36,7 +36,9 @@ interface GroupSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   group: Group | null;
-  onSubmit: (data: CreateGroupRequest | Partial<CreateGroupRequest>) => Promise<void>;
+  onSubmit: (
+    data: CreateGroupRequest | Partial<CreateGroupRequest>,
+  ) => Promise<void>;
   isLoading: boolean;
 }
 
@@ -95,7 +97,10 @@ export function GroupSheet({
         </SheetHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6 mt-6">
+          <form
+            onSubmit={form.handleSubmit(handleSubmit)}
+            className="space-y-6 mt-6"
+          >
             <FormField
               control={form.control}
               name="name"
@@ -135,7 +140,11 @@ export function GroupSheet({
             />
 
             <div className="flex justify-end pt-4">
-              <LoadingButton type="submit" loading={isLoading} loadingText="Enregistrement...">
+              <LoadingButton
+                type="submit"
+                loading={isLoading}
+                loadingText="Enregistrement..."
+              >
                 {isEditing ? "Enregistrer" : "Créer le groupe"}
               </LoadingButton>
             </div>

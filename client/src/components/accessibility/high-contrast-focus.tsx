@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { Target } from 'lucide-react';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
+import { useEffect, useState } from "react";
+import { Target } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
-const STORAGE_KEY = 'signapps-high-contrast-focus';
+const STORAGE_KEY = "signapps-high-contrast-focus";
 
 export function HighContrastFocusToggle() {
   const [enabled, setEnabled] = useState(false);
@@ -13,16 +13,16 @@ export function HighContrastFocusToggle() {
 
   useEffect(() => {
     setMounted(true);
-    const stored = localStorage.getItem(STORAGE_KEY) === 'true';
+    const stored = localStorage.getItem(STORAGE_KEY) === "true";
     setEnabled(stored);
     applySetting(stored);
   }, []);
 
   const applySetting = (on: boolean) => {
     if (on) {
-      document.body.classList.add('high-contrast-focus');
+      document.body.classList.add("high-contrast-focus");
     } else {
-      document.body.classList.remove('high-contrast-focus');
+      document.body.classList.remove("high-contrast-focus");
     }
   };
 
@@ -39,12 +39,16 @@ export function HighContrastFocusToggle() {
       <div className="flex flex-col gap-1.5">
         <div className="flex items-center gap-2">
           <Target className="h-4 w-4 text-muted-foreground" />
-          <Label htmlFor="high-contrast-focus-toggle" className="font-medium cursor-pointer">
+          <Label
+            htmlFor="high-contrast-focus-toggle"
+            className="font-medium cursor-pointer"
+          >
             Focus Ring Ultra-Visible
           </Label>
         </div>
         <p className="text-xs text-muted-foreground ml-6">
-          Affiche une bordure dynamique très contrastée autour de l'élément sélectionné au clavier.
+          Affiche une bordure dynamique très contrastée autour de l'élément
+          sélectionné au clavier.
         </p>
       </div>
       <Switch

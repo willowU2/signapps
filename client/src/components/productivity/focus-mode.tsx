@@ -51,7 +51,9 @@ export function FocusMode() {
   // Toggle focus mode
   const toggleFocus = () => {
     if (isActive) {
-      setTotalFocusToday((prev) => prev + Math.ceil((duration * 60 - timeLeft) / 60));
+      setTotalFocusToday(
+        (prev) => prev + Math.ceil((duration * 60 - timeLeft) / 60),
+      );
       setIsActive(false);
       setTimeLeft(duration * 60);
     } else {
@@ -65,22 +67,26 @@ export function FocusMode() {
   return (
     <div className="space-y-4">
       {/* Focus Mode Card */}
-      <Card className={cn(
-        "transition-all",
-        isActive && "border-amber-500 shadow-lg shadow-amber-500/20"
-      )}>
+      <Card
+        className={cn(
+          "transition-all",
+          isActive && "border-amber-500 shadow-lg shadow-amber-500/20",
+        )}
+      >
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
               <Focus className="w-5 h-5" />
               Mode Focus
             </CardTitle>
-            <span className={cn(
-              "text-xs font-semibold px-2.5 py-1 rounded-full",
-              isActive
-                ? "bg-amber-100 text-amber-700"
-                : "bg-muted text-muted-foreground"
-            )}>
+            <span
+              className={cn(
+                "text-xs font-semibold px-2.5 py-1 rounded-full",
+                isActive
+                  ? "bg-amber-100 text-amber-700"
+                  : "bg-muted text-muted-foreground",
+              )}
+            >
               {isActive ? "ACTIF" : "INACTIF"}
             </span>
           </div>
@@ -89,14 +95,19 @@ export function FocusMode() {
         <CardContent className="space-y-6">
           {/* Timer Display */}
           <div className="text-center">
-            <div className={cn(
-              "relative w-32 h-32 mx-auto rounded-full flex items-center justify-center",
-              isActive
-                ? "bg-gradient-to-br from-amber-50 to-orange-50 border-2 border-amber-400"
-                : "bg-muted border-2 border-border"
-            )}>
+            <div
+              className={cn(
+                "relative w-32 h-32 mx-auto rounded-full flex items-center justify-center",
+                isActive
+                  ? "bg-gradient-to-br from-amber-50 to-orange-50 border-2 border-amber-400"
+                  : "bg-muted border-2 border-border",
+              )}
+            >
               {/* Progress Ring */}
-              <svg className="absolute inset-0 w-full h-full -rotate-90" style={{ overflow: "visible" }}>
+              <svg
+                className="absolute inset-0 w-full h-full -rotate-90"
+                style={{ overflow: "visible" }}
+              >
                 <circle
                   cx="50%"
                   cy="50%"
@@ -106,7 +117,7 @@ export function FocusMode() {
                   strokeWidth="3"
                   className={cn(
                     "text-gray-200 transition-all",
-                    isActive && "text-amber-400"
+                    isActive && "text-amber-400",
                   )}
                   strokeDasharray={`${progress * 3.46} 346`}
                 />
@@ -114,10 +125,12 @@ export function FocusMode() {
 
               {/* Time Text */}
               <div className="text-center z-10">
-                <div className={cn(
-                  "text-4xl font-bold font-mono",
-                  isActive ? "text-amber-600" : "text-muted-foreground"
-                )}>
+                <div
+                  className={cn(
+                    "text-4xl font-bold font-mono",
+                    isActive ? "text-amber-600" : "text-muted-foreground",
+                  )}
+                >
                   {formatTime(timeLeft)}
                 </div>
               </div>
@@ -157,7 +170,7 @@ export function FocusMode() {
               "w-full font-semibold transition-all",
               isActive
                 ? "bg-amber-500 hover:bg-amber-600 text-white shadow-lg"
-                : "bg-blue-600 hover:bg-blue-700 text-white"
+                : "bg-blue-600 hover:bg-blue-700 text-white",
             )}
           >
             {isActive ? "⏸ Pause" : "▶ Commencer"}

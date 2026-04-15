@@ -146,7 +146,15 @@ pub async fn provision_domain(
     };
 
     // 3. Create the unified domain record
-    let domain = create_infra_domain(pool, tenant_id, &input, ad_enabled, mail_enabled, dhcp_enabled).await?;
+    let domain = create_infra_domain(
+        pool,
+        tenant_id,
+        &input,
+        ad_enabled,
+        mail_enabled,
+        dhcp_enabled,
+    )
+    .await?;
 
     // 3b. Store generated SID, realm, and cert_mode
     if let Err(e) = InfraDomainRepository::update_ad_identity(
@@ -182,10 +190,10 @@ pub async fn provision_domain(
                 Ok(()) => {
                     result.ad_provisioned = true;
                     tracing::info!(domain = %dns_name, "AD provisioned");
-                }
+                },
                 Err(e) => {
                     tracing::warn!(domain = %dns_name, error = %e, "AD provisioning failed (non-fatal)");
-                }
+                },
             }
         }
     }
@@ -195,10 +203,10 @@ pub async fn provision_domain(
         Ok(()) => {
             result.dns_provisioned = true;
             tracing::info!(domain = %dns_name, "DNS provisioned");
-        }
+        },
         Err(e) => {
             tracing::warn!(domain = %dns_name, error = %e, "DNS provisioning failed (non-fatal)");
-        }
+        },
     }
 
     // 6. Provision certificates
@@ -206,10 +214,10 @@ pub async fn provision_domain(
         Ok(()) => {
             result.cert_provisioned = true;
             tracing::info!(domain = %dns_name, cert_mode = cert_mode, "Certificates provisioned");
-        }
+        },
         Err(e) => {
             tracing::warn!(domain = %dns_name, error = %e, "Certificate provisioning failed (non-fatal)");
-        }
+        },
     }
 
     // 7. Mail metadata (DKIM/SPF/DMARC DNS records are added to the zone)
@@ -224,10 +232,10 @@ pub async fn provision_domain(
             Ok(()) => {
                 result.dhcp_provisioned = true;
                 tracing::info!(domain = %dns_name, "DHCP provisioned");
-            }
+            },
             Err(e) => {
                 tracing::warn!(domain = %dns_name, error = %e, "DHCP provisioning failed (non-fatal)");
-            }
+            },
         }
     }
 
@@ -236,11 +244,11 @@ pub async fn provision_domain(
         Ok(()) => {
             result.ntp_configured = true;
             tracing::info!(domain = %dns_name, "NTP configured");
-        }
+        },
         Err(e) => {
             tracing::warn!(domain = %dns_name, error = %e, "NTP config failed (non-fatal)");
             result.ntp_configured = false;
-        }
+        },
     }
 
     // 10. Create default deployment profile
@@ -248,10 +256,10 @@ pub async fn provision_domain(
         Ok(()) => {
             result.deploy_profile_created = true;
             tracing::info!(domain = %dns_name, "Default deploy profile created");
-        }
+        },
         Err(e) => {
             tracing::warn!(domain = %dns_name, error = %e, "Deploy profile creation failed (non-fatal)");
-        }
+        },
     }
 
     tracing::info!(
@@ -288,7 +296,14 @@ pub async fn provision_domain(
 /// No panics possible.
 pub fn is_internal_domain(dns_name: &str) -> bool {
     const INTERNAL_TLDS: &[&str] = &[
-        ".local", ".corp", ".internal", ".lan", ".home", ".test", ".invalid", ".localdomain",
+        ".local",
+        ".corp",
+        ".internal",
+        ".lan",
+        ".home",
+        ".test",
+        ".invalid",
+        ".localdomain",
     ];
     INTERNAL_TLDS.iter().any(|tld| dns_name.ends_with(tld))
 }
@@ -346,7 +361,12 @@ async fn provision_ad(pool: &PgPool, domain_id: Uuid, realm: &str) -> Result<()>
 }
 
 /// Provision the DNS zone with AD SRV records when AD is enabled.
-async fn provision_dns(pool: &PgPool, domain_id: Uuid, dns_name: &str, ad_enabled: bool) -> Result<()> {
+async fn provision_dns(
+    pool: &PgPool,
+    domain_id: Uuid,
+    dns_name: &str,
+    ad_enabled: bool,
+) -> Result<()> {
     let zone = AdDnsRepository::create_zone(pool, domain_id, dns_name).await?;
 
     if ad_enabled {
@@ -419,10 +439,10 @@ struct CertBundle {
 /// No panics — all errors are propagated.
 fn generate_cert_bundle(dns_name: &str) -> std::result::Result<CertBundle, String> {
     use rcgen::{
-        BasicConstraints, CertificateParams, DistinguishedName, DnType,
-        IsCa, KeyUsagePurpose, SanType,
+        BasicConstraints, CertificateParams, DistinguishedName, DnType, IsCa, KeyUsagePurpose,
+        SanType,
     };
-    use sha2::{Digest, Sha256};
+    use sha2::Digest;
 
     let now = time::OffsetDateTime::now_utc();
 
@@ -463,7 +483,12 @@ fn generate_cert_bundle(dns_name: &str) -> std::result::Result<CertBundle, Strin
     ];
     srv_params.subject_alt_names = vec![
         SanType::DnsName(dc_fqdn.clone().try_into().map_err(|e| format!("{e}"))?),
-        SanType::DnsName(dns_name.to_string().try_into().map_err(|e| format!("{e}"))?),
+        SanType::DnsName(
+            dns_name
+                .to_string()
+                .try_into()
+                .map_err(|e| format!("{e}"))?,
+        ),
     ];
     srv_params.not_before = now;
     srv_params.not_after = now + time::Duration::days(730); // 2 years
@@ -489,8 +514,18 @@ fn generate_cert_bundle(dns_name: &str) -> std::result::Result<CertBundle, Strin
     ];
     wc_params.extended_key_usages = vec![rcgen::ExtendedKeyUsagePurpose::ServerAuth];
     wc_params.subject_alt_names = vec![
-        SanType::DnsName(wildcard_name.clone().try_into().map_err(|e| format!("{e}"))?),
-        SanType::DnsName(dns_name.to_string().try_into().map_err(|e| format!("{e}"))?),
+        SanType::DnsName(
+            wildcard_name
+                .clone()
+                .try_into()
+                .map_err(|e| format!("{e}"))?,
+        ),
+        SanType::DnsName(
+            dns_name
+                .to_string()
+                .try_into()
+                .map_err(|e| format!("{e}"))?,
+        ),
     ];
     wc_params.not_before = now;
     wc_params.not_after = now + time::Duration::days(730);
@@ -517,7 +552,10 @@ fn generate_cert_bundle(dns_name: &str) -> std::result::Result<CertBundle, Strin
 fn hex_sha256(der: &[u8]) -> String {
     use sha2::{Digest, Sha256};
     let hash = Sha256::digest(der);
-    hash.iter().map(|b| format!("{b:02X}")).collect::<Vec<_>>().join(":")
+    hash.iter()
+        .map(|b| format!("{b:02X}"))
+        .collect::<Vec<_>>()
+        .join(":")
 }
 
 /// Provision certificate records: internal CA chain or ACME marker.
@@ -540,45 +578,66 @@ async fn provision_certificates(
 
             // Root CA
             InfraCertificateRepository::create(
-                pool, domain_id,
-                &ca_subject, &ca_subject, "root_ca",
-                &bundle.ca_cert_pem, now, ca_expires,
+                pool,
+                domain_id,
+                &ca_subject,
+                &ca_subject,
+                "root_ca",
+                &bundle.ca_cert_pem,
+                now,
+                ca_expires,
                 &[format!("*.{dns_name}"), dns_name.to_string()],
                 None,
                 Some(&bundle.ca_fingerprint),
-            ).await?;
+            )
+            .await?;
 
             // DC Server cert
             let dc_subject = format!("CN=dc.{dns_name}");
             InfraCertificateRepository::create(
-                pool, domain_id,
-                &dc_subject, &ca_subject, "server",
-                &bundle.server_cert_pem, now, child_expires,
+                pool,
+                domain_id,
+                &dc_subject,
+                &ca_subject,
+                "server",
+                &bundle.server_cert_pem,
+                now,
+                child_expires,
                 &[format!("dc.{dns_name}"), dns_name.to_string()],
                 None,
                 Some(&bundle.server_fingerprint),
-            ).await?;
+            )
+            .await?;
 
             // Wildcard cert
             let wc_subject = format!("CN=*.{dns_name}");
             InfraCertificateRepository::create(
-                pool, domain_id,
-                &wc_subject, &ca_subject, "wildcard",
-                &bundle.wildcard_cert_pem, now, child_expires,
+                pool,
+                domain_id,
+                &wc_subject,
+                &ca_subject,
+                "wildcard",
+                &bundle.wildcard_cert_pem,
+                now,
+                child_expires,
                 &[format!("*.{dns_name}"), dns_name.to_string()],
                 None,
                 Some(&bundle.wildcard_fingerprint),
-            ).await?;
+            )
+            .await?;
 
             tracing::info!(
                 domain = dns_name,
                 "Issued 3 certificates: Root CA (10y) + DC server (2y) + Wildcard (2y)"
             );
-        }
+        },
         "acme" => {
-            tracing::info!(domain = dns_name, "ACME certificate will be provisioned asynchronously");
-        }
-        _ => {}
+            tracing::info!(
+                domain = dns_name,
+                "ACME certificate will be provisioned asynchronously"
+            );
+        },
+        _ => {},
     }
     Ok(())
 }
@@ -627,14 +686,12 @@ async fn provision_ntp_config(pool: &PgPool, domain_id: Uuid) -> Result<()> {
         }
     });
 
-    sqlx::query(
-        "UPDATE infrastructure.domains SET config = config || $1 WHERE id = $2",
-    )
-    .bind(&ntp_config)
-    .bind(domain_id)
-    .execute(pool)
-    .await
-    .map_err(|e| signapps_common::Error::Database(e.to_string()))?;
+    sqlx::query("UPDATE infrastructure.domains SET config = config || $1 WHERE id = $2")
+        .bind(&ntp_config)
+        .bind(domain_id)
+        .execute(pool)
+        .await
+        .map_err(|e| signapps_common::Error::Database(e.to_string()))?;
 
     Ok(())
 }
@@ -680,8 +737,16 @@ mod tests {
         assert!(is_internal_domain("corp.local"));
         assert!(!is_internal_domain("example.com"));
         // Verify the two branches resolve to the expected mode strings
-        let internal_mode = if is_internal_domain("corp.local") { "internal_ca" } else { "acme" };
-        let public_mode = if is_internal_domain("example.com") { "internal_ca" } else { "acme" };
+        let internal_mode = if is_internal_domain("corp.local") {
+            "internal_ca"
+        } else {
+            "acme"
+        };
+        let public_mode = if is_internal_domain("example.com") {
+            "internal_ca"
+        } else {
+            "acme"
+        };
         assert_eq!(internal_mode, "internal_ca");
         assert_eq!(public_mode, "acme");
     }
@@ -691,20 +756,30 @@ mod tests {
         let bundle = generate_cert_bundle("test.local").unwrap();
 
         // CA cert
-        assert!(bundle.ca_cert_pem.starts_with("-----BEGIN CERTIFICATE-----"));
+        assert!(bundle
+            .ca_cert_pem
+            .starts_with("-----BEGIN CERTIFICATE-----"));
         assert!(bundle.ca_cert_pem.len() > 500);
         assert!(bundle.ca_key_pem.starts_with("-----BEGIN PRIVATE KEY-----"));
 
         // Server cert
-        assert!(bundle.server_cert_pem.starts_with("-----BEGIN CERTIFICATE-----"));
+        assert!(bundle
+            .server_cert_pem
+            .starts_with("-----BEGIN CERTIFICATE-----"));
         assert!(bundle.server_cert_pem.len() > 500);
 
         // Wildcard cert
-        assert!(bundle.wildcard_cert_pem.starts_with("-----BEGIN CERTIFICATE-----"));
+        assert!(bundle
+            .wildcard_cert_pem
+            .starts_with("-----BEGIN CERTIFICATE-----"));
         assert!(bundle.wildcard_cert_pem.len() > 500);
 
         // SHA-256 fingerprints (colon-separated hex, 95 chars)
-        assert_eq!(bundle.ca_fingerprint.len(), 95, "SHA-256 fingerprint = 32 bytes * 3 - 1");
+        assert_eq!(
+            bundle.ca_fingerprint.len(),
+            95,
+            "SHA-256 fingerprint = 32 bytes * 3 - 1"
+        );
         assert!(bundle.ca_fingerprint.contains(':'));
         assert_ne!(bundle.ca_fingerprint, bundle.server_fingerprint);
         assert_ne!(bundle.server_fingerprint, bundle.wildcard_fingerprint);

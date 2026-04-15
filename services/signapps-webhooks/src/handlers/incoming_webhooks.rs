@@ -90,7 +90,9 @@ pub async fn receive_incoming_webhook(
         ));
     }
 
-    let body = payload.map(|Json(v)| v).unwrap_or(Value::Object(Default::default()));
+    let body = payload
+        .map(|Json(v)| v)
+        .unwrap_or(Value::Object(Default::default()));
 
     let event_type = resolve_event_type(&source, &body);
 
@@ -139,7 +141,9 @@ pub async fn receive_public_webhook(
         ));
     }
 
-    let body = payload.map(|Json(v)| v).unwrap_or(Value::Object(Default::default()));
+    let body = payload
+        .map(|Json(v)| v)
+        .unwrap_or(Value::Object(Default::default()));
     let event_type = resolve_event_type(&source, &body);
 
     // Log signature header if present (for future verification)

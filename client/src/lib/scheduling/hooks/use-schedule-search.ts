@@ -4,9 +4,9 @@
  * React hook for searching scheduling blocks with debouncing and caching.
  */
 
-import * as React from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { useDebouncedCallback } from 'use-debounce';
+import * as React from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useDebouncedCallback } from "use-debounce";
 import {
   SchedulingSearchService,
   getSearchService,
@@ -14,9 +14,14 @@ import {
   type SearchQuery,
   type SearchResult,
   type SearchResultItem,
-} from '../utils/search-service';
-import type { ScheduleBlock, BlockType, BlockStatus, Priority } from '../types/scheduling';
-import { timeItemsApi } from '../../api/scheduler';
+} from "../utils/search-service";
+import type {
+  ScheduleBlock,
+  BlockType,
+  BlockStatus,
+  Priority,
+} from "../types/scheduling";
+import { timeItemsApi } from "../../api/scheduler";
 
 // ============================================================================
 // Types
@@ -26,7 +31,7 @@ export interface UseScheduleSearchOptions {
   /** Initial search query text */
   initialQuery?: string;
   /** Search filters */
-  filters?: Omit<SearchQuery, 'text'>;
+  filters?: Omit<SearchQuery, "text">;
   /** Debounce delay in milliseconds */
   debounceMs?: number;
   /** Whether search is enabled */
@@ -41,7 +46,7 @@ export interface UseScheduleSearchResult {
   /** Total number of matches */
   total: number;
   /** Search facets */
-  facets: SearchResult['facets'];
+  facets: SearchResult["facets"];
   /** Whether search is loading */
   isLoading: boolean;
   /** Search error */
@@ -57,7 +62,7 @@ export interface UseScheduleSearchResult {
   /** Get suggestions for current query */
   getSuggestions: () => void;
   /** Search metadata */
-  meta?: SearchResult['meta'];
+  meta?: SearchResult["meta"];
 }
 
 // ============================================================================
@@ -67,25 +72,29 @@ export interface UseScheduleSearchResult {
 async function fetchRealBlocks(): Promise<ScheduleBlock[]> {
   try {
     // Fetch up to 500 items for the search index
-    const res = await timeItemsApi.list({ limit: 500, scope: 'nous' });
+    const res = await timeItemsApi.list({ limit: 500, scope: "nous" });
     return res.data.items.map((item) => ({
       id: item.id,
       title: item.title,
       description: item.description,
-      start: new Date(item.start_time || item.deadline || new Date().toISOString()),
+      start: new Date(
+        item.start_time || item.deadline || new Date().toISOString(),
+      ),
       end: item.end_time ? new Date(item.end_time) : undefined,
       allDay: item.all_day,
       type: item.item_type as BlockType,
       status: item.status as BlockStatus,
       priority: item.priority as Priority,
       tags: [], // Tags not yet exposed in TimeItem response model simply
-      location: item.location_name ? { name: item.location_name, address: item.location_address || '' } : undefined,
+      location: item.location_name
+        ? { name: item.location_name, address: item.location_address || "" }
+        : undefined,
       metadata: { organizerId: item.owner_id },
       createdAt: new Date(item.created_at),
       updatedAt: new Date(item.updated_at),
     }));
   } catch (err) {
-    console.error('Failed to fetch blocks for search:', err);
+    console.error("Failed to fetch blocks for search:", err);
     return [];
   }
 }
@@ -95,10 +104,10 @@ async function fetchRealBlocks(): Promise<ScheduleBlock[]> {
 // ============================================================================
 
 export function useScheduleSearch(
-  options: UseScheduleSearchOptions = {}
+  options: UseScheduleSearchOptions = {},
 ): UseScheduleSearchResult {
   const {
-    initialQuery = '',
+    initialQuery = "",
     filters = {},
     debounceMs = 300,
     enabled = true,
@@ -126,7 +135,7 @@ export function useScheduleSearch(
       setQueryState(newQuery);
       debouncedSetQuery(newQuery);
     },
-    [debouncedSetQuery]
+    [debouncedSetQuery],
   );
 
   // Build search query
@@ -135,10 +144,10 @@ export function useScheduleSearch(
       text: debouncedQuery,
       ...filters,
       limit,
-      sortBy: debouncedQuery ? 'relevance' : 'start',
-      sortDirection: debouncedQuery ? 'desc' : 'asc',
+      sortBy: debouncedQuery ? "relevance" : "start",
+      sortDirection: debouncedQuery ? "desc" : "asc",
     }),
-    [debouncedQuery, filters, limit]
+    [debouncedQuery, filters, limit],
   );
 
   // Execute search
@@ -147,7 +156,7 @@ export function useScheduleSearch(
     isLoading,
     error,
   } = useQuery({
-    queryKey: ['schedule-search', searchQuery],
+    queryKey: ["schedule-search", searchQuery],
     queryFn: async () => {
       // Fetch fresh blocks from API
       // In a real optimized system, this would only be fetched occasionally, or rely on server-side search API directly
@@ -172,13 +181,13 @@ export function useScheduleSearch(
   // Update suggestions when query changes
   React.useEffect(() => {
     getSuggestions();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query]);
 
   // Clear search
   const clear = React.useCallback(() => {
-    setQueryState('');
-    setDebouncedQuery('');
+    setQueryState("");
+    setDebouncedQuery("");
     setSuggestions([]);
   }, []);
 
@@ -212,9 +221,7 @@ export interface UseQuickSearchOptions {
   limit?: number;
 }
 
-export function useQuickSearch(
-  options: UseQuickSearchOptions = {}
-): {
+export function useQuickSearch(options: UseQuickSearchOptions = {}): {
   query: string;
   setQuery: (q: string) => void;
   results: SearchResultItem[];
@@ -223,8 +230,8 @@ export function useQuickSearch(
 } {
   const { debounceMs = 200, limit = 10 } = options;
 
-  const [query, setQueryState] = React.useState('');
-  const [debouncedQuery, setDebouncedQuery] = React.useState('');
+  const [query, setQueryState] = React.useState("");
+  const [debouncedQuery, setDebouncedQuery] = React.useState("");
 
   const debouncedSetQuery = useDebouncedCallback((value: string) => {
     setDebouncedQuery(value);
@@ -235,7 +242,7 @@ export function useQuickSearch(
       setQueryState(newQuery);
       debouncedSetQuery(newQuery);
     },
-    [debouncedSetQuery]
+    [debouncedSetQuery],
   );
 
   const searchService = React.useMemo(() => {
@@ -243,7 +250,7 @@ export function useQuickSearch(
   }, []);
 
   const { data: results = [], isLoading } = useQuery({
-    queryKey: ['quick-search', debouncedQuery, limit],
+    queryKey: ["quick-search", debouncedQuery, limit],
     queryFn: async () => {
       if (!debouncedQuery.trim()) return [];
       const blocks = await fetchRealBlocks();
@@ -255,8 +262,8 @@ export function useQuickSearch(
   });
 
   const clear = React.useCallback(() => {
-    setQueryState('');
-    setDebouncedQuery('');
+    setQueryState("");
+    setDebouncedQuery("");
   }, []);
 
   return {

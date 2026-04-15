@@ -7,7 +7,9 @@
 use axum::{extract::State, http::StatusCode, Json};
 use serde::{Deserialize, Serialize};
 use signapps_transcription::tiptap::to_tiptap_doc;
-use signapps_transcription::{Segment, SessionMeta, Speaker, TranscriptionResult, TranscriptionSource};
+use signapps_transcription::{
+    Segment, SessionMeta, Speaker, TranscriptionResult, TranscriptionSource,
+};
 use uuid::Uuid;
 
 use crate::AppState;
@@ -151,10 +153,8 @@ async fn run_transcription_pipeline(
     let client = reqwest::Client::new();
     let storage_url =
         std::env::var("STORAGE_URL").unwrap_or_else(|_| "http://localhost:3004".into());
-    let media_url =
-        std::env::var("MEDIA_URL").unwrap_or_else(|_| "http://localhost:3009".into());
-    let docs_url =
-        std::env::var("DOCS_URL").unwrap_or_else(|_| "http://localhost:3010".into());
+    let media_url = std::env::var("MEDIA_URL").unwrap_or_else(|_| "http://localhost:3009".into());
+    let docs_url = std::env::var("DOCS_URL").unwrap_or_else(|_| "http://localhost:3010".into());
 
     // ── Step 1: Fetch recording metadata ────────────────────────────────────
 

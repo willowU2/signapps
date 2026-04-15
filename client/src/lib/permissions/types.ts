@@ -101,7 +101,11 @@ export interface PermissionContextValue {
   /** Loading state */
   isLoading: boolean;
   /** Check if user has a specific permission */
-  can: (resource: Resource, action: ResourceAction | ResourceAction[], options?: PermissionCheckOptions) => boolean;
+  can: (
+    resource: Resource,
+    action: ResourceAction | ResourceAction[],
+    options?: PermissionCheckOptions,
+  ) => boolean;
   /** Check if user is admin */
   isAdmin: () => boolean;
   /** Check if user is super admin */

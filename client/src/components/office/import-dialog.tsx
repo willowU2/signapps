@@ -20,8 +20,18 @@ interface ImportResult {
   row_count: number;
   columns: string[];
   rows: string[][];
-  contacts: Array<{ name: string; email?: string; phone?: string; organization?: string }>;
-  events: Array<{ summary: string; dtstart?: string; dtend?: string; location?: string }>;
+  contacts: Array<{
+    name: string;
+    email?: string;
+    phone?: string;
+    organization?: string;
+  }>;
+  events: Array<{
+    summary: string;
+    dtstart?: string;
+    dtend?: string;
+    location?: string;
+  }>;
 }
 
 interface ImportDialogProps {
@@ -41,7 +51,11 @@ const FORMAT_LABELS: Record<string, string> = {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export function ImportDialog({ open, onOpenChange, onImport }: ImportDialogProps) {
+export function ImportDialog({
+  open,
+  onOpenChange,
+  onImport,
+}: ImportDialogProps) {
   const [dragging, setDragging] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
@@ -86,9 +100,13 @@ export function ImportDialog({ open, onOpenChange, onImport }: ImportDialogProps
       const data: ImportResult = await res.json();
       setResult(data);
       onImport?.(data);
-      toast.success(`Importé ${data.row_count} entrée(s) — format ${FORMAT_LABELS[data.format] ?? data.format}`);
+      toast.success(
+        `Importé ${data.row_count} entrée(s) — format ${FORMAT_LABELS[data.format] ?? data.format}`,
+      );
     } catch (err) {
-      toast.error(`Erreur import: ${err instanceof Error ? err.message : String(err)}`);
+      toast.error(
+        `Erreur import: ${err instanceof Error ? err.message : String(err)}`,
+      );
     } finally {
       setLoading(false);
     }
@@ -112,13 +130,18 @@ export function ImportDialog({ open, onOpenChange, onImport }: ImportDialogProps
         <div className="space-y-4">
           {/* Drop zone */}
           <div
-            onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+            onDragOver={(e) => {
+              e.preventDefault();
+              setDragging(true);
+            }}
             onDragLeave={() => setDragging(false)}
             onDrop={handleDrop}
             onClick={() => inputRef.current?.click()}
             className={[
               "border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors",
-              dragging ? "border-primary bg-primary/5" : "border-muted-foreground/25 hover:border-primary/50",
+              dragging
+                ? "border-primary bg-primary/5"
+                : "border-muted-foreground/25 hover:border-primary/50",
             ].join(" ")}
           >
             <input
@@ -126,7 +149,9 @@ export function ImportDialog({ open, onOpenChange, onImport }: ImportDialogProps
               type="file"
               accept={ACCEPTED}
               className="hidden"
-              onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])}
+              onChange={(e) =>
+                e.target.files?.[0] && handleFile(e.target.files[0])
+              }
             />
             {file ? (
               <div className="flex items-center justify-center gap-2 text-sm font-medium">
@@ -136,7 +161,10 @@ export function ImportDialog({ open, onOpenChange, onImport }: ImportDialogProps
                   variant="ghost"
                   size="icon"
                   className="h-5 w-5"
-                  onClick={(e) => { e.stopPropagation(); reset(); }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    reset();
+                  }}
                 >
                   <X className="h-4 w-4" />
                 </Button>
@@ -160,13 +188,16 @@ export function ImportDialog({ open, onOpenChange, onImport }: ImportDialogProps
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="h-4 w-4 text-green-500" />
                 <span className="text-sm font-medium">Import réussi</span>
-                <Badge variant="secondary">{FORMAT_LABELS[result.format] ?? result.format}</Badge>
+                <Badge variant="secondary">
+                  {FORMAT_LABELS[result.format] ?? result.format}
+                </Badge>
                 <Badge variant="outline">{result.row_count} lignes</Badge>
               </div>
               {result.columns.length > 0 && (
                 <p className="text-xs text-muted-foreground">
                   Colonnes : {result.columns.slice(0, 6).join(", ")}
-                  {result.columns.length > 6 && ` +${result.columns.length - 6}`}
+                  {result.columns.length > 6 &&
+                    ` +${result.columns.length - 6}`}
                 </p>
               )}
               {result.contacts.length > 0 && (
@@ -191,7 +222,9 @@ export function ImportDialog({ open, onOpenChange, onImport }: ImportDialogProps
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={handleClose}>Annuler</Button>
+          <Button variant="outline" onClick={handleClose}>
+            Annuler
+          </Button>
           <Button
             onClick={handleImport}
             disabled={!file || loading || !!result}

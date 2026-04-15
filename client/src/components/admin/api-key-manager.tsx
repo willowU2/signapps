@@ -38,10 +38,16 @@ function saveKeysToStorage(keys: ApiKey[]) {
 }
 
 function generateToken(): string {
-  const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  const chars =
+    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
   const arr = new Uint8Array(32);
   crypto.getRandomValues(arr);
-  return "sk_live_" + Array.from(arr).map((b) => chars[b % chars.length]).join("");
+  return (
+    "sk_live_" +
+    Array.from(arr)
+      .map((b) => chars[b % chars.length])
+      .join("")
+  );
 }
 
 function mapApiKeyToLocal(k: any): ApiKey {
@@ -64,7 +70,7 @@ export function ApiKeyManager() {
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await identityClient.get<any[]>('/api-keys');
+        const res = await identityClient.get<any[]>("/api-keys");
         const keys = (res.data ?? []).map(mapApiKeyToLocal);
         setApiKeys(keys);
         saveKeysToStorage(keys);
@@ -91,7 +97,7 @@ export function ApiKeyManager() {
     saveKeysToStorage(updated);
     toast.success("Nouvelle clé API générée");
     try {
-      await identityClient.post('/api-keys', {
+      await identityClient.post("/api-keys", {
         name: `Key ${new Date().toISOString()}`,
         scopes: newKey.scopes,
       });
@@ -108,7 +114,12 @@ export function ApiKeyManager() {
   };
 
   const handleRevoke = async (id: string) => {
-    if (!confirm("Are you sure you want to revoke this API key? This action cannot be undone.")) return;
+    if (
+      !confirm(
+        "Are you sure you want to revoke this API key? This action cannot be undone.",
+      )
+    )
+      return;
     const updated = apiKeys.filter((k) => k.id !== id);
     setApiKeys(updated);
     saveKeysToStorage(updated);
@@ -133,14 +144,30 @@ export function ApiKeyManager() {
     return date.toLocaleDateString();
   };
 
-  const getExpiryStatus = (date: Date | null): { text: string; className: string } => {
+  const getExpiryStatus = (
+    date: Date | null,
+  ): { text: string; className: string } => {
     if (!date) return { text: "No expiry", className: "text-green-600" };
     const now = new Date();
-    const daysUntilExpiry = Math.ceil((date.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-    if (daysUntilExpiry < 0) return { text: "Expired", className: "text-destructive" };
-    if (daysUntilExpiry < 7) return { text: `Expires in ${daysUntilExpiry}d`, className: "text-orange-600" };
-    if (daysUntilExpiry < 30) return { text: `Expires in ${daysUntilExpiry}d`, className: "text-yellow-600" };
-    return { text: `Expires in ${daysUntilExpiry}d`, className: "text-muted-foreground" };
+    const daysUntilExpiry = Math.ceil(
+      (date.getTime() - now.getTime()) / (1000 * 60 * 60 * 24),
+    );
+    if (daysUntilExpiry < 0)
+      return { text: "Expired", className: "text-destructive" };
+    if (daysUntilExpiry < 7)
+      return {
+        text: `Expires in ${daysUntilExpiry}d`,
+        className: "text-orange-600",
+      };
+    if (daysUntilExpiry < 30)
+      return {
+        text: `Expires in ${daysUntilExpiry}d`,
+        className: "text-yellow-600",
+      };
+    return {
+      text: `Expires in ${daysUntilExpiry}d`,
+      className: "text-muted-foreground",
+    };
   };
 
   return (
@@ -154,7 +181,9 @@ export function ApiKeyManager() {
       </div>
 
       {isLoading ? (
-        <div className="text-center text-muted-foreground py-8">Chargement...</div>
+        <div className="text-center text-muted-foreground py-8">
+          Chargement...
+        </div>
       ) : apiKeys.length === 0 ? (
         <div className="rounded-md border border-dashed p-8 text-center text-muted-foreground">
           <p>No API keys generated yet. Create one to get started.</p>
@@ -178,7 +207,11 @@ export function ApiKeyManager() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-2">
                       <code className="bg-muted px-2 py-1 rounded text-xs font-mono font-semibold text-muted-foreground">
-                        {isRevealed ? key.prefix : key.prefix.slice(0, 12) + "..." + key.prefix.slice(-4)}
+                        {isRevealed
+                          ? key.prefix
+                          : key.prefix.slice(0, 12) +
+                            "..." +
+                            key.prefix.slice(-4)}
                       </code>
                       {!key.isActive && (
                         <span className="text-xs px-2 py-1 rounded-md bg-destructive/10 text-destructive font-medium">
@@ -200,7 +233,9 @@ export function ApiKeyManager() {
 
                     <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
                       <div>
-                        <span className={`font-medium ${expiryStatus.className}`}>
+                        <span
+                          className={`font-medium ${expiryStatus.className}`}
+                        >
                           {expiryStatus.text}
                         </span>
                       </div>
@@ -216,7 +251,11 @@ export function ApiKeyManager() {
                       onClick={() => setRevealedId(isRevealed ? null : key.id)}
                       disabled={!key.isActive}
                     >
-                      {isRevealed ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      {isRevealed ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
                     </Button>
                     <Button
                       size="icon"

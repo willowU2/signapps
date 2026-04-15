@@ -125,7 +125,9 @@ export function VoIPDialer() {
 
       {/* Quick Contacts */}
       <div className="space-y-2 pt-2 border-t border-border/50">
-        <p className="text-xs font-medium text-muted-foreground">Contacts rapides</p>
+        <p className="text-xs font-medium text-muted-foreground">
+          Contacts rapides
+        </p>
         <div className="space-y-1">
           {QUICK_CONTACTS.map((contact) => (
             <Button

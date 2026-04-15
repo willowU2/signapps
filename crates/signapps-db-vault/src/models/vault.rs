@@ -50,7 +50,10 @@ mod base64_bytes_opt {
     {
         let opt: Option<String> = Option::deserialize(deserializer)?;
         match opt {
-            Some(s) => STANDARD.decode(&s).map(Some).map_err(serde::de::Error::custom),
+            Some(s) => STANDARD
+                .decode(&s)
+                .map(Some)
+                .map_err(serde::de::Error::custom),
             None => Ok(None),
         }
     }

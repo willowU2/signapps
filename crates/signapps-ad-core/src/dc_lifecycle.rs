@@ -62,14 +62,13 @@ pub async fn promote_dc(
     role: &str,
 ) -> Result<AdDcSite> {
     // Check for duplicate hostname
-    let existing: Option<Uuid> = sqlx::query_scalar(
-        "SELECT id FROM ad_dc_sites WHERE domain_id = $1 AND dc_hostname = $2",
-    )
-    .bind(domain_id)
-    .bind(hostname)
-    .fetch_optional(pool)
-    .await
-    .map_err(|e| Error::Database(e.to_string()))?;
+    let existing: Option<Uuid> =
+        sqlx::query_scalar("SELECT id FROM ad_dc_sites WHERE domain_id = $1 AND dc_hostname = $2")
+            .bind(domain_id)
+            .bind(hostname)
+            .fetch_optional(pool)
+            .await
+            .map_err(|e| Error::Database(e.to_string()))?;
 
     if existing.is_some() {
         return Err(Error::Conflict(format!(
@@ -100,12 +99,11 @@ pub async fn promote_dc(
     tracing::info!(dc_id = %dc.id, hostname = %hostname, "DC row inserted (provisioning)");
 
     // 2. Is this the first DC? → set primary + create FSMO roles
-    let dc_count: i64 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM ad_dc_sites WHERE domain_id = $1")
-            .bind(domain_id)
-            .fetch_one(pool)
-            .await
-            .map_err(|e| Error::Database(e.to_string()))?;
+    let dc_count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM ad_dc_sites WHERE domain_id = $1")
+        .bind(domain_id)
+        .fetch_one(pool)
+        .await
+        .map_err(|e| Error::Database(e.to_string()))?;
 
     if dc_count == 1 {
         sqlx::query("UPDATE ad_dc_sites SET is_primary = true WHERE id = $1")
@@ -173,22 +171,20 @@ pub async fn promote_dc(
 #[tracing::instrument(skip(pool))]
 pub async fn demote_dc(pool: &PgPool, dc_id: Uuid) -> Result<()> {
     // Verify the DC exists
-    let dc: Option<AdDcSite> =
-        sqlx::query_as("SELECT * FROM ad_dc_sites WHERE id = $1")
-            .bind(dc_id)
-            .fetch_optional(pool)
-            .await
-            .map_err(|e| Error::Database(e.to_string()))?;
+    let dc: Option<AdDcSite> = sqlx::query_as("SELECT * FROM ad_dc_sites WHERE id = $1")
+        .bind(dc_id)
+        .fetch_optional(pool)
+        .await
+        .map_err(|e| Error::Database(e.to_string()))?;
 
     let dc = dc.ok_or_else(|| Error::NotFound(format!("DC {dc_id} not found")))?;
 
     // 1. Check FSMO roles
-    let fsmo_count: i64 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM ad_fsmo_roles WHERE dc_id = $1")
-            .bind(dc_id)
-            .fetch_one(pool)
-            .await
-            .map_err(|e| Error::Database(e.to_string()))?;
+    let fsmo_count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM ad_fsmo_roles WHERE dc_id = $1")
+        .bind(dc_id)
+        .fetch_one(pool)
+        .await
+        .map_err(|e| Error::Database(e.to_string()))?;
 
     if fsmo_count > 0 {
         return Err(Error::Conflict(format!(
@@ -302,12 +298,7 @@ pub async fn transfer_fsmo(
 /// # }
 /// ```
 #[tracing::instrument(skip(pool))]
-pub async fn seize_fsmo(
-    pool: &PgPool,
-    domain_id: Uuid,
-    role: &str,
-    new_dc_id: Uuid,
-) -> Result<()> {
+pub async fn seize_fsmo(pool: &PgPool, domain_id: Uuid, role: &str, new_dc_id: Uuid) -> Result<()> {
     // Still verify the NEW DC is writable and online
     verify_dc_writable_online(pool, new_dc_id).await?;
 
@@ -406,13 +397,12 @@ pub async fn dc_heartbeat(pool: &PgPool, dc_id: Uuid) -> Result<()> {
 /// ```
 #[tracing::instrument(skip(pool))]
 pub async fn list_dc_sites(pool: &PgPool, domain_id: Uuid) -> Result<Vec<AdDcSite>> {
-    let dcs: Vec<AdDcSite> = sqlx::query_as(
-        "SELECT * FROM ad_dc_sites WHERE domain_id = $1 ORDER BY dc_hostname",
-    )
-    .bind(domain_id)
-    .fetch_all(pool)
-    .await
-    .map_err(|e| Error::Database(e.to_string()))?;
+    let dcs: Vec<AdDcSite> =
+        sqlx::query_as("SELECT * FROM ad_dc_sites WHERE domain_id = $1 ORDER BY dc_hostname")
+            .bind(domain_id)
+            .fetch_all(pool)
+            .await
+            .map_err(|e| Error::Database(e.to_string()))?;
 
     Ok(dcs)
 }
@@ -570,7 +560,7 @@ async fn create_dc_srv_records(
         None => {
             tracing::warn!(domain_id = %domain_id, "No DNS name found — skipping SRV records");
             return Ok(());
-        }
+        },
     };
 
     let zone = AdDnsRepository::get_zone(pool, domain_id, &dns_name).await?;
@@ -579,7 +569,7 @@ async fn create_dc_srv_records(
         None => {
             tracing::warn!(zone = %dns_name, "DNS zone not found — skipping SRV records");
             return Ok(());
-        }
+        },
     };
 
     // A record for the DC hostname
@@ -679,13 +669,12 @@ async fn remove_dc_srv_records(pool: &PgPool, domain_id: Uuid, hostname: &str) -
 
 /// Verify a DC exists, is online, and writable — used before FSMO operations.
 async fn verify_dc_writable_online(pool: &PgPool, dc_id: Uuid) -> Result<()> {
-    let row: Option<(bool, String)> = sqlx::query_as(
-        "SELECT is_writable, dc_status FROM ad_dc_sites WHERE id = $1",
-    )
-    .bind(dc_id)
-    .fetch_optional(pool)
-    .await
-    .map_err(|e| Error::Database(e.to_string()))?;
+    let row: Option<(bool, String)> =
+        sqlx::query_as("SELECT is_writable, dc_status FROM ad_dc_sites WHERE id = $1")
+            .bind(dc_id)
+            .fetch_optional(pool)
+            .await
+            .map_err(|e| Error::Database(e.to_string()))?;
 
     match row {
         None => Err(Error::NotFound(format!("DC {dc_id} not found"))),

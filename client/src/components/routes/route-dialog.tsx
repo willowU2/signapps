@@ -1,37 +1,53 @@
-'use client';
+"use client";
 
-import { SpinnerInfinity } from 'spinners-react';
+import { SpinnerInfinity } from "spinners-react";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import { Plus, Trash2, Globe, Shield, FileCode, AlertTriangle, Lock, Unlock, Server, Info } from 'lucide-react';
-import { routesApi, Route, CreateRouteRequest, ShieldConfig, HeadersConfig, HeaderEntry, TlsConfig, DnsRecord, GeoBlockConfig } from '@/lib/api';
-import { toast } from 'sonner';
+  Plus,
+  Trash2,
+  Globe,
+  Shield,
+  FileCode,
+  AlertTriangle,
+  Lock,
+  Unlock,
+  Server,
+  Info,
+} from "lucide-react";
+import {
+  routesApi,
+  Route,
+  CreateRouteRequest,
+  ShieldConfig,
+  HeadersConfig,
+  HeaderEntry,
+  TlsConfig,
+  DnsRecord,
+  GeoBlockConfig,
+} from "@/lib/api";
+import { toast } from "sonner";
 
 interface RouteDialogProps {
   open: boolean;
@@ -59,56 +75,72 @@ const defaultHeadersConfig: HeadersConfig = {
 const defaultTlsConfig: TlsConfig = {
   wildcard: false,
   force_https: true,
-  min_version: 'TLS1.2',
+  min_version: "TLS1.2",
   covered_domains: [],
 };
 
 const defaultDnsRecord: DnsRecord = {
-  type: 'A',
-  name: '@',
-  value: '',
+  type: "A",
+  name: "@",
+  value: "",
   ttl: 3600,
 };
 
 // Domain validation regex
-const DOMAIN_REGEX = /^(\*\.)?([a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/;
+const DOMAIN_REGEX =
+  /^(\*\.)?([a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/;
 const SUBDOMAIN_REGEX = /^(@|\*|[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?)$/;
-const IPV4_REGEX = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
-const IPV6_REGEX = /^(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$|^::(?:[0-9a-fA-F]{1,4}:){0,6}[0-9a-fA-F]{1,4}$|^(?:[0-9a-fA-F]{1,4}:){1,7}:$/;
+const IPV4_REGEX =
+  /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+const IPV6_REGEX =
+  /^(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$|^::(?:[0-9a-fA-F]{1,4}:){0,6}[0-9a-fA-F]{1,4}$|^(?:[0-9a-fA-F]{1,4}:){1,7}:$/;
 
-export function RouteDialog({ open, onOpenChange, route, onSuccess }: RouteDialogProps) {
+export function RouteDialog({
+  open,
+  onOpenChange,
+  route,
+  onSuccess,
+}: RouteDialogProps) {
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState('general');
+  const [activeTab, setActiveTab] = useState("general");
 
   // General settings
-  const [name, setName] = useState('');
-  const [host, setHost] = useState('');
-  const [target, setTarget] = useState('');
-  const [mode, setMode] = useState<'proxy' | 'redirect' | 'static' | 'loadbalancer'>('proxy');
+  const [name, setName] = useState("");
+  const [host, setHost] = useState("");
+  const [target, setTarget] = useState("");
+  const [mode, setMode] = useState<
+    "proxy" | "redirect" | "static" | "loadbalancer"
+  >("proxy");
   const [tlsEnabled, setTlsEnabled] = useState(true);
   const [authRequired, setAuthRequired] = useState(false);
   const [enabled, setEnabled] = useState(true);
 
   // Shield config
-  const [shieldConfig, setShieldConfig] = useState<ShieldConfig>(defaultShieldConfig);
-  const [newWhitelistIp, setNewWhitelistIp] = useState('');
-  const [newBlacklistIp, setNewBlacklistIp] = useState('');
-  const [newCountryCode, setNewCountryCode] = useState('');
+  const [shieldConfig, setShieldConfig] =
+    useState<ShieldConfig>(defaultShieldConfig);
+  const [newWhitelistIp, setNewWhitelistIp] = useState("");
+  const [newBlacklistIp, setNewBlacklistIp] = useState("");
+  const [newCountryCode, setNewCountryCode] = useState("");
 
   // Headers config
-  const [headersConfig, setHeadersConfig] = useState<HeadersConfig>(defaultHeadersConfig);
-  const [newReqHeader, setNewReqHeader] = useState({ name: '', value: '' });
-  const [newResHeader, setNewResHeader] = useState({ name: '', value: '' });
-  const [newRemoveReqHeader, setNewRemoveReqHeader] = useState('');
-  const [newRemoveResHeader, setNewRemoveResHeader] = useState('');
+  const [headersConfig, setHeadersConfig] =
+    useState<HeadersConfig>(defaultHeadersConfig);
+  const [newReqHeader, setNewReqHeader] = useState({ name: "", value: "" });
+  const [newResHeader, setNewResHeader] = useState({ name: "", value: "" });
+  const [newRemoveReqHeader, setNewRemoveReqHeader] = useState("");
+  const [newRemoveResHeader, setNewRemoveResHeader] = useState("");
 
   // TLS config
   const [tlsConfig, setTlsConfig] = useState<TlsConfig>(defaultTlsConfig);
 
   // DNS records
   const [dnsRecords, setDnsRecords] = useState<DnsRecord[]>([]);
-  const [newDnsRecord, setNewDnsRecord] = useState<DnsRecord>({ ...defaultDnsRecord });
-  const [dnsValidationError, setDnsValidationError] = useState<string | null>(null);
+  const [newDnsRecord, setNewDnsRecord] = useState<DnsRecord>({
+    ...defaultDnsRecord,
+  });
+  const [dnsValidationError, setDnsValidationError] = useState<string | null>(
+    null,
+  );
 
   const isEdit = !!route;
 
@@ -126,10 +158,10 @@ export function RouteDialog({ open, onOpenChange, route, onSuccess }: RouteDialo
       setHeadersConfig(route.headers || defaultHeadersConfig);
       setDnsRecords(route.dns_records || []);
     } else {
-      setName('');
-      setHost('');
-      setTarget('');
-      setMode('proxy');
+      setName("");
+      setHost("");
+      setTarget("");
+      setMode("proxy");
       setTlsEnabled(true);
       setTlsConfig(defaultTlsConfig);
       setAuthRequired(false);
@@ -138,7 +170,7 @@ export function RouteDialog({ open, onOpenChange, route, onSuccess }: RouteDialo
       setHeadersConfig(defaultHeadersConfig);
       setDnsRecords([]);
     }
-    setActiveTab('general');
+    setActiveTab("general");
     setNewDnsRecord({ ...defaultDnsRecord });
     setDnsValidationError(null);
   }, [route, open]);
@@ -148,10 +180,14 @@ export function RouteDialog({ open, onOpenChange, route, onSuccess }: RouteDialo
     setLoading(true);
 
     // Build TLS config with covered domains for wildcard
-    const finalTlsConfig: TlsConfig | undefined = tlsEnabled ? {
-      ...tlsConfig,
-      covered_domains: tlsConfig.wildcard ? computeCoveredDomains(host) : [],
-    } : undefined;
+    const finalTlsConfig: TlsConfig | undefined = tlsEnabled
+      ? {
+          ...tlsConfig,
+          covered_domains: tlsConfig.wildcard
+            ? computeCoveredDomains(host)
+            : [],
+        }
+      : undefined;
 
     const formData: CreateRouteRequest = {
       name,
@@ -163,25 +199,30 @@ export function RouteDialog({ open, onOpenChange, route, onSuccess }: RouteDialo
       auth_required: authRequired,
       enabled,
       shield_config: shieldConfig.enabled ? shieldConfig : undefined,
-      headers: (headersConfig.request_headers.length > 0 ||
-                headersConfig.response_headers.length > 0 ||
-                headersConfig.remove_request_headers.length > 0 ||
-                headersConfig.remove_response_headers.length > 0) ? headersConfig : undefined,
+      headers:
+        headersConfig.request_headers.length > 0 ||
+        headersConfig.response_headers.length > 0 ||
+        headersConfig.remove_request_headers.length > 0 ||
+        headersConfig.remove_response_headers.length > 0
+          ? headersConfig
+          : undefined,
       dns_records: dnsRecords.length > 0 ? dnsRecords : undefined,
     };
 
     try {
       if (isEdit && route) {
         await routesApi.update(route.id, formData);
-        toast.success('Route mise à jour avec succès');
+        toast.success("Route mise à jour avec succès");
       } else {
         await routesApi.create(formData);
-        toast.success('Route créée avec succès');
+        toast.success("Route créée avec succès");
       }
       onSuccess();
       onOpenChange(false);
     } catch {
-      toast.error(isEdit ? 'Erreur lors de la mise à jour' : 'Erreur lors de la création');
+      toast.error(
+        isEdit ? "Erreur lors de la mise à jour" : "Erreur lors de la création",
+      );
     } finally {
       setLoading(false);
     }
@@ -194,14 +235,14 @@ export function RouteDialog({ open, onOpenChange, route, onSuccess }: RouteDialo
         ...shieldConfig,
         whitelist: [...shieldConfig.whitelist, newWhitelistIp],
       });
-      setNewWhitelistIp('');
+      setNewWhitelistIp("");
     }
   };
 
   const removeWhitelistIp = (ip: string) => {
     setShieldConfig({
       ...shieldConfig,
-      whitelist: shieldConfig.whitelist.filter(i => i !== ip),
+      whitelist: shieldConfig.whitelist.filter((i) => i !== ip),
     });
   };
 
@@ -211,19 +252,22 @@ export function RouteDialog({ open, onOpenChange, route, onSuccess }: RouteDialo
         ...shieldConfig,
         blacklist: [...shieldConfig.blacklist, newBlacklistIp],
       });
-      setNewBlacklistIp('');
+      setNewBlacklistIp("");
     }
   };
 
   const removeBlacklistIp = (ip: string) => {
     setShieldConfig({
       ...shieldConfig,
-      blacklist: shieldConfig.blacklist.filter(i => i !== ip),
+      blacklist: shieldConfig.blacklist.filter((i) => i !== ip),
     });
   };
 
   // Geo-blocking helpers
-  const geoBlock = shieldConfig.geo_block || { enabled: false, blocked_countries: [] };
+  const geoBlock = shieldConfig.geo_block || {
+    enabled: false,
+    blocked_countries: [],
+  };
 
   const setGeoBlock = (update: Partial<GeoBlockConfig>) => {
     setShieldConfig({
@@ -236,13 +280,13 @@ export function RouteDialog({ open, onOpenChange, route, onSuccess }: RouteDialo
     const code = newCountryCode.toUpperCase().trim();
     if (code.length === 2 && !geoBlock.blocked_countries.includes(code)) {
       setGeoBlock({ blocked_countries: [...geoBlock.blocked_countries, code] });
-      setNewCountryCode('');
+      setNewCountryCode("");
     }
   };
 
   const removeBlockedCountry = (code: string) => {
     setGeoBlock({
-      blocked_countries: geoBlock.blocked_countries.filter(c => c !== code),
+      blocked_countries: geoBlock.blocked_countries.filter((c) => c !== code),
     });
   };
 
@@ -251,16 +295,21 @@ export function RouteDialog({ open, onOpenChange, route, onSuccess }: RouteDialo
     if (newReqHeader.name && newReqHeader.value) {
       setHeadersConfig({
         ...headersConfig,
-        request_headers: [...headersConfig.request_headers, { ...newReqHeader }],
+        request_headers: [
+          ...headersConfig.request_headers,
+          { ...newReqHeader },
+        ],
       });
-      setNewReqHeader({ name: '', value: '' });
+      setNewReqHeader({ name: "", value: "" });
     }
   };
 
   const removeRequestHeader = (index: number) => {
     setHeadersConfig({
       ...headersConfig,
-      request_headers: headersConfig.request_headers.filter((_, i) => i !== index),
+      request_headers: headersConfig.request_headers.filter(
+        (_, i) => i !== index,
+      ),
     });
   };
 
@@ -268,72 +317,97 @@ export function RouteDialog({ open, onOpenChange, route, onSuccess }: RouteDialo
     if (newResHeader.name && newResHeader.value) {
       setHeadersConfig({
         ...headersConfig,
-        response_headers: [...headersConfig.response_headers, { ...newResHeader }],
+        response_headers: [
+          ...headersConfig.response_headers,
+          { ...newResHeader },
+        ],
       });
-      setNewResHeader({ name: '', value: '' });
+      setNewResHeader({ name: "", value: "" });
     }
   };
 
   const removeResponseHeader = (index: number) => {
     setHeadersConfig({
       ...headersConfig,
-      response_headers: headersConfig.response_headers.filter((_, i) => i !== index),
+      response_headers: headersConfig.response_headers.filter(
+        (_, i) => i !== index,
+      ),
     });
   };
 
   const addRemoveRequestHeader = () => {
-    if (newRemoveReqHeader && !headersConfig.remove_request_headers.includes(newRemoveReqHeader)) {
+    if (
+      newRemoveReqHeader &&
+      !headersConfig.remove_request_headers.includes(newRemoveReqHeader)
+    ) {
       setHeadersConfig({
         ...headersConfig,
-        remove_request_headers: [...headersConfig.remove_request_headers, newRemoveReqHeader],
+        remove_request_headers: [
+          ...headersConfig.remove_request_headers,
+          newRemoveReqHeader,
+        ],
       });
-      setNewRemoveReqHeader('');
+      setNewRemoveReqHeader("");
     }
   };
 
   const addRemoveResponseHeader = () => {
-    if (newRemoveResHeader && !headersConfig.remove_response_headers.includes(newRemoveResHeader)) {
+    if (
+      newRemoveResHeader &&
+      !headersConfig.remove_response_headers.includes(newRemoveResHeader)
+    ) {
       setHeadersConfig({
         ...headersConfig,
-        remove_response_headers: [...headersConfig.remove_response_headers, newRemoveResHeader],
+        remove_response_headers: [
+          ...headersConfig.remove_response_headers,
+          newRemoveResHeader,
+        ],
       });
-      setNewRemoveResHeader('');
+      setNewRemoveResHeader("");
     }
   };
 
   // DNS record helpers
   const validateDnsRecord = (record: DnsRecord): string | null => {
-    if (!SUBDOMAIN_REGEX.test(record.name) && record.name !== '@') {
-      return 'Nom de sous-domaine invalide (utilisez @ pour le domaine principal, * pour wildcard)';
+    if (!SUBDOMAIN_REGEX.test(record.name) && record.name !== "@") {
+      return "Nom de sous-domaine invalide (utilisez @ pour le domaine principal, * pour wildcard)";
     }
 
-    if (record.type === 'A' && !IPV4_REGEX.test(record.value)) {
-      return 'Adresse IPv4 invalide';
+    if (record.type === "A" && !IPV4_REGEX.test(record.value)) {
+      return "Adresse IPv4 invalide";
     }
 
-    if (record.type === 'AAAA' && !IPV6_REGEX.test(record.value)) {
-      return 'Adresse IPv6 invalide';
+    if (record.type === "AAAA" && !IPV6_REGEX.test(record.value)) {
+      return "Adresse IPv6 invalide";
     }
 
-    if (record.type === 'CNAME' && !DOMAIN_REGEX.test(record.value) && record.value !== '@') {
-      return 'Domaine cible CNAME invalide';
+    if (
+      record.type === "CNAME" &&
+      !DOMAIN_REGEX.test(record.value) &&
+      record.value !== "@"
+    ) {
+      return "Domaine cible CNAME invalide";
     }
 
-    if (record.type === 'MX') {
+    if (record.type === "MX") {
       if (!DOMAIN_REGEX.test(record.value)) {
-        return 'Serveur mail MX invalide';
+        return "Serveur mail MX invalide";
       }
-      if (record.priority === undefined || record.priority < 0 || record.priority > 65535) {
-        return 'Priorite MX invalide (0-65535)';
+      if (
+        record.priority === undefined ||
+        record.priority < 0 ||
+        record.priority > 65535
+      ) {
+        return "Priorite MX invalide (0-65535)";
       }
     }
 
     if (!record.value.trim()) {
-      return 'La valeur ne peut pas etre vide';
+      return "La valeur ne peut pas etre vide";
     }
 
     if (record.ttl < 60 || record.ttl > 86400) {
-      return 'TTL doit etre entre 60 et 86400 secondes';
+      return "TTL doit etre entre 60 et 86400 secondes";
     }
 
     return null;
@@ -355,7 +429,11 @@ export function RouteDialog({ open, onOpenChange, route, onSuccess }: RouteDialo
     setDnsRecords(dnsRecords.filter((_, i) => i !== index));
   };
 
-  const updateDnsRecord = (index: number, field: keyof DnsRecord, value: string | number) => {
+  const updateDnsRecord = (
+    index: number,
+    field: keyof DnsRecord,
+    value: string | number,
+  ) => {
     const updated = [...dnsRecords];
     updated[index] = { ...updated[index], [field]: value };
     setDnsRecords(updated);
@@ -365,11 +443,13 @@ export function RouteDialog({ open, onOpenChange, route, onSuccess }: RouteDialo
   const computeCoveredDomains = (hostValue: string): string[] => {
     if (!hostValue) return [];
 
-    const baseDomain = hostValue.startsWith('*.') ? hostValue.substring(2) : hostValue;
+    const baseDomain = hostValue.startsWith("*.")
+      ? hostValue.substring(2)
+      : hostValue;
     const domains = [baseDomain];
 
     // Add common subdomains that would be covered
-    if (hostValue.startsWith('*.')) {
+    if (hostValue.startsWith("*.")) {
       domains.push(`www.${baseDomain}`);
       domains.push(`api.${baseDomain}`);
       domains.push(`app.${baseDomain}`);
@@ -381,7 +461,7 @@ export function RouteDialog({ open, onOpenChange, route, onSuccess }: RouteDialo
   };
 
   // Check if host is a wildcard domain
-  const isWildcardHost = host.startsWith('*.');
+  const isWildcardHost = host.startsWith("*.");
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -389,12 +469,16 @@ export function RouteDialog({ open, onOpenChange, route, onSuccess }: RouteDialo
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Globe className="h-5 w-5" />
-            {isEdit ? 'Modifier la Route' : 'Nouvelle Route'}
+            {isEdit ? "Modifier la Route" : "Nouvelle Route"}
           </DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit}>
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <Tabs
+            value={activeTab}
+            onValueChange={setActiveTab}
+            className="w-full"
+          >
             <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="general" className="gap-2">
                 <Globe className="h-4 w-4" />
@@ -438,10 +522,14 @@ export function RouteDialog({ open, onOpenChange, route, onSuccess }: RouteDialo
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="proxy">Proxy (Reverse Proxy)</SelectItem>
+                      <SelectItem value="proxy">
+                        Proxy (Reverse Proxy)
+                      </SelectItem>
                       <SelectItem value="redirect">Redirection</SelectItem>
                       <SelectItem value="static">Fichiers statiques</SelectItem>
-                      <SelectItem value="loadbalancer">Load Balancer</SelectItem>
+                      <SelectItem value="loadbalancer">
+                        Load Balancer
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -457,33 +545,36 @@ export function RouteDialog({ open, onOpenChange, route, onSuccess }: RouteDialo
                   required
                 />
                 <p className="text-xs text-muted-foreground">
-                  Utilisez * pour un wildcard (ex: *.example.com pour tous les sous-domaines)
+                  Utilisez * pour un wildcard (ex: *.example.com pour tous les
+                  sous-domaines)
                 </p>
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="target">
-                  {mode === 'redirect' ? 'URL de redirection' : 'Cible (Backend)'}
+                  {mode === "redirect"
+                    ? "URL de redirection"
+                    : "Cible (Backend)"}
                 </Label>
                 <Input
                   id="target"
-                  placeholder={mode === 'redirect'
-                    ? 'https://nouveau-site.com'
-                    : mode === 'loadbalancer'
-                    ? 'http://backend1:3000,http://backend2:3000'
-                    : 'http://container:3000'
+                  placeholder={
+                    mode === "redirect"
+                      ? "https://nouveau-site.com"
+                      : mode === "loadbalancer"
+                        ? "http://backend1:3000,http://backend2:3000"
+                        : "http://container:3000"
                   }
                   value={target}
                   onChange={(e) => setTarget(e.target.value)}
                   required
                 />
                 <p className="text-xs text-muted-foreground">
-                  {mode === 'loadbalancer'
-                    ? 'Séparez les backends par des virgules pour le load balancing'
-                    : mode === 'redirect'
-                    ? "L'URL vers laquelle rediriger le trafic"
-                    : 'Nom du conteneur Docker ou adresse IP:port du service backend'
-                  }
+                  {mode === "loadbalancer"
+                    ? "Séparez les backends par des virgules pour le load balancing"
+                    : mode === "redirect"
+                      ? "L'URL vers laquelle rediriger le trafic"
+                      : "Nom du conteneur Docker ou adresse IP:port du service backend"}
                 </p>
               </div>
 
@@ -497,10 +588,7 @@ export function RouteDialog({ open, onOpenChange, route, onSuccess }: RouteDialo
                       Activer/desactiver cette route
                     </p>
                   </div>
-                  <Switch
-                    checked={enabled}
-                    onCheckedChange={setEnabled}
-                  />
+                  <Switch checked={enabled} onCheckedChange={setEnabled} />
                 </div>
 
                 <div className="flex items-center justify-between rounded-lg border p-3">
@@ -521,9 +609,12 @@ export function RouteDialog({ open, onOpenChange, route, onSuccess }: RouteDialo
                 <div className="flex items-center gap-2 rounded-lg bg-blue-500/10 border border-blue-500/20 p-3">
                   <Info className="h-5 w-5 text-blue-500" />
                   <div className="text-sm">
-                    <p className="font-medium text-blue-600">Domaine Wildcard detecte</p>
+                    <p className="font-medium text-blue-600">
+                      Domaine Wildcard detecte
+                    </p>
                     <p className="text-muted-foreground">
-                      Cette route capturera tous les sous-domaines de {host.substring(2)}
+                      Cette route capturera tous les sous-domaines de{" "}
+                      {host.substring(2)}
                     </p>
                   </div>
                 </div>
@@ -542,10 +633,7 @@ export function RouteDialog({ open, onOpenChange, route, onSuccess }: RouteDialo
                     </p>
                   </div>
                 </div>
-                <Switch
-                  checked={tlsEnabled}
-                  onCheckedChange={setTlsEnabled}
-                />
+                <Switch checked={tlsEnabled} onCheckedChange={setTlsEnabled} />
               </div>
 
               {tlsEnabled && (
@@ -562,7 +650,9 @@ export function RouteDialog({ open, onOpenChange, route, onSuccess }: RouteDialo
                     </div>
                     <Switch
                       checked={tlsConfig.wildcard}
-                      onCheckedChange={(checked) => setTlsConfig({ ...tlsConfig, wildcard: checked })}
+                      onCheckedChange={(checked) =>
+                        setTlsConfig({ ...tlsConfig, wildcard: checked })
+                      }
                     />
                   </div>
 
@@ -575,22 +665,30 @@ export function RouteDialog({ open, onOpenChange, route, onSuccess }: RouteDialo
                     </div>
                     <Switch
                       checked={tlsConfig.force_https}
-                      onCheckedChange={(checked) => setTlsConfig({ ...tlsConfig, force_https: checked })}
+                      onCheckedChange={(checked) =>
+                        setTlsConfig({ ...tlsConfig, force_https: checked })
+                      }
                     />
                   </div>
 
                   <div className="space-y-2">
                     <Label>Version TLS minimale</Label>
                     <Select
-                      value={tlsConfig.min_version || 'TLS1.2'}
-                      onValueChange={(v: 'TLS1.2' | 'TLS1.3') => setTlsConfig({ ...tlsConfig, min_version: v })}
+                      value={tlsConfig.min_version || "TLS1.2"}
+                      onValueChange={(v: "TLS1.2" | "TLS1.3") =>
+                        setTlsConfig({ ...tlsConfig, min_version: v })
+                      }
                     >
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="TLS1.2">TLS 1.2 (Recommande)</SelectItem>
-                        <SelectItem value="TLS1.3">TLS 1.3 (Plus securise)</SelectItem>
+                        <SelectItem value="TLS1.2">
+                          TLS 1.2 (Recommande)
+                        </SelectItem>
+                        <SelectItem value="TLS1.3">
+                          TLS 1.3 (Plus securise)
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -599,18 +697,25 @@ export function RouteDialog({ open, onOpenChange, route, onSuccess }: RouteDialo
                     <div className="rounded-lg border p-4 space-y-3">
                       <div className="flex items-center gap-2">
                         <Info className="h-4 w-4 text-blue-500" />
-                        <Label>Domaines couverts par le certificat wildcard</Label>
+                        <Label>
+                          Domaines couverts par le certificat wildcard
+                        </Label>
                       </div>
                       <div className="flex flex-wrap gap-2">
                         {computeCoveredDomains(host).map((domain) => (
-                          <Badge key={domain} variant="secondary" className="gap-1">
+                          <Badge
+                            key={domain}
+                            variant="secondary"
+                            className="gap-1"
+                          >
                             <Lock className="h-3 w-3" />
                             {domain}
                           </Badge>
                         ))}
                       </div>
                       <p className="text-xs text-muted-foreground">
-                        Un certificat wildcard couvrira automatiquement tous les sous-domaines de premier niveau.
+                        Un certificat wildcard couvrira automatiquement tous les
+                        sous-domaines de premier niveau.
                       </p>
                     </div>
                   )}
@@ -621,10 +726,12 @@ export function RouteDialog({ open, onOpenChange, route, onSuccess }: RouteDialo
                 <div className="rounded-lg border border-dashed p-6 text-center text-muted-foreground">
                   <Unlock className="h-8 w-8 mx-auto mb-2 opacity-50" />
                   <p className="text-sm">
-                    SSL/TLS desactive. Les connexions seront en HTTP non securise.
+                    SSL/TLS desactive. Les connexions seront en HTTP non
+                    securise.
                   </p>
                   <p className="text-xs mt-2">
-                    Il est fortement recommande d&apos;activer SSL pour la securite.
+                    Il est fortement recommande d&apos;activer SSL pour la
+                    securite.
                   </p>
                 </div>
               )}
@@ -644,7 +751,13 @@ export function RouteDialog({ open, onOpenChange, route, onSuccess }: RouteDialo
                       <Label className="text-xs">Type</Label>
                       <Select
                         value={newDnsRecord.type}
-                        onValueChange={(v: DnsRecord['type']) => setNewDnsRecord({ ...newDnsRecord, type: v, priority: v === 'MX' ? 10 : undefined })}
+                        onValueChange={(v: DnsRecord["type"]) =>
+                          setNewDnsRecord({
+                            ...newDnsRecord,
+                            type: v,
+                            priority: v === "MX" ? 10 : undefined,
+                          })
+                        }
                       >
                         <SelectTrigger>
                           <SelectValue />
@@ -664,25 +777,42 @@ export function RouteDialog({ open, onOpenChange, route, onSuccess }: RouteDialo
                       <Input
                         placeholder="@ ou www"
                         value={newDnsRecord.name}
-                        onChange={(e) => setNewDnsRecord({ ...newDnsRecord, name: e.target.value })}
+                        onChange={(e) =>
+                          setNewDnsRecord({
+                            ...newDnsRecord,
+                            name: e.target.value,
+                          })
+                        }
                       />
                     </div>
-                    <div className={`${newDnsRecord.type === 'MX' ? 'col-span-4' : 'col-span-5'}`}>
+                    <div
+                      className={`${newDnsRecord.type === "MX" ? "col-span-4" : "col-span-5"}`}
+                    >
                       <Label className="text-xs">Valeur</Label>
                       <Input
                         placeholder={
-                          newDnsRecord.type === 'A' ? '192.168.1.1' :
-                          newDnsRecord.type === 'AAAA' ? '2001:db8::1' :
-                          newDnsRecord.type === 'CNAME' ? 'target.example.com' :
-                          newDnsRecord.type === 'TXT' ? 'v=spf1 include:...' :
-                          newDnsRecord.type === 'MX' ? 'mail.example.com' :
-                          'ns1.example.com'
+                          newDnsRecord.type === "A"
+                            ? "192.168.1.1"
+                            : newDnsRecord.type === "AAAA"
+                              ? "2001:db8::1"
+                              : newDnsRecord.type === "CNAME"
+                                ? "target.example.com"
+                                : newDnsRecord.type === "TXT"
+                                  ? "v=spf1 include:..."
+                                  : newDnsRecord.type === "MX"
+                                    ? "mail.example.com"
+                                    : "ns1.example.com"
                         }
                         value={newDnsRecord.value}
-                        onChange={(e) => setNewDnsRecord({ ...newDnsRecord, value: e.target.value })}
+                        onChange={(e) =>
+                          setNewDnsRecord({
+                            ...newDnsRecord,
+                            value: e.target.value,
+                          })
+                        }
                       />
                     </div>
-                    {newDnsRecord.type === 'MX' && (
+                    {newDnsRecord.type === "MX" && (
                       <div className="col-span-1">
                         <Label className="text-xs">Priorite</Label>
                         <Input
@@ -690,7 +820,12 @@ export function RouteDialog({ open, onOpenChange, route, onSuccess }: RouteDialo
                           min="0"
                           max="65535"
                           value={newDnsRecord.priority || 10}
-                          onChange={(e) => setNewDnsRecord({ ...newDnsRecord, priority: parseInt(e.target.value) || 10 })}
+                          onChange={(e) =>
+                            setNewDnsRecord({
+                              ...newDnsRecord,
+                              priority: parseInt(e.target.value) || 10,
+                            })
+                          }
                         />
                       </div>
                     )}
@@ -701,11 +836,21 @@ export function RouteDialog({ open, onOpenChange, route, onSuccess }: RouteDialo
                         min="60"
                         max="86400"
                         value={newDnsRecord.ttl}
-                        onChange={(e) => setNewDnsRecord({ ...newDnsRecord, ttl: parseInt(e.target.value) || 3600 })}
+                        onChange={(e) =>
+                          setNewDnsRecord({
+                            ...newDnsRecord,
+                            ttl: parseInt(e.target.value) || 3600,
+                          })
+                        }
                       />
                     </div>
                     <div className="col-span-1 flex items-end">
-                      <Button type="button" variant="outline" size="icon" onClick={addDnsRecord}>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        onClick={addDnsRecord}
+                      >
                         <Plus className="h-4 w-4" />
                       </Button>
                     </div>
@@ -733,11 +878,14 @@ export function RouteDialog({ open, onOpenChange, route, onSuccess }: RouteDialo
                           </Badge>
                           <div>
                             <p className="font-medium font-mono text-sm">
-                              {record.name === '@' ? host : `${record.name}.${host.replace('*.', '')}`}
+                              {record.name === "@"
+                                ? host
+                                : `${record.name}.${host.replace("*.", "")}`}
                             </p>
                             <p className="text-xs text-muted-foreground font-mono">
                               {record.value}
-                              {record.priority !== undefined && ` (Priority: ${record.priority})`}
+                              {record.priority !== undefined &&
+                                ` (Priority: ${record.priority})`}
                             </p>
                           </div>
                         </div>
@@ -764,7 +912,8 @@ export function RouteDialog({ open, onOpenChange, route, onSuccess }: RouteDialo
                       Aucun enregistrement DNS configure
                     </p>
                     <p className="text-xs mt-2">
-                      Ajoutez des enregistrements A, CNAME, TXT, etc. pour gerer votre domaine
+                      Ajoutez des enregistrements A, CNAME, TXT, etc. pour gerer
+                      votre domaine
                     </p>
                   </div>
                 )}
@@ -775,8 +924,9 @@ export function RouteDialog({ open, onOpenChange, route, onSuccess }: RouteDialo
                     <div className="text-sm">
                       <p className="font-medium text-blue-600">Wildcard DNS</p>
                       <p className="text-muted-foreground">
-                        Pour un domaine wildcard, vous pouvez ajouter un enregistrement A avec le nom &quot;*&quot;
-                        pour rediriger tous les sous-domaines vers une adresse IP.
+                        Pour un domaine wildcard, vous pouvez ajouter un
+                        enregistrement A avec le nom &quot;*&quot; pour
+                        rediriger tous les sous-domaines vers une adresse IP.
                       </p>
                     </div>
                   </div>
@@ -798,7 +948,9 @@ export function RouteDialog({ open, onOpenChange, route, onSuccess }: RouteDialo
                 </div>
                 <Switch
                   checked={shieldConfig.enabled}
-                  onCheckedChange={(checked) => setShieldConfig({ ...shieldConfig, enabled: checked })}
+                  onCheckedChange={(checked) =>
+                    setShieldConfig({ ...shieldConfig, enabled: checked })
+                  }
                 />
               </div>
 
@@ -810,10 +962,13 @@ export function RouteDialog({ open, onOpenChange, route, onSuccess }: RouteDialo
                       <Input
                         type="number"
                         value={shieldConfig.requests_per_second}
-                        onChange={(e) => setShieldConfig({
-                          ...shieldConfig,
-                          requests_per_second: parseInt(e.target.value) || 100,
-                        })}
+                        onChange={(e) =>
+                          setShieldConfig({
+                            ...shieldConfig,
+                            requests_per_second:
+                              parseInt(e.target.value) || 100,
+                          })
+                        }
                       />
                     </div>
                     <div className="space-y-2">
@@ -821,10 +976,12 @@ export function RouteDialog({ open, onOpenChange, route, onSuccess }: RouteDialo
                       <Input
                         type="number"
                         value={shieldConfig.burst_size}
-                        onChange={(e) => setShieldConfig({
-                          ...shieldConfig,
-                          burst_size: parseInt(e.target.value) || 200,
-                        })}
+                        onChange={(e) =>
+                          setShieldConfig({
+                            ...shieldConfig,
+                            burst_size: parseInt(e.target.value) || 200,
+                          })
+                        }
                       />
                     </div>
                     <div className="space-y-2">
@@ -832,10 +989,13 @@ export function RouteDialog({ open, onOpenChange, route, onSuccess }: RouteDialo
                       <Input
                         type="number"
                         value={shieldConfig.block_duration_seconds}
-                        onChange={(e) => setShieldConfig({
-                          ...shieldConfig,
-                          block_duration_seconds: parseInt(e.target.value) || 300,
-                        })}
+                        onChange={(e) =>
+                          setShieldConfig({
+                            ...shieldConfig,
+                            block_duration_seconds:
+                              parseInt(e.target.value) || 300,
+                          })
+                        }
                       />
                     </div>
                   </div>
@@ -849,9 +1009,17 @@ export function RouteDialog({ open, onOpenChange, route, onSuccess }: RouteDialo
                         placeholder="192.168.1.0/24 ou IP unique"
                         value={newWhitelistIp}
                         onChange={(e) => setNewWhitelistIp(e.target.value)}
-                        onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addWhitelistIp())}
+                        onKeyPress={(e) =>
+                          e.key === "Enter" &&
+                          (e.preventDefault(), addWhitelistIp())
+                        }
                       />
-                      <Button type="button" variant="outline" size="icon" onClick={addWhitelistIp}>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        onClick={addWhitelistIp}
+                      >
                         <Plus className="h-4 w-4" />
                       </Button>
                     </div>
@@ -859,7 +1027,10 @@ export function RouteDialog({ open, onOpenChange, route, onSuccess }: RouteDialo
                       {shieldConfig.whitelist.map((ip) => (
                         <Badge key={ip} variant="secondary" className="gap-1">
                           {ip}
-                          <button type="button" onClick={() => removeWhitelistIp(ip)}>
+                          <button
+                            type="button"
+                            onClick={() => removeWhitelistIp(ip)}
+                          >
                             <Trash2 className="h-3 w-3" />
                           </button>
                         </Badge>
@@ -877,9 +1048,17 @@ export function RouteDialog({ open, onOpenChange, route, onSuccess }: RouteDialo
                         placeholder="IP à bloquer"
                         value={newBlacklistIp}
                         onChange={(e) => setNewBlacklistIp(e.target.value)}
-                        onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addBlacklistIp())}
+                        onKeyPress={(e) =>
+                          e.key === "Enter" &&
+                          (e.preventDefault(), addBlacklistIp())
+                        }
                       />
-                      <Button type="button" variant="outline" size="icon" onClick={addBlacklistIp}>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        onClick={addBlacklistIp}
+                      >
                         <Plus className="h-4 w-4" />
                       </Button>
                     </div>
@@ -887,7 +1066,10 @@ export function RouteDialog({ open, onOpenChange, route, onSuccess }: RouteDialo
                       {shieldConfig.blacklist.map((ip) => (
                         <Badge key={ip} variant="destructive" className="gap-1">
                           {ip}
-                          <button type="button" onClick={() => removeBlacklistIp(ip)}>
+                          <button
+                            type="button"
+                            onClick={() => removeBlacklistIp(ip)}
+                          >
                             <Trash2 className="h-3 w-3" />
                           </button>
                         </Badge>
@@ -906,11 +1088,14 @@ export function RouteDialog({ open, onOpenChange, route, onSuccess }: RouteDialo
                       </Label>
                       <Switch
                         checked={geoBlock.enabled}
-                        onCheckedChange={(checked) => setGeoBlock({ enabled: checked })}
+                        onCheckedChange={(checked) =>
+                          setGeoBlock({ enabled: checked })
+                        }
                       />
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      Bloquer le trafic provenant de pays specifiques (codes ISO 3166-1 alpha-2)
+                      Bloquer le trafic provenant de pays specifiques (codes ISO
+                      3166-1 alpha-2)
                     </p>
 
                     {geoBlock.enabled && (
@@ -920,19 +1105,34 @@ export function RouteDialog({ open, onOpenChange, route, onSuccess }: RouteDialo
                             placeholder="Code pays (ex: CN, RU, KR)"
                             value={newCountryCode}
                             onChange={(e) => setNewCountryCode(e.target.value)}
-                            onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addBlockedCountry())}
+                            onKeyPress={(e) =>
+                              e.key === "Enter" &&
+                              (e.preventDefault(), addBlockedCountry())
+                            }
                             maxLength={2}
                             className="uppercase"
                           />
-                          <Button type="button" variant="outline" size="icon" onClick={addBlockedCountry}>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="icon"
+                            onClick={addBlockedCountry}
+                          >
                             <Plus className="h-4 w-4" />
                           </Button>
                         </div>
                         <div className="flex flex-wrap gap-2">
                           {geoBlock.blocked_countries.map((code) => (
-                            <Badge key={code} variant="outline" className="gap-1 border-blue-500/50">
+                            <Badge
+                              key={code}
+                              variant="outline"
+                              className="gap-1 border-blue-500/50"
+                            >
                               {code}
-                              <button type="button" onClick={() => removeBlockedCountry(code)}>
+                              <button
+                                type="button"
+                                onClick={() => removeBlockedCountry(code)}
+                              >
                                 <Trash2 className="h-3 w-3" />
                               </button>
                             </Badge>
@@ -940,7 +1140,8 @@ export function RouteDialog({ open, onOpenChange, route, onSuccess }: RouteDialo
                         </div>
                         {geoBlock.blocked_countries.length === 0 && (
                           <p className="text-xs text-muted-foreground italic">
-                            Codes courants : CN (Chine), RU (Russie), KR (Coree du Sud), BR (Bresil), IN (Inde)
+                            Codes courants : CN (Chine), RU (Russie), KR (Coree
+                            du Sud), BR (Bresil), IN (Inde)
                           </p>
                         )}
                       </>
@@ -958,24 +1159,46 @@ export function RouteDialog({ open, onOpenChange, route, onSuccess }: RouteDialo
                   <Input
                     placeholder="Nom (ex: X-Custom-Header)"
                     value={newReqHeader.name}
-                    onChange={(e) => setNewReqHeader({ ...newReqHeader, name: e.target.value })}
+                    onChange={(e) =>
+                      setNewReqHeader({ ...newReqHeader, name: e.target.value })
+                    }
                     className="flex-1"
                   />
                   <Input
                     placeholder="Valeur"
                     value={newReqHeader.value}
-                    onChange={(e) => setNewReqHeader({ ...newReqHeader, value: e.target.value })}
+                    onChange={(e) =>
+                      setNewReqHeader({
+                        ...newReqHeader,
+                        value: e.target.value,
+                      })
+                    }
                     className="flex-1"
                   />
-                  <Button type="button" variant="outline" size="icon" onClick={addRequestHeader}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={addRequestHeader}
+                  >
                     <Plus className="h-4 w-4" />
                   </Button>
                 </div>
                 <div className="space-y-2">
                   {headersConfig.request_headers.map((h, i) => (
-                    <div key={i} className="flex items-center justify-between rounded border p-2 text-sm">
-                      <code>{h.name}: {h.value}</code>
-                      <Button type="button" variant="ghost" size="icon" onClick={() => removeRequestHeader(i)}>
+                    <div
+                      key={i}
+                      className="flex items-center justify-between rounded border p-2 text-sm"
+                    >
+                      <code>
+                        {h.name}: {h.value}
+                      </code>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => removeRequestHeader(i)}
+                      >
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
@@ -991,24 +1214,46 @@ export function RouteDialog({ open, onOpenChange, route, onSuccess }: RouteDialo
                   <Input
                     placeholder="Nom (ex: X-Frame-Options)"
                     value={newResHeader.name}
-                    onChange={(e) => setNewResHeader({ ...newResHeader, name: e.target.value })}
+                    onChange={(e) =>
+                      setNewResHeader({ ...newResHeader, name: e.target.value })
+                    }
                     className="flex-1"
                   />
                   <Input
                     placeholder="Valeur (ex: DENY)"
                     value={newResHeader.value}
-                    onChange={(e) => setNewResHeader({ ...newResHeader, value: e.target.value })}
+                    onChange={(e) =>
+                      setNewResHeader({
+                        ...newResHeader,
+                        value: e.target.value,
+                      })
+                    }
                     className="flex-1"
                   />
-                  <Button type="button" variant="outline" size="icon" onClick={addResponseHeader}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={addResponseHeader}
+                  >
                     <Plus className="h-4 w-4" />
                   </Button>
                 </div>
                 <div className="space-y-2">
                   {headersConfig.response_headers.map((h, i) => (
-                    <div key={i} className="flex items-center justify-between rounded border p-2 text-sm">
-                      <code>{h.name}: {h.value}</code>
-                      <Button type="button" variant="ghost" size="icon" onClick={() => removeResponseHeader(i)}>
+                    <div
+                      key={i}
+                      className="flex items-center justify-between rounded border p-2 text-sm"
+                    >
+                      <code>
+                        {h.name}: {h.value}
+                      </code>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => removeResponseHeader(i)}
+                      >
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
@@ -1026,9 +1271,17 @@ export function RouteDialog({ open, onOpenChange, route, onSuccess }: RouteDialo
                       placeholder="Nom du header"
                       value={newRemoveReqHeader}
                       onChange={(e) => setNewRemoveReqHeader(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addRemoveRequestHeader())}
+                      onKeyPress={(e) =>
+                        e.key === "Enter" &&
+                        (e.preventDefault(), addRemoveRequestHeader())
+                      }
                     />
-                    <Button type="button" variant="outline" size="icon" onClick={addRemoveRequestHeader}>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      onClick={addRemoveRequestHeader}
+                    >
                       <Plus className="h-4 w-4" />
                     </Button>
                   </div>
@@ -1036,10 +1289,18 @@ export function RouteDialog({ open, onOpenChange, route, onSuccess }: RouteDialo
                     {headersConfig.remove_request_headers.map((h) => (
                       <Badge key={h} variant="outline" className="gap-1">
                         {h}
-                        <button type="button" onClick={() => setHeadersConfig({
-                          ...headersConfig,
-                          remove_request_headers: headersConfig.remove_request_headers.filter(x => x !== h),
-                        })}>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setHeadersConfig({
+                              ...headersConfig,
+                              remove_request_headers:
+                                headersConfig.remove_request_headers.filter(
+                                  (x) => x !== h,
+                                ),
+                            })
+                          }
+                        >
                           <Trash2 className="h-3 w-3" />
                         </button>
                       </Badge>
@@ -1054,9 +1315,17 @@ export function RouteDialog({ open, onOpenChange, route, onSuccess }: RouteDialo
                       placeholder="Nom du header"
                       value={newRemoveResHeader}
                       onChange={(e) => setNewRemoveResHeader(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addRemoveResponseHeader())}
+                      onKeyPress={(e) =>
+                        e.key === "Enter" &&
+                        (e.preventDefault(), addRemoveResponseHeader())
+                      }
                     />
-                    <Button type="button" variant="outline" size="icon" onClick={addRemoveResponseHeader}>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      onClick={addRemoveResponseHeader}
+                    >
                       <Plus className="h-4 w-4" />
                     </Button>
                   </div>
@@ -1064,10 +1333,18 @@ export function RouteDialog({ open, onOpenChange, route, onSuccess }: RouteDialo
                     {headersConfig.remove_response_headers.map((h) => (
                       <Badge key={h} variant="outline" className="gap-1">
                         {h}
-                        <button type="button" onClick={() => setHeadersConfig({
-                          ...headersConfig,
-                          remove_response_headers: headersConfig.remove_response_headers.filter(x => x !== h),
-                        })}>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setHeadersConfig({
+                              ...headersConfig,
+                              remove_response_headers:
+                                headersConfig.remove_response_headers.filter(
+                                  (x) => x !== h,
+                                ),
+                            })
+                          }
+                        >
                           <Trash2 className="h-3 w-3" />
                         </button>
                       </Badge>
@@ -1079,12 +1356,27 @@ export function RouteDialog({ open, onOpenChange, route, onSuccess }: RouteDialo
           </Tabs>
 
           <DialogFooter className="mt-6">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+            >
               Annuler
             </Button>
-            <Button type="submit" disabled={loading || !name || !host || !target}>
-              {loading && <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />}
-              {isEdit ? 'Mettre à jour' : 'Créer la route'}
+            <Button
+              type="submit"
+              disabled={loading || !name || !host || !target}
+            >
+              {loading && (
+                <SpinnerInfinity
+                  size={24}
+                  secondaryColor="rgba(128,128,128,0.2)"
+                  color="currentColor"
+                  speed={120}
+                  className="mr-2 h-4 w-4 "
+                />
+              )}
+              {isEdit ? "Mettre à jour" : "Créer la route"}
             </Button>
           </DialogFooter>
         </form>

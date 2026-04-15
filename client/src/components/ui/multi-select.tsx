@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * Multi-Select Component
@@ -6,11 +6,11 @@
  * A combobox that allows selecting multiple items.
  */
 
-import * as React from 'react';
-import { Check, ChevronsUpDown, X } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import * as React from "react";
+import { Check, ChevronsUpDown, X } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Command,
   CommandEmpty,
@@ -18,12 +18,12 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from '@/components/ui/command';
+} from "@/components/ui/command";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from '@/components/ui/popover';
+} from "@/components/ui/popover";
 
 export interface MultiSelectOption {
   value: string;
@@ -46,9 +46,9 @@ export function MultiSelect({
   options,
   selected,
   onChange,
-  placeholder = 'Sélectionner...',
-  searchPlaceholder = 'Rechercher...',
-  emptyText = 'Aucun résultat',
+  placeholder = "Sélectionner...",
+  searchPlaceholder = "Rechercher...",
+  emptyText = "Aucun résultat",
   className,
   maxDisplay = 3,
 }: MultiSelectProps) {
@@ -82,9 +82,9 @@ export function MultiSelect({
           role="combobox"
           aria-expanded={open}
           className={cn(
-            'w-full justify-between',
-            selected.length > 0 && 'h-auto min-h-10',
-            className
+            "w-full justify-between",
+            selected.length > 0 && "h-auto min-h-10",
+            className,
           )}
         >
           <div className="flex flex-wrap gap-1">
@@ -146,10 +146,10 @@ export function MultiSelect({
                   >
                     <div
                       className={cn(
-                        'mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary',
+                        "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
                         isSelected
-                          ? 'bg-primary text-primary-foreground'
-                          : 'opacity-50 [&_svg]:invisible'
+                          ? "bg-primary text-primary-foreground"
+                          : "opacity-50 [&_svg]:invisible",
                       )}
                     >
                       <Check className="h-3 w-3" />

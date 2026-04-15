@@ -59,12 +59,12 @@ export function getOooSettings(): OutOfOfficeSettings | null {
 export function saveOooSettings(settings: OutOfOfficeSettings): void {
   localStorage.setItem(OOO_KEY, JSON.stringify(settings));
   // fire-and-forget API sync
-  calendarApi.put('/ooo', settings).catch(() => {});
+  calendarApi.put("/ooo", settings).catch(() => {});
 }
 
 export function clearOooSettings(): void {
   localStorage.removeItem(OOO_KEY);
-  calendarApi.delete('/ooo').catch(() => {});
+  calendarApi.delete("/ooo").catch(() => {});
 }
 
 export function isCurrentlyOoo(): boolean {
@@ -106,7 +106,7 @@ export function OooBanner() {
         "flex items-center gap-3 px-4 py-2.5 text-sm border-b",
         isActive
           ? "bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-200"
-          : "bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800 text-blue-900 dark:text-blue-200"
+          : "bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800 text-blue-900 dark:text-blue-200",
       )}
     >
       <Palmtree className="h-4 w-4 shrink-0" />
@@ -138,12 +138,15 @@ interface OutOfOfficeSheetProps {
   onOpenChange: (open: boolean) => void;
 }
 
-export function OutOfOfficeSheet({ open, onOpenChange }: OutOfOfficeSheetProps) {
+export function OutOfOfficeSheet({
+  open,
+  onOpenChange,
+}: OutOfOfficeSheetProps) {
   const [enabled, setEnabled] = useState(false);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [autoReplyMessage, setAutoReplyMessage] = useState(
-    "I'm currently out of office and will respond to your message when I return. For urgent matters, please contact my team."
+    "I'm currently out of office and will respond to your message when I return. For urgent matters, please contact my team.",
   );
   const [autoDeclineInvitations, setAutoDeclineInvitations] = useState(true);
   const [showOooOnCalendar, setShowOooOnCalendar] = useState(true);
@@ -154,7 +157,7 @@ export function OutOfOfficeSheet({ open, onOpenChange }: OutOfOfficeSheetProps) 
     const loadSettings = async () => {
       let existing = getOooSettings();
       try {
-        const res = await calendarApi.get<OutOfOfficeSettings>('/ooo');
+        const res = await calendarApi.get<OutOfOfficeSettings>("/ooo");
         if (res.data) {
           existing = res.data;
           localStorage.setItem(OOO_KEY, JSON.stringify(existing));
@@ -198,7 +201,9 @@ export function OutOfOfficeSheet({ open, onOpenChange }: OutOfOfficeSheetProps) 
     };
 
     saveOooSettings(settings);
-    toast.success(enabled ? "Out of Office enabled" : "Absence du bureau désactivée");
+    toast.success(
+      enabled ? "Out of Office enabled" : "Absence du bureau désactivée",
+    );
     onOpenChange(false);
   }, [
     enabled,
@@ -227,7 +232,8 @@ export function OutOfOfficeSheet({ open, onOpenChange }: OutOfOfficeSheetProps) 
             Out of Office
           </SheetTitle>
           <SheetDescription>
-            Configure automatic responses and calendar status for when you are away.
+            Configure automatic responses and calendar status for when you are
+            away.
           </SheetDescription>
         </SheetHeader>
 
@@ -235,7 +241,9 @@ export function OutOfOfficeSheet({ open, onOpenChange }: OutOfOfficeSheetProps) 
           {/* Enable toggle */}
           <div className="flex items-center justify-between">
             <div>
-              <Label className="text-sm font-medium">Enable Out of Office</Label>
+              <Label className="text-sm font-medium">
+                Enable Out of Office
+              </Label>
               <p className="text-xs text-muted-foreground mt-0.5">
                 Activate OOO mode for the specified period
               </p>
@@ -252,7 +260,9 @@ export function OutOfOfficeSheet({ open, onOpenChange }: OutOfOfficeSheetProps) 
                 </Label>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1">
-                    <Label className="text-xs text-muted-foreground">Start date</Label>
+                    <Label className="text-xs text-muted-foreground">
+                      Start date
+                    </Label>
                     <Input
                       type="date"
                       value={startDate}
@@ -260,7 +270,9 @@ export function OutOfOfficeSheet({ open, onOpenChange }: OutOfOfficeSheetProps) 
                     />
                   </div>
                   <div className="space-y-1">
-                    <Label className="text-xs text-muted-foreground">End date</Label>
+                    <Label className="text-xs text-muted-foreground">
+                      End date
+                    </Label>
                     <Input
                       type="date"
                       value={endDate}
@@ -330,8 +342,8 @@ export function OutOfOfficeSheet({ open, onOpenChange }: OutOfOfficeSheetProps) 
                 <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 text-sm">
                   <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
                   <p className="text-amber-800 dark:text-amber-300">
-                    Auto-reply will be sent once per sender during the OOO period.
-                    Make sure your mail service is connected.
+                    Auto-reply will be sent once per sender during the OOO
+                    period. Make sure your mail service is connected.
                   </p>
                 </div>
               )}
@@ -341,11 +353,20 @@ export function OutOfOfficeSheet({ open, onOpenChange }: OutOfOfficeSheetProps) 
 
         <SheetFooter className="gap-2">
           {enabled && getOooSettings()?.enabled && (
-            <Button type="button" variant="destructive" size="sm" onClick={handleDisable}>
+            <Button
+              type="button"
+              variant="destructive"
+              size="sm"
+              onClick={handleDisable}
+            >
               <X className="h-4 w-4 mr-1" /> Disable OOO
             </Button>
           )}
-          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+          >
             Cancel
           </Button>
           <Button type="button" onClick={handleSave}>

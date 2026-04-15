@@ -1,5 +1,5 @@
-import { create } from 'zustand';
-import { getClient, ServiceName } from '@/lib/api/factory';
+import { create } from "zustand";
+import { getClient, ServiceName } from "@/lib/api/factory";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -71,14 +71,17 @@ export const useAiCapabilities = create<AiCapabilitiesStore>()((set) => ({
     set({ loading: true, error: null });
     try {
       const client = getClient(ServiceName.AI);
-      const res = await client.get<{ capabilities: Capability[] }>('/ai/capabilities');
+      const res = await client.get<{ capabilities: Capability[] }>(
+        "/ai/capabilities",
+      );
       const data = res.data;
       const capabilities = Array.isArray(data)
         ? (data as Capability[])
-        : data.capabilities ?? [];
+        : (data.capabilities ?? []);
       set({ capabilities, loading: false });
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to fetch capabilities';
+      const message =
+        err instanceof Error ? err.message : "Failed to fetch capabilities";
       set({ error: message, loading: false });
     }
   },
@@ -86,10 +89,11 @@ export const useAiCapabilities = create<AiCapabilitiesStore>()((set) => ({
   fetchGpuStatus: async () => {
     try {
       const client = getClient(ServiceName.AI);
-      const res = await client.get<GpuStatus>('/ai/gpu/status');
+      const res = await client.get<GpuStatus>("/ai/gpu/status");
       set({ gpuStatus: res.data });
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to fetch GPU status';
+      const message =
+        err instanceof Error ? err.message : "Failed to fetch GPU status";
       set({ error: message });
     }
   },

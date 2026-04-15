@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { SpinnerInfinity } from 'spinners-react';
+import { SpinnerInfinity } from "spinners-react";
 
 /**
  * AutoSchedulePanel Component
@@ -9,29 +9,43 @@ import { SpinnerInfinity } from 'spinners-react';
  * Shows unscheduled tasks and provides smart scheduling suggestions.
  */
 
-import * as React from 'react';
-import { format, addDays } from 'date-fns';
-import { fr } from 'date-fns/locale';
-import { Sparkles, Play, Pause, Settings, Calendar, Clock, AlertTriangle, CheckCircle2, XCircle, ChevronDown, ChevronRight, RotateCcw, Zap } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
-import { Slider } from '@/components/ui/slider';
-import { Progress } from '@/components/ui/progress';
+import * as React from "react";
+import { format, addDays } from "date-fns";
+import { fr } from "date-fns/locale";
+import {
+  Sparkles,
+  Play,
+  Pause,
+  Settings,
+  Calendar,
+  Clock,
+  AlertTriangle,
+  CheckCircle2,
+  XCircle,
+  ChevronDown,
+  ChevronRight,
+  RotateCcw,
+  Zap,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { Slider } from "@/components/ui/slider";
+import { Progress } from "@/components/ui/progress";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from '@/components/ui/collapsible';
+} from "@/components/ui/collapsible";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@/components/ui/tooltip';
+} from "@/components/ui/tooltip";
 import type {
   Task,
   ScheduleBlock,
@@ -39,12 +53,12 @@ import type {
   AutoScheduleConstraints,
   AutoSchedulePreferences,
   DateRange,
-} from '@/lib/scheduling/types';
+} from "@/lib/scheduling/types";
 import {
   autoScheduleTasks,
   previewAutoSchedule,
-} from '@/lib/scheduling/ai/auto-scheduler';
-import { PRIORITY_COLORS } from '@/lib/scheduling/types/time-item';
+} from "@/lib/scheduling/ai/auto-scheduler";
+import { PRIORITY_COLORS } from "@/lib/scheduling/types/time-item";
 
 // ============================================================================
 // Types
@@ -75,29 +89,33 @@ export function AutoSchedulePanel({
   const [previewMode, setPreviewMode] = React.useState(true);
 
   // Settings state
-  const [constraints, setConstraints] = React.useState<AutoScheduleConstraints>({
-    dateRange: {
-      start: new Date(),
-      end: addDays(new Date(), 14),
+  const [constraints, setConstraints] = React.useState<AutoScheduleConstraints>(
+    {
+      dateRange: {
+        start: new Date(),
+        end: addDays(new Date(), 14),
+      },
+      workingHours: { start: 9, end: 18 },
+      excludeDays: [0, 6],
+      respectDeadlines: true,
+      minBlockSize: 30,
+      maxBlockSize: 180,
     },
-    workingHours: { start: 9, end: 18 },
-    excludeDays: [0, 6],
-    respectDeadlines: true,
-    minBlockSize: 30,
-    maxBlockSize: 180,
-  });
+  );
 
-  const [preferences, setPreferences] = React.useState<AutoSchedulePreferences>({
-    preferMorning: false,
-    groupSimilarTasks: true,
-    bufferBetweenTasks: 15,
-    prioritizeUrgent: true,
-  });
+  const [preferences, setPreferences] = React.useState<AutoSchedulePreferences>(
+    {
+      preferMorning: false,
+      groupSimilarTasks: true,
+      bufferBetweenTasks: 15,
+      prioritizeUrgent: true,
+    },
+  );
 
   // Filter unscheduled tasks
   const unscheduledTasks = React.useMemo(
-    () => tasks.filter((t) => !t.start || t.status === 'backlog'),
-    [tasks]
+    () => tasks.filter((t) => !t.start || t.status === "backlog"),
+    [tasks],
   );
 
   // Preview stats
@@ -106,7 +124,7 @@ export function AutoSchedulePanel({
 
     const preview = previewAutoSchedule(
       { tasks: unscheduledTasks, constraints, preferences },
-      existingEvents
+      existingEvents,
     );
 
     return preview.stats;
@@ -121,7 +139,7 @@ export function AutoSchedulePanel({
 
     const scheduleResult = autoScheduleTasks(
       { tasks: unscheduledTasks, constraints, preferences },
-      existingEvents
+      existingEvents,
     );
 
     setResult(scheduleResult);
@@ -136,7 +154,7 @@ export function AutoSchedulePanel({
       result.scheduled.map((s) => ({
         task: s.task,
         slot: s.suggestedSlot,
-      }))
+      })),
     );
 
     setResult(null);
@@ -149,12 +167,13 @@ export function AutoSchedulePanel({
 
   // Calculate stats
   const totalEstimatedMinutes = React.useMemo(
-    () => unscheduledTasks.reduce((sum, t) => sum + (t.estimatedMinutes || 60), 0),
-    [unscheduledTasks]
+    () =>
+      unscheduledTasks.reduce((sum, t) => sum + (t.estimatedMinutes || 60), 0),
+    [unscheduledTasks],
   );
 
   return (
-    <Card className={cn('overflow-hidden', className)}>
+    <Card className={cn("overflow-hidden", className)}>
       <Collapsible open={isOpen} onOpenChange={setIsOpen}>
         <CollapsibleTrigger asChild>
           <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors">
@@ -211,8 +230,8 @@ export function AutoSchedulePanel({
                 <div className="flex items-center gap-2 text-sm text-purple-700 dark:text-purple-300">
                   <Zap className="h-4 w-4" />
                   <span>
-                    <strong>{previewStats.schedulable}</strong> tâches peuvent être
-                    planifiées automatiquement
+                    <strong>{previewStats.schedulable}</strong> tâches peuvent
+                    être planifiées automatiquement
                   </span>
                 </div>
                 {previewStats.conflicts > 0 && (
@@ -245,7 +264,7 @@ export function AutoSchedulePanel({
                               className="w-2 h-2 rounded-full"
                               style={{
                                 backgroundColor:
-                                  PRIORITY_COLORS[s.task.priority || 'medium'],
+                                  PRIORITY_COLORS[s.task.priority || "medium"],
                               }}
                             />
                             <span className="truncate max-w-[150px]">
@@ -256,9 +275,13 @@ export function AutoSchedulePanel({
                             <Tooltip>
                               <TooltipTrigger asChild>
                                 <div className="text-xs text-muted-foreground">
-                                  {format(s.suggestedSlot.start, 'EEE d HH:mm', {
-                                    locale: fr,
-                                  })}
+                                  {format(
+                                    s.suggestedSlot.start,
+                                    "EEE d HH:mm",
+                                    {
+                                      locale: fr,
+                                    },
+                                  )}
                                 </div>
                               </TooltipTrigger>
                               <TooltipContent>
@@ -326,13 +349,17 @@ export function AutoSchedulePanel({
             {/* Settings */}
             <Collapsible open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
               <CollapsibleTrigger asChild>
-                <Button variant="ghost" size="sm" className="w-full justify-start">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="w-full justify-start"
+                >
                   <Settings className="h-4 w-4 mr-2" />
                   <span>Paramètres</span>
                   <ChevronRight
                     className={cn(
-                      'h-4 w-4 ml-auto transition-transform',
-                      isSettingsOpen && 'rotate-90'
+                      "h-4 w-4 ml-auto transition-transform",
+                      isSettingsOpen && "rotate-90",
                     )}
                   />
                 </Button>
@@ -341,7 +368,7 @@ export function AutoSchedulePanel({
                 {/* Working Hours */}
                 <div className="space-y-2">
                   <Label className="text-xs">
-                    Heures de travail: {constraints.workingHours.start}h -{' '}
+                    Heures de travail: {constraints.workingHours.start}h -{" "}
                     {constraints.workingHours.end}h
                   </Label>
                   <div className="flex gap-2">
@@ -468,7 +495,13 @@ export function AutoSchedulePanel({
                 >
                   {isScheduling ? (
                     <>
-                      <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-4 w-4 mr-2 " />
+                      <SpinnerInfinity
+                        size={24}
+                        secondaryColor="rgba(128,128,128,0.2)"
+                        color="currentColor"
+                        speed={120}
+                        className="h-4 w-4 mr-2 "
+                      />
                       Planification...
                     </>
                   ) : (

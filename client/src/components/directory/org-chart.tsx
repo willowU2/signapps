@@ -43,7 +43,9 @@ function OrgChartNodeComponent({ node, level }: TreeNodeProps) {
     finance: "bg-slate-500/20 text-slate-700 dark:text-slate-400",
   };
 
-  const deptColor = departmentColors[node.department.toLowerCase()] || "bg-gray-500/20 text-muted-foreground dark:text-gray-400";
+  const deptColor =
+    departmentColors[node.department.toLowerCase()] ||
+    "bg-gray-500/20 text-muted-foreground dark:text-gray-400";
 
   return (
     <div className={cn("py-2", level > 0 && "ml-6")}>
@@ -74,13 +76,11 @@ function OrgChartNodeComponent({ node, level }: TreeNodeProps) {
           <p className="font-semibold text-sm text-foreground truncate">
             {node.name}
           </p>
-          <p className="text-xs text-muted-foreground truncate">
-            {node.title}
-          </p>
+          <p className="text-xs text-muted-foreground truncate">{node.title}</p>
           <span
             className={cn(
               "inline-block text-xs font-medium px-2 py-0.5 rounded mt-1",
-              deptColor
+              deptColor,
             )}
           >
             {node.department}
@@ -110,9 +110,16 @@ interface OrgChartProps {
 
 export function OrgChart({ rootNode, className }: OrgChartProps) {
   return (
-    <div className={cn("p-6 bg-card border border-border/50 rounded-lg", className)}>
+    <div
+      className={cn(
+        "p-6 bg-card border border-border/50 rounded-lg",
+        className,
+      )}
+    >
       <div className="mb-4">
-        <h2 className="text-lg font-bold text-foreground">Organization Chart</h2>
+        <h2 className="text-lg font-bold text-foreground">
+          Organization Chart
+        </h2>
         <p className="text-sm text-muted-foreground">
           Click expand/collapse to view team structure
         </p>

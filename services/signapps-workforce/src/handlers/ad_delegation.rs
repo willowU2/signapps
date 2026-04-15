@@ -314,9 +314,7 @@ pub async fn my_team_gpo(
 
     let result: Vec<_> = policies
         .into_iter()
-        .map(|(id, name, settings)| {
-            json!({ "id": id, "name": name, "settings": settings })
-        })
+        .map(|(id, name, settings)| json!({ "id": id, "name": name, "settings": settings }))
         .collect();
 
     Ok(Json(json!(result)))

@@ -1,15 +1,18 @@
-'use client';
+"use client";
 
 /**
  * Feature 15: Doc collab → show who's editing in real-time indicator
  */
 
-import { useEffect, useState } from 'react';
-import { Users, Circle } from 'lucide-react';
+import { useEffect, useState } from "react";
+import { Users, Circle } from "lucide-react";
 import {
-  Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 interface Editor {
   id: string;
@@ -24,13 +27,28 @@ interface DocCollabIndicatorProps {
   currentUserId?: string;
 }
 
-const COLORS = ['#6366f1', '#f59e0b', '#10b981', '#ef4444', '#3b82f6', '#8b5cf6'];
+const COLORS = [
+  "#6366f1",
+  "#f59e0b",
+  "#10b981",
+  "#ef4444",
+  "#3b82f6",
+  "#8b5cf6",
+];
 
 function getInitials(name: string) {
-  return name.split(' ').map((w) => w[0]).join('').toUpperCase().slice(0, 2);
+  return name
+    .split(" ")
+    .map((w) => w[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
 }
 
-export function DocCollabIndicator({ docId, currentUserId }: DocCollabIndicatorProps) {
+export function DocCollabIndicator({
+  docId,
+  currentUserId,
+}: DocCollabIndicatorProps) {
   const [editors, setEditors] = useState<Editor[]>([]);
 
   useEffect(() => {
@@ -41,20 +59,23 @@ export function DocCollabIndicator({ docId, currentUserId }: DocCollabIndicatorP
 
     const myself: Editor = {
       id: currentUserId ?? `user-${Math.random().toString(36).slice(2, 8)}`,
-      name: 'Vous',
+      name: "Vous",
       color: COLORS[Math.floor(Math.random() * COLORS.length)],
       lastSeen: Date.now(),
     };
 
     // Broadcast own presence every 5s
     const announce = () => {
-      channel.postMessage({ type: 'presence', editor: { ...myself, lastSeen: Date.now() } });
+      channel.postMessage({
+        type: "presence",
+        editor: { ...myself, lastSeen: Date.now() },
+      });
     };
     announce();
     const timer = setInterval(announce, 5000);
 
     channel.onmessage = (e) => {
-      if (e.data?.type !== 'presence') return;
+      if (e.data?.type !== "presence") return;
       const incoming: Editor = e.data.editor;
       if (incoming.id === myself.id) return;
       setEditors((prev) => {
@@ -87,9 +108,12 @@ export function DocCollabIndicator({ docId, currentUserId }: DocCollabIndicatorP
             <Tooltip key={ed.id}>
               <TooltipTrigger asChild>
                 <div className="relative">
-                  <Avatar className="h-6 w-6 border-2 border-background" style={{ borderColor: ed.color }}>
+                  <Avatar
+                    className="h-6 w-6 border-2 border-background"
+                    style={{ borderColor: ed.color }}
+                  >
                     <AvatarFallback
-                      style={{ backgroundColor: ed.color, color: 'white' }}
+                      style={{ backgroundColor: ed.color, color: "white" }}
                       className="text-[10px] font-semibold"
                     >
                       {getInitials(ed.name)}

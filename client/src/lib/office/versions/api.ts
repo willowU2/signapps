@@ -4,7 +4,7 @@
  * API client for version history operations.
  */
 
-import { getClient, ServiceName } from '@/lib/api/factory';
+import { getClient, ServiceName } from "@/lib/api/factory";
 
 const api = getClient(ServiceName.OFFICE);
 import type {
@@ -15,9 +15,9 @@ import type {
   CreateVersionRequest,
   RestoreVersionRequest,
   CompareVersionsRequest,
-} from './types';
+} from "./types";
 
-const VERSIONS_BASE = '/api/v1/documents';
+const VERSIONS_BASE = "/api/v1/documents";
 
 // ============================================================================
 // Version History
@@ -26,18 +26,21 @@ const VERSIONS_BASE = '/api/v1/documents';
 /**
  * Get version history for a document
  */
-export async function getVersions(params: GetVersionsParams): Promise<VersionsResponse> {
+export async function getVersions(
+  params: GetVersionsParams,
+): Promise<VersionsResponse> {
   const queryParams = new URLSearchParams();
 
-  if (params.page) queryParams.append('page', String(params.page));
-  if (params.pageSize) queryParams.append('pageSize', String(params.pageSize));
-  if (params.type && params.type !== 'all') queryParams.append('type', params.type);
-  if (params.starredOnly) queryParams.append('starredOnly', 'true');
-  if (params.fromDate) queryParams.append('fromDate', params.fromDate);
-  if (params.toDate) queryParams.append('toDate', params.toDate);
+  if (params.page) queryParams.append("page", String(params.page));
+  if (params.pageSize) queryParams.append("pageSize", String(params.pageSize));
+  if (params.type && params.type !== "all")
+    queryParams.append("type", params.type);
+  if (params.starredOnly) queryParams.append("starredOnly", "true");
+  if (params.fromDate) queryParams.append("fromDate", params.fromDate);
+  if (params.toDate) queryParams.append("toDate", params.toDate);
 
   const response = await api.get<VersionsResponse>(
-    `${VERSIONS_BASE}/${params.documentId}/versions?${queryParams.toString()}`
+    `${VERSIONS_BASE}/${params.documentId}/versions?${queryParams.toString()}`,
   );
   return response.data;
 }
@@ -47,10 +50,10 @@ export async function getVersions(params: GetVersionsParams): Promise<VersionsRe
  */
 export async function getVersion(
   documentId: string,
-  versionId: string
+  versionId: string,
 ): Promise<DocumentVersion> {
   const response = await api.get<DocumentVersion>(
-    `${VERSIONS_BASE}/${documentId}/versions/${versionId}`
+    `${VERSIONS_BASE}/${documentId}/versions/${versionId}`,
   );
   return response.data;
 }
@@ -58,9 +61,11 @@ export async function getVersion(
 /**
  * Get the current (latest) version
  */
-export async function getCurrentVersion(documentId: string): Promise<DocumentVersion> {
+export async function getCurrentVersion(
+  documentId: string,
+): Promise<DocumentVersion> {
   const response = await api.get<DocumentVersion>(
-    `${VERSIONS_BASE}/${documentId}/versions/current`
+    `${VERSIONS_BASE}/${documentId}/versions/current`,
   );
   return response.data;
 }
@@ -70,10 +75,10 @@ export async function getCurrentVersion(documentId: string): Promise<DocumentVer
  */
 export async function getVersionContent(
   documentId: string,
-  versionId: string
+  versionId: string,
 ): Promise<{ content: Record<string, unknown> }> {
   const response = await api.get<{ content: Record<string, unknown> }>(
-    `${VERSIONS_BASE}/${documentId}/versions/${versionId}/content`
+    `${VERSIONS_BASE}/${documentId}/versions/${versionId}/content`,
   );
   return response.data;
 }
@@ -85,13 +90,15 @@ export async function getVersionContent(
 /**
  * Create a manual version (snapshot)
  */
-export async function createVersion(request: CreateVersionRequest): Promise<DocumentVersion> {
+export async function createVersion(
+  request: CreateVersionRequest,
+): Promise<DocumentVersion> {
   const response = await api.post<DocumentVersion>(
     `${VERSIONS_BASE}/${request.documentId}/versions`,
     {
       label: request.label,
       description: request.description,
-    }
+    },
   );
   return response.data;
 }
@@ -102,11 +109,11 @@ export async function createVersion(request: CreateVersionRequest): Promise<Docu
 export async function updateVersion(
   documentId: string,
   versionId: string,
-  data: { label?: string; description?: string; isStarred?: boolean }
+  data: { label?: string; description?: string; isStarred?: boolean },
 ): Promise<DocumentVersion> {
   const response = await api.patch<DocumentVersion>(
     `${VERSIONS_BASE}/${documentId}/versions/${versionId}`,
-    data
+    data,
   );
   return response.data;
 }
@@ -114,7 +121,10 @@ export async function updateVersion(
 /**
  * Delete a version
  */
-export async function deleteVersion(documentId: string, versionId: string): Promise<void> {
+export async function deleteVersion(
+  documentId: string,
+  versionId: string,
+): Promise<void> {
   await api.delete(`${VERSIONS_BASE}/${documentId}/versions/${versionId}`);
 }
 
@@ -126,11 +136,11 @@ export async function deleteVersion(documentId: string, versionId: string): Prom
  * Restore a document to a previous version
  */
 export async function restoreVersion(
-  request: RestoreVersionRequest
+  request: RestoreVersionRequest,
 ): Promise<{ newVersion: DocumentVersion; backupVersion?: DocumentVersion }> {
   // Extract documentId from the version
   const versionResponse = await api.get<DocumentVersion>(
-    `${VERSIONS_BASE}/versions/${request.versionId}`
+    `${VERSIONS_BASE}/versions/${request.versionId}`,
   );
   const documentId = versionResponse.data.documentId;
 
@@ -149,7 +159,7 @@ export async function restoreVersion(
 export async function restoreDocumentVersion(
   documentId: string,
   versionId: string,
-  createBackup = true
+  createBackup = true,
 ): Promise<{ newVersion: DocumentVersion; backupVersion?: DocumentVersion }> {
   const response = await api.post<{
     newVersion: DocumentVersion;
@@ -167,20 +177,23 @@ export async function restoreDocumentVersion(
 /**
  * Compare two versions and get diff
  */
-export async function compareVersions(request: CompareVersionsRequest): Promise<VersionDiff> {
+export async function compareVersions(
+  request: CompareVersionsRequest,
+): Promise<VersionDiff> {
   const params = new URLSearchParams();
-  params.append('sourceVersionId', request.sourceVersionId);
-  params.append('targetVersionId', request.targetVersionId);
-  if (request.format) params.append('format', request.format);
-  if (request.contextLines) params.append('contextLines', String(request.contextLines));
+  params.append("sourceVersionId", request.sourceVersionId);
+  params.append("targetVersionId", request.targetVersionId);
+  if (request.format) params.append("format", request.format);
+  if (request.contextLines)
+    params.append("contextLines", String(request.contextLines));
 
   // Get documentId from source version
   const sourceVersion = await api.get<DocumentVersion>(
-    `${VERSIONS_BASE}/versions/${request.sourceVersionId}`
+    `${VERSIONS_BASE}/versions/${request.sourceVersionId}`,
   );
 
   const response = await api.get<VersionDiff>(
-    `${VERSIONS_BASE}/${sourceVersion.data.documentId}/versions/compare?${params.toString()}`
+    `${VERSIONS_BASE}/${sourceVersion.data.documentId}/versions/compare?${params.toString()}`,
   );
   return response.data;
 }
@@ -192,16 +205,17 @@ export async function compareDocumentVersions(
   documentId: string,
   sourceVersionId: string,
   targetVersionId: string,
-  options?: { format?: 'unified' | 'sideBySide'; contextLines?: number }
+  options?: { format?: "unified" | "sideBySide"; contextLines?: number },
 ): Promise<VersionDiff> {
   const params = new URLSearchParams();
-  params.append('sourceVersionId', sourceVersionId);
-  params.append('targetVersionId', targetVersionId);
-  if (options?.format) params.append('format', options.format);
-  if (options?.contextLines) params.append('contextLines', String(options.contextLines));
+  params.append("sourceVersionId", sourceVersionId);
+  params.append("targetVersionId", targetVersionId);
+  if (options?.format) params.append("format", options.format);
+  if (options?.contextLines)
+    params.append("contextLines", String(options.contextLines));
 
   const response = await api.get<VersionDiff>(
-    `${VERSIONS_BASE}/${documentId}/versions/compare?${params.toString()}`
+    `${VERSIONS_BASE}/${documentId}/versions/compare?${params.toString()}`,
   );
   return response.data;
 }
@@ -213,23 +227,31 @@ export async function compareDocumentVersions(
 /**
  * Star/pin a version
  */
-export async function starVersion(documentId: string, versionId: string): Promise<void> {
+export async function starVersion(
+  documentId: string,
+  versionId: string,
+): Promise<void> {
   await api.post(`${VERSIONS_BASE}/${documentId}/versions/${versionId}/star`);
 }
 
 /**
  * Unstar/unpin a version
  */
-export async function unstarVersion(documentId: string, versionId: string): Promise<void> {
+export async function unstarVersion(
+  documentId: string,
+  versionId: string,
+): Promise<void> {
   await api.delete(`${VERSIONS_BASE}/${documentId}/versions/${versionId}/star`);
 }
 
 /**
  * Get starred versions
  */
-export async function getStarredVersions(documentId: string): Promise<DocumentVersion[]> {
+export async function getStarredVersions(
+  documentId: string,
+): Promise<DocumentVersion[]> {
   const response = await api.get<DocumentVersion[]>(
-    `${VERSIONS_BASE}/${documentId}/versions/starred`
+    `${VERSIONS_BASE}/${documentId}/versions/starred`,
   );
   return response.data;
 }
@@ -243,10 +265,10 @@ export async function getStarredVersions(documentId: string): Promise<DocumentVe
  */
 export async function getVersionThumbnail(
   documentId: string,
-  versionId: string
+  versionId: string,
 ): Promise<{ thumbnailUrl: string }> {
   const response = await api.get<{ thumbnailUrl: string }>(
-    `${VERSIONS_BASE}/${documentId}/versions/${versionId}/thumbnail`
+    `${VERSIONS_BASE}/${documentId}/versions/${versionId}/thumbnail`,
   );
   return response.data;
 }

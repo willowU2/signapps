@@ -576,16 +576,31 @@ fn create_router(state: AppState) -> Router {
 
     // AD Delegation routes (manager-scoped)
     let ad_delegation_routes = Router::new()
-        .route("/my-team/ad-accounts", get(handlers::ad_delegation::my_team_ad_accounts))
-        .route("/my-team/computers", get(handlers::ad_delegation::my_team_computers))
+        .route(
+            "/my-team/ad-accounts",
+            get(handlers::ad_delegation::my_team_ad_accounts),
+        )
+        .route(
+            "/my-team/computers",
+            get(handlers::ad_delegation::my_team_computers),
+        )
         .route("/my-team/gpo", get(handlers::ad_delegation::my_team_gpo))
-        .route("/my-team/ad-accounts/:id/disable", post(handlers::ad_delegation::disable_account))
-        .route("/my-team/ad-accounts/:id/enable", post(handlers::ad_delegation::enable_account))
+        .route(
+            "/my-team/ad-accounts/:id/disable",
+            post(handlers::ad_delegation::disable_account),
+        )
+        .route(
+            "/my-team/ad-accounts/:id/enable",
+            post(handlers::ad_delegation::enable_account),
+        )
         .route(
             "/my-team/ad-accounts/:id/reset-password",
             post(handlers::ad_delegation::reset_password),
         )
-        .route("/my-team/ad-accounts/:id/move", put(handlers::ad_delegation::move_account))
+        .route(
+            "/my-team/ad-accounts/:id/move",
+            put(handlers::ad_delegation::move_account),
+        )
         .layer(axum::middleware::from_fn(
             signapps_common::middleware::tenant_context_middleware,
         ))
@@ -623,10 +638,7 @@ fn create_router(state: AppState) -> Router {
             "/leaves/:id/approve",
             post(handlers::my_team::approve_leave),
         )
-        .route(
-            "/leaves/:id/reject",
-            post(handlers::my_team::reject_leave),
-        )
+        .route("/leaves/:id/reject", post(handlers::my_team::reject_leave))
         .route(
             "/timesheets/:id/approve",
             post(handlers::my_team::approve_timesheet),

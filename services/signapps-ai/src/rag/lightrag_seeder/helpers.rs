@@ -57,7 +57,7 @@ pub(super) fn sanitize_attributes(attrs: serde_json::Value) -> serde_json::Value
                 !SENSITIVE_FIELDS.iter().any(|s| key_lower.contains(s))
             });
             serde_json::Value::Object(map)
-        }
+        },
         other => other,
     }
 }

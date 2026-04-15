@@ -44,7 +44,8 @@ export function WidgetTodayCalendar({ widget }: WidgetRenderProps) {
 
       // Fetch all calendars first
       const calendarsRes = await calendarApi.listCalendars();
-      const calendars: Array<{ id: string; color?: string }> = calendarsRes.data ?? [];
+      const calendars: Array<{ id: string; color?: string }> =
+        calendarsRes.data ?? [];
 
       // Fetch today's events from each calendar in parallel
       const eventsNested = await Promise.all(
@@ -52,33 +53,35 @@ export function WidgetTodayCalendar({ widget }: WidgetRenderProps) {
           calendarApi
             .listEvents(cal.id, todayStart, todayEnd)
             .then((r) =>
-              (r.data ?? []).map((ev: {
-                id: string;
-                title: string;
-                start_time: string;
-                end_time: string;
-                location?: string;
-                is_all_day?: boolean;
-                color?: string;
-              }) => ({
-                id: ev.id,
-                title: ev.title,
-                start_time: ev.start_time,
-                end_time: ev.end_time,
-                location: ev.location,
-                is_all_day: ev.is_all_day,
-                color: ev.color ?? cal.color ?? "bg-blue-500",
-              }))
+              (r.data ?? []).map(
+                (ev: {
+                  id: string;
+                  title: string;
+                  start_time: string;
+                  end_time: string;
+                  location?: string;
+                  is_all_day?: boolean;
+                  color?: string;
+                }) => ({
+                  id: ev.id,
+                  title: ev.title,
+                  start_time: ev.start_time,
+                  end_time: ev.end_time,
+                  location: ev.location,
+                  is_all_day: ev.is_all_day,
+                  color: ev.color ?? cal.color ?? "bg-blue-500",
+                }),
+              ),
             )
-            .catch(() => [])
-        )
+            .catch(() => []),
+        ),
       );
 
       // Flatten, sort by start_time, and cap at limit
       const allEvents: CalendarEvent[] = eventsNested.flat();
       allEvents.sort(
         (a, b) =>
-          new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
+          new Date(a.start_time).getTime() - new Date(b.start_time).getTime(),
       );
       return allEvents.slice(0, limit);
     },

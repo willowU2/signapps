@@ -10,7 +10,7 @@ export function useSortableTable<T>(data: T[], defaultKey?: keyof T) {
 
   function toggleSort(key: keyof T) {
     if (sortKey === key) {
-      setSortDir(d => (d === "asc" ? "desc" : "asc"));
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
     } else {
       setSortKey(key);
       setSortDir("asc");
@@ -20,7 +20,8 @@ export function useSortableTable<T>(data: T[], defaultKey?: keyof T) {
   const sorted = useMemo(() => {
     if (!sortKey) return data;
     return [...data].sort((a, b) => {
-      const va = a[sortKey], vb = b[sortKey];
+      const va = a[sortKey],
+        vb = b[sortKey];
       if (va == null && vb == null) return 0;
       if (va == null) return 1;
       if (vb == null) return -1;

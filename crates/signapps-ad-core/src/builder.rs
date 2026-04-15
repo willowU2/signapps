@@ -113,9 +113,8 @@ pub async fn build_user_entry(
     .fetch_optional(pool)
     .await?;
 
-    let row = row.ok_or_else(|| {
-        signapps_common::Error::NotFound(format!("User {user_id} not found"))
-    })?;
+    let row =
+        row.ok_or_else(|| signapps_common::Error::NotFound(format!("User {user_id} not found")))?;
 
     let display_name = match (&row.first_name, &row.last_name) {
         (Some(f), Some(l)) => format!("{f} {l}"),
@@ -133,7 +132,11 @@ pub async fn build_user_entry(
     let mut attrs: HashMap<String, Vec<AttributeValue>> = HashMap::new();
 
     set_attr(&mut attrs, "sAMAccountName", &row.username);
-    set_attr(&mut attrs, "userPrincipalName", &format!("{}@{domain}", row.username));
+    set_attr(
+        &mut attrs,
+        "userPrincipalName",
+        &format!("{}@{domain}", row.username),
+    );
     set_attr(&mut attrs, "cn", &display_name);
     set_attr(&mut attrs, "name", &display_name);
     set_attr(&mut attrs, "displayName", &display_name);
@@ -177,8 +180,16 @@ pub async fn build_user_entry(
         vec![AttributeValue::Binary(sid.to_bytes())],
     );
 
-    set_attr(&mut attrs, "whenCreated", &format_generalized_time(row.created_at));
-    set_attr(&mut attrs, "whenChanged", &format_generalized_time(row.updated_at));
+    set_attr(
+        &mut attrs,
+        "whenCreated",
+        &format_generalized_time(row.created_at),
+    );
+    set_attr(
+        &mut attrs,
+        "whenChanged",
+        &format_generalized_time(row.updated_at),
+    );
 
     let uac = UserAccountControl::normal_user();
     set_attr(&mut attrs, "userAccountControl", &uac.value().to_string());
@@ -195,7 +206,11 @@ pub async fn build_user_entry(
         ],
         attributes: attrs,
         uac,
-        lifecycle: if row.is_active.unwrap_or(true) { LifecycleState::Live } else { LifecycleState::Recycled },
+        lifecycle: if row.is_active.unwrap_or(true) {
+            LifecycleState::Live
+        } else {
+            LifecycleState::Recycled
+        },
         created: row.created_at,
         modified: row.updated_at,
     })
@@ -231,9 +246,8 @@ pub async fn build_node_entry(
     .fetch_optional(pool)
     .await?;
 
-    let row = row.ok_or_else(|| {
-        signapps_common::Error::NotFound(format!("Node {node_id} not found"))
-    })?;
+    let row =
+        row.ok_or_else(|| signapps_common::Error::NotFound(format!("Node {node_id} not found")))?;
 
     // Resolve DN from hierarchy closure table.
     let path = resolve_node_path(pool, node_id).await?;
@@ -257,11 +271,22 @@ pub async fn build_node_entry(
     };
     attrs.insert(
         "objectClass".to_string(),
-        classes.iter().map(|c| AttributeValue::String(c.to_string())).collect(),
+        classes
+            .iter()
+            .map(|c| AttributeValue::String(c.to_string()))
+            .collect(),
     );
 
-    set_attr(&mut attrs, "whenCreated", &format_generalized_time(row.created_at));
-    set_attr(&mut attrs, "whenChanged", &format_generalized_time(row.updated_at));
+    set_attr(
+        &mut attrs,
+        "whenCreated",
+        &format_generalized_time(row.created_at),
+    );
+    set_attr(
+        &mut attrs,
+        "whenChanged",
+        &format_generalized_time(row.updated_at),
+    );
 
     Ok(DirectoryEntry {
         guid: node_id,
@@ -304,9 +329,8 @@ pub async fn build_group_entry(
     .fetch_optional(pool)
     .await?;
 
-    let row = row.ok_or_else(|| {
-        signapps_common::Error::NotFound(format!("Group {group_id} not found"))
-    })?;
+    let row =
+        row.ok_or_else(|| signapps_common::Error::NotFound(format!("Group {group_id} not found")))?;
 
     let dn = DistinguishedName::from_path(&["Groups", &row.name], domain);
     let rid = uuid_to_rid(group_id);
@@ -340,8 +364,16 @@ pub async fn build_group_entry(
     // -2147483646 = Global Security Group (ADS_GROUP_TYPE_GLOBAL_GROUP | ADS_GROUP_TYPE_SECURITY_ENABLED)
     set_attr(&mut attrs, "groupType", "-2147483646");
 
-    set_attr(&mut attrs, "whenCreated", &format_generalized_time(row.created_at));
-    set_attr(&mut attrs, "whenChanged", &format_generalized_time(row.updated_at));
+    set_attr(
+        &mut attrs,
+        "whenCreated",
+        &format_generalized_time(row.created_at),
+    );
+    set_attr(
+        &mut attrs,
+        "whenChanged",
+        &format_generalized_time(row.updated_at),
+    );
 
     // Load members — join via persons to get display names for DNs.
     let dc_suffix = domain.replace('.', ",DC=");
@@ -362,7 +394,10 @@ pub async fn build_group_entry(
     if !members.is_empty() {
         attrs.insert(
             "member".to_string(),
-            members.iter().map(|(dn,)| AttributeValue::String(dn.clone())).collect(),
+            members
+                .iter()
+                .map(|(dn,)| AttributeValue::String(dn.clone()))
+                .collect(),
         );
     }
 
@@ -383,7 +418,10 @@ pub async fn build_group_entry(
 
 /// Inserts a single string value under `name`, replacing any prior value.
 fn set_attr(attrs: &mut HashMap<String, Vec<AttributeValue>>, name: &str, value: &str) {
-    attrs.insert(name.to_string(), vec![AttributeValue::String(value.to_string())]);
+    attrs.insert(
+        name.to_string(),
+        vec![AttributeValue::String(value.to_string())],
+    );
 }
 
 /// Converts a UUID to a deterministic Relative Identifier (RID).
@@ -472,7 +510,10 @@ mod tests {
     fn set_attr_helper() {
         let mut attrs = HashMap::new();
         set_attr(&mut attrs, "cn", "John");
-        assert_eq!(attrs["cn"], vec![AttributeValue::String("John".to_string())]);
+        assert_eq!(
+            attrs["cn"],
+            vec![AttributeValue::String("John".to_string())]
+        );
     }
 
     #[test]
@@ -484,6 +525,9 @@ mod tests {
     #[test]
     fn group_dn_format() {
         let dn = DistinguishedName::from_path(&["Groups", "Domain Admins"], "example.com");
-        assert_eq!(dn.to_string(), "CN=Domain Admins,OU=Groups,DC=example,DC=com");
+        assert_eq!(
+            dn.to_string(),
+            "CN=Domain Admins,OU=Groups,DC=example,DC=com"
+        );
     }
 }

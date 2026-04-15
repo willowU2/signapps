@@ -1,10 +1,14 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { Trophy, TrendingUp, TrendingDown, Minus } from 'lucide-react';
-import { useUsers } from '@/hooks/use-users';
-import { loadPoints, getEarnedBadges, type PointsState } from '@/lib/gamification/points';
-import { cn } from '@/lib/utils';
+import { useEffect, useState } from "react";
+import { Trophy, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { useUsers } from "@/hooks/use-users";
+import {
+  loadPoints,
+  getEarnedBadges,
+  type PointsState,
+} from "@/lib/gamification/points";
+import { cn } from "@/lib/utils";
 
 interface LeaderboardEntry {
   rank: number;
@@ -14,15 +18,15 @@ interface LeaderboardEntry {
   pointsThisWeek: number;
   totalPoints: number;
   badgeCount: number;
-  trend: 'up' | 'down' | 'stable';
+  trend: "up" | "down" | "stable";
 }
 
-type Period = 'week' | 'month' | 'alltime';
+type Period = "week" | "month" | "alltime";
 
 const PERIOD_LABELS: Record<Period, string> = {
-  week: 'This week',
-  month: 'This month',
-  alltime: 'All time',
+  week: "This week",
+  month: "This month",
+  alltime: "All time",
 };
 
 /**
@@ -35,7 +39,7 @@ const PERIOD_LABELS: Record<Period, string> = {
  */
 export function Leaderboard() {
   const { data: users, isLoading } = useUsers();
-  const [period, setPeriod] = useState<Period>('week');
+  const [period, setPeriod] = useState<Period>("week");
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
 
   useEffect(() => {
@@ -59,9 +63,11 @@ export function Leaderboard() {
 
       // Current user: use the main points key
       if (!state) {
-        const main = localStorage.getItem('signapps-points');
+        const main = localStorage.getItem("signapps-points");
         if (main && idx === 0) {
-          try { state = JSON.parse(main); } catch {}
+          try {
+            state = JSON.parse(main);
+          } catch {}
         }
       }
 
@@ -72,8 +78,14 @@ export function Leaderboard() {
       // (real impl would store time-bucketed points)
       const pts = total;
 
-      const name = user.display_name || user.username || user.email || `User ${idx + 1}`;
-      const initials = name.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase();
+      const name =
+        user.display_name || user.username || user.email || `User ${idx + 1}`;
+      const initials = name
+        .split(" ")
+        .map((w: string) => w[0])
+        .join("")
+        .slice(0, 2)
+        .toUpperCase();
 
       return {
         rank: 0,
@@ -83,13 +95,15 @@ export function Leaderboard() {
         pointsThisWeek: pts,
         totalPoints: total,
         badgeCount,
-        trend: 'stable' as const,
+        trend: "stable" as const,
       };
     });
 
     // Sort by selected metric and assign rank
     built.sort((a, b) => b.pointsThisWeek - a.pointsThisWeek);
-    built.forEach((e, i) => { e.rank = i + 1; });
+    built.forEach((e, i) => {
+      e.rank = i + 1;
+    });
 
     setEntries(built);
   }, [users, period]);
@@ -111,10 +125,10 @@ export function Leaderboard() {
             key={p}
             onClick={() => setPeriod(p)}
             className={cn(
-              'flex-1 py-1 text-xs font-medium rounded-md transition-colors',
+              "flex-1 py-1 text-xs font-medium rounded-md transition-colors",
               period === p
-                ? 'bg-background text-foreground shadow-sm'
-                : 'text-muted-foreground hover:text-foreground',
+                ? "bg-background text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground",
             )}
           >
             {PERIOD_LABELS[p]}
@@ -130,23 +144,33 @@ export function Leaderboard() {
           ))}
         </div>
       ) : entries.length === 0 ? (
-        <p className="text-sm text-muted-foreground text-center py-6">No users yet.</p>
+        <p className="text-sm text-muted-foreground text-center py-6">
+          No users yet.
+        </p>
       ) : (
         <div className="space-y-1.5">
           {entries.map((entry) => (
             <div
               key={entry.userId}
               className={cn(
-                'flex items-center gap-3 p-2.5 rounded-lg border transition-colors',
-                entry.rank === 1 && 'bg-yellow-50 border-yellow-200 dark:bg-yellow-950/20 dark:border-yellow-800',
-                entry.rank === 2 && 'bg-muted/50 border-border',
-                entry.rank === 3 && 'bg-orange-50 border-orange-200 dark:bg-orange-950/20 dark:border-orange-800',
-                entry.rank > 3 && 'bg-card border-border',
+                "flex items-center gap-3 p-2.5 rounded-lg border transition-colors",
+                entry.rank === 1 &&
+                  "bg-yellow-50 border-yellow-200 dark:bg-yellow-950/20 dark:border-yellow-800",
+                entry.rank === 2 && "bg-muted/50 border-border",
+                entry.rank === 3 &&
+                  "bg-orange-50 border-orange-200 dark:bg-orange-950/20 dark:border-orange-800",
+                entry.rank > 3 && "bg-card border-border",
               )}
             >
               {/* Rank */}
               <div className="w-7 text-center font-bold text-sm text-muted-foreground">
-                {entry.rank === 1 ? '🥇' : entry.rank === 2 ? '🥈' : entry.rank === 3 ? '🥉' : entry.rank}
+                {entry.rank === 1
+                  ? "🥇"
+                  : entry.rank === 2
+                    ? "🥈"
+                    : entry.rank === 3
+                      ? "🥉"
+                      : entry.rank}
               </div>
 
               {/* Avatar */}
@@ -158,7 +182,9 @@ export function Leaderboard() {
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium truncate">{entry.name}</p>
                 {entry.badgeCount > 0 && (
-                  <p className="text-xs text-muted-foreground">{entry.badgeCount} badge{entry.badgeCount > 1 ? 's' : ''}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {entry.badgeCount} badge{entry.badgeCount > 1 ? "s" : ""}
+                  </p>
                 )}
               </div>
 
@@ -172,16 +198,24 @@ export function Leaderboard() {
 
               {/* Trend */}
               <div className="w-5 flex-shrink-0">
-                {entry.trend === 'up' && <TrendingUp className="h-4 w-4 text-green-500" />}
-                {entry.trend === 'down' && <TrendingDown className="h-4 w-4 text-red-500" />}
-                {entry.trend === 'stable' && <Minus className="h-4 w-4 text-muted-foreground" />}
+                {entry.trend === "up" && (
+                  <TrendingUp className="h-4 w-4 text-green-500" />
+                )}
+                {entry.trend === "down" && (
+                  <TrendingDown className="h-4 w-4 text-red-500" />
+                )}
+                {entry.trend === "stable" && (
+                  <Minus className="h-4 w-4 text-muted-foreground" />
+                )}
               </div>
             </div>
           ))}
         </div>
       )}
 
-      <p className="text-xs text-muted-foreground text-center">Updates in real-time based on your actions</p>
+      <p className="text-xs text-muted-foreground text-center">
+        Updates in real-time based on your actions
+      </p>
     </div>
   );
 }

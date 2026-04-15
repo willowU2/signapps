@@ -1,21 +1,20 @@
-'use client';
-import { SpinnerInfinity } from 'spinners-react';
+"use client";
+import { SpinnerInfinity } from "spinners-react";
 
-
-import { useEffect, useCallback } from 'react';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { authApi } from '@/lib/api';
-import { useAuthStore } from '@/lib/store';
-import { SessionTimeoutWarning } from './session-timeout-warning';
+import { useEffect, useCallback } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { authApi } from "@/lib/api";
+import { useAuthStore } from "@/lib/store";
+import { SessionTimeoutWarning } from "./session-timeout-warning";
 
 // Routes that don't require authentication
-const publicRoutes = ['/login', '/login/verify'];
+const publicRoutes = ["/login", "/login/verify"];
 
 /**
  * Validate that a redirect URL is safe (relative path only, no protocol-relative URLs).
  */
 function isValidRedirect(url: string): boolean {
-  return url.startsWith('/') && !url.startsWith('//');
+  return url.startsWith("/") && !url.startsWith("//");
 }
 
 interface AuthProviderProps {
@@ -37,9 +36,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Sync auth state to cookie for middleware
   const syncAuthCookie = useCallback((authenticated: boolean) => {
-    if (typeof document !== 'undefined') {
-      const value = JSON.stringify({ state: { isAuthenticated: authenticated } });
-      const secure = window.location.protocol === 'https:' ? ' Secure;' : '';
+    if (typeof document !== "undefined") {
+      const value = JSON.stringify({
+        state: { isAuthenticated: authenticated },
+      });
+      const secure = window.location.protocol === "https:" ? " Secure;" : "";
       document.cookie = `auth-storage=${encodeURIComponent(value)}; path=/; max-age=31536000;${secure} SameSite=Lax`;
     }
   }, []);
@@ -47,7 +48,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // Initialize auth state on mount
   useEffect(() => {
     const initAuth = async () => {
-      const authStorageStr = localStorage.getItem('auth-storage');
+      const authStorageStr = localStorage.getItem("auth-storage");
       let isPresumedAuthenticated = false;
 
       if (authStorageStr) {
@@ -55,7 +56,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           const authData = JSON.parse(authStorageStr);
           isPresumedAuthenticated = authData?.state?.isAuthenticated === true;
         } catch {
-            isPresumedAuthenticated = false;
+          isPresumedAuthenticated = false;
         }
       }
 
@@ -74,7 +75,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
         // Distinguish between auth failure (401) and service unavailability.
         // If the identity service is unreachable (network error / 5xx), trust the
         // persisted auth state so the app remains usable offline / in E2E tests.
-        const status = (err as { response?: { status?: number } })?.response?.status;
+        const status = (err as { response?: { status?: number } })?.response
+          ?.status;
         if (status === 401 || status === 403) {
           // Token genuinely expired or invalid — clear auth state
           logout();
@@ -82,7 +84,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
         } else {
           // Network error or service down — keep the existing auth state
           // so the user is not kicked out unnecessarily.
-          const authData = JSON.parse(localStorage.getItem('auth-storage') || '{}');
+          const authData = JSON.parse(
+            localStorage.getItem("auth-storage") || "{}",
+          );
           const user = authData?.state?.user;
           if (user) {
             setUser(user);
@@ -101,26 +105,35 @@ export function AuthProvider({ children }: AuthProviderProps) {
   useEffect(() => {
     if (isLoading) return;
 
-    const isPublicRoute = publicRoutes.some((route) => pathname.startsWith(route));
+    const isPublicRoute = publicRoutes.some((route) =>
+      pathname.startsWith(route),
+    );
 
     if (!isAuthenticated && !isPublicRoute) {
       // Store the intended destination
-      if (pathname !== '/') {
+      if (pathname !== "/") {
         setRedirectAfterLogin(pathname);
       }
-      router.push('/login');
+      router.push("/login");
     }
 
     // Handle redirect parameter after login
-    if (isAuthenticated && pathname === '/login') {
-      const redirect = searchParams.get('redirect');
+    if (isAuthenticated && pathname === "/login") {
+      const redirect = searchParams.get("redirect");
       if (redirect && isValidRedirect(redirect)) {
         router.push(redirect);
       } else {
-        router.push('/dashboard');
+        router.push("/dashboard");
       }
     }
-  }, [isAuthenticated, isLoading, pathname, router, searchParams, setRedirectAfterLogin]);
+  }, [
+    isAuthenticated,
+    isLoading,
+    pathname,
+    router,
+    searchParams,
+    setRedirectAfterLogin,
+  ]);
 
   // Show loading state while initializing
   if (isLoading && !publicRoutes.some((route) => pathname.startsWith(route))) {
@@ -130,7 +143,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
         suppressHydrationWarning
       >
         <div className="flex items-center gap-2">
-          <SpinnerInfinity size={32} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} />
+          <SpinnerInfinity
+            size={32}
+            secondaryColor="rgba(128,128,128,0.2)"
+            color="currentColor"
+            speed={120}
+          />
           <span>Chargement...</span>
         </div>
       </div>

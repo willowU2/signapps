@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * Quick Filters Component
@@ -6,7 +6,7 @@
  * Pre-defined filter buttons for common scheduling queries.
  */
 
-import * as React from 'react';
+import * as React from "react";
 import {
   addDays,
   startOfDay,
@@ -19,7 +19,7 @@ import {
   isTomorrow,
   isThisWeek,
   isThisMonth,
-} from 'date-fns';
+} from "date-fns";
 import {
   Calendar,
   Clock,
@@ -31,24 +31,24 @@ import {
   Filter,
   X,
   Sparkles,
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from '@/components/ui/popover';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Label } from '@/components/ui/label';
+} from "@/components/ui/popover";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import type {
   SchedulingFilters,
   BlockType,
   BlockStatus,
   Priority,
-} from '@/lib/scheduling/types/scheduling';
+} from "@/lib/scheduling/types/scheduling";
 
 // ============================================================================
 // Types
@@ -83,61 +83,65 @@ interface QuickFilterPreset {
 
 const QUICK_FILTER_PRESETS: QuickFilterPreset[] = [
   {
-    id: 'all',
-    label: 'Tout',
+    id: "all",
+    label: "Tout",
     icon: Sparkles,
     filters: {},
   },
   {
-    id: 'today',
-    label: 'Aujourd\'hui',
+    id: "today",
+    label: "Aujourd'hui",
     icon: Calendar,
     filters: {}, // Will be computed dynamically
-    color: 'blue',
+    color: "blue",
   },
   {
-    id: 'this-week',
-    label: 'Cette semaine',
+    id: "this-week",
+    label: "Cette semaine",
     icon: Calendar,
     filters: {},
-    color: 'purple',
+    color: "purple",
   },
   {
-    id: 'urgent',
-    label: 'Urgent',
+    id: "urgent",
+    label: "Urgent",
     icon: AlertTriangle,
     filters: {
-      priorities: ['urgent', 'high'],
+      priorities: ["urgent", "high"],
     },
-    color: 'red',
+    color: "red",
   },
   {
-    id: 'my-events',
-    label: 'Mes événements',
+    id: "my-events",
+    label: "Mes événements",
     icon: User,
     filters: {}, // Will filter by current user
-    color: 'green',
+    color: "green",
   },
 ];
 
 const TYPE_OPTIONS: Array<{ type: BlockType; label: string }> = [
-  { type: 'event', label: 'Événements' },
-  { type: 'task', label: 'Tâches' },
-  { type: 'booking', label: 'Réservations' },
+  { type: "event", label: "Événements" },
+  { type: "task", label: "Tâches" },
+  { type: "booking", label: "Réservations" },
 ];
 
 const STATUS_OPTIONS: Array<{ status: BlockStatus; label: string }> = [
-  { status: 'confirmed', label: 'Confirmé' },
-  { status: 'tentative', label: 'Provisoire' },
-  { status: 'cancelled', label: 'Annulé' },
-  { status: 'completed', label: 'Terminé' },
+  { status: "confirmed", label: "Confirmé" },
+  { status: "tentative", label: "Provisoire" },
+  { status: "cancelled", label: "Annulé" },
+  { status: "completed", label: "Terminé" },
 ];
 
-const PRIORITY_OPTIONS: Array<{ priority: Priority; label: string; color: string }> = [
-  { priority: 'urgent', label: 'Urgent', color: 'text-red-600' },
-  { priority: 'high', label: 'Haute', color: 'text-orange-600' },
-  { priority: 'medium', label: 'Moyenne', color: 'text-blue-600' },
-  { priority: 'low', label: 'Basse', color: 'text-muted-foreground' },
+const PRIORITY_OPTIONS: Array<{
+  priority: Priority;
+  label: string;
+  color: string;
+}> = [
+  { priority: "urgent", label: "Urgent", color: "text-red-600" },
+  { priority: "high", label: "Haute", color: "text-orange-600" },
+  { priority: "medium", label: "Moyenne", color: "text-blue-600" },
+  { priority: "low", label: "Basse", color: "text-muted-foreground" },
 ];
 
 // ============================================================================
@@ -155,18 +159,26 @@ export function QuickFilters({
   // Get the currently active preset
   const activePreset = React.useMemo(() => {
     // Check if any preset matches the current filters
-    if (!filters.types?.length && !filters.statuses?.length && !filters.priorities?.length && !filters.tags?.length) {
-      return 'all';
+    if (
+      !filters.types?.length &&
+      !filters.statuses?.length &&
+      !filters.priorities?.length &&
+      !filters.tags?.length
+    ) {
+      return "all";
     }
-    if (filters.priorities?.includes('urgent') || filters.priorities?.includes('high')) {
-      return 'urgent';
+    if (
+      filters.priorities?.includes("urgent") ||
+      filters.priorities?.includes("high")
+    ) {
+      return "urgent";
     }
     return null;
   }, [filters]);
 
   // Apply a preset
   const applyPreset = (preset: QuickFilterPreset) => {
-    if (preset.id === 'all') {
+    if (preset.id === "all") {
       onFiltersChange({
         showWeekends: filters.showWeekends,
         showAllDay: filters.showAllDay,
@@ -261,22 +273,30 @@ export function QuickFilters({
   }
 
   return (
-    <div className={cn('space-y-2', className)}>
+    <div className={cn("space-y-2", className)}>
       {/* Quick preset buttons */}
       <ScrollArea className="w-full">
         <div className="flex items-center gap-2 pb-2">
           {QUICK_FILTER_PRESETS.map((preset) => (
             <Button
               key={preset.id}
-              variant={activePreset === preset.id ? 'default' : 'outline'}
+              variant={activePreset === preset.id ? "default" : "outline"}
               size="sm"
               onClick={() => applyPreset(preset)}
               className={cn(
-                'shrink-0',
-                activePreset === preset.id && preset.color === 'red' && 'bg-red-600 hover:bg-red-700',
-                activePreset === preset.id && preset.color === 'blue' && 'bg-blue-600 hover:bg-blue-700',
-                activePreset === preset.id && preset.color === 'purple' && 'bg-purple-600 hover:bg-purple-700',
-                activePreset === preset.id && preset.color === 'green' && 'bg-green-600 hover:bg-green-700'
+                "shrink-0",
+                activePreset === preset.id &&
+                  preset.color === "red" &&
+                  "bg-red-600 hover:bg-red-700",
+                activePreset === preset.id &&
+                  preset.color === "blue" &&
+                  "bg-blue-600 hover:bg-blue-700",
+                activePreset === preset.id &&
+                  preset.color === "purple" &&
+                  "bg-purple-600 hover:bg-purple-700",
+                activePreset === preset.id &&
+                  preset.color === "green" &&
+                  "bg-green-600 hover:bg-green-700",
               )}
             >
               <preset.icon className="h-3 w-3 mr-1.5" />
@@ -301,12 +321,16 @@ export function QuickFilters({
               <div className="space-y-4">
                 {/* Types */}
                 <div className="space-y-2">
-                  <Label className="text-xs font-medium text-muted-foreground">Type</Label>
+                  <Label className="text-xs font-medium text-muted-foreground">
+                    Type
+                  </Label>
                   <div className="flex flex-wrap gap-1.5">
                     {TYPE_OPTIONS.map(({ type, label }) => (
                       <Button
                         key={type}
-                        variant={filters.types?.includes(type) ? 'default' : 'outline'}
+                        variant={
+                          filters.types?.includes(type) ? "default" : "outline"
+                        }
                         size="sm"
                         className="h-7 text-xs"
                         onClick={() => toggleType(type)}
@@ -319,12 +343,18 @@ export function QuickFilters({
 
                 {/* Status */}
                 <div className="space-y-2">
-                  <Label className="text-xs font-medium text-muted-foreground">Statut</Label>
+                  <Label className="text-xs font-medium text-muted-foreground">
+                    Statut
+                  </Label>
                   <div className="flex flex-wrap gap-1.5">
                     {STATUS_OPTIONS.map(({ status, label }) => (
                       <Button
                         key={status}
-                        variant={filters.statuses?.includes(status) ? 'default' : 'outline'}
+                        variant={
+                          filters.statuses?.includes(status)
+                            ? "default"
+                            : "outline"
+                        }
                         size="sm"
                         className="h-7 text-xs"
                         onClick={() => toggleStatus(status)}
@@ -337,14 +367,23 @@ export function QuickFilters({
 
                 {/* Priority */}
                 <div className="space-y-2">
-                  <Label className="text-xs font-medium text-muted-foreground">Priorité</Label>
+                  <Label className="text-xs font-medium text-muted-foreground">
+                    Priorité
+                  </Label>
                   <div className="flex flex-wrap gap-1.5">
                     {PRIORITY_OPTIONS.map(({ priority, label, color }) => (
                       <Button
                         key={priority}
-                        variant={filters.priorities?.includes(priority) ? 'default' : 'outline'}
+                        variant={
+                          filters.priorities?.includes(priority)
+                            ? "default"
+                            : "outline"
+                        }
                         size="sm"
-                        className={cn('h-7 text-xs', !filters.priorities?.includes(priority) && color)}
+                        className={cn(
+                          "h-7 text-xs",
+                          !filters.priorities?.includes(priority) && color,
+                        )}
                         onClick={() => togglePriority(priority)}
                       >
                         {label}
@@ -356,13 +395,18 @@ export function QuickFilters({
                 {/* Calendars */}
                 {calendars.length > 0 && (
                   <div className="space-y-2">
-                    <Label className="text-xs font-medium text-muted-foreground">Calendriers</Label>
+                    <Label className="text-xs font-medium text-muted-foreground">
+                      Calendriers
+                    </Label>
                     <div className="space-y-1.5">
                       {calendars.map((cal) => (
                         <div key={cal.id} className="flex items-center gap-2">
                           <Checkbox
                             id={`cal-${cal.id}`}
-                            checked={!filters.calendarIds?.length || filters.calendarIds.includes(cal.id)}
+                            checked={
+                              !filters.calendarIds?.length ||
+                              filters.calendarIds.includes(cal.id)
+                            }
                             onCheckedChange={() => toggleCalendar(cal.id)}
                           />
                           <div
@@ -381,12 +425,16 @@ export function QuickFilters({
                 {/* Tags */}
                 {availableTags.length > 0 && (
                   <div className="space-y-2">
-                    <Label className="text-xs font-medium text-muted-foreground">Tags</Label>
+                    <Label className="text-xs font-medium text-muted-foreground">
+                      Tags
+                    </Label>
                     <div className="flex flex-wrap gap-1.5">
                       {availableTags.slice(0, 10).map((tag) => (
                         <Badge
                           key={tag}
-                          variant={filters.tags?.includes(tag) ? 'default' : 'outline'}
+                          variant={
+                            filters.tags?.includes(tag) ? "default" : "outline"
+                          }
                           className="cursor-pointer"
                           onClick={() => toggleTag(tag)}
                         >
@@ -487,7 +535,7 @@ function CompactFilters({
     (filters.tags?.length || 0);
 
   return (
-    <div className={cn('flex items-center gap-2', className)}>
+    <div className={cn("flex items-center gap-2", className)}>
       <Popover>
         <PopoverTrigger asChild>
           <Button variant="outline" size="sm" className="h-8">
@@ -509,7 +557,9 @@ function CompactFilters({
                 {TYPE_OPTIONS.map(({ type, label }) => (
                   <Badge
                     key={type}
-                    variant={filters.types?.includes(type) ? 'default' : 'outline'}
+                    variant={
+                      filters.types?.includes(type) ? "default" : "outline"
+                    }
                     className="cursor-pointer text-xs"
                     onClick={() => {
                       const types = filters.types || [];
@@ -534,7 +584,11 @@ function CompactFilters({
                 {PRIORITY_OPTIONS.map(({ priority, label }) => (
                   <Badge
                     key={priority}
-                    variant={filters.priorities?.includes(priority) ? 'default' : 'outline'}
+                    variant={
+                      filters.priorities?.includes(priority)
+                        ? "default"
+                        : "outline"
+                    }
                     className="cursor-pointer text-xs"
                     onClick={() => {
                       const priorities = filters.priorities || [];

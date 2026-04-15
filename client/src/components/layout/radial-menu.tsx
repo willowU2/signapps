@@ -1,10 +1,36 @@
 "use client";
 
-import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import React, {
+  useState,
+  useRef,
+  useEffect,
+  useCallback,
+  useMemo,
+} from "react";
 import {
-  Plus, X, FileText, Mail, Calendar, CheckSquare, Bot, Search, Settings,
-  FolderPlus, UserPlus, BarChart3, FileSpreadsheet, Presentation, FormInput,
-  MessageSquare, Video, Megaphone, Ticket, Package, Globe, PenLine, BookOpen
+  Plus,
+  X,
+  FileText,
+  Mail,
+  Calendar,
+  CheckSquare,
+  Bot,
+  Search,
+  Settings,
+  FolderPlus,
+  UserPlus,
+  BarChart3,
+  FileSpreadsheet,
+  Presentation,
+  FormInput,
+  MessageSquare,
+  Video,
+  Megaphone,
+  Ticket,
+  Package,
+  Globe,
+  PenLine,
+  BookOpen,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -30,10 +56,14 @@ function loadConfig(): string[] | null {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     return raw ? JSON.parse(raw) : null;
-  } catch { return null; }
+  } catch {
+    return null;
+  }
 }
 function saveConfig(ids: string[]) {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(ids)); } catch {}
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(ids));
+  } catch {}
 }
 
 // ─── Component ───────────────────────────────────────────────────────────────
@@ -43,14 +73,18 @@ export function RadialMenu() {
   const [showCustomize, setShowCustomize] = useState(false);
   const [composeOpen, setComposeOpen] = useState(false);
   const [scrollOffset, setScrollOffset] = useState(0);
-  const [longPressTimer, setLongPressTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
+  const [longPressTimer, setLongPressTimer] = useState<ReturnType<
+    typeof setTimeout
+  > | null>(null);
   const [enabledItems, setEnabledItems] = useState<string[] | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const { setActiveRightWidget, setRightSidebarOpen } = useUIStore();
   const { setOpen: openCommandBar } = useCommandBarStore();
 
-  useEffect(() => { setEnabledItems(loadConfig()); }, []);
+  useEffect(() => {
+    setEnabledItems(loadConfig());
+  }, []);
 
   const toggleAI = useCallback(() => {
     setActiveRightWidget("chat");
@@ -59,38 +93,161 @@ export function RadialMenu() {
 
   // ─── All possible "create new" actions ───────────────────────────────────
 
-  const ALL_ITEMS: RadialMenuItem[] = useMemo(() => [
-    { id: "doc", icon: <FileText />, label: "Nouveau Document", color: "bg-blue-500", action: () => router.push("/docs?new=true") },
-    { id: "mail", icon: <Mail />, label: "Nouveau Email", color: "bg-amber-500", action: () => setComposeOpen(true) },
-    { id: "event", icon: <Calendar />, label: "Nouvel Événement", color: "bg-green-500", action: () => router.push("/cal?new=true") },
-    { id: "task", icon: <CheckSquare />, label: "Nouvelle Tâche", color: "bg-purple-500", action: () => router.push("/tasks?new=true") },
-    { id: "folder", icon: <FolderPlus />, label: "Nouveau Dossier", color: "bg-teal-500", action: () => router.push("/drive?new=folder") },
-    { id: "contact", icon: <UserPlus />, label: "Nouveau Contact", color: "bg-pink-500", action: () => router.push("/contacts?new=true") },
-    { id: "sheet", icon: <FileSpreadsheet />, label: "Nouvelle Feuille", color: "bg-emerald-500", action: () => router.push("/sheets?new=true") },
-    { id: "slide", icon: <Presentation />, label: "Nouvelle Présentation", color: "bg-orange-500", action: () => router.push("/slides?new=true") },
-    { id: "form", icon: <FormInput />, label: "Nouveau Formulaire", color: "bg-sky-500", action: () => router.push("/forms?new=true") },
-    { id: "channel", icon: <MessageSquare />, label: "Nouveau Canal", color: "bg-violet-500", action: () => router.push("/chat?new=true") },
-    { id: "meeting", icon: <Video />, label: "Nouvelle Réunion", color: "bg-rose-500", action: () => router.push("/meet?new=true") },
-    { id: "announce", icon: <Megaphone />, label: "Nouvelle Annonce", color: "bg-yellow-500", action: () => router.push("/comms/announcements?new=true") },
-    { id: "ticket", icon: <Ticket />, label: "Nouveau Ticket", color: "bg-red-500", action: () => router.push("/it-assets/tickets?new=true") },
-    { id: "deal", icon: <BarChart3 />, label: "Nouveau Deal", color: "bg-lime-500", action: () => router.push("/crm?new=deal") },
-    { id: "wiki", icon: <BookOpen />, label: "Nouvelle Page Wiki", color: "bg-cyan-600", action: () => router.push("/wiki?new=true") },
-    { id: "social", icon: <Globe />, label: "Nouveau Post", color: "bg-fuchsia-500", action: () => router.push("/social?compose=true") },
-    { id: "whiteboard", icon: <PenLine />, label: "Nouveau Tableau", color: "bg-stone-500", action: () => router.push("/whiteboard") },
-    { id: "ai", icon: <Bot />, label: "Nouveau Chat AI", color: "bg-cyan-500", action: toggleAI },
-    { id: "search", icon: <Search />, label: "Rechercher", color: "bg-indigo-500", action: () => openCommandBar(true) },
-    { id: "settings", icon: <Settings />, label: "Paramètres", color: "bg-gray-500", action: () => router.push("/settings") },
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  ], [toggleAI, openCommandBar]);
+  const ALL_ITEMS: RadialMenuItem[] = useMemo(
+    () => [
+      {
+        id: "doc",
+        icon: <FileText />,
+        label: "Nouveau Document",
+        color: "bg-blue-500",
+        action: () => router.push("/docs?new=true"),
+      },
+      {
+        id: "mail",
+        icon: <Mail />,
+        label: "Nouveau Email",
+        color: "bg-amber-500",
+        action: () => setComposeOpen(true),
+      },
+      {
+        id: "event",
+        icon: <Calendar />,
+        label: "Nouvel Événement",
+        color: "bg-green-500",
+        action: () => router.push("/cal?new=true"),
+      },
+      {
+        id: "task",
+        icon: <CheckSquare />,
+        label: "Nouvelle Tâche",
+        color: "bg-purple-500",
+        action: () => router.push("/tasks?new=true"),
+      },
+      {
+        id: "folder",
+        icon: <FolderPlus />,
+        label: "Nouveau Dossier",
+        color: "bg-teal-500",
+        action: () => router.push("/drive?new=folder"),
+      },
+      {
+        id: "contact",
+        icon: <UserPlus />,
+        label: "Nouveau Contact",
+        color: "bg-pink-500",
+        action: () => router.push("/contacts?new=true"),
+      },
+      {
+        id: "sheet",
+        icon: <FileSpreadsheet />,
+        label: "Nouvelle Feuille",
+        color: "bg-emerald-500",
+        action: () => router.push("/sheets?new=true"),
+      },
+      {
+        id: "slide",
+        icon: <Presentation />,
+        label: "Nouvelle Présentation",
+        color: "bg-orange-500",
+        action: () => router.push("/slides?new=true"),
+      },
+      {
+        id: "form",
+        icon: <FormInput />,
+        label: "Nouveau Formulaire",
+        color: "bg-sky-500",
+        action: () => router.push("/forms?new=true"),
+      },
+      {
+        id: "channel",
+        icon: <MessageSquare />,
+        label: "Nouveau Canal",
+        color: "bg-violet-500",
+        action: () => router.push("/chat?new=true"),
+      },
+      {
+        id: "meeting",
+        icon: <Video />,
+        label: "Nouvelle Réunion",
+        color: "bg-rose-500",
+        action: () => router.push("/meet?new=true"),
+      },
+      {
+        id: "announce",
+        icon: <Megaphone />,
+        label: "Nouvelle Annonce",
+        color: "bg-yellow-500",
+        action: () => router.push("/comms/announcements?new=true"),
+      },
+      {
+        id: "ticket",
+        icon: <Ticket />,
+        label: "Nouveau Ticket",
+        color: "bg-red-500",
+        action: () => router.push("/it-assets/tickets?new=true"),
+      },
+      {
+        id: "deal",
+        icon: <BarChart3 />,
+        label: "Nouveau Deal",
+        color: "bg-lime-500",
+        action: () => router.push("/crm?new=deal"),
+      },
+      {
+        id: "wiki",
+        icon: <BookOpen />,
+        label: "Nouvelle Page Wiki",
+        color: "bg-cyan-600",
+        action: () => router.push("/wiki?new=true"),
+      },
+      {
+        id: "social",
+        icon: <Globe />,
+        label: "Nouveau Post",
+        color: "bg-fuchsia-500",
+        action: () => router.push("/social?compose=true"),
+      },
+      {
+        id: "whiteboard",
+        icon: <PenLine />,
+        label: "Nouveau Tableau",
+        color: "bg-stone-500",
+        action: () => router.push("/whiteboard"),
+      },
+      {
+        id: "ai",
+        icon: <Bot />,
+        label: "Nouveau Chat AI",
+        color: "bg-cyan-500",
+        action: toggleAI,
+      },
+      {
+        id: "search",
+        icon: <Search />,
+        label: "Rechercher",
+        color: "bg-indigo-500",
+        action: () => openCommandBar(true),
+      },
+      {
+        id: "settings",
+        icon: <Settings />,
+        label: "Paramètres",
+        color: "bg-gray-500",
+        action: () => router.push("/settings"),
+      },
+    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [toggleAI, openCommandBar],
+  );
 
   // Filter by enabled items (customization)
   const activeItems = useMemo(() => {
     if (!enabledItems) return ALL_ITEMS;
     const ordered = enabledItems
-      .map(id => ALL_ITEMS.find(i => i.id === id))
+      .map((id) => ALL_ITEMS.find((i) => i.id === id))
       .filter(Boolean) as RadialMenuItem[];
     // Add any new items not yet in config
-    const missing = ALL_ITEMS.filter(i => !enabledItems.includes(i.id));
+    const missing = ALL_ITEMS.filter((i) => !enabledItems.includes(i.id));
     return [...ordered, ...missing];
   }, [enabledItems, ALL_ITEMS]);
 
@@ -101,44 +258,54 @@ export function RadialMenu() {
   // scrollOffset is the index of the first visible item
   const maxOffset = Math.max(0, totalItems - VISIBLE_SLOTS);
   const clampedOffset = Math.min(Math.max(0, scrollOffset), maxOffset);
-  const visibleItems = activeItems.slice(clampedOffset, clampedOffset + VISIBLE_SLOTS);
+  const visibleItems = activeItems.slice(
+    clampedOffset,
+    clampedOffset + VISIBLE_SLOTS,
+  );
 
   // Mouse position determines scroll direction
-  const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    if (!isOpen || !containerRef.current) return;
-    const rect = containerRef.current.getBoundingClientRect();
-    // FAB center
-    const fabCenterX = rect.right - 28; // 14px half of w-14
-    const fabCenterY = rect.bottom - 28;
-    // Mouse angle relative to FAB center
-    const dx = e.clientX - fabCenterX;
-    const dy = e.clientY - fabCenterY;
-    const angle = Math.atan2(dy, dx) * (180 / Math.PI);
-    // If mouse is near the "left" edge of the arc (< -160°), scroll up (show earlier items)
-    // If mouse is near the "top" edge of the arc (> -100°), scroll down (show later items)
-    if (angle < -160 && clampedOffset > 0) {
-      setScrollOffset(prev => Math.max(0, prev - 1));
-    } else if (angle > -100 && angle < -80 && clampedOffset < maxOffset) {
-      setScrollOffset(prev => Math.min(maxOffset, prev + 1));
-    }
-  }, [isOpen, clampedOffset, maxOffset]);
+  const handleMouseMove = useCallback(
+    (e: React.MouseEvent) => {
+      if (!isOpen || !containerRef.current) return;
+      const rect = containerRef.current.getBoundingClientRect();
+      // FAB center
+      const fabCenterX = rect.right - 28; // 14px half of w-14
+      const fabCenterY = rect.bottom - 28;
+      // Mouse angle relative to FAB center
+      const dx = e.clientX - fabCenterX;
+      const dy = e.clientY - fabCenterY;
+      const angle = Math.atan2(dy, dx) * (180 / Math.PI);
+      // If mouse is near the "left" edge of the arc (< -160°), scroll up (show earlier items)
+      // If mouse is near the "top" edge of the arc (> -100°), scroll down (show later items)
+      if (angle < -160 && clampedOffset > 0) {
+        setScrollOffset((prev) => Math.max(0, prev - 1));
+      } else if (angle > -100 && angle < -80 && clampedOffset < maxOffset) {
+        setScrollOffset((prev) => Math.min(maxOffset, prev + 1));
+      }
+    },
+    [isOpen, clampedOffset, maxOffset],
+  );
 
   // Mouse wheel scroll
-  const handleWheel = useCallback((e: React.WheelEvent) => {
-    if (!isOpen) return;
-    e.preventDefault();
-    setScrollOffset(prev => {
-      const next = prev + (e.deltaY > 0 ? 1 : -1);
-      return Math.min(Math.max(0, next), maxOffset);
-    });
-  }, [isOpen, maxOffset]);
+  const handleWheel = useCallback(
+    (e: React.WheelEvent) => {
+      if (!isOpen) return;
+      e.preventDefault();
+      setScrollOffset((prev) => {
+        const next = prev + (e.deltaY > 0 ? 1 : -1);
+        return Math.min(Math.max(0, next), maxOffset);
+      });
+    },
+    [isOpen, maxOffset],
+  );
 
   // ─── Arc geometry ────────────────────────────────────────────────────────
 
   const radius = 130;
   const startAngle = -180; // left
-  const endAngle = -90;    // top
-  const angleStep = VISIBLE_SLOTS > 1 ? (endAngle - startAngle) / (VISIBLE_SLOTS - 1) : 0;
+  const endAngle = -90; // top
+  const angleStep =
+    VISIBLE_SLOTS > 1 ? (endAngle - startAngle) / (VISIBLE_SLOTS - 1) : 0;
 
   // Size scaling: center item is biggest, edges are smaller
   const getScale = (index: number) => {
@@ -152,7 +319,10 @@ export function RadialMenu() {
   useEffect(() => {
     if (!isOpen && !showCustomize) return;
     const handler = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(e.target as Node)
+      ) {
         setIsOpen(false);
         setShowCustomize(false);
       }
@@ -164,38 +334,53 @@ export function RadialMenu() {
   useEffect(() => {
     if (!isOpen && !showCustomize) return;
     const handler = (e: KeyboardEvent) => {
-      if (e.key === "Escape") { setIsOpen(false); setShowCustomize(false); }
+      if (e.key === "Escape") {
+        setIsOpen(false);
+        setShowCustomize(false);
+      }
     };
     document.addEventListener("keydown", handler);
     return () => document.removeEventListener("keydown", handler);
   }, [isOpen, showCustomize]);
 
   // Reset scroll when opening
-  useEffect(() => { if (isOpen) setScrollOffset(0); }, [isOpen]);
+  useEffect(() => {
+    if (isOpen) setScrollOffset(0);
+  }, [isOpen]);
 
   const handleFabPointerDown = () => {
-    const timer = setTimeout(() => { setShowCustomize(true); setIsOpen(false); }, 600);
+    const timer = setTimeout(() => {
+      setShowCustomize(true);
+      setIsOpen(false);
+    }, 600);
     setLongPressTimer(timer);
   };
   const handleFabPointerUp = () => {
-    if (longPressTimer) { clearTimeout(longPressTimer); setLongPressTimer(null); }
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      setLongPressTimer(null);
+    }
   };
 
   // ─── Customization ──────────────────────────────────────────────────────
 
   const toggleItem = (id: string) => {
-    const current = enabledItems ?? ALL_ITEMS.map(i => i.id);
-    const next = current.includes(id) ? current.filter(x => x !== id) : [...current, id];
+    const current = enabledItems ?? ALL_ITEMS.map((i) => i.id);
+    const next = current.includes(id)
+      ? current.filter((x) => x !== id)
+      : [...current, id];
     setEnabledItems(next);
     saveConfig(next);
   };
   const moveItem = (id: string, dir: "up" | "down") => {
-    const current = enabledItems ?? ALL_ITEMS.map(i => i.id);
+    const current = enabledItems ?? ALL_ITEMS.map((i) => i.id);
     const idx = current.indexOf(id);
     if (idx === -1) return;
     const next = [...current];
-    if (dir === "up" && idx > 0) [next[idx - 1], next[idx]] = [next[idx], next[idx - 1]];
-    else if (dir === "down" && idx < next.length - 1) [next[idx + 1], next[idx]] = [next[idx], next[idx + 1]];
+    if (dir === "up" && idx > 0)
+      [next[idx - 1], next[idx]] = [next[idx], next[idx - 1]];
+    else if (dir === "down" && idx < next.length - 1)
+      [next[idx + 1], next[idx]] = [next[idx], next[idx + 1]];
     setEnabledItems(next);
     saveConfig(next);
   };
@@ -220,14 +405,22 @@ export function RadialMenu() {
 
         {/* Scroll indicators */}
         {isOpen && clampedOffset > 0 && (
-          <div className="absolute z-[101] text-muted-foreground text-[10px]"
-            style={{ transform: `translate(${Math.cos(-180 * Math.PI / 180) * (radius + 30)}px, ${Math.sin(-180 * Math.PI / 180) * (radius + 30)}px)` }}>
+          <div
+            className="absolute z-[101] text-muted-foreground text-[10px]"
+            style={{
+              transform: `translate(${Math.cos((-180 * Math.PI) / 180) * (radius + 30)}px, ${Math.sin((-180 * Math.PI) / 180) * (radius + 30)}px)`,
+            }}
+          >
             ← plus
           </div>
         )}
         {isOpen && clampedOffset < maxOffset && (
-          <div className="absolute z-[101] text-muted-foreground text-[10px]"
-            style={{ transform: `translate(${Math.cos(-90 * Math.PI / 180) * (radius + 30)}px, ${Math.sin(-90 * Math.PI / 180) * (radius + 30)}px)` }}>
+          <div
+            className="absolute z-[101] text-muted-foreground text-[10px]"
+            style={{
+              transform: `translate(${Math.cos((-90 * Math.PI) / 180) * (radius + 30)}px, ${Math.sin((-90 * Math.PI) / 180) * (radius + 30)}px)`,
+            }}
+          >
             ↑ plus
           </div>
         )}
@@ -262,10 +455,13 @@ export function RadialMenu() {
                 }}
               >
                 <button
-                  onClick={() => { item.action(); setIsOpen(false); }}
+                  onClick={() => {
+                    item.action();
+                    setIsOpen(false);
+                  }}
                   className={cn(
                     "relative rounded-full flex items-center justify-center text-white shadow-lg hover:shadow-xl hover:scale-110 active:scale-90 transition-all duration-200",
-                    item.color
+                    item.color,
                   )}
                   style={{ width: size, height: size }}
                   title={item.label}
@@ -284,94 +480,157 @@ export function RadialMenu() {
             onPointerDown={handleFabPointerDown}
             onPointerUp={handleFabPointerUp}
             onPointerLeave={handleFabPointerUp}
-            onContextMenu={(e) => { e.preventDefault(); setShowCustomize(true); setIsOpen(false); }}
+            onContextMenu={(e) => {
+              e.preventDefault();
+              setShowCustomize(true);
+              setIsOpen(false);
+            }}
             className={cn(
               "relative z-10 w-14 h-14 rounded-full flex items-center justify-center text-white shadow-xl transition-all duration-300",
-              isOpen ? "bg-destructive hover:bg-destructive/90" : "bg-primary hover:bg-primary/90"
+              isOpen
+                ? "bg-destructive hover:bg-destructive/90"
+                : "bg-primary hover:bg-primary/90",
             )}
-            title={isOpen ? "Fermer" : "Actions rapides (clic long pour personnaliser)"}
+            title={
+              isOpen
+                ? "Fermer"
+                : "Actions rapides (clic long pour personnaliser)"
+            }
           >
-            <div className={cn("transition-transform duration-300", isOpen ? "rotate-45" : "rotate-0")}>
-              {isOpen ? <X className="h-6 w-6" /> : <Plus className="h-6 w-6" />}
+            <div
+              className={cn(
+                "transition-transform duration-300",
+                isOpen ? "rotate-45" : "rotate-0",
+              )}
+            >
+              {isOpen ? (
+                <X className="h-6 w-6" />
+              ) : (
+                <Plus className="h-6 w-6" />
+              )}
             </div>
           </button>
         </div>
 
         {/* Label bar below FAB: prev << CURRENT >> next */}
-        {isOpen && (() => {
-          const centerIdx = Math.floor((VISIBLE_SLOTS - 1) / 2);
-          const globalCenter = clampedOffset + centerIdx;
-          const prev = globalCenter > 0 ? activeItems[globalCenter - 1] : null;
-          const curr = activeItems[globalCenter];
-          const next = globalCenter < totalItems - 1 ? activeItems[globalCenter + 1] : null;
-          return (
-            <div
-              className="absolute z-[110] select-none pointer-events-none rounded-2xl shadow-2xl overflow-hidden"
-              style={{
-                bottom: radius + 40,
-                right: -10,
-                transition: "all 300ms cubic-bezier(0.16, 1, 0.3, 1)",
-              }}
-            >
-              {/* Background layer with blur — separate from text */}
-              <div className="absolute inset-0 bg-background/75 backdrop-blur-md border border-border/30 rounded-2xl" />
-              {/* Text layer — crisp, no blur */}
-              <div className="relative flex items-center gap-2 px-5 py-2.5">
-                {prev && (
-                  <span className="text-[12px] text-muted-foreground/50 truncate max-w-[120px]">{prev.label}</span>
-                )}
-                <span className="text-[14px] text-muted-foreground/30 font-light">{"«"}</span>
-                {curr && (
-                  <span className="text-[15px] font-bold text-foreground uppercase tracking-wider">{curr.label}</span>
-                )}
-                <span className="text-[14px] text-muted-foreground/30 font-light">{"»"}</span>
-                {next && (
-                  <span className="text-[12px] text-muted-foreground/50 truncate max-w-[120px]">{next.label}</span>
-                )}
+        {isOpen &&
+          (() => {
+            const centerIdx = Math.floor((VISIBLE_SLOTS - 1) / 2);
+            const globalCenter = clampedOffset + centerIdx;
+            const prev =
+              globalCenter > 0 ? activeItems[globalCenter - 1] : null;
+            const curr = activeItems[globalCenter];
+            const next =
+              globalCenter < totalItems - 1
+                ? activeItems[globalCenter + 1]
+                : null;
+            return (
+              <div
+                className="absolute z-[110] select-none pointer-events-none rounded-2xl shadow-2xl overflow-hidden"
+                style={{
+                  bottom: radius + 40,
+                  right: -10,
+                  transition: "all 300ms cubic-bezier(0.16, 1, 0.3, 1)",
+                }}
+              >
+                {/* Background layer with blur — separate from text */}
+                <div className="absolute inset-0 bg-background/75 backdrop-blur-md border border-border/30 rounded-2xl" />
+                {/* Text layer — crisp, no blur */}
+                <div className="relative flex items-center gap-2 px-5 py-2.5">
+                  {prev && (
+                    <span className="text-[12px] text-muted-foreground/50 truncate max-w-[120px]">
+                      {prev.label}
+                    </span>
+                  )}
+                  <span className="text-[14px] text-muted-foreground/30 font-light">
+                    {"«"}
+                  </span>
+                  {curr && (
+                    <span className="text-[15px] font-bold text-foreground uppercase tracking-wider">
+                      {curr.label}
+                    </span>
+                  )}
+                  <span className="text-[14px] text-muted-foreground/30 font-light">
+                    {"»"}
+                  </span>
+                  {next && (
+                    <span className="text-[12px] text-muted-foreground/50 truncate max-w-[120px]">
+                      {next.label}
+                    </span>
+                  )}
+                </div>
               </div>
-            </div>
-          );
-        })()}
+            );
+          })()}
 
         {/* Customization panel */}
         {showCustomize && (
           <div className="absolute bottom-16 right-0 w-64 max-h-[70vh] rounded-xl border border-border bg-popover shadow-xl p-3 z-[102] animate-in fade-in slide-in-from-bottom-2 duration-150">
             <div className="flex items-center justify-between mb-2">
               <p className="text-xs font-semibold">Personnaliser le menu</p>
-              <button onClick={() => setShowCustomize(false)} className="rounded p-0.5 text-muted-foreground hover:text-foreground hover:bg-muted">
+              <button
+                onClick={() => setShowCustomize(false)}
+                className="rounded p-0.5 text-muted-foreground hover:text-foreground hover:bg-muted"
+              >
                 <X className="h-3.5 w-3.5" />
               </button>
             </div>
-            <p className="text-[10px] text-muted-foreground mb-2">Activer/désactiver et réordonner les actions</p>
+            <p className="text-[10px] text-muted-foreground mb-2">
+              Activer/désactiver et réordonner les actions
+            </p>
             <div className="space-y-1 max-h-[55vh] overflow-y-auto">
               {ALL_ITEMS.map((item, idx) => {
-                const isEnabled = !enabledItems || enabledItems.includes(item.id);
+                const isEnabled =
+                  !enabledItems || enabledItems.includes(item.id);
                 return (
-                  <div key={item.id} className={cn(
-                    "flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs transition-opacity",
-                    isEnabled ? "bg-muted/50" : "bg-muted/20 opacity-50"
-                  )}>
-                    <button onClick={() => toggleItem(item.id)} className="shrink-0">
-                      <div className={cn(
-                        "h-5 w-5 rounded-full flex items-center justify-center text-white shrink-0 transition-all",
-                        isEnabled ? item.color : "bg-muted-foreground/30"
-                      )}>
-                        {React.cloneElement(item.icon, { className: "h-3 w-3" } as React.HTMLAttributes<SVGElement>)}
+                  <div
+                    key={item.id}
+                    className={cn(
+                      "flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs transition-opacity",
+                      isEnabled ? "bg-muted/50" : "bg-muted/20 opacity-50",
+                    )}
+                  >
+                    <button
+                      onClick={() => toggleItem(item.id)}
+                      className="shrink-0"
+                    >
+                      <div
+                        className={cn(
+                          "h-5 w-5 rounded-full flex items-center justify-center text-white shrink-0 transition-all",
+                          isEnabled ? item.color : "bg-muted-foreground/30",
+                        )}
+                      >
+                        {React.cloneElement(item.icon, {
+                          className: "h-3 w-3",
+                        } as React.HTMLAttributes<SVGElement>)}
                       </div>
                     </button>
                     <span className="flex-1 truncate">{item.label}</span>
                     {isEnabled && idx > 0 && (
-                      <button onClick={() => moveItem(item.id, "up")} className="text-muted-foreground hover:text-foreground p-0.5 rounded text-[10px]">▲</button>
+                      <button
+                        onClick={() => moveItem(item.id, "up")}
+                        className="text-muted-foreground hover:text-foreground p-0.5 rounded text-[10px]"
+                      >
+                        ▲
+                      </button>
                     )}
                     {isEnabled && idx < ALL_ITEMS.length - 1 && (
-                      <button onClick={() => moveItem(item.id, "down")} className="text-muted-foreground hover:text-foreground p-0.5 rounded text-[10px]">▼</button>
+                      <button
+                        onClick={() => moveItem(item.id, "down")}
+                        className="text-muted-foreground hover:text-foreground p-0.5 rounded text-[10px]"
+                      >
+                        ▼
+                      </button>
                     )}
                   </div>
                 );
               })}
             </div>
             <button
-              onClick={() => { setEnabledItems(null); localStorage.removeItem(STORAGE_KEY); }}
+              onClick={() => {
+                setEnabledItems(null);
+                localStorage.removeItem(STORAGE_KEY);
+              }}
               className="w-full text-[10px] text-muted-foreground hover:text-foreground text-center py-1.5 mt-2 rounded hover:bg-muted transition-colors"
             >
               Réinitialiser

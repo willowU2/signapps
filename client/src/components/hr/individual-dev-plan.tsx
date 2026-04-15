@@ -1,7 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { TrendingUp, Target, BookOpen, DollarSign, Calendar } from "lucide-react";
+import {
+  TrendingUp,
+  Target,
+  BookOpen,
+  DollarSign,
+  Calendar,
+} from "lucide-react";
 
 interface SkillGap {
   id: string;
@@ -95,8 +101,8 @@ export function IndividualDevPlan() {
   const handleToggleTraining = (id: string) => {
     setTrainings(
       trainings.map((t) =>
-        t.id === id ? { ...t, completed: !t.completed } : t
-      )
+        t.id === id ? { ...t, completed: !t.completed } : t,
+      ),
     );
   };
 
@@ -138,7 +144,9 @@ export function IndividualDevPlan() {
       <div className="border rounded-lg overflow-hidden bg-card">
         <div className="bg-muted border-b p-4 flex items-center gap-2">
           <Target className="w-5 h-5 text-muted-foreground" />
-          <h3 className="font-semibold text-foreground">Skill Gaps & Targets</h3>
+          <h3 className="font-semibold text-foreground">
+            Skill Gaps & Targets
+          </h3>
         </div>
 
         <div className="divide-y">
@@ -152,11 +160,12 @@ export function IndividualDevPlan() {
                       gap.priority === "high"
                         ? "bg-red-100 text-red-800"
                         : gap.priority === "medium"
-                        ? "bg-yellow-100 text-yellow-800"
-                        : "bg-green-100 text-green-800"
+                          ? "bg-yellow-100 text-yellow-800"
+                          : "bg-green-100 text-green-800"
                     }`}
                   >
-                    {gap.priority.charAt(0).toUpperCase() + gap.priority.slice(1)}
+                    {gap.priority.charAt(0).toUpperCase() +
+                      gap.priority.slice(1)}
                   </span>
                 </div>
               </div>
@@ -191,7 +200,9 @@ export function IndividualDevPlan() {
       <div className="border rounded-lg overflow-hidden bg-card">
         <div className="bg-muted border-b p-4 flex items-center gap-2">
           <BookOpen className="w-5 h-5 text-muted-foreground" />
-          <h3 className="font-semibold text-foreground">Recommended Trainings</h3>
+          <h3 className="font-semibold text-foreground">
+            Recommended Trainings
+          </h3>
         </div>
 
         <div className="divide-y">
@@ -216,7 +227,9 @@ export function IndividualDevPlan() {
 
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-foreground">{training.name}</p>
-                  <p className="text-sm text-muted-foreground">{training.provider}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {training.provider}
+                  </p>
 
                   <div className="flex flex-wrap gap-3 mt-2 text-xs text-muted-foreground">
                     <div className="flex items-center gap-1">
@@ -228,8 +241,7 @@ export function IndividualDevPlan() {
                       Start: {training.startDate}
                     </div>
                     <div className="flex items-center gap-1">
-                      <DollarSign className="w-3 h-3" />
-                      €{training.cost}
+                      <DollarSign className="w-3 h-3" />€{training.cost}
                     </div>
                   </div>
                 </div>
@@ -243,33 +255,45 @@ export function IndividualDevPlan() {
         <div className="rounded-lg border p-4">
           <div className="flex items-center gap-2 mb-2">
             <BookOpen className="w-4 h-4 text-blue-600" />
-            <p className="text-sm font-medium text-muted-foreground">Total Trainings</p>
+            <p className="text-sm font-medium text-muted-foreground">
+              Total Trainings
+            </p>
           </div>
-          <p className="text-2xl font-bold text-foreground">{trainings.length}</p>
+          <p className="text-2xl font-bold text-foreground">
+            {trainings.length}
+          </p>
         </div>
 
         <div className="rounded-lg border p-4">
           <div className="flex items-center gap-2 mb-2">
             <TrendingUp className="w-4 h-4 text-green-600" />
-            <p className="text-sm font-medium text-muted-foreground">Completed</p>
+            <p className="text-sm font-medium text-muted-foreground">
+              Completed
+            </p>
           </div>
-          <p className="text-2xl font-bold text-foreground">{completedTrainings}</p>
+          <p className="text-2xl font-bold text-foreground">
+            {completedTrainings}
+          </p>
         </div>
 
         <div className="rounded-lg border p-4">
           <div className="flex items-center gap-2 mb-2">
             <Target className="w-4 h-4 text-purple-600" />
-            <p className="text-sm font-medium text-muted-foreground">Skills Tracked</p>
+            <p className="text-sm font-medium text-muted-foreground">
+              Skills Tracked
+            </p>
           </div>
           <p className="text-2xl font-bold text-foreground">{gaps.length}</p>
         </div>
       </div>
 
       <div className="border-l-4 border-blue-400 bg-blue-50 p-4 rounded-r-lg">
-        <p className="text-sm font-medium text-blue-900">Development Timeline</p>
+        <p className="text-sm font-medium text-blue-900">
+          Development Timeline
+        </p>
         <p className="text-sm text-blue-800 mt-1">
-          Expected completion of all trainings: Q4 2026. Regular check-ins scheduled
-          monthly with manager.
+          Expected completion of all trainings: Q4 2026. Regular check-ins
+          scheduled monthly with manager.
         </p>
       </div>
     </div>

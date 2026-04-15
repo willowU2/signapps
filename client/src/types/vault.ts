@@ -3,17 +3,17 @@
  */
 
 export type VaultItemType =
-  | 'login'
-  | 'secure_note'
-  | 'card'
-  | 'ssh_key'
-  | 'api_token'
-  | 'identity'
-  | 'passkey';
+  | "login"
+  | "secure_note"
+  | "card"
+  | "ssh_key"
+  | "api_token"
+  | "identity"
+  | "passkey";
 
-export type ShareType = 'person' | 'group';
+export type ShareType = "person" | "group";
 
-export type AccessLevel = 'full' | 'use_only' | 'read_only';
+export type AccessLevel = "full" | "use_only" | "read_only";
 
 export interface VaultUserKeys {
   user_id: string;
@@ -42,7 +42,10 @@ export interface VaultItem {
   updated_at: string;
 }
 
-export interface DecryptedVaultItem extends Omit<VaultItem, 'name' | 'data' | 'notes' | 'uri' | 'totp_secret'> {
+export interface DecryptedVaultItem extends Omit<
+  VaultItem,
+  "name" | "data" | "notes" | "uri" | "totp_secret"
+> {
   name: string;
   data: Record<string, unknown>;
   notes?: string;

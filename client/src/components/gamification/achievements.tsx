@@ -107,7 +107,9 @@ export default function Achievements() {
               <div className="mt-2 bg-gray-200 rounded-full h-1">
                 <div
                   className="bg-blue-600 h-1 rounded-full"
-                  style={{ width: `${(badge.progress / badge.maxProgress) * 100}%` }}
+                  style={{
+                    width: `${(badge.progress / badge.maxProgress) * 100}%`,
+                  }}
                 />
               </div>
               <p className="text-xs text-muted-foreground mt-1">
@@ -124,7 +126,9 @@ export default function Achievements() {
             <div className="text-4xl">{selectedBadge.icon}</div>
             <div className="flex-1">
               <h3 className="font-bold text-lg">{selectedBadge.name}</h3>
-              <p className="text-sm text-muted-foreground mb-2">{selectedBadge.description}</p>
+              <p className="text-sm text-muted-foreground mb-2">
+                {selectedBadge.description}
+              </p>
               <div className="space-y-1">
                 <div className="flex justify-between text-xs">
                   <span>Progress</span>

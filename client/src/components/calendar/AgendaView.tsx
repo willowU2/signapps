@@ -71,7 +71,10 @@ function DraggableAgendaEvent({
   );
 }
 
-export function AgendaView({ selectedCalendarId, onCreateEvent }: AgendaViewProps) {
+export function AgendaView({
+  selectedCalendarId,
+  onCreateEvent,
+}: AgendaViewProps) {
   const currentDate = useCalendarStore((s) => s.currentDate);
   const { selectEvent } = useCalendarSelection();
   const [events, setEvents] = useState<AgendaEvent[]>([]);
@@ -159,9 +162,12 @@ export function AgendaView({ selectedCalendarId, onCreateEvent }: AgendaViewProp
   if (!groupedEvents || groupedEvents.size === 0) {
     return (
       <div className="flex flex-col items-center justify-center text-center text-muted-foreground py-20 px-4">
-        <p className="text-lg font-medium text-foreground mb-2">Aucun événement à venir</p>
+        <p className="text-lg font-medium text-foreground mb-2">
+          Aucun événement à venir
+        </p>
         <p className="text-sm max-w-sm mb-6">
-          Votre agenda est vide pour la période affichée. Les événements apparaîtront ici une fois créés.
+          Votre agenda est vide pour la période affichée. Les événements
+          apparaîtront ici une fois créés.
         </p>
         <Button onClick={() => onCreateEvent?.()} className="gap-2">
           <Plus className="h-4 w-4" />

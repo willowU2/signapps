@@ -4,7 +4,7 @@
  * Parse iCalendar (ICS) files and convert to scheduling blocks.
  */
 
-import { parse, parseISO } from 'date-fns';
+import { parse, parseISO } from "date-fns";
 import type {
   ScheduleBlock,
   Attendee,
@@ -13,7 +13,7 @@ import type {
   RSVPStatus,
   BlockStatus,
   Priority,
-} from '../types/scheduling';
+} from "../types/scheduling";
 
 // ============================================================================
 // Types
@@ -84,32 +84,32 @@ const DEFAULT_OPTIONS: ICSImportOptions = {
   importAttendees: true,
   importReminders: true,
   importRecurrence: true,
-  defaultTimezone: 'Europe/Paris',
+  defaultTimezone: "Europe/Paris",
 };
 
 const STATUS_MAP: Record<string, BlockStatus> = {
-  CONFIRMED: 'confirmed',
-  TENTATIVE: 'tentative',
-  CANCELLED: 'cancelled',
+  CONFIRMED: "confirmed",
+  TENTATIVE: "tentative",
+  CANCELLED: "cancelled",
 };
 
 const RSVP_MAP: Record<string, RSVPStatus> = {
-  ACCEPTED: 'accepted',
-  DECLINED: 'declined',
-  TENTATIVE: 'tentative',
-  'NEEDS-ACTION': 'pending',
+  ACCEPTED: "accepted",
+  DECLINED: "declined",
+  TENTATIVE: "tentative",
+  "NEEDS-ACTION": "pending",
 };
 
 const PRIORITY_MAP: Record<number, Priority> = {
-  1: 'urgent',
-  2: 'urgent',
-  3: 'high',
-  4: 'high',
-  5: 'medium',
-  6: 'medium',
-  7: 'low',
-  8: 'low',
-  9: 'low',
+  1: "urgent",
+  2: "urgent",
+  3: "high",
+  4: "high",
+  5: "medium",
+  6: "medium",
+  7: "low",
+  8: "low",
+  9: "low",
 };
 
 // ============================================================================
@@ -121,7 +121,7 @@ const PRIORITY_MAP: Record<number, Priority> = {
  */
 export function parseICS(
   icsContent: string,
-  options: ICSImportOptions = {}
+  options: ICSImportOptions = {},
 ): ICSImportResult {
   const opts = { ...DEFAULT_OPTIONS, ...options };
   const events: Partial<ScheduleBlock>[] = [];
@@ -139,31 +139,35 @@ export function parseICS(
     let inEvent = false;
     let currentEvent: ParsedVEvent = {};
     let inAlarm = false;
-    let currentAlarm: { trigger?: string; action?: string; description?: string } = {};
+    let currentAlarm: {
+      trigger?: string;
+      action?: string;
+      description?: string;
+    } = {};
 
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i].trim();
 
-      if (line === 'BEGIN:VCALENDAR') {
+      if (line === "BEGIN:VCALENDAR") {
         inCalendar = true;
         continue;
       }
 
-      if (line === 'END:VCALENDAR') {
+      if (line === "END:VCALENDAR") {
         inCalendar = false;
         continue;
       }
 
       if (!inCalendar) continue;
 
-      if (line === 'BEGIN:VEVENT') {
+      if (line === "BEGIN:VEVENT") {
         inEvent = true;
         total++;
         currentEvent = {};
         continue;
       }
 
-      if (line === 'END:VEVENT') {
+      if (line === "END:VEVENT") {
         inEvent = false;
         try {
           const block = parsedEventToBlock(currentEvent, opts);
@@ -175,21 +179,21 @@ export function parseICS(
         } catch (err) {
           errors.push({
             line: i,
-            component: 'VEVENT',
-            message: err instanceof Error ? err.message : 'Unknown error',
+            component: "VEVENT",
+            message: err instanceof Error ? err.message : "Unknown error",
           });
         }
         currentEvent = {};
         continue;
       }
 
-      if (line === 'BEGIN:VALARM') {
+      if (line === "BEGIN:VALARM") {
         inAlarm = true;
         currentAlarm = {};
         continue;
       }
 
-      if (line === 'END:VALARM') {
+      if (line === "END:VALARM") {
         inAlarm = false;
         if (currentAlarm.trigger && currentAlarm.action) {
           currentEvent.alarm = {
@@ -212,7 +216,8 @@ export function parseICS(
     }
   } catch (err) {
     errors.push({
-      message: err instanceof Error ? err.message : 'Failed to parse ICS content',
+      message:
+        err instanceof Error ? err.message : "Failed to parse ICS content",
     });
   }
 
@@ -233,7 +238,7 @@ export function parseICS(
  */
 export async function importICSFile(
   file: File,
-  options: ICSImportOptions = {}
+  options: ICSImportOptions = {},
 ): Promise<ICSImportResult> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -243,12 +248,12 @@ export async function importICSFile(
       if (content) {
         resolve(parseICS(content, options));
       } else {
-        reject(new Error('Failed to read file content'));
+        reject(new Error("Failed to read file content"));
       }
     };
 
     reader.onerror = () => {
-      reject(new Error('Failed to read file'));
+      reject(new Error("Failed to read file"));
     };
 
     reader.readAsText(file);
@@ -260,7 +265,7 @@ export async function importICSFile(
  */
 export async function importICSFromUrl(
   url: string,
-  options: ICSImportOptions = {}
+  options: ICSImportOptions = {},
 ): Promise<ICSImportResult> {
   const response = await fetch(url);
   if (!response.ok) {
@@ -276,18 +281,18 @@ export async function importICSFromUrl(
 
 function unfoldLines(content: string): string {
   // ICS allows line folding - lines starting with space/tab are continuations
-  return content.replace(/\r?\n[ \t]/g, '');
+  return content.replace(/\r?\n[ \t]/g, "");
 }
 
 function parseEventProperty(line: string, event: ParsedVEvent): void {
-  const colonIndex = line.indexOf(':');
+  const colonIndex = line.indexOf(":");
   if (colonIndex === -1) return;
 
   let key = line.slice(0, colonIndex);
   const value = line.slice(colonIndex + 1);
 
   // Handle parameters (e.g., DTSTART;VALUE=DATE:20240101)
-  const semicolonIndex = key.indexOf(';');
+  const semicolonIndex = key.indexOf(";");
   let params: Record<string, string> = {};
   if (semicolonIndex !== -1) {
     const paramStr = key.slice(semicolonIndex + 1);
@@ -296,63 +301,63 @@ function parseEventProperty(line: string, event: ParsedVEvent): void {
   }
 
   switch (key.toUpperCase()) {
-    case 'UID':
+    case "UID":
       event.uid = value;
       break;
-    case 'SUMMARY':
+    case "SUMMARY":
       event.summary = unescapeText(value);
       break;
-    case 'DESCRIPTION':
+    case "DESCRIPTION":
       event.description = unescapeText(value);
       break;
-    case 'DTSTART':
+    case "DTSTART":
       event.dtstart = value;
-      event.dtstartAllDay = params['VALUE'] === 'DATE';
+      event.dtstartAllDay = params["VALUE"] === "DATE";
       break;
-    case 'DTEND':
+    case "DTEND":
       event.dtend = value;
       break;
-    case 'LOCATION':
+    case "LOCATION":
       event.location = unescapeText(value);
       break;
-    case 'GEO':
+    case "GEO":
       event.geo = value;
       break;
-    case 'URL':
+    case "URL":
       event.url = value;
       break;
-    case 'STATUS':
+    case "STATUS":
       event.status = value;
       break;
-    case 'CATEGORIES':
-      event.categories = value.split(',').map((c) => c.trim());
+    case "CATEGORIES":
+      event.categories = value.split(",").map((c) => c.trim());
       break;
-    case 'PRIORITY':
+    case "PRIORITY":
       event.priority = parseInt(value, 10);
       break;
-    case 'RRULE':
+    case "RRULE":
       event.rrule = value;
       break;
-    case 'ORGANIZER':
+    case "ORGANIZER":
       event.organizer = parseAttendeeValue(value, params) ?? undefined;
       break;
-    case 'ATTENDEE':
+    case "ATTENDEE":
       if (!event.attendees) event.attendees = [];
       const attendee = parseAttendeeValue(value, params);
       if (attendee) {
         event.attendees.push({
           ...attendee,
-          partstat: params['PARTSTAT'] || 'NEEDS-ACTION',
+          partstat: params["PARTSTAT"] || "NEEDS-ACTION",
         });
       }
       break;
-    case 'CREATED':
+    case "CREATED":
       event.created = value;
       break;
-    case 'LAST-MODIFIED':
+    case "LAST-MODIFIED":
       event.lastModified = value;
       break;
-    case 'SEQUENCE':
+    case "SEQUENCE":
       event.sequence = parseInt(value, 10);
       break;
   }
@@ -360,22 +365,22 @@ function parseEventProperty(line: string, event: ParsedVEvent): void {
 
 function parseAlarmProperty(
   line: string,
-  alarm: { trigger?: string; action?: string; description?: string }
+  alarm: { trigger?: string; action?: string; description?: string },
 ): void {
-  const colonIndex = line.indexOf(':');
+  const colonIndex = line.indexOf(":");
   if (colonIndex === -1) return;
 
-  const key = line.slice(0, colonIndex).split(';')[0].toUpperCase();
+  const key = line.slice(0, colonIndex).split(";")[0].toUpperCase();
   const value = line.slice(colonIndex + 1);
 
   switch (key) {
-    case 'TRIGGER':
+    case "TRIGGER":
       alarm.trigger = value;
       break;
-    case 'ACTION':
+    case "ACTION":
       alarm.action = value;
       break;
-    case 'DESCRIPTION':
+    case "DESCRIPTION":
       alarm.description = unescapeText(value);
       break;
   }
@@ -383,12 +388,12 @@ function parseAlarmProperty(
 
 function parseParams(paramStr: string): Record<string, string> {
   const params: Record<string, string> = {};
-  const parts = paramStr.split(';');
+  const parts = paramStr.split(";");
   for (const part of parts) {
-    const eqIndex = part.indexOf('=');
+    const eqIndex = part.indexOf("=");
     if (eqIndex !== -1) {
       const key = part.slice(0, eqIndex);
-      const val = part.slice(eqIndex + 1).replace(/^"|"$/g, '');
+      const val = part.slice(eqIndex + 1).replace(/^"|"$/g, "");
       params[key] = val;
     }
   }
@@ -397,19 +402,19 @@ function parseParams(paramStr: string): Record<string, string> {
 
 function parseAttendeeValue(
   value: string,
-  params: Record<string, string>
+  params: Record<string, string>,
 ): { name: string; email: string } | null {
-  const email = value.replace('mailto:', '').toLowerCase();
-  const name = params['CN'] || email.split('@')[0];
+  const email = value.replace("mailto:", "").toLowerCase();
+  const name = params["CN"] || email.split("@")[0];
   return { name, email };
 }
 
 function unescapeText(text: string): string {
   return text
-    .replace(/\\n/g, '\n')
-    .replace(/\\,/g, ',')
-    .replace(/\\;/g, ';')
-    .replace(/\\\\/g, '\\');
+    .replace(/\\n/g, "\n")
+    .replace(/\\,/g, ",")
+    .replace(/\\;/g, ";")
+    .replace(/\\\\/g, "\\");
 }
 
 // ============================================================================
@@ -418,14 +423,14 @@ function unescapeText(text: string): string {
 
 function parsedEventToBlock(
   event: ParsedVEvent,
-  options: ICSImportOptions
+  options: ICSImportOptions,
 ): Partial<ScheduleBlock> | null {
   if (!event.summary || !event.dtstart) {
     return null;
   }
 
   const block: Partial<ScheduleBlock> = {
-    type: 'event',
+    type: "event",
     title: event.summary,
     description: event.description,
     allDay: event.dtstartAllDay || false,
@@ -462,7 +467,7 @@ function parsedEventToBlock(
       name: event.location,
     };
     if (event.geo) {
-      const [lat, lng] = event.geo.split(';').map(Number);
+      const [lat, lng] = event.geo.split(";").map(Number);
       if (!isNaN(lat) && !isNaN(lng)) {
         location.coordinates = { lat, lng };
       }
@@ -479,7 +484,7 @@ function parsedEventToBlock(
       id: `attendee-${i}`,
       name: a.name,
       email: a.email,
-      status: RSVP_MAP[a.partstat] || 'pending',
+      status: RSVP_MAP[a.partstat] || "pending",
       required: true,
     }));
   }
@@ -507,11 +512,11 @@ function parsedEventToBlock(
 
 function parseICSDate(dateStr: string, isDateOnly?: boolean): Date {
   // Remove any timezone suffix for parsing
-  const cleanStr = dateStr.replace(/Z$/, '');
+  const cleanStr = dateStr.replace(/Z$/, "");
 
   if (isDateOnly || cleanStr.length === 8) {
     // Format: YYYYMMDD
-    return parse(cleanStr, 'yyyyMMdd', new Date());
+    return parse(cleanStr, "yyyyMMdd", new Date());
   }
 
   // Format: YYYYMMDDTHHMMSS or YYYYMMDDTHHMMSSZ
@@ -519,35 +524,36 @@ function parseICSDate(dateStr: string, isDateOnly?: boolean): Date {
 }
 
 function parseRRule(rruleStr: string): ScheduleRecurrenceRule {
-  const parts = rruleStr.split(';');
+  const parts = rruleStr.split(";");
   const rule: ScheduleRecurrenceRule = {
-    frequency: 'weekly',
+    frequency: "weekly",
     interval: 1,
   };
 
   for (const part of parts) {
-    const [key, value] = part.split('=');
+    const [key, value] = part.split("=");
     switch (key.toUpperCase()) {
-      case 'FREQ':
-        rule.frequency = value.toLowerCase() as ScheduleRecurrenceRule['frequency'];
+      case "FREQ":
+        rule.frequency =
+          value.toLowerCase() as ScheduleRecurrenceRule["frequency"];
         break;
-      case 'INTERVAL':
+      case "INTERVAL":
         rule.interval = parseInt(value, 10);
         break;
-      case 'COUNT':
+      case "COUNT":
         rule.count = parseInt(value, 10);
         break;
-      case 'UNTIL':
+      case "UNTIL":
         rule.endDate = parseICSDate(value, false);
         break;
-      case 'BYDAY':
-        rule.byDay = value.split(',');
+      case "BYDAY":
+        rule.byDay = value.split(",");
         break;
-      case 'BYMONTH':
-        rule.byMonth = value.split(',').map(Number);
+      case "BYMONTH":
+        rule.byMonth = value.split(",").map(Number);
         break;
-      case 'BYMONTHDAY':
-        rule.byMonthDay = value.split(',').map(Number);
+      case "BYMONTHDAY":
+        rule.byMonthDay = value.split(",").map(Number);
         break;
     }
   }
@@ -557,7 +563,9 @@ function parseRRule(rruleStr: string): ScheduleRecurrenceRule {
 
 function parseTrigger(triggerStr: string): number {
   // Parse ISO 8601 duration format: -P1D, -PT15M, -PT1H, etc.
-  const match = triggerStr.match(/^(-)?P(?:(\d+)D)?(?:T(?:(\d+)H)?(?:(\d+)M)?)?$/);
+  const match = triggerStr.match(
+    /^(-)?P(?:(\d+)D)?(?:T(?:(\d+)H)?(?:(\d+)M)?)?$/,
+  );
   if (!match) return 15; // Default 15 minutes
 
   const [, negative, days, hours, minutes] = match;
@@ -576,23 +584,26 @@ function parseTrigger(triggerStr: string): number {
 /**
  * Validate ICS content
  */
-export function validateICS(content: string): { valid: boolean; errors: string[] } {
+export function validateICS(content: string): {
+  valid: boolean;
+  errors: string[];
+} {
   const errors: string[] = [];
 
-  if (!content.includes('BEGIN:VCALENDAR')) {
-    errors.push('Missing VCALENDAR component');
+  if (!content.includes("BEGIN:VCALENDAR")) {
+    errors.push("Missing VCALENDAR component");
   }
-  if (!content.includes('END:VCALENDAR')) {
-    errors.push('Unclosed VCALENDAR component');
+  if (!content.includes("END:VCALENDAR")) {
+    errors.push("Unclosed VCALENDAR component");
   }
-  if (!content.includes('VERSION:2.0')) {
-    errors.push('Missing or invalid VERSION property');
+  if (!content.includes("VERSION:2.0")) {
+    errors.push("Missing or invalid VERSION property");
   }
 
   const eventStarts = (content.match(/BEGIN:VEVENT/g) || []).length;
   const eventEnds = (content.match(/END:VEVENT/g) || []).length;
   if (eventStarts !== eventEnds) {
-    errors.push('Mismatched VEVENT start/end tags');
+    errors.push("Mismatched VEVENT start/end tags");
   }
 
   return {

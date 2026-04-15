@@ -29,7 +29,8 @@ const DEFAULT_CONTENT: ShareableContent[] = [
   {
     id: "1",
     title: "How SignApps is Transforming SMB Operations",
-    description: "An in-depth look at how our platform helps small businesses scale efficiently.",
+    description:
+      "An in-depth look at how our platform helps small businesses scale efficiently.",
     type: "article",
     link: "https://blog.signapps.com/smboperations",
     createdDate: "2026-03-18",
@@ -161,14 +162,16 @@ function getInfluenceColor(score: number): string {
 export function EmployeeAdvocacy() {
   const [content, setContent] = useState<ShareableContent[]>(DEFAULT_CONTENT);
   const [employees] = useState<Employee[]>(DEFAULT_EMPLOYEES);
-  const [activeTab, setActiveTab] = useState<"content" | "advocates">("content");
+  const [activeTab, setActiveTab] = useState<"content" | "advocates">(
+    "content",
+  );
 
   const totalReaches = employees.reduce((sum, e) => sum + e.totalReaches, 0);
   const avgEngagement = (
     employees.reduce((sum, e) => sum + e.engagementRate, 0) / employees.length
   ).toFixed(1);
   const topAdvocate = employees.reduce((prev, current) =>
-    prev.influenceScore > current.influenceScore ? prev : current
+    prev.influenceScore > current.influenceScore ? prev : current,
   );
 
   const handleCopyLink = (link: string) => {
@@ -180,29 +183,43 @@ export function EmployeeAdvocacy() {
       <div className="flex items-center gap-3">
         <Users className="w-6 h-6 text-blue-600" />
         <div>
-          <h2 className="text-2xl font-bold text-foreground">Employee Advocacy</h2>
-          <p className="text-muted-foreground">Amplify your reach through employee networks</p>
+          <h2 className="text-2xl font-bold text-foreground">
+            Employee Advocacy
+          </h2>
+          <p className="text-muted-foreground">
+            Amplify your reach through employee networks
+          </p>
         </div>
       </div>
 
       <div className="grid grid-cols-4 gap-4">
         <div className="rounded-lg border bg-blue-50 p-4">
-          <p className="text-sm text-muted-foreground font-medium">Active Advocates</p>
+          <p className="text-sm text-muted-foreground font-medium">
+            Active Advocates
+          </p>
           <p className="text-3xl font-bold text-blue-900">{employees.length}</p>
         </div>
         <div className="rounded-lg border bg-green-50 p-4">
-          <p className="text-sm text-muted-foreground font-medium">Total Reaches</p>
+          <p className="text-sm text-muted-foreground font-medium">
+            Total Reaches
+          </p>
           <p className="text-3xl font-bold text-green-900">
             {(totalReaches / 1000).toFixed(1)}K
           </p>
         </div>
         <div className="rounded-lg border bg-purple-50 p-4">
-          <p className="text-sm text-muted-foreground font-medium">Avg Engagement</p>
+          <p className="text-sm text-muted-foreground font-medium">
+            Avg Engagement
+          </p>
           <p className="text-3xl font-bold text-purple-900">{avgEngagement}%</p>
         </div>
         <div className="rounded-lg border bg-orange-50 p-4">
-          <p className="text-sm text-muted-foreground font-medium">Top Advocate</p>
-          <p className="text-lg font-bold text-orange-900">{topAdvocate.name}</p>
+          <p className="text-sm text-muted-foreground font-medium">
+            Top Advocate
+          </p>
+          <p className="text-lg font-bold text-orange-900">
+            {topAdvocate.name}
+          </p>
           <p className="text-xs text-muted-foreground">{topAdvocate.role}</p>
         </div>
       </div>
@@ -241,7 +258,9 @@ export function EmployeeAdvocacy() {
             >
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-start gap-4 flex-1">
-                  <span className="text-3xl">{getContentTypeIcon(item.type)}</span>
+                  <span className="text-3xl">
+                    {getContentTypeIcon(item.type)}
+                  </span>
                   <div className="flex-1">
                     <h3 className="text-lg font-semibold text-foreground mb-1">
                       {item.title}
@@ -317,7 +336,9 @@ export function EmployeeAdvocacy() {
                     <h3 className="text-lg font-semibold text-foreground">
                       {employee.name}
                     </h3>
-                    <p className="text-sm text-muted-foreground">{employee.role}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {employee.role}
+                    </p>
                   </div>
                   <div className="text-right">
                     <p className="text-xs text-muted-foreground font-medium mb-1">

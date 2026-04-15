@@ -1,5 +1,5 @@
-import { AppLayout } from '@/components/layout/app-layout';
-import { SocialNav } from '@/components/social/social-nav';
+import { AppLayout } from "@/components/layout/app-layout";
+import { SocialNav } from "@/components/social/social-nav";
 
 export default function SocialLayout({
   children,

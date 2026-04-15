@@ -27,7 +27,12 @@ interface OrderSystemProps {
   onSubmit?: (items: CartItem[]) => void;
 }
 
-const STATUS_STEPS: OrderStatus[] = ["Commande", "Validation", "Livraison", "Reception"];
+const STATUS_STEPS: OrderStatus[] = [
+  "Commande",
+  "Validation",
+  "Livraison",
+  "Reception",
+];
 
 export function OrderSystem({ cartItems = [], onSubmit }: OrderSystemProps) {
   const [items, setItems] = useState<CartItem[]>(cartItems);
@@ -41,14 +46,15 @@ export function OrderSystem({ cartItems = [], onSubmit }: OrderSystemProps) {
   const updateQuantity = (id: string, quantity: number) => {
     if (quantity > 0) {
       setItems(
-        items.map((item) =>
-          item.id === id ? { ...item, quantity } : item
-        )
+        items.map((item) => (item.id === id ? { ...item, quantity } : item)),
       );
     }
   };
 
-  const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const total = items.reduce(
+    (sum, item) => sum + item.price * item.quantity,
+    0,
+  );
 
   const handleSubmitOrder = () => {
     if (items.length === 0) {
@@ -80,8 +86,7 @@ export function OrderSystem({ cartItems = [], onSubmit }: OrderSystemProps) {
         <div className="flex justify-between items-center mb-4">
           {STATUS_STEPS.map((status, index) => {
             const isActive = currentStatus === status;
-            const isCompleted =
-              STATUS_STEPS.indexOf(currentStatus) > index;
+            const isCompleted = STATUS_STEPS.indexOf(currentStatus) > index;
 
             return (
               <div key={status} className="flex items-center flex-1">
@@ -130,7 +135,9 @@ export function OrderSystem({ cartItems = [], onSubmit }: OrderSystemProps) {
         <div className="flex justify-between items-center mb-4">
           <h3 className="font-semibold text-lg">Cart Items</h3>
           {items.length > 0 && (
-            <span className="text-sm text-muted-foreground">{items.length} item(s)</span>
+            <span className="text-sm text-muted-foreground">
+              {items.length} item(s)
+            </span>
           )}
         </div>
 
@@ -184,7 +191,9 @@ export function OrderSystem({ cartItems = [], onSubmit }: OrderSystemProps) {
             </Table>
 
             <div className="mt-4 text-right space-y-3">
-              <div className="text-lg font-bold">Total: ${total.toFixed(2)}</div>
+              <div className="text-lg font-bold">
+                Total: ${total.toFixed(2)}
+              </div>
               <Button
                 onClick={handleSubmitOrder}
                 className="w-full"
@@ -203,7 +212,9 @@ export function OrderSystem({ cartItems = [], onSubmit }: OrderSystemProps) {
           <Button
             onClick={advanceStatus}
             className="w-full"
-            disabled={STATUS_STEPS.indexOf(currentStatus) === STATUS_STEPS.length - 1}
+            disabled={
+              STATUS_STEPS.indexOf(currentStatus) === STATUS_STEPS.length - 1
+            }
           >
             Move to Next Step
           </Button>

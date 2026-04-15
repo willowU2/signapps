@@ -238,7 +238,10 @@ function GroupRow({
     });
   };
 
-  const updateCondition = (index: number, updated: FilterCondition | FilterGroup) => {
+  const updateCondition = (
+    index: number,
+    updated: FilterCondition | FilterGroup,
+  ) => {
     const newConditions = [...group.conditions];
     newConditions[index] = updated;
     onChange({ ...group, conditions: newConditions });
@@ -258,7 +261,9 @@ function GroupRow({
     });
   };
 
-  const isGroup = (item: FilterCondition | FilterGroup): item is FilterGroup => {
+  const isGroup = (
+    item: FilterCondition | FilterGroup,
+  ): item is FilterGroup => {
     return "logic" in item;
   };
 
@@ -266,7 +271,7 @@ function GroupRow({
     <div
       className={cn(
         "space-y-2 p-3 rounded-lg border",
-        depth === 0 ? "bg-background" : "bg-muted/30"
+        depth === 0 ? "bg-background" : "bg-muted/30",
       )}
     >
       {/* Header */}
@@ -381,7 +386,11 @@ interface FilterSummaryProps {
   onClear?: () => void;
 }
 
-export function FilterSummary({ filters, fields, onClear }: FilterSummaryProps) {
+export function FilterSummary({
+  filters,
+  fields,
+  onClear,
+}: FilterSummaryProps) {
   const countConditions = (group: FilterGroup): number => {
     return group.conditions.reduce((count, item) => {
       if ("logic" in item) {

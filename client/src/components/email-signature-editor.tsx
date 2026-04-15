@@ -22,7 +22,11 @@ interface SignatureData {
   tagline: string;
 }
 
-const VARIABLES: { key: keyof SignatureData; label: string; example: string }[] = [
+const VARIABLES: {
+  key: keyof SignatureData;
+  label: string;
+  example: string;
+}[] = [
   { key: "name", label: "Full Name", example: "Jane Doe" },
   { key: "title", label: "Job Title", example: "Product Manager" },
   { key: "company", label: "Company", example: "Acme Corp" },
@@ -37,7 +41,8 @@ const TEMPLATES = [
   {
     id: "minimal",
     label: "Minimal",
-    build: (d: SignatureData) => `
+    build: (d: SignatureData) =>
+      `
 <table style="font-family:Arial,sans-serif;font-size:13px;color:#333;border-collapse:collapse;">
   <tr><td style="padding-bottom:4px;">
     <strong style="font-size:15px;color:#111;">${d.name || "Your Name"}</strong>
@@ -52,7 +57,8 @@ const TEMPLATES = [
   {
     id: "branded",
     label: "Branded",
-    build: (d: SignatureData) => `
+    build: (d: SignatureData) =>
+      `
 <table style="font-family:Arial,sans-serif;font-size:13px;color:#333;border-collapse:collapse;max-width:420px;">
   <tr>
     <td style="border-left:4px solid #3b82f6;padding-left:12px;">
@@ -64,7 +70,7 @@ const TEMPLATES = [
         ${d.email ? `<span>${d.phone ? " &nbsp;|&nbsp; " : ""}<a href="mailto:${d.email}" style="color:#3b82f6;text-decoration:none;">${d.email}</a></span>` : ""}
         ${d.website ? `<span> &nbsp;|&nbsp; <a href="${d.website}" style="color:#3b82f6;text-decoration:none;">${d.website}</a></span>` : ""}
       </div>
-      ${d.linkedin ? `<div style="margin-top:4px;font-size:11px;"><a href="https://${d.linkedin.replace(/^https?:\/\//, '')}" style="color:#0a66c2;text-decoration:none;">LinkedIn</a></div>` : ""}
+      ${d.linkedin ? `<div style="margin-top:4px;font-size:11px;"><a href="https://${d.linkedin.replace(/^https?:\/\//, "")}" style="color:#0a66c2;text-decoration:none;">LinkedIn</a></div>` : ""}
     </td>
   </tr>
 </table>`.trim(),
@@ -72,7 +78,8 @@ const TEMPLATES = [
   {
     id: "classic",
     label: "Classic",
-    build: (d: SignatureData) => `
+    build: (d: SignatureData) =>
+      `
 <table style="font-family:Georgia,serif;font-size:13px;color:#333;border-collapse:collapse;">
   <tr><td style="padding-bottom:6px;border-bottom:1px solid #ddd;">
     <span style="font-size:16px;font-weight:bold;">${d.name || "Your Name"}</span>
@@ -89,7 +96,14 @@ const TEMPLATES = [
 
 export function EmailSignatureEditor() {
   const [data, setData] = useState<SignatureData>({
-    name: "", title: "", company: "", phone: "", email: "", website: "", linkedin: "", tagline: "",
+    name: "",
+    title: "",
+    company: "",
+    phone: "",
+    email: "",
+    website: "",
+    linkedin: "",
+    tagline: "",
   });
   const [templateId, setTemplateId] = useState("branded");
   const [copied, setCopied] = useState(false);
@@ -97,7 +111,8 @@ export function EmailSignatureEditor() {
   const update = (key: keyof SignatureData, value: string) =>
     setData((d) => ({ ...d, [key]: value }));
 
-  const selectedTemplate = TEMPLATES.find((t) => t.id === templateId) || TEMPLATES[0];
+  const selectedTemplate =
+    TEMPLATES.find((t) => t.id === templateId) || TEMPLATES[0];
   const html = selectedTemplate.build(data);
 
   const handleCopy = () => {
@@ -162,7 +177,10 @@ export function EmailSignatureEditor() {
           <div className="grid grid-cols-2 gap-3">
             {VARIABLES.map((v) => (
               <div key={v.key} className="space-y-1">
-                <Label htmlFor={`sig-${v.key}`} className="text-xs text-muted-foreground">
+                <Label
+                  htmlFor={`sig-${v.key}`}
+                  className="text-xs text-muted-foreground"
+                >
                   {v.label}
                 </Label>
                 <Input

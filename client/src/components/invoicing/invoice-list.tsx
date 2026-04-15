@@ -40,7 +40,7 @@ const STATUS_LABELS: Record<InvoiceStatus, string> = {
 function calcTTC(invoice: Invoice) {
   const ht = invoice.lineItems.reduce(
     (sum, l) => sum + l.quantity * l.unitPrice,
-    0
+    0,
   );
   return ht * (1 + invoice.tvaRate / 100);
 }

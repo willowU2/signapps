@@ -17,9 +17,15 @@ export default function GoogleMailCallbackPage() {
 
     if (window.opener) {
       if (code) {
-        window.opener.postMessage({ type: "oauth_callback", code }, window.location.origin);
+        window.opener.postMessage(
+          { type: "oauth_callback", code },
+          window.location.origin,
+        );
       } else if (error) {
-        window.opener.postMessage({ type: "oauth_error", error }, window.location.origin);
+        window.opener.postMessage(
+          { type: "oauth_error", error },
+          window.location.origin,
+        );
       }
       window.close();
     }
@@ -29,7 +35,9 @@ export default function GoogleMailCallbackPage() {
     <div className="flex items-center justify-center min-h-screen">
       <div className="text-center space-y-2">
         <p className="text-lg font-medium">Connexion Google en cours...</p>
-        <p className="text-sm text-muted-foreground">Cette fenetre va se fermer automatiquement.</p>
+        <p className="text-sm text-muted-foreground">
+          Cette fenetre va se fermer automatiquement.
+        </p>
       </div>
     </div>
   );

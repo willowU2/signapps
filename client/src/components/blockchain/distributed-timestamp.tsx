@@ -52,7 +52,7 @@ export const DistributedTimestamp: React.FC<DistributedTimestampProps> = ({
       // Default: open verification
       window.open(
         `https://www.proof.bnktrust.com/?file_hash=${file.hash}`,
-        "_blank"
+        "_blank",
       );
     } finally {
       setVerifyingId(null);
@@ -83,10 +83,7 @@ export const DistributedTimestamp: React.FC<DistributedTimestampProps> = ({
       );
     }
     return (
-      <Badge
-        variant="secondary"
-        className="flex items-center gap-1"
-      >
+      <Badge variant="secondary" className="flex items-center gap-1">
         <Clock4 className="size-3" />
         En attente
       </Badge>

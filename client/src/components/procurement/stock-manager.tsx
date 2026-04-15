@@ -96,7 +96,7 @@ function isBelowThreshold(quantity: number, minThreshold: number): boolean {
 
 export function StockManager({ items = SAMPLE_STOCK }: StockManagerProps) {
   const alertItems = items.filter((item) =>
-    isBelowThreshold(item.quantity, item.minThreshold)
+    isBelowThreshold(item.quantity, item.minThreshold),
   );
 
   return (
@@ -106,9 +106,7 @@ export function StockManager({ items = SAMPLE_STOCK }: StockManagerProps) {
           <div className="flex gap-3">
             <AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
             <div>
-              <h3 className="font-semibold text-yellow-900">
-                Low Stock Alert
-              </h3>
+              <h3 className="font-semibold text-yellow-900">Low Stock Alert</h3>
               <p className="text-sm text-yellow-800">
                 {alertItems.length} product{alertItems.length !== 1 ? "s" : ""}{" "}
                 below minimum threshold
@@ -154,7 +152,9 @@ export function StockManager({ items = SAMPLE_STOCK }: StockManagerProps) {
                     {item.quantity}
                   </span>
                 </TableCell>
-                <TableCell className="text-right">{item.minThreshold}</TableCell>
+                <TableCell className="text-right">
+                  {item.minThreshold}
+                </TableCell>
                 <TableCell>
                   {getStatusBadge(item.quantity, item.minThreshold)}
                 </TableCell>
@@ -180,7 +180,9 @@ export function StockManager({ items = SAMPLE_STOCK }: StockManagerProps) {
           <p className="text-sm text-muted-foreground">Total Units</p>
         </div>
         <div className="border rounded-lg p-4">
-          <p className="text-2xl font-bold text-yellow-600">{alertItems.length}</p>
+          <p className="text-2xl font-bold text-yellow-600">
+            {alertItems.length}
+          </p>
           <p className="text-sm text-muted-foreground">Low Stock</p>
         </div>
         <div className="border rounded-lg p-4">

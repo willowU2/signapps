@@ -169,8 +169,10 @@ export function SLAContracts({
             <div>
               <p className="text-xs text-muted-foreground">Conformes</p>
               <p className="text-2xl font-bold">
-                {contracts.filter((c) => contractStatus(c) === "Compliant")
-                  .length}
+                {
+                  contracts.filter((c) => contractStatus(c) === "Compliant")
+                    .length
+                }
               </p>
             </div>
           </div>
@@ -251,7 +253,9 @@ export function SLAContracts({
           <div className="flex gap-3">
             <AlertTriangle className="h-5 w-5 flex-shrink-0 text-red-600" />
             <div>
-              <p className="font-semibold text-red-900">Violation SLA Détectée</p>
+              <p className="font-semibold text-red-900">
+                Violation SLA Détectée
+              </p>
               <p className="text-sm text-red-800">
                 {contracts.filter((c) => contractStatus(c) === "Breach").length}{" "}
                 contrat(s) en violation. Action requise immédiate.

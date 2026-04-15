@@ -49,7 +49,10 @@ export function ListSkeleton({ className, count = 6 }: SkeletonProps) {
   return (
     <div className={cn("space-y-2", className)}>
       {Array.from({ length: count }).map((_, i) => (
-        <div key={i} className="flex items-center gap-3 px-3 py-2.5 rounded-lg border">
+        <div
+          key={i}
+          className="flex items-center gap-3 px-3 py-2.5 rounded-lg border"
+        >
           <Skeleton className="h-8 w-8 rounded-full shrink-0" />
           <div className="flex-1 space-y-1.5">
             <Skeleton className="h-4 w-1/2" />

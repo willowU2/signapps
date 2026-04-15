@@ -84,7 +84,7 @@ fn pbkdf2_hmac_sha1(password: &[u8], salt: &[u8], iterations: u32, output: &mut 
 
     let key_len = output.len();
     let hash_len: usize = 20; // SHA-1 output size in bytes.
-    let blocks = (key_len + hash_len - 1) / hash_len;
+    let blocks = key_len.div_ceil(hash_len);
 
     let mut offset = 0;
     for block_num in 1..=(blocks as u32) {

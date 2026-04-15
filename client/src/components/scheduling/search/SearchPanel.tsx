@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { SpinnerInfinity } from 'spinners-react';
+import { SpinnerInfinity } from "spinners-react";
 
 /**
  * Search Panel Component
@@ -8,15 +8,30 @@ import { SpinnerInfinity } from 'spinners-react';
  * Full-featured search interface for scheduling blocks with filters and results.
  */
 
-import * as React from 'react';
-import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
-import { Search, X, Calendar, CheckSquare, Building, Clock, MapPin, Tag, Filter, SortAsc, SortDesc, AlertCircle, ChevronRight, Users } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import * as React from "react";
+import { format } from "date-fns";
+import { fr } from "date-fns/locale";
+import {
+  Search,
+  X,
+  Calendar,
+  CheckSquare,
+  Building,
+  Clock,
+  MapPin,
+  Tag,
+  Filter,
+  SortAsc,
+  SortDesc,
+  AlertCircle,
+  ChevronRight,
+  Users,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,19 +40,27 @@ import {
   DropdownMenuTrigger,
   DropdownMenuCheckboxItem,
   DropdownMenuLabel,
-} from '@/components/ui/dropdown-menu';
+} from "@/components/ui/dropdown-menu";
 import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
-} from '@/components/ui/sheet';
+} from "@/components/ui/sheet";
 import {
   useScheduleSearch,
   type UseScheduleSearchOptions,
-} from '@/lib/scheduling/hooks/use-schedule-search';
-import type { SearchResultItem, SearchQuery } from '@/lib/scheduling/utils/search-service';
-import type { BlockType, BlockStatus, Priority, ScheduleBlock } from '@/lib/scheduling/types/scheduling';
+} from "@/lib/scheduling/hooks/use-schedule-search";
+import type {
+  SearchResultItem,
+  SearchQuery,
+} from "@/lib/scheduling/utils/search-service";
+import type {
+  BlockType,
+  BlockStatus,
+  Priority,
+  ScheduleBlock,
+} from "@/lib/scheduling/types/scheduling";
 
 // ============================================================================
 // Types
@@ -51,7 +74,7 @@ interface SearchPanelProps {
   /** Callback when a result is selected */
   onSelect: (block: ScheduleBlock) => void;
   /** Panel display mode */
-  mode?: 'inline' | 'sheet';
+  mode?: "inline" | "sheet";
   /** Custom class name */
   className?: string;
 }
@@ -67,30 +90,30 @@ const TYPE_ICONS: Record<BlockType, React.ElementType> = {
 };
 
 const TYPE_LABELS: Record<BlockType, string> = {
-  event: 'Événement',
-  task: 'Tâche',
-  booking: 'Réservation',
+  event: "Événement",
+  task: "Tâche",
+  booking: "Réservation",
 };
 
 const STATUS_LABELS: Record<BlockStatus, string> = {
-  confirmed: 'Confirmé',
-  tentative: 'Provisoire',
-  cancelled: 'Annulé',
-  completed: 'Terminé',
+  confirmed: "Confirmé",
+  tentative: "Provisoire",
+  cancelled: "Annulé",
+  completed: "Terminé",
 };
 
 const PRIORITY_LABELS: Record<Priority, string> = {
-  low: 'Basse',
-  medium: 'Moyenne',
-  high: 'Haute',
-  urgent: 'Urgente',
+  low: "Basse",
+  medium: "Moyenne",
+  high: "Haute",
+  urgent: "Urgente",
 };
 
 const PRIORITY_COLORS: Record<Priority, string> = {
-  low: 'bg-muted text-muted-foreground',
-  medium: 'bg-blue-100 text-blue-700',
-  high: 'bg-orange-100 text-orange-700',
-  urgent: 'bg-red-100 text-red-700',
+  low: "bg-muted text-muted-foreground",
+  medium: "bg-blue-100 text-blue-700",
+  high: "bg-orange-100 text-orange-700",
+  urgent: "bg-red-100 text-red-700",
 };
 
 // ============================================================================
@@ -101,13 +124,15 @@ export function SearchPanel({
   open = true,
   onOpenChange,
   onSelect,
-  mode = 'inline',
+  mode = "inline",
   className,
 }: SearchPanelProps) {
   // State for filters
-  const [filters, setFilters] = React.useState<Omit<SearchQuery, 'text'>>({});
-  const [sortBy, setSortBy] = React.useState<SearchQuery['sortBy']>('relevance');
-  const [sortDirection, setSortDirection] = React.useState<SearchQuery['sortDirection']>('desc');
+  const [filters, setFilters] = React.useState<Omit<SearchQuery, "text">>({});
+  const [sortBy, setSortBy] =
+    React.useState<SearchQuery["sortBy"]>("relevance");
+  const [sortDirection, setSortDirection] =
+    React.useState<SearchQuery["sortDirection"]>("desc");
 
   // Search hook
   const {
@@ -153,7 +178,10 @@ export function SearchPanel({
     setFilters((prev) => {
       const priorities = prev.priorities || [];
       if (priorities.includes(priority)) {
-        return { ...prev, priorities: priorities.filter((p) => p !== priority) };
+        return {
+          ...prev,
+          priorities: priorities.filter((p) => p !== priority),
+        };
       }
       return { ...prev, priorities: [...priorities, priority] };
     });
@@ -162,8 +190,8 @@ export function SearchPanel({
   // Clear all filters
   const clearFilters = () => {
     setFilters({});
-    setSortBy('relevance');
-    setSortDirection('desc');
+    setSortBy("relevance");
+    setSortDirection("desc");
   };
 
   // Count active filters
@@ -174,7 +202,7 @@ export function SearchPanel({
     (filters.tags?.length || 0);
 
   const content = (
-    <div className={cn('flex flex-col h-full', className)}>
+    <div className={cn("flex flex-col h-full", className)}>
       {/* Search input */}
       <div className="p-4 border-b space-y-3">
         <div className="relative">
@@ -305,7 +333,7 @@ export function SearchPanel({
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm" className="h-8">
-                {sortDirection === 'asc' ? (
+                {sortDirection === "asc" ? (
                   <SortAsc className="h-3 w-3 mr-1" />
                 ) : (
                   <SortDesc className="h-3 w-3 mr-1" />
@@ -316,32 +344,37 @@ export function SearchPanel({
             <DropdownMenuContent>
               <DropdownMenuLabel>Trier par</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => setSortBy('relevance')}>
-                Pertinence {sortBy === 'relevance' && '✓'}
+              <DropdownMenuItem onClick={() => setSortBy("relevance")}>
+                Pertinence {sortBy === "relevance" && "✓"}
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setSortBy('start')}>
-                Date {sortBy === 'start' && '✓'}
+              <DropdownMenuItem onClick={() => setSortBy("start")}>
+                Date {sortBy === "start" && "✓"}
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setSortBy('title')}>
-                Titre {sortBy === 'title' && '✓'}
+              <DropdownMenuItem onClick={() => setSortBy("title")}>
+                Titre {sortBy === "title" && "✓"}
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setSortBy('priority')}>
-                Priorité {sortBy === 'priority' && '✓'}
+              <DropdownMenuItem onClick={() => setSortBy("priority")}>
+                Priorité {sortBy === "priority" && "✓"}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={() =>
-                  setSortDirection((d) => (d === 'asc' ? 'desc' : 'asc'))
+                  setSortDirection((d) => (d === "asc" ? "desc" : "asc"))
                 }
               >
-                {sortDirection === 'asc' ? 'Croissant ↑' : 'Décroissant ↓'}
+                {sortDirection === "asc" ? "Croissant ↑" : "Décroissant ↓"}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
 
           {/* Clear filters */}
           {activeFilterCount > 0 && (
-            <Button variant="ghost" size="sm" className="h-8" onClick={clearFilters}>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8"
+              onClick={clearFilters}
+            >
               <X className="h-3 w-3 mr-1" />
               Effacer ({activeFilterCount})
             </Button>
@@ -355,9 +388,17 @@ export function SearchPanel({
           {/* Results count */}
           <div className="flex items-center justify-between text-sm text-muted-foreground mb-3">
             <span>
-              {total} résultat{total !== 1 ? 's' : ''}
+              {total} résultat{total !== 1 ? "s" : ""}
             </span>
-            {isLoading && <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-4 w-4 " />}
+            {isLoading && (
+              <SpinnerInfinity
+                size={24}
+                secondaryColor="rgba(128,128,128,0.2)"
+                color="currentColor"
+                speed={120}
+                className="h-4 w-4 "
+              />
+            )}
           </div>
 
           {/* Error state */}
@@ -394,7 +435,7 @@ export function SearchPanel({
     </div>
   );
 
-  if (mode === 'sheet') {
+  if (mode === "sheet") {
     return (
       <Sheet open={open} onOpenChange={onOpenChange}>
         <SheetContent side="right" className="w-full sm:max-w-lg p-0">
@@ -431,18 +472,18 @@ function SearchResultCard({ result, onClick }: SearchResultCardProps) {
       type="button"
       onClick={onClick}
       className={cn(
-        'w-full text-left p-3 rounded-lg border hover:bg-muted/50 transition-colors',
-        'focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1'
+        "w-full text-left p-3 rounded-lg border hover:bg-muted/50 transition-colors",
+        "focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1",
       )}
     >
       <div className="flex items-start gap-3">
         {/* Type icon */}
         <div
           className={cn(
-            'w-8 h-8 rounded-lg flex items-center justify-center shrink-0',
-            block.type === 'event' && 'bg-blue-100 text-blue-600',
-            block.type === 'task' && 'bg-green-100 text-green-600',
-            block.type === 'booking' && 'bg-purple-100 text-purple-600'
+            "w-8 h-8 rounded-lg flex items-center justify-center shrink-0",
+            block.type === "event" && "bg-blue-100 text-blue-600",
+            block.type === "task" && "bg-green-100 text-green-600",
+            block.type === "booking" && "bg-purple-100 text-purple-600",
           )}
         >
           <TypeIcon className="h-4 w-4" />
@@ -454,7 +495,7 @@ function SearchResultCard({ result, onClick }: SearchResultCardProps) {
           <div className="font-medium truncate">
             <HighlightedText
               text={block.title}
-              highlights={highlights.filter((h) => h.field === 'title')}
+              highlights={highlights.filter((h) => h.field === "title")}
             />
           </div>
 
@@ -480,14 +521,17 @@ function SearchResultCard({ result, onClick }: SearchResultCardProps) {
           {block.attendees && block.attendees.length > 0 && (
             <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
               <Users className="h-3 w-3" />
-              <span>{block.attendees.length} participant{block.attendees.length > 1 ? 's' : ''}</span>
+              <span>
+                {block.attendees.length} participant
+                {block.attendees.length > 1 ? "s" : ""}
+              </span>
             </div>
           )}
 
           {/* Tags and badges */}
           <div className="flex items-center gap-1 mt-2 flex-wrap">
-            {block.priority && block.priority !== 'medium' && (
-              <Badge className={cn('text-xs', PRIORITY_COLORS[block.priority])}>
+            {block.priority && block.priority !== "medium" && (
+              <Badge className={cn("text-xs", PRIORITY_COLORS[block.priority])}>
                 {PRIORITY_LABELS[block.priority]}
               </Badge>
             )}
@@ -538,14 +582,17 @@ function HighlightedText({ text, highlights }: HighlightedTextProps) {
     // Add non-highlighted text before match
     if (match.start > lastEnd) {
       parts.push(
-        <span key={`text-${lastEnd}`}>{text.slice(lastEnd, match.start)}</span>
+        <span key={`text-${lastEnd}`}>{text.slice(lastEnd, match.start)}</span>,
       );
     }
     // Add highlighted match
     parts.push(
-      <mark key={`match-${match.start}`} className="bg-yellow-200 rounded px-0.5">
+      <mark
+        key={`match-${match.start}`}
+        className="bg-yellow-200 rounded px-0.5"
+      >
         {text.slice(match.start, match.end)}
-      </mark>
+      </mark>,
     );
     lastEnd = match.end;
   }

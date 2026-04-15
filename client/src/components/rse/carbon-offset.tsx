@@ -52,7 +52,7 @@ export default function CarbonOffset() {
 
   const handleSupport = (id: string) => {
     setSupported((prev) =>
-      prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id],
     );
   };
 
@@ -87,7 +87,9 @@ export default function CarbonOffset() {
       <div className="p-4 bg-gradient-to-r from-blue-50 to-green-50 rounded-lg border border-blue-200">
         <div className="flex items-center justify-between mb-2">
           <p className="font-medium text-sm">Offset Coverage</p>
-          <p className="text-lg font-bold text-green-900">{offsetPercentage}%</p>
+          <p className="text-lg font-bold text-green-900">
+            {offsetPercentage}%
+          </p>
         </div>
         <div className="h-4 bg-gray-200 rounded-full overflow-hidden">
           <div
@@ -112,7 +114,9 @@ export default function CarbonOffset() {
                 <span className="text-3xl">{getTypeIcon(project.type)}</span>
                 <div className="flex-1">
                   <h3 className="font-semibold text-sm">{project.name}</h3>
-                  <p className="text-xs text-muted-foreground">{project.co2Offset} kg CO₂ offset</p>
+                  <p className="text-xs text-muted-foreground">
+                    {project.co2Offset} kg CO₂ offset
+                  </p>
                 </div>
               </div>
               <span
@@ -142,8 +146,8 @@ export default function CarbonOffset() {
       {supported.length > 0 && (
         <div className="p-3 bg-green-50 rounded-lg border border-green-200 text-sm">
           <p className="text-green-900">
-            <strong>Thank you!</strong> You're supporting {supported.length} offset
-            project(s).
+            <strong>Thank you!</strong> You're supporting {supported.length}{" "}
+            offset project(s).
           </p>
         </div>
       )}

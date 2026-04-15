@@ -1,8 +1,8 @@
 //! TimeItemDependencyRepository — dependency operations between time items.
 
 use crate::models::{AddDependency, TimeItemDependency};
-use signapps_db_shared::DatabasePool;
 use signapps_common::Result;
+use signapps_db_shared::DatabasePool;
 use uuid::Uuid;
 
 /// Repository for managing scheduling dependencies between time items.

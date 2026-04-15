@@ -43,7 +43,13 @@ export default function SupplierEvaluation() {
   const [scores] = useState<SupplierScore[]>(DEFAULT_SCORES);
 
   const getAverageScore = (supplier: SupplierScore) => {
-    return Math.round((supplier.quality + supplier.delivery + supplier.price + supplier.communication) / 4);
+    return Math.round(
+      (supplier.quality +
+        supplier.delivery +
+        supplier.price +
+        supplier.communication) /
+        4,
+    );
   };
 
   const getScoreColor = (score: number) => {
@@ -67,12 +73,24 @@ export default function SupplierEvaluation() {
           <table className="w-full">
             <thead>
               <tr className="border-b bg-muted">
-                <th className="px-4 py-3 text-left text-sm font-semibold">Supplier</th>
-                <th className="px-4 py-3 text-center text-sm font-semibold">Quality</th>
-                <th className="px-4 py-3 text-center text-sm font-semibold">Delivery</th>
-                <th className="px-4 py-3 text-center text-sm font-semibold">Price</th>
-                <th className="px-4 py-3 text-center text-sm font-semibold">Communication</th>
-                <th className="px-4 py-3 text-center text-sm font-semibold">Average</th>
+                <th className="px-4 py-3 text-left text-sm font-semibold">
+                  Supplier
+                </th>
+                <th className="px-4 py-3 text-center text-sm font-semibold">
+                  Quality
+                </th>
+                <th className="px-4 py-3 text-center text-sm font-semibold">
+                  Delivery
+                </th>
+                <th className="px-4 py-3 text-center text-sm font-semibold">
+                  Price
+                </th>
+                <th className="px-4 py-3 text-center text-sm font-semibold">
+                  Communication
+                </th>
+                <th className="px-4 py-3 text-center text-sm font-semibold">
+                  Average
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y">
@@ -80,38 +98,50 @@ export default function SupplierEvaluation() {
                 const avg = getAverageScore(supplier);
                 return (
                   <tr key={supplier.id} className="hover:bg-muted">
-                    <td className="px-4 py-3 text-sm font-medium">{supplier.supplierName}</td>
+                    <td className="px-4 py-3 text-sm font-medium">
+                      {supplier.supplierName}
+                    </td>
                     <td className="px-4 py-3">
                       <div className="flex justify-center">
-                        <span className={`rounded px-2 py-1 text-sm font-semibold ${getScoreColor(supplier.quality)}`}>
+                        <span
+                          className={`rounded px-2 py-1 text-sm font-semibold ${getScoreColor(supplier.quality)}`}
+                        >
                           {supplier.quality}
                         </span>
                       </div>
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex justify-center">
-                        <span className={`rounded px-2 py-1 text-sm font-semibold ${getScoreColor(supplier.delivery)}`}>
+                        <span
+                          className={`rounded px-2 py-1 text-sm font-semibold ${getScoreColor(supplier.delivery)}`}
+                        >
                           {supplier.delivery}
                         </span>
                       </div>
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex justify-center">
-                        <span className={`rounded px-2 py-1 text-sm font-semibold ${getScoreColor(supplier.price)}`}>
+                        <span
+                          className={`rounded px-2 py-1 text-sm font-semibold ${getScoreColor(supplier.price)}`}
+                        >
                           {supplier.price}
                         </span>
                       </div>
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex justify-center">
-                        <span className={`rounded px-2 py-1 text-sm font-semibold ${getScoreColor(supplier.communication)}`}>
+                        <span
+                          className={`rounded px-2 py-1 text-sm font-semibold ${getScoreColor(supplier.communication)}`}
+                        >
                           {supplier.communication}
                         </span>
                       </div>
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex flex-col items-center">
-                        <span className={`rounded px-2 py-1 text-sm font-bold ${getScoreColor(avg)}`}>
+                        <span
+                          className={`rounded px-2 py-1 text-sm font-bold ${getScoreColor(avg)}`}
+                        >
                           {avg}
                         </span>
                         <div className="mt-1 flex gap-0.5">

@@ -1,23 +1,23 @@
-'use client';
+"use client";
 
 // CT2: Duplicate detection and merge — full-featured implementation
 // Replaces the minimal stub that existed before
 
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from '@/components/ui/dialog';
-import { contactsApi, type Contact } from '@/lib/api/contacts';
-import { toast } from 'sonner';
-import { Copy, Merge, Loader2, Search, CheckCircle } from 'lucide-react';
+} from "@/components/ui/dialog";
+import { contactsApi, type Contact } from "@/lib/api/contacts";
+import { toast } from "sonner";
+import { Copy, Merge, Loader2, Search, CheckCircle } from "lucide-react";
 
 // ── Levenshtein ───────────────────────────────────────────────────────────────
 
@@ -25,7 +25,7 @@ function levenshtein(a: string, b: string): number {
   const la = a.length;
   const lb = b.length;
   const dp: number[][] = Array.from({ length: la + 1 }, (_, i) =>
-    Array.from({ length: lb + 1 }, (_, j) => (i === 0 ? j : j === 0 ? i : 0))
+    Array.from({ length: lb + 1 }, (_, j) => (i === 0 ? j : j === 0 ? i : 0)),
   );
   for (let i = 1; i <= la; i++) {
     for (let j = 1; j <= lb; j++) {
@@ -90,31 +90,31 @@ function detectDuplicates(contacts: Contact[]): DuplicateGroup[] {
 function bestValue(contacts: Contact[], key: keyof Contact): string {
   for (const c of contacts) {
     const v = c[key];
-    if (typeof v === 'string' && v.trim()) return v.trim();
+    if (typeof v === "string" && v.trim()) return v.trim();
   }
-  return '';
+  return "";
 }
 
 function buildMerged(group: Contact[]): Partial<Contact> {
   return {
-    first_name: bestValue(group, 'first_name'),
-    last_name: bestValue(group, 'last_name'),
-    email: bestValue(group, 'email'),
-    phone: bestValue(group, 'phone'),
-    organization: bestValue(group, 'organization'),
-    job_title: bestValue(group, 'job_title'),
+    first_name: bestValue(group, "first_name"),
+    last_name: bestValue(group, "last_name"),
+    email: bestValue(group, "email"),
+    phone: bestValue(group, "phone"),
+    organization: bestValue(group, "organization"),
+    job_title: bestValue(group, "job_title"),
   };
 }
 
 // ── Merge dialog ──────────────────────────────────────────────────────────────
 
 const FIELD_LABELS: { key: keyof Contact; label: string }[] = [
-  { key: 'first_name', label: 'Prénom' },
-  { key: 'last_name', label: 'Nom' },
-  { key: 'email', label: 'Email' },
-  { key: 'phone', label: 'Téléphone' },
-  { key: 'organization', label: 'Entreprise' },
-  { key: 'job_title', label: 'Poste' },
+  { key: "first_name", label: "Prénom" },
+  { key: "last_name", label: "Nom" },
+  { key: "email", label: "Email" },
+  { key: "phone", label: "Téléphone" },
+  { key: "organization", label: "Entreprise" },
+  { key: "job_title", label: "Poste" },
 ];
 
 interface MergeDialogProps {
@@ -137,20 +137,20 @@ function MergeDialog({ group, open, onClose, onMerged }: MergeDialogProps) {
       const updated = res.data;
 
       // Delete all others
-      const idsToDelete = group.slice(1).map(c => c.id);
-      await Promise.all(idsToDelete.map(id => contactsApi.delete(id)));
+      const idsToDelete = group.slice(1).map((c) => c.id);
+      await Promise.all(idsToDelete.map((id) => contactsApi.delete(id)));
 
       onMerged(updated, idsToDelete);
-      toast.success('Contacts fusionnés avec succès.');
+      toast.success("Contacts fusionnés avec succès.");
     } catch {
-      toast.error('Erreur lors de la fusion.');
+      toast.error("Erreur lors de la fusion.");
     } finally {
       setMerging(false);
     }
   };
 
   return (
-    <Dialog open={open} onOpenChange={v => !v && onClose()}>
+    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -163,30 +163,42 @@ function MergeDialog({ group, open, onClose, onMerged }: MergeDialogProps) {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b">
-                <th className="text-left py-2 pr-4 font-medium text-muted-foreground w-24">Champ</th>
+                <th className="text-left py-2 pr-4 font-medium text-muted-foreground w-24">
+                  Champ
+                </th>
                 {group.map((c, i) => (
                   <th key={c.id} className="text-left py-2 px-2 font-medium">
                     {i === 0 ? (
-                      <Badge variant="default" className="text-xs">Principal</Badge>
+                      <Badge variant="default" className="text-xs">
+                        Principal
+                      </Badge>
                     ) : (
-                      <Badge variant="secondary" className="text-xs">Doublon {i}</Badge>
+                      <Badge variant="secondary" className="text-xs">
+                        Doublon {i}
+                      </Badge>
                     )}
                   </th>
                 ))}
-                <th className="text-left py-2 pl-4 font-medium text-green-600">Résultat</th>
+                <th className="text-left py-2 pl-4 font-medium text-green-600">
+                  Résultat
+                </th>
               </tr>
             </thead>
             <tbody>
               {FIELD_LABELS.map(({ key, label }) => (
                 <tr key={key} className="border-b last:border-0">
                   <td className="py-2 pr-4 text-muted-foreground">{label}</td>
-                  {group.map(c => (
+                  {group.map((c) => (
                     <td key={c.id} className="py-2 px-2 text-xs">
-                      {(c[key] as string) || <span className="text-muted-foreground/50">—</span>}
+                      {(c[key] as string) || (
+                        <span className="text-muted-foreground/50">—</span>
+                      )}
                     </td>
                   ))}
                   <td className="py-2 pl-4 font-medium text-green-700 dark:text-green-400 text-xs">
-                    {(merged[key] as string) || <span className="text-muted-foreground/50">—</span>}
+                    {(merged[key] as string) || (
+                      <span className="text-muted-foreground/50">—</span>
+                    )}
                   </td>
                 </tr>
               ))}
@@ -195,7 +207,9 @@ function MergeDialog({ group, open, onClose, onMerged }: MergeDialogProps) {
         </div>
 
         <p className="text-xs text-muted-foreground mt-1">
-          Le contact principal sera conservé et mis à jour. Les {group.length - 1} doublon{group.length - 1 > 1 ? 's' : ''} seront supprimé{group.length - 1 > 1 ? 's' : ''}.
+          Le contact principal sera conservé et mis à jour. Les{" "}
+          {group.length - 1} doublon{group.length - 1 > 1 ? "s" : ""} seront
+          supprimé{group.length - 1 > 1 ? "s" : ""}.
         </p>
 
         <DialogFooter>
@@ -203,7 +217,11 @@ function MergeDialog({ group, open, onClose, onMerged }: MergeDialogProps) {
             Annuler
           </Button>
           <Button onClick={handleMerge} disabled={merging} className="gap-2">
-            {merging ? <Loader2 className="h-4 w-4 animate-spin" /> : <Merge className="h-4 w-4" />}
+            {merging ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Merge className="h-4 w-4" />
+            )}
             Fusionner
           </Button>
         </DialogFooter>
@@ -218,10 +236,14 @@ interface DuplicateDetectorProps {
   onContactsChanged?: () => void;
 }
 
-export function DuplicateDetector({ onContactsChanged }: DuplicateDetectorProps) {
+export function DuplicateDetector({
+  onContactsChanged,
+}: DuplicateDetectorProps) {
   const [scanning, setScanning] = useState(false);
   const [groups, setGroups] = useState<DuplicateGroup[]>([]);
-  const [selectedGroup, setSelectedGroup] = useState<DuplicateGroup | null>(null);
+  const [selectedGroup, setSelectedGroup] = useState<DuplicateGroup | null>(
+    null,
+  );
   const [mergedIds, setMergedIds] = useState<Set<string>>(new Set());
   const [scanned, setScanned] = useState(false);
 
@@ -237,30 +259,32 @@ export function DuplicateDetector({ onContactsChanged }: DuplicateDetectorProps)
       setGroups(found);
       setScanned(true);
       if (found.length === 0) {
-        toast.success('Aucun doublon détecté.');
+        toast.success("Aucun doublon détecté.");
       } else {
-        toast.info(`${found.length} groupe${found.length > 1 ? 's' : ''} de doublons trouvé${found.length > 1 ? 's' : ''}.`);
+        toast.info(
+          `${found.length} groupe${found.length > 1 ? "s" : ""} de doublons trouvé${found.length > 1 ? "s" : ""}.`,
+        );
       }
     } catch {
-      toast.error('Erreur lors du scan.');
+      toast.error("Erreur lors du scan.");
     } finally {
       setScanning(false);
     }
   };
 
   const handleMerged = (merged: Contact, deletedIds: string[]) => {
-    setMergedIds(prev => {
+    setMergedIds((prev) => {
       const next = new Set(prev);
-      deletedIds.forEach(id => next.add(id));
+      deletedIds.forEach((id) => next.add(id));
       next.add(merged.id);
       return next;
     });
-    setGroups(prev => prev.filter(g => g[0].id !== merged.id));
+    setGroups((prev) => prev.filter((g) => g[0].id !== merged.id));
     setSelectedGroup(null);
     onContactsChanged?.();
   };
 
-  const pendingGroups = groups.filter(g => !mergedIds.has(g[0].id));
+  const pendingGroups = groups.filter((g) => !mergedIds.has(g[0].id));
 
   return (
     <div className="space-y-3">
@@ -276,7 +300,7 @@ export function DuplicateDetector({ onContactsChanged }: DuplicateDetectorProps)
         ) : (
           <Search className="h-4 w-4" />
         )}
-        {scanning ? 'Scan en cours…' : 'Détecter les doublons'}
+        {scanning ? "Scan en cours…" : "Détecter les doublons"}
       </Button>
 
       {scanned && pendingGroups.length === 0 && (
@@ -300,11 +324,28 @@ export function DuplicateDetector({ onContactsChanged }: DuplicateDetectorProps)
                 <CardContent className="px-4 pb-3 space-y-2">
                   <div className="space-y-1">
                     {group.map((c, i) => (
-                      <div key={c.id} className="flex items-center gap-2 text-sm">
-                        {i === 0 && <Badge variant="outline" className="text-xs shrink-0">Principal</Badge>}
-                        <span className="font-medium">{c.first_name} {c.last_name}</span>
-                        {c.email && <span className="text-muted-foreground text-xs">{c.email}</span>}
-                        {c.organization && <span className="text-muted-foreground text-xs">· {c.organization}</span>}
+                      <div
+                        key={c.id}
+                        className="flex items-center gap-2 text-sm"
+                      >
+                        {i === 0 && (
+                          <Badge variant="outline" className="text-xs shrink-0">
+                            Principal
+                          </Badge>
+                        )}
+                        <span className="font-medium">
+                          {c.first_name} {c.last_name}
+                        </span>
+                        {c.email && (
+                          <span className="text-muted-foreground text-xs">
+                            {c.email}
+                          </span>
+                        )}
+                        {c.organization && (
+                          <span className="text-muted-foreground text-xs">
+                            · {c.organization}
+                          </span>
+                        )}
                       </div>
                     ))}
                   </div>

@@ -20,9 +20,9 @@ import { toast } from "sonner";
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const STATUS_META: Record<InvoiceStatus, { label: string; color: string }> = {
-  draft:   { label: "Brouillon", color: "bg-muted text-muted-foreground" },
-  sent:    { label: "Envoyée",   color: "bg-blue-500/15 text-blue-500" },
-  paid:    { label: "Payée",     color: "bg-green-500/15 text-green-500" },
+  draft: { label: "Brouillon", color: "bg-muted text-muted-foreground" },
+  sent: { label: "Envoyée", color: "bg-blue-500/15 text-blue-500" },
+  paid: { label: "Payée", color: "bg-green-500/15 text-green-500" },
   overdue: { label: "En retard", color: "bg-red-500/15 text-red-500" },
 };
 
@@ -133,7 +133,12 @@ interface InvoiceDialogProps {
   onSaved: (inv: Invoice) => void;
 }
 
-function InvoiceDialog({ open, invoice, onClose, onSaved }: InvoiceDialogProps) {
+function InvoiceDialog({
+  open,
+  invoice,
+  onClose,
+  onSaved,
+}: InvoiceDialogProps) {
   const isEdit = !!invoice;
   const [clientName, setClientName] = useState("");
   const [amount, setAmount] = useState("");
@@ -144,7 +149,9 @@ function InvoiceDialog({ open, invoice, onClose, onSaved }: InvoiceDialogProps) 
 
   useEffect(() => {
     if (invoice) {
-      setClientName((invoice.metadata?.client_name as string) || invoice.client_name || "");
+      setClientName(
+        (invoice.metadata?.client_name as string) || invoice.client_name || "",
+      );
       setAmount(String((invoice.amount_cents / 100).toFixed(2)));
       setCurrency(invoice.currency || "EUR");
       setDueDate(invoice.due_at ? invoice.due_at.substring(0, 10) : "");
@@ -194,7 +201,11 @@ function InvoiceDialog({ open, invoice, onClose, onSaved }: InvoiceDialogProps) 
       }
       onClose();
     } catch {
-      toast.error(isEdit ? "Impossible de modifier la facture" : "Impossible de créer la facture");
+      toast.error(
+        isEdit
+          ? "Impossible de modifier la facture"
+          : "Impossible de créer la facture",
+      );
     } finally {
       setSaving(false);
     }
@@ -282,7 +293,11 @@ function InvoiceDialog({ open, invoice, onClose, onSaved }: InvoiceDialogProps) 
               disabled={saving}
               className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
             >
-              {saving ? "Enregistrement..." : isEdit ? "Mettre à jour" : "Créer"}
+              {saving
+                ? "Enregistrement..."
+                : isEdit
+                  ? "Mettre à jour"
+                  : "Créer"}
             </button>
           </div>
         </form>
@@ -398,7 +413,11 @@ function PlanDialog({ open, plan, onClose, onSaved }: PlanDialogProps) {
       }
       onClose();
     } catch {
-      toast.error(isEdit ? "Impossible de modifier le plan" : "Impossible de créer le plan");
+      toast.error(
+        isEdit
+          ? "Impossible de modifier le plan"
+          : "Impossible de créer le plan",
+      );
     } finally {
       setSaving(false);
     }
@@ -471,7 +490,11 @@ function PlanDialog({ open, plan, onClose, onSaved }: PlanDialogProps) {
               disabled={saving}
               className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
             >
-              {saving ? "Enregistrement..." : isEdit ? "Mettre à jour" : "Créer"}
+              {saving
+                ? "Enregistrement..."
+                : isEdit
+                  ? "Mettre à jour"
+                  : "Créer"}
             </button>
           </div>
         </form>
@@ -532,7 +555,10 @@ function PlansTab() {
           Plans tarifaires
         </h2>
         <button
-          onClick={() => { setEditingPlan(null); setPlanDialog(true); }}
+          onClick={() => {
+            setEditingPlan(null);
+            setPlanDialog(true);
+          }}
           className="px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors shadow-sm"
         >
           + Nouveau plan
@@ -551,18 +577,31 @@ function PlansTab() {
           <table className="w-full text-sm">
             <thead className="bg-muted/50">
               <tr>
-                <th className="text-left px-4 py-3 font-semibold text-muted-foreground">Nom</th>
-                <th className="text-left px-4 py-3 font-semibold text-muted-foreground">Description</th>
-                <th className="text-right px-4 py-3 font-semibold text-muted-foreground">Prix / mois</th>
-                <th className="text-left px-4 py-3 font-semibold text-muted-foreground">Statut</th>
+                <th className="text-left px-4 py-3 font-semibold text-muted-foreground">
+                  Nom
+                </th>
+                <th className="text-left px-4 py-3 font-semibold text-muted-foreground">
+                  Description
+                </th>
+                <th className="text-right px-4 py-3 font-semibold text-muted-foreground">
+                  Prix / mois
+                </th>
+                <th className="text-left px-4 py-3 font-semibold text-muted-foreground">
+                  Statut
+                </th>
                 <th className="px-4 py-3" />
               </tr>
             </thead>
             <tbody>
               {plans.map((plan) => (
-                <tr key={plan.id} className="border-t hover:bg-accent/40 transition-colors">
+                <tr
+                  key={plan.id}
+                  className="border-t hover:bg-accent/40 transition-colors"
+                >
                   <td className="px-4 py-3 font-medium">{plan.name}</td>
-                  <td className="px-4 py-3 text-muted-foreground">{plan.description || "—"}</td>
+                  <td className="px-4 py-3 text-muted-foreground">
+                    {plan.description || "—"}
+                  </td>
                   <td className="px-4 py-3 text-right font-mono">
                     {formatCurrency(plan.price_cents / 100, plan.currency)}
                   </td>
@@ -580,7 +619,10 @@ function PlansTab() {
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2 justify-end">
                       <button
-                        onClick={() => { setEditingPlan(plan); setPlanDialog(true); }}
+                        onClick={() => {
+                          setEditingPlan(plan);
+                          setPlanDialog(true);
+                        }}
                         className="text-xs text-primary hover:underline"
                       >
                         Modifier
@@ -603,7 +645,10 @@ function PlansTab() {
       <PlanDialog
         open={planDialog}
         plan={editingPlan}
-        onClose={() => { setPlanDialog(false); setEditingPlan(null); }}
+        onClose={() => {
+          setPlanDialog(false);
+          setEditingPlan(null);
+        }}
         onSaved={handleSaved}
       />
       <ConfirmDialog
@@ -623,13 +668,15 @@ function PlansTab() {
 type Tab = "invoices" | "quotes" | "plans";
 
 export default function BillingPage() {
-  usePageTitle('Facturation');
+  usePageTitle("Facturation");
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [usage, setUsage] = useState<BillingUsage | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>("invoices");
-  const [statusFilter, setStatusFilter] = useState<InvoiceStatus | "all">("all");
+  const [statusFilter, setStatusFilter] = useState<InvoiceStatus | "all">(
+    "all",
+  );
 
   // Invoice dialog state
   const [invoiceDialog, setInvoiceDialog] = useState(false);
@@ -657,7 +704,7 @@ export default function BillingPage() {
         }
 
         setLoading(false);
-      }
+      },
     );
 
     return () => {
@@ -706,196 +753,207 @@ export default function BillingPage() {
 
   return (
     <AppLayout>
-    <div className="w-full space-y-8">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Facturation</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            Gérez vos factures et suivez votre utilisation
-          </p>
-        </div>
-        <button
-          onClick={() => { setEditingInvoice(null); setInvoiceDialog(true); }}
-          className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors shadow-sm"
-        >
-          + Nouvelle facture
-        </button>
-      </div>
-
-      {/* Plan + Stats row */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-        <div className="md:col-span-2">
-          <PlanCard />
+      <div className="w-full space-y-8">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold">Facturation</h1>
+            <p className="text-sm text-muted-foreground mt-0.5">
+              Gérez vos factures et suivez votre utilisation
+            </p>
+          </div>
+          <button
+            onClick={() => {
+              setEditingInvoice(null);
+              setInvoiceDialog(true);
+            }}
+            className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors shadow-sm"
+          >
+            + Nouvelle facture
+          </button>
         </div>
 
-        <StatCard
-          label="Total encaissé"
-          value={formatCurrency(totalPaid)}
-          sub="Toutes factures payées"
-          colorClass="text-green-600"
-        />
+        {/* Plan + Stats row */}
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+          <div className="md:col-span-2">
+            <PlanCard />
+          </div>
 
-        <StatCard
-          label="Factures en retard"
-          value={String(countOverdue)}
-          sub={countOverdue > 0 ? "Action requise" : "Rien à signaler"}
-          colorClass={countOverdue > 0 ? "text-red-500" : "text-foreground"}
-        />
-      </div>
+          <StatCard
+            label="Total encaissé"
+            value={formatCurrency(totalPaid)}
+            sub="Toutes factures payées"
+            colorClass="text-green-600"
+          />
 
-      {/* Usage cards — live data from billing API */}
-      <section>
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground mb-3">
-          Utilisation
-        </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <UsageCard
-            label="Stockage"
-            used={
-              usage
-                ? formatBytes(usage.storage_used_bytes)
-                : "—"
-            }
-            limit={
-              usage && usage.storage_limit_bytes > 0
-                ? formatBytes(usage.storage_limit_bytes)
-                : "5 Go"
-            }
-            pct={
-              usage && usage.storage_limit_bytes > 0
-                ? Math.round(
-                    (usage.storage_used_bytes / usage.storage_limit_bytes) * 100
-                  )
-                : 0
-            }
-          />
-          <UsageCard
-            label="Appels API ce mois"
-            used={usage ? String(usage.api_calls_this_month) : "—"}
-            limit={
-              usage && usage.api_calls_limit > 0
-                ? String(usage.api_calls_limit)
-                : "Illimité"
-            }
-            pct={
-              usage && usage.api_calls_limit > 0
-                ? Math.round(
-                    (usage.api_calls_this_month / usage.api_calls_limit) * 100
-                  )
-                : 0
-            }
-          />
-          <UsageCard
-            label="Utilisateurs actifs"
-            used={usage ? String(usage.active_users) : "—"}
-            limit={
-              usage && usage.user_limit > 0
-                ? String(usage.user_limit)
-                : "Illimité"
-            }
-            pct={
-              usage && usage.user_limit > 0
-                ? Math.round((usage.active_users / usage.user_limit) * 100)
-                : 0
-            }
+          <StatCard
+            label="Factures en retard"
+            value={String(countOverdue)}
+            sub={countOverdue > 0 ? "Action requise" : "Rien à signaler"}
+            colorClass={countOverdue > 0 ? "text-red-500" : "text-foreground"}
           />
         </div>
-      </section>
 
-      {/* Feature 11: Overdue invoices with CRM flag */}
-      <section>
-        <OverdueInvoicesCrmFlag />
-      </section>
+        {/* Usage cards — live data from billing API */}
+        <section>
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground mb-3">
+            Utilisation
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <UsageCard
+              label="Stockage"
+              used={usage ? formatBytes(usage.storage_used_bytes) : "—"}
+              limit={
+                usage && usage.storage_limit_bytes > 0
+                  ? formatBytes(usage.storage_limit_bytes)
+                  : "5 Go"
+              }
+              pct={
+                usage && usage.storage_limit_bytes > 0
+                  ? Math.round(
+                      (usage.storage_used_bytes / usage.storage_limit_bytes) *
+                        100,
+                    )
+                  : 0
+              }
+            />
+            <UsageCard
+              label="Appels API ce mois"
+              used={usage ? String(usage.api_calls_this_month) : "—"}
+              limit={
+                usage && usage.api_calls_limit > 0
+                  ? String(usage.api_calls_limit)
+                  : "Illimité"
+              }
+              pct={
+                usage && usage.api_calls_limit > 0
+                  ? Math.round(
+                      (usage.api_calls_this_month / usage.api_calls_limit) *
+                        100,
+                    )
+                  : 0
+              }
+            />
+            <UsageCard
+              label="Utilisateurs actifs"
+              used={usage ? String(usage.active_users) : "—"}
+              limit={
+                usage && usage.user_limit > 0
+                  ? String(usage.user_limit)
+                  : "Illimité"
+              }
+              pct={
+                usage && usage.user_limit > 0
+                  ? Math.round((usage.active_users / usage.user_limit) * 100)
+                  : 0
+              }
+            />
+          </div>
+        </section>
 
-      {/* Tabs section */}
-      <section>
-        {/* Tabs */}
-        <div className="flex items-center gap-2 mb-4">
-          {(["invoices", "quotes", "plans"] as const).map((t) => (
-            <button
-              key={t}
-              onClick={() => setTab(t)}
-              className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                tab === t
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-muted-foreground hover:bg-accent"
-              }`}
-            >
-              {t === "invoices" ? "Factures" : t === "quotes" ? "Devis" : "Plans"}
-            </button>
-          ))}
+        {/* Feature 11: Overdue invoices with CRM flag */}
+        <section>
+          <OverdueInvoicesCrmFlag />
+        </section>
 
-          {/* Status filter — only shown for invoices */}
-          {tab === "invoices" && (
-            <div className="ml-auto flex gap-2">
-              {(["all", "sent", "paid", "overdue", "draft"] as const).map(
-                (s) => (
-                  <button
-                    key={s}
-                    onClick={() => setStatusFilter(s)}
-                    className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
-                      statusFilter === s
-                        ? "bg-primary/15 text-primary"
-                        : "text-muted-foreground hover:bg-accent"
-                    }`}
-                  >
-                    {s === "all"
-                      ? "Toutes"
-                      : STATUS_META[s as InvoiceStatus]?.label ?? s}
-                  </button>
-                )
-              )}
-            </div>
+        {/* Tabs section */}
+        <section>
+          {/* Tabs */}
+          <div className="flex items-center gap-2 mb-4">
+            {(["invoices", "quotes", "plans"] as const).map((t) => (
+              <button
+                key={t}
+                onClick={() => setTab(t)}
+                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                  tab === t
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-muted-foreground hover:bg-accent"
+                }`}
+              >
+                {t === "invoices"
+                  ? "Factures"
+                  : t === "quotes"
+                    ? "Devis"
+                    : "Plans"}
+              </button>
+            ))}
+
+            {/* Status filter — only shown for invoices */}
+            {tab === "invoices" && (
+              <div className="ml-auto flex gap-2">
+                {(["all", "sent", "paid", "overdue", "draft"] as const).map(
+                  (s) => (
+                    <button
+                      key={s}
+                      onClick={() => setStatusFilter(s)}
+                      className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
+                        statusFilter === s
+                          ? "bg-primary/15 text-primary"
+                          : "text-muted-foreground hover:bg-accent"
+                      }`}
+                    >
+                      {s === "all"
+                        ? "Toutes"
+                        : (STATUS_META[s as InvoiceStatus]?.label ?? s)}
+                    </button>
+                  ),
+                )}
+              </div>
+            )}
+          </div>
+
+          {tab === "plans" ? (
+            <PlansTab />
+          ) : loading ? (
+            <LoadingSkeleton />
+          ) : error ? (
+            <ErrorBanner message={error} />
+          ) : filtered.length === 0 ? (
+            <EmptyState
+              label={
+                tab === "invoices"
+                  ? statusFilter !== "all"
+                    ? `Aucune facture avec le statut « ${STATUS_META[statusFilter as InvoiceStatus]?.label} »`
+                    : "Aucune facture pour le moment"
+                  : "Aucun devis pour le moment"
+              }
+              hint={
+                tab === "invoices"
+                  ? "Créez votre première facture pour commencer"
+                  : "Créez votre premier devis pour commencer"
+              }
+            />
+          ) : (
+            <InvoiceTable
+              invoices={filtered}
+              onEdit={(inv) => {
+                setEditingInvoice(inv);
+                setInvoiceDialog(true);
+              }}
+              onDelete={setDeleteTarget}
+            />
           )}
-        </div>
+        </section>
+      </div>
 
-        {tab === "plans" ? (
-          <PlansTab />
-        ) : loading ? (
-          <LoadingSkeleton />
-        ) : error ? (
-          <ErrorBanner message={error} />
-        ) : filtered.length === 0 ? (
-          <EmptyState
-            label={
-              tab === "invoices"
-                ? statusFilter !== "all"
-                  ? `Aucune facture avec le statut « ${STATUS_META[statusFilter as InvoiceStatus]?.label} »`
-                  : "Aucune facture pour le moment"
-                : "Aucun devis pour le moment"
-            }
-            hint={
-              tab === "invoices"
-                ? "Créez votre première facture pour commencer"
-                : "Créez votre premier devis pour commencer"
-            }
-          />
-        ) : (
-          <InvoiceTable
-            invoices={filtered}
-            onEdit={(inv) => { setEditingInvoice(inv); setInvoiceDialog(true); }}
-            onDelete={setDeleteTarget}
-          />
-        )}
-      </section>
-    </div>
-
-    {/* Dialogs */}
-    <InvoiceDialog
-      open={invoiceDialog}
-      invoice={editingInvoice}
-      onClose={() => { setInvoiceDialog(false); setEditingInvoice(null); }}
-      onSaved={handleInvoiceSaved}
-    />
-    <ConfirmDialog
-      open={!!deleteTarget}
-      title="Supprimer cette facture ?"
-      description={`La facture ${deleteTarget?.number} sera définitivement supprimée. Seules les factures en brouillon peuvent être supprimées.`}
-      onConfirm={handleDeleteConfirm}
-      onCancel={() => setDeleteTarget(null)}
-      loading={deleting}
-    />
+      {/* Dialogs */}
+      <InvoiceDialog
+        open={invoiceDialog}
+        invoice={editingInvoice}
+        onClose={() => {
+          setInvoiceDialog(false);
+          setEditingInvoice(null);
+        }}
+        onSaved={handleInvoiceSaved}
+      />
+      <ConfirmDialog
+        open={!!deleteTarget}
+        title="Supprimer cette facture ?"
+        description={`La facture ${deleteTarget?.number} sera définitivement supprimée. Seules les factures en brouillon peuvent être supprimées.`}
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => setDeleteTarget(null)}
+        loading={deleting}
+      />
     </AppLayout>
   );
 }
@@ -947,9 +1005,12 @@ function InvoiceTable({
             const st =
               STATUS_META[inv.status as InvoiceStatus] ?? STATUS_META.draft;
             // Try to find local invoice for email sending
-            const localInv = localInvoicesApi.list().find(
-              li => li.number === inv.number || li.clientName === inv.client_name
-            );
+            const localInv = localInvoicesApi
+              .list()
+              .find(
+                (li) =>
+                  li.number === inv.number || li.clientName === inv.client_name,
+              );
             return (
               <tr
                 key={inv.id}

@@ -194,10 +194,34 @@ export const viewTemplates: ViewTemplate[] = [
         id: "filter-images",
         logic: "or",
         conditions: [
-          { id: "jpg", field: "mime_type", operator: "equals", value: "image/jpeg", valueType: "string" },
-          { id: "png", field: "mime_type", operator: "equals", value: "image/png", valueType: "string" },
-          { id: "gif", field: "mime_type", operator: "equals", value: "image/gif", valueType: "string" },
-          { id: "webp", field: "mime_type", operator: "equals", value: "image/webp", valueType: "string" },
+          {
+            id: "jpg",
+            field: "mime_type",
+            operator: "equals",
+            value: "image/jpeg",
+            valueType: "string",
+          },
+          {
+            id: "png",
+            field: "mime_type",
+            operator: "equals",
+            value: "image/png",
+            valueType: "string",
+          },
+          {
+            id: "gif",
+            field: "mime_type",
+            operator: "equals",
+            value: "image/gif",
+            valueType: "string",
+          },
+          {
+            id: "webp",
+            field: "mime_type",
+            operator: "equals",
+            value: "image/webp",
+            valueType: "string",
+          },
         ],
       },
       pageSize: 50,
@@ -225,10 +249,34 @@ export const viewTemplates: ViewTemplate[] = [
         id: "filter-docs",
         logic: "or",
         conditions: [
-          { id: "pdf", field: "mime_type", operator: "equals", value: "application/pdf", valueType: "string" },
-          { id: "docx", field: "mime_type", operator: "contains", value: "wordprocessingml", valueType: "string" },
-          { id: "xlsx", field: "mime_type", operator: "contains", value: "spreadsheetml", valueType: "string" },
-          { id: "pptx", field: "mime_type", operator: "contains", value: "presentationml", valueType: "string" },
+          {
+            id: "pdf",
+            field: "mime_type",
+            operator: "equals",
+            value: "application/pdf",
+            valueType: "string",
+          },
+          {
+            id: "docx",
+            field: "mime_type",
+            operator: "contains",
+            value: "wordprocessingml",
+            valueType: "string",
+          },
+          {
+            id: "xlsx",
+            field: "mime_type",
+            operator: "contains",
+            value: "spreadsheetml",
+            valueType: "string",
+          },
+          {
+            id: "pptx",
+            field: "mime_type",
+            operator: "contains",
+            value: "presentationml",
+            valueType: "string",
+          },
         ],
       },
       pageSize: 25,
@@ -460,8 +508,20 @@ export const quickFilterPresets: QuickFilterPreset[] = [
           id: "qf-overdue",
           logic: "and",
           conditions: [
-            { id: "past", field: "due_date", operator: "before", value: "{{today}}", valueType: "date" },
-            { id: "not-done", field: "status", operator: "not_equals", value: "done", valueType: "select" },
+            {
+              id: "past",
+              field: "due_date",
+              operator: "before",
+              value: "{{today}}",
+              valueType: "date",
+            },
+            {
+              id: "not-done",
+              field: "status",
+              operator: "not_equals",
+              value: "done",
+              valueType: "select",
+            },
           ],
         },
       },
@@ -529,8 +589,20 @@ export const quickFilterPresets: QuickFilterPreset[] = [
           id: "qf-docs",
           logic: "or",
           conditions: [
-            { id: "pdf", field: "mime_type", operator: "equals", value: "application/pdf", valueType: "string" },
-            { id: "doc", field: "mime_type", operator: "contains", value: "document", valueType: "string" },
+            {
+              id: "pdf",
+              field: "mime_type",
+              operator: "equals",
+              value: "application/pdf",
+              valueType: "string",
+            },
+            {
+              id: "doc",
+              field: "mime_type",
+              operator: "contains",
+              value: "document",
+              valueType: "string",
+            },
           ],
         },
       },
@@ -648,10 +720,10 @@ export function getTemplatesForEntity(entityType: string): ViewTemplate[] {
 
 export function getTemplatesByCategory(
   entityType: string,
-  category: string
+  category: string,
 ): ViewTemplate[] {
   return viewTemplates.filter(
-    (t) => t.entityType === entityType && t.category === category
+    (t) => t.entityType === entityType && t.category === category,
   );
 }
 
@@ -659,13 +731,15 @@ export function getTemplate(templateId: string): ViewTemplate | undefined {
   return viewTemplates.find((t) => t.id === templateId);
 }
 
-export function getQuickFilters(entityType: string): QuickFilterPreset | undefined {
+export function getQuickFilters(
+  entityType: string,
+): QuickFilterPreset | undefined {
   return quickFilterPresets.find((p) => p.entityType === entityType);
 }
 
 export function createViewFromTemplate(
   template: ViewTemplate,
-  userId: string
+  userId: string,
 ): ViewDefinition {
   return {
     ...template.view,
@@ -678,7 +752,7 @@ export function createViewFromTemplate(
 
 export function getDefaultView(entityType: string): ViewTemplate | undefined {
   return viewTemplates.find(
-    (t) => t.entityType === entityType && t.view.isDefault
+    (t) => t.entityType === entityType && t.view.isDefault,
   );
 }
 

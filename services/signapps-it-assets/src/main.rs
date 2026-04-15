@@ -62,8 +62,7 @@ async fn main() -> anyhow::Result<()> {
         ]);
 
     // Sharing sub-router: State<SharingEngine> — separate from AppState.
-    let sharing_sub = sharing_routes("assets", ResourceType::Asset)
-        .with_state(sharing_engine);
+    let sharing_sub = sharing_routes("assets", ResourceType::Asset).with_state(sharing_engine);
 
     let protected_routes = routes::api_routes(state.clone())
         .route_layer(middleware::from_fn(tenant_context_middleware))

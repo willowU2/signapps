@@ -154,12 +154,7 @@ export const userAdapter: BlockAdapter<UserEntity> = {
   },
 
   getSearchableText(user: UserEntity): string {
-    return [
-      user.username,
-      user.display_name,
-      user.email,
-      user.role,
-    ]
+    return [user.username, user.display_name, user.email, user.role]
       .filter(Boolean)
       .join(" ");
   },
@@ -360,7 +355,11 @@ export const eventAdapter: BlockAdapter<EventEntity> = {
       id: event.id,
       type: "event",
       title: event.title,
-      subtitle: formatEventTime(event.start_time, event.end_time, event.all_day),
+      subtitle: formatEventTime(
+        event.start_time,
+        event.end_time,
+        event.all_day,
+      ),
       description: event.description,
       icon: "Calendar",
       color: event.color || "#3b82f6",
@@ -562,10 +561,14 @@ function getFileIcon(mimeType: string): string {
   if (mimeType.startsWith("video/")) return "Video";
   if (mimeType.startsWith("audio/")) return "Music";
   if (mimeType === "application/pdf") return "FileText";
-  if (mimeType.includes("spreadsheet") || mimeType.includes("excel")) return "Table";
-  if (mimeType.includes("presentation") || mimeType.includes("powerpoint")) return "Presentation";
-  if (mimeType.includes("document") || mimeType.includes("word")) return "FileText";
-  if (mimeType.includes("zip") || mimeType.includes("archive")) return "Archive";
+  if (mimeType.includes("spreadsheet") || mimeType.includes("excel"))
+    return "Table";
+  if (mimeType.includes("presentation") || mimeType.includes("powerpoint"))
+    return "Presentation";
+  if (mimeType.includes("document") || mimeType.includes("word"))
+    return "FileText";
+  if (mimeType.includes("zip") || mimeType.includes("archive"))
+    return "Archive";
   if (mimeType.includes("text/")) return "FileCode";
   return "File";
 }
@@ -575,9 +578,11 @@ function getFileColor(mimeType: string): string {
   if (mimeType.startsWith("video/")) return "#8b5cf6";
   if (mimeType.startsWith("audio/")) return "#06b6d4";
   if (mimeType === "application/pdf") return "#ef4444";
-  if (mimeType.includes("spreadsheet") || mimeType.includes("excel")) return "#22c55e";
+  if (mimeType.includes("spreadsheet") || mimeType.includes("excel"))
+    return "#22c55e";
   if (mimeType.includes("presentation")) return "#f97316";
-  if (mimeType.includes("document") || mimeType.includes("word")) return "#3b82f6";
+  if (mimeType.includes("document") || mimeType.includes("word"))
+    return "#3b82f6";
   return "#6b7280";
 }
 
@@ -624,7 +629,11 @@ function getPriorityOrder(priority: string): number {
   return order[priority] ?? 99;
 }
 
-function formatEventTime(start: string, end?: string, allDay?: boolean): string {
+function formatEventTime(
+  start: string,
+  end?: string,
+  allDay?: boolean,
+): string {
   if (allDay) return "Toute la journée";
 
   const startDate = new Date(start);

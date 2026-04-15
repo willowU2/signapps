@@ -126,8 +126,12 @@ function PostPill({
     <button
       onClick={onClick}
       className="w-full text-left text-xs px-1.5 py-0.5 rounded truncate transition-opacity hover:opacity-80 flex items-center gap-1"
-      style={{ backgroundColor: color + "22", borderLeft: `2px solid ${color}`, color }}
-      title={`${post.content}${post.repeatInterval && post.repeatInterval > 0 ? ` (repeats every ${post.repeatInterval}d)` : ''}`}
+      style={{
+        backgroundColor: color + "22",
+        borderLeft: `2px solid ${color}`,
+        color,
+      }}
+      title={`${post.content}${post.repeatInterval && post.repeatInterval > 0 ? ` (repeats every ${post.repeatInterval}d)` : ""}`}
     >
       {post.repeatInterval && post.repeatInterval > 0 && (
         <Repeat className="h-2.5 w-2.5 shrink-0" />
@@ -154,7 +158,11 @@ export function ContentCalendar({
     const start = startOfMonth(current);
     const firstDay = start.getDay(); // 0=Sun
     const days: Array<Date | null> = Array(firstDay).fill(null);
-    const daysInMonth = new Date(current.getFullYear(), current.getMonth() + 1, 0).getDate();
+    const daysInMonth = new Date(
+      current.getFullYear(),
+      current.getMonth() + 1,
+      0,
+    ).getDate();
     for (let i = 1; i <= daysInMonth; i++) {
       days.push(new Date(current.getFullYear(), current.getMonth(), i));
     }
@@ -174,7 +182,7 @@ export function ContentCalendar({
 
   const postsForSlot = (date: Date, hour: number) =>
     posts.filter(
-      (p) => sameDay(p.scheduledAt, date) && p.scheduledAt.getHours() === hour
+      (p) => sameDay(p.scheduledAt, date) && p.scheduledAt.getHours() === hour,
     );
 
   const navigate = (dir: -1 | 1) => {
@@ -210,7 +218,10 @@ export function ContentCalendar({
               <span>{headerLabel}</span>
             </div>
             <div className="flex items-center gap-2">
-              <Tabs value={view} onValueChange={(v) => setView(v as "month" | "week")}>
+              <Tabs
+                value={view}
+                onValueChange={(v) => setView(v as "month" | "week")}
+              >
                 <TabsList className="h-7">
                   <TabsTrigger value="month" className="text-xs h-6 px-2">
                     <Calendar className="w-3 h-3 mr-1" /> Month
@@ -220,10 +231,20 @@ export function ContentCalendar({
                   </TabsTrigger>
                 </TabsList>
               </Tabs>
-              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => navigate(-1)}>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7"
+                onClick={() => navigate(-1)}
+              >
                 <ChevronLeft className="w-4 h-4" />
               </Button>
-              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => navigate(1)}>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7"
+                onClick={() => navigate(1)}
+              >
                 <ChevronRight className="w-4 h-4" />
               </Button>
             </div>
@@ -235,7 +256,10 @@ export function ContentCalendar({
               {/* Day headers */}
               <div className="grid grid-cols-7 border-b">
                 {DAYS_WEEK.map((d) => (
-                  <div key={d} className="text-center text-xs font-medium text-muted-foreground py-2">
+                  <div
+                    key={d}
+                    className="text-center text-xs font-medium text-muted-foreground py-2"
+                  >
                     {d}
                   </div>
                 ))}
@@ -249,12 +273,20 @@ export function ContentCalendar({
                     <div
                       key={i}
                       className={`min-h-[80px] border-b border-r p-1 ${
-                        !day ? "bg-muted/20" : "hover:bg-muted/30 cursor-pointer"
+                        !day
+                          ? "bg-muted/20"
+                          : "hover:bg-muted/30 cursor-pointer"
                       } transition-colors ${draggedId && day && dragOverDate === day.toDateString() ? "ring-2 ring-blue-400 bg-blue-50/40 dark:bg-blue-900/10" : ""}`}
                       onClick={() => day && onNewPost?.(day)}
-                      onDragOver={(e) => { e.preventDefault(); if (day) setDragOverDate(day.toDateString()); }}
+                      onDragOver={(e) => {
+                        e.preventDefault();
+                        if (day) setDragOverDate(day.toDateString());
+                      }}
                       onDragLeave={() => setDragOverDate(null)}
-                      onDrop={() => { day && handleDrop(day); setDragOverDate(null); }}
+                      onDrop={() => {
+                        day && handleDrop(day);
+                        setDragOverDate(null);
+                      }}
                     >
                       {day && (
                         <>
@@ -272,7 +304,10 @@ export function ContentCalendar({
                               <div
                                 key={p.id}
                                 draggable
-                                onDragStart={(e) => { e.stopPropagation(); setDraggedId(p.id); }}
+                                onDragStart={(e) => {
+                                  e.stopPropagation();
+                                  setDraggedId(p.id);
+                                }}
                                 onDragEnd={() => setDraggedId(null)}
                               >
                                 <PostPill
@@ -313,7 +348,9 @@ export function ContentCalendar({
                   const isToday = sameDay(d, new Date());
                   return (
                     <div key={i} className="text-center py-2 border-l">
-                      <p className="text-xs text-muted-foreground">{DAYS_WEEK[d.getDay()]}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {DAYS_WEEK[d.getDay()]}
+                      </p>
                       <p
                         className={`text-sm font-medium ${
                           isToday ? "text-blue-500" : ""
@@ -378,8 +415,14 @@ export function ContentCalendar({
       {/* Platform legend */}
       <div className="flex flex-wrap gap-3 px-1 pt-1">
         {Object.entries(PLATFORM_COLORS).map(([p, color]) => (
-          <span key={p} className="flex items-center gap-1 text-xs text-muted-foreground capitalize">
-            <span className="w-2 h-2 rounded-full" style={{ backgroundColor: color }} />
+          <span
+            key={p}
+            className="flex items-center gap-1 text-xs text-muted-foreground capitalize"
+          >
+            <span
+              className="w-2 h-2 rounded-full"
+              style={{ backgroundColor: color }}
+            />
             {p}
           </span>
         ))}
@@ -387,13 +430,18 @@ export function ContentCalendar({
 
       {/* Post detail dialog */}
       {selectedPost && (
-        <Dialog open={!!selectedPost} onOpenChange={() => setSelectedPost(null)}>
+        <Dialog
+          open={!!selectedPost}
+          onOpenChange={() => setSelectedPost(null)}
+        >
           <DialogContent className="max-w-sm">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2 text-sm">
                 <span
                   className="w-2 h-2 rounded-full"
-                  style={{ backgroundColor: PLATFORM_COLORS[selectedPost.platform] }}
+                  style={{
+                    backgroundColor: PLATFORM_COLORS[selectedPost.platform],
+                  }}
                 />
                 <span className="capitalize">{selectedPost.platform}</span>
                 <Badge
@@ -401,8 +449,8 @@ export function ContentCalendar({
                     selectedPost.status === "published"
                       ? "default"
                       : selectedPost.status === "failed"
-                      ? "destructive"
-                      : "secondary"
+                        ? "destructive"
+                        : "secondary"
                   }
                   className="text-xs"
                 >

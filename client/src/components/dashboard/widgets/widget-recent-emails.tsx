@@ -43,7 +43,9 @@ export function WidgetRecentEmails({ widget }: WidgetRenderProps) {
       const query = unreadOnly
         ? { folder_type: "inbox", limit, is_read: false }
         : { folder_type: "inbox", limit };
-      const raw = await mailApi.list(query as Parameters<typeof mailApi.list>[0]);
+      const raw = await mailApi.list(
+        query as Parameters<typeof mailApi.list>[0],
+      );
       const items: EmailItem[] = raw.map((e) => ({
         id: e.id,
         subject: e.subject || "(Sans objet)",

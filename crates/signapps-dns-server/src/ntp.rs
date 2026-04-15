@@ -22,10 +22,7 @@ impl Default for NtpConfig {
     fn default() -> Self {
         Self {
             enabled: true,
-            upstream_servers: vec![
-                "pool.ntp.org".to_string(),
-                "time.google.com".to_string(),
-            ],
+            upstream_servers: vec!["pool.ntp.org".to_string(), "time.google.com".to_string()],
             stratum: 3,
             max_drift_ms: 500,
         }
@@ -91,8 +88,7 @@ impl NtpPacket {
 
         let ntp_secs = now.as_secs() + Self::NTP_EPOCH_OFFSET;
         // Fixed-point fraction: subsec_nanos * 2^32 / 1e9
-        let ntp_frac =
-            (now.subsec_nanos() as u64 * (1u64 << 32)) / 1_000_000_000;
+        let ntp_frac = (now.subsec_nanos() as u64 * (1u64 << 32)) / 1_000_000_000;
         let ntp_timestamp = (ntp_secs << 32) | ntp_frac;
 
         Self {
@@ -143,20 +139,16 @@ impl NtpPacket {
             root_dispersion: u32::from_be_bytes([data[8], data[9], data[10], data[11]]),
             reference_id: u32::from_be_bytes([data[12], data[13], data[14], data[15]]),
             reference_timestamp: u64::from_be_bytes([
-                data[16], data[17], data[18], data[19],
-                data[20], data[21], data[22], data[23],
+                data[16], data[17], data[18], data[19], data[20], data[21], data[22], data[23],
             ]),
             origin_timestamp: u64::from_be_bytes([
-                data[24], data[25], data[26], data[27],
-                data[28], data[29], data[30], data[31],
+                data[24], data[25], data[26], data[27], data[28], data[29], data[30], data[31],
             ]),
             receive_timestamp: u64::from_be_bytes([
-                data[32], data[33], data[34], data[35],
-                data[36], data[37], data[38], data[39],
+                data[32], data[33], data[34], data[35], data[36], data[37], data[38], data[39],
             ]),
             transmit_timestamp: u64::from_be_bytes([
-                data[40], data[41], data[42], data[43],
-                data[44], data[45], data[46], data[47],
+                data[40], data[41], data[42], data[43], data[44], data[45], data[46], data[47],
             ]),
         })
     }

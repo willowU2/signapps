@@ -79,7 +79,11 @@ pub async fn spawn_dc_listeners(
             tracing::error!("LDAP listener error: {}", e);
         }
     });
-    tracing::info!(port = config.ldap_port, ldaps_port = config.ldaps_port, "LDAP listener spawned");
+    tracing::info!(
+        port = config.ldap_port,
+        ldaps_port = config.ldaps_port,
+        "LDAP listener spawned"
+    );
 
     // ── Kerberos KDC listener ────────────────────────────────────────────────
     let kdc_config = signapps_kerberos_kdc::listener::KdcListenerConfig {
@@ -95,7 +99,11 @@ pub async fn spawn_dc_listeners(
             tracing::error!("KDC listener error: {}", e);
         }
     });
-    tracing::info!(port = config.kdc_port, kpasswd_port = config.kpasswd_port, "KDC listener spawned");
+    tracing::info!(
+        port = config.kdc_port,
+        kpasswd_port = config.kpasswd_port,
+        "KDC listener spawned"
+    );
 
     // ── NTP listener ─────────────────────────────────────────────────────────
     let ntp_port = config.ntp_port;
@@ -108,11 +116,11 @@ pub async fn spawn_dc_listeners(
             Ok(s) => {
                 tracing::info!(port = ntp_port, "NTP server started");
                 s
-            }
+            },
             Err(e) => {
                 tracing::error!(port = ntp_port, "NTP bind failed: {}", e);
                 return;
-            }
+            },
         };
 
         let mut buf = [0u8; 48];
@@ -166,17 +174,16 @@ pub async fn spawn_dc_listeners(
     // ── AD Reconciliation cron (every 15 min) ─────────────────────────────────
     let recon_pool = pool.clone();
     tokio::spawn(async move {
-        let mut interval =
-            tokio::time::interval(tokio::time::Duration::from_secs(900));
+        let mut interval = tokio::time::interval(tokio::time::Duration::from_secs(900));
         loop {
             interval.tick().await;
             match signapps_ad_core::reconciliation::reconcile(&recon_pool).await {
                 Ok(report) => {
                     tracing::info!(?report, "AD reconciliation completed");
-                }
+                },
                 Err(e) => {
                     tracing::error!("AD reconciliation failed: {}", e);
-                }
+                },
             }
         }
     });

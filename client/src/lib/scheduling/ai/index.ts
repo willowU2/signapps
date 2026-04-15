@@ -12,13 +12,13 @@ export {
   type SuggestionContext,
   type PatternAnalysis,
   type SuggestionOptions,
-} from './suggestions';
+} from "./suggestions";
 
 export {
   autoScheduleTasks,
   previewAutoSchedule,
   findBestSlotForTask,
-} from './auto-scheduler';
+} from "./auto-scheduler";
 
 export {
   analyzeConflictPatterns,
@@ -26,4 +26,4 @@ export {
   generateWeeklyConflictReport,
   type ConflictInsightResult,
   type ConflictInsightOptions,
-} from './conflict-insights';
+} from "./conflict-insights";

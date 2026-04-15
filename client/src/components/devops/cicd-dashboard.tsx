@@ -24,7 +24,10 @@ function loadPipelinesFromStorage(): PipelineCard[] {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return [];
     const parsed = JSON.parse(raw);
-    return parsed.map((p: PipelineCard) => ({ ...p, lastRunTime: new Date(p.lastRunTime) }));
+    return parsed.map((p: PipelineCard) => ({
+      ...p,
+      lastRunTime: new Date(p.lastRunTime),
+    }));
   } catch {
     return [];
   }
@@ -39,7 +42,9 @@ function mapPipelineFromApi(p: any): PipelineCard {
     id: p.id ?? crypto.randomUUID(),
     repoName: p.name ?? p.repo_name ?? p.repository ?? "",
     branch: p.branch ?? "main",
-    status: (["success","failed","running"].includes(p.status) ? p.status : "running") as PipelineCard["status"],
+    status: (["success", "failed", "running"].includes(p.status)
+      ? p.status
+      : "running") as PipelineCard["status"],
     duration: p.duration_seconds ?? p.duration ?? 0,
     lastRunTime: new Date(p.last_run_at ?? p.created_at ?? Date.now()),
   };
@@ -47,17 +52,23 @@ function mapPipelineFromApi(p: any): PipelineCard {
 
 const getStatusColor = (status: "success" | "failed" | "running"): string => {
   switch (status) {
-    case "success": return "bg-green-500 shadow-green-500/50";
-    case "failed": return "bg-red-500 shadow-red-500/50";
-    case "running": return "bg-yellow-500 shadow-yellow-500/50";
+    case "success":
+      return "bg-green-500 shadow-green-500/50";
+    case "failed":
+      return "bg-red-500 shadow-red-500/50";
+    case "running":
+      return "bg-yellow-500 shadow-yellow-500/50";
   }
 };
 
 const getStatusText = (status: "success" | "failed" | "running"): string => {
   switch (status) {
-    case "success": return "Success";
-    case "failed": return "Failed";
-    case "running": return "Running";
+    case "success":
+      return "Success";
+    case "failed":
+      return "Failed";
+    case "running":
+      return "Running";
   }
 };
 
@@ -89,7 +100,7 @@ export function CICDDashboard() {
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await schedulerClient.get<any[]>('/devops/pipelines');
+        const res = await schedulerClient.get<any[]>("/devops/pipelines");
         const loaded = (res.data ?? []).map(mapPipelineFromApi);
         setPipelines(loaded);
         savePipelinesToStorage(loaded);
@@ -108,7 +119,7 @@ export function CICDDashboard() {
         const updated = prev.map((pipeline) =>
           pipeline.status === "running"
             ? { ...pipeline, duration: pipeline.duration + 1 }
-            : pipeline
+            : pipeline,
         );
         savePipelinesToStorage(updated);
         return updated;
@@ -135,7 +146,7 @@ export function CICDDashboard() {
     setFormBranch("main");
     toast.success(`Pipeline for ${formRepo} started`);
     try {
-      await schedulerClient.post('/devops/pipelines', {
+      await schedulerClient.post("/devops/pipelines", {
         name: newPipeline.repoName,
         branch: newPipeline.branch,
       });
@@ -145,9 +156,7 @@ export function CICDDashboard() {
   };
 
   const handleMarkStatus = async (id: string, status: "success" | "failed") => {
-    const updated = pipelines.map((p) =>
-      p.id === id ? { ...p, status } : p
-    );
+    const updated = pipelines.map((p) => (p.id === id ? { ...p, status } : p));
     setPipelines(updated);
     savePipelinesToStorage(updated);
     try {
@@ -158,7 +167,9 @@ export function CICDDashboard() {
   };
 
   if (isLoading) {
-    return <div className="text-center text-muted-foreground">Chargement...</div>;
+    return (
+      <div className="text-center text-muted-foreground">Chargement...</div>
+    );
   }
 
   const runningCount = pipelines.filter((p) => p.status === "running").length;
@@ -184,10 +195,29 @@ export function CICDDashboard() {
           </div>
           {showForm ? (
             <div className="flex gap-2">
-              <Input value={formRepo} onChange={(e) => setFormRepo(e.target.value)} placeholder="Repository name" className="h-8 text-sm w-40" autoFocus />
-              <Input value={formBranch} onChange={(e) => setFormBranch(e.target.value)} placeholder="branch" className="h-8 text-sm w-24" />
-              <Button size="sm" onClick={handleAddPipeline}>Start</Button>
-              <Button size="sm" variant="ghost" onClick={() => setShowForm(false)}>Annuler</Button>
+              <Input
+                value={formRepo}
+                onChange={(e) => setFormRepo(e.target.value)}
+                placeholder="Repository name"
+                className="h-8 text-sm w-40"
+                autoFocus
+              />
+              <Input
+                value={formBranch}
+                onChange={(e) => setFormBranch(e.target.value)}
+                placeholder="branch"
+                className="h-8 text-sm w-24"
+              />
+              <Button size="sm" onClick={handleAddPipeline}>
+                Start
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => setShowForm(false)}
+              >
+                Annuler
+              </Button>
             </div>
           ) : (
             <Button size="sm" onClick={() => setShowForm(true)}>
@@ -211,7 +241,9 @@ export function CICDDashboard() {
             >
               <div className="flex items-start justify-between mb-3">
                 <div className="flex-1">
-                  <h3 className="font-semibold text-foreground">{pipeline.repoName}</h3>
+                  <h3 className="font-semibold text-foreground">
+                    {pipeline.repoName}
+                  </h3>
                   <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1">
                     <GitBranch className="h-3 w-3" />
                     {pipeline.branch}
@@ -228,8 +260,8 @@ export function CICDDashboard() {
                   pipeline.status === "success"
                     ? "bg-green-100 text-green-700"
                     : pipeline.status === "failed"
-                    ? "bg-red-100 text-red-700"
-                    : "bg-yellow-100 text-yellow-700"
+                      ? "bg-red-100 text-red-700"
+                      : "bg-yellow-100 text-yellow-700"
                 }`}
               >
                 {getStatusText(pipeline.status)}

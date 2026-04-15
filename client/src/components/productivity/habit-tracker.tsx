@@ -64,7 +64,7 @@ export function HabitTracker() {
           return { ...habit, completed: newCompleted, streak: newStreak };
         }
         return habit;
-      })
+      }),
     );
   };
 
@@ -102,7 +102,11 @@ export function HabitTracker() {
               onKeyDown={(e) => e.key === "Enter" && addHabit()}
               className="flex-1 px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
-            <Button onClick={addHabit} size="sm" className="bg-blue-600 hover:bg-blue-700">
+            <Button
+              onClick={addHabit}
+              size="sm"
+              className="bg-blue-600 hover:bg-blue-700"
+            >
               <Plus className="w-4 h-4" />
             </Button>
           </div>
@@ -110,11 +114,16 @@ export function HabitTracker() {
           {/* Habits List */}
           <div className="space-y-4">
             {habits.map((habit) => (
-              <div key={habit.id} className="pb-4 border-b border-gray-100 last:border-b-0">
+              <div
+                key={habit.id}
+                className="pb-4 border-b border-gray-100 last:border-b-0"
+              >
                 {/* Habit Header */}
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-3">
-                    <h3 className="font-medium text-foreground">{habit.name}</h3>
+                    <h3 className="font-medium text-foreground">
+                      {habit.name}
+                    </h3>
                     {habit.streak > 0 && (
                       <span className="flex items-center gap-1 text-xs font-semibold text-orange-600 bg-orange-100 px-2 py-1 rounded-full">
                         <Flame className="w-3 h-3" />
@@ -140,7 +149,7 @@ export function HabitTracker() {
                         "w-10 h-10 rounded-md font-semibold text-xs transition-all",
                         habit.completed[index]
                           ? "bg-emerald-500 text-white shadow-md"
-                          : "bg-muted text-muted-foreground hover:bg-gray-200"
+                          : "bg-muted text-muted-foreground hover:bg-gray-200",
                       )}
                     >
                       {day}
@@ -153,14 +162,18 @@ export function HabitTracker() {
 
           {habits.length === 0 && (
             <div className="text-center py-8 text-muted-foreground">
-              <p className="text-sm">No habits yet. Create one to get started!</p>
+              <p className="text-sm">
+                No habits yet. Create one to get started!
+              </p>
             </div>
           )}
 
           {/* Contribution Heatmap */}
           {habits.length > 0 && (
             <div className="mt-6 pt-4 border-t border-border">
-              <h4 className="text-sm font-semibold text-muted-foreground mb-3">Completion Heatmap</h4>
+              <h4 className="text-sm font-semibold text-muted-foreground mb-3">
+                Completion Heatmap
+              </h4>
               <div className="space-y-2">
                 {habits.map((habit) => (
                   <div key={`${habit.id}-heatmap`} className="flex gap-1">
@@ -173,9 +186,7 @@ export function HabitTracker() {
                           key={idx}
                           className={cn(
                             "w-5 h-5 rounded-sm transition-colors",
-                            completed
-                              ? "bg-emerald-500 shadow-sm"
-                              : "bg-muted"
+                            completed ? "bg-emerald-500 shadow-sm" : "bg-muted",
                           )}
                           title={`${DAYS[idx]}: ${completed ? "Fait" : "Manque"}`}
                         />

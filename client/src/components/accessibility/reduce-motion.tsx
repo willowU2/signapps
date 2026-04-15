@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { RefreshCcw } from 'lucide-react';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
+import { useEffect, useState } from "react";
+import { RefreshCcw } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
-const STORAGE_KEY = 'signapps-reduce-motion';
+const STORAGE_KEY = "signapps-reduce-motion";
 
 export function ReduceMotionToggle() {
   const [enabled, setEnabled] = useState(false);
@@ -13,16 +13,16 @@ export function ReduceMotionToggle() {
 
   useEffect(() => {
     setMounted(true);
-    const stored = localStorage.getItem(STORAGE_KEY) === 'true';
+    const stored = localStorage.getItem(STORAGE_KEY) === "true";
     setEnabled(stored);
     applySetting(stored);
   }, []);
 
   const applySetting = (on: boolean) => {
     if (on) {
-      document.documentElement.classList.add('reduce-motion');
+      document.documentElement.classList.add("reduce-motion");
     } else {
-      document.documentElement.classList.remove('reduce-motion');
+      document.documentElement.classList.remove("reduce-motion");
     }
   };
 
@@ -39,12 +39,16 @@ export function ReduceMotionToggle() {
       <div className="flex flex-col gap-1.5">
         <div className="flex items-center gap-2">
           <RefreshCcw className="h-4 w-4 text-muted-foreground" />
-          <Label htmlFor="reduce-motion-toggle" className="font-medium cursor-pointer">
+          <Label
+            htmlFor="reduce-motion-toggle"
+            className="font-medium cursor-pointer"
+          >
             Réduction des Mouvements
           </Label>
         </div>
         <p className="text-xs text-muted-foreground ml-6">
-          Désactive toutes les animations et transitions (confort visuel / vestibulaire).
+          Désactive toutes les animations et transitions (confort visuel /
+          vestibulaire).
         </p>
       </div>
       <Switch

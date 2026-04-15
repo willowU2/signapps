@@ -42,7 +42,9 @@ export function OcrImage({ onTextExtracted }: OcrImageProps) {
   };
 
   const handlePaste = (e: React.ClipboardEvent) => {
-    const file = Array.from(e.clipboardData.items).find((i) => i.type.startsWith("image/"))?.getAsFile();
+    const file = Array.from(e.clipboardData.items)
+      .find((i) => i.type.startsWith("image/"))
+      ?.getAsFile();
     if (file) handleFile(file);
   };
 
@@ -57,7 +59,8 @@ export function OcrImage({ onTextExtracted }: OcrImageProps) {
       const aiClient = getClient(ServiceName.AI);
       const response = await aiClient.post("/ai/vision/ocr", {
         image: imageUrl,
-        prompt: "Extract all text from this image. Return only the extracted text, nothing else.",
+        prompt:
+          "Extract all text from this image. Return only the extracted text, nothing else.",
       });
       const text = (response.data as { text?: string }).text ?? "";
       setExtractedText(text);
@@ -69,7 +72,8 @@ export function OcrImage({ onTextExtracted }: OcrImageProps) {
     } catch {
       // Fallback: simulate OCR for demo
       await new Promise((r) => setTimeout(r, 1500));
-      const simulated = "Texte extrait (simulation)\n\nOCR complet nécessite le service IA SignApps.\n\nActivez le service AI pour l'OCR réel.";
+      const simulated =
+        "Texte extrait (simulation)\n\nOCR complet nécessite le service IA SignApps.\n\nActivez le service AI pour l'OCR réel.";
       setExtractedText(simulated);
       toast.info("Mode simulation — activez le service IA pour l'OCR réel.");
     } finally {
@@ -95,7 +99,9 @@ export function OcrImage({ onTextExtracted }: OcrImageProps) {
     <div className="space-y-3">
       <div className="flex items-center gap-2 pb-2 border-b">
         <ScanText className="size-4 text-primary" />
-        <h3 className="font-semibold text-sm">OCR — Extraire le texte d'une image</h3>
+        <h3 className="font-semibold text-sm">
+          OCR — Extraire le texte d'une image
+        </h3>
       </div>
 
       {/* Drop zone */}
@@ -106,27 +112,51 @@ export function OcrImage({ onTextExtracted }: OcrImageProps) {
         onClick={() => fileRef.current?.click()}
         className={cn(
           "border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors",
-          imageUrl ? "border-primary/40 bg-primary/5" : "border-border hover:border-primary/40 hover:bg-muted/30"
+          imageUrl
+            ? "border-primary/40 bg-primary/5"
+            : "border-border hover:border-primary/40 hover:bg-muted/30",
         )}
       >
         {imageUrl ? (
-          <img src={imageUrl} alt="Image à analyser" className="max-h-40 mx-auto rounded object-contain" />
+          <img
+            src={imageUrl}
+            alt="Image à analyser"
+            className="max-h-40 mx-auto rounded object-contain"
+          />
         ) : (
           <div className="space-y-2">
             <Upload className="size-8 mx-auto text-muted-foreground" />
-            <p className="text-sm text-muted-foreground">Glissez une image, collez (Ctrl+V) ou cliquez</p>
+            <p className="text-sm text-muted-foreground">
+              Glissez une image, collez (Ctrl+V) ou cliquez
+            </p>
             <p className="text-xs text-muted-foreground">PNG, JPG, GIF, WebP</p>
           </div>
         )}
       </div>
 
-      <input ref={fileRef} type="file" accept="image/*" className="hidden"
-        onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }} />
+      <input
+        ref={fileRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          if (f) handleFile(f);
+        }}
+      />
 
       {/* Extract button */}
       {imageUrl && (
-        <Button className="w-full gap-2" onClick={handleExtract} disabled={isProcessing}>
-          {isProcessing ? <Loader2 className="size-4 animate-spin" /> : <ScanText className="size-4" />}
+        <Button
+          className="w-full gap-2"
+          onClick={handleExtract}
+          disabled={isProcessing}
+        >
+          {isProcessing ? (
+            <Loader2 className="size-4 animate-spin" />
+          ) : (
+            <ScanText className="size-4" />
+          )}
           {isProcessing ? "Extraction en cours..." : "Extraire le texte"}
         </Button>
       )}
@@ -134,13 +164,26 @@ export function OcrImage({ onTextExtracted }: OcrImageProps) {
       {/* Result */}
       {extractedText && (
         <div className="space-y-2">
-          <p className="text-xs font-medium text-muted-foreground">Texte extrait:</p>
+          <p className="text-xs font-medium text-muted-foreground">
+            Texte extrait:
+          </p>
           <div className="relative border rounded-lg p-3 bg-muted/20 min-h-[80px]">
-            <pre className="text-sm whitespace-pre-wrap font-sans">{extractedText}</pre>
+            <pre className="text-sm whitespace-pre-wrap font-sans">
+              {extractedText}
+            </pre>
           </div>
           <div className="flex gap-2">
-            <Button size="sm" variant="outline" className="flex-1 gap-1" onClick={handleCopy}>
-              {copied ? <Check className="size-3 text-green-500" /> : <Copy className="size-3" />}
+            <Button
+              size="sm"
+              variant="outline"
+              className="flex-1 gap-1"
+              onClick={handleCopy}
+            >
+              {copied ? (
+                <Check className="size-3 text-green-500" />
+              ) : (
+                <Copy className="size-3" />
+              )}
               Copier
             </Button>
             <Button size="sm" className="flex-1 gap-1" onClick={handleInsert}>

@@ -3,7 +3,9 @@
 //! Translates LDAP search requests into SQL queries via ad-core's
 //! filter compiler and returns DirectoryEntry results.
 
-use signapps_ad_core::{acl::check_access, AclDecision, AclOperation, LdapFilter, SecurityIdentifier};
+use signapps_ad_core::{
+    acl::check_access, AclDecision, AclOperation, LdapFilter, SecurityIdentifier,
+};
 use signapps_common::Result;
 use sqlx::PgPool;
 use uuid::Uuid;
@@ -62,20 +64,31 @@ pub fn schema_subentry(domain: &str) -> SearchEntry {
     let object_classes: Vec<String> = BUILTIN_CLASSES
         .iter()
         .map(|cls| {
-            let sup = if cls.super_classes.is_empty() { "top" } else { cls.super_classes[0] };
+            let sup = if cls.super_classes.is_empty() {
+                "top"
+            } else {
+                cls.super_classes[0]
+            };
             let must_part = if cls.must_attributes.is_empty() {
                 String::new()
             } else {
                 format!(" MUST ( {} )", cls.must_attributes.join(" $ "))
             };
-            format!("( {} NAME '{}' SUP {}{} )", cls.oid, cls.name, sup, must_part)
+            format!(
+                "( {} NAME '{}' SUP {}{} )",
+                cls.oid, cls.name, sup, must_part
+            )
         })
         .collect();
 
     let attribute_types: Vec<String> = BUILTIN_ATTRIBUTES
         .iter()
         .map(|attr| {
-            let single = if attr.multi_valued { "" } else { " SINGLE-VALUE" };
+            let single = if attr.multi_valued {
+                ""
+            } else {
+                " SINGLE-VALUE"
+            };
             format!(
                 "( {} NAME '{}' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{} )",
                 attr.oid, attr.name, single,
@@ -258,20 +271,21 @@ pub fn entry_to_search_entry(
 ///
 /// No panics — the fallback parse is a hard-coded valid SID.
 async fn resolve_domain_sid(pool: &PgPool, domain: &str) -> SecurityIdentifier {
-    let row: Option<(String,)> = sqlx::query_as(
-        "SELECT domain_sid FROM ad_domains WHERE dns_name = $1 LIMIT 1",
-    )
-    .bind(domain)
-    .fetch_optional(pool)
-    .await
-    .unwrap_or(None);
+    let row: Option<(String,)> =
+        sqlx::query_as("SELECT domain_sid FROM ad_domains WHERE dns_name = $1 LIMIT 1")
+            .bind(domain)
+            .fetch_optional(pool)
+            .await
+            .unwrap_or(None);
 
     row.and_then(|(s,)| SecurityIdentifier::parse(&s).ok())
         .or_else(|| SecurityIdentifier::parse("S-1-5-21-0-0-0").ok())
         .unwrap_or_else(|| {
             // This branch is only reachable if the hardcoded fallback above fails to
             // parse — which would be a bug. Log and return a generated placeholder SID.
-            tracing::error!("Hardcoded fallback SID 'S-1-5-21-0-0-0' failed to parse — using generated SID");
+            tracing::error!(
+                "Hardcoded fallback SID 'S-1-5-21-0-0-0' failed to parse — using generated SID"
+            );
             SecurityIdentifier::generate_domain_sid()
         })
 }
@@ -300,8 +314,8 @@ async fn search_objects(
     let mut results = Vec::new();
 
     // Decide which object types to query based on objectClass hints in filter.
-    let has_class_constraint = filter_str.contains("objectClass=")
-        && !filter_str.contains("objectClass=*");
+    let has_class_constraint =
+        filter_str.contains("objectClass=") && !filter_str.contains("objectClass=*");
 
     let search_users = !has_class_constraint
         || filter_str.contains("objectClass=user")
@@ -312,16 +326,14 @@ async fn search_objects(
         || filter_str.contains("objectClass=organizationalUnit")
         || filter_str.contains("objectClass=container");
 
-    let search_groups = !has_class_constraint
-        || filter_str.contains("objectClass=group");
+    let search_groups = !has_class_constraint || filter_str.contains("objectClass=group");
 
     // ── Users ──────────────────────────────────────────────────────────────
     if search_users {
-        let users: Vec<(Uuid,)> =
-            sqlx::query_as("SELECT id FROM identity.users LIMIT 1000")
-                .fetch_all(pool)
-                .await
-                .unwrap_or_default();
+        let users: Vec<(Uuid,)> = sqlx::query_as("SELECT id FROM identity.users LIMIT 1000")
+            .fetch_all(pool)
+            .await
+            .unwrap_or_default();
 
         for (user_id,) in users {
             match signapps_ad_core::builder::build_user_entry(pool, user_id, domain, domain_sid)
@@ -330,7 +342,7 @@ async fn search_objects(
                 Ok(entry) => results.push(entry),
                 Err(e) => {
                     tracing::warn!(user_id = %user_id, error = ?e, "Failed to build user entry");
-                }
+                },
             }
         }
     }
@@ -351,19 +363,18 @@ async fn search_objects(
                 Ok(entry) => results.push(entry),
                 Err(e) => {
                     tracing::warn!(node_id = %node_id, error = ?e, "Failed to build node entry");
-                }
+                },
             }
         }
     }
 
     // ── Security groups ────────────────────────────────────────────────────
     if search_groups {
-        let groups: Vec<(Uuid,)> = sqlx::query_as(
-            "SELECT id FROM workforce_org_groups WHERE is_active = true LIMIT 1000",
-        )
-        .fetch_all(pool)
-        .await
-        .unwrap_or_default();
+        let groups: Vec<(Uuid,)> =
+            sqlx::query_as("SELECT id FROM workforce_org_groups WHERE is_active = true LIMIT 1000")
+                .fetch_all(pool)
+                .await
+                .unwrap_or_default();
 
         for (group_id,) in groups {
             match signapps_ad_core::builder::build_group_entry(pool, group_id, domain, domain_sid)
@@ -372,7 +383,7 @@ async fn search_objects(
                 Ok(entry) => results.push(entry),
                 Err(e) => {
                     tracing::warn!(group_id = %group_id, error = ?e, "Failed to build group entry");
-                }
+                },
             }
         }
     }
@@ -498,9 +509,7 @@ pub async fn handle_search(
 
     // subschemaSubentry — schema query (unauthenticated, RFC 4512)
     let base_lower = base_dn.to_ascii_lowercase();
-    if base_lower.contains("cn=schema")
-        || base_lower.contains("cn=aggregate")
-    {
+    if base_lower.contains("cn=schema") || base_lower.contains("cn=aggregate") {
         tracing::debug!(base = base_dn, "Schema subentry query");
         return Ok(vec![schema_subentry(domain)]);
     }
@@ -518,7 +527,7 @@ pub async fn handle_search(
         Err(e) => {
             tracing::warn!(filter = filter_str, "Invalid search filter: {}", e);
             return Ok(vec![]);
-        }
+        },
     };
 
     // Compile to parameterized SQL — param_offset = 1 for standalone queries
@@ -683,9 +692,18 @@ mod tests {
     #[test]
     fn entry_to_search_entry_all_attrs() {
         let mut attrs = HashMap::new();
-        attrs.insert("cn".to_string(), vec![AttributeValue::String("Alice".into())]);
-        attrs.insert("mail".to_string(), vec![AttributeValue::String("alice@example.com".into())]);
-        attrs.insert("sn".to_string(), vec![AttributeValue::String("Smith".into())]);
+        attrs.insert(
+            "cn".to_string(),
+            vec![AttributeValue::String("Alice".into())],
+        );
+        attrs.insert(
+            "mail".to_string(),
+            vec![AttributeValue::String("alice@example.com".into())],
+        );
+        attrs.insert(
+            "sn".to_string(),
+            vec![AttributeValue::String("Smith".into())],
+        );
 
         let entry = make_entry(attrs);
         let result = entry_to_search_entry(&entry, &[]);
@@ -698,9 +716,18 @@ mod tests {
     #[test]
     fn entry_to_search_entry_specific_attrs() {
         let mut attrs = HashMap::new();
-        attrs.insert("cn".to_string(), vec![AttributeValue::String("Alice".into())]);
-        attrs.insert("mail".to_string(), vec![AttributeValue::String("alice@example.com".into())]);
-        attrs.insert("sn".to_string(), vec![AttributeValue::String("Smith".into())]);
+        attrs.insert(
+            "cn".to_string(),
+            vec![AttributeValue::String("Alice".into())],
+        );
+        attrs.insert(
+            "mail".to_string(),
+            vec![AttributeValue::String("alice@example.com".into())],
+        );
+        attrs.insert(
+            "sn".to_string(),
+            vec![AttributeValue::String("Smith".into())],
+        );
 
         let entry = make_entry(attrs);
         let requested = vec!["cn".to_string(), "mail".to_string()];
@@ -738,7 +765,10 @@ mod tests {
     fn entry_to_search_entry_case_insensitive() {
         let mut attrs = HashMap::new();
         attrs.insert("cn".to_string(), vec![AttributeValue::String("Bob".into())]);
-        attrs.insert("mail".to_string(), vec![AttributeValue::String("bob@example.com".into())]);
+        attrs.insert(
+            "mail".to_string(),
+            vec![AttributeValue::String("bob@example.com".into())],
+        );
 
         let entry = make_entry(attrs);
         // Request "CN" (uppercase) — should match "cn" (lowercase) in attributes

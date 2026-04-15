@@ -20,12 +20,16 @@ export default function WaterMonitoring() {
     leakLocation: "Floor 2 - Restroom",
   });
 
-  const today = waterData.dailyConsumption[waterData.dailyConsumption.length - 1];
-  const yesterday = waterData.dailyConsumption[waterData.dailyConsumption.length - 2];
+  const today =
+    waterData.dailyConsumption[waterData.dailyConsumption.length - 1];
+  const yesterday =
+    waterData.dailyConsumption[waterData.dailyConsumption.length - 2];
   const percentChange = ((today - yesterday) / yesterday) * 100;
 
-  const currentMonth = waterData.monthlyConsumption[waterData.monthlyConsumption.length - 1];
-  const lastMonth = waterData.monthlyConsumption[waterData.monthlyConsumption.length - 2];
+  const currentMonth =
+    waterData.monthlyConsumption[waterData.monthlyConsumption.length - 1];
+  const lastMonth =
+    waterData.monthlyConsumption[waterData.monthlyConsumption.length - 2];
   const monthPercentChange = ((currentMonth - lastMonth) / lastMonth) * 100;
 
   const getDays = () => {
@@ -33,7 +37,9 @@ export default function WaterMonitoring() {
     for (let i = 6; i >= 0; i--) {
       const d = new Date();
       d.setDate(d.getDate() - i);
-      days.push(d.toLocaleDateString("en-US", { month: "short", day: "numeric" }));
+      days.push(
+        d.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+      );
     }
     return days;
   };
@@ -43,7 +49,9 @@ export default function WaterMonitoring() {
     for (let i = 5; i >= 0; i--) {
       const d = new Date();
       d.setMonth(d.getMonth() - i);
-      months.push(d.toLocaleDateString("en-US", { month: "short", year: "2-digit" }));
+      months.push(
+        d.toLocaleDateString("en-US", { month: "short", year: "2-digit" }),
+      );
     }
     return months;
   };
@@ -67,12 +75,17 @@ export default function WaterMonitoring() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card className="p-4">
-          <h3 className="font-semibold mb-4">Daily Consumption (Last 7 Days)</h3>
+          <h3 className="font-semibold mb-4">
+            Daily Consumption (Last 7 Days)
+          </h3>
           <div className="space-y-3">
             <div className="flex justify-between text-sm">
               <span>Today: {today} L</span>
-              <Badge className={percentChange > 0 ? "bg-red-500" : "bg-green-500"}>
-                {percentChange > 0 ? "+" : ""}{percentChange.toFixed(1)}%
+              <Badge
+                className={percentChange > 0 ? "bg-red-500" : "bg-green-500"}
+              >
+                {percentChange > 0 ? "+" : ""}
+                {percentChange.toFixed(1)}%
               </Badge>
             </div>
             <div className="flex gap-1 items-end h-32">
@@ -101,8 +114,13 @@ export default function WaterMonitoring() {
           <div className="space-y-3">
             <div className="flex justify-between text-sm">
               <span>This Month: {currentMonth} L</span>
-              <Badge className={monthPercentChange > 0 ? "bg-orange-500" : "bg-green-500"}>
-                {monthPercentChange > 0 ? "+" : ""}{monthPercentChange.toFixed(1)}%
+              <Badge
+                className={
+                  monthPercentChange > 0 ? "bg-orange-500" : "bg-green-500"
+                }
+              >
+                {monthPercentChange > 0 ? "+" : ""}
+                {monthPercentChange.toFixed(1)}%
               </Badge>
             </div>
             <div className="flex gap-1 items-end h-32">

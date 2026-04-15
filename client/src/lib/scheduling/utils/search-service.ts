@@ -10,7 +10,7 @@ import {
   endOfDay,
   parseISO,
   format,
-} from 'date-fns';
+} from "date-fns";
 import type {
   ScheduleBlock,
   BlockType,
@@ -18,7 +18,7 @@ import type {
   Priority,
   Task,
   Booking,
-} from '../types/scheduling';
+} from "../types/scheduling";
 
 // ============================================================================
 // Types
@@ -49,9 +49,9 @@ export interface SearchQuery {
   /** Filter by location name */
   location?: string;
   /** Sort field */
-  sortBy?: 'start' | 'title' | 'updatedAt' | 'priority' | 'relevance';
+  sortBy?: "start" | "title" | "updatedAt" | "priority" | "relevance";
   /** Sort direction */
-  sortDirection?: 'asc' | 'desc';
+  sortDirection?: "asc" | "desc";
   /** Maximum results to return */
   limit?: number;
   /** Offset for pagination */
@@ -79,7 +79,7 @@ export interface SearchResultItem {
 }
 
 export interface SearchHighlight {
-  field: 'title' | 'description' | 'location' | 'attendee';
+  field: "title" | "description" | "location" | "attendee";
   text: string;
   matches: Array<{ start: number; end: number }>;
 }
@@ -108,7 +108,7 @@ export class SchedulingSearchService {
 
   constructor(
     blocks: ScheduleBlock[] = [],
-    calendarsMap: Map<string, string> = new Map()
+    calendarsMap: Map<string, string> = new Map(),
   ) {
     this.blocks = blocks;
     this.calendarsMap = calendarsMap;
@@ -177,8 +177,8 @@ export class SchedulingSearchService {
     const result = this.search({
       text,
       limit,
-      sortBy: 'relevance',
-      sortDirection: 'desc',
+      sortBy: "relevance",
+      sortDirection: "desc",
     });
     return result.items;
   }
@@ -222,7 +222,7 @@ export class SchedulingSearchService {
 
   private applyFilters(
     blocks: ScheduleBlock[],
-    query: SearchQuery
+    query: SearchQuery,
   ): ScheduleBlock[] {
     return blocks.filter((block) => {
       // Type filter
@@ -231,17 +231,26 @@ export class SchedulingSearchService {
       }
 
       // Status filter
-      if (query.statuses?.length && !query.statuses.includes(block.status || 'confirmed')) {
+      if (
+        query.statuses?.length &&
+        !query.statuses.includes(block.status || "confirmed")
+      ) {
         return false;
       }
 
       // Priority filter
-      if (query.priorities?.length && !query.priorities.includes(block.priority || 'medium')) {
+      if (
+        query.priorities?.length &&
+        !query.priorities.includes(block.priority || "medium")
+      ) {
         return false;
       }
 
       // Calendar filter
-      if (query.calendarIds?.length && !query.calendarIds.includes(block.calendarId || '')) {
+      if (
+        query.calendarIds?.length &&
+        !query.calendarIds.includes(block.calendarId || "")
+      ) {
         return false;
       }
 
@@ -269,7 +278,8 @@ export class SchedulingSearchService {
       if (query.userId) {
         const isOrganizer = block.metadata?.organizerId === query.userId;
         const isAssignee =
-          block.type === 'task' && (block as unknown as Task).assigneeId === query.userId;
+          block.type === "task" &&
+          (block as unknown as Task).assigneeId === query.userId;
         if (!isOrganizer && !isAssignee) {
           return false;
         }
@@ -278,7 +288,7 @@ export class SchedulingSearchService {
       // Attendee filter
       if (query.attendeeEmail) {
         const hasAttendee = block.attendees?.some(
-          (a) => a.email.toLowerCase() === query.attendeeEmail!.toLowerCase()
+          (a) => a.email.toLowerCase() === query.attendeeEmail!.toLowerCase(),
         );
         if (!hasAttendee) {
           return false;
@@ -301,7 +311,7 @@ export class SchedulingSearchService {
 
   private applyTextSearch(
     blocks: ScheduleBlock[],
-    text: string
+    text: string,
   ): SearchResultItem[] {
     const searchTerms = text
       .toLowerCase()
@@ -319,7 +329,7 @@ export class SchedulingSearchService {
           score += titleScore.score * 3;
           if (titleScore.matches.length > 0) {
             highlights.push({
-              field: 'title',
+              field: "title",
               text: block.title,
               matches: titleScore.matches,
             });
@@ -333,7 +343,7 @@ export class SchedulingSearchService {
             score += descScore.score * 2;
             if (descScore.matches.length > 0) {
               highlights.push({
-                field: 'description',
+                field: "description",
                 text: block.description,
                 matches: descScore.matches,
               });
@@ -348,7 +358,7 @@ export class SchedulingSearchService {
             score += locScore.score;
             if (locScore.matches.length > 0) {
               highlights.push({
-                field: 'location',
+                field: "location",
                 text: block.location.name,
                 matches: locScore.matches,
               });
@@ -364,9 +374,10 @@ export class SchedulingSearchService {
             if (nameScore.score > 0 || emailScore.score > 0) {
               score += Math.max(nameScore.score, emailScore.score);
               highlights.push({
-                field: 'attendee',
+                field: "attendee",
                 text: `${attendee.name} (${attendee.email})`,
-                matches: nameScore.score > 0 ? nameScore.matches : emailScore.matches,
+                matches:
+                  nameScore.score > 0 ? nameScore.matches : emailScore.matches,
               });
             }
           }
@@ -391,7 +402,7 @@ export class SchedulingSearchService {
 
   private scoreField(
     text: string,
-    searchTerms: string[]
+    searchTerms: string[],
   ): { score: number; matches: Array<{ start: number; end: number }> } {
     const lowerText = text.toLowerCase();
     let score = 0;
@@ -401,8 +412,7 @@ export class SchedulingSearchService {
       let index = lowerText.indexOf(term);
       while (index !== -1) {
         // Exact word match scores higher
-        const isWordStart =
-          index === 0 || /\W/.test(lowerText[index - 1]);
+        const isWordStart = index === 0 || /\W/.test(lowerText[index - 1]);
         const isWordEnd =
           index + term.length === lowerText.length ||
           /\W/.test(lowerText[index + term.length]);
@@ -429,40 +439,42 @@ export class SchedulingSearchService {
 
   private applySorting(
     items: SearchResultItem[],
-    query: SearchQuery
+    query: SearchQuery,
   ): SearchResultItem[] {
-    const sortBy = query.sortBy || 'relevance';
-    const direction = query.sortDirection || 'desc';
-    const multiplier = direction === 'asc' ? 1 : -1;
+    const sortBy = query.sortBy || "relevance";
+    const direction = query.sortDirection || "desc";
+    const multiplier = direction === "asc" ? 1 : -1;
 
     return [...items].sort((a, b) => {
       switch (sortBy) {
-        case 'relevance':
+        case "relevance":
           return (b.score - a.score) * multiplier;
-        case 'start':
+        case "start":
           return (
             (new Date(a.block.start).getTime() -
               new Date(b.block.start).getTime()) *
             multiplier
           );
-        case 'title':
+        case "title":
           return a.block.title.localeCompare(b.block.title) * multiplier;
-        case 'updatedAt':
+        case "updatedAt":
           return (
             (new Date(a.block.updatedAt).getTime() -
               new Date(b.block.updatedAt).getTime()) *
             multiplier
           );
-        case 'priority': {
+        case "priority": {
           const priorityOrder: Record<Priority, number> = {
             urgent: 4,
             high: 3,
             medium: 2,
             low: 1,
           };
-          const aPriority = a.block.priority || 'medium';
-          const bPriority = b.block.priority || 'medium';
-          return (priorityOrder[bPriority] - priorityOrder[aPriority]) * multiplier;
+          const aPriority = a.block.priority || "medium";
+          const bPriority = b.block.priority || "medium";
+          return (
+            (priorityOrder[bPriority] - priorityOrder[aPriority]) * multiplier
+          );
         }
         default:
           return 0;
@@ -482,18 +494,18 @@ export class SchedulingSearchService {
       typeCounts.set(block.type, (typeCounts.get(block.type) || 0) + 1);
 
       // Statuses
-      const status = block.status || 'confirmed';
+      const status = block.status || "confirmed";
       statusCounts.set(status, (statusCounts.get(status) || 0) + 1);
 
       // Priorities
-      const priority = block.priority || 'medium';
+      const priority = block.priority || "medium";
       priorityCounts.set(priority, (priorityCounts.get(priority) || 0) + 1);
 
       // Calendars
       if (block.calendarId) {
         calendarCounts.set(
           block.calendarId,
-          (calendarCounts.get(block.calendarId) || 0) + 1
+          (calendarCounts.get(block.calendarId) || 0) + 1,
         );
       }
 
@@ -544,7 +556,7 @@ export function getSearchService(): SchedulingSearchService {
 
 export function initSearchService(
   blocks: ScheduleBlock[],
-  calendarsMap?: Map<string, string>
+  calendarsMap?: Map<string, string>,
 ): SchedulingSearchService {
   searchServiceInstance = new SchedulingSearchService(blocks, calendarsMap);
   return searchServiceInstance;

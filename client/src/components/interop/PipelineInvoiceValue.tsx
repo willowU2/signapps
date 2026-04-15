@@ -1,12 +1,20 @@
-"use client"
+"use client";
 // Feature 8: CRM pipeline → show total invoice value per stage
 // Feature 20: CRM report → include billing revenue data
 
-import { useState, useEffect } from "react"
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { getCrmRevenueSummary } from "@/lib/api/interop"
-import { STAGE_LABELS } from "@/lib/api/crm"
+import { useState, useEffect } from "react";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  Cell,
+} from "recharts";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { getCrmRevenueSummary } from "@/lib/api/interop";
+import { STAGE_LABELS } from "@/lib/api/crm";
 
 const STAGE_COLORS: Record<string, string> = {
   prospect: "#94a3b8",
@@ -15,32 +23,45 @@ const STAGE_COLORS: Record<string, string> = {
   negotiation: "#f97316",
   won: "#10b981",
   lost: "#ef4444",
-}
+};
 
-const fmt = (v: number) =>
-  v >= 1000 ? `${(v / 1000).toFixed(0)}k€` : `${v}€`
+const fmt = (v: number) => (v >= 1000 ? `${(v / 1000).toFixed(0)}k€` : `${v}€`);
 
 const fmtFull = (v: number) =>
-  new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(v)
+  new Intl.NumberFormat("fr-FR", {
+    style: "currency",
+    currency: "EUR",
+    maximumFractionDigits: 0,
+  }).format(v);
 
 export function PipelineInvoiceValue() {
-  const [data, setData] = useState<{ stage: string; dealCount: number; dealValue: number; invoicedAmount: number; paidAmount: number; stageName: string }[]>([])
+  const [data, setData] = useState<
+    {
+      stage: string;
+      dealCount: number;
+      dealValue: number;
+      invoicedAmount: number;
+      paidAmount: number;
+      stageName: string;
+    }[]
+  >([]);
   useEffect(() => {
-    getCrmRevenueSummary().then(summary => {
+    getCrmRevenueSummary().then((summary) => {
       setData(
         summary
-          .filter(r => r.dealCount > 0 || r.invoicedAmount > 0)
-          .map(r => ({
+          .filter((r) => r.dealCount > 0 || r.invoicedAmount > 0)
+          .map((r) => ({
             ...r,
-            stageName: STAGE_LABELS[r.stage as keyof typeof STAGE_LABELS] ?? r.stage,
-          }))
-      )
-    })
-  }, [])
+            stageName:
+              STAGE_LABELS[r.stage as keyof typeof STAGE_LABELS] ?? r.stage,
+          })),
+      );
+    });
+  }, []);
 
-  const totalInvoiced = data.reduce((s, r) => s + r.invoicedAmount, 0)
-  const totalPaid = data.reduce((s, r) => s + r.paidAmount, 0)
-  const totalDeals = data.reduce((s, r) => s + r.dealValue, 0)
+  const totalInvoiced = data.reduce((s, r) => s + r.invoicedAmount, 0);
+  const totalPaid = data.reduce((s, r) => s + r.paidAmount, 0);
+  const totalDeals = data.reduce((s, r) => s + r.dealValue, 0);
 
   return (
     <div className="space-y-4">
@@ -48,19 +69,25 @@ export function PipelineInvoiceValue() {
         <Card>
           <CardContent className="pt-4 pb-3">
             <p className="text-xs text-muted-foreground">Pipeline total</p>
-            <p className="text-lg font-bold text-primary">{fmtFull(totalDeals)}</p>
+            <p className="text-lg font-bold text-primary">
+              {fmtFull(totalDeals)}
+            </p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-4 pb-3">
             <p className="text-xs text-muted-foreground">Total facturé</p>
-            <p className="text-lg font-bold text-amber-600">{fmtFull(totalInvoiced)}</p>
+            <p className="text-lg font-bold text-amber-600">
+              {fmtFull(totalInvoiced)}
+            </p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-4 pb-3">
             <p className="text-xs text-muted-foreground">Total encaissé</p>
-            <p className="text-lg font-bold text-emerald-600">{fmtFull(totalPaid)}</p>
+            <p className="text-lg font-bold text-emerald-600">
+              {fmtFull(totalPaid)}
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -79,14 +106,25 @@ export function PipelineInvoiceValue() {
                   formatter={(value: unknown) => [fmtFull(Number(value)), ""]}
                   labelFormatter={(l: unknown) => `Étape: ${String(l)}`}
                 />
-                <Bar dataKey="invoicedAmount" name="Facturé" radius={[3, 3, 0, 0]}>
-                  {data.map(entry => (
-                    <Cell key={entry.stage} fill={STAGE_COLORS[entry.stage] ?? "#94a3b8"} opacity={0.7} />
+                <Bar
+                  dataKey="invoicedAmount"
+                  name="Facturé"
+                  radius={[3, 3, 0, 0]}
+                >
+                  {data.map((entry) => (
+                    <Cell
+                      key={entry.stage}
+                      fill={STAGE_COLORS[entry.stage] ?? "#94a3b8"}
+                      opacity={0.7}
+                    />
                   ))}
                 </Bar>
                 <Bar dataKey="paidAmount" name="Payé" radius={[3, 3, 0, 0]}>
-                  {data.map(entry => (
-                    <Cell key={entry.stage} fill={STAGE_COLORS[entry.stage] ?? "#94a3b8"} />
+                  {data.map((entry) => (
+                    <Cell
+                      key={entry.stage}
+                      fill={STAGE_COLORS[entry.stage] ?? "#94a3b8"}
+                    />
                   ))}
                 </Bar>
               </BarChart>
@@ -97,9 +135,10 @@ export function PipelineInvoiceValue() {
 
       {data.length === 0 && (
         <p className="text-xs text-muted-foreground italic text-center py-4">
-          Créez des deals et factures pour voir les données de facturation par étape.
+          Créez des deals et factures pour voir les données de facturation par
+          étape.
         </p>
       )}
     </div>
-  )
+  );
 }

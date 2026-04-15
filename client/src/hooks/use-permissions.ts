@@ -1,5 +1,5 @@
-import { useState, useCallback } from 'react';
-import { storageApiClient } from '@/lib/api/core';
+import { useState, useCallback } from "react";
+import { storageApiClient } from "@/lib/api/core";
 
 export interface Permissions {
   bucket: string;
@@ -39,7 +39,9 @@ export function usePermissions(): UsePermissionsReturn {
     setLoading(true);
     setError(null);
     try {
-      const response = await storageApiClient.get(`/permissions/${bucket}/${encodeURIComponent(key)}`);
+      const response = await storageApiClient.get(
+        `/permissions/${bucket}/${encodeURIComponent(key)}`,
+      );
       setPermissionsState(response.data);
     } catch (err) {
       const error = err instanceof Error ? err : new Error(String(err));
@@ -53,7 +55,10 @@ export function usePermissions(): UsePermissionsReturn {
     async (bucket: string, key: string, mode: number) => {
       setError(null);
       try {
-        const response = await storageApiClient.put(`/permissions/${bucket}/${encodeURIComponent(key)}`, { mode });
+        const response = await storageApiClient.put(
+          `/permissions/${bucket}/${encodeURIComponent(key)}`,
+          { mode },
+        );
         setPermissionsState(response.data);
       } catch (err) {
         const error = err instanceof Error ? err : new Error(String(err));
@@ -61,23 +66,22 @@ export function usePermissions(): UsePermissionsReturn {
         throw error;
       }
     },
-    []
+    [],
   );
 
-  const resetPermissions = useCallback(
-    async (bucket: string, key: string) => {
-      setError(null);
-      try {
-        await storageApiClient.delete(`/permissions/${bucket}/${encodeURIComponent(key)}`);
-        setPermissionsState(null);
-      } catch (err) {
-        const error = err instanceof Error ? err : new Error(String(err));
-        setError(error);
-        throw error;
-      }
-    },
-    []
-  );
+  const resetPermissions = useCallback(async (bucket: string, key: string) => {
+    setError(null);
+    try {
+      await storageApiClient.delete(
+        `/permissions/${bucket}/${encodeURIComponent(key)}`,
+      );
+      setPermissionsState(null);
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err));
+      setError(error);
+      throw error;
+    }
+  }, []);
 
   return {
     permissions,

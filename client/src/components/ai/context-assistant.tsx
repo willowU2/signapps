@@ -1,39 +1,40 @@
-"use client"
+"use client";
 
-import { SpinnerInfinity } from 'spinners-react';
+import { SpinnerInfinity } from "spinners-react";
 
-import { useState } from "react"
-import { Bot, Sparkles } from 'lucide-react';
-import { Button } from "@/components/ui/button"
-import { useOmniActions } from "@/stores/omni-store"
-import { usePageContext } from "@/lib/store/page-context"
-import { aiApiClient } from "@/lib/api"
-import { toast } from "sonner"
+import { useState } from "react";
+import { Bot, Sparkles } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useOmniActions } from "@/stores/omni-store";
+import { usePageContext } from "@/lib/store/page-context";
+import { aiApiClient } from "@/lib/api";
+import { toast } from "sonner";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@/components/ui/tooltip"
+} from "@/components/ui/tooltip";
 
 export function ContextAssistant() {
-  const { open } = useOmniActions()
-  const pageContext = usePageContext()
-  const [isExecuting, setIsExecuting] = useState(false)
+  const { open } = useOmniActions();
+  const pageContext = usePageContext();
+  const [isExecuting, setIsExecuting] = useState(false);
 
   // Determine styling based on whether AI has a proactive message
-  const isProactive = !!pageContext.proactiveMessage
-  const isWarning = pageContext.severity === 'warning' || pageContext.severity === 'error'
-  
+  const isProactive = !!pageContext.proactiveMessage;
+  const isWarning =
+    pageContext.severity === "warning" || pageContext.severity === "error";
+
   const buttonClasses = isProactive
-    ? isWarning 
+    ? isWarning
       ? "animate-ai-warning bg-red-500/90 hover:bg-red-600/90 text-white"
       : "animate-ai-breathe bg-blue-500/90 hover:bg-blue-600/90 text-white"
-    : "bg-primary/90 hover:shadow-2xl hover:scale-105 text-primary-foreground"
+    : "bg-primary/90 hover:shadow-2xl hover:scale-105 text-primary-foreground";
 
-  const tooltipText = isProactive 
-    ? pageContext.proactiveMessage 
-    : "Ask AI Assistant (Ctrl+K)"
+  const tooltipText = isProactive
+    ? pageContext.proactiveMessage
+    : "Ask AI Assistant (Ctrl+K)";
 
   return (
     <div className="fixed bottom-6 right-6 z-50">
@@ -41,23 +42,25 @@ export function ContextAssistant() {
         onClick={async () => {
           if (isProactive) {
             // Execute the action immediately
-            setIsExecuting(true)
+            setIsExecuting(true);
 
-            const actionPromise = aiApiClient.post('/ai/action', {
-              prompt: "restart the crashed container shown on screen",
-              context_id: pageContext.activeContext
-            }).finally(() => {
-              setIsExecuting(false);
-              pageContext.clearProactive();
-            });
+            const actionPromise = aiApiClient
+              .post("/ai/action", {
+                prompt: "restart the crashed container shown on screen",
+                context_id: pageContext.activeContext,
+              })
+              .finally(() => {
+                setIsExecuting(false);
+                pageContext.clearProactive();
+              });
 
             toast.promise(actionPromise, {
-              loading: 'Executing AI action...',
-              success: 'Action Success',
-              error: 'Failed to execute AI action',
+              loading: "Executing AI action...",
+              success: "Action Success",
+              error: "Failed to execute AI action",
             });
           } else {
-            open()
+            open();
           }
         }}
         size="icon"
@@ -66,10 +69,20 @@ export function ContextAssistant() {
         aria-label="Ask AI Assistant"
         title={tooltipText || undefined}
       >
-        {isExecuting ? <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-6 w-6 " /> :
-          isProactive ? <Sparkles className="h-6 w-6" /> : 
-          <Bot className="h-6 w-6" />}
+        {isExecuting ? (
+          <SpinnerInfinity
+            size={24}
+            secondaryColor="rgba(128,128,128,0.2)"
+            color="currentColor"
+            speed={120}
+            className="h-6 w-6 "
+          />
+        ) : isProactive ? (
+          <Sparkles className="h-6 w-6" />
+        ) : (
+          <Bot className="h-6 w-6" />
+        )}
       </Button>
     </div>
-  )
+  );
 }

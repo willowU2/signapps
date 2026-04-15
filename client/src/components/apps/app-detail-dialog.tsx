@@ -1,18 +1,18 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import Image from 'next/image';
+import { useEffect, useState } from "react";
+import Image from "next/image";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
-import { getAppLogo } from '@/lib/app-logos';
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { getAppLogo } from "@/lib/app-logos";
 import {
   Package,
   Download,
@@ -20,9 +20,9 @@ import {
   Server,
   Cpu,
   Layers,
-} from 'lucide-react';
-import { storeApi } from '@/lib/api';
-import type { StoreApp, AppDetails } from '@/lib/api';
+} from "lucide-react";
+import { storeApi } from "@/lib/api";
+import type { StoreApp, AppDetails } from "@/lib/api";
 
 interface AppDetailDialogProps {
   app: StoreApp | null;
@@ -65,7 +65,10 @@ export function AppDetailDialog({
           <div className="flex items-start gap-4">
             <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-muted">
               {(() => {
-                const logo = app.icon && !imgError ? app.icon : getAppLogo(app.id || app.name, app.image, 128);
+                const logo =
+                  app.icon && !imgError
+                    ? app.icon
+                    : getAppLogo(app.id || app.name, app.image, 128);
                 return logo ? (
                   <Image
                     src={logo}
@@ -88,7 +91,11 @@ export function AppDetailDialog({
               </p>
               <div className="mt-2 flex flex-wrap gap-1">
                 {app.tags.map((tag, idx) => (
-                  <Badge key={`${tag}-${idx}`} variant="secondary" className="text-xs">
+                  <Badge
+                    key={`${tag}-${idx}`}
+                    variant="secondary"
+                    className="text-xs"
+                  >
                     {tag}
                   </Badge>
                 ))}
@@ -111,7 +118,9 @@ export function AppDetailDialog({
             {app.supported_architectures.length > 0 && (
               <div className="flex items-center gap-2">
                 <Cpu className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">Architectures:</span>
+                <span className="text-sm text-muted-foreground">
+                  Architectures:
+                </span>
                 {app.supported_architectures.map((arch) => (
                   <Badge key={arch} variant="outline" className="text-xs">
                     {arch}
@@ -142,15 +151,26 @@ export function AppDetailDialog({
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b bg-muted/50">
-                        <th className="px-3 py-2 text-left font-medium">Name</th>
-                        <th className="px-3 py-2 text-left font-medium">Image</th>
-                        <th className="px-3 py-2 text-right font-medium">Ports</th>
-                        <th className="px-3 py-2 text-right font-medium">Env</th>
+                        <th className="px-3 py-2 text-left font-medium">
+                          Name
+                        </th>
+                        <th className="px-3 py-2 text-left font-medium">
+                          Image
+                        </th>
+                        <th className="px-3 py-2 text-right font-medium">
+                          Ports
+                        </th>
+                        <th className="px-3 py-2 text-right font-medium">
+                          Env
+                        </th>
                       </tr>
                     </thead>
                     <tbody>
                       {services.map((svc) => (
-                        <tr key={svc.service_name} className="border-b last:border-0">
+                        <tr
+                          key={svc.service_name}
+                          className="border-b last:border-0"
+                        >
                           <td className="px-3 py-2 font-mono text-xs">
                             {svc.service_name}
                           </td>
@@ -159,11 +179,13 @@ export function AppDetailDialog({
                           </td>
                           <td className="px-3 py-2 text-right text-xs">
                             {svc.ports.length > 0
-                              ? svc.ports.map((p) => `${p.host}:${p.container}`).join(', ')
-                              : '-'}
+                              ? svc.ports
+                                  .map((p) => `${p.host}:${p.container}`)
+                                  .join(", ")
+                              : "-"}
                           </td>
                           <td className="px-3 py-2 text-right text-xs">
-                            {svc.environment.length || '-'}
+                            {svc.environment.length || "-"}
                           </td>
                         </tr>
                       ))}

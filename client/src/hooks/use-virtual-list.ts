@@ -25,12 +25,9 @@ export function useVirtualList({ itemHeight }: UseVirtualListOptions) {
     [itemHeight],
   );
 
-  const scrollToTop = useCallback(
-    (behavior: ScrollBehavior = "smooth") => {
-      containerRef.current?.scrollTo({ top: 0, behavior });
-    },
-    [],
-  );
+  const scrollToTop = useCallback((behavior: ScrollBehavior = "smooth") => {
+    containerRef.current?.scrollTo({ top: 0, behavior });
+  }, []);
 
   return { containerRef, scrollToIndex, scrollToTop };
 }

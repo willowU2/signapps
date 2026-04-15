@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { PollData, PollType } from './poll-creator';
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { PollData, PollType } from "./poll-creator";
 
 export interface PollVote {
   optionIds: string[];
@@ -23,19 +23,19 @@ export function PollViewer({
   poll,
   votes = [],
   onVote,
-  currentUserId = 'guest',
+  currentUserId = "guest",
 }: PollViewerProps) {
   const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
   const [hasVoted, setHasVoted] = useState(false);
 
-  const userVote = votes.find(v => v.userId === currentUserId);
+  const userVote = votes.find((v) => v.userId === currentUserId);
 
   const getTotalVotes = (): number => {
     return votes.length;
   };
 
   const getOptionVoteCount = (optionId: string): number => {
-    return votes.filter(v => v.optionIds.includes(optionId)).length;
+    return votes.filter((v) => v.optionIds.includes(optionId)).length;
   };
 
   const getPercentage = (count: number): number => {
@@ -58,7 +58,7 @@ export function PollViewer({
     if (checked) {
       setSelectedOptions([...selectedOptions, optionId]);
     } else {
-      setSelectedOptions(selectedOptions.filter(id => id !== optionId));
+      setSelectedOptions(selectedOptions.filter((id) => id !== optionId));
     }
   };
 
@@ -70,12 +70,12 @@ export function PollViewer({
       <div>
         <h3 className="text-lg font-semibold mb-2">{poll.question}</h3>
         <p className="text-xs text-muted-foreground">
-          {totalVotes} {totalVotes === 1 ? 'vote' : 'votes'}
+          {totalVotes} {totalVotes === 1 ? "vote" : "votes"}
         </p>
       </div>
 
       <div className="space-y-4">
-        {poll.options.map(option => {
+        {poll.options.map((option) => {
           const voteCount = getOptionVoteCount(option.id);
           const percentage = getPercentage(voteCount);
           const isSelected = selectedOptions.includes(option.id);
@@ -85,8 +85,8 @@ export function PollViewer({
             <div key={option.id} className="space-y-2">
               <div className="flex items-center gap-2">
                 {canVote ? (
-                  poll.type === 'single' ? (
-                    <RadioGroup value={selectedOptions[0] || ''}>
+                  poll.type === "single" ? (
+                    <RadioGroup value={selectedOptions[0] || ""}>
                       <div
                         className="flex items-center gap-2 cursor-pointer flex-1"
                         onClick={() => handleSingleSelect(option.id)}
@@ -109,7 +109,7 @@ export function PollViewer({
                       <Checkbox
                         id={option.id}
                         checked={isSelected}
-                        onCheckedChange={checked =>
+                        onCheckedChange={(checked) =>
                           handleMultipleSelect(option.id, checked as boolean)
                         }
                       />
@@ -124,7 +124,9 @@ export function PollViewer({
                 ) : (
                   <div className="flex items-center gap-2 flex-1">
                     {isUserVote && (
-                      <span className="text-xs font-medium text-green-600">✓</span>
+                      <span className="text-xs font-medium text-green-600">
+                        ✓
+                      </span>
                     )}
                     <span className="flex-1">{option.text}</span>
                   </div>

@@ -41,24 +41,21 @@ export function useResources() {
     }
   }, []);
 
-  const loadResourcesByType = useCallback(
-    async (type: string) => {
-      try {
-        const response = await calendarApiClient.get(`/resources/type/${type}`);
-        return response.data;
-      } catch {
-        return [];
-      }
-    },
-    []
-  );
+  const loadResourcesByType = useCallback(async (type: string) => {
+    try {
+      const response = await calendarApiClient.get(`/resources/type/${type}`);
+      return response.data;
+    } catch {
+      return [];
+    }
+  }, []);
 
   const createResource = useCallback(
     async (
       name: string,
       type: "room" | "equipment" | "vehicle",
       capacity?: number,
-      location?: string
+      location?: string,
     ) => {
       try {
         const response = await calendarApiClient.post("/resources", {
@@ -76,21 +73,21 @@ export function useResources() {
         throw err;
       }
     },
-    []
+    [],
   );
 
   const updateResource = useCallback(
     async (
       resourceId: string,
-      updates: { name?: string; is_available?: boolean }
+      updates: { name?: string; is_available?: boolean },
     ) => {
       try {
         const response = await calendarApiClient.put(
           `/resources/${resourceId}`,
-          updates
+          updates,
         );
         setResources((prev) =>
-          prev.map((r) => (r.id === resourceId ? response.data : r))
+          prev.map((r) => (r.id === resourceId ? response.data : r)),
         );
         setError(null);
         return response.data;
@@ -99,41 +96,41 @@ export function useResources() {
         throw err;
       }
     },
-    []
+    [],
   );
 
-  const deleteResource = useCallback(
-    async (resourceId: string) => {
-      try {
-        await calendarApiClient.delete(`/resources/${resourceId}`);
-        setResources((prev) => prev.filter((r) => r.id !== resourceId));
-        setError(null);
-      } catch (err) {
-        setError("Impossible de supprimer resource");
-        throw err;
-      }
-    },
-    []
-  );
+  const deleteResource = useCallback(async (resourceId: string) => {
+    try {
+      await calendarApiClient.delete(`/resources/${resourceId}`);
+      setResources((prev) => prev.filter((r) => r.id !== resourceId));
+      setError(null);
+    } catch (err) {
+      setError("Impossible de supprimer resource");
+      throw err;
+    }
+  }, []);
 
   const checkAvailability = useCallback(
     async (
       resourceIds: string[],
       startTime: string,
-      endTime: string
+      endTime: string,
     ): Promise<AvailabilityResponse | null> => {
       try {
-        const response = await calendarApiClient.post("/resources/availability", {
-          resource_ids: resourceIds,
-          start_time: startTime,
-          end_time: endTime,
-        });
+        const response = await calendarApiClient.post(
+          "/resources/availability",
+          {
+            resource_ids: resourceIds,
+            start_time: startTime,
+            end_time: endTime,
+          },
+        );
         return response.data;
       } catch {
         return null;
       }
     },
-    []
+    [],
   );
 
   const bookResources = useCallback(
@@ -149,7 +146,7 @@ export function useResources() {
         throw err;
       }
     },
-    []
+    [],
   );
 
   return {

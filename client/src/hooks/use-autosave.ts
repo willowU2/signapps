@@ -8,7 +8,12 @@ export function useAutosave<T>(key: string, data: T, interval = 30000) {
 
   useEffect(() => {
     const timer = setInterval(() => {
-      try { localStorage.setItem("autosave:" + key, JSON.stringify(dataRef.current)); } catch {}
+      try {
+        localStorage.setItem(
+          "autosave:" + key,
+          JSON.stringify(dataRef.current),
+        );
+      } catch {}
     }, interval);
     return () => clearInterval(timer);
   }, [key, interval]);
@@ -18,8 +23,14 @@ export function useAutosave<T>(key: string, data: T, interval = 30000) {
       try {
         const stored = localStorage.getItem("autosave:" + key);
         return stored ? JSON.parse(stored) : null;
-      } catch { return null; }
+      } catch {
+        return null;
+      }
     },
-    clear: () => { try { localStorage.removeItem("autosave:" + key); } catch {} },
+    clear: () => {
+      try {
+        localStorage.removeItem("autosave:" + key);
+      } catch {}
+    },
   };
 }

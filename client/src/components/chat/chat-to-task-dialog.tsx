@@ -1,13 +1,13 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { CheckSquare, AlertCircle } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { toast } from "sonner"
-import { calendarApi, tasksApi } from "@/lib/api/calendar"
+import { useState, useEffect } from "react";
+import { CheckSquare, AlertCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "sonner";
+import { calendarApi, tasksApi } from "@/lib/api/calendar";
 import {
   Dialog,
   DialogContent,
@@ -15,50 +15,54 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
+} from "@/components/ui/dialog";
 
 export interface ChatTaskMessage {
-  content: string
-  author: string
-  channel: string
+  content: string;
+  author: string;
+  channel: string;
 }
 
 interface ChatToTaskDialogProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  message: ChatTaskMessage | null
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  message: ChatTaskMessage | null;
 }
 
-export function ChatToTaskDialog({ open, onOpenChange, message }: ChatToTaskDialogProps) {
-  const [title, setTitle] = useState("")
-  const [description, setDescription] = useState("")
-  const [dueDate, setDueDate] = useState("")
-  const [priority, setPriority] = useState(2)
-  const [saving, setSaving] = useState(false)
+export function ChatToTaskDialog({
+  open,
+  onOpenChange,
+  message,
+}: ChatToTaskDialogProps) {
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [dueDate, setDueDate] = useState("");
+  const [priority, setPriority] = useState(2);
+  const [saving, setSaving] = useState(false);
 
   // Pre-fill when dialog opens
   useEffect(() => {
     if (open && message) {
-      setTitle(message.content.slice(0, 80))
+      setTitle(message.content.slice(0, 80));
       setDescription(
         `[Message de ${message.author} dans #${message.channel}]\n\n${message.content.slice(0, 500)}${message.content.length > 500 ? "..." : ""}`,
-      )
-      setDueDate("")
-      setPriority(2)
+      );
+      setDueDate("");
+      setPriority(2);
     }
-  }, [open, message])
+  }, [open, message]);
 
   const handleSave = async () => {
     if (!title.trim()) {
-      toast.error("Le titre est requis")
-      return
+      toast.error("Le titre est requis");
+      return;
     }
 
-    setSaving(true)
+    setSaving(true);
 
     try {
-      const calendarsResponse = await calendarApi.listCalendars()
-      const calendars = calendarsResponse.data || []
+      const calendarsResponse = await calendarApi.listCalendars();
+      const calendars = calendarsResponse.data || [];
 
       if (Array.isArray(calendars) && calendars.length > 0) {
         await tasksApi.createTask(calendars[0].id, {
@@ -66,23 +70,23 @@ export function ChatToTaskDialog({ open, onOpenChange, message }: ChatToTaskDial
           description: description.trim(),
           priority,
           due_date: dueDate || undefined,
-        })
-        toast.success("Tâche créée avec succès")
+        });
+        toast.success("Tâche créée avec succès");
       } else {
-        saveToLocalStorage()
-        toast.success("Tâche enregistrée localement")
+        saveToLocalStorage();
+        toast.success("Tâche enregistrée localement");
       }
     } catch {
-      saveToLocalStorage()
-      toast.success("Tâche enregistrée localement (service indisponible)")
+      saveToLocalStorage();
+      toast.success("Tâche enregistrée localement (service indisponible)");
     } finally {
-      setSaving(false)
-      onOpenChange(false)
+      setSaving(false);
+      onOpenChange(false);
     }
-  }
+  };
 
   const saveToLocalStorage = () => {
-    const tasks = JSON.parse(localStorage.getItem("chat-tasks") || "[]")
+    const tasks = JSON.parse(localStorage.getItem("chat-tasks") || "[]");
     tasks.push({
       id: `task-${Date.now()}`,
       title: title.trim(),
@@ -94,9 +98,9 @@ export function ChatToTaskDialog({ open, onOpenChange, message }: ChatToTaskDial
       source_author: message?.author,
       status: "open",
       created_at: new Date().toISOString(),
-    })
-    localStorage.setItem("chat-tasks", JSON.stringify(tasks))
-  }
+    });
+    localStorage.setItem("chat-tasks", JSON.stringify(tasks));
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -174,7 +178,11 @@ export function ChatToTaskDialog({ open, onOpenChange, message }: ChatToTaskDial
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
+          <Button
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={saving}
+          >
             Annuler
           </Button>
           <Button onClick={handleSave} disabled={saving || !title.trim()}>
@@ -183,5 +191,5 @@ export function ChatToTaskDialog({ open, onOpenChange, message }: ChatToTaskDial
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

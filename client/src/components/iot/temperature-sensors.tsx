@@ -18,8 +18,22 @@ export default function TemperatureSensors() {
   const [rooms] = useState<RoomTemperature[]>([
     { id: "1", name: "Lobby", current: 22, min: 18, max: 25, status: "ok" },
     { id: "2", name: "Office A", current: 20, min: 18, max: 25, status: "ok" },
-    { id: "3", name: "Meeting Room", current: 29, min: 18, max: 25, status: "alert" },
-    { id: "4", name: "Server Room", current: 16, min: 18, max: 25, status: "alert" },
+    {
+      id: "3",
+      name: "Meeting Room",
+      current: 29,
+      min: 18,
+      max: 25,
+      status: "alert",
+    },
+    {
+      id: "4",
+      name: "Server Room",
+      current: 16,
+      min: 18,
+      max: 25,
+      status: "alert",
+    },
   ]);
 
   const getStatusBadge = (temp: number) => {
@@ -66,7 +80,9 @@ export default function TemperatureSensors() {
                 {getStatusBadge(room.current)}
               </div>
             </div>
-            <p className="text-xs text-muted-foreground mt-3">History: Chart placeholder</p>
+            <p className="text-xs text-muted-foreground mt-3">
+              History: Chart placeholder
+            </p>
           </Card>
         ))}
       </div>

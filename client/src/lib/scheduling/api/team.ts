@@ -5,33 +5,53 @@
  * Integrates directly with the `signapps-workforce` microservice.
  */
 
-import { useQuery } from '@tanstack/react-query';
+import { useQuery } from "@tanstack/react-query";
 import {
   startOfDay,
   endOfDay,
   setHours,
   setMinutes,
   isWeekend,
-} from 'date-fns';
+} from "date-fns";
 import type {
   TeamMember,
   AvailabilitySlot,
   WorkingHours,
-} from '../types/scheduling';
-import { getClient, ServiceName } from '@/lib/api/factory';
+} from "../types/scheduling";
+import { getClient, ServiceName } from "@/lib/api/factory";
 
 // ============================================================================
 // Default Data (Demo)
 // ============================================================================
 
 const defaultWorkingHours: WorkingHours = {
-  timezone: 'Europe/Paris',
+  timezone: "Europe/Paris",
   schedule: {
-    monday: { start: '09:00', end: '18:00', breaks: [{ start: '12:00', end: '13:00' }] },
-    tuesday: { start: '09:00', end: '18:00', breaks: [{ start: '12:00', end: '13:00' }] },
-    wednesday: { start: '09:00', end: '18:00', breaks: [{ start: '12:00', end: '13:00' }] },
-    thursday: { start: '09:00', end: '18:00', breaks: [{ start: '12:00', end: '13:00' }] },
-    friday: { start: '09:00', end: '17:00', breaks: [{ start: '12:00', end: '13:00' }] },
+    monday: {
+      start: "09:00",
+      end: "18:00",
+      breaks: [{ start: "12:00", end: "13:00" }],
+    },
+    tuesday: {
+      start: "09:00",
+      end: "18:00",
+      breaks: [{ start: "12:00", end: "13:00" }],
+    },
+    wednesday: {
+      start: "09:00",
+      end: "18:00",
+      breaks: [{ start: "12:00", end: "13:00" }],
+    },
+    thursday: {
+      start: "09:00",
+      end: "18:00",
+      breaks: [{ start: "12:00", end: "13:00" }],
+    },
+    friday: {
+      start: "09:00",
+      end: "17:00",
+      breaks: [{ start: "12:00", end: "13:00" }],
+    },
   },
 };
 
@@ -73,14 +93,17 @@ export interface BackendOrgTreeNode {
   employee_count: number;
 }
 
-function toTeamMember(employee: BackendEmployee, managerId?: string | null): TeamMember {
+function toTeamMember(
+  employee: BackendEmployee,
+  managerId?: string | null,
+): TeamMember {
   return {
     id: employee.id,
     name: `${employee.first_name} ${employee.last_name}`.trim(),
-    email: employee.email || '',
+    email: employee.email || "",
     avatarUrl: `https://api.dicebear.com/7.x/initials/svg?seed=${employee.first_name}`,
-    role: employee.functions?.[0] || 'Employé',
-    department: 'Département',
+    role: employee.functions?.[0] || "Employé",
+    department: "Département",
     managerId: managerId || null,
     orgNodeId: employee.org_node_id,
     workingHours: defaultWorkingHours,
@@ -93,7 +116,7 @@ function toTeamMember(employee: BackendEmployee, managerId?: string | null): Tea
 
 function generateAvailabilitySlots(
   members: TeamMember[],
-  date: Date
+  date: Date,
 ): AvailabilitySlot[] {
   const slots: AvailabilitySlot[] = [];
   const dayStart = startOfDay(date);
@@ -105,7 +128,7 @@ function generateAvailabilitySlots(
         memberId: member.id,
         start: dayStart,
         end: endOfDay(date),
-        status: 'out-of-office',
+        status: "out-of-office",
       });
     });
     return slots;
@@ -124,7 +147,7 @@ function generateAvailabilitySlots(
       memberId: member.id,
       start: dayStart,
       end: workStart,
-      status: 'out-of-office',
+      status: "out-of-office",
     });
 
     // Morning - simulate some meetings
@@ -137,26 +160,26 @@ function generateAvailabilitySlots(
         memberId: member.id,
         start: workStart,
         end: meetingStart,
-        status: 'available',
+        status: "available",
       });
       slots.push({
         memberId: member.id,
         start: meetingStart,
         end: meetingEnd,
-        status: 'busy',
+        status: "busy",
       });
       slots.push({
         memberId: member.id,
         start: meetingEnd,
         end: lunchStart,
-        status: 'available',
+        status: "available",
       });
     } else {
       slots.push({
         memberId: member.id,
         start: workStart,
         end: lunchStart,
-        status: index % 4 === 1 ? 'tentative' : 'available',
+        status: index % 4 === 1 ? "tentative" : "available",
       });
     }
 
@@ -165,7 +188,7 @@ function generateAvailabilitySlots(
       memberId: member.id,
       start: lunchStart,
       end: lunchEnd,
-      status: 'busy',
+      status: "busy",
     });
 
     // Afternoon - simulate some meetings
@@ -178,26 +201,26 @@ function generateAvailabilitySlots(
         memberId: member.id,
         start: lunchEnd,
         end: meetingStart,
-        status: 'available',
+        status: "available",
       });
       slots.push({
         memberId: member.id,
         start: meetingStart,
         end: meetingEnd,
-        status: 'busy',
+        status: "busy",
       });
       slots.push({
         memberId: member.id,
         start: meetingEnd,
         end: workEnd,
-        status: 'available',
+        status: "available",
       });
     } else {
       slots.push({
         memberId: member.id,
         start: lunchEnd,
         end: workEnd,
-        status: 'available',
+        status: "available",
       });
     }
 
@@ -206,7 +229,7 @@ function generateAvailabilitySlots(
       memberId: member.id,
       start: workEnd,
       end: endOfDay(date),
-      status: 'out-of-office',
+      status: "out-of-office",
     });
   });
 
@@ -218,11 +241,12 @@ function generateAvailabilitySlots(
 // ============================================================================
 
 export const teamKeys = {
-  all: ['team'] as const,
-  members: () => [...teamKeys.all, 'members'] as const,
+  all: ["team"] as const,
+  members: () => [...teamKeys.all, "members"] as const,
   member: (id: string) => [...teamKeys.members(), id] as const,
-  orgTree: () => [...teamKeys.all, 'orgTree'] as const,
-  availability: (date: Date) => [...teamKeys.all, 'availability', date.toISOString()] as const,
+  orgTree: () => [...teamKeys.all, "orgTree"] as const,
+  availability: (date: Date) =>
+    [...teamKeys.all, "availability", date.toISOString()] as const,
 };
 
 // ============================================================================
@@ -237,7 +261,7 @@ export function useTeamMembers() {
     queryKey: teamKeys.members(),
     queryFn: async () => {
       const client = getClient(ServiceName.WORKFORCE);
-      const res = await client.get<BackendEmployee[]>('/workforce/employees');
+      const res = await client.get<BackendEmployee[]>("/workforce/employees");
       return res.data.map((emp) => toTeamMember(emp));
     },
   });
@@ -253,13 +277,13 @@ export function useTeamMember(id: string) {
       const client = getClient(ServiceName.WORKFORCE);
       const res = await client.get<any>(`/workforce/employees/${id}`);
       if (!res.data) return null;
-      
+
       const member = toTeamMember(res.data.employee);
       if (res.data.function_names && res.data.function_names.length > 0) {
         member.role = res.data.function_names[0];
       }
       if (res.data.org_node_name) {
-         member.department = res.data.org_node_name;
+        member.department = res.data.org_node_name;
       }
       return member;
     },
@@ -274,10 +298,10 @@ export function useOrgTree() {
   return useQuery({
     queryKey: teamKeys.orgTree(),
     queryFn: async (): Promise<BackendOrgTreeNode[]> => {
-       const client = getClient(ServiceName.WORKFORCE);
-       const res = await client.get<BackendOrgTreeNode[]>('/workforce/org/tree');
-       return res.data;
-    }
+      const client = getClient(ServiceName.WORKFORCE);
+      const res = await client.get<BackendOrgTreeNode[]>("/workforce/org/tree");
+      return res.data;
+    },
   });
 }
 
@@ -301,11 +325,11 @@ export function useFindCommonSlots(memberIds: string[], date: Date) {
   const { data: slots = [] } = useAvailabilitySlots(date);
 
   return useQuery({
-    queryKey: [...teamKeys.availability(date), 'common', memberIds],
+    queryKey: [...teamKeys.availability(date), "common", memberIds],
     queryFn: () => {
       // Find slots where all members are available
       const memberSlots = memberIds.map((id) =>
-        slots.filter((s) => s.memberId === id && s.status === 'available')
+        slots.filter((s) => s.memberId === id && s.status === "available"),
       );
 
       if (memberSlots.length === 0) return [];
@@ -330,10 +354,10 @@ export function useFindCommonSlots(memberIds: string[], date: Date) {
 
             // Find intersection
             const intersectStart = new Date(
-              Math.max(candidate.start.getTime(), slotStart.getTime())
+              Math.max(candidate.start.getTime(), slotStart.getTime()),
             );
             const intersectEnd = new Date(
-              Math.min(candidate.end.getTime(), slotEnd.getTime())
+              Math.min(candidate.end.getTime(), slotEnd.getTime()),
             );
 
             if (intersectStart < intersectEnd) {

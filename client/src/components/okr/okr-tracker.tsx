@@ -6,7 +6,11 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { ChevronDown, Plus, X } from "lucide-react";
@@ -32,10 +36,25 @@ interface Objective {
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
-const STATUS_CONFIG: Record<OKRStatus, { color: string; label: string; bgColor: string }> = {
-  "on-track": { color: "text-green-700", label: "On Track", bgColor: "bg-green-50" },
-  "at-risk": { color: "text-yellow-700", label: "At Risk", bgColor: "bg-yellow-50" },
-  "off-track": { color: "text-red-700", label: "Off Track", bgColor: "bg-red-50" },
+const STATUS_CONFIG: Record<
+  OKRStatus,
+  { color: string; label: string; bgColor: string }
+> = {
+  "on-track": {
+    color: "text-green-700",
+    label: "On Track",
+    bgColor: "bg-green-50",
+  },
+  "at-risk": {
+    color: "text-yellow-700",
+    label: "At Risk",
+    bgColor: "bg-yellow-50",
+  },
+  "off-track": {
+    color: "text-red-700",
+    label: "Off Track",
+    bgColor: "bg-red-50",
+  },
 };
 
 const INITIAL_OBJECTIVES: Objective[] = [
@@ -44,9 +63,27 @@ const INITIAL_OBJECTIVES: Objective[] = [
     title: "Deliver MVP Platform",
     owner: "AL",
     keyResults: [
-      { id: "kr-1", title: "Backend API 100% complete", progress: 85, owner: "MR", status: "on-track" },
-      { id: "kr-2", title: "Frontend UI components", progress: 75, owner: "AL", status: "on-track" },
-      { id: "kr-3", title: "User authentication flow", progress: 100, owner: "JD", status: "on-track" },
+      {
+        id: "kr-1",
+        title: "Backend API 100% complete",
+        progress: 85,
+        owner: "MR",
+        status: "on-track",
+      },
+      {
+        id: "kr-2",
+        title: "Frontend UI components",
+        progress: 75,
+        owner: "AL",
+        status: "on-track",
+      },
+      {
+        id: "kr-3",
+        title: "User authentication flow",
+        progress: 100,
+        owner: "JD",
+        status: "on-track",
+      },
     ],
   },
   {
@@ -54,8 +91,20 @@ const INITIAL_OBJECTIVES: Objective[] = [
     title: "Improve System Performance",
     owner: "MR",
     keyResults: [
-      { id: "kr-4", title: "API latency < 100ms", progress: 60, owner: "MR", status: "at-risk" },
-      { id: "kr-5", title: "Database query optimization", progress: 40, owner: "JD", status: "off-track" },
+      {
+        id: "kr-4",
+        title: "API latency < 100ms",
+        progress: 60,
+        owner: "MR",
+        status: "at-risk",
+      },
+      {
+        id: "kr-5",
+        title: "Database query optimization",
+        progress: 40,
+        owner: "JD",
+        status: "off-track",
+      },
     ],
   },
   {
@@ -63,15 +112,29 @@ const INITIAL_OBJECTIVES: Objective[] = [
     title: "Achieve 95% Test Coverage",
     owner: "JD",
     keyResults: [
-      { id: "kr-6", title: "Unit tests coverage", progress: 92, owner: "JD", status: "on-track" },
-      { id: "kr-7", title: "Integration tests", progress: 70, owner: "AL", status: "at-risk" },
+      {
+        id: "kr-6",
+        title: "Unit tests coverage",
+        progress: 92,
+        owner: "JD",
+        status: "on-track",
+      },
+      {
+        id: "kr-7",
+        title: "Integration tests",
+        progress: 70,
+        owner: "AL",
+        status: "at-risk",
+      },
     ],
   },
 ];
 
 // ── Helper Functions ───────────────────────────────────────────────────────────
 
-const getStatusBadgeVariant = (status: OKRStatus): "default" | "secondary" | "destructive" => {
+const getStatusBadgeVariant = (
+  status: OKRStatus,
+): "default" | "secondary" | "destructive" => {
   switch (status) {
     case "on-track":
       return "default";
@@ -128,11 +191,15 @@ interface ObjectiveCardProps {
   onDelete: (id: string) => void;
 }
 
-const ObjectiveCard: React.FC<ObjectiveCardProps> = ({ objective, onDelete }) => {
+const ObjectiveCard: React.FC<ObjectiveCardProps> = ({
+  objective,
+  onDelete,
+}) => {
   const [isOpen, setIsOpen] = useState(true);
 
   const avgProgress = Math.round(
-    objective.keyResults.reduce((sum, kr) => sum + kr.progress, 0) / objective.keyResults.length
+    objective.keyResults.reduce((sum, kr) => sum + kr.progress, 0) /
+      objective.keyResults.length,
   );
 
   return (
@@ -144,20 +211,23 @@ const ObjectiveCard: React.FC<ObjectiveCardProps> = ({ objective, onDelete }) =>
               <ChevronDown
                 className={cn(
                   "h-5 w-5 shrink-0 transition-transform text-muted-foreground",
-                  !isOpen && "-rotate-90"
+                  !isOpen && "-rotate-90",
                 )}
               />
               <div className="min-w-0 flex-1">
                 <h3 className="font-semibold truncate">{objective.title}</h3>
                 <p className="text-xs text-muted-foreground">
-                  Avg Progress: {avgProgress}% • {objective.keyResults.length} Key Results
+                  Avg Progress: {avgProgress}% • {objective.keyResults.length}{" "}
+                  Key Results
                 </p>
               </div>
             </div>
 
             <div className="flex items-center gap-2 shrink-0">
               <Avatar className="h-8 w-8">
-                <AvatarFallback className="text-xs">{objective.owner}</AvatarFallback>
+                <AvatarFallback className="text-xs">
+                  {objective.owner}
+                </AvatarFallback>
               </Avatar>
               <Button
                 variant="ghost"
@@ -179,7 +249,9 @@ const ObjectiveCard: React.FC<ObjectiveCardProps> = ({ objective, onDelete }) =>
             <KeyResultItem key={kr.id} kr={kr} />
           ))}
           {objective.keyResults.length === 0 && (
-            <p className="text-sm text-muted-foreground italic">No key results yet</p>
+            <p className="text-sm text-muted-foreground italic">
+              No key results yet
+            </p>
           )}
         </CollapsibleContent>
       </Collapsible>
@@ -214,7 +286,11 @@ const ObjectiveForm: React.FC<ObjectiveFormProps> = ({ onAdd }) => {
 
   if (!isOpen) {
     return (
-      <Button onClick={() => setIsOpen(true)} className="w-full" variant="outline">
+      <Button
+        onClick={() => setIsOpen(true)}
+        className="w-full"
+        variant="outline"
+      >
         <Plus className="h-4 w-4" />
         Add Objective
       </Button>
@@ -289,7 +365,9 @@ export const OKRTracker: React.FC<OKRTrackerProps> = ({
       <div>
         <h2 className="text-2xl font-bold mb-1">OKR Tracker</h2>
         <p className="text-sm text-muted-foreground">
-          {objectives.length} objectives • {objectives.reduce((sum, obj) => sum + obj.keyResults.length, 0)} key results
+          {objectives.length} objectives •{" "}
+          {objectives.reduce((sum, obj) => sum + obj.keyResults.length, 0)} key
+          results
         </p>
       </div>
 

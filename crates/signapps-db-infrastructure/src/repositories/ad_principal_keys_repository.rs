@@ -107,19 +107,13 @@ impl AdPrincipalKeysRepository {
     /// # Errors
     ///
     /// Returns `Error::Database` if the DELETE fails.
-    pub async fn delete_keys(
-        pool: &PgPool,
-        domain_id: Uuid,
-        principal_name: &str,
-    ) -> Result<()> {
-        sqlx::query(
-            "DELETE FROM ad_principal_keys WHERE domain_id = $1 AND principal_name = $2",
-        )
-        .bind(domain_id)
-        .bind(principal_name)
-        .execute(pool)
-        .await
-        .map_err(|e| Error::Database(e.to_string()))?;
+    pub async fn delete_keys(pool: &PgPool, domain_id: Uuid, principal_name: &str) -> Result<()> {
+        sqlx::query("DELETE FROM ad_principal_keys WHERE domain_id = $1 AND principal_name = $2")
+            .bind(domain_id)
+            .bind(principal_name)
+            .execute(pool)
+            .await
+            .map_err(|e| Error::Database(e.to_string()))?;
 
         Ok(())
     }

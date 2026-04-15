@@ -2,13 +2,13 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { usePageTitle } from '@/hooks/use-page-title';
+import { usePageTitle } from "@/hooks/use-page-title";
 
 /**
  * Legacy /calendar route - redirects to the new unified calendar UI at /cal.
  */
 export default function CalendarPage() {
-  usePageTitle('Calendrier');
+  usePageTitle("Calendrier");
   const router = useRouter();
 
   useEffect(() => {

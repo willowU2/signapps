@@ -1,17 +1,17 @@
 /* eslint-disable @next/next/no-img-element */
-'use client';
+"use client";
 
-import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { useState, useCallback, useRef, useEffect, useMemo } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
+} from "@/components/ui/dropdown-menu";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 import {
   Upload,
   Trash2,
@@ -22,19 +22,19 @@ import {
   SortAsc,
   ExternalLink,
   Loader2,
-} from 'lucide-react';
-import { toast } from 'sonner';
-import { socialApi, MediaItem } from '@/lib/api/social';
+} from "lucide-react";
+import { toast } from "sonner";
+import { socialApi, MediaItem } from "@/lib/api/social";
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
-type FilterType = 'all' | 'images' | 'videos';
-type SortType = 'newest' | 'oldest' | 'name' | 'size';
+type FilterType = "all" | "images" | "videos";
+type SortType = "newest" | "oldest" | "name" | "size";
 
-const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-const VIDEO_TYPES = ['video/mp4', 'video/webm'];
+const IMAGE_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+const VIDEO_TYPES = ["video/mp4", "video/webm"];
 const ACCEPTED_TYPES = [...IMAGE_TYPES, ...VIDEO_TYPES];
 
 // ---------------------------------------------------------------------------
@@ -49,9 +49,9 @@ function formatFileSize(bytes: number): string {
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString(undefined, {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
+    year: "numeric",
+    month: "short",
+    day: "numeric",
   });
 }
 
@@ -63,8 +63,8 @@ export function MediaLibrary() {
   const [items, setItems] = useState<MediaItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
-  const [filter, setFilter] = useState<FilterType>('all');
-  const [sort, setSort] = useState<SortType>('newest');
+  const [filter, setFilter] = useState<FilterType>("all");
+  const [sort, setSort] = useState<SortType>("newest");
   const [isDraggingOver, setIsDraggingOver] = useState(false);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
@@ -77,7 +77,7 @@ export function MediaLibrary() {
       const res = await socialApi.media.list();
       setItems(res.data);
     } catch {
-      toast.error('Failed to load media library');
+      toast.error("Failed to load media library");
     } finally {
       setLoading(false);
     }
@@ -90,7 +90,9 @@ export function MediaLibrary() {
   // ------ Upload logic ------
 
   const processFiles = useCallback(async (files: FileList | File[]) => {
-    const validFiles = Array.from(files).filter((f) => ACCEPTED_TYPES.includes(f.type));
+    const validFiles = Array.from(files).filter((f) =>
+      ACCEPTED_TYPES.includes(f.type),
+    );
     if (validFiles.length === 0) return;
 
     setUploading(true);
@@ -113,7 +115,9 @@ export function MediaLibrary() {
 
     if (newItems.length > 0) {
       setItems((prev) => [...newItems, ...prev]);
-      toast.success(`Uploaded ${newItems.length} file${newItems.length > 1 ? 's' : ''}`);
+      toast.success(
+        `Uploaded ${newItems.length} file${newItems.length > 1 ? "s" : ""}`,
+      );
     }
     setUploading(false);
   }, []);
@@ -121,7 +125,7 @@ export function MediaLibrary() {
   const handleFileChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       if (e.target.files) processFiles(e.target.files);
-      e.target.value = '';
+      e.target.value = "";
     },
     [processFiles],
   );
@@ -163,16 +167,16 @@ export function MediaLibrary() {
     try {
       await socialApi.media.delete(id);
       setItems((prev) => prev.filter((item) => item.id !== id));
-      toast.success('Media deleted');
+      toast.success("Media deleted");
     } catch {
-      toast.error('Impossible de supprimer media');
+      toast.error("Impossible de supprimer media");
     }
   }, []);
 
   const handleCopyUrl = useCallback((item: MediaItem) => {
     navigator.clipboard.writeText(item.url).then(
-      () => toast.success('URL copied to clipboard'),
-      () => toast.error('Impossible de copier URL'),
+      () => toast.success("URL copied to clipboard"),
+      () => toast.error("Impossible de copier URL"),
     );
   }, []);
 
@@ -187,7 +191,11 @@ export function MediaLibrary() {
   }, []);
 
   const handleItemDragEnd = useCallback(() => {
-    if (dragIndex !== null && dragOverIndex !== null && dragIndex !== dragOverIndex) {
+    if (
+      dragIndex !== null &&
+      dragOverIndex !== null &&
+      dragIndex !== dragOverIndex
+    ) {
       setItems((prev) => {
         const updated = [...prev];
         const [moved] = updated.splice(dragIndex, 1);
@@ -205,21 +213,29 @@ export function MediaLibrary() {
     let list = [...items];
 
     // Filter
-    if (filter === 'images') list = list.filter((i) => i.mimeType.startsWith('image/'));
-    else if (filter === 'videos') list = list.filter((i) => i.mimeType.startsWith('video/'));
+    if (filter === "images")
+      list = list.filter((i) => i.mimeType.startsWith("image/"));
+    else if (filter === "videos")
+      list = list.filter((i) => i.mimeType.startsWith("video/"));
 
     // Sort
     switch (sort) {
-      case 'newest':
-        list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      case "newest":
+        list.sort(
+          (a, b) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+        );
         break;
-      case 'oldest':
-        list.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+      case "oldest":
+        list.sort(
+          (a, b) =>
+            new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+        );
         break;
-      case 'name':
+      case "name":
         list.sort((a, b) => a.filename.localeCompare(b.filename));
         break;
-      case 'size':
+      case "size":
         list.sort((a, b) => b.size - a.size);
         break;
     }
@@ -229,8 +245,17 @@ export function MediaLibrary() {
 
   // ------ Render ------
 
-  const filterLabel: Record<FilterType, string> = { all: 'All', images: 'Images', videos: 'Videos' };
-  const sortLabel: Record<SortType, string> = { newest: 'Newest', oldest: 'Oldest', name: 'Name', size: 'Size' };
+  const filterLabel: Record<FilterType, string> = {
+    all: "All",
+    images: "Images",
+    videos: "Videos",
+  };
+  const sortLabel: Record<SortType, string> = {
+    newest: "Newest",
+    oldest: "Oldest",
+    name: "Name",
+    size: "Size",
+  };
 
   if (loading) {
     return (
@@ -287,19 +312,23 @@ export function MediaLibrary() {
           </DropdownMenu>
 
           {/* Upload button */}
-          <Button size="sm" onClick={() => fileInputRef.current?.click()} disabled={uploading}>
+          <Button
+            size="sm"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploading}
+          >
             {uploading ? (
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
             ) : (
               <Upload className="h-4 w-4 mr-2" />
             )}
-            {uploading ? 'Uploading...' : 'Upload'}
+            {uploading ? "Uploading..." : "Upload"}
           </Button>
           <input
             ref={fileInputRef}
             type="file"
             multiple
-            accept={ACCEPTED_TYPES.join(',')}
+            accept={ACCEPTED_TYPES.join(",")}
             className="hidden"
             onChange={handleFileChange}
           />
@@ -313,7 +342,9 @@ export function MediaLibrary() {
         /* Empty state -- large dashed upload zone */
         <div
           className={`flex flex-col items-center justify-center rounded-xl border-2 border-dashed p-16 transition-colors ${
-            isDraggingOver ? 'border-primary bg-primary/5' : 'border-muted-foreground/25'
+            isDraggingOver
+              ? "border-primary bg-primary/5"
+              : "border-muted-foreground/25"
           }`}
           onDragEnter={handleDragEnter}
           onDragOver={handleDragOver}
@@ -327,7 +358,10 @@ export function MediaLibrary() {
           <p className="text-sm text-muted-foreground mb-4">
             Drag &amp; drop images or videos here, or click to browse
           </p>
-          <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
+          <Button
+            variant="outline"
+            onClick={() => fileInputRef.current?.click()}
+          >
             <Upload className="h-4 w-4 mr-2" />
             Browse Files
           </Button>
@@ -336,7 +370,7 @@ export function MediaLibrary() {
         <>
           {/* Drop overlay when dragging files from OS */}
           <div
-            className={`relative ${isDraggingOver ? 'ring-2 ring-primary rounded-xl' : ''}`}
+            className={`relative ${isDraggingOver ? "ring-2 ring-primary rounded-xl" : ""}`}
             onDragEnter={handleDragEnter}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
@@ -351,7 +385,7 @@ export function MediaLibrary() {
             {/* Grid */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {processed.map((item, index) => {
-                const isImage = item.mimeType.startsWith('image/');
+                const isImage = item.mimeType.startsWith("image/");
                 return (
                   <Card
                     key={item.id}
@@ -361,8 +395,8 @@ export function MediaLibrary() {
                     onDragEnd={handleItemDragEnd}
                     onDragOver={(e) => e.preventDefault()}
                     className={`group relative overflow-hidden cursor-grab transition-all ${
-                      dragOverIndex === index ? 'ring-2 ring-primary' : ''
-                    } ${dragIndex === index ? 'opacity-50' : ''}`}
+                      dragOverIndex === index ? "ring-2 ring-primary" : ""
+                    } ${dragIndex === index ? "opacity-50" : ""}`}
                   >
                     {/* Thumbnail */}
                     <div className="relative aspect-square bg-muted">
@@ -412,7 +446,7 @@ export function MediaLibrary() {
                           className="h-8 w-8"
                           onClick={(e) => {
                             e.stopPropagation();
-                            window.open(item.url, '_blank');
+                            window.open(item.url, "_blank");
                           }}
                           title="Open in new tab"
                         >
@@ -440,7 +474,10 @@ export function MediaLibrary() {
 
                     {/* Info */}
                     <CardContent className="p-3 space-y-0.5">
-                      <p className="text-sm font-medium truncate" title={item.filename}>
+                      <p
+                        className="text-sm font-medium truncate"
+                        title={item.filename}
+                      >
                         {item.filename}
                       </p>
                       <div className="flex items-center justify-between text-xs text-muted-foreground">
@@ -456,10 +493,11 @@ export function MediaLibrary() {
 
           {/* Summary */}
           <div className="text-sm text-muted-foreground text-center pt-2">
-            {processed.length} item{processed.length !== 1 ? 's' : ''}
-            {filter !== 'all' && ` (${filterLabel[filter].toLowerCase()})`}
-            {' — '}
-            {formatFileSize(processed.reduce((sum, i) => sum + i.size, 0))} total
+            {processed.length} item{processed.length !== 1 ? "s" : ""}
+            {filter !== "all" && ` (${filterLabel[filter].toLowerCase()})`}
+            {" — "}
+            {formatFileSize(processed.reduce((sum, i) => sum + i.size, 0))}{" "}
+            total
           </div>
         </>
       )}

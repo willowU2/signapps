@@ -49,7 +49,7 @@ where
                 relations_created: 0,
                 source: "crm.leads".to_string(),
             });
-        }
+        },
     };
 
     let mut count = 0usize;

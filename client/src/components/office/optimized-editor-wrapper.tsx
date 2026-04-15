@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { SpinnerInfinity } from 'spinners-react';
+import { SpinnerInfinity } from "spinners-react";
 
 /**
  * OptimizedEditorWrapper
@@ -9,30 +9,33 @@ import { SpinnerInfinity } from 'spinners-react';
  * and export functionality for office editors.
  */
 
-import React, { Suspense, useCallback, useState } from 'react';
-import { Download, AlertCircle, RefreshCw } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
+import React, { Suspense, useCallback, useState } from "react";
+import { Download, AlertCircle, RefreshCw } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { cn } from '@/lib/utils';
+} from "@/components/ui/dropdown-menu";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { cn } from "@/lib/utils";
 import {
   useOptimizedExport,
   downloadExportResult,
   type ExportFormat,
-} from '@/hooks/use-optimized-export';
-import { useLazyEditor, preloadCommonExtensions } from '@/hooks/use-lazy-editor';
+} from "@/hooks/use-optimized-export";
+import {
+  useLazyEditor,
+  preloadCommonExtensions,
+} from "@/hooks/use-lazy-editor";
 
 // ============================================================================
 // Types
 // ============================================================================
 
-type EditorType = 'document' | 'spreadsheet' | 'presentation';
+type EditorType = "document" | "spreadsheet" | "presentation";
 
 interface OptimizedEditorWrapperProps {
   type: EditorType;
@@ -55,22 +58,25 @@ interface ExportMenuProps {
 // Export Format Config
 // ============================================================================
 
-const exportFormats: Record<EditorType, { format: ExportFormat; label: string }[]> = {
+const exportFormats: Record<
+  EditorType,
+  { format: ExportFormat; label: string }[]
+> = {
   document: [
-    { format: 'docx', label: 'Word (.docx)' },
-    { format: 'pdf', label: 'PDF (.pdf)' },
-    { format: 'html', label: 'HTML (.html)' },
-    { format: 'markdown', label: 'Markdown (.md)' },
+    { format: "docx", label: "Word (.docx)" },
+    { format: "pdf", label: "PDF (.pdf)" },
+    { format: "html", label: "HTML (.html)" },
+    { format: "markdown", label: "Markdown (.md)" },
   ],
   spreadsheet: [
-    { format: 'xlsx', label: 'Excel (.xlsx)' },
-    { format: 'csv', label: 'CSV (.csv)' },
-    { format: 'pdf', label: 'PDF (.pdf)' },
+    { format: "xlsx", label: "Excel (.xlsx)" },
+    { format: "csv", label: "CSV (.csv)" },
+    { format: "pdf", label: "PDF (.pdf)" },
   ],
   presentation: [
-    { format: 'pptx', label: 'PowerPoint (.pptx)' },
-    { format: 'pdf', label: 'PDF (.pdf)' },
-    { format: 'png', label: 'Images (.png)' },
+    { format: "pptx", label: "PowerPoint (.pptx)" },
+    { format: "pdf", label: "PDF (.pdf)" },
+    { format: "png", label: "Images (.png)" },
   ],
 };
 
@@ -90,17 +96,20 @@ function EditorSkeleton({ type }: { type: EditorType }) {
 
       {/* Content skeleton */}
       <div className="flex-1 p-4">
-        {type === 'spreadsheet' ? (
+        {type === "spreadsheet" ? (
           <div className="grid h-full grid-cols-6 gap-px bg-border">
             {Array.from({ length: 42 }).map((_, i) => (
               <div key={i} className="h-8 animate-pulse bg-background" />
             ))}
           </div>
-        ) : type === 'presentation' ? (
+        ) : type === "presentation" ? (
           <div className="flex h-full gap-4">
             <div className="w-48 space-y-2 bg-muted/20 p-2">
               {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="aspect-video animate-pulse rounded bg-muted" />
+                <div
+                  key={i}
+                  className="aspect-video animate-pulse rounded bg-muted"
+                />
               ))}
             </div>
             <div className="flex-1 animate-pulse rounded bg-muted" />
@@ -133,7 +142,13 @@ function ExportMenu({ type, isExporting, onExport }: ExportMenuProps) {
       <DropdownMenuTrigger asChild>
         <Button variant="outline" size="sm" disabled={isExporting}>
           {isExporting ? (
-            <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />
+            <SpinnerInfinity
+              size={24}
+              secondaryColor="rgba(128,128,128,0.2)"
+              color="currentColor"
+              speed={120}
+              className="mr-2 h-4 w-4 "
+            />
           ) : (
             <Download className="mr-2 h-4 w-4" />
           )}
@@ -182,13 +197,19 @@ function ExportProgress({
 // Error Display
 // ============================================================================
 
-function EditorError({ error, onRetry }: { error: Error; onRetry: () => void }) {
+function EditorError({
+  error,
+  onRetry,
+}: {
+  error: Error;
+  onRetry: () => void;
+}) {
   return (
     <div className="flex h-full items-center justify-center p-8">
       <Alert variant="destructive" className="max-w-md">
         <AlertCircle className="h-4 w-4" />
         <AlertDescription className="ml-2">
-          {error.message || 'Failed to load editor'}
+          {error.message || "Failed to load editor"}
         </AlertDescription>
         <Button variant="outline" size="sm" className="mt-4" onClick={onRetry}>
           <RefreshCw className="mr-2 h-4 w-4" />
@@ -214,13 +235,15 @@ export function OptimizedEditorWrapper({
   const [editorContent, setEditorContent] = useState(content);
 
   // Lazy load editor
-  const { isLoading, isVisible, error, Editor, containerRef, retry } = useLazyEditor(type, {
-    preload: true,
-    rootMargin: '200px',
-  });
+  const { isLoading, isVisible, error, Editor, containerRef, retry } =
+    useLazyEditor(type, {
+      preload: true,
+      rootMargin: "200px",
+    });
 
   // Export functionality
-  const { exportDocument, progress, isExporting, cancel } = useOptimizedExport();
+  const { exportDocument, progress, isExporting, cancel } =
+    useOptimizedExport();
 
   // Handle export
   const handleExport = useCallback(
@@ -235,7 +258,7 @@ export function OptimizedEditorWrapper({
         downloadExportResult(result);
       }
     },
-    [documentId, editorContent, exportDocument]
+    [documentId, editorContent, exportDocument],
   );
 
   // Handle content change
@@ -244,7 +267,7 @@ export function OptimizedEditorWrapper({
       setEditorContent(newContent);
       onSave?.(newContent);
     },
-    [onSave]
+    [onSave],
   );
 
   // Preload extensions on mount
@@ -253,7 +276,7 @@ export function OptimizedEditorWrapper({
   }, []);
 
   return (
-    <div ref={containerRef} className={cn('relative h-full w-full', className)}>
+    <div ref={containerRef} className={cn("relative h-full w-full", className)}>
       {/* Toolbar with export */}
       <div className="absolute right-4 top-2 z-10">
         <ExportMenu
@@ -284,8 +307,12 @@ export function OptimizedEditorWrapper({
       )}
 
       {/* Export progress overlay */}
-      {isExporting && progress.phase !== 'complete' && (
-        <ExportProgress progress={progress.progress} message={progress.message} onCancel={cancel} />
+      {isExporting && progress.phase !== "complete" && (
+        <ExportProgress
+          progress={progress.progress}
+          message={progress.message}
+          onCancel={cancel}
+        />
       )}
     </div>
   );

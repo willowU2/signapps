@@ -77,7 +77,7 @@ export function EmployeeCard({
     <div
       className={cn(
         "relative overflow-hidden rounded-xl border border-border/50 bg-card/80 shadow-sm hover:shadow-md hover:border-border transition-all",
-        className
+        className,
       )}
     >
       {/* Gradient background */}
@@ -88,7 +88,11 @@ export function EmployeeCard({
         <div className="flex justify-center mb-4">
           <Avatar className="h-20 w-20 border-4 border-primary/20 shadow-sm">
             {avatarUrl && (
-              <AvatarImage src={avatarUrl} alt={name} className="object-cover" />
+              <AvatarImage
+                src={avatarUrl}
+                alt={name}
+                className="object-cover"
+              />
             )}
             <AvatarFallback className="bg-primary/10 text-primary font-bold text-lg">
               {getInitials(name)}
@@ -98,12 +102,8 @@ export function EmployeeCard({
 
         {/* Name & Title */}
         <div className="text-center mb-4">
-          <h3 className="font-bold text-lg text-foreground truncate">
-            {name}
-          </h3>
-          <p className="text-sm text-muted-foreground font-medium">
-            {title}
-          </p>
+          <h3 className="font-bold text-lg text-foreground truncate">{name}</h3>
+          <p className="text-sm text-muted-foreground font-medium">{title}</p>
         </div>
 
         {/* Department Badge */}
@@ -113,7 +113,7 @@ export function EmployeeCard({
             className={cn(
               "text-xs font-semibold px-3 py-1 border-0",
               deptColor.bg,
-              deptColor.text
+              deptColor.text,
             )}
           >
             <Briefcase className="h-3 w-3 mr-1" />
@@ -137,10 +137,7 @@ export function EmployeeCard({
           {phone && (
             <div className="flex items-center gap-2 text-sm">
               <Phone className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-              <a
-                href={`tel:${phone}`}
-                className="text-primary hover:underline"
-              >
+              <a href={`tel:${phone}`} className="text-primary hover:underline">
                 {phone}
               </a>
             </div>

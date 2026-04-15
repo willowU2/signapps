@@ -16,7 +16,7 @@
  *   await breaker.call(() => fetch('/api/v1/users'));
  */
 
-type CircuitState = 'closed' | 'open' | 'half-open';
+type CircuitState = "closed" | "open" | "half-open";
 
 interface CircuitBreakerOptions {
   /** Number of consecutive failures before opening the circuit */
@@ -50,7 +50,7 @@ export function onCircuitStateChange(cb: StateChangeCallback): () => void {
 }
 
 class CircuitBreaker {
-  private state: CircuitState = 'closed';
+  private state: CircuitState = "closed";
   private failureCount = 0;
   private lastFailureTime = 0;
   private readonly threshold: number;
@@ -71,10 +71,10 @@ class CircuitBreaker {
    * Throws a `CircuitOpenError` when the circuit is open.
    */
   async call<T>(fn: () => Promise<T>): Promise<T> {
-    if (this.state === 'open') {
+    if (this.state === "open") {
       if (Date.now() - this.lastFailureTime >= this.resetTimeoutMs) {
         // Allow a single probe request
-        this.transitionTo('half-open');
+        this.transitionTo("half-open");
       } else {
         throw new CircuitOpenError(this.name);
       }
@@ -92,8 +92,8 @@ class CircuitBreaker {
 
   private onSuccess() {
     this.failureCount = 0;
-    if (this.state !== 'closed') {
-      this.transitionTo('closed');
+    if (this.state !== "closed") {
+      this.transitionTo("closed");
     }
   }
 
@@ -101,7 +101,7 @@ class CircuitBreaker {
     this.failureCount += 1;
     this.lastFailureTime = Date.now();
     if (this.failureCount >= this.threshold) {
-      this.transitionTo('open');
+      this.transitionTo("open");
     }
   }
 
@@ -126,7 +126,7 @@ class CircuitBreaker {
 
   /** Whether this breaker is in an unhealthy state (open or half-open) */
   get isOpen(): boolean {
-    return this.state === 'open' || this.state === 'half-open';
+    return this.state === "open" || this.state === "half-open";
   }
 
   /** Reset the breaker (e.g. on manual refresh or auto-reconnect) */
@@ -134,10 +134,10 @@ class CircuitBreaker {
     const prev = this.state;
     this.failureCount = 0;
     this.lastFailureTime = 0;
-    if (prev !== 'closed') {
-      this.transitionTo('closed');
+    if (prev !== "closed") {
+      this.transitionTo("closed");
     } else {
-      this.state = 'closed';
+      this.state = "closed";
     }
   }
 }
@@ -145,7 +145,7 @@ class CircuitBreaker {
 export class CircuitOpenError extends Error {
   constructor(serviceName: string) {
     super(`Circuit breaker open for service "${serviceName}"`);
-    this.name = 'CircuitOpenError';
+    this.name = "CircuitOpenError";
   }
 }
 
@@ -200,7 +200,7 @@ async function probeOpenCircuits(): Promise<void> {
 
     try {
       const response = await fetch(probeUrl, {
-        method: 'GET',
+        method: "GET",
         signal: AbortSignal.timeout(5_000),
       });
       if (response.ok) {
@@ -272,7 +272,7 @@ export function getServiceBreaker(serviceName: string): CircuitBreaker {
       mail: 3012,
       collab: 3013,
       meet: 3014,
-      'it-assets': 3015,
+      "it-assets": 3015,
       pxe: 3016,
       remote: 3017,
       office: 3018,
@@ -295,6 +295,6 @@ export function getServiceBreaker(serviceName: string): CircuitBreaker {
 }
 
 // Auto-start in browser environments
-if (typeof window !== 'undefined') {
+if (typeof window !== "undefined") {
   startAutoReconnect();
 }

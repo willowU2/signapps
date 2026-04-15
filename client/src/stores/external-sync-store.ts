@@ -4,7 +4,7 @@
  * Zustand store for managing external calendar sync state.
  */
 
-import { create } from 'zustand';
+import { create } from "zustand";
 import type {
   CalendarProvider,
   ProviderConnection,
@@ -13,8 +13,8 @@ import type {
   SyncLogEntry,
   SyncConflict,
   SyncStatus,
-} from '@/lib/calendar/external-sync/types';
-import { externalSyncApi } from '@/lib/calendar/external-sync/api';
+} from "@/lib/calendar/external-sync/types";
+import { externalSyncApi } from "@/lib/calendar/external-sync/api";
 
 // ============================================================================
 // Types
@@ -54,20 +54,36 @@ interface ExternalSyncState {
 
   // Actions - Connections
   loadConnections: () => Promise<void>;
-  connectProvider: (provider: CalendarProvider, redirectUri: string) => Promise<string>;
-  handleOAuthCallback: (provider: CalendarProvider, code: string, state: string) => Promise<void>;
+  connectProvider: (
+    provider: CalendarProvider,
+    redirectUri: string,
+  ) => Promise<string>;
+  handleOAuthCallback: (
+    provider: CalendarProvider,
+    code: string,
+    state: string,
+  ) => Promise<void>;
   disconnectProvider: (connectionId: string) => Promise<void>;
   refreshToken: (connectionId: string) => Promise<void>;
   setSelectedConnection: (connectionId: string | null) => void;
 
   // Actions - External Calendars
   loadExternalCalendars: (connectionId: string) => Promise<void>;
-  toggleCalendarSelection: (connectionId: string, externalCalendarId: string, selected: boolean) => Promise<void>;
+  toggleCalendarSelection: (
+    connectionId: string,
+    externalCalendarId: string,
+    selected: boolean,
+  ) => Promise<void>;
 
   // Actions - Sync Configs
   loadSyncConfigs: () => Promise<void>;
-  createSyncConfig: (config: Parameters<typeof externalSyncApi.createSyncConfig>[0]) => Promise<SyncConfig>;
-  updateSyncConfig: (configId: string, updates: Parameters<typeof externalSyncApi.updateSyncConfig>[1]) => Promise<void>;
+  createSyncConfig: (
+    config: Parameters<typeof externalSyncApi.createSyncConfig>[0],
+  ) => Promise<SyncConfig>;
+  updateSyncConfig: (
+    configId: string,
+    updates: Parameters<typeof externalSyncApi.updateSyncConfig>[1],
+  ) => Promise<void>;
   deleteSyncConfig: (configId: string) => Promise<void>;
   toggleSyncConfig: (configId: string, enabled: boolean) => Promise<void>;
 
@@ -80,8 +96,14 @@ interface ExternalSyncState {
 
   // Actions - Conflicts
   loadConflicts: () => Promise<void>;
-  resolveConflict: (conflictId: string, resolution: 'local' | 'remote') => Promise<void>;
-  resolveAllConflicts: (configId: string, resolution: 'local' | 'remote') => Promise<void>;
+  resolveConflict: (
+    conflictId: string,
+    resolution: "local" | "remote",
+  ) => Promise<void>;
+  resolveAllConflicts: (
+    configId: string,
+    resolution: "local" | "remote",
+  ) => Promise<void>;
 
   // Utility
   clearError: () => void;
@@ -120,7 +142,8 @@ export const useExternalSyncStore = create<ExternalSyncState>()((set, get) => ({
     } catch (error) {
       set({
         isLoadingConnections: false,
-        error: error instanceof Error ? error.message : 'Failed to load connections',
+        error:
+          error instanceof Error ? error.message : "Failed to load connections",
       });
     }
   },
@@ -137,7 +160,10 @@ export const useExternalSyncStore = create<ExternalSyncState>()((set, get) => ({
       return response.auth_url;
     } catch (error) {
       set({
-        error: error instanceof Error ? error.message : 'Failed to initiate connection',
+        error:
+          error instanceof Error
+            ? error.message
+            : "Failed to initiate connection",
       });
       throw error;
     }
@@ -147,7 +173,7 @@ export const useExternalSyncStore = create<ExternalSyncState>()((set, get) => ({
     const { pendingOAuthState } = get();
 
     if (state !== pendingOAuthState) {
-      set({ error: 'Invalid OAuth state' });
+      set({ error: "Invalid OAuth state" });
       return;
     }
 
@@ -169,7 +195,7 @@ export const useExternalSyncStore = create<ExternalSyncState>()((set, get) => ({
       set({
         isLoadingConnections: false,
         pendingOAuthState: null,
-        error: error instanceof Error ? error.message : 'OAuth callback failed',
+        error: error instanceof Error ? error.message : "OAuth callback failed",
       });
     }
   },
@@ -182,15 +208,21 @@ export const useExternalSyncStore = create<ExternalSyncState>()((set, get) => ({
       set((state) => ({
         connections: state.connections.filter((c) => c.id !== connectionId),
         externalCalendars: Object.fromEntries(
-          Object.entries(state.externalCalendars).filter(([key]) => key !== connectionId)
+          Object.entries(state.externalCalendars).filter(
+            ([key]) => key !== connectionId,
+          ),
         ),
-        syncConfigs: state.syncConfigs.filter((c) => c.connection_id !== connectionId),
+        syncConfigs: state.syncConfigs.filter(
+          (c) => c.connection_id !== connectionId,
+        ),
         selectedConnectionId:
-          state.selectedConnectionId === connectionId ? null : state.selectedConnectionId,
+          state.selectedConnectionId === connectionId
+            ? null
+            : state.selectedConnectionId,
       }));
     } catch (error) {
       set({
-        error: error instanceof Error ? error.message : 'Failed to disconnect',
+        error: error instanceof Error ? error.message : "Failed to disconnect",
       });
     }
   },
@@ -202,12 +234,13 @@ export const useExternalSyncStore = create<ExternalSyncState>()((set, get) => ({
       const connection = await externalSyncApi.refreshToken(connectionId);
       set((state) => ({
         connections: state.connections.map((c) =>
-          c.id === connectionId ? connection : c
+          c.id === connectionId ? connection : c,
         ),
       }));
     } catch (error) {
       set({
-        error: error instanceof Error ? error.message : 'Failed to refresh token',
+        error:
+          error instanceof Error ? error.message : "Failed to refresh token",
       });
     }
   },
@@ -221,7 +254,8 @@ export const useExternalSyncStore = create<ExternalSyncState>()((set, get) => ({
     set({ isLoadingCalendars: true, error: null });
 
     try {
-      const response = await externalSyncApi.listExternalCalendars(connectionId);
+      const response =
+        await externalSyncApi.listExternalCalendars(connectionId);
       set((state) => ({
         externalCalendars: {
           ...state.externalCalendars,
@@ -232,31 +266,38 @@ export const useExternalSyncStore = create<ExternalSyncState>()((set, get) => ({
     } catch (error) {
       set({
         isLoadingCalendars: false,
-        error: error instanceof Error ? error.message : 'Failed to load calendars',
+        error:
+          error instanceof Error ? error.message : "Failed to load calendars",
       });
     }
   },
 
-  toggleCalendarSelection: async (connectionId, externalCalendarId, selected) => {
+  toggleCalendarSelection: async (
+    connectionId,
+    externalCalendarId,
+    selected,
+  ) => {
     set({ error: null });
 
     try {
       const updated = await externalSyncApi.toggleCalendarSelection(
         connectionId,
         externalCalendarId,
-        selected
+        selected,
       );
       set((state) => ({
         externalCalendars: {
           ...state.externalCalendars,
-          [connectionId]: state.externalCalendars[connectionId]?.map((c) =>
-            c.id === updated.id ? updated : c
-          ) || [],
+          [connectionId]:
+            state.externalCalendars[connectionId]?.map((c) =>
+              c.id === updated.id ? updated : c,
+            ) || [],
         },
       }));
     } catch (error) {
       set({
-        error: error instanceof Error ? error.message : 'Failed to toggle calendar',
+        error:
+          error instanceof Error ? error.message : "Failed to toggle calendar",
       });
     }
   },
@@ -271,7 +312,8 @@ export const useExternalSyncStore = create<ExternalSyncState>()((set, get) => ({
     } catch (error) {
       set({
         isLoadingConfigs: false,
-        error: error instanceof Error ? error.message : 'Failed to load configs',
+        error:
+          error instanceof Error ? error.message : "Failed to load configs",
       });
     }
   },
@@ -287,7 +329,8 @@ export const useExternalSyncStore = create<ExternalSyncState>()((set, get) => ({
       return created;
     } catch (error) {
       set({
-        error: error instanceof Error ? error.message : 'Impossible de créer config',
+        error:
+          error instanceof Error ? error.message : "Impossible de créer config",
       });
       throw error;
     }
@@ -300,12 +343,15 @@ export const useExternalSyncStore = create<ExternalSyncState>()((set, get) => ({
       const updated = await externalSyncApi.updateSyncConfig(configId, updates);
       set((state) => ({
         syncConfigs: state.syncConfigs.map((c) =>
-          c.id === configId ? updated : c
+          c.id === configId ? updated : c,
         ),
       }));
     } catch (error) {
       set({
-        error: error instanceof Error ? error.message : 'Impossible de mettre à jour config',
+        error:
+          error instanceof Error
+            ? error.message
+            : "Impossible de mettre à jour config",
       });
     }
   },
@@ -320,7 +366,10 @@ export const useExternalSyncStore = create<ExternalSyncState>()((set, get) => ({
       }));
     } catch (error) {
       set({
-        error: error instanceof Error ? error.message : 'Impossible de supprimer config',
+        error:
+          error instanceof Error
+            ? error.message
+            : "Impossible de supprimer config",
       });
     }
   },
@@ -332,12 +381,13 @@ export const useExternalSyncStore = create<ExternalSyncState>()((set, get) => ({
       const updated = await externalSyncApi.toggleSyncConfig(configId, enabled);
       set((state) => ({
         syncConfigs: state.syncConfigs.map((c) =>
-          c.id === configId ? updated : c
+          c.id === configId ? updated : c,
         ),
       }));
     } catch (error) {
       set({
-        error: error instanceof Error ? error.message : 'Failed to toggle config',
+        error:
+          error instanceof Error ? error.message : "Failed to toggle config",
       });
     }
   },
@@ -355,7 +405,7 @@ export const useExternalSyncStore = create<ExternalSyncState>()((set, get) => ({
     } catch (error) {
       set({
         isSyncing: false,
-        error: error instanceof Error ? error.message : 'Sync failed',
+        error: error instanceof Error ? error.message : "Sync failed",
       });
     }
   },
@@ -371,7 +421,7 @@ export const useExternalSyncStore = create<ExternalSyncState>()((set, get) => ({
     } catch (error) {
       set({
         isSyncing: false,
-        error: error instanceof Error ? error.message : 'Sync failed',
+        error: error instanceof Error ? error.message : "Sync failed",
       });
     }
   },
@@ -387,7 +437,7 @@ export const useExternalSyncStore = create<ExternalSyncState>()((set, get) => ({
     } catch (error) {
       set({
         isLoadingLogs: false,
-        error: error instanceof Error ? error.message : 'Failed to load logs',
+        error: error instanceof Error ? error.message : "Failed to load logs",
       });
     }
   },
@@ -406,7 +456,8 @@ export const useExternalSyncStore = create<ExternalSyncState>()((set, get) => ({
     } catch (error) {
       set({
         isLoadingConflicts: false,
-        error: error instanceof Error ? error.message : 'Failed to load conflicts',
+        error:
+          error instanceof Error ? error.message : "Failed to load conflicts",
       });
     }
   },
@@ -415,16 +466,19 @@ export const useExternalSyncStore = create<ExternalSyncState>()((set, get) => ({
     set({ error: null });
 
     try {
-      const resolved = await externalSyncApi.resolveConflict(conflictId, { resolution });
+      const resolved = await externalSyncApi.resolveConflict(conflictId, {
+        resolution,
+      });
       set((state) => ({
         conflicts: state.conflicts.map((c) =>
-          c.id === conflictId ? resolved : c
+          c.id === conflictId ? resolved : c,
         ),
         unresolvedConflictCount: state.unresolvedConflictCount - 1,
       }));
     } catch (error) {
       set({
-        error: error instanceof Error ? error.message : 'Failed to resolve conflict',
+        error:
+          error instanceof Error ? error.message : "Failed to resolve conflict",
       });
     }
   },
@@ -433,16 +487,24 @@ export const useExternalSyncStore = create<ExternalSyncState>()((set, get) => ({
     set({ error: null });
 
     try {
-      const { resolved } = await externalSyncApi.resolveAllConflicts(configId, resolution);
+      const { resolved } = await externalSyncApi.resolveAllConflicts(
+        configId,
+        resolution,
+      );
       set((state) => ({
         conflicts: state.conflicts.map((c) =>
-          c.sync_config_id === configId ? { ...c, resolved: true, resolution } : c
+          c.sync_config_id === configId
+            ? { ...c, resolved: true, resolution }
+            : c,
         ),
         unresolvedConflictCount: state.unresolvedConflictCount - resolved,
       }));
     } catch (error) {
       set({
-        error: error instanceof Error ? error.message : 'Failed to resolve conflicts',
+        error:
+          error instanceof Error
+            ? error.message
+            : "Failed to resolve conflicts",
       });
     }
   },
@@ -471,13 +533,14 @@ export const useExternalSyncStore = create<ExternalSyncState>()((set, get) => ({
 // Selectors
 // ============================================================================
 
-export const selectConnections = (state: ExternalSyncState) => state.connections;
+export const selectConnections = (state: ExternalSyncState) =>
+  state.connections;
 export const selectSelectedConnection = (state: ExternalSyncState) =>
   state.connections.find((c) => c.id === state.selectedConnectionId);
 export const selectGoogleConnection = (state: ExternalSyncState) =>
-  state.connections.find((c) => c.provider === 'google');
+  state.connections.find((c) => c.provider === "google");
 export const selectMicrosoftConnection = (state: ExternalSyncState) =>
-  state.connections.find((c) => c.provider === 'microsoft');
+  state.connections.find((c) => c.provider === "microsoft");
 export const selectHasUnresolvedConflicts = (state: ExternalSyncState) =>
   state.unresolvedConflictCount > 0;
 export const selectIsSyncing = (state: ExternalSyncState) => state.isSyncing;

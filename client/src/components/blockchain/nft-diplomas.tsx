@@ -154,9 +154,7 @@ export const NFTDiplomas: React.FC<NFTDiplomasProps> = ({ diplomas }) => {
       {diplomas.length === 0 && (
         <Card className="text-center py-8">
           <Shield className="size-8 mx-auto mb-2 text-muted-foreground" />
-          <p className="text-muted-foreground">
-            Aucun diplôme NFT trouvé
-          </p>
+          <p className="text-muted-foreground">Aucun diplôme NFT trouvé</p>
         </Card>
       )}
     </div>

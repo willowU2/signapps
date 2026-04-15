@@ -1,10 +1,10 @@
-import { useQuery } from '@tanstack/react-query';
-import { aiApi, type ChatResponse } from '@/lib/api';
-import type { DashboardData } from './use-dashboard';
+import { useQuery } from "@tanstack/react-query";
+import { aiApi, type ChatResponse } from "@/lib/api";
+import type { DashboardData } from "./use-dashboard";
 
 export interface AiBriefResult {
   summary: string;
-  sources?: ChatResponse['sources'];
+  sources?: ChatResponse["sources"];
   generatedAt: number;
 }
 
@@ -27,21 +27,22 @@ Génère un brief quotidien en français (3-4 phrases). Mentionne les points cri
 }
 
 function formatBytes(bytes: number): string {
-  if (bytes === 0) return '0 B';
+  if (bytes === 0) return "0 B";
   const k = 1024;
-  const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+  const sizes = ["B", "KB", "MB", "GB", "TB"];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
 }
 
 export function useAiBrief(data?: DashboardData) {
   return useQuery<AiBriefResult>({
-    queryKey: ['ai-brief', data?.containers, data?.cpu, data?.routes],
+    queryKey: ["ai-brief", data?.containers, data?.cpu, data?.routes],
     queryFn: async () => {
       const prompt = buildBriefPrompt(data);
       const res = await aiApi.chat(prompt, {
-        language: 'fr',
-        systemPrompt: 'Tu es un assistant DevOps concis. Réponds toujours en français, en 3-4 phrases maximum.',
+        language: "fr",
+        systemPrompt:
+          "Tu es un assistant DevOps concis. Réponds toujours en français, en 3-4 phrases maximum.",
       });
       return {
         summary: res.data.answer,

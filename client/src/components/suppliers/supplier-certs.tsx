@@ -101,7 +101,7 @@ export default function SupplierCerts() {
       acc[cert.supplier].push(cert);
       return acc;
     },
-    {} as Record<string, Certification[]>
+    {} as Record<string, Certification[]>,
   );
 
   const hasExpiredOrExpiring = (certList: Certification[]) => {
@@ -125,18 +125,26 @@ export default function SupplierCerts() {
               </div>
               <div className="space-y-2 ml-2">
                 {certList.map((cert) => (
-                  <div key={cert.id} className="flex items-center justify-between rounded bg-muted p-3">
+                  <div
+                    key={cert.id}
+                    className="flex items-center justify-between rounded bg-muted p-3"
+                  >
                     <div className="flex items-center gap-3">
                       {getStatusIcon(cert.status)}
                       <div>
                         <p className="text-sm font-medium">{cert.type}</p>
-                        <p className="text-xs text-muted-foreground">{cert.certNumber}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {cert.certNumber}
+                        </p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-xs text-muted-foreground">Expires: {cert.expiryDate}</p>
+                      <p className="text-xs text-muted-foreground">
+                        Expires: {cert.expiryDate}
+                      </p>
                       <span className={getStatusBadge(cert.status)}>
-                        {cert.status.charAt(0).toUpperCase() + cert.status.slice(1)}
+                        {cert.status.charAt(0).toUpperCase() +
+                          cert.status.slice(1)}
                       </span>
                     </div>
                   </div>

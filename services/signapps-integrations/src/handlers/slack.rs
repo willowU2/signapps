@@ -11,10 +11,7 @@
 //!   /signapps help                 — lists available commands
 
 use crate::AppState;
-use axum::{
-    extract::State,
-    Json,
-};
+use axum::{extract::State, Json};
 use serde::{Deserialize, Serialize};
 use signapps_common::{Error, Result};
 
@@ -193,7 +190,9 @@ pub async fn save_slack_config(
 ) -> Result<Json<serde_json::Value>> {
     // Validate webhook URL format
     if !payload.webhook_url.starts_with("https://hooks.slack.com/") {
-        return Err(Error::BadRequest("URL de webhook Slack invalide".to_string()));
+        return Err(Error::BadRequest(
+            "URL de webhook Slack invalide".to_string(),
+        ));
     }
 
     // In a full implementation, persist to DB or env config.
@@ -246,11 +245,7 @@ pub async fn notify_slack(webhook_url: &str, message: &str) -> anyhow::Result<()
     let client = reqwest::Client::new();
     let body = serde_json::json!({ "text": message });
 
-    let resp = client
-        .post(webhook_url)
-        .json(&body)
-        .send()
-        .await?;
+    let resp = client.post(webhook_url).json(&body).send().await?;
 
     if !resp.status().is_success() {
         anyhow::bail!("Slack webhook returned HTTP {}", resp.status());

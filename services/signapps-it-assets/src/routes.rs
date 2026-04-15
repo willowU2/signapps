@@ -68,6 +68,12 @@ use crate::handlers::remote_ws::{
     admin_remote_viewer, agent_remote_ws, list_recordings, start_remote_session,
     stop_remote_session,
 };
+use crate::handlers::resources::{
+    create_reservation, create_resource, create_resource_type, delete_resource,
+    delete_resource_type, get_reservation, get_resource, list_my_reservations,
+    list_pending_reservations, list_reservations, list_resource_types, list_resources,
+    update_reservation_status, update_resource,
+};
 use crate::handlers::script_library::{
     create_schedule, create_script, delete_schedule, delete_script, get_script, list_schedules,
     list_scripts, run_library_script, update_script,
@@ -75,6 +81,9 @@ use crate::handlers::script_library::{
 use crate::handlers::security::{
     av_fleet_summary, encryption_fleet_summary, get_antivirus_status, get_encryption_status,
     report_antivirus, report_encryption,
+};
+use crate::handlers::sites::{
+    attach_node, attach_person, create_site, get_site, list_site_persons, list_sites, update_site,
 };
 use crate::handlers::software_policies::{
     check_software_compliance, create_software_policy, list_software_policies,
@@ -85,15 +94,6 @@ use crate::handlers::tickets::{
     update_psa_integration, update_ticket,
 };
 use crate::handlers::wol::wake_on_lan;
-use crate::handlers::sites::{
-    attach_node, attach_person, create_site, get_site, list_site_persons, list_sites, update_site,
-};
-use crate::handlers::resources::{
-    create_reservation, create_resource, create_resource_type, delete_resource,
-    delete_resource_type, get_reservation, get_resource, list_my_reservations,
-    list_pending_reservations, list_reservations, list_resource_types, list_resources,
-    update_reservation_status, update_resource,
-};
 use crate::handlers::{
     create_hardware, delete_hardware, get_hardware, list_hardware, update_hardware,
 };
@@ -545,11 +545,22 @@ fn site_routes(state: AppState) -> Router {
 #[inline(never)]
 fn resource_routes(state: AppState) -> Router {
     Router::new()
-        .route("/resource-types", get(list_resource_types).post(create_resource_type))
+        .route(
+            "/resource-types",
+            get(list_resource_types).post(create_resource_type),
+        )
         .route("/resource-types/:id", delete(delete_resource_type))
         .route("/resources", get(list_resources).post(create_resource))
-        .route("/resources/:id", get(get_resource).put(update_resource).delete(delete_resource))
-        .route("/reservations", get(list_reservations).post(create_reservation))
+        .route(
+            "/resources/:id",
+            get(get_resource)
+                .put(update_resource)
+                .delete(delete_resource),
+        )
+        .route(
+            "/reservations",
+            get(list_reservations).post(create_reservation),
+        )
         .route("/reservations/mine", get(list_my_reservations))
         .route("/reservations/pending", get(list_pending_reservations))
         .route("/reservations/:id", get(get_reservation))

@@ -71,7 +71,11 @@ export interface LinkedBlocksListProps {
   /** Click handler for linked blocks */
   onBlockClick?: (block: UniversalBlock) => void;
   /** Add link handler */
-  onAddLink?: (linkType: LinkType, targetId: string, targetType: BlockType) => Promise<void>;
+  onAddLink?: (
+    linkType: LinkType,
+    targetId: string,
+    targetType: BlockType,
+  ) => Promise<void>;
   /** Remove link handler */
   onRemoveLink?: (linkId: string) => Promise<void>;
   /** Show add button */
@@ -92,9 +96,9 @@ export function LinkedBlocksList({
   editable = true,
   className,
 }: LinkedBlocksListProps) {
-  const [resolvedBlocks, setResolvedBlocks] = React.useState<Map<string, UniversalBlock>>(
-    new Map()
-  );
+  const [resolvedBlocks, setResolvedBlocks] = React.useState<
+    Map<string, UniversalBlock>
+  >(new Map());
   const [loading, setLoading] = React.useState(true);
   const [addDialogOpen, setAddDialogOpen] = React.useState(false);
 
@@ -112,14 +116,17 @@ export function LinkedBlocksList({
       await Promise.all(
         block.linkedBlocks.map(async (link) => {
           try {
-            const resolvedBlock = await resolveBlock(link.blockId, link.blockType);
+            const resolvedBlock = await resolveBlock(
+              link.blockId,
+              link.blockType,
+            );
             if (resolvedBlock) {
               resolved.set(link.blockId, resolvedBlock);
             }
           } catch (error) {
             console.error(`Failed to resolve block ${link.blockId}:`, error);
           }
-        })
+        }),
       );
 
       setResolvedBlocks(resolved);
@@ -213,10 +220,13 @@ export function LinkedBlocksList({
                       </AlertDialogTrigger>
                       <AlertDialogContent>
                         <AlertDialogHeader>
-                          <AlertDialogTitle>Supprimer le lien ?</AlertDialogTitle>
+                          <AlertDialogTitle>
+                            Supprimer le lien ?
+                          </AlertDialogTitle>
                           <AlertDialogDescription>
-                            Cette action supprimera le lien vers "{linkedBlock.title}".
-                            L'élément lui-même ne sera pas supprimé.
+                            Cette action supprimera le lien vers "
+                            {linkedBlock.title}". L'élément lui-même ne sera pas
+                            supprimé.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
@@ -242,7 +252,10 @@ export function LinkedBlocksList({
           open={addDialogOpen}
           onOpenChange={setAddDialogOpen}
           onAddLink={onAddLink}
-          excludeIds={[block.id, ...(block.linkedBlocks?.map((l) => l.blockId) || [])]}
+          excludeIds={[
+            block.id,
+            ...(block.linkedBlocks?.map((l) => l.blockId) || []),
+          ]}
         >
           <Button variant="outline" size="sm" className="w-full">
             <Plus className="h-4 w-4 mr-2" />
@@ -262,7 +275,11 @@ interface AddLinkDialogProps {
   children: React.ReactNode;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onAddLink: (linkType: LinkType, targetId: string, targetType: BlockType) => Promise<void>;
+  onAddLink: (
+    linkType: LinkType,
+    targetId: string,
+    targetType: BlockType,
+  ) => Promise<void>;
   excludeIds?: string[];
 }
 
@@ -295,7 +312,10 @@ function AddLinkDialog({
     }
   };
 
-  const entityTypeMap: Record<BlockType, "user" | "file" | "task" | "event" | "document"> = {
+  const entityTypeMap: Record<
+    BlockType,
+    "user" | "file" | "task" | "event" | "document"
+  > = {
     user: "user",
     file: "file",
     folder: "file",
@@ -376,10 +396,7 @@ function AddLinkDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Annuler
           </Button>
-          <Button
-            onClick={handleSubmit}
-            disabled={!targetId || isSubmitting}
-          >
+          <Button onClick={handleSubmit} disabled={!targetId || isSubmitting}>
             {isSubmitting ? "Ajout..." : "Ajouter"}
           </Button>
         </div>
@@ -496,7 +513,7 @@ export function LinkBadge({
       variant="secondary"
       className={cn(
         "flex items-center gap-1.5 pr-1 cursor-pointer hover:bg-muted",
-        className
+        className,
       )}
       onClick={onClick}
     >

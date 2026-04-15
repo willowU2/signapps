@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { useRef, useEffect, useState } from 'react';
-import { Button } from '@/components/ui/button';
+import { useRef, useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
 
 interface SignaturePadProps {
   onSignature: (base64: string) => void;
@@ -22,21 +22,21 @@ export function SignaturePad({ onSignature, onCancel }: SignaturePadProps) {
     canvas.width = canvas.offsetWidth * window.devicePixelRatio;
     canvas.height = canvas.offsetHeight * window.devicePixelRatio;
 
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
     // Scale context to match device pixel ratio
     ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
 
     // Fill with white background
-    ctx.fillStyle = 'white';
+    ctx.fillStyle = "white";
     ctx.fillRect(0, 0, canvas.offsetWidth, canvas.offsetHeight);
   }, []);
 
   const getContextAndCanvas = () => {
     const canvas = canvasRef.current;
     if (!canvas) return { ctx: null, canvas: null };
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext("2d");
     return { ctx, canvas };
   };
 
@@ -65,10 +65,10 @@ export function SignaturePad({ onSignature, onCancel }: SignaturePadProps) {
     const y = e.clientY - rect.top;
 
     ctx.lineTo(x, y);
-    ctx.strokeStyle = '#000';
+    ctx.strokeStyle = "#000";
     ctx.lineWidth = 2;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
     ctx.stroke();
   };
 
@@ -83,7 +83,7 @@ export function SignaturePad({ onSignature, onCancel }: SignaturePadProps) {
     const { ctx, canvas } = getContextAndCanvas();
     if (!ctx || !canvas) return;
 
-    ctx.fillStyle = 'white';
+    ctx.fillStyle = "white";
     ctx.fillRect(0, 0, canvas.offsetWidth, canvas.offsetHeight);
     setIsEmpty(true);
   };
@@ -92,7 +92,7 @@ export function SignaturePad({ onSignature, onCancel }: SignaturePadProps) {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const base64 = canvas.toDataURL('image/png');
+    const base64 = canvas.toDataURL("image/png");
     onSignature(base64);
   };
 

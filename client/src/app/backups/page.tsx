@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { AppLayout } from '@/components/layout/app-layout';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
-import { DataTableSkeleton } from '@/components/ui/skeleton-loader';
+import { useState } from "react";
+import { AppLayout } from "@/components/layout/app-layout";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { DataTableSkeleton } from "@/components/ui/skeleton-loader";
 import {
   Table,
   TableBody,
@@ -14,14 +14,14 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
+} from "@/components/ui/table";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from "@/components/ui/dropdown-menu";
 import {
   HardDrive,
   Plus,
@@ -33,47 +33,55 @@ import {
   RotateCcw,
   Power,
   PowerOff,
-} from 'lucide-react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { backupsApi, BackupProfile } from '@/lib/api';
-import { toast } from 'sonner';
-import { BackupDialog } from '@/components/backups/backup-dialog';
-import { RestoreDialog } from '@/components/backups/restore-dialog';
-import { RunsDialog } from '@/components/backups/runs-dialog';
-import { BackupVerificationStatus } from '@/components/backups/backup-verification-status';
-import { PointInTimeRecoveryDialog } from '@/components/backups/point-in-time-recovery';
-import { BackupMonitoringDashboard } from '@/components/backups/backup-monitoring-dashboard';
-import { CrossRegionBackup } from '@/components/backups/cross-region-backup';
-import { IncrementalBackupSettings } from '@/components/backups/incremental-backup-settings';
-import { DRTestDialog } from '@/components/backups/dr-test-dialog';
-import { usePageTitle } from '@/hooks/use-page-title';
+} from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { backupsApi, BackupProfile } from "@/lib/api";
+import { toast } from "sonner";
+import { BackupDialog } from "@/components/backups/backup-dialog";
+import { RestoreDialog } from "@/components/backups/restore-dialog";
+import { RunsDialog } from "@/components/backups/runs-dialog";
+import { BackupVerificationStatus } from "@/components/backups/backup-verification-status";
+import { PointInTimeRecoveryDialog } from "@/components/backups/point-in-time-recovery";
+import { BackupMonitoringDashboard } from "@/components/backups/backup-monitoring-dashboard";
+import { CrossRegionBackup } from "@/components/backups/cross-region-backup";
+import { IncrementalBackupSettings } from "@/components/backups/incremental-backup-settings";
+import { DRTestDialog } from "@/components/backups/dr-test-dialog";
+import { usePageTitle } from "@/hooks/use-page-title";
 
 function formatDate(dateStr?: string) {
-  if (!dateStr) return '-';
+  if (!dateStr) return "-";
   return new Date(dateStr).toLocaleString();
 }
 
 function formatBytes(bytes?: number) {
-  if (!bytes) return '-';
+  if (!bytes) return "-";
   const k = 1024;
-  const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+  const sizes = ["B", "KB", "MB", "GB", "TB"];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
 }
 
 export default function BackupsPage() {
-  usePageTitle('Sauvegardes');
+  usePageTitle("Sauvegardes");
   const queryClient = useQueryClient();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editProfile, setEditProfile] = useState<BackupProfile | null>(null);
   const [restoreProfileId, setRestoreProfileId] = useState<string | null>(null);
   const [runsProfileId, setRunsProfileId] = useState<string | null>(null);
   const [pitrProfileId, setPitrProfileId] = useState<string | null>(null);
-  const [drTestProfile, setDrTestProfile] = useState<BackupProfile | null>(null);
-  const [activeTab, setActiveTab] = useState<'profiles' | 'monitoring' | 'cross-region' | 'incremental'>('profiles');
+  const [drTestProfile, setDrTestProfile] = useState<BackupProfile | null>(
+    null,
+  );
+  const [activeTab, setActiveTab] = useState<
+    "profiles" | "monitoring" | "cross-region" | "incremental"
+  >("profiles");
 
-  const { data: profilesData, isLoading, isError } = useQuery({
-    queryKey: ['backup-profiles'],
+  const {
+    data: profilesData,
+    isLoading,
+    isError,
+  } = useQuery({
+    queryKey: ["backup-profiles"],
     queryFn: async () => {
       const res = await backupsApi.list();
       return res.data.profiles;
@@ -86,28 +94,28 @@ export default function BackupsPage() {
   const runBackup = useMutation({
     mutationFn: (id: string) => backupsApi.run(id),
     onSuccess: () => {
-      toast.success('Sauvegarde démarrée');
-      queryClient.invalidateQueries({ queryKey: ['backup-profiles'] });
+      toast.success("Sauvegarde démarrée");
+      queryClient.invalidateQueries({ queryKey: ["backup-profiles"] });
     },
-    onError: () => toast.error('Impossible de démarrer la sauvegarde'),
+    onError: () => toast.error("Impossible de démarrer la sauvegarde"),
   });
 
   const deleteProfile = useMutation({
     mutationFn: (id: string) => backupsApi.remove(id),
     onSuccess: () => {
-      toast.success('Profil de sauvegarde supprimé');
-      queryClient.invalidateQueries({ queryKey: ['backup-profiles'] });
+      toast.success("Profil de sauvegarde supprimé");
+      queryClient.invalidateQueries({ queryKey: ["backup-profiles"] });
     },
-    onError: () => toast.error('Impossible de supprimer le profil'),
+    onError: () => toast.error("Impossible de supprimer le profil"),
   });
 
   const toggleEnabled = useMutation({
     mutationFn: ({ id, enabled }: { id: string; enabled: boolean }) =>
       backupsApi.update(id, { enabled } as Partial<BackupProfile>),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['backup-profiles'] });
+      queryClient.invalidateQueries({ queryKey: ["backup-profiles"] });
     },
-    onError: () => toast.error('Impossible de modifier le profil'),
+    onError: () => toast.error("Impossible de modifier le profil"),
   });
 
   if (isLoading && !isError) {
@@ -139,218 +147,248 @@ export default function BackupsPage() {
 
         {/* Tab navigation for new backup features */}
         <div className="flex gap-2 border-b pb-2">
-          {(['profiles', 'monitoring', 'cross-region', 'incremental'] as const).map(tab => (
+          {(
+            ["profiles", "monitoring", "cross-region", "incremental"] as const
+          ).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
               className={`px-3 py-1.5 text-sm rounded-lg transition-colors capitalize ${
-                activeTab === tab ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-accent'
+                activeTab === tab
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:bg-accent"
               }`}
             >
-              {tab.replace('-', ' ')}
+              {tab.replace("-", " ")}
             </button>
           ))}
         </div>
 
-        {activeTab === 'monitoring' && <BackupMonitoringDashboard />}
-        {activeTab === 'cross-region' && <CrossRegionBackup />}
-        {activeTab === 'incremental' && <IncrementalBackupSettings />}
+        {activeTab === "monitoring" && <BackupMonitoringDashboard />}
+        {activeTab === "cross-region" && <CrossRegionBackup />}
+        {activeTab === "incremental" && <IncrementalBackupSettings />}
 
-        {activeTab === 'profiles' && (
-        <>
-        {/* AQ-BKPVER: Backup verification status */}
-        <BackupVerificationStatus />
+        {activeTab === "profiles" && (
+          <>
+            {/* AQ-BKPVER: Backup verification status */}
+            <BackupVerificationStatus />
 
-        {isError ? (
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center py-12">
-              <HardDrive className="h-12 w-12 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Aucune sauvegarde</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                Le service de sauvegardes n&apos;est pas disponible pour le moment.
-              </p>
-            </CardContent>
-          </Card>
-        ) : profiles.length === 0 ? (
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center py-12">
-              <HardDrive className="h-12 w-12 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold mb-2">No Backup Profiles</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                Create a backup profile to start protecting your container data.
-              </p>
-              <Button onClick={() => setCreateDialogOpen(true)}>
-                <Plus className="mr-2 h-4 w-4" />
-                Create Profile
-              </Button>
-            </CardContent>
-          </Card>
-        ) : (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <HardDrive className="h-5 w-5" />
-                Backup Profiles
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Destination</TableHead>
-                    <TableHead>Schedule</TableHead>
-                    <TableHead>Containers</TableHead>
-                    <TableHead>Last Run</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="w-[50px]" />
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {profiles.map((profile) => (
-                    <TableRow key={profile.id}>
-                      <TableCell className="font-medium">{profile.name}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline">{profile.destination_type}</Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1 text-sm">
-                          <Clock className="h-3 w-3" />
-                          {profile.schedule || 'Manual'}
-                        </div>
-                      </TableCell>
-                      <TableCell>{profile.container_ids.length}</TableCell>
-                      <TableCell className="text-sm">
-                        {formatDate(profile.last_run_at)}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={profile.enabled ? 'default' : 'secondary'}>
-                          {profile.enabled ? 'Enabled' : 'Disabled'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem
-                              onClick={() => runBackup.mutate(profile.id)}
-                            >
-                              <Play className="mr-2 h-4 w-4" />
-                              Run Now
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => setRestoreProfileId(profile.id)}
-                            >
-                              <RotateCcw className="mr-2 h-4 w-4" />
-                              Restore
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => setRunsProfileId(profile.id)}
-                            >
-                              <History className="mr-2 h-4 w-4" />
-                              Run History
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => setPitrProfileId(profile.id)}>
-                              <Clock className="mr-2 h-4 w-4" />
-                              Point-in-Time Recovery
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => setDrTestProfile(profile)}>
-                              <Power className="mr-2 h-4 w-4" />
-                              DR Test
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              onClick={() =>
-                                toggleEnabled.mutate({
-                                  id: profile.id,
-                                  enabled: !profile.enabled,
-                                })
+            {isError ? (
+              <Card>
+                <CardContent className="flex flex-col items-center justify-center py-12">
+                  <HardDrive className="h-12 w-12 text-muted-foreground mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">
+                    Aucune sauvegarde
+                  </h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Le service de sauvegardes n&apos;est pas disponible pour le
+                    moment.
+                  </p>
+                </CardContent>
+              </Card>
+            ) : profiles.length === 0 ? (
+              <Card>
+                <CardContent className="flex flex-col items-center justify-center py-12">
+                  <HardDrive className="h-12 w-12 text-muted-foreground mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">
+                    No Backup Profiles
+                  </h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Create a backup profile to start protecting your container
+                    data.
+                  </p>
+                  <Button onClick={() => setCreateDialogOpen(true)}>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Create Profile
+                  </Button>
+                </CardContent>
+              </Card>
+            ) : (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <HardDrive className="h-5 w-5" />
+                    Backup Profiles
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Name</TableHead>
+                        <TableHead>Destination</TableHead>
+                        <TableHead>Schedule</TableHead>
+                        <TableHead>Containers</TableHead>
+                        <TableHead>Last Run</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead className="w-[50px]" />
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {profiles.map((profile) => (
+                        <TableRow key={profile.id}>
+                          <TableCell className="font-medium">
+                            {profile.name}
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline">
+                              {profile.destination_type}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-1 text-sm">
+                              <Clock className="h-3 w-3" />
+                              {profile.schedule || "Manual"}
+                            </div>
+                          </TableCell>
+                          <TableCell>{profile.container_ids.length}</TableCell>
+                          <TableCell className="text-sm">
+                            {formatDate(profile.last_run_at)}
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              variant={
+                                profile.enabled ? "default" : "secondary"
                               }
                             >
-                              {profile.enabled ? (
-                                <>
-                                  <PowerOff className="mr-2 h-4 w-4" />
-                                  Disable
-                                </>
-                              ) : (
-                                <>
+                              {profile.enabled ? "Enabled" : "Disabled"}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8"
+                                >
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem
+                                  onClick={() => runBackup.mutate(profile.id)}
+                                >
+                                  <Play className="mr-2 h-4 w-4" />
+                                  Run Now
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() =>
+                                    setRestoreProfileId(profile.id)
+                                  }
+                                >
+                                  <RotateCcw className="mr-2 h-4 w-4" />
+                                  Restore
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => setRunsProfileId(profile.id)}
+                                >
+                                  <History className="mr-2 h-4 w-4" />
+                                  Run History
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => setPitrProfileId(profile.id)}
+                                >
+                                  <Clock className="mr-2 h-4 w-4" />
+                                  Point-in-Time Recovery
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => setDrTestProfile(profile)}
+                                >
                                   <Power className="mr-2 h-4 w-4" />
-                                  Enable
-                                </>
-                              )}
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => setEditProfile(profile)}
-                            >
-                              Edit
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              className="text-destructive"
-                              onClick={() => deleteProfile.mutate(profile.id)}
-                            >
-                              <Trash2 className="mr-2 h-4 w-4" />
-                              Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        )}
+                                  DR Test
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                  onClick={() =>
+                                    toggleEnabled.mutate({
+                                      id: profile.id,
+                                      enabled: !profile.enabled,
+                                    })
+                                  }
+                                >
+                                  {profile.enabled ? (
+                                    <>
+                                      <PowerOff className="mr-2 h-4 w-4" />
+                                      Disable
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Power className="mr-2 h-4 w-4" />
+                                      Enable
+                                    </>
+                                  )}
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => setEditProfile(profile)}
+                                >
+                                  Edit
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                  className="text-destructive"
+                                  onClick={() =>
+                                    deleteProfile.mutate(profile.id)
+                                  }
+                                >
+                                  <Trash2 className="mr-2 h-4 w-4" />
+                                  Delete
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            )}
 
-        <BackupDialog
-          open={createDialogOpen || !!editProfile}
-          onOpenChange={(open) => {
-            if (!open) {
-              setCreateDialogOpen(false);
-              setEditProfile(null);
-            }
-          }}
-          profile={editProfile}
-        />
+            <BackupDialog
+              open={createDialogOpen || !!editProfile}
+              onOpenChange={(open) => {
+                if (!open) {
+                  setCreateDialogOpen(false);
+                  setEditProfile(null);
+                }
+              }}
+              profile={editProfile}
+            />
 
-        {restoreProfileId && (
-          <RestoreDialog
-            open={!!restoreProfileId}
-            onOpenChange={(open) => !open && setRestoreProfileId(null)}
-            profileId={restoreProfileId}
-          />
-        )}
+            {restoreProfileId && (
+              <RestoreDialog
+                open={!!restoreProfileId}
+                onOpenChange={(open) => !open && setRestoreProfileId(null)}
+                profileId={restoreProfileId}
+              />
+            )}
 
-        {runsProfileId && (
-          <RunsDialog
-            open={!!runsProfileId}
-            onOpenChange={(open) => !open && setRunsProfileId(null)}
-            profileId={runsProfileId}
-          />
-        )}
+            {runsProfileId && (
+              <RunsDialog
+                open={!!runsProfileId}
+                onOpenChange={(open) => !open && setRunsProfileId(null)}
+                profileId={runsProfileId}
+              />
+            )}
 
-        {pitrProfileId && (
-          <PointInTimeRecoveryDialog
-            open={!!pitrProfileId}
-            onOpenChange={(open) => !open && setPitrProfileId(null)}
-            profileId={pitrProfileId}
-          />
-        )}
+            {pitrProfileId && (
+              <PointInTimeRecoveryDialog
+                open={!!pitrProfileId}
+                onOpenChange={(open) => !open && setPitrProfileId(null)}
+                profileId={pitrProfileId}
+              />
+            )}
 
-        {drTestProfile && (
-          <DRTestDialog
-            open={!!drTestProfile}
-            onOpenChange={(open) => !open && setDrTestProfile(null)}
-            profileId={drTestProfile.id}
-            profileName={drTestProfile.name}
-          />
-        )}
-        </>
+            {drTestProfile && (
+              <DRTestDialog
+                open={!!drTestProfile}
+                onOpenChange={(open) => !open && setDrTestProfile(null)}
+                profileId={drTestProfile.id}
+                profileName={drTestProfile.name}
+              />
+            )}
+          </>
         )}
       </div>
     </AppLayout>

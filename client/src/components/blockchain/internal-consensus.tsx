@@ -44,7 +44,7 @@ export const InternalConsensus: React.FC<InternalConsensusProps> = ({
   selectedOptionId,
 }) => {
   const [selectedOption, setSelectedOption] = useState<string | undefined>(
-    selectedOptionId
+    selectedOptionId,
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -73,12 +73,14 @@ export const InternalConsensus: React.FC<InternalConsensusProps> = ({
         </div>
       );
     }
-    const remaining = Math.ceil(totalVoters * (quorumRequired / 100)) - votedCount;
+    const remaining =
+      Math.ceil(totalVoters * (quorumRequired / 100)) - votedCount;
     return (
       <div className="flex items-center gap-2 text-yellow-700 dark:text-yellow-300">
         <Clock4 className="size-4" />
         <span className="text-sm font-medium">
-          {remaining} vote{remaining !== 1 ? "s" : ""} manquant{remaining !== 1 ? "s" : ""}
+          {remaining} vote{remaining !== 1 ? "s" : ""} manquant
+          {remaining !== 1 ? "s" : ""}
         </span>
       </div>
     );
@@ -118,7 +120,9 @@ export const InternalConsensus: React.FC<InternalConsensusProps> = ({
                 <div className="flex items-start justify-between gap-3 mb-2">
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
-                      <span className="font-medium text-sm">{option.label}</span>
+                      <span className="font-medium text-sm">
+                        {option.label}
+                      </span>
                       {option.id === leadingOption?.id && (
                         <Badge variant="secondary" className="text-xs">
                           En tête

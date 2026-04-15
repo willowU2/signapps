@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import { SpinnerInfinity } from 'spinners-react';
+import { SpinnerInfinity } from "spinners-react";
 
-import { useEffect, useState } from 'react';
-import { FileText } from 'lucide-react';
+import { useEffect, useState } from "react";
+import { FileText } from "lucide-react";
 
-import { previewApi } from '@/lib/api';
+import { previewApi } from "@/lib/api";
 
 interface DocumentPreviewProps {
   fileName: string;
@@ -39,11 +39,12 @@ export function DocumentPreview({
       return;
     }
 
-    previewApi.getDocumentMetadata(bucket, fileKey)
-      .then(res => {
+    previewApi
+      .getDocumentMetadata(bucket, fileKey)
+      .then((res) => {
         setMetadata(res.data);
       })
-      .catch(err => {
+      .catch((err) => {
         console.error("Failed to load document metadata", err);
       })
       .finally(() => {
@@ -52,34 +53,41 @@ export function DocumentPreview({
   }, [bucket, fileKey]);
 
   const getDocumentType = () => {
-    const ext = fileName.split('.').pop()?.toLowerCase() || '';
+    const ext = fileName.split(".").pop()?.toLowerCase() || "";
     const typeMap: Record<string, string> = {
-      'doc': 'Microsoft Word 97-2003',
-      'docx': 'Microsoft Word',
-      'xls': 'Microsoft Excel 97-2003',
-      'xlsx': 'Microsoft Excel',
-      'ppt': 'Microsoft PowerPoint 97-2003',
-      'pptx': 'Microsoft PowerPoint',
-      'odt': 'OpenDocument Text',
-      'ods': 'OpenDocument Spreadsheet',
-      'odp': 'OpenDocument Presentation',
-      'pdf': 'Portable Document Format',
-      'txt': 'Texte brut',
+      doc: "Microsoft Word 97-2003",
+      docx: "Microsoft Word",
+      xls: "Microsoft Excel 97-2003",
+      xlsx: "Microsoft Excel",
+      ppt: "Microsoft PowerPoint 97-2003",
+      pptx: "Microsoft PowerPoint",
+      odt: "OpenDocument Text",
+      ods: "OpenDocument Spreadsheet",
+      odp: "OpenDocument Presentation",
+      pdf: "Portable Document Format",
+      txt: "Texte brut",
     };
     return typeMap[ext] || ext.toUpperCase();
   };
 
   const isOfficeDocument = () => {
-    const ext = fileName.split('.').pop()?.toLowerCase() || '';
-    return ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'].includes(ext);
+    const ext = fileName.split(".").pop()?.toLowerCase() || "";
+    return ["doc", "docx", "xls", "xlsx", "ppt", "pptx"].includes(ext);
   };
 
-  const publicUrl = bucket && fileKey ? previewApi.getPreviewUrl(bucket, fileKey) : null;
+  const publicUrl =
+    bucket && fileKey ? previewApi.getPreviewUrl(bucket, fileKey) : null;
 
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-8 w-8  text-muted-foreground" />
+        <SpinnerInfinity
+          size={24}
+          secondaryColor="rgba(128,128,128,0.2)"
+          color="currentColor"
+          speed={120}
+          className="h-8 w-8  text-muted-foreground"
+        />
       </div>
     );
   }
@@ -92,9 +100,7 @@ export function DocumentPreview({
           <FileText className="h-5 w-5" />
           <div>
             <p className="font-medium">{fileName}</p>
-            <p className="text-xs text-muted-foreground">
-              {getDocumentType()}
-            </p>
+            <p className="text-xs text-muted-foreground">{getDocumentType()}</p>
           </div>
         </div>
       </div>
@@ -133,17 +139,19 @@ export function DocumentPreview({
             title="Office Document Preview"
             onError={() => {
               // Si le viewer ne peut pas charger (ex: localhost)
-              console.warn("Office Web Viewer ne peut pas accéder à une URL locale.");
+              console.warn(
+                "Office Web Viewer ne peut pas accéder à une URL locale.",
+              );
             }}
           />
         </div>
       )}
-      
+
       {isOfficeDocument() && !publicUrl && (
-         <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
           <p className="text-sm text-amber-900">
-            La prévisualisation nécessite une URL publique pour le document Office.
-            (Le viewer Microsoft ne fonctionne pas sur localhost).
+            La prévisualisation nécessite une URL publique pour le document
+            Office. (Le viewer Microsoft ne fonctionne pas sur localhost).
           </p>
         </div>
       )}

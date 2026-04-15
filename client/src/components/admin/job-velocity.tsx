@@ -1,17 +1,17 @@
-'use client';
+"use client";
 
-import { useEffect, useState, useCallback } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { useEffect, useState, useCallback } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { RefreshCw, Zap } from 'lucide-react';
+} from "@/components/ui/select";
+import { RefreshCw, Zap } from "lucide-react";
 import {
   BarChart,
   Bar,
@@ -21,8 +21,8 @@ import {
   Tooltip,
   ResponsiveContainer,
   Legend,
-} from 'recharts';
-import { getClient, ServiceName } from '@/lib/api/factory';
+} from "recharts";
+import { getClient, ServiceName } from "@/lib/api/factory";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -35,7 +35,7 @@ interface JobBucket {
   total: number;
 }
 
-type Granularity = 'hourly' | 'daily';
+type Granularity = "hourly" | "daily";
 
 // ---------------------------------------------------------------------------
 // Component
@@ -44,13 +44,15 @@ type Granularity = 'hourly' | 'daily';
 export function JobVelocity() {
   const [buckets, setBuckets] = useState<JobBucket[]>([]);
   const [loading, setLoading] = useState(true);
-  const [granularity, setGranularity] = useState<Granularity>('hourly');
+  const [granularity, setGranularity] = useState<Granularity>("hourly");
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       const client = getClient(ServiceName.SCHEDULER);
-      const res = await client.get<{ jobs: any[] }>('/jobs', { params: { limit: 1000 } });
+      const res = await client.get<{ jobs: any[] }>("/jobs", {
+        params: { limit: 1000 },
+      });
       const jobs: any[] = res.data?.jobs || res.data || [];
 
       const map = new Map<string, { success: number; failure: number }>();
@@ -60,12 +62,12 @@ export function JobVelocity() {
         if (!ts) continue;
         const d = new Date(ts);
         const key =
-          granularity === 'hourly'
-            ? `${d.toLocaleDateString('fr-FR', { month: 'short', day: 'numeric' })} ${String(d.getHours()).padStart(2, '0')}h`
-            : d.toLocaleDateString('fr-FR', { month: 'short', day: 'numeric' });
+          granularity === "hourly"
+            ? `${d.toLocaleDateString("fr-FR", { month: "short", day: "numeric" })} ${String(d.getHours()).padStart(2, "0")}h`
+            : d.toLocaleDateString("fr-FR", { month: "short", day: "numeric" });
 
         const entry = map.get(key) || { success: 0, failure: 0 };
-        if (job.status === 'failed' || job.status === 'error') {
+        if (job.status === "failed" || job.status === "error") {
           entry.failure++;
         } else {
           entry.success++;
@@ -107,7 +109,10 @@ export function JobVelocity() {
           <h2 className="text-xl font-bold">Job Velocity</h2>
         </div>
         <div className="flex items-center gap-2">
-          <Select value={granularity} onValueChange={(v) => setGranularity(v as Granularity)}>
+          <Select
+            value={granularity}
+            onValueChange={(v) => setGranularity(v as Granularity)}
+          >
             <SelectTrigger className="w-[120px]">
               <SelectValue />
             </SelectTrigger>
@@ -116,8 +121,13 @@ export function JobVelocity() {
               <SelectItem value="daily">Per Day</SelectItem>
             </SelectContent>
           </Select>
-          <Button variant="outline" size="sm" onClick={fetchData} disabled={loading}>
-            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={fetchData}
+            disabled={loading}
+          >
+            <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
           </Button>
         </div>
       </div>
@@ -148,24 +158,42 @@ export function JobVelocity() {
       <Card>
         <CardHeader className="py-3">
           <CardTitle className="text-sm">
-            Jobs processed ({granularity === 'hourly' ? 'per hour' : 'per day'})
+            Jobs processed ({granularity === "hourly" ? "per hour" : "per day"})
           </CardTitle>
         </CardHeader>
         <CardContent>
           {buckets.length === 0 ? (
             <div className="flex items-center justify-center h-64 text-muted-foreground">
-              {loading ? 'Chargement...' : 'No job data available'}
+              {loading ? "Chargement..." : "No job data available"}
             </div>
           ) : (
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={buckets}>
                 <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                <XAxis dataKey="label" tick={{ fontSize: 10 }} angle={-30} textAnchor="end" height={60} />
+                <XAxis
+                  dataKey="label"
+                  tick={{ fontSize: 10 }}
+                  angle={-30}
+                  textAnchor="end"
+                  height={60}
+                />
                 <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
                 <Tooltip />
                 <Legend />
-                <Bar dataKey="success" fill="#22c55e" stackId="a" name="Success" radius={[0, 0, 0, 0]} />
-                <Bar dataKey="failure" fill="#ef4444" stackId="a" name="Failure" radius={[4, 4, 0, 0]} />
+                <Bar
+                  dataKey="success"
+                  fill="#22c55e"
+                  stackId="a"
+                  name="Success"
+                  radius={[0, 0, 0, 0]}
+                />
+                <Bar
+                  dataKey="failure"
+                  fill="#ef4444"
+                  stackId="a"
+                  name="Failure"
+                  radius={[4, 4, 0, 0]}
+                />
               </BarChart>
             </ResponsiveContainer>
           )}

@@ -4,8 +4,8 @@
 //! uses `UPDATE ... RETURNING` to atomically increment `uid_next`.
 
 use crate::models::mailserver::*;
-use signapps_db_shared::pool::DatabasePool;
 use signapps_common::Result;
+use signapps_db_shared::pool::DatabasePool;
 use uuid::Uuid;
 
 // ============================================================================

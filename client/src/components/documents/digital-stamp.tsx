@@ -1,46 +1,54 @@
-"use client"
+"use client";
 
 // IDEA-274: Digital stamp/seal on documents — add company stamp image
 
-import { useState, useRef, useCallback } from "react"
-import { Upload, Stamp, Plus, Trash2, Image, RotateCw, Move } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Slider } from "@/components/ui/slider"
-import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { useState, useRef, useCallback } from "react";
+import {
+  Upload,
+  Stamp,
+  Plus,
+  Trash2,
+  Image,
+  RotateCw,
+  Move,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Slider } from "@/components/ui/slider";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import { toast } from "sonner"
-import { cn } from "@/lib/utils"
+} from "@/components/ui/select";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 interface StampConfig {
-  id: string
-  name: string
-  image_url: string
-  width: number        // % of page width
-  opacity: number      // 0–100
-  position_x: number  // % from left
-  position_y: number  // % from top
-  rotation: number    // degrees
-  pages: "all" | "first" | "last" | "custom"
-  custom_pages?: string // e.g. "1,3,5"
+  id: string;
+  name: string;
+  image_url: string;
+  width: number; // % of page width
+  opacity: number; // 0–100
+  position_x: number; // % from left
+  position_y: number; // % from top
+  rotation: number; // degrees
+  pages: "all" | "first" | "last" | "custom";
+  custom_pages?: string; // e.g. "1,3,5"
 }
 
 interface SavedStamp {
-  id: string
-  name: string
-  image_url: string
+  id: string;
+  name: string;
+  image_url: string;
 }
 
 export function DigitalStampConfig() {
-  const [savedStamps, setSavedStamps] = useState<SavedStamp[]>([])
+  const [savedStamps, setSavedStamps] = useState<SavedStamp[]>([]);
   const [config, setConfig] = useState<Omit<StampConfig, "id">>({
     name: "Company Seal",
     image_url: "",
@@ -50,64 +58,76 @@ export function DigitalStampConfig() {
     position_y: 85,
     rotation: -15,
     pages: "all",
-  })
-  const [uploading, setUploading] = useState(false)
-  const [applying, setApplying] = useState(false)
-  const fileRef = useRef<HTMLInputElement>(null)
+  });
+  const [uploading, setUploading] = useState(false);
+  const [applying, setApplying] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   const handleImageUpload = useCallback(async (file: File) => {
-    setUploading(true)
+    setUploading(true);
     try {
-      const formData = new FormData()
-      formData.append("file", file)
-      formData.append("type", "stamp")
-      const res = await fetch("/api/docs/stamps/upload", { method: "POST", body: formData })
-      if (!res.ok) throw new Error()
-      const { url } = await res.json()
-      setConfig(p => ({ ...p, image_url: url }))
-      toast.success("Image du tampon téléversée")
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("type", "stamp");
+      const res = await fetch("/api/docs/stamps/upload", {
+        method: "POST",
+        body: formData,
+      });
+      if (!res.ok) throw new Error();
+      const { url } = await res.json();
+      setConfig((p) => ({ ...p, image_url: url }));
+      toast.success("Image du tampon téléversée");
     } catch {
-      toast.error("Échec du téléversement")
+      toast.error("Échec du téléversement");
     } finally {
-      setUploading(false)
+      setUploading(false);
     }
-  }, [])
+  }, []);
 
   async function saveStamp() {
-    if (!config.image_url) { toast.error("Téléversez d'abord une image de tampon"); return }
+    if (!config.image_url) {
+      toast.error("Téléversez d'abord une image de tampon");
+      return;
+    }
     try {
       const res = await fetch("/api/docs/stamps", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(config),
-      })
-      const saved = await res.json()
-      setSavedStamps(prev => [...prev, saved])
-      toast.success("Tampon enregistré")
+      });
+      const saved = await res.json();
+      setSavedStamps((prev) => [...prev, saved]);
+      toast.success("Tampon enregistré");
     } catch {
-      toast.error("Impossible d'enregistrer stamp")
+      toast.error("Impossible d'enregistrer stamp");
     }
   }
 
   async function applyToDocument(documentId: string) {
-    if (!config.image_url) { toast.error("Configurez le tampon d'abord"); return }
-    setApplying(true)
+    if (!config.image_url) {
+      toast.error("Configurez le tampon d'abord");
+      return;
+    }
+    setApplying(true);
     try {
       await fetch(`/api/docs/${documentId}/stamp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(config),
-      })
-      toast.success("Tampon appliqué to document")
+      });
+      toast.success("Tampon appliqué to document");
     } catch {
-      toast.error("Impossible d'appliquer le tampon")
+      toast.error("Impossible d'appliquer le tampon");
     } finally {
-      setApplying(false)
+      setApplying(false);
     }
   }
 
-  function update<K extends keyof typeof config>(key: K, value: typeof config[K]) {
-    setConfig(p => ({ ...p, [key]: value }))
+  function update<K extends keyof typeof config>(
+    key: K,
+    value: (typeof config)[K],
+  ) {
+    setConfig((p) => ({ ...p, [key]: value }));
   }
 
   return (
@@ -122,7 +142,7 @@ export function DigitalStampConfig() {
         <div
           className={cn(
             "border-2 border-dashed rounded-lg p-6 text-center cursor-pointer hover:bg-muted/30",
-            config.image_url && "border-primary/40"
+            config.image_url && "border-primary/40",
           )}
           onClick={() => fileRef.current?.click()}
         >
@@ -131,30 +151,43 @@ export function DigitalStampConfig() {
             type="file"
             accept="image/png,image/svg+xml"
             className="hidden"
-            onChange={e => { const f = e.target.files?.[0]; if (f) handleImageUpload(f) }}
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) handleImageUpload(f);
+            }}
           />
           {config.image_url ? (
             <div className="flex flex-col items-center gap-2">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={config.image_url} alt="stamp" className="h-16 object-contain" />
+              <img
+                src={config.image_url}
+                alt="stamp"
+                className="h-16 object-contain"
+              />
               <p className="text-xs text-muted-foreground">Click to change</p>
             </div>
           ) : (
             <>
               <Image className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
-              <p className="text-sm text-muted-foreground">Upload PNG/SVG stamp image</p>
+              <p className="text-sm text-muted-foreground">
+                Upload PNG/SVG stamp image
+              </p>
             </>
           )}
         </div>
 
-        {uploading && <p className="text-xs text-muted-foreground">Uploading…</p>}
+        {uploading && (
+          <p className="text-xs text-muted-foreground">Uploading…</p>
+        )}
 
         <div className="grid grid-cols-2 gap-3">
           {/* Size */}
           <div className="space-y-1.5">
             <Label className="text-xs">Size ({config.width}% width)</Label>
             <Slider
-              min={5} max={50} step={1}
+              min={5}
+              max={50}
+              step={1}
               value={[config.width]}
               onValueChange={([v]) => update("width", v)}
             />
@@ -163,7 +196,9 @@ export function DigitalStampConfig() {
           <div className="space-y-1.5">
             <Label className="text-xs">Opacity ({config.opacity}%)</Label>
             <Slider
-              min={10} max={100} step={5}
+              min={10}
+              max={100}
+              step={5}
               value={[config.opacity]}
               onValueChange={([v]) => update("opacity", v)}
             />
@@ -172,7 +207,9 @@ export function DigitalStampConfig() {
           <div className="space-y-1.5">
             <Label className="text-xs">Position X ({config.position_x}%)</Label>
             <Slider
-              min={0} max={100} step={1}
+              min={0}
+              max={100}
+              step={1}
               value={[config.position_x]}
               onValueChange={([v]) => update("position_x", v)}
             />
@@ -181,7 +218,9 @@ export function DigitalStampConfig() {
           <div className="space-y-1.5">
             <Label className="text-xs">Position Y ({config.position_y}%)</Label>
             <Slider
-              min={0} max={100} step={1}
+              min={0}
+              max={100}
+              step={1}
               value={[config.position_y]}
               onValueChange={([v]) => update("position_y", v)}
             />
@@ -190,7 +229,9 @@ export function DigitalStampConfig() {
           <div className="space-y-1.5">
             <Label className="text-xs">Rotation ({config.rotation}°)</Label>
             <Slider
-              min={-45} max={45} step={5}
+              min={-45}
+              max={45}
+              step={5}
               value={[config.rotation]}
               onValueChange={([v]) => update("rotation", v)}
             />
@@ -198,8 +239,13 @@ export function DigitalStampConfig() {
           {/* Pages */}
           <div className="space-y-1.5">
             <Label className="text-xs">Apply to pages</Label>
-            <Select value={config.pages} onValueChange={v => update("pages", v as StampConfig["pages"])}>
-              <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+            <Select
+              value={config.pages}
+              onValueChange={(v) => update("pages", v as StampConfig["pages"])}
+            >
+              <SelectTrigger className="h-8 text-xs">
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All pages</SelectItem>
                 <SelectItem value="first">First page only</SelectItem>
@@ -215,7 +261,7 @@ export function DigitalStampConfig() {
             <Label className="text-xs">Page numbers (e.g. 1,3,5)</Label>
             <Input
               value={config.custom_pages ?? ""}
-              onChange={e => update("custom_pages", e.target.value)}
+              onChange={(e) => update("custom_pages", e.target.value)}
               placeholder="1,3,5"
               className="h-7 text-xs"
             />
@@ -229,5 +275,5 @@ export function DigitalStampConfig() {
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }

@@ -103,7 +103,7 @@ async fn refresh_one(state: AppState, pool: PgPool, row: RefreshQueueRow) {
             warn!(table = other, "unknown source_table — skipping");
             record_failure(&pool, row.id, "unknown source_table", false).await;
             return;
-        }
+        },
     };
 
     let outcome = match attempt(&state, &pool, table_handle.as_ref(), &row).await {
@@ -125,8 +125,12 @@ async fn refresh_one(state: AppState, pool: PgPool, row: RefreshQueueRow) {
             .bind(row.id)
             .execute(&pool)
             .await;
-        }
-        RefreshOutcome::Revoked { status, error, description } => {
+        },
+        RefreshOutcome::Revoked {
+            status,
+            error,
+            description,
+        } => {
             let reason = format!("revoked: status={status} {error}: {description:?}");
             warn!(reason = %reason, "refresh token revoked — disabling");
             let _ = sqlx::query(
@@ -141,7 +145,7 @@ async fn refresh_one(state: AppState, pool: PgPool, row: RefreshQueueRow) {
             .await;
 
             emit_invalidated(&state, &row, reason).await;
-        }
+        },
         RefreshOutcome::Transient { reason } => {
             let now_disabled = (row.consecutive_failures + 1) >= 10;
             let _ = sqlx::query(
@@ -163,7 +167,7 @@ async fn refresh_one(state: AppState, pool: PgPool, row: RefreshQueueRow) {
                 warn!(reason = %reason, "10 consecutive failures — disabling");
                 emit_invalidated(&state, &row, reason).await;
             }
-        }
+        },
     }
 }
 
@@ -185,8 +189,8 @@ async fn attempt(
     let dek = state.keystore.dek("oauth-tokens-v1");
 
     // 2. Decrypt the refresh token.
-    let refresh_token = decrypt_string(&enc.refresh_token_enc, dek.as_ref())
-        .context("decrypt refresh_token")?;
+    let refresh_token =
+        decrypt_string(&enc.refresh_token_enc, dek.as_ref()).context("decrypt refresh_token")?;
 
     // 3. Resolve the provider definition from the embedded catalog.
     let provider = state
@@ -210,9 +214,8 @@ async fn attempt(
         })?;
 
     // 5. Decrypt client credentials.
-    let creds =
-        crate::handlers::oauth::creds::resolve_credentials(&cfg, &state.keystore)
-            .map_err(|e| anyhow::anyhow!("resolve_credentials: {:?}", e))?;
+    let creds = crate::handlers::oauth::creds::resolve_credentials(&cfg, &state.keystore)
+        .map_err(|e| anyhow::anyhow!("resolve_credentials: {:?}", e))?;
 
     // 6. POST to the provider's token endpoint.
     let http = reqwest::Client::new();
@@ -243,7 +246,13 @@ async fn attempt(
             .unwrap_or_else(|| Utc::now() + chrono::Duration::hours(1));
 
         table
-            .update(pool, row.source_id, &access_enc, &new_refresh_enc, new_expires_at)
+            .update(
+                pool,
+                row.source_id,
+                &access_enc,
+                &new_refresh_enc,
+                new_expires_at,
+            )
             .await
             .map_err(|e| anyhow::anyhow!("update source table: {:?}", e))?;
     }
@@ -271,10 +280,10 @@ async fn emit_invalidated(state: &AppState, row: &RefreshQueueRow, reason: Strin
                     payload,
                 })
                 .await;
-        }
+        },
         Err(e) => {
             error!(?e, "failed to serialize OAuthTokenInvalidated event");
-        }
+        },
     }
 }
 

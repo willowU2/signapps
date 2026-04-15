@@ -3,9 +3,9 @@
  * Story 1.1.3: Scheduling Zustand Store
  */
 
-import { create } from 'zustand';
-import { devtools, persist } from 'zustand/middleware';
-import { immer } from 'zustand/middleware/immer';
+import { create } from "zustand";
+import { devtools, persist } from "zustand/middleware";
+import { immer } from "zustand/middleware/immer";
 import type {
   TimeItem,
   Scope,
@@ -15,8 +15,8 @@ import type {
   CreateTimeItemInput,
   UpdateTimeItemInput,
   DateRange,
-} from '@/lib/scheduling/types';
-import { schedulingApi } from '@/lib/scheduling/api';
+} from "@/lib/scheduling/types";
+import { schedulingApi } from "@/lib/scheduling/api";
 
 // ============================================================================
 // STATE INTERFACE
@@ -37,7 +37,7 @@ export interface SchedulingState {
   selectedItem: TimeItem | null;
 
   // Filters
-  scope: Scope | 'all';
+  scope: Scope | "all";
   dateRange: DateRange | null;
   filters: Filters;
 
@@ -50,15 +50,22 @@ export interface SchedulingState {
   pendingUpdates: Map<string, Partial<TimeItem>>;
 
   // Actions
-  fetchTimeItems: (range: DateRange, scope?: Scope | 'all') => Promise<void>;
+  fetchTimeItems: (range: DateRange, scope?: Scope | "all") => Promise<void>;
   fetchUnscheduledTasks: () => Promise<void>;
   createTimeItem: (input: CreateTimeItemInput) => Promise<TimeItem>;
-  updateTimeItem: (id: string, updates: UpdateTimeItemInput) => Promise<TimeItem>;
+  updateTimeItem: (
+    id: string,
+    updates: UpdateTimeItemInput,
+  ) => Promise<TimeItem>;
   deleteTimeItem: (id: string) => Promise<void>;
-  moveTimeItem: (id: string, startTime: string, endTime?: string) => Promise<TimeItem>;
+  moveTimeItem: (
+    id: string,
+    startTime: string,
+    endTime?: string,
+  ) => Promise<TimeItem>;
 
   // Scope & Filters
-  setScope: (scope: Scope | 'all') => void;
+  setScope: (scope: Scope | "all") => void;
   setDateRange: (range: DateRange) => void;
   setFilters: (filters: Partial<Filters>) => void;
   clearFilters: () => void;
@@ -72,7 +79,11 @@ export interface SchedulingState {
   commitUpdate: (id: string) => void;
 
   // Sharing
-  shareItem: (id: string, userIds?: string[], groupIds?: string[]) => Promise<TimeItem>;
+  shareItem: (
+    id: string,
+    userIds?: string[],
+    groupIds?: string[],
+  ) => Promise<TimeItem>;
 
   // Utilities
   getItemById: (id: string) => TimeItem | undefined;
@@ -92,13 +103,13 @@ const defaultFilters: Filters = {
   statuses: [],
   projectIds: [],
   tags: [],
-  search: '',
+  search: "",
 };
 
 const initialState = {
   timeItems: [] as TimeItem[],
   selectedItem: null as TimeItem | null,
-  scope: 'moi' as Scope | 'all',
+  scope: "moi" as Scope | "all",
   dateRange: null as DateRange | null,
   filters: defaultFilters,
   isLoading: false,
@@ -120,7 +131,7 @@ export const useSchedulingStore = create<SchedulingState>()(
       // FETCH ACTIONS
       // ======================================================================
 
-      fetchTimeItems: async (range: DateRange, scope?: Scope | 'all') => {
+      fetchTimeItems: async (range: DateRange, scope?: Scope | "all") => {
         set((state) => {
           state.isLoading = true;
           state.error = null;
@@ -133,9 +144,14 @@ export const useSchedulingStore = create<SchedulingState>()(
           const response = await schedulingApi.queryTimeItems({
             start: range.start.toISOString(),
             end: range.end.toISOString(),
-            scope: scope || get().scope === 'all' ? undefined : (get().scope as Scope),
+            scope:
+              scope || get().scope === "all"
+                ? undefined
+                : (get().scope as Scope),
             types: filters.types.length ? filters.types : undefined,
-            priorities: filters.priorities.length ? filters.priorities : undefined,
+            priorities: filters.priorities.length
+              ? filters.priorities
+              : undefined,
             statuses: filters.statuses.length ? filters.statuses : undefined,
             search: filters.search || undefined,
             includeRecurrences: true,
@@ -148,7 +164,8 @@ export const useSchedulingStore = create<SchedulingState>()(
           });
         } catch (error) {
           set((state) => {
-            state.error = error instanceof Error ? error.message : 'Failed to fetch items';
+            state.error =
+              error instanceof Error ? error.message : "Failed to fetch items";
             state.isLoading = false;
           });
         }
@@ -164,7 +181,7 @@ export const useSchedulingStore = create<SchedulingState>()(
             state.timeItems = [...state.timeItems, ...newTasks];
           });
         } catch (error) {
-          console.error('Failed to fetch unscheduled tasks:', error);
+          console.error("Failed to fetch unscheduled tasks:", error);
         }
       },
 
@@ -187,7 +204,10 @@ export const useSchedulingStore = create<SchedulingState>()(
           return item;
         } catch (error) {
           set((state) => {
-            state.error = error instanceof Error ? error.message : 'Impossible de créer item';
+            state.error =
+              error instanceof Error
+                ? error.message
+                : "Impossible de créer item";
             state.isSaving = false;
           });
           throw error;
@@ -221,7 +241,10 @@ export const useSchedulingStore = create<SchedulingState>()(
           // Rollback on error
           get().rollbackUpdate(id);
           set((state) => {
-            state.error = error instanceof Error ? error.message : 'Impossible de mettre à jour item';
+            state.error =
+              error instanceof Error
+                ? error.message
+                : "Impossible de mettre à jour item";
             state.isSaving = false;
           });
           throw error;
@@ -254,7 +277,10 @@ export const useSchedulingStore = create<SchedulingState>()(
             });
           }
           set((state) => {
-            state.error = error instanceof Error ? error.message : 'Impossible de supprimer item';
+            state.error =
+              error instanceof Error
+                ? error.message
+                : "Impossible de supprimer item";
             state.isSaving = false;
           });
           throw error;
@@ -264,7 +290,7 @@ export const useSchedulingStore = create<SchedulingState>()(
       moveTimeItem: async (id: string, startTime: string, endTime?: string) => {
         const originalItem = get().timeItems.find((item) => item.id === id);
         if (!originalItem) {
-          throw new Error('Item not found');
+          throw new Error("Item not found");
         }
 
         // Optimistic update
@@ -291,7 +317,8 @@ export const useSchedulingStore = create<SchedulingState>()(
         } catch (error) {
           get().rollbackUpdate(id);
           set((state) => {
-            state.error = error instanceof Error ? error.message : 'Failed to move item';
+            state.error =
+              error instanceof Error ? error.message : "Failed to move item";
             state.isSaving = false;
           });
           throw error;
@@ -302,7 +329,7 @@ export const useSchedulingStore = create<SchedulingState>()(
       // SCOPE & FILTERS
       // ======================================================================
 
-      setScope: (scope: Scope | 'all') => {
+      setScope: (scope: Scope | "all") => {
         set((state) => {
           state.scope = scope;
         });
@@ -354,7 +381,10 @@ export const useSchedulingStore = create<SchedulingState>()(
             // Apply optimistic update
             const index = state.timeItems.findIndex((i) => i.id === id);
             if (index !== -1) {
-              state.timeItems[index] = { ...state.timeItems[index], ...updates };
+              state.timeItems[index] = {
+                ...state.timeItems[index],
+                ...updates,
+              };
             }
           }
         });
@@ -366,7 +396,10 @@ export const useSchedulingStore = create<SchedulingState>()(
           if (original) {
             const index = state.timeItems.findIndex((i) => i.id === id);
             if (index !== -1) {
-              state.timeItems[index] = { ...state.timeItems[index], ...original } as TimeItem;
+              state.timeItems[index] = {
+                ...state.timeItems[index],
+                ...original,
+              } as TimeItem;
             }
             state.pendingUpdates.delete(id);
           }
@@ -383,7 +416,11 @@ export const useSchedulingStore = create<SchedulingState>()(
       // SHARING
       // ======================================================================
 
-      shareItem: async (id: string, userIds?: string[], groupIds?: string[]) => {
+      shareItem: async (
+        id: string,
+        userIds?: string[],
+        groupIds?: string[],
+      ) => {
         set((state) => {
           state.isSaving = true;
         });
@@ -403,7 +440,8 @@ export const useSchedulingStore = create<SchedulingState>()(
           return item;
         } catch (error) {
           set((state) => {
-            state.error = error instanceof Error ? error.message : 'Failed to share item';
+            state.error =
+              error instanceof Error ? error.message : "Failed to share item";
             state.isSaving = false;
           });
           throw error;
@@ -443,8 +481,8 @@ export const useSchedulingStore = create<SchedulingState>()(
         });
       },
     })),
-    { name: 'scheduling-store' }
-  )
+    { name: "scheduling-store" },
+  ),
 );
 
 // ============================================================================
@@ -452,7 +490,8 @@ export const useSchedulingStore = create<SchedulingState>()(
 // ============================================================================
 
 export const selectTimeItems = (state: SchedulingState) => state.timeItems;
-export const selectSelectedItem = (state: SchedulingState) => state.selectedItem;
+export const selectSelectedItem = (state: SchedulingState) =>
+  state.selectedItem;
 export const selectScope = (state: SchedulingState) => state.scope;
 export const selectDateRange = (state: SchedulingState) => state.dateRange;
 export const selectFilters = (state: SchedulingState) => state.filters;
@@ -465,16 +504,19 @@ export const selectScheduledItems = (state: SchedulingState) =>
   state.timeItems.filter((item) => item.startTime);
 
 export const selectUnscheduledTasks = (state: SchedulingState) =>
-  state.timeItems.filter((item) => !item.startTime && item.type === 'task');
+  state.timeItems.filter((item) => !item.startTime && item.type === "task");
 
-export const selectItemsByType = (type: TimeItemType) => (state: SchedulingState) =>
-  state.timeItems.filter((item) => item.type === type);
+export const selectItemsByType =
+  (type: TimeItemType) => (state: SchedulingState) =>
+    state.timeItems.filter((item) => item.type === type);
 
-export const selectItemsByStatus = (status: Status) => (state: SchedulingState) =>
-  state.timeItems.filter((item) => item.status === status);
+export const selectItemsByStatus =
+  (status: Status) => (state: SchedulingState) =>
+    state.timeItems.filter((item) => item.status === status);
 
-export const selectItemsByPriority = (priority: Priority) => (state: SchedulingState) =>
-  state.timeItems.filter((item) => item.priority === priority);
+export const selectItemsByPriority =
+  (priority: Priority) => (state: SchedulingState) =>
+    state.timeItems.filter((item) => item.priority === priority);
 
 export const selectTodayItems = (state: SchedulingState) => {
   const today = new Date();

@@ -25,13 +25,12 @@ pub async fn ensure_calendar(
     // Resolve the tenant_id from the owner's user row so that the calendar
     // inherits the correct multi-tenant scope. This is required because the
     // calendar API's `find_by_id` filters by `tenant_id` (migration 031).
-    let tenant_id: Option<Uuid> = sqlx::query_scalar(
-        "SELECT tenant_id FROM identity.users WHERE id = $1",
-    )
-    .bind(owner_id)
-    .fetch_optional(pool)
-    .await?
-    .flatten();
+    let tenant_id: Option<Uuid> =
+        sqlx::query_scalar("SELECT tenant_id FROM identity.users WHERE id = $1")
+            .bind(owner_id)
+            .fetch_optional(pool)
+            .await?
+            .flatten();
 
     let id = Uuid::new_v4();
     sqlx::query(
@@ -108,8 +107,8 @@ pub async fn insert_time_item(
                 "DATE_TRUNC('day', NOW()) + INTERVAL '{day} days' + INTERVAL '{hour}:00:00' + INTERVAL '{} minutes'",
                 p.duration_minutes
             );
-            (format!("{start}"), format!("{end}"))
-        }
+            (start.to_string(), end.to_string())
+        },
         _ => ("NULL".to_string(), "NULL".to_string()),
     };
 
@@ -181,7 +180,8 @@ pub fn pick<T>(items: &[T], index: usize) -> &T {
 #[allow(dead_code)]
 pub fn date_2026(ordinal: u32) -> NaiveDate {
     let clamped = ordinal.clamp(1, 365);
-    NaiveDate::from_yo_opt(2026, clamped).unwrap_or_else(|| NaiveDate::from_ymd_opt(2026, 1, 1).expect("valid date"))
+    NaiveDate::from_yo_opt(2026, clamped)
+        .unwrap_or_else(|| NaiveDate::from_ymd_opt(2026, 1, 1).expect("valid date"))
 }
 
 /// Combines a `NaiveDate` with an hour to produce a UTC `DateTime`.
@@ -191,6 +191,8 @@ pub fn date_2026(ordinal: u32) -> NaiveDate {
 /// No panics — all errors are propagated via `Result`.
 #[allow(dead_code)]
 pub fn datetime_at(date: NaiveDate, hour: u32) -> chrono::DateTime<Utc> {
-    let naive = date.and_hms_opt(hour, 0, 0).unwrap_or_else(|| date.and_hms_opt(0, 0, 0).expect("valid time"));
+    let naive = date
+        .and_hms_opt(hour, 0, 0)
+        .unwrap_or_else(|| date.and_hms_opt(0, 0, 0).expect("valid time"));
     Utc.from_utc_datetime(&naive)
 }

@@ -1,14 +1,14 @@
-'use client';
+"use client";
 
-import { useState, useCallback } from 'react';
-import { RefreshCw, Copy, Check } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Slider } from '@/components/ui/slider';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
-import { cn } from '@/lib/utils';
-import { toast } from 'sonner';
-import { generatePassword, evaluatePasswordStrength } from '@/lib/vault-crypto';
+import { useState, useCallback } from "react";
+import { RefreshCw, Copy, Check } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Slider } from "@/components/ui/slider";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
+import { toast } from "sonner";
+import { generatePassword, evaluatePasswordStrength } from "@/lib/vault-crypto";
 
 interface PasswordGeneratorProps {
   /** Appelé quand l'utilisateur clique sur "Utiliser" */
@@ -17,20 +17,29 @@ interface PasswordGeneratorProps {
 }
 
 const STRENGTH_CONFIG = {
-  faible:    { label: 'Faible',    color: 'bg-red-500',    width: 'w-1/4' },
-  correct:   { label: 'Correct',   color: 'bg-amber-500',  width: 'w-2/4' },
-  fort:      { label: 'Fort',      color: 'bg-blue-500',   width: 'w-3/4' },
-  excellent: { label: 'Excellent', color: 'bg-emerald-500', width: 'w-full' },
+  faible: { label: "Faible", color: "bg-red-500", width: "w-1/4" },
+  correct: { label: "Correct", color: "bg-amber-500", width: "w-2/4" },
+  fort: { label: "Fort", color: "bg-blue-500", width: "w-3/4" },
+  excellent: { label: "Excellent", color: "bg-emerald-500", width: "w-full" },
 };
 
-export function PasswordGenerator({ onUse, className }: PasswordGeneratorProps) {
+export function PasswordGenerator({
+  onUse,
+  className,
+}: PasswordGeneratorProps) {
   const [length, setLength] = useState(16);
   const [upper, setUpper] = useState(true);
   const [lower, setLower] = useState(true);
   const [digits, setDigits] = useState(true);
   const [symbols, setSymbols] = useState(false);
   const [password, setPassword] = useState(() =>
-    generatePassword({ length: 16, upper: true, lower: true, digits: true, symbols: false }),
+    generatePassword({
+      length: 16,
+      upper: true,
+      lower: true,
+      digits: true,
+      symbols: false,
+    }),
   );
   const [copied, setCopied] = useState(false);
 
@@ -43,7 +52,7 @@ export function PasswordGenerator({ onUse, className }: PasswordGeneratorProps) 
   const handleCopy = () => {
     navigator.clipboard.writeText(password).then(() => {
       setCopied(true);
-      toast.success('Mot de passe copié');
+      toast.success("Mot de passe copié");
       setTimeout(() => setCopied(false), 2_000);
     });
   };
@@ -56,12 +65,10 @@ export function PasswordGenerator({ onUse, className }: PasswordGeneratorProps) 
   const strengthCfg = STRENGTH_CONFIG[label];
 
   return (
-    <div className={cn('space-y-4 p-4', className)}>
+    <div className={cn("space-y-4 p-4", className)}>
       {/* Preview */}
       <div className="relative">
-        <div
-          className="font-mono text-sm bg-muted rounded-md px-3 py-2.5 pr-16 break-all select-all min-h-[40px] leading-relaxed"
-        >
+        <div className="font-mono text-sm bg-muted rounded-md px-3 py-2.5 pr-16 break-all select-all min-h-[40px] leading-relaxed">
           {password}
         </div>
         <Button
@@ -80,11 +87,11 @@ export function PasswordGenerator({ onUse, className }: PasswordGeneratorProps) 
           <span className="text-muted-foreground">Force</span>
           <span
             className={cn(
-              'font-medium',
-              label === 'faible' && 'text-red-500',
-              label === 'correct' && 'text-amber-500',
-              label === 'fort' && 'text-blue-500',
-              label === 'excellent' && 'text-emerald-500',
+              "font-medium",
+              label === "faible" && "text-red-500",
+              label === "correct" && "text-amber-500",
+              label === "fort" && "text-blue-500",
+              label === "excellent" && "text-emerald-500",
             )}
           >
             {strengthCfg.label}
@@ -92,7 +99,11 @@ export function PasswordGenerator({ onUse, className }: PasswordGeneratorProps) 
         </div>
         <div className="h-1.5 bg-muted rounded-full overflow-hidden">
           <div
-            className={cn('h-full rounded-full transition-all duration-300', strengthCfg.color, strengthCfg.width)}
+            className={cn(
+              "h-full rounded-full transition-all duration-300",
+              strengthCfg.color,
+              strengthCfg.width,
+            )}
           />
         </div>
         <div className="flex gap-1">
@@ -100,8 +111,8 @@ export function PasswordGenerator({ onUse, className }: PasswordGeneratorProps) 
             <div
               key={i}
               className={cn(
-                'flex-1 h-1 rounded-full transition-colors',
-                i < score ? strengthCfg.color : 'bg-muted',
+                "flex-1 h-1 rounded-full transition-colors",
+                i < score ? strengthCfg.color : "bg-muted",
               )}
             />
           ))}
@@ -121,7 +132,9 @@ export function PasswordGenerator({ onUse, className }: PasswordGeneratorProps) 
           value={[length]}
           onValueChange={([v]) => {
             setLength(v);
-            setPassword(generatePassword({ length: v, upper, lower, digits, symbols }));
+            setPassword(
+              generatePassword({ length: v, upper, lower, digits, symbols }),
+            );
           }}
           className="w-full"
         />
@@ -133,22 +146,46 @@ export function PasswordGenerator({ onUse, className }: PasswordGeneratorProps) 
 
       {/* Toggles */}
       <div className="grid grid-cols-2 gap-3">
-        <ToggleOption label="Majuscules (A-Z)" checked={upper} onChange={(v) => {
-          setUpper(v);
-          setPassword(generatePassword({ length, upper: v, lower, digits, symbols }));
-        }} />
-        <ToggleOption label="Minuscules (a-z)" checked={lower} onChange={(v) => {
-          setLower(v);
-          setPassword(generatePassword({ length, upper, lower: v, digits, symbols }));
-        }} />
-        <ToggleOption label="Chiffres (0-9)" checked={digits} onChange={(v) => {
-          setDigits(v);
-          setPassword(generatePassword({ length, upper, lower, digits: v, symbols }));
-        }} />
-        <ToggleOption label="Symboles (!@#…)" checked={symbols} onChange={(v) => {
-          setSymbols(v);
-          setPassword(generatePassword({ length, upper, lower, digits, symbols: v }));
-        }} />
+        <ToggleOption
+          label="Majuscules (A-Z)"
+          checked={upper}
+          onChange={(v) => {
+            setUpper(v);
+            setPassword(
+              generatePassword({ length, upper: v, lower, digits, symbols }),
+            );
+          }}
+        />
+        <ToggleOption
+          label="Minuscules (a-z)"
+          checked={lower}
+          onChange={(v) => {
+            setLower(v);
+            setPassword(
+              generatePassword({ length, upper, lower: v, digits, symbols }),
+            );
+          }}
+        />
+        <ToggleOption
+          label="Chiffres (0-9)"
+          checked={digits}
+          onChange={(v) => {
+            setDigits(v);
+            setPassword(
+              generatePassword({ length, upper, lower, digits: v, symbols }),
+            );
+          }}
+        />
+        <ToggleOption
+          label="Symboles (!@#…)"
+          checked={symbols}
+          onChange={(v) => {
+            setSymbols(v);
+            setPassword(
+              generatePassword({ length, upper, lower, digits, symbols: v }),
+            );
+          }}
+        />
       </div>
 
       {/* Actions */}
@@ -158,8 +195,12 @@ export function PasswordGenerator({ onUse, className }: PasswordGeneratorProps) 
           className="flex-1 gap-1.5"
           onClick={handleCopy}
         >
-          {copied ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
-          {copied ? 'Copié !' : 'Copier'}
+          {copied ? (
+            <Check className="h-4 w-4 text-emerald-500" />
+          ) : (
+            <Copy className="h-4 w-4" />
+          )}
+          {copied ? "Copié !" : "Copier"}
         </Button>
         {onUse && (
           <Button className="flex-1 gap-1.5" onClick={handleUse}>

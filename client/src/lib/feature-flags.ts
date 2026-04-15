@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { useSyncExternalStore, useCallback } from 'react';
-import { FEATURES } from './features';
+import { useSyncExternalStore, useCallback } from "react";
+import { FEATURES } from "./features";
 
-const STORAGE_KEY = 'signapps-feature-overrides';
+const STORAGE_KEY = "signapps-feature-overrides";
 
 type FeatureKey = keyof typeof FEATURES;
 
@@ -12,7 +12,7 @@ let overrides: Record<string, boolean> = {};
 const listeners = new Set<() => void>();
 
 function loadOverrides() {
-  if (typeof window === 'undefined') return;
+  if (typeof window === "undefined") return;
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) overrides = JSON.parse(stored);
@@ -20,12 +20,12 @@ function loadOverrides() {
 }
 
 function saveOverrides() {
-  if (typeof window === 'undefined') return;
+  if (typeof window === "undefined") return;
   localStorage.setItem(STORAGE_KEY, JSON.stringify(overrides));
 }
 
 function notify() {
-  listeners.forEach(l => l());
+  listeners.forEach((l) => l());
 }
 
 loadOverrides();
@@ -58,8 +58,14 @@ export function clearAllOverrides() {
 }
 
 /** Get all feature flags with their current effective values. */
-export function getAllFeatures(): Record<string, { default: boolean; override?: boolean; effective: boolean }> {
-  const result: Record<string, { default: boolean; override?: boolean; effective: boolean }> = {};
+export function getAllFeatures(): Record<
+  string,
+  { default: boolean; override?: boolean; effective: boolean }
+> {
+  const result: Record<
+    string,
+    { default: boolean; override?: boolean; effective: boolean }
+  > = {};
   for (const [key, defaultVal] of Object.entries(FEATURES)) {
     const override = overrides[key];
     result[key] = {
@@ -74,9 +80,12 @@ export function getAllFeatures(): Record<string, { default: boolean; override?: 
 /** React hook for reactive feature flag access. */
 export function useFeatureFlags() {
   const snapshot = useSyncExternalStore(
-    (cb) => { listeners.add(cb); return () => listeners.delete(cb); },
+    (cb) => {
+      listeners.add(cb);
+      return () => listeners.delete(cb);
+    },
     () => JSON.stringify(overrides),
-    () => '{}',
+    () => "{}",
   );
 
   return {

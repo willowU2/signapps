@@ -5,7 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { usersApi, storageApi, calendarApi } from "@/lib/api";
 import { toast } from "sonner";
 
@@ -92,20 +98,35 @@ const OPERATORS = [
 // Real data fetchers
 // ---------------------------------------------------------------------------
 
-async function fetchReportData(source: DataSource, columns: string[]): Promise<ReportData[]> {
+async function fetchReportData(
+  source: DataSource,
+  columns: string[],
+): Promise<ReportData[]> {
   switch (source) {
     case "users": {
       const res = await usersApi.list(0, 50);
-      type RawUser = { id?: string; email?: string; display_name?: string; username?: string; created_at?: string; last_login?: string };
+      type RawUser = {
+        id?: string;
+        email?: string;
+        display_name?: string;
+        username?: string;
+        created_at?: string;
+        last_login?: string;
+      };
       const rud = res.data as { users?: RawUser[] } | RawUser[] | undefined;
-      const users: RawUser[] = (rud as { users?: RawUser[] })?.users ?? (Array.isArray(rud) ? (rud as RawUser[]) : []);
+      const users: RawUser[] =
+        (rud as { users?: RawUser[] })?.users ??
+        (Array.isArray(rud) ? (rud as RawUser[]) : []);
       return users.map((u) => {
         const row: ReportData = {};
         if (columns.includes("id")) row["id"] = u.id ?? "";
         if (columns.includes("email")) row["email"] = u.email ?? "";
-        if (columns.includes("name")) row["name"] = u.display_name || u.username || "";
-        if (columns.includes("created_at")) row["created_at"] = u.created_at ?? "";
-        if (columns.includes("active")) row["active"] = u.last_login ? true : false;
+        if (columns.includes("name"))
+          row["name"] = u.display_name || u.username || "";
+        if (columns.includes("created_at"))
+          row["created_at"] = u.created_at ?? "";
+        if (columns.includes("active"))
+          row["active"] = u.last_login ? true : false;
         return row;
       });
     }
@@ -114,14 +135,22 @@ async function fetchReportData(source: DataSource, columns: string[]): Promise<R
       const buckets = bucketsRes.data ?? [];
       if (buckets.length === 0) return [];
       const filesRes = await storageApi.listFiles(buckets[0].name);
-      const objects = (filesRes.data as { objects?: { key: string; size: number; last_modified?: string }[] })?.objects ?? [];
+      const objects =
+        (
+          filesRes.data as {
+            objects?: { key: string; size: number; last_modified?: string }[];
+          }
+        )?.objects ?? [];
       return objects.slice(0, 50).map((obj, i) => {
         const row: ReportData = {};
         if (columns.includes("id")) row["id"] = String(i + 1);
-        if (columns.includes("name")) row["name"] = obj.key.split("/").pop() || obj.key;
-        if (columns.includes("size")) row["size"] = (obj.size / (1024 * 1024)).toFixed(2);
+        if (columns.includes("name"))
+          row["name"] = obj.key.split("/").pop() || obj.key;
+        if (columns.includes("size"))
+          row["size"] = (obj.size / (1024 * 1024)).toFixed(2);
         if (columns.includes("owner")) row["owner"] = buckets[0].name;
-        if (columns.includes("modified_at")) row["modified_at"] = obj.last_modified ?? "";
+        if (columns.includes("modified_at"))
+          row["modified_at"] = obj.last_modified ?? "";
         return row;
       });
     }
@@ -135,9 +164,16 @@ async function fetchReportData(source: DataSource, columns: string[]): Promise<R
         const row: ReportData = {};
         if (columns.includes("id")) row["id"] = ev.id;
         if (columns.includes("title")) row["title"] = ev.title || "";
-        if (columns.includes("start_time")) row["start_time"] = ev.start_time ? new Date(ev.start_time).toLocaleString() : "";
-        if (columns.includes("end_time")) row["end_time"] = ev.end_time ? new Date(ev.end_time).toLocaleString() : "";
-        if (columns.includes("attendees")) row["attendees"] = ev.location ? ev.location : "N/A";
+        if (columns.includes("start_time"))
+          row["start_time"] = ev.start_time
+            ? new Date(ev.start_time).toLocaleString()
+            : "";
+        if (columns.includes("end_time"))
+          row["end_time"] = ev.end_time
+            ? new Date(ev.end_time).toLocaleString()
+            : "";
+        if (columns.includes("attendees"))
+          row["attendees"] = ev.location ? ev.location : "N/A";
         return row;
       });
     }
@@ -152,7 +188,13 @@ async function fetchReportData(source: DataSource, columns: string[]): Promise<R
 // Step components
 // ---------------------------------------------------------------------------
 
-function StepIndicator({ steps, current }: { steps: string[]; current: number }) {
+function StepIndicator({
+  steps,
+  current,
+}: {
+  steps: string[];
+  current: number;
+}) {
   return (
     <div className="flex items-center gap-2 mb-6">
       {steps.map((label, i) => (
@@ -175,9 +217,7 @@ function StepIndicator({ steps, current }: { steps: string[]; current: number })
           >
             {label}
           </span>
-          {i < steps.length - 1 && (
-            <div className="mx-1 h-px w-8 bg-border" />
-          )}
+          {i < steps.length - 1 && <div className="mx-1 h-px w-8 bg-border" />}
         </div>
       ))}
     </div>
@@ -238,12 +278,12 @@ export function ReportBuilder() {
   const updateFilter = (
     filterId: string,
     field: keyof Filter,
-    value: string
+    value: string,
   ) => {
     setConfig((prev) => ({
       ...prev,
       filters: prev.filters.map((f) =>
-        f.id === filterId ? { ...f, [field]: value } : f
+        f.id === filterId ? { ...f, [field]: value } : f,
       ),
     }));
   };
@@ -350,7 +390,10 @@ export function ReportBuilder() {
             <Button variant="outline" onClick={() => setStep(0)}>
               Back
             </Button>
-            <Button onClick={() => setStep(2)} disabled={config.columns.size === 0}>
+            <Button
+              onClick={() => setStep(2)}
+              disabled={config.columns.size === 0}
+            >
               Next
             </Button>
           </div>
@@ -373,7 +416,10 @@ export function ReportBuilder() {
               <div key={filter.id} className="flex gap-2 items-end">
                 <div className="flex-1 space-y-1">
                   <Label className="text-xs">Column</Label>
-                  <Select value={filter.column} onValueChange={(v) => updateFilter(filter.id, "column", v)}>
+                  <Select
+                    value={filter.column}
+                    onValueChange={(v) => updateFilter(filter.id, "column", v)}
+                  >
                     <SelectTrigger className="h-9">
                       <SelectValue />
                     </SelectTrigger>
@@ -388,7 +434,12 @@ export function ReportBuilder() {
                 </div>
                 <div className="flex-1 space-y-1">
                   <Label className="text-xs">Operator</Label>
-                  <Select value={filter.operator} onValueChange={(v) => updateFilter(filter.id, "operator", v)}>
+                  <Select
+                    value={filter.operator}
+                    onValueChange={(v) =>
+                      updateFilter(filter.id, "operator", v)
+                    }
+                  >
                     <SelectTrigger className="h-9">
                       <SelectValue />
                     </SelectTrigger>
@@ -406,7 +457,9 @@ export function ReportBuilder() {
                   <Input
                     placeholder="Enter value"
                     value={filter.value}
-                    onChange={(e) => updateFilter(filter.id, "value", e.target.value)}
+                    onChange={(e) =>
+                      updateFilter(filter.id, "value", e.target.value)
+                    }
                     className="h-9"
                   />
                 </div>
@@ -468,7 +521,10 @@ export function ReportBuilder() {
                 <thead className="bg-muted border-b sticky top-0 z-10">
                   <tr>
                     {Array.from(config.columns).map((colId) => (
-                      <th key={colId} className="px-3 py-2 text-left font-medium">
+                      <th
+                        key={colId}
+                        className="px-3 py-2 text-left font-medium"
+                      >
                         {availableColumns.find((c) => c.id === colId)?.label}
                       </th>
                     ))}
@@ -490,7 +546,12 @@ export function ReportBuilder() {
           )}
 
           {!showPreview && (
-            <Button onClick={handlePreview} variant="secondary" className="w-full" disabled={isLoadingPreview}>
+            <Button
+              onClick={handlePreview}
+              variant="secondary"
+              className="w-full"
+              disabled={isLoadingPreview}
+            >
               {isLoadingPreview ? "Loading data..." : "Generate Preview"}
             </Button>
           )}
@@ -499,9 +560,7 @@ export function ReportBuilder() {
             <Button variant="outline" onClick={() => setStep(2)}>
               Back
             </Button>
-            <Button disabled={!showPreview}>
-              Export Report
-            </Button>
+            <Button disabled={!showPreview}>Export Report</Button>
           </div>
         </div>
       )}

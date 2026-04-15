@@ -1,12 +1,16 @@
-'use client';
+"use client";
 
-import { useEffect, useRef } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { Cpu, HardDrive, Clock, Layers } from 'lucide-react';
-import { useAiCapabilities, type GpuState, type LoadedModel } from '@/hooks/use-ai-capabilities';
-import { SpinnerInfinity } from 'spinners-react';
+import { useEffect, useRef } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { Cpu, HardDrive, Clock, Layers } from "lucide-react";
+import {
+  useAiCapabilities,
+  type GpuState,
+  type LoadedModel,
+} from "@/hooks/use-ai-capabilities";
+import { SpinnerInfinity } from "spinners-react";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // HELPERS
@@ -23,30 +27,30 @@ function vramPercent(gpu: GpuState): number {
 }
 
 function vramBarColor(percent: number): string {
-  if (percent >= 90) return '[&>div]:bg-red-500';
-  if (percent >= 70) return '[&>div]:bg-yellow-500';
-  return '';
+  if (percent >= 90) return "[&>div]:bg-red-500";
+  if (percent >= 70) return "[&>div]:bg-yellow-500";
+  return "";
 }
 
-function roleBadgeVariant(role: string): 'default' | 'secondary' | 'outline' {
+function roleBadgeVariant(role: string): "default" | "secondary" | "outline" {
   switch (role) {
-    case 'always_on':
-    case 'always-on':
-      return 'default';
-    case 'dynamic':
-      return 'secondary';
+    case "always_on":
+    case "always-on":
+      return "default";
+    case "dynamic":
+      return "secondary";
     default:
-      return 'outline';
+      return "outline";
   }
 }
 
 function roleLabel(role: string): string {
   switch (role) {
-    case 'always_on':
-    case 'always-on':
-      return 'Permanent';
-    case 'dynamic':
-      return 'Dynamique';
+    case "always_on":
+    case "always-on":
+      return "Permanent";
+    case "dynamic":
+      return "Dynamique";
     default:
       return role;
   }
@@ -54,16 +58,16 @@ function roleLabel(role: string): string {
 
 function tierBadgeClass(tier: string): string {
   switch (tier) {
-    case 'high':
-      return 'bg-green-500/15 text-green-700 border-green-200';
-    case 'medium':
-      return 'bg-yellow-500/15 text-yellow-700 border-yellow-200';
-    case 'low':
-      return 'bg-orange-500/15 text-orange-700 border-orange-200';
-    case 'cpu':
-      return 'bg-gray-500/15 text-muted-foreground border-border';
+    case "high":
+      return "bg-green-500/15 text-green-700 border-green-200";
+    case "medium":
+      return "bg-yellow-500/15 text-yellow-700 border-yellow-200";
+    case "low":
+      return "bg-orange-500/15 text-orange-700 border-orange-200";
+    case "cpu":
+      return "bg-gray-500/15 text-muted-foreground border-border";
     default:
-      return '';
+      return "";
   }
 }
 
@@ -78,7 +82,7 @@ function formatRelativeTime(isoDate: string): string {
     if (hours < 24) return `${hours}h`;
     return `${Math.floor(hours / 24)}j`;
   } catch {
-    return '-';
+    return "-";
   }
 }
 
@@ -133,10 +137,14 @@ function GpuCard({ gpu }: { gpu: GpuState }) {
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">VRAM</span>
             <span className="text-xs font-medium">
-              {formatVram(gpu.used_vram_mb)} / {formatVram(gpu.total_vram_mb)} ({percent}%)
+              {formatVram(gpu.used_vram_mb)} / {formatVram(gpu.total_vram_mb)} (
+              {percent}%)
             </span>
           </div>
-          <Progress value={percent} className={`h-2.5 ${vramBarColor(percent)}`} />
+          <Progress
+            value={percent}
+            className={`h-2.5 ${vramBarColor(percent)}`}
+          />
         </div>
 
         {/* Loaded models */}
@@ -154,7 +162,9 @@ function GpuCard({ gpu }: { gpu: GpuState }) {
         )}
 
         {gpu.loaded_models.length === 0 && (
-          <p className="text-xs text-muted-foreground italic">Aucun modele charge</p>
+          <p className="text-xs text-muted-foreground italic">
+            Aucun modele charge
+          </p>
         )}
       </CardContent>
     </Card>
@@ -234,11 +244,15 @@ export function GpuMonitor() {
             </Badge>
             <div className="text-sm">
               <span className="text-muted-foreground">VRAM totale: </span>
-              <span className="font-medium">{formatVram(gpuStatus.total_vram_mb)}</span>
+              <span className="font-medium">
+                {formatVram(gpuStatus.total_vram_mb)}
+              </span>
             </div>
             <div className="text-sm">
               <span className="text-muted-foreground">VRAM libre: </span>
-              <span className="font-medium">{formatVram(gpuStatus.free_vram_mb)}</span>
+              <span className="font-medium">
+                {formatVram(gpuStatus.free_vram_mb)}
+              </span>
             </div>
             <div className="text-sm">
               <span className="text-muted-foreground">GPUs: </span>

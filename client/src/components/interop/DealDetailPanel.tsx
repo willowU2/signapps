@@ -1,28 +1,35 @@
-"use client"
+"use client";
 // Features 2, 6, 13, 16, 21, 28: CRM deal detail interop panel
 
-import { useState } from "react"
-import { FileText, Bell, FolderOpen, StickyNote, Settings2, Users } from "lucide-react"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { DealInvoicesPanel } from "./DealInvoicesPanel"
-import { DealStageNotifier } from "./DealStageNotifier"
-import { DealDocumentsPanel } from "./DealDocumentsPanel"
-import { SharedContactNotes } from "./SharedContactNotes"
-import { ContactCustomFieldsCrm } from "./ContactCustomFieldsCrm"
-import type { Deal } from "@/lib/api/crm"
+import { useState } from "react";
+import {
+  FileText,
+  Bell,
+  FolderOpen,
+  StickyNote,
+  Settings2,
+  Users,
+} from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { DealInvoicesPanel } from "./DealInvoicesPanel";
+import { DealStageNotifier } from "./DealStageNotifier";
+import { DealDocumentsPanel } from "./DealDocumentsPanel";
+import { SharedContactNotes } from "./SharedContactNotes";
+import { ContactCustomFieldsCrm } from "./ContactCustomFieldsCrm";
+import type { Deal } from "@/lib/api/crm";
 
 interface Props {
-  deal: Deal
-  onDealUpdate?: (updated: Deal) => void
+  deal: Deal;
+  onDealUpdate?: (updated: Deal) => void;
 }
 
 export function DealDetailPanel({ deal, onDealUpdate }: Props) {
-  const [currentDeal, setCurrentDeal] = useState(deal)
+  const [currentDeal, setCurrentDeal] = useState(deal);
 
   const handleUpdate = (updated: Deal) => {
-    setCurrentDeal(updated)
-    onDealUpdate?.(updated)
-  }
+    setCurrentDeal(updated);
+    onDealUpdate?.(updated);
+  };
 
   return (
     <div className="space-y-3">
@@ -79,5 +86,5 @@ export function DealDetailPanel({ deal, onDealUpdate }: Props) {
         </TabsContent>
       </Tabs>
     </div>
-  )
+  );
 }

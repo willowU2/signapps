@@ -8,11 +8,11 @@ export {
   TeamMemberCard,
   TeamMemberCardCompact,
   TeamMemberAvatarStack,
-} from './TeamMemberCard';
-export { TeamTimeline } from './TeamTimeline';
-export { TeamView } from './TeamView';
+} from "./TeamMemberCard";
+export { TeamTimeline } from "./TeamTimeline";
+export { TeamView } from "./TeamView";
 export {
   WorkloadDashboard,
   WorkloadDetail,
   fetchWorkloadData,
-} from './WorkloadDashboard';
+} from "./WorkloadDashboard";

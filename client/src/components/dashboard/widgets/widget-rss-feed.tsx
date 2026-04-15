@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
 // IDEA-122: RSS Feed widget for the extended widget library
 
-import { useQuery } from '@tanstack/react-query';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Rss, Loader2, ExternalLink, AlertCircle } from 'lucide-react';
-import type { WidgetRenderProps } from '@/lib/dashboard/types';
+import { useQuery } from "@tanstack/react-query";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Rss, Loader2, ExternalLink, AlertCircle } from "lucide-react";
+import type { WidgetRenderProps } from "@/lib/dashboard/types";
 
 interface RssItem {
   title: string;
@@ -20,24 +20,30 @@ async function fetchRssFeed(feedUrl: string): Promise<RssItem[]> {
   const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feedUrl)}&count=10`;
   const res = await fetch(apiUrl);
   const data = await res.json();
-  if (data.status !== 'ok') throw new Error('RSS fetch failed');
+  if (data.status !== "ok") throw new Error("RSS fetch failed");
   return (data.items ?? []).map((item: Record<string, unknown>) => ({
-    title: String(item.title ?? ''),
-    link: String(item.link ?? ''),
-    pubDate: String(item.pubDate ?? ''),
-    description: String(item.description ?? '').replace(/<[^>]*>/g, '').slice(0, 120),
+    title: String(item.title ?? ""),
+    link: String(item.link ?? ""),
+    pubDate: String(item.pubDate ?? ""),
+    description: String(item.description ?? "")
+      .replace(/<[^>]*>/g, "")
+      .slice(0, 120),
   }));
 }
 
-const DEFAULT_FEED = 'https://news.ycombinator.com/rss';
+const DEFAULT_FEED = "https://news.ycombinator.com/rss";
 
 export function WidgetRssFeed({ widget }: WidgetRenderProps) {
   const config = widget.config as { feedUrl?: string; title?: string };
   const feedUrl = config.feedUrl ?? DEFAULT_FEED;
-  const feedTitle = config.title ?? 'RSS Feed';
+  const feedTitle = config.title ?? "RSS Feed";
 
-  const { data: items = [], isLoading, error } = useQuery({
-    queryKey: ['widget-rss', feedUrl],
+  const {
+    data: items = [],
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["widget-rss", feedUrl],
     queryFn: () => fetchRssFeed(feedUrl),
     staleTime: 10 * 60 * 1000,
     retry: 1,
@@ -85,8 +91,9 @@ export function WidgetRssFeed({ widget }: WidgetRenderProps) {
                     )}
                     {item.pubDate && (
                       <p className="text-[10px] text-muted-foreground/60 mt-1">
-                        {new Date(item.pubDate).toLocaleDateString('fr-FR', {
-                          day: '2-digit', month: 'short'
+                        {new Date(item.pubDate).toLocaleDateString("fr-FR", {
+                          day: "2-digit",
+                          month: "short",
                         })}
                       </p>
                     )}

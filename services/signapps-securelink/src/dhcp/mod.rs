@@ -142,11 +142,11 @@ async fn handle_discover(
         Ok(ip) => {
             tracing::info!(ip = %ip, mac = %mac_str, "DHCP OFFER");
             Some(build_response(DhcpMessageType::Offer, &ip, &scope, config))
-        }
+        },
         Err(e) => {
             tracing::warn!(mac = %mac_str, "DHCP DISCOVER allocation failed: {}", e);
             None
-        }
+        },
     }
 }
 
@@ -166,7 +166,7 @@ async fn handle_request(
         Err(e) => {
             tracing::warn!(mac = %mac_str, "DHCP REQUEST allocation failed: {}", e);
             return None;
-        }
+        },
     };
 
     // Store IP as string before moving into create_lease (needed for DNS update below).
@@ -192,14 +192,13 @@ async fn handle_request(
     if let Some(ref hostname) = pkt.hostname {
         let fqdn = format!("{}.{}", hostname, config.domain_name);
 
-        let zone: Option<(Uuid,)> = sqlx::query_as(
-            "SELECT id FROM ad_dns_zones WHERE zone_name = $1 LIMIT 1",
-        )
-        .bind(&config.domain_name)
-        .fetch_optional(pool)
-        .await
-        .ok()
-        .flatten();
+        let zone: Option<(Uuid,)> =
+            sqlx::query_as("SELECT id FROM ad_dns_zones WHERE zone_name = $1 LIMIT 1")
+                .bind(&config.domain_name)
+                .fetch_optional(pool)
+                .await
+                .ok()
+                .flatten();
 
         if let Some((zone_id,)) = zone {
             // Upsert A record: hostname.domain → IP
@@ -270,10 +269,10 @@ async fn handle_release(pool: &PgPool, pkt: &DhcpPacket) {
     match result {
         Ok(r) => {
             tracing::info!(mac = %mac_str, rows = r.rows_affected(), "DHCP RELEASE processed");
-        }
+        },
         Err(e) => {
             tracing::warn!(mac = %mac_str, "DHCP RELEASE DB error: {}", e);
-        }
+        },
     }
 }
 
@@ -295,17 +294,24 @@ struct ResolvedScope {
 /// the SQL injection vector that existed in the previous `format!("id = '{id}'")`
 /// approach.
 async fn resolve_scope(pool: &PgPool, config: &DhcpListenerConfig) -> Option<ResolvedScope> {
-    type ScopeRow = (Uuid, Option<String>, Vec<String>, Vec<String>, Option<String>, i32, Option<String>, Option<String>);
+    type ScopeRow = (
+        Uuid,
+        Option<String>,
+        Vec<String>,
+        Vec<String>,
+        Option<String>,
+        i32,
+        Option<String>,
+        Option<String>,
+    );
 
-    const QUERY_ALL: &str =
-        "SELECT id, gateway, dns_servers, ntp_servers, domain_name, \
+    const QUERY_ALL: &str = "SELECT id, gateway, dns_servers, ntp_servers, domain_name, \
          lease_duration_hours, pxe_server, pxe_bootfile \
          FROM infrastructure.dhcp_scopes \
          WHERE is_active = true \
          ORDER BY created_at LIMIT 1";
 
-    const QUERY_BY_ID: &str =
-        "SELECT id, gateway, dns_servers, ntp_servers, domain_name, \
+    const QUERY_BY_ID: &str = "SELECT id, gateway, dns_servers, ntp_servers, domain_name, \
          lease_duration_hours, pxe_server, pxe_bootfile \
          FROM infrastructure.dhcp_scopes \
          WHERE is_active = true AND id = $1 \
@@ -318,15 +324,32 @@ async fn resolve_scope(pool: &PgPool, config: &DhcpListenerConfig) -> Option<Res
             .await
             .ok()?
     } else {
-        sqlx::query_as(QUERY_ALL)
-            .fetch_optional(pool)
-            .await
-            .ok()?
+        sqlx::query_as(QUERY_ALL).fetch_optional(pool).await.ok()?
     };
 
-    row.map(|(id, gateway, dns_servers, ntp_servers, domain_name, lease_hours, pxe_server, pxe_bootfile)| {
-        ResolvedScope { id, gateway, dns_servers, ntp_servers, domain_name, lease_duration_hours: lease_hours, pxe_server, pxe_bootfile }
-    })
+    row.map(
+        |(
+            id,
+            gateway,
+            dns_servers,
+            ntp_servers,
+            domain_name,
+            lease_hours,
+            pxe_server,
+            pxe_bootfile,
+        )| {
+            ResolvedScope {
+                id,
+                gateway,
+                dns_servers,
+                ntp_servers,
+                domain_name,
+                lease_duration_hours: lease_hours,
+                pxe_server,
+                pxe_bootfile,
+            }
+        },
+    )
 }
 
 /// Build a DhcpResponse using real scope data from the database.
@@ -339,7 +362,9 @@ fn build_response(
     let ip = parse_ipv4(ip_str);
 
     // Gateway: use scope value, or default to x.x.x.1
-    let gateway = scope.gateway.as_deref()
+    let gateway = scope
+        .gateway
+        .as_deref()
         .map(|g| parse_ipv4(g))
         .unwrap_or([ip[0], ip[1], ip[2], 1]);
 
@@ -357,7 +382,9 @@ fn build_response(
         scope.ntp_servers.iter().map(|s| parse_ipv4(s)).collect()
     };
 
-    let domain_name = scope.domain_name.clone()
+    let domain_name = scope
+        .domain_name
+        .clone()
         .unwrap_or_else(|| config.domain_name.clone());
 
     let lease_seconds = (scope.lease_duration_hours as u32) * 3600;
@@ -426,17 +453,17 @@ fn parse_dhcp_packet(data: &[u8]) -> Option<DhcpPacket> {
         match option {
             53 if len == 1 => {
                 message_type = DhcpMessageType::from_u8(value[0]);
-            }
+            },
             12 => {
                 hostname = String::from_utf8(value.to_vec()).ok();
-            }
+            },
             50 if len == 4 => {
                 requested_ip = Some([value[0], value[1], value[2], value[3]]);
-            }
+            },
             55 => {
                 parameter_list = value.to_vec();
-            }
-            _ => {}
+            },
+            _ => {},
         }
 
         i = end;
@@ -461,7 +488,7 @@ fn build_dhcp_reply(request: &DhcpPacket, response: &DhcpResponse) -> Vec<u8> {
     pkt[0] = 2; // BOOTREPLY
     pkt[1] = 1; // Ethernet
     pkt[2] = 6; // HW addr len
-    // xid
+                // xid
     pkt[4..8].copy_from_slice(&request.xid.to_be_bytes());
     // yiaddr (your IP address)
     pkt[16..20].copy_from_slice(&response.offered_ip);
@@ -598,7 +625,7 @@ mod tests {
         pkt_bytes[0] = 1; // BOOTREQUEST
         pkt_bytes[1] = 1; // Ethernet
         pkt_bytes[2] = 6; // HW addr len
-        // xid = 0x12345678
+                          // xid = 0x12345678
         pkt_bytes[4..8].copy_from_slice(&0x12345678u32.to_be_bytes());
         // MAC
         pkt_bytes[28..34].copy_from_slice(&[0xDE, 0xAD, 0xBE, 0xEF, 0x00, 0x01]);

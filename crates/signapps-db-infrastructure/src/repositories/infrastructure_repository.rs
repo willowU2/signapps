@@ -103,13 +103,12 @@ impl InfraDomainRepository {
     ///
     /// Returns `Error::Database` if the query fails.
     pub async fn get(pool: &PgPool, id: Uuid) -> Result<Option<InfraDomain>> {
-        let domain = sqlx::query_as::<_, InfraDomain>(
-            "SELECT * FROM infrastructure.domains WHERE id = $1",
-        )
-        .bind(id)
-        .fetch_optional(pool)
-        .await
-        .map_err(|e| Error::Database(e.to_string()))?;
+        let domain =
+            sqlx::query_as::<_, InfraDomain>("SELECT * FROM infrastructure.domains WHERE id = $1")
+                .bind(id)
+                .fetch_optional(pool)
+                .await
+                .map_err(|e| Error::Database(e.to_string()))?;
 
         Ok(domain)
     }
@@ -266,10 +265,7 @@ impl InfraCertificateRepository {
     /// # Errors
     ///
     /// Returns `Error::Database` if the query fails.
-    pub async fn list_by_domain(
-        pool: &PgPool,
-        domain_id: Uuid,
-    ) -> Result<Vec<InfraCertificate>> {
+    pub async fn list_by_domain(pool: &PgPool, domain_id: Uuid) -> Result<Vec<InfraCertificate>> {
         let certs = sqlx::query_as::<_, InfraCertificate>(
             "SELECT * FROM infrastructure.certificates WHERE domain_id = $1 ORDER BY not_after DESC",
         )
@@ -309,13 +305,11 @@ impl InfraCertificateRepository {
     ///
     /// Returns `Error::Database` if the UPDATE fails.
     pub async fn revoke(pool: &PgPool, id: Uuid) -> Result<()> {
-        sqlx::query(
-            "UPDATE infrastructure.certificates SET status = 'revoked' WHERE id = $1",
-        )
-        .bind(id)
-        .execute(pool)
-        .await
-        .map_err(|e| Error::Database(e.to_string()))?;
+        sqlx::query("UPDATE infrastructure.certificates SET status = 'revoked' WHERE id = $1")
+            .bind(id)
+            .execute(pool)
+            .await
+            .map_err(|e| Error::Database(e.to_string()))?;
 
         Ok(())
     }
@@ -583,10 +577,7 @@ impl DeployProfileRepository {
     /// # Errors
     ///
     /// Returns `Error::Database` if the query fails.
-    pub async fn get_default(
-        pool: &PgPool,
-        domain_id: Uuid,
-    ) -> Result<Option<DeployProfile>> {
+    pub async fn get_default(pool: &PgPool, domain_id: Uuid) -> Result<Option<DeployProfile>> {
         let profile = sqlx::query_as::<_, DeployProfile>(
             "SELECT * FROM infrastructure.deploy_profiles \
              WHERE domain_id = $1 AND is_default = true LIMIT 1",
@@ -660,10 +651,7 @@ impl DeployProfileRepository {
     /// # Errors
     ///
     /// Returns `Error::Database` if the query fails.
-    pub async fn list_history(
-        pool: &PgPool,
-        profile_id: Uuid,
-    ) -> Result<Vec<DeployHistory>> {
+    pub async fn list_history(pool: &PgPool, profile_id: Uuid) -> Result<Vec<DeployHistory>> {
         let records = sqlx::query_as::<_, DeployHistory>(
             "SELECT * FROM infrastructure.deploy_history \
              WHERE profile_id = $1 ORDER BY created_at DESC",

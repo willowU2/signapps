@@ -95,7 +95,7 @@ export function AiResearchPipeline({
   const [format, setFormat] = useState<OutputFormat>("short");
   const [tone, setTone] = useState<VoiceTone>("personal");
   const [platform, setPlatform] = useState<SocialAccount["platform"]>(
-    connectedPlatforms[0] ?? "twitter"
+    connectedPlatforms[0] ?? "twitter",
   );
   const [withPictures, setWithPictures] = useState(false);
 
@@ -128,7 +128,7 @@ export function AiResearchPipeline({
     if (displayedContent.length === generatedContent.length) {
       // Check if all fully streamed
       const allDone = generatedContent.every(
-        (c, i) => (displayedContent[i] ?? "").length >= c.length
+        (c, i) => (displayedContent[i] ?? "").length >= c.length,
       );
       if (allDone) {
         setPipelineComplete(true);
@@ -230,7 +230,8 @@ export function AiResearchPipeline({
     }
 
     // Append hashtags if we got them
-    const hashtagSuffix = apiHashtags.length > 0 ? `\n\n${apiHashtags.join(" ")}` : "";
+    const hashtagSuffix =
+      apiHashtags.length > 0 ? `\n\n${apiHashtags.join(" ")}` : "";
     const limit = getPlatformCharLimit(platform);
     const isThread = format === "thread-short" || format === "thread-long";
 
@@ -247,7 +248,8 @@ export function AiResearchPipeline({
         }
         // Find a good break point
         let breakPoint = remaining.lastIndexOf("\n", chunkSize);
-        if (breakPoint < chunkSize * 0.3) breakPoint = remaining.lastIndexOf(" ", chunkSize);
+        if (breakPoint < chunkSize * 0.3)
+          breakPoint = remaining.lastIndexOf(" ", chunkSize);
         if (breakPoint < chunkSize * 0.3) breakPoint = chunkSize;
         posts.push(remaining.slice(0, breakPoint).trim());
         remaining = remaining.slice(breakPoint).trim();
@@ -292,7 +294,8 @@ export function AiResearchPipeline({
           AI Research Pipeline
         </CardTitle>
         <p className="text-sm text-muted-foreground">
-          Multi-step AI content generation with research, analysis, and optimization.
+          Multi-step AI content generation with research, analysis, and
+          optimization.
         </p>
       </CardHeader>
 
@@ -332,8 +335,12 @@ export function AiResearchPipeline({
                 <SelectContent>
                   <SelectItem value="short">Short post</SelectItem>
                   <SelectItem value="long">Long post</SelectItem>
-                  <SelectItem value="thread-short">Thread (short posts)</SelectItem>
-                  <SelectItem value="thread-long">Thread (long posts)</SelectItem>
+                  <SelectItem value="thread-short">
+                    Thread (short posts)
+                  </SelectItem>
+                  <SelectItem value="thread-long">
+                    Thread (long posts)
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -343,7 +350,9 @@ export function AiResearchPipeline({
               <Label>Platform</Label>
               <Select
                 value={platform}
-                onValueChange={(v) => setPlatform(v as SocialAccount["platform"])}
+                onValueChange={(v) =>
+                  setPlatform(v as SocialAccount["platform"])
+                }
                 disabled={running}
               >
                 <SelectTrigger>
@@ -377,14 +386,22 @@ export function AiResearchPipeline({
             >
               <div className="flex items-center gap-2">
                 <RadioGroupItem value="personal" id="tone-personal" />
-                <Label htmlFor="tone-personal" className="font-normal cursor-pointer">
-                  Personal voice <span className="text-muted-foreground">(I / me)</span>
+                <Label
+                  htmlFor="tone-personal"
+                  className="font-normal cursor-pointer"
+                >
+                  Personal voice{" "}
+                  <span className="text-muted-foreground">(I / me)</span>
                 </Label>
               </div>
               <div className="flex items-center gap-2">
                 <RadioGroupItem value="company" id="tone-company" />
-                <Label htmlFor="tone-company" className="font-normal cursor-pointer">
-                  Company voice <span className="text-muted-foreground">(We / us)</span>
+                <Label
+                  htmlFor="tone-company"
+                  className="font-normal cursor-pointer"
+                >
+                  Company voice{" "}
+                  <span className="text-muted-foreground">(We / us)</span>
                 </Label>
               </div>
             </RadioGroup>
@@ -398,7 +415,10 @@ export function AiResearchPipeline({
               onCheckedChange={setWithPictures}
               disabled={running}
             />
-            <Label htmlFor="with-pictures" className="cursor-pointer flex items-center gap-2">
+            <Label
+              htmlFor="with-pictures"
+              className="cursor-pointer flex items-center gap-2"
+            >
               <Image className="w-4 h-4" />
               Generate with pictures
             </Label>
@@ -438,7 +458,8 @@ export function AiResearchPipeline({
           <div className="space-y-1">
             {PIPELINE_STEPS.map((step, i) => {
               const StepIcon = step.icon;
-              const isDone = i < currentStep || currentStep === PIPELINE_STEPS.length;
+              const isDone =
+                i < currentStep || currentStep === PIPELINE_STEPS.length;
               const isActive = i === currentStep && running;
               const isPending = i > currentStep;
 
@@ -527,9 +548,13 @@ export function AiResearchPipeline({
                         <span className="flex items-center gap-2">
                           <span
                             className="w-2 h-2 rounded-full"
-                            style={{ backgroundColor: PLATFORM_COLORS[platform] }}
+                            style={{
+                              backgroundColor: PLATFORM_COLORS[platform],
+                            }}
                           />
-                          {isThread ? `Post ${idx + 1} of ${generatedContent.length}` : PLATFORM_LABELS[platform]}
+                          {isThread
+                            ? `Post ${idx + 1} of ${generatedContent.length}`
+                            : PLATFORM_LABELS[platform]}
                         </span>
                         {showEditable && (
                           <span
@@ -551,7 +576,8 @@ export function AiResearchPipeline({
                       ) : (
                         <div className="text-sm whitespace-pre-wrap min-h-[60px] p-3 rounded-md bg-muted/50">
                           {displayed}
-                          {displayed.length < (generatedContent[idx]?.length ?? 0) && (
+                          {displayed.length <
+                            (generatedContent[idx]?.length ?? 0) && (
                             <span className="inline-block w-0.5 h-4 bg-purple-500 animate-pulse ml-0.5 align-text-bottom" />
                           )}
                         </div>

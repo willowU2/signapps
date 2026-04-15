@@ -4,13 +4,13 @@
  * Zustand store for document version history management.
  */
 
-import { create } from 'zustand';
+import { create } from "zustand";
 import type {
   DocumentVersion,
   VersionDiff,
   VersionType,
-} from '@/lib/office/versions/types';
-import { versionsApi } from '@/lib/office/versions/api';
+} from "@/lib/office/versions/types";
+import { versionsApi } from "@/lib/office/versions/api";
 
 // ============================================================================
 // Types
@@ -28,7 +28,7 @@ interface VersionsState {
   hasMore: boolean;
 
   // Filters
-  typeFilter: VersionType | 'all';
+  typeFilter: VersionType | "all";
   starredOnly: boolean;
   dateRange: { from?: string; to?: string };
 
@@ -57,14 +57,20 @@ interface VersionsState {
   setDocumentId: (documentId: string) => void;
   fetchVersions: (reset?: boolean) => Promise<void>;
   fetchMoreVersions: () => Promise<void>;
-  createVersion: (label?: string, description?: string) => Promise<DocumentVersion | null>;
-  restoreVersion: (versionId: string, createBackup?: boolean) => Promise<boolean>;
+  createVersion: (
+    label?: string,
+    description?: string,
+  ) => Promise<DocumentVersion | null>;
+  restoreVersion: (
+    versionId: string,
+    createBackup?: boolean,
+  ) => Promise<boolean>;
   deleteVersion: (versionId: string) => Promise<boolean>;
   starVersion: (versionId: string) => Promise<void>;
   unstarVersion: (versionId: string) => Promise<void>;
   updateVersionMetadata: (
     versionId: string,
-    data: { label?: string; description?: string }
+    data: { label?: string; description?: string },
   ) => Promise<void>;
   toggleVersionSelection: (versionId: string) => void;
   clearSelection: () => void;
@@ -73,7 +79,7 @@ interface VersionsState {
   clearComparison: () => void;
   loadVersionPreview: (versionId: string) => Promise<void>;
   clearPreview: () => void;
-  setTypeFilter: (type: VersionType | 'all') => void;
+  setTypeFilter: (type: VersionType | "all") => void;
   setStarredOnly: (starredOnly: boolean) => void;
   setDateRange: (range: { from?: string; to?: string }) => void;
   clearError: () => void;
@@ -93,7 +99,7 @@ export const useVersionsStore = create<VersionsState>((set, get) => ({
   pageSize: 20,
   hasMore: false,
 
-  typeFilter: 'all',
+  typeFilter: "all",
   starredOnly: false,
   dateRange: {},
 
@@ -159,7 +165,8 @@ export const useVersionsStore = create<VersionsState>((set, get) => ({
       });
     } catch (error) {
       set({
-        error: error instanceof Error ? error.message : 'Erreur lors du chargement',
+        error:
+          error instanceof Error ? error.message : "Erreur lors du chargement",
         isLoading: false,
       });
     }
@@ -201,7 +208,8 @@ export const useVersionsStore = create<VersionsState>((set, get) => ({
       });
     } catch (error) {
       set({
-        error: error instanceof Error ? error.message : 'Erreur lors du chargement',
+        error:
+          error instanceof Error ? error.message : "Erreur lors du chargement",
         isLoadingMore: false,
       });
     }
@@ -229,7 +237,8 @@ export const useVersionsStore = create<VersionsState>((set, get) => ({
       return version;
     } catch (error) {
       set({
-        error: error instanceof Error ? error.message : 'Erreur lors de la création',
+        error:
+          error instanceof Error ? error.message : "Erreur lors de la création",
         isCreating: false,
       });
       return null;
@@ -246,7 +255,7 @@ export const useVersionsStore = create<VersionsState>((set, get) => ({
       const result = await versionsApi.restoreDocumentVersion(
         documentId,
         versionId,
-        createBackup
+        createBackup,
       );
 
       // Add new versions to the list
@@ -265,7 +274,10 @@ export const useVersionsStore = create<VersionsState>((set, get) => ({
       return true;
     } catch (error) {
       set({
-        error: error instanceof Error ? error.message : 'Erreur lors de la restauration',
+        error:
+          error instanceof Error
+            ? error.message
+            : "Erreur lors de la restauration",
         isRestoring: false,
       });
       return false;
@@ -282,13 +294,18 @@ export const useVersionsStore = create<VersionsState>((set, get) => ({
       set((state) => ({
         versions: state.versions.filter((v) => v.id !== versionId),
         totalVersions: state.totalVersions - 1,
-        selectedVersions: state.selectedVersions.filter((id) => id !== versionId),
+        selectedVersions: state.selectedVersions.filter(
+          (id) => id !== versionId,
+        ),
       }));
 
       return true;
     } catch (error) {
       set({
-        error: error instanceof Error ? error.message : 'Erreur lors de la suppression',
+        error:
+          error instanceof Error
+            ? error.message
+            : "Erreur lors de la suppression",
       });
       return false;
     }
@@ -303,12 +320,12 @@ export const useVersionsStore = create<VersionsState>((set, get) => ({
 
       set((state) => ({
         versions: state.versions.map((v) =>
-          v.id === versionId ? { ...v, isStarred: true } : v
+          v.id === versionId ? { ...v, isStarred: true } : v,
         ),
       }));
     } catch (error) {
       set({
-        error: error instanceof Error ? error.message : 'Erreur',
+        error: error instanceof Error ? error.message : "Erreur",
       });
     }
   },
@@ -322,32 +339,39 @@ export const useVersionsStore = create<VersionsState>((set, get) => ({
 
       set((state) => ({
         versions: state.versions.map((v) =>
-          v.id === versionId ? { ...v, isStarred: false } : v
+          v.id === versionId ? { ...v, isStarred: false } : v,
         ),
       }));
     } catch (error) {
       set({
-        error: error instanceof Error ? error.message : 'Erreur',
+        error: error instanceof Error ? error.message : "Erreur",
       });
     }
   },
 
   updateVersionMetadata: async (
     versionId: string,
-    data: { label?: string; description?: string }
+    data: { label?: string; description?: string },
   ) => {
     const { documentId } = get();
     if (!documentId) return;
 
     try {
-      const updated = await versionsApi.updateVersion(documentId, versionId, data);
+      const updated = await versionsApi.updateVersion(
+        documentId,
+        versionId,
+        data,
+      );
 
       set((state) => ({
         versions: state.versions.map((v) => (v.id === versionId ? updated : v)),
       }));
     } catch (error) {
       set({
-        error: error instanceof Error ? error.message : 'Erreur lors de la mise à jour',
+        error:
+          error instanceof Error
+            ? error.message
+            : "Erreur lors de la mise à jour",
       });
     }
   },
@@ -357,7 +381,9 @@ export const useVersionsStore = create<VersionsState>((set, get) => ({
       const isSelected = state.selectedVersions.includes(versionId);
       if (isSelected) {
         return {
-          selectedVersions: state.selectedVersions.filter((id) => id !== versionId),
+          selectedVersions: state.selectedVersions.filter(
+            (id) => id !== versionId,
+          ),
         };
       } else if (state.selectedVersions.length < 2) {
         return {
@@ -378,7 +404,9 @@ export const useVersionsStore = create<VersionsState>((set, get) => ({
 
     // Sort by version number to determine source and target
     const versions = get().versions;
-    const [v1, v2] = selectedVersions.map((id) => versions.find((v) => v.id === id)!);
+    const [v1, v2] = selectedVersions.map(
+      (id) => versions.find((v) => v.id === id)!,
+    );
     const [source, target] =
       v1.versionNumber < v2.versionNumber ? [v1, v2] : [v2, v1];
 
@@ -395,7 +423,7 @@ export const useVersionsStore = create<VersionsState>((set, get) => ({
       const diff = await versionsApi.compareDocumentVersions(
         documentId,
         sourceId,
-        targetId
+        targetId,
       );
 
       set({
@@ -404,7 +432,10 @@ export const useVersionsStore = create<VersionsState>((set, get) => ({
       });
     } catch (error) {
       set({
-        error: error instanceof Error ? error.message : 'Erreur lors de la comparaison',
+        error:
+          error instanceof Error
+            ? error.message
+            : "Erreur lors de la comparaison",
         isComparing: false,
       });
     }
@@ -421,7 +452,10 @@ export const useVersionsStore = create<VersionsState>((set, get) => ({
     set({ isLoadingPreview: true, previewVersionId: versionId });
 
     try {
-      const { content } = await versionsApi.getVersionContent(documentId, versionId);
+      const { content } = await versionsApi.getVersionContent(
+        documentId,
+        versionId,
+      );
 
       set({
         previewContent: content,
@@ -429,7 +463,8 @@ export const useVersionsStore = create<VersionsState>((set, get) => ({
       });
     } catch (error) {
       set({
-        error: error instanceof Error ? error.message : 'Erreur lors du chargement',
+        error:
+          error instanceof Error ? error.message : "Erreur lors du chargement",
         isLoadingPreview: false,
       });
     }
@@ -439,7 +474,7 @@ export const useVersionsStore = create<VersionsState>((set, get) => ({
     set({ previewVersionId: null, previewContent: null });
   },
 
-  setTypeFilter: (type: VersionType | 'all') => {
+  setTypeFilter: (type: VersionType | "all") => {
     set({ typeFilter: type });
     get().fetchVersions(true);
   },
@@ -465,7 +500,7 @@ export const useVersionsStore = create<VersionsState>((set, get) => ({
       totalVersions: 0,
       currentPage: 1,
       hasMore: false,
-      typeFilter: 'all',
+      typeFilter: "all",
       starredOnly: false,
       dateRange: {},
       selectedVersions: [],
@@ -482,8 +517,10 @@ export const useVersionsStore = create<VersionsState>((set, get) => ({
 // ============================================================================
 
 export const selectVersions = (state: VersionsState) => state.versions;
-export const selectSelectedVersions = (state: VersionsState) => state.selectedVersions;
-export const selectComparisonResult = (state: VersionsState) => state.comparisonResult;
+export const selectSelectedVersions = (state: VersionsState) =>
+  state.selectedVersions;
+export const selectComparisonResult = (state: VersionsState) =>
+  state.comparisonResult;
 export const selectIsLoading = (state: VersionsState) => state.isLoading;
 export const selectIsComparing = (state: VersionsState) => state.isComparing;
 export const selectError = (state: VersionsState) => state.error;

@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { SpinnerInfinity } from 'spinners-react';
+import { SpinnerInfinity } from "spinners-react";
 
 /**
  * QuickCreate Component
@@ -10,9 +10,18 @@ import { SpinnerInfinity } from 'spinners-react';
  * Supports quick creation of events, tasks, and bookings.
  */
 
-import * as React from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Calendar, Clock, MapPin, Users, Tag, AlertCircle, CheckCircle2, Sparkles } from 'lucide-react';
+import * as React from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Calendar,
+  Clock,
+  MapPin,
+  Users,
+  Tag,
+  AlertCircle,
+  CheckCircle2,
+  Sparkles,
+} from "lucide-react";
 import {
   format,
   addHours,
@@ -23,14 +32,18 @@ import {
   addDays,
   nextMonday,
   nextFriday,
-} from 'date-fns';
-import { fr } from 'date-fns/locale';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { useCalendarStore } from '@/stores/scheduling/calendar-store';
-import { useSchedulingStore } from '@/stores/scheduling/scheduling-store';
-import type { RecurrenceRule, Priority, TimeItemType } from '@/lib/scheduling/types';
+} from "date-fns";
+import { fr } from "date-fns/locale";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { useCalendarStore } from "@/stores/scheduling/calendar-store";
+import { useSchedulingStore } from "@/stores/scheduling/scheduling-store";
+import type {
+  RecurrenceRule,
+  Priority,
+  TimeItemType,
+} from "@/lib/scheduling/types";
 
 // ============================================================================
 // Types
@@ -76,7 +89,10 @@ interface ParseResult {
 // NLP Parser (Simplified)
 // ============================================================================
 
-function parseNaturalLanguage(input: string, defaultType?: TimeItemType): ParseResult {
+function parseNaturalLanguage(
+  input: string,
+  defaultType?: TimeItemType,
+): ParseResult {
   const result: ParseResult = {
     title: input,
     type: defaultType,
@@ -90,24 +106,30 @@ function parseNaturalLanguage(input: string, defaultType?: TimeItemType): ParseR
 
   // Detect item type from input
   if (/\b(?:tâche|task|todo|faire)\b/i.test(remaining)) {
-    result.type = 'task';
-    remaining = remaining.replace(/\b(?:tâche|task|todo|faire)\b/i, '');
+    result.type = "task";
+    remaining = remaining.replace(/\b(?:tâche|task|todo|faire)\b/i, "");
     result.confidence += 0.05;
   } else if (/\b(?:réunion|meeting|rdv|rendez-vous)\b/i.test(remaining)) {
-    result.type = 'event';
-    remaining = remaining.replace(/\b(?:réunion|meeting|rdv|rendez-vous)\b/i, '');
+    result.type = "event";
+    remaining = remaining.replace(
+      /\b(?:réunion|meeting|rdv|rendez-vous)\b/i,
+      "",
+    );
     result.confidence += 0.05;
   } else if (/\b(?:réservation|réserver|booking|book)\b/i.test(remaining)) {
-    result.type = 'booking';
-    remaining = remaining.replace(/\b(?:réservation|réserver|booking|book)\b/i, '');
+    result.type = "booking";
+    remaining = remaining.replace(
+      /\b(?:réservation|réserver|booking|book)\b/i,
+      "",
+    );
     result.confidence += 0.05;
   } else if (/\b(?:rappel|reminder)\b/i.test(remaining)) {
-    result.type = 'reminder';
-    remaining = remaining.replace(/\b(?:rappel|reminder)\b/i, '');
+    result.type = "reminder";
+    remaining = remaining.replace(/\b(?:rappel|reminder)\b/i, "");
     result.confidence += 0.05;
   } else if (/\b(?:bloquer|blocage|blocker)\b/i.test(remaining)) {
-    result.type = 'blocker';
-    remaining = remaining.replace(/\b(?:bloquer|blocage|blocker)\b/i, '');
+    result.type = "blocker";
+    remaining = remaining.replace(/\b(?:bloquer|blocage|blocker)\b/i, "");
     result.confidence += 0.05;
   }
 
@@ -116,24 +138,23 @@ function parseNaturalLanguage(input: string, defaultType?: TimeItemType): ParseR
   // "demain"
   if (/\bdemain\b/i.test(remaining)) {
     result.date = addDays(today, 1);
-    remaining = remaining.replace(/\bdemain\b/i, '');
+    remaining = remaining.replace(/\bdemain\b/i, "");
     result.confidence += 0.1;
   }
   // "aujourd'hui"
   else if (/\baujourd'?hui\b/i.test(remaining)) {
     result.date = today;
-    remaining = remaining.replace(/\baujourd'?hui\b/i, '');
+    remaining = remaining.replace(/\baujourd'?hui\b/i, "");
     result.confidence += 0.1;
   }
   // "lundi", "mardi", etc.
   else if (/\blundi\b/i.test(remaining)) {
     result.date = nextMonday(today);
-    remaining = remaining.replace(/\blundi\b/i, '');
+    remaining = remaining.replace(/\blundi\b/i, "");
     result.confidence += 0.1;
-  }
-  else if (/\bvendredi\b/i.test(remaining)) {
+  } else if (/\bvendredi\b/i.test(remaining)) {
     result.date = nextFriday(today);
-    remaining = remaining.replace(/\bvendredi\b/i, '');
+    remaining = remaining.replace(/\bvendredi\b/i, "");
     result.confidence += 0.1;
   }
   // "le XX" (date numérique)
@@ -147,7 +168,7 @@ function parseNaturalLanguage(input: string, defaultType?: TimeItemType): ParseR
         targetDate.setMonth(targetDate.getMonth() + 1);
       }
       result.date = targetDate;
-      remaining = remaining.replace(dateMatch[0], '');
+      remaining = remaining.replace(dateMatch[0], "");
       result.confidence += 0.1;
     }
   }
@@ -159,35 +180,42 @@ function parseNaturalLanguage(input: string, defaultType?: TimeItemType): ParseR
   if (timeMatch) {
     const hour = parseInt(timeMatch[1], 10);
     const minute = timeMatch[2] ? parseInt(timeMatch[2], 10) : 0;
-    result.time = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+    result.time = `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`;
 
     if (result.date) {
       result.date = setMinutes(setHours(result.date, hour), minute);
     }
 
-    remaining = remaining.replace(timeMatch[0], '');
+    remaining = remaining.replace(timeMatch[0], "");
     result.confidence += 0.1;
   }
 
   // ---- Duration Parsing ----
 
   // "pendant Xh" ou "X heures"
-  const durationMatch = remaining.match(/\b(?:pendant\s+)?(\d+)\s*(?:h(?:eure)?s?|min(?:ute)?s?)\b/i);
+  const durationMatch = remaining.match(
+    /\b(?:pendant\s+)?(\d+)\s*(?:h(?:eure)?s?|min(?:ute)?s?)\b/i,
+  );
   if (durationMatch) {
     const value = parseInt(durationMatch[1], 10);
     const isMinutes = /min/i.test(durationMatch[0]);
     result.duration = isMinutes ? value : value * 60;
-    remaining = remaining.replace(durationMatch[0], '');
+    remaining = remaining.replace(durationMatch[0], "");
     result.confidence += 0.1;
   }
 
   // ---- Location Parsing ----
 
   // "à/au/en [lieu]" (après la date/heure)
-  const locationMatch = remaining.match(/\b(?:à|au|en)\s+([A-Za-zÀ-ÿ\s]+?)(?:\s+avec|\s*$)/i);
+  const locationMatch = remaining.match(
+    /\b(?:à|au|en)\s+([A-Za-zÀ-ÿ\s]+?)(?:\s+avec|\s*$)/i,
+  );
   if (locationMatch && !timeMatch) {
     result.location = locationMatch[1].trim();
-    remaining = remaining.replace(locationMatch[0], locationMatch[0].includes('avec') ? ' avec' : '');
+    remaining = remaining.replace(
+      locationMatch[0],
+      locationMatch[0].includes("avec") ? " avec" : "",
+    );
     result.confidence += 0.1;
   }
 
@@ -201,15 +229,18 @@ function parseNaturalLanguage(input: string, defaultType?: TimeItemType): ParseR
       .map((n) => n.trim())
       .filter((n) => n.length > 0);
     result.participants = names;
-    remaining = remaining.replace(participantsMatch[0], '');
+    remaining = remaining.replace(participantsMatch[0], "");
     result.confidence += 0.1;
   }
 
   // ---- Priority Parsing ----
 
   if (/\b(?:urgent|importante?|prioritaire)\b/i.test(remaining)) {
-    result.priority = 'high';
-    remaining = remaining.replace(/\b(?:urgent|importante?|prioritaire)\b/i, '');
+    result.priority = "high";
+    remaining = remaining.replace(
+      /\b(?:urgent|importante?|prioritaire)\b/i,
+      "",
+    );
     result.confidence += 0.05;
   }
 
@@ -217,18 +248,36 @@ function parseNaturalLanguage(input: string, defaultType?: TimeItemType): ParseR
 
   if (/\b(?:chaque|tous les)\s*(?:jours?|semaines?|mois)\b/i.test(remaining)) {
     if (/jours?/i.test(remaining)) {
-      result.recurrence = { id: crypto.randomUUID(), frequency: 'daily', interval: 1, exceptions: [] };
+      result.recurrence = {
+        id: crypto.randomUUID(),
+        frequency: "daily",
+        interval: 1,
+        exceptions: [],
+      };
     } else if (/semaines?/i.test(remaining)) {
-      result.recurrence = { id: crypto.randomUUID(), frequency: 'weekly', interval: 1, exceptions: [] };
+      result.recurrence = {
+        id: crypto.randomUUID(),
+        frequency: "weekly",
+        interval: 1,
+        exceptions: [],
+      };
     } else if (/mois/i.test(remaining)) {
-      result.recurrence = { id: crypto.randomUUID(), frequency: 'monthly', interval: 1, exceptions: [] };
+      result.recurrence = {
+        id: crypto.randomUUID(),
+        frequency: "monthly",
+        interval: 1,
+        exceptions: [],
+      };
     }
-    remaining = remaining.replace(/\b(?:chaque|tous les)\s*(?:jours?|semaines?|mois)\b/i, '');
+    remaining = remaining.replace(
+      /\b(?:chaque|tous les)\s*(?:jours?|semaines?|mois)\b/i,
+      "",
+    );
     result.confidence += 0.1;
   }
 
   // ---- Clean up title ----
-  result.title = remaining.trim().replace(/\s+/g, ' ') || input;
+  result.title = remaining.trim().replace(/\s+/g, " ") || input;
 
   // Capitalize first letter
   if (result.title) {
@@ -243,7 +292,11 @@ function parseNaturalLanguage(input: string, defaultType?: TimeItemType): ParseR
 // ============================================================================
 
 function ParsePreview({ result }: { result: ParseResult }) {
-  const hasExtras = result.date || result.time || result.location || result.participants?.length;
+  const hasExtras =
+    result.date ||
+    result.time ||
+    result.location ||
+    result.participants?.length;
 
   if (!hasExtras) return null;
 
@@ -256,8 +309,8 @@ function ParsePreview({ result }: { result: ParseResult }) {
             {isToday(result.date)
               ? "Aujourd'hui"
               : isTomorrow(result.date)
-              ? 'Demain'
-              : format(result.date, 'EEEE d MMMM', { locale: fr })}
+                ? "Demain"
+                : format(result.date, "EEEE d MMMM", { locale: fr })}
           </span>
         </div>
       )}
@@ -267,7 +320,8 @@ function ParsePreview({ result }: { result: ParseResult }) {
           <Clock className="h-4 w-4" />
           <span>
             {result.time}
-            {result.duration && ` (${result.duration >= 60 ? `${result.duration / 60}h` : `${result.duration}min`})`}
+            {result.duration &&
+              ` (${result.duration >= 60 ? `${result.duration / 60}h` : `${result.duration}min`})`}
           </span>
         </div>
       )}
@@ -282,15 +336,17 @@ function ParsePreview({ result }: { result: ParseResult }) {
       {result.participants && result.participants.length > 0 && (
         <div className="flex items-center gap-2 text-muted-foreground">
           <Users className="h-4 w-4" />
-          <span>{result.participants.join(', ')}</span>
+          <span>{result.participants.join(", ")}</span>
         </div>
       )}
 
       {result.priority && (
         <div className="flex items-center gap-2">
           <Tag className="h-4 w-4" />
-          <Badge variant={result.priority === 'high' ? 'destructive' : 'secondary'}>
-            {result.priority === 'high' ? 'Urgent' : result.priority}
+          <Badge
+            variant={result.priority === "high" ? "destructive" : "secondary"}
+          >
+            {result.priority === "high" ? "Urgent" : result.priority}
           </Badge>
         </div>
       )}
@@ -306,12 +362,14 @@ export function QuickCreate({
   isOpen,
   onClose,
   defaultDate,
-  defaultType = 'event',
+  defaultType = "event",
   templates = [],
   className,
 }: QuickCreateProps) {
-  const [input, setInput] = React.useState('');
-  const [parseResult, setParseResult] = React.useState<ParseResult | null>(null);
+  const [input, setInput] = React.useState("");
+  const [parseResult, setParseResult] = React.useState<ParseResult | null>(
+    null,
+  );
   const [isCreating, setIsCreating] = React.useState(false);
   const [showTemplates, setShowTemplates] = React.useState(false);
   const inputRef = React.useRef<HTMLInputElement>(null);
@@ -325,10 +383,11 @@ export function QuickCreate({
     if (!input.trim()) return templates.slice(0, 5);
     const search = input.toLowerCase();
     return templates
-      .filter(t =>
-        t.name.toLowerCase().includes(search) ||
-        t.itemDefaults.title?.toLowerCase().includes(search) ||
-        t.category?.toLowerCase().includes(search)
+      .filter(
+        (t) =>
+          t.name.toLowerCase().includes(search) ||
+          t.itemDefaults.title?.toLowerCase().includes(search) ||
+          t.category?.toLowerCase().includes(search),
       )
       .slice(0, 5);
   }, [templates, input]);
@@ -369,7 +428,7 @@ export function QuickCreate({
   // Focus input when opened
   React.useEffect(() => {
     if (isOpen) {
-      setInput('');
+      setInput("");
       setParseResult(null);
       setShowTemplates(templates.length > 0);
       setTimeout(() => inputRef.current?.focus(), 50);
@@ -387,16 +446,18 @@ export function QuickCreate({
       const start = parseResult.date || defaultDate || currentDate;
       const duration = parseResult.duration || 60;
       const end = addHours(start, duration / 60);
-      const itemType = parseResult.type || defaultType || 'event';
+      const itemType = parseResult.type || defaultType || "event";
 
       await createTimeItem({
         type: itemType,
         title: parseResult.title,
         startTime: start.toISOString(),
         endTime: end.toISOString(),
-        scope: scope === 'all' ? 'moi' : scope,
+        scope: scope === "all" ? "moi" : scope,
         priority: parseResult.priority,
-        location: parseResult.location ? { type: 'text', value: parseResult.location } : undefined,
+        location: parseResult.location
+          ? { type: "text", value: parseResult.location }
+          : undefined,
         // Pass recurrence without the internal 'id' field for API
         ...(parseResult.recurrence && {
           recurrence: {
@@ -409,14 +470,14 @@ export function QuickCreate({
 
       onClose();
     } catch (error) {
-      console.error('Impossible de créer item:', error);
+      console.error("Impossible de créer item:", error);
     } finally {
       setIsCreating(false);
     }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Escape') {
+    if (e.key === "Escape") {
       e.preventDefault();
       onClose();
     }
@@ -442,11 +503,11 @@ export function QuickCreate({
             exit={{ opacity: 0, scale: 0.95, y: -20 }}
             transition={{ duration: 0.15 }}
             className={cn(
-              'fixed left-1/2 top-[20%] -translate-x-1/2 z-50',
-              'w-full max-w-lg',
-              'rounded-xl border bg-background shadow-2xl',
-              'overflow-hidden',
-              className
+              "fixed left-1/2 top-[20%] -translate-x-1/2 z-50",
+              "w-full max-w-lg",
+              "rounded-xl border bg-background shadow-2xl",
+              "overflow-hidden",
+              className,
             )}
           >
             <form onSubmit={handleSubmit}>
@@ -466,8 +527,8 @@ export function QuickCreate({
                   onKeyDown={handleKeyDown}
                   placeholder="Ex: Réunion avec Marc demain à 14h"
                   className={cn(
-                    'w-full bg-transparent text-lg outline-none',
-                    'placeholder:text-muted-foreground'
+                    "w-full bg-transparent text-lg outline-none",
+                    "placeholder:text-muted-foreground",
                   )}
                   autoComplete="off"
                   autoCorrect="off"
@@ -475,53 +536,61 @@ export function QuickCreate({
                 />
 
                 {/* Template Suggestions */}
-                {showTemplates && filteredTemplates.length > 0 && !parseResult && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    className="mt-4 pt-4 border-t"
-                  >
-                    <p className="text-xs text-muted-foreground mb-2">Modèles suggérés</p>
-                    <div className="space-y-1">
-                      {filteredTemplates.map((template) => (
-                        <button
-                          key={template.id}
-                          type="button"
-                          onClick={() => handleSelectTemplate(template)}
-                          className={cn(
-                            'w-full text-left px-3 py-2 rounded-md text-sm',
-                            'hover:bg-accent transition-colors',
-                            'flex items-center gap-2'
-                          )}
-                        >
-                          {template.itemDefaults.color && (
-                            <span
-                              className="w-2 h-2 rounded-full shrink-0"
-                              style={{ backgroundColor: template.itemDefaults.color }}
-                            />
-                          )}
-                          <span className="flex-1">{template.name}</span>
-                          {template.category && (
-                            <Badge variant="outline" className="text-xs">
-                              {template.category}
-                            </Badge>
-                          )}
-                        </button>
-                      ))}
-                    </div>
-                  </motion.div>
-                )}
+                {showTemplates &&
+                  filteredTemplates.length > 0 &&
+                  !parseResult && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      className="mt-4 pt-4 border-t"
+                    >
+                      <p className="text-xs text-muted-foreground mb-2">
+                        Modèles suggérés
+                      </p>
+                      <div className="space-y-1">
+                        {filteredTemplates.map((template) => (
+                          <button
+                            key={template.id}
+                            type="button"
+                            onClick={() => handleSelectTemplate(template)}
+                            className={cn(
+                              "w-full text-left px-3 py-2 rounded-md text-sm",
+                              "hover:bg-accent transition-colors",
+                              "flex items-center gap-2",
+                            )}
+                          >
+                            {template.itemDefaults.color && (
+                              <span
+                                className="w-2 h-2 rounded-full shrink-0"
+                                style={{
+                                  backgroundColor: template.itemDefaults.color,
+                                }}
+                              />
+                            )}
+                            <span className="flex-1">{template.name}</span>
+                            {template.category && (
+                              <Badge variant="outline" className="text-xs">
+                                {template.category}
+                              </Badge>
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    </motion.div>
+                  )}
 
                 {/* Parse Preview */}
                 {parseResult && (
                   <motion.div
                     initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
+                    animate={{ opacity: 1, height: "auto" }}
                     className="mt-4 pt-4 border-t"
                   >
                     <div className="flex items-start gap-3">
                       <div className="flex-1">
-                        <h4 className="font-medium mb-2">{parseResult.title}</h4>
+                        <h4 className="font-medium mb-2">
+                          {parseResult.title}
+                        </h4>
                         <ParsePreview result={parseResult} />
                       </div>
                       <div className="flex items-center gap-1 text-xs">
@@ -544,11 +613,17 @@ export function QuickCreate({
                 <div className="text-xs text-muted-foreground">
                   <kbd className="rounded bg-muted px-1.5 py-0.5">↵</kbd> créer
                   <span className="mx-2">•</span>
-                  <kbd className="rounded bg-muted px-1.5 py-0.5">Esc</kbd> annuler
+                  <kbd className="rounded bg-muted px-1.5 py-0.5">Esc</kbd>{" "}
+                  annuler
                 </div>
 
                 <div className="flex gap-2">
-                  <Button type="button" variant="ghost" size="sm" onClick={onClose}>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={onClose}
+                  >
                     Annuler
                   </Button>
                   <Button
@@ -558,11 +633,17 @@ export function QuickCreate({
                   >
                     {isCreating ? (
                       <>
-                        <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />
+                        <SpinnerInfinity
+                          size={24}
+                          secondaryColor="rgba(128,128,128,0.2)"
+                          color="currentColor"
+                          speed={120}
+                          className="mr-2 h-4 w-4 "
+                        />
                         Création...
                       </>
                     ) : (
-                      'Créer'
+                      "Créer"
                     )}
                   </Button>
                 </div>

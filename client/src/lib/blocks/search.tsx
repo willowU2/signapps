@@ -1,14 +1,14 @@
-import { SpinnerInfinity } from 'spinners-react';
+import { SpinnerInfinity } from "spinners-react";
 /**
  * Universal Blocks System - Search
  *
  * Recherche universelle parmi tous les types de blocs.
  */
 
-"use client";
+("use client");
 
 import * as React from "react";
-import { Search, Filter, X, ChevronDown } from 'lucide-react';
+import { Search, Filter, X, ChevronDown } from "lucide-react";
 import Fuse, { type IFuseOptions } from "fuse.js";
 
 import { cn } from "@/lib/utils";
@@ -34,7 +34,11 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 
 import type { UniversalBlock, BlockType, BlockSearchResult } from "./types";
 import { BlockRow, BlockInline } from "./renderers";
-import { getBlockTypeInfo, getAllBlockRegistries, getSearchWeight } from "./registry";
+import {
+  getBlockTypeInfo,
+  getAllBlockRegistries,
+  getSearchWeight,
+} from "./registry";
 
 // ============================================================================
 // Fuse.js Configuration
@@ -87,7 +91,7 @@ export function useBlockSearch({
   // Create Fuse instance
   const fuse = React.useMemo(
     () => new Fuse(filteredBlocks, fuseOptions),
-    [filteredBlocks]
+    [filteredBlocks],
   );
 
   // Perform search
@@ -126,7 +130,14 @@ export function useBlockSearch({
     };
 
     if ("requestIdleCallback" in window) {
-      (window as Window & { requestIdleCallback: (cb: () => void, opts?: { timeout: number }) => void }).requestIdleCallback(search, { timeout: 100 });
+      (
+        window as Window & {
+          requestIdleCallback: (
+            cb: () => void,
+            opts?: { timeout: number },
+          ) => void;
+        }
+      ).requestIdleCallback(search, { timeout: 100 });
     } else {
       setTimeout(search, 0);
     }
@@ -174,7 +185,13 @@ export function BlockSearchInput({
         className="pl-9 pr-9"
       />
       {isSearching && (
-        <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4  text-muted-foreground" />
+        <SpinnerInfinity
+          size={24}
+          secondaryColor="rgba(128,128,128,0.2)"
+          color="currentColor"
+          speed={120}
+          className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4  text-muted-foreground"
+        />
       )}
       {!isSearching && value && (
         <button
@@ -229,7 +246,7 @@ export function BlockTypeFilter({
           className={cn(
             "gap-2",
             selectedTypes.length > 0 && "border-primary",
-            className
+            className,
           )}
         >
           <Filter className="h-4 w-4" />
@@ -316,7 +333,13 @@ export function BlockSearchResults({
   if (isSearching) {
     return (
       <div className={cn("flex items-center justify-center py-8", className)}>
-        <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-6 w-6  text-muted-foreground" />
+        <SpinnerInfinity
+          size={24}
+          secondaryColor="rgba(128,128,128,0.2)"
+          color="currentColor"
+          speed={120}
+          className="h-6 w-6  text-muted-foreground"
+        />
       </div>
     );
   }
@@ -356,7 +379,7 @@ export function BlockSearchResults({
       acc[type].push(result);
       return acc;
     },
-    {} as Record<BlockType, BlockSearchResult[]>
+    {} as Record<BlockType, BlockSearchResult[]>,
   );
 
   return (
@@ -433,10 +456,12 @@ export function UniversalBlockSearch({
 }: UniversalBlockSearchProps) {
   const [selectedTypes, setSelectedTypes] = React.useState<BlockType[]>([]);
 
-  const { query, setQuery, results, isSearching, clearSearch } = useBlockSearch({
-    blocks,
-    types: selectedTypes.length > 0 ? selectedTypes : undefined,
-  });
+  const { query, setQuery, results, isSearching, clearSearch } = useBlockSearch(
+    {
+      blocks,
+      types: selectedTypes.length > 0 ? selectedTypes : undefined,
+    },
+  );
 
   const handleSelect = (block: UniversalBlock) => {
     onSelect(block);
@@ -518,7 +543,7 @@ export function CommandPaletteSearch({
       acc[type].push(result);
       return acc;
     },
-    {} as Record<BlockType, BlockSearchResult[]>
+    {} as Record<BlockType, BlockSearchResult[]>,
   );
 
   return (
@@ -531,7 +556,13 @@ export function CommandPaletteSearch({
       <CommandList>
         {isSearching && (
           <div className="flex items-center justify-center py-6">
-            <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-5 w-5 " />
+            <SpinnerInfinity
+              size={24}
+              secondaryColor="rgba(128,128,128,0.2)"
+              color="currentColor"
+              speed={120}
+              className="h-5 w-5 "
+            />
           </div>
         )}
 

@@ -23,7 +23,7 @@ const serviceHealth = new Map<string, ServiceStatus>();
 function getServiceKey(url: string): string {
   try {
     const parsed = new URL(url);
-    return `${parsed.hostname}:${parsed.port || '80'}`;
+    return `${parsed.hostname}:${parsed.port || "80"}`;
   } catch {
     return url;
   }

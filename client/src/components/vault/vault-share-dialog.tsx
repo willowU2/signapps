@@ -1,10 +1,19 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { Search, User, Users, Shield, Eye, Lock, Calendar, X } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { useState, useEffect } from "react";
+import {
+  Search,
+  User,
+  Users,
+  Shield,
+  Eye,
+  Lock,
+  Calendar,
+  X,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
@@ -12,14 +21,14 @@ import {
   DialogTitle,
   DialogFooter,
   DialogDescription,
-} from '@/components/ui/dialog';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { cn } from '@/lib/utils';
-import { toast } from 'sonner';
-import { useVaultStore } from '@/stores/vault-store';
-import type { DecryptedVaultItem, ShareType, AccessLevel } from '@/types/vault';
-import { usersApi, groupsApi } from '@/lib/api/identity';
+} from "@/components/ui/dialog";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { cn } from "@/lib/utils";
+import { toast } from "sonner";
+import { useVaultStore } from "@/stores/vault-store";
+import type { DecryptedVaultItem, ShareType, AccessLevel } from "@/types/vault";
+import { usersApi, groupsApi } from "@/lib/api/identity";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Access level config
@@ -35,36 +44,44 @@ const ACCESS_LEVELS: {
   bg: string;
 }[] = [
   {
-    value: 'full',
-    label: 'Accès complet',
-    description: 'Voir, copier et modifier le secret',
+    value: "full",
+    label: "Accès complet",
+    description: "Voir, copier et modifier le secret",
     icon: Shield,
-    color: 'text-emerald-600 dark:text-emerald-400',
-    border: 'border-emerald-300 dark:border-emerald-700',
-    bg: 'bg-emerald-50 dark:bg-emerald-950/40',
+    color: "text-emerald-600 dark:text-emerald-400",
+    border: "border-emerald-300 dark:border-emerald-700",
+    bg: "bg-emerald-50 dark:bg-emerald-950/40",
   },
   {
-    value: 'use_only',
-    label: 'Utilisation seulement',
-    description: 'Utiliser via le navigateur intégré sans voir le mot de passe',
+    value: "use_only",
+    label: "Utilisation seulement",
+    description: "Utiliser via le navigateur intégré sans voir le mot de passe",
     icon: Eye,
-    color: 'text-amber-600 dark:text-amber-400',
-    border: 'border-amber-300 dark:border-amber-700',
-    bg: 'bg-amber-50 dark:bg-amber-950/40',
+    color: "text-amber-600 dark:text-amber-400",
+    border: "border-amber-300 dark:border-amber-700",
+    bg: "bg-amber-50 dark:bg-amber-950/40",
   },
   {
-    value: 'read_only',
-    label: 'Lecture seule',
-    description: 'Voir en lecture seule',
+    value: "read_only",
+    label: "Lecture seule",
+    description: "Voir en lecture seule",
     icon: Lock,
-    color: 'text-slate-600 dark:text-slate-400',
-    border: 'border-slate-300 dark:border-slate-600',
-    bg: 'bg-slate-50 dark:bg-slate-900/40',
+    color: "text-slate-600 dark:text-slate-400",
+    border: "border-slate-300 dark:border-slate-600",
+    bg: "bg-slate-50 dark:bg-slate-900/40",
   },
 ];
 
-interface Person { id: string; name: string; email: string; }
-interface Group  { id: string; name: string; memberCount: number; }
+interface Person {
+  id: string;
+  name: string;
+  email: string;
+}
+interface Group {
+  id: string;
+  name: string;
+  memberCount: number;
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Props
@@ -80,14 +97,18 @@ interface VaultShareDialogProps {
 // Component
 // ─────────────────────────────────────────────────────────────────────────────
 
-export function VaultShareDialog({ open, item, onClose }: VaultShareDialogProps) {
+export function VaultShareDialog({
+  open,
+  item,
+  onClose,
+}: VaultShareDialogProps) {
   const { shareItem } = useVaultStore();
 
-  const [shareType, setShareType] = useState<ShareType>('person');
-  const [accessLevel, setAccessLevel] = useState<AccessLevel>('use_only');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [shareType, setShareType] = useState<ShareType>("person");
+  const [accessLevel, setAccessLevel] = useState<AccessLevel>("use_only");
+  const [searchQuery, setSearchQuery] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [expiresAt, setExpiresAt] = useState('');
+  const [expiresAt, setExpiresAt] = useState("");
   const [loading, setLoading] = useState(false);
   const [persons, setPersons] = useState<Person[]>([]);
   const [groups, setGroups] = useState<Group[]>([]);
@@ -98,25 +119,32 @@ export function VaultShareDialog({ open, item, onClose }: VaultShareDialogProps)
       setLoadingData(true);
       Promise.all([
         usersApi.list(0, 100).catch(() => ({ data: { users: [] } })),
-        groupsApi.list().catch(() => ({ data: [] }))
-      ]).then(([usersRes, groupsRes]) => {
-        // Handle axios responses structure (sometimes data is nested in .data)
-        const userList = (usersRes as any).data?.users || (usersRes as any).users || [];
-        const groupList = (groupsRes as any).data || groupsRes || [];
-        
-        setPersons(userList.map((u: any) => ({
-          id: u.id,
-          name: u.display_name || u.username,
-          email: u.email || ''
-        })));
-        setGroups(groupList.map((g: any) => ({
-          id: g.id,
-          name: g.name,
-          memberCount: g.member_count || 0
-        })));
-      }).finally(() => {
-        setLoadingData(false);
-      });
+        groupsApi.list().catch(() => ({ data: [] })),
+      ])
+        .then(([usersRes, groupsRes]) => {
+          // Handle axios responses structure (sometimes data is nested in .data)
+          const userList =
+            (usersRes as any).data?.users || (usersRes as any).users || [];
+          const groupList = (groupsRes as any).data || groupsRes || [];
+
+          setPersons(
+            userList.map((u: any) => ({
+              id: u.id,
+              name: u.display_name || u.username,
+              email: u.email || "",
+            })),
+          );
+          setGroups(
+            groupList.map((g: any) => ({
+              id: g.id,
+              name: g.name,
+              memberCount: g.member_count || 0,
+            })),
+          );
+        })
+        .finally(() => {
+          setLoadingData(false);
+        });
     }
   }, [open]);
 
@@ -130,14 +158,15 @@ export function VaultShareDialog({ open, item, onClose }: VaultShareDialogProps)
   );
 
   const filteredGroups = groups.filter(
-    (g) => !searchQuery || g.name.toLowerCase().includes(searchQuery.toLowerCase()),
+    (g) =>
+      !searchQuery || g.name.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   // ── Submit ──────────────────────────────────────────────────────────────
 
   const handleShare = async () => {
     if (!selectedId) {
-      toast.error('Sélectionnez un destinataire');
+      toast.error("Sélectionnez un destinataire");
       return;
     }
 
@@ -150,10 +179,10 @@ export function VaultShareDialog({ open, item, onClose }: VaultShareDialogProps)
         accessLevel,
         expiresAt || undefined,
       );
-      toast.success('Élément partagé avec succès');
+      toast.success("Élément partagé avec succès");
       onClose();
     } catch {
-      toast.error('Erreur lors du partage');
+      toast.error("Erreur lors du partage");
     } finally {
       setLoading(false);
     }
@@ -162,7 +191,7 @@ export function VaultShareDialog({ open, item, onClose }: VaultShareDialogProps)
   const handleTypeChange = (v: ShareType) => {
     setShareType(v);
     setSelectedId(null);
-    setSearchQuery('');
+    setSearchQuery("");
   };
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -178,7 +207,8 @@ export function VaultShareDialog({ open, item, onClose }: VaultShareDialogProps)
             Partager ce secret
           </DialogTitle>
           <DialogDescription>
-            Partagez <strong>{item.name}</strong> en choisissant le destinataire et le niveau d'accès.
+            Partagez <strong>{item.name}</strong> en choisissant le destinataire
+            et le niveau d'accès.
           </DialogDescription>
         </DialogHeader>
 
@@ -188,16 +218,16 @@ export function VaultShareDialog({ open, item, onClose }: VaultShareDialogProps)
             <Label>Type de destinataire</Label>
             <div className="flex gap-2">
               <TypeButton
-                active={shareType === 'person'}
+                active={shareType === "person"}
                 icon={<User className="h-4 w-4" />}
                 label="Personne"
-                onClick={() => handleTypeChange('person')}
+                onClick={() => handleTypeChange("person")}
               />
               <TypeButton
-                active={shareType === 'group'}
+                active={shareType === "group"}
                 icon={<Users className="h-4 w-4" />}
                 label="Groupe"
-                onClick={() => handleTypeChange('group')}
+                onClick={() => handleTypeChange("group")}
               />
             </div>
           </div>
@@ -205,13 +235,17 @@ export function VaultShareDialog({ open, item, onClose }: VaultShareDialogProps)
           {/* ── Picker ── */}
           <div className="space-y-2">
             <Label>
-              {shareType === 'person' ? 'Rechercher une personne' : 'Rechercher un groupe'}
+              {shareType === "person"
+                ? "Rechercher une personne"
+                : "Rechercher un groupe"}
             </Label>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 className="pl-9"
-                placeholder={shareType === 'person' ? 'Nom ou email…' : 'Nom du groupe…'}
+                placeholder={
+                  shareType === "person" ? "Nom ou email…" : "Nom du groupe…"
+                }
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -224,7 +258,7 @@ export function VaultShareDialog({ open, item, onClose }: VaultShareDialogProps)
                 </div>
               ) : (
                 <div className="p-1 space-y-0.5">
-                  {shareType === 'person' &&
+                  {shareType === "person" &&
                     filteredPersons.map((p) => (
                       <PersonItem
                         key={p.id}
@@ -233,7 +267,7 @@ export function VaultShareDialog({ open, item, onClose }: VaultShareDialogProps)
                         onClick={() => setSelectedId(p.id)}
                       />
                     ))}
-                  {shareType === 'group' &&
+                  {shareType === "group" &&
                     filteredGroups.map((g) => (
                       <GroupItem
                         key={g.id}
@@ -242,11 +276,15 @@ export function VaultShareDialog({ open, item, onClose }: VaultShareDialogProps)
                         onClick={() => setSelectedId(g.id)}
                       />
                     ))}
-                  {shareType === 'person' && filteredPersons.length === 0 && (
-                    <p className="text-center text-xs text-muted-foreground py-4">Aucune personne trouvée</p>
+                  {shareType === "person" && filteredPersons.length === 0 && (
+                    <p className="text-center text-xs text-muted-foreground py-4">
+                      Aucune personne trouvée
+                    </p>
                   )}
-                  {shareType === 'group' && filteredGroups.length === 0 && (
-                    <p className="text-center text-xs text-muted-foreground py-4">Aucun groupe trouvé</p>
+                  {shareType === "group" && filteredGroups.length === 0 && (
+                    <p className="text-center text-xs text-muted-foreground py-4">
+                      Aucun groupe trouvé
+                    </p>
                   )}
                 </div>
               )}
@@ -266,26 +304,35 @@ export function VaultShareDialog({ open, item, onClose }: VaultShareDialogProps)
                     type="button"
                     onClick={() => setAccessLevel(lvl.value)}
                     className={cn(
-                      'w-full flex items-start gap-3 rounded-lg border p-3 text-left transition-all',
-                      isSelected ? `${lvl.border} ${lvl.bg}` : 'border-border hover:bg-accent/50',
+                      "w-full flex items-start gap-3 rounded-lg border p-3 text-left transition-all",
+                      isSelected
+                        ? `${lvl.border} ${lvl.bg}`
+                        : "border-border hover:bg-accent/50",
                     )}
                   >
-                    <div className={cn('mt-0.5 shrink-0', lvl.color)}>
+                    <div className={cn("mt-0.5 shrink-0", lvl.color)}>
                       <Icon className="h-4 w-4" />
                     </div>
                     <div>
-                      <p className={cn('text-sm font-medium', isSelected && lvl.color)}>
+                      <p
+                        className={cn(
+                          "text-sm font-medium",
+                          isSelected && lvl.color,
+                        )}
+                      >
                         {lvl.label}
                       </p>
-                      <p className="text-xs text-muted-foreground">{lvl.description}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {lvl.description}
+                      </p>
                     </div>
                     <div className="ml-auto shrink-0">
                       <div
                         className={cn(
-                          'h-4 w-4 rounded-full border-2 transition-colors',
+                          "h-4 w-4 rounded-full border-2 transition-colors",
                           isSelected
-                            ? 'border-current bg-current'
-                            : 'border-muted-foreground',
+                            ? "border-current bg-current"
+                            : "border-muted-foreground",
                         )}
                       />
                     </div>
@@ -314,7 +361,7 @@ export function VaultShareDialog({ open, item, onClose }: VaultShareDialogProps)
                   variant="ghost"
                   size="icon"
                   type="button"
-                  onClick={() => setExpiresAt('')}
+                  onClick={() => setExpiresAt("")}
                   className="h-8 w-8"
                 >
                   <X className="h-4 w-4" />
@@ -325,14 +372,16 @@ export function VaultShareDialog({ open, item, onClose }: VaultShareDialogProps)
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Annuler</Button>
+          <Button variant="outline" onClick={onClose}>
+            Annuler
+          </Button>
           <Button
             onClick={handleShare}
             disabled={loading || !selectedId}
             className="gap-1.5"
           >
             <Shield className="h-4 w-4" />
-            {loading ? 'Partage en cours…' : 'Partager'}
+            {loading ? "Partage en cours…" : "Partager"}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -345,7 +394,10 @@ export function VaultShareDialog({ open, item, onClose }: VaultShareDialogProps)
 // ─────────────────────────────────────────────────────────────────────────────
 
 function TypeButton({
-  active, icon, label, onClick,
+  active,
+  icon,
+  label,
+  onClick,
 }: {
   active: boolean;
   icon: React.ReactNode;
@@ -357,10 +409,10 @@ function TypeButton({
       type="button"
       onClick={onClick}
       className={cn(
-        'flex-1 flex items-center justify-center gap-2 rounded-md border py-2 text-sm font-medium transition-colors',
+        "flex-1 flex items-center justify-center gap-2 rounded-md border py-2 text-sm font-medium transition-colors",
         active
-          ? 'border-emerald-500 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
-          : 'border-border text-muted-foreground hover:bg-accent',
+          ? "border-emerald-500 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+          : "border-border text-muted-foreground hover:bg-accent",
       )}
     >
       {icon}
@@ -369,14 +421,24 @@ function TypeButton({
   );
 }
 
-function PersonItem({ person, selected, onClick }: { person: Person; selected: boolean; onClick: () => void }) {
+function PersonItem({
+  person,
+  selected,
+  onClick,
+}: {
+  person: Person;
+  selected: boolean;
+  onClick: () => void;
+}) {
   return (
     <button
       type="button"
       onClick={onClick}
       className={cn(
-        'w-full flex items-center gap-2.5 rounded-md px-2 py-1.5 text-left text-sm transition-colors',
-        selected ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400' : 'hover:bg-accent',
+        "w-full flex items-center gap-2.5 rounded-md px-2 py-1.5 text-left text-sm transition-colors",
+        selected
+          ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
+          : "hover:bg-accent",
       )}
     >
       <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-medium">
@@ -390,14 +452,24 @@ function PersonItem({ person, selected, onClick }: { person: Person; selected: b
   );
 }
 
-function GroupItem({ group, selected, onClick }: { group: Group; selected: boolean; onClick: () => void }) {
+function GroupItem({
+  group,
+  selected,
+  onClick,
+}: {
+  group: Group;
+  selected: boolean;
+  onClick: () => void;
+}) {
   return (
     <button
       type="button"
       onClick={onClick}
       className={cn(
-        'w-full flex items-center gap-2.5 rounded-md px-2 py-1.5 text-left text-sm transition-colors',
-        selected ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400' : 'hover:bg-accent',
+        "w-full flex items-center gap-2.5 rounded-md px-2 py-1.5 text-left text-sm transition-colors",
+        selected
+          ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
+          : "hover:bg-accent",
       )}
     >
       <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted">
@@ -405,7 +477,9 @@ function GroupItem({ group, selected, onClick }: { group: Group; selected: boole
       </div>
       <div className="min-w-0 flex-1">
         <p className="truncate font-medium">{group.name}</p>
-        <p className="text-xs text-muted-foreground">{group.memberCount} membres</p>
+        <p className="text-xs text-muted-foreground">
+          {group.memberCount} membres
+        </p>
       </div>
     </button>
   );

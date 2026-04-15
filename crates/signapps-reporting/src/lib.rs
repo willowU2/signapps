@@ -149,10 +149,7 @@ impl ReportEngine {
     /// # Errors
     ///
     /// Returns `ReportingError::Validation` if template generation fails.
-    pub async fn generate(
-        &self,
-        template: &ReportTemplate,
-    ) -> Result<ReportData, ReportingError> {
+    pub async fn generate(&self, template: &ReportTemplate) -> Result<ReportData, ReportingError> {
         let now = chrono::Utc::now().timestamp();
         let report_id = Uuid::new_v4();
 

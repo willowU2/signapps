@@ -222,8 +222,14 @@ export function useApplyAccessibility() {
     root.classList.toggle("screen-reader-mode", accessibility.screenReaderMode);
     root.classList.toggle("keyboard-hints", accessibility.keyboardHints);
     root.classList.toggle("focus-indicators", accessibility.focusIndicators);
-    root.classList.toggle("reduce-transparency", accessibility.reduceTransparency);
-    root.classList.toggle("large-click-targets", accessibility.largeClickTargets);
+    root.classList.toggle(
+      "reduce-transparency",
+      accessibility.reduceTransparency,
+    );
+    root.classList.toggle(
+      "large-click-targets",
+      accessibility.largeClickTargets,
+    );
   }, [accessibility]);
 }
 
@@ -302,7 +308,10 @@ export function SyncStatusIndicator({ className }: SyncStatusIndicatorProps) {
 
   if (syncStatus.pendingChanges > 0) {
     return (
-      <span className={className} title={`${syncStatus.pendingChanges} modification(s) en attente`}>
+      <span
+        className={className}
+        title={`${syncStatus.pendingChanges} modification(s) en attente`}
+      >
         <span className="inline-block h-2 w-2 rounded-full bg-orange-500" />
       </span>
     );

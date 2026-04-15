@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { Type } from 'lucide-react';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
+import { useEffect, useState } from "react";
+import { Type } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
-const STORAGE_KEY = 'signapps-dyslexia-font';
+const STORAGE_KEY = "signapps-dyslexia-font";
 
 export function DyslexiaFontToggle() {
   const [enabled, setEnabled] = useState(false);
@@ -13,16 +13,16 @@ export function DyslexiaFontToggle() {
 
   useEffect(() => {
     setMounted(true);
-    const stored = localStorage.getItem(STORAGE_KEY) === 'true';
+    const stored = localStorage.getItem(STORAGE_KEY) === "true";
     setEnabled(stored);
     applyFont(stored);
   }, []);
 
   const applyFont = (on: boolean) => {
     if (on) {
-      document.documentElement.classList.add('dyslexia-font');
+      document.documentElement.classList.add("dyslexia-font");
     } else {
-      document.documentElement.classList.remove('dyslexia-font');
+      document.documentElement.classList.remove("dyslexia-font");
     }
   };
 

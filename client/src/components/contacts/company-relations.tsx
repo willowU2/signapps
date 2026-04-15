@@ -4,7 +4,15 @@ import React, { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Building2, Users, Plus, Link, Unlink, ChevronDown, ChevronRight } from "lucide-react";
+import {
+  Building2,
+  Users,
+  Plus,
+  Link,
+  Unlink,
+  ChevronDown,
+  ChevronRight,
+} from "lucide-react";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -32,14 +40,37 @@ interface CompanyRelationsProps {
 // ── Sample companies ──────────────────────────────────────────────────────────
 
 const INITIAL_COMPANIES: Company[] = [
-  { id: "c1", name: "Acme Corp", industry: "Tech", website: "acme.com", size: "50-200" },
-  { id: "c2", name: "Beta Ltd", industry: "Finance", website: "beta.com", size: "10-50" },
-  { id: "c3", name: "Gamma SAS", industry: "Marketing", website: "gamma.fr", size: "1-10" },
+  {
+    id: "c1",
+    name: "Acme Corp",
+    industry: "Tech",
+    website: "acme.com",
+    size: "50-200",
+  },
+  {
+    id: "c2",
+    name: "Beta Ltd",
+    industry: "Finance",
+    website: "beta.com",
+    size: "10-50",
+  },
+  {
+    id: "c3",
+    name: "Gamma SAS",
+    industry: "Marketing",
+    website: "gamma.fr",
+    size: "1-10",
+  },
 ];
 
 // ── Company Card ──────────────────────────────────────────────────────────────
 
-function CompanyCard({ company, contacts, onLink, onUnlink }: {
+function CompanyCard({
+  company,
+  contacts,
+  onLink,
+  onUnlink,
+}: {
   company: Company;
   contacts: ContactRef[];
   onLink: (companyId: string, contactId: string) => void;
@@ -50,8 +81,10 @@ function CompanyCard({ company, contacts, onLink, onUnlink }: {
   const [search, setSearch] = useState("");
 
   const linkedContacts = contacts.filter((c) => c.companyId === company.id);
-  const unlinkedContacts = contacts.filter((c) => !c.companyId &&
-    (!search || c.name.toLowerCase().includes(search.toLowerCase()))
+  const unlinkedContacts = contacts.filter(
+    (c) =>
+      !c.companyId &&
+      (!search || c.name.toLowerCase().includes(search.toLowerCase())),
   );
 
   return (
@@ -65,12 +98,18 @@ function CompanyCard({ company, contacts, onLink, onUnlink }: {
         </div>
         <div className="flex-1 min-w-0">
           <p className="font-medium text-sm truncate">{company.name}</p>
-          <p className="text-xs text-muted-foreground">{company.industry} • {company.size} employés</p>
+          <p className="text-xs text-muted-foreground">
+            {company.industry} • {company.size} employés
+          </p>
         </div>
         <Badge variant="secondary" className="shrink-0">
           <Users className="size-3 mr-1" /> {linkedContacts.length}
         </Badge>
-        {expanded ? <ChevronDown className="size-4 text-muted-foreground" /> : <ChevronRight className="size-4 text-muted-foreground" />}
+        {expanded ? (
+          <ChevronDown className="size-4 text-muted-foreground" />
+        ) : (
+          <ChevronRight className="size-4 text-muted-foreground" />
+        )}
       </button>
 
       {expanded && (
@@ -83,17 +122,26 @@ function CompanyCard({ company, contacts, onLink, onUnlink }: {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-medium truncate text-sm">{c.name}</p>
-                {c.title && <p className="text-xs text-muted-foreground">{c.title}</p>}
+                {c.title && (
+                  <p className="text-xs text-muted-foreground">{c.title}</p>
+                )}
               </div>
-              <Button size="icon" variant="ghost" className="size-6 text-muted-foreground hover:text-destructive"
-                onClick={() => onUnlink(c.id)} title="Délier">
+              <Button
+                size="icon"
+                variant="ghost"
+                className="size-6 text-muted-foreground hover:text-destructive"
+                onClick={() => onUnlink(c.id)}
+                title="Délier"
+              >
                 <Unlink className="size-3" />
               </Button>
             </div>
           ))}
 
           {linkedContacts.length === 0 && (
-            <p className="text-xs text-muted-foreground text-center py-2">Aucun contact lié.</p>
+            <p className="text-xs text-muted-foreground text-center py-2">
+              Aucun contact lié.
+            </p>
           )}
 
           {/* Link new contact */}
@@ -107,23 +155,44 @@ function CompanyCard({ company, contacts, onLink, onUnlink }: {
               />
               <div className="max-h-32 overflow-y-auto space-y-1">
                 {unlinkedContacts.slice(0, 6).map((c) => (
-                  <button key={c.id} onClick={() => { onLink(company.id, c.id); setLinking(false); setSearch(""); }}
-                    className="w-full flex items-center gap-2 text-xs px-2 py-1 rounded hover:bg-muted text-left">
+                  <button
+                    key={c.id}
+                    onClick={() => {
+                      onLink(company.id, c.id);
+                      setLinking(false);
+                      setSearch("");
+                    }}
+                    className="w-full flex items-center gap-2 text-xs px-2 py-1 rounded hover:bg-muted text-left"
+                  >
                     <Link className="size-3 text-primary" />
                     {c.name}
-                    <span className="text-muted-foreground ml-auto">{c.email}</span>
+                    <span className="text-muted-foreground ml-auto">
+                      {c.email}
+                    </span>
                   </button>
                 ))}
                 {unlinkedContacts.length === 0 && (
-                  <p className="text-xs text-muted-foreground text-center py-2">Aucun contact disponible.</p>
+                  <p className="text-xs text-muted-foreground text-center py-2">
+                    Aucun contact disponible.
+                  </p>
                 )}
               </div>
-              <Button size="sm" variant="ghost" className="w-full h-6 text-xs" onClick={() => setLinking(false)}>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="w-full h-6 text-xs"
+                onClick={() => setLinking(false)}
+              >
                 Fermer
               </Button>
             </div>
           ) : (
-            <Button size="sm" variant="outline" className="w-full h-7 text-xs gap-1" onClick={() => setLinking(true)}>
+            <Button
+              size="sm"
+              variant="outline"
+              className="w-full h-7 text-xs gap-1"
+              onClick={() => setLinking(true)}
+            >
               <Plus className="size-3" /> Lier un contact
             </Button>
           )}
@@ -135,7 +204,10 @@ function CompanyCard({ company, contacts, onLink, onUnlink }: {
 
 // ── Main Component ─────────────────────────────────────────────────────────────
 
-export function CompanyRelations({ contacts, onContactUpdate }: CompanyRelationsProps) {
+export function CompanyRelations({
+  contacts,
+  onContactUpdate,
+}: CompanyRelationsProps) {
   const [companies, setCompanies] = useState<Company[]>(INITIAL_COMPANIES);
   const [newCompanyName, setNewCompanyName] = useState("");
 
@@ -149,11 +221,17 @@ export function CompanyRelations({ contacts, onContactUpdate }: CompanyRelations
 
   const handleAddCompany = () => {
     if (!newCompanyName.trim()) return;
-    setCompanies((p) => [...p, { id: crypto.randomUUID(), name: newCompanyName.trim() }]);
+    setCompanies((p) => [
+      ...p,
+      { id: crypto.randomUUID(), name: newCompanyName.trim() },
+    ]);
     setNewCompanyName("");
   };
 
-  const unlinked = useMemo(() => contacts.filter((c) => !c.companyId), [contacts]);
+  const unlinked = useMemo(
+    () => contacts.filter((c) => !c.companyId),
+    [contacts],
+  );
 
   return (
     <div className="space-y-4">
@@ -161,7 +239,10 @@ export function CompanyRelations({ contacts, onContactUpdate }: CompanyRelations
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {[
           { label: "Entreprises", value: companies.length },
-          { label: "Contacts liés", value: contacts.filter((c) => !!c.companyId).length },
+          {
+            label: "Contacts liés",
+            value: contacts.filter((c) => !!c.companyId).length,
+          },
           { label: "Sans entreprise", value: unlinked.length },
         ].map((s) => (
           <div key={s.label} className="border rounded-lg p-3 text-center">
@@ -173,12 +254,21 @@ export function CompanyRelations({ contacts, onContactUpdate }: CompanyRelations
 
       {/* Add company */}
       <div className="flex gap-2">
-        <Input placeholder="Nouvelle entreprise..." value={newCompanyName}
+        <Input
+          placeholder="Nouvelle entreprise..."
+          value={newCompanyName}
           onChange={(e) => setNewCompanyName(e.target.value)}
-          onKeyDown={(e) => { if (e.key === "Enter") handleAddCompany(); }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") handleAddCompany();
+          }}
           className="flex-1 h-8 text-sm"
         />
-        <Button size="sm" onClick={handleAddCompany} disabled={!newCompanyName.trim()} className="gap-1">
+        <Button
+          size="sm"
+          onClick={handleAddCompany}
+          disabled={!newCompanyName.trim()}
+          className="gap-1"
+        >
           <Plus className="size-4" /> Ajouter
         </Button>
       </div>
@@ -186,8 +276,13 @@ export function CompanyRelations({ contacts, onContactUpdate }: CompanyRelations
       {/* Company list */}
       <div className="space-y-2">
         {companies.map((c) => (
-          <CompanyCard key={c.id} company={c} contacts={contacts}
-            onLink={handleLink} onUnlink={handleUnlink} />
+          <CompanyCard
+            key={c.id}
+            company={c}
+            contacts={contacts}
+            onLink={handleLink}
+            onUnlink={handleUnlink}
+          />
         ))}
       </div>
     </div>

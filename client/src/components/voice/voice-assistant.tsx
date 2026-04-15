@@ -1,34 +1,34 @@
-'use client';
+"use client";
 
-import { useState, useRef, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Mic, Send, X, Loader2 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { useState, useRef, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Mic, Send, X, Loader2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface Message {
   id: string;
-  role: 'user' | 'assistant';
+  role: "user" | "assistant";
   content: string;
 }
 
 const SUGGESTED_COMMANDS = [
-  'Create a new project',
-  'Schedule a meeting',
-  'Generate report',
-  'Search documents',
+  "Create a new project",
+  "Schedule a meeting",
+  "Generate report",
+  "Search documents",
 ];
 
 export function VoiceAssistant() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
-  const [inputValue, setInputValue] = useState('');
+  const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
   useEffect(() => {
@@ -40,19 +40,19 @@ export function VoiceAssistant() {
 
     const userMessage: Message = {
       id: Date.now().toString(),
-      role: 'user',
+      role: "user",
       content: inputValue,
     };
 
     setMessages((prev) => [...prev, userMessage]);
-    setInputValue('');
+    setInputValue("");
     setIsLoading(true);
 
     setTimeout(() => {
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: 'I understood your request. Processing...',
+        role: "assistant",
+        content: "I understood your request. Processing...",
       };
       setMessages((prev) => [...prev, assistantMessage]);
       setIsLoading(false);
@@ -63,7 +63,7 @@ export function VoiceAssistant() {
     setIsListening(!isListening);
     if (!isListening) {
       setTimeout(() => {
-        setInputValue('Create a new project for the Q2 initiative');
+        setInputValue("Create a new project for the Q2 initiative");
         setIsListening(false);
       }, 2000);
     }
@@ -152,16 +152,16 @@ export function VoiceAssistant() {
                   <div
                     key={message.id}
                     className={cn(
-                      'flex gap-2 mb-3',
-                      message.role === 'user' ? 'justify-end' : 'justify-start'
+                      "flex gap-2 mb-3",
+                      message.role === "user" ? "justify-end" : "justify-start",
                     )}
                   >
                     <div
                       className={cn(
-                        'max-w-xs px-3 py-2 rounded-lg text-sm',
-                        message.role === 'user'
-                          ? 'bg-primary text-primary-foreground rounded-br-none'
-                          : 'bg-accent text-accent-foreground rounded-bl-none'
+                        "max-w-xs px-3 py-2 rounded-lg text-sm",
+                        message.role === "user"
+                          ? "bg-primary text-primary-foreground rounded-br-none"
+                          : "bg-accent text-accent-foreground rounded-bl-none",
                       )}
                     >
                       {message.content}
@@ -203,7 +203,7 @@ export function VoiceAssistant() {
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyPress={(e) => {
-                  if (e.key === 'Enter' && !isLoading) {
+                  if (e.key === "Enter" && !isLoading) {
                     handleSendMessage();
                   }
                 }}
@@ -214,8 +214,8 @@ export function VoiceAssistant() {
               <Button
                 onClick={handleMicClick}
                 size="icon-sm"
-                variant={isListening ? 'destructive' : 'outline'}
-                className={isListening ? 'animate-pulse' : ''}
+                variant={isListening ? "destructive" : "outline"}
+                className={isListening ? "animate-pulse" : ""}
                 aria-label="Toggle voice input"
               >
                 <Mic className="h-4 w-4" />

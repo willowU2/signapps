@@ -5,28 +5,28 @@
  * overload alerts, and historical trends.
  */
 
-'use client';
+"use client";
 
-import * as React from 'react';
-import { cn } from '@/lib/utils';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Progress } from '@/components/ui/progress';
+import * as React from "react";
+import { cn } from "@/lib/utils";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Progress } from "@/components/ui/progress";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from "@/components/ui/select";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@/components/ui/tooltip';
+} from "@/components/ui/tooltip";
 import {
   TrendingUp,
   TrendingDown,
@@ -38,14 +38,14 @@ import {
   Target,
   ChevronRight,
   Download,
-} from 'lucide-react';
+} from "lucide-react";
 import type {
   WorkloadData,
   WorkloadBreakdown,
   TeamMember,
   DateRange,
-} from '@/lib/scheduling/types/scheduling';
-import { timeItemsApi } from '@/lib/api/scheduler';
+} from "@/lib/scheduling/types/scheduling";
+import { timeItemsApi } from "@/lib/api/scheduler";
 
 // ============================================================================
 // Types
@@ -55,7 +55,7 @@ interface WorkloadDashboardProps {
   members: TeamMember[];
   workloadData: WorkloadData[];
   period: DateRange;
-  onPeriodChange?: (period: '7d' | '14d' | '30d') => void;
+  onPeriodChange?: (period: "7d" | "14d" | "30d") => void;
   onMemberClick?: (memberId: string) => void;
   onExport?: () => void;
   className?: string;
@@ -83,10 +83,14 @@ const UTILIZATION_THRESHOLDS = {
 };
 
 const BREAKDOWN_COLORS = {
-  meetings: { bg: 'bg-blue-500', text: 'text-blue-500', label: 'R\u00e9unions' },
-  focusTime: { bg: 'bg-green-500', text: 'text-green-500', label: 'Focus' },
-  tasks: { bg: 'bg-purple-500', text: 'text-purple-500', label: 'T\u00e2ches' },
-  other: { bg: 'bg-gray-400', text: 'text-gray-400', label: 'Autre' },
+  meetings: {
+    bg: "bg-blue-500",
+    text: "text-blue-500",
+    label: "R\u00e9unions",
+  },
+  focusTime: { bg: "bg-green-500", text: "text-green-500", label: "Focus" },
+  tasks: { bg: "bg-purple-500", text: "text-purple-500", label: "T\u00e2ches" },
+  other: { bg: "bg-gray-400", text: "text-gray-400", label: "Autre" },
 };
 
 const TREND_ICONS = {
@@ -108,19 +112,30 @@ export function WorkloadDashboard({
   onExport,
   className,
 }: WorkloadDashboardProps) {
-  const [selectedPeriod, setSelectedPeriod] = React.useState<'7d' | '14d' | '30d'>('7d');
-  const [sortBy, setSortBy] = React.useState<'name' | 'utilization'>('utilization');
+  const [selectedPeriod, setSelectedPeriod] = React.useState<
+    "7d" | "14d" | "30d"
+  >("7d");
+  const [sortBy, setSortBy] = React.useState<"name" | "utilization">(
+    "utilization",
+  );
 
   // Compute summary stats
   const summaryStats = React.useMemo(() => {
-    const totalScheduled = workloadData.reduce((sum, w) => sum + w.scheduledHours, 0);
-    const totalCapacity = workloadData.reduce((sum, w) => sum + w.capacityHours, 0);
-    const avgUtilization = totalCapacity > 0 ? (totalScheduled / totalCapacity) * 100 : 0;
+    const totalScheduled = workloadData.reduce(
+      (sum, w) => sum + w.scheduledHours,
+      0,
+    );
+    const totalCapacity = workloadData.reduce(
+      (sum, w) => sum + w.capacityHours,
+      0,
+    );
+    const avgUtilization =
+      totalCapacity > 0 ? (totalScheduled / totalCapacity) * 100 : 0;
     const overloadedCount = workloadData.filter(
-      (w) => w.utilizationPercent > UTILIZATION_THRESHOLDS.overload
+      (w) => w.utilizationPercent > UTILIZATION_THRESHOLDS.overload,
     ).length;
     const underutilizedCount = workloadData.filter(
-      (w) => w.utilizationPercent < UTILIZATION_THRESHOLDS.low
+      (w) => w.utilizationPercent < UTILIZATION_THRESHOLDS.low,
     ).length;
 
     return {
@@ -136,7 +151,7 @@ export function WorkloadDashboard({
   // Sort data
   const sortedData = React.useMemo(() => {
     return [...workloadData].sort((a, b) => {
-      if (sortBy === 'utilization') {
+      if (sortBy === "utilization") {
         return b.utilizationPercent - a.utilizationPercent;
       }
       return a.memberName.localeCompare(b.memberName);
@@ -144,13 +159,13 @@ export function WorkloadDashboard({
   }, [workloadData, sortBy]);
 
   // Handle period change
-  const handlePeriodChange = (value: '7d' | '14d' | '30d') => {
+  const handlePeriodChange = (value: "7d" | "14d" | "30d") => {
     setSelectedPeriod(value);
     onPeriodChange?.(value);
   };
 
   return (
-    <div className={cn('space-y-6', className)}>
+    <div className={cn("space-y-6", className)}>
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -203,7 +218,7 @@ export function WorkloadDashboard({
           description={
             summaryStats.overloadedCount > 0
               ? `${summaryStats.overloadedCount} en surcharge`
-              : 'Charge \u00e9quilibr\u00e9e'
+              : "Charge \u00e9quilibr\u00e9e"
           }
           alert={summaryStats.overloadedCount > 0}
         />
@@ -214,7 +229,7 @@ export function WorkloadDashboard({
           description={
             summaryStats.underutilizedCount > 0
               ? `${summaryStats.underutilizedCount} sous-utilis\u00e9s`
-              : 'Bien r\u00e9partie'
+              : "Bien r\u00e9partie"
           }
         />
       </div>
@@ -224,8 +239,9 @@ export function WorkloadDashboard({
         <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 text-destructive">
           <AlertTriangle className="h-5 w-5" />
           <span className="text-sm font-medium">
-            {summaryStats.overloadedCount} membre{summaryStats.overloadedCount > 1 ? 's' : ''} en
-            surcharge (&gt;120% d'utilisation)
+            {summaryStats.overloadedCount} membre
+            {summaryStats.overloadedCount > 1 ? "s" : ""} en surcharge (&gt;120%
+            d'utilisation)
           </span>
         </div>
       )}
@@ -235,7 +251,10 @@ export function WorkloadDashboard({
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
             <CardTitle className="text-base">D\u00e9tail par membre</CardTitle>
-            <Select value={sortBy} onValueChange={(v) => setSortBy(v as 'name' | 'utilization')}>
+            <Select
+              value={sortBy}
+              onValueChange={(v) => setSortBy(v as "name" | "utilization")}
+            >
               <SelectTrigger className="w-[160px] h-8">
                 <SelectValue />
               </SelectTrigger>
@@ -294,13 +313,13 @@ function SummaryCard({
   alert,
 }: SummaryCardProps) {
   return (
-    <Card className={cn(alert && 'border-destructive/50')}>
+    <Card className={cn(alert && "border-destructive/50")}>
       <CardContent className="p-4">
         <div className="flex items-center justify-between">
           <span className="text-sm text-muted-foreground">{title}</span>
-          <Icon className={cn('h-4 w-4', color || 'text-muted-foreground')} />
+          <Icon className={cn("h-4 w-4", color || "text-muted-foreground")} />
         </div>
-        <div className={cn('mt-2 text-2xl font-bold', color)}>{value}</div>
+        <div className={cn("mt-2 text-2xl font-bold", color)}>{value}</div>
         <p className="mt-1 text-xs text-muted-foreground">{description}</p>
       </CardContent>
     </Card>
@@ -319,13 +338,14 @@ interface WorkloadRowProps {
 function WorkloadRow({ data, onClick }: WorkloadRowProps) {
   const TrendIcon = TREND_ICONS[data.trend];
   const utilizationColor = getUtilizationColor(data.utilizationPercent);
-  const isOverloaded = data.utilizationPercent > UTILIZATION_THRESHOLDS.overload;
+  const isOverloaded =
+    data.utilizationPercent > UTILIZATION_THRESHOLDS.overload;
 
   return (
     <div
       className={cn(
-        'flex items-center gap-4 p-3 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors',
-        isOverloaded && 'bg-destructive/5'
+        "flex items-center gap-4 p-3 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors",
+        isOverloaded && "bg-destructive/5",
       )}
       onClick={onClick}
     >
@@ -334,9 +354,9 @@ function WorkloadRow({ data, onClick }: WorkloadRowProps) {
         <AvatarImage src={data.avatarUrl} alt={data.memberName} />
         <AvatarFallback>
           {data.memberName
-            .split(' ')
+            .split(" ")
             .map((n) => n[0])
-            .join('')
+            .join("")
             .toUpperCase()}
         </AvatarFallback>
       </Avatar>
@@ -353,7 +373,8 @@ function WorkloadRow({ data, onClick }: WorkloadRowProps) {
         </div>
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <span>
-            {Math.round(data.scheduledHours)}h / {Math.round(data.capacityHours)}h
+            {Math.round(data.scheduledHours)}h /{" "}
+            {Math.round(data.capacityHours)}h
           </span>
           <span>\u00b7</span>
           <WorkloadBreakdownMini breakdown={data.breakdown} />
@@ -363,7 +384,7 @@ function WorkloadRow({ data, onClick }: WorkloadRowProps) {
       {/* Utilization progress */}
       <div className="w-40">
         <div className="flex items-center justify-between mb-1">
-          <span className={cn('text-sm font-medium', utilizationColor)}>
+          <span className={cn("text-sm font-medium", utilizationColor)}>
             {Math.round(data.utilizationPercent)}%
           </span>
           <TooltipProvider>
@@ -371,21 +392,21 @@ function WorkloadRow({ data, onClick }: WorkloadRowProps) {
               <TooltipTrigger>
                 <TrendIcon
                   className={cn(
-                    'h-4 w-4',
-                    data.trend === 'up'
-                      ? 'text-red-500'
-                      : data.trend === 'down'
-                        ? 'text-green-500'
-                        : 'text-muted-foreground'
+                    "h-4 w-4",
+                    data.trend === "up"
+                      ? "text-red-500"
+                      : data.trend === "down"
+                        ? "text-green-500"
+                        : "text-muted-foreground",
                   )}
                 />
               </TooltipTrigger>
               <TooltipContent>
-                {data.trend === 'up' && data.trendPercent
+                {data.trend === "up" && data.trendPercent
                   ? `+${data.trendPercent}% vs p\u00e9riode pr\u00e9c\u00e9dente`
-                  : data.trend === 'down' && data.trendPercent
+                  : data.trend === "down" && data.trendPercent
                     ? `${data.trendPercent}% vs p\u00e9riode pr\u00e9c\u00e9dente`
-                    : 'Stable'}
+                    : "Stable"}
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
@@ -394,9 +415,9 @@ function WorkloadRow({ data, onClick }: WorkloadRowProps) {
           value={Math.min(data.utilizationPercent, 150)}
           max={150}
           className={cn(
-            'h-2',
+            "h-2",
             data.utilizationPercent > UTILIZATION_THRESHOLDS.overload &&
-              '[&>div]:bg-destructive'
+              "[&>div]:bg-destructive",
           )}
         />
       </div>
@@ -416,20 +437,24 @@ interface WorkloadBreakdownMiniProps {
 }
 
 function WorkloadBreakdownMini({ breakdown }: WorkloadBreakdownMiniProps) {
-  const total = breakdown.meetings + breakdown.focusTime + breakdown.tasks + breakdown.other;
+  const total =
+    breakdown.meetings +
+    breakdown.focusTime +
+    breakdown.tasks +
+    breakdown.other;
   if (total === 0) return null;
 
   return (
     <div className="flex items-center gap-1">
       {breakdown.meetings > 0 && (
-        <span className={cn('text-xs', BREAKDOWN_COLORS.meetings.text)}>
+        <span className={cn("text-xs", BREAKDOWN_COLORS.meetings.text)}>
           {Math.round((breakdown.meetings / total) * 100)}% r\u00e9u
         </span>
       )}
       {breakdown.focusTime > 0 && (
         <>
           <span className="text-muted-foreground">\u00b7</span>
-          <span className={cn('text-xs', BREAKDOWN_COLORS.focusTime.text)}>
+          <span className={cn("text-xs", BREAKDOWN_COLORS.focusTime.text)}>
             {Math.round((breakdown.focusTime / total) * 100)}% focus
           </span>
         </>
@@ -453,7 +478,9 @@ function WorkloadBarChart({ data, maxHours = 50 }: WorkloadBarChartProps) {
 
         return (
           <div key={item.memberId} className="flex items-center gap-3">
-            <div className="w-24 truncate text-sm">{item.memberName.split(' ')[0]}</div>
+            <div className="w-24 truncate text-sm">
+              {item.memberName.split(" ")[0]}
+            </div>
             <div className="flex-1 relative h-6 bg-muted rounded">
               {/* Capacity marker */}
               <div
@@ -464,12 +491,12 @@ function WorkloadBarChart({ data, maxHours = 50 }: WorkloadBarChartProps) {
               {/* Scheduled bar */}
               <div
                 className={cn(
-                  'absolute top-0 bottom-0 left-0 rounded transition-all',
+                  "absolute top-0 bottom-0 left-0 rounded transition-all",
                   item.utilizationPercent > UTILIZATION_THRESHOLDS.overload
-                    ? 'bg-destructive'
+                    ? "bg-destructive"
                     : item.utilizationPercent > UTILIZATION_THRESHOLDS.high
-                      ? 'bg-yellow-500'
-                      : 'bg-primary'
+                      ? "bg-yellow-500"
+                      : "bg-primary",
                 )}
                 style={{ width: `${barWidth}%` }}
               />
@@ -526,9 +553,9 @@ export function WorkloadDetail({ data, onClose }: WorkloadDetailProps) {
           <AvatarImage src={data.avatarUrl} alt={data.memberName} />
           <AvatarFallback className="text-lg">
             {data.memberName
-              .split(' ')
+              .split(" ")
               .map((n) => n[0])
-              .join('')
+              .join("")
               .toUpperCase()}
           </AvatarFallback>
         </Avatar>
@@ -544,7 +571,12 @@ export function WorkloadDetail({ data, onClose }: WorkloadDetailProps) {
       <div className="grid grid-cols-2 gap-4">
         <div className="p-3 rounded-lg bg-muted/50">
           <p className="text-xs text-muted-foreground">Utilisation</p>
-          <p className={cn('text-2xl font-bold', getUtilizationColor(data.utilizationPercent))}>
+          <p
+            className={cn(
+              "text-2xl font-bold",
+              getUtilizationColor(data.utilizationPercent),
+            )}
+          >
             {Math.round(data.utilizationPercent)}%
           </p>
         </div>
@@ -575,7 +607,7 @@ export function WorkloadDetail({ data, onClose }: WorkloadDetailProps) {
                 </div>
                 <div className="h-2 bg-muted rounded-full overflow-hidden">
                   <div
-                    className={cn('h-full transition-all', config.bg)}
+                    className={cn("h-full transition-all", config.bg)}
                     style={{ width: `${percent}%` }}
                   />
                 </div>
@@ -591,29 +623,29 @@ export function WorkloadDetail({ data, onClose }: WorkloadDetailProps) {
         <div className="flex items-center gap-2">
           {React.createElement(TREND_ICONS[data.trend], {
             className: cn(
-              'h-4 w-4',
-              data.trend === 'up'
-                ? 'text-red-500'
-                : data.trend === 'down'
-                  ? 'text-green-500'
-                  : 'text-muted-foreground'
+              "h-4 w-4",
+              data.trend === "up"
+                ? "text-red-500"
+                : data.trend === "down"
+                  ? "text-green-500"
+                  : "text-muted-foreground",
             ),
           })}
           <span
             className={cn(
-              'text-sm font-medium',
-              data.trend === 'up'
-                ? 'text-red-500'
-                : data.trend === 'down'
-                  ? 'text-green-500'
-                  : 'text-muted-foreground'
+              "text-sm font-medium",
+              data.trend === "up"
+                ? "text-red-500"
+                : data.trend === "down"
+                  ? "text-green-500"
+                  : "text-muted-foreground",
             )}
           >
-            {data.trend === 'up' && data.trendPercent
+            {data.trend === "up" && data.trendPercent
               ? `+${data.trendPercent}%`
-              : data.trend === 'down' && data.trendPercent
+              : data.trend === "down" && data.trendPercent
                 ? `${data.trendPercent}%`
-                : 'Stable'}
+                : "Stable"}
           </span>
         </div>
       </div>
@@ -626,27 +658,30 @@ export function WorkloadDetail({ data, onClose }: WorkloadDetailProps) {
 // ============================================================================
 
 function getUtilizationColor(percent: number): string {
-  if (percent > UTILIZATION_THRESHOLDS.overload) return 'text-destructive';
-  if (percent > UTILIZATION_THRESHOLDS.high) return 'text-yellow-600 dark:text-yellow-500';
-  if (percent < UTILIZATION_THRESHOLDS.low) return 'text-blue-600 dark:text-blue-500';
-  return 'text-green-600 dark:text-green-500';
+  if (percent > UTILIZATION_THRESHOLDS.overload) return "text-destructive";
+  if (percent > UTILIZATION_THRESHOLDS.high)
+    return "text-yellow-600 dark:text-yellow-500";
+  if (percent < UTILIZATION_THRESHOLDS.low)
+    return "text-blue-600 dark:text-blue-500";
+  return "text-green-600 dark:text-green-500";
 }
 
 function getUtilizationLabel(percent: number): string {
-  if (percent > UTILIZATION_THRESHOLDS.overload) return 'Surcharge d\u00e9tect\u00e9e';
-  if (percent > UTILIZATION_THRESHOLDS.high) return 'Charge \u00e9lev\u00e9e';
-  if (percent < UTILIZATION_THRESHOLDS.low) return 'Sous-utilisation';
-  return 'Charge optimale';
+  if (percent > UTILIZATION_THRESHOLDS.overload)
+    return "Surcharge d\u00e9tect\u00e9e";
+  if (percent > UTILIZATION_THRESHOLDS.high) return "Charge \u00e9lev\u00e9e";
+  if (percent < UTILIZATION_THRESHOLDS.low) return "Sous-utilisation";
+  return "Charge optimale";
 }
 
 function formatDateRange(range: DateRange): string {
-  const start = range.start.toLocaleDateString('fr-FR', {
-    day: 'numeric',
-    month: 'short',
+  const start = range.start.toLocaleDateString("fr-FR", {
+    day: "numeric",
+    month: "short",
   });
-  const end = range.end.toLocaleDateString('fr-FR', {
-    day: 'numeric',
-    month: 'short',
+  const end = range.end.toLocaleDateString("fr-FR", {
+    day: "numeric",
+    month: "short",
   });
   return `${start} - ${end}`;
 }
@@ -658,13 +693,17 @@ function formatDateRange(range: DateRange): string {
 export async function fetchWorkloadData(
   members: TeamMember[],
   start: Date,
-  end: Date
+  end: Date,
 ): Promise<WorkloadData[]> {
   const memberIds = members.map((m) => m.id);
   if (memberIds.length === 0) return [];
 
   try {
-    const res = await timeItemsApi.queryUsersEvents(memberIds, start.toISOString(), end.toISOString());
+    const res = await timeItemsApi.queryUsersEvents(
+      memberIds,
+      start.toISOString(),
+      end.toISOString(),
+    );
     const items = res.data.items;
 
     return members.map((member) => {
@@ -681,18 +720,22 @@ export async function fetchWorkloadData(
         const durationMin = item.duration_minutes || 60; // default 1h
         const durationHrs = durationMin / 60;
 
-        if (item.item_type === 'meeting' || item.item_type === 'event') {
+        if (item.item_type === "meeting" || item.item_type === "event") {
           meetingsHours += durationHrs;
-        } else if (item.item_type === 'task') {
+        } else if (item.item_type === "task") {
           tasksHours += durationHrs;
-        } else if (item.item_type === 'block' && item.title.toLowerCase().includes('focus')) {
+        } else if (
+          item.item_type === "block" &&
+          item.title.toLowerCase().includes("focus")
+        ) {
           focusHours += durationHrs;
         } else {
           otherHours += durationHrs;
         }
       });
 
-      const scheduledHours = meetingsHours + focusHours + tasksHours + otherHours;
+      const scheduledHours =
+        meetingsHours + focusHours + tasksHours + otherHours;
       const capacityHours = 40; // Default capacity per week, could be adjusted by DateRange
       const utilizationPercent = (scheduledHours / capacityHours) * 100;
 
@@ -710,13 +753,12 @@ export async function fetchWorkloadData(
           tasks: tasksHours,
           other: otherHours,
         },
-        trend: 'stable', // Real historical comparison would require another query
+        trend: "stable", // Real historical comparison would require another query
         trendPercent: 0,
       };
     });
   } catch (error) {
-    console.error('Failed to fetch workload data:', error);
+    console.error("Failed to fetch workload data:", error);
     return [];
   }
 }
-

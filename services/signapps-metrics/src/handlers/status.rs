@@ -205,7 +205,7 @@ async fn probe_service(name: &str, port: u16) -> ServiceStatus {
                 latency_ms: None,
                 checked_at: Utc::now(),
             };
-        }
+        },
     };
 
     match client.get(&url).send().await {
@@ -223,7 +223,7 @@ async fn probe_service(name: &str, port: u16) -> ServiceStatus {
                 latency_ms: Some(latency),
                 checked_at: Utc::now(),
             }
-        }
+        },
         Err(_) => ServiceStatus {
             name: name.to_string(),
             port,
@@ -385,12 +385,11 @@ pub async fn list_incidents(State(state): State<AppState>) -> Result<Json<Vec<In
         tracing::warn!("status ensure_tables failed: {e}");
     }
 
-    let incidents = sqlx::query_as::<_, Incident>(
-        "SELECT * FROM status.incidents ORDER BY created_at DESC",
-    )
-    .fetch_all(state.pool.inner())
-    .await
-    .map_err(|e| Error::Internal(format!("list incidents: {e}")))?;
+    let incidents =
+        sqlx::query_as::<_, Incident>("SELECT * FROM status.incidents ORDER BY created_at DESC")
+            .fetch_all(state.pool.inner())
+            .await
+            .map_err(|e| Error::Internal(format!("list incidents: {e}")))?;
 
     Ok(Json(incidents))
 }
@@ -429,7 +428,9 @@ pub async fn create_incident(
 ) -> Result<(StatusCode, Json<Incident>)> {
     // Validate
     if payload.title.trim().is_empty() {
-        return Err(Error::Validation("Incident title cannot be empty".to_string()));
+        return Err(Error::Validation(
+            "Incident title cannot be empty".to_string(),
+        ));
     }
 
     if let Err(e) = ensure_tables(&state.pool).await {
@@ -437,7 +438,9 @@ pub async fn create_incident(
     }
 
     let severity = payload.severity.unwrap_or_else(|| "minor".to_string());
-    let status = payload.status.unwrap_or_else(|| "investigating".to_string());
+    let status = payload
+        .status
+        .unwrap_or_else(|| "investigating".to_string());
     let affected = payload.affected_services.unwrap_or_default();
 
     let incident = sqlx::query_as::<_, Incident>(

@@ -59,7 +59,7 @@ export const useCommandBarStore = create<CommandBarState>()(
         set((state) => {
           // Remove if already exists
           const filtered = state.recentItems.filter(
-            (item) => item.block.id !== block.id
+            (item) => item.block.id !== block.id,
           );
           // Add to front
           const newItems = [
@@ -107,6 +107,6 @@ export const useCommandBarStore = create<CommandBarState>()(
         favorites: state.favorites,
         // Don't persist commandHistory (too large)
       }),
-    }
-  )
+    },
+  ),
 );

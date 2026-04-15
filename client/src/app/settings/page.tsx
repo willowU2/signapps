@@ -1,22 +1,22 @@
-'use client';
+"use client";
 
-import { SpinnerInfinity } from 'spinners-react';
+import { SpinnerInfinity } from "spinners-react";
 
-import { useEffect, useState, useCallback } from 'react';
-import { usePageTitle } from '@/hooks/use-page-title';
-import { useSearchParams } from 'next/navigation';
-import { AppLayout } from '@/components/layout/app-layout';
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
-import { EmailSignatureEditor } from '@/components/email-signature-editor';
-import { DataTableSkeleton } from '@/components/ui/skeleton-loader';
+import { useEffect, useState, useCallback } from "react";
+import { usePageTitle } from "@/hooks/use-page-title";
+import { useSearchParams } from "next/navigation";
+import { AppLayout } from "@/components/layout/app-layout";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { EmailSignatureEditor } from "@/components/email-signature-editor";
+import { DataTableSkeleton } from "@/components/ui/skeleton-loader";
 import {
   Table,
   TableBody,
@@ -24,14 +24,14 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
+} from "@/components/ui/table";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -41,22 +41,38 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import { Plus, Link as LinkIcon, MoreVertical, Users, Pencil, Trash2, Webhook, Play, Pause, TestTube2, ExternalLink, Settings, Check, Globe, Palette } from 'lucide-react';
+} from "@/components/ui/alert-dialog";
+import {
+  Plus,
+  Link as LinkIcon,
+  MoreVertical,
+  Users,
+  Pencil,
+  Trash2,
+  Webhook,
+  Play,
+  Pause,
+  TestTube2,
+  ExternalLink,
+  Settings,
+  Check,
+  Globe,
+  Palette,
+} from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { authApi, groupsApi, LdapConfig, Group } from '@/lib/api';
-import { api } from '@/lib/api';
-import { tenantApi, tenantsApi, Tenant } from '@/lib/api/tenant';
-import { DataTable } from '@/components/ui/data-table';
-import { GroupSheet } from '@/components/settings/group-sheet';
-import { WebhookSheet } from '@/components/settings/webhook-sheet';
-import { ColumnDef } from '@tanstack/react-table';
+} from "@/components/ui/dropdown-menu";
+import { authApi, groupsApi, LdapConfig, Group } from "@/lib/api";
+import { api } from "@/lib/api";
+import { tenantApi, tenantsApi, Tenant } from "@/lib/api/tenant";
+import { DataTable } from "@/components/ui/data-table";
+import { GroupSheet } from "@/components/settings/group-sheet";
+import { WebhookSheet } from "@/components/settings/webhook-sheet";
+import { ColumnDef } from "@tanstack/react-table";
 
 interface WebhookConfig {
   id: string;
@@ -71,44 +87,53 @@ interface WebhookConfig {
 }
 
 const WEBHOOK_EVENTS = [
-  'user.login',
-  'user.logout',
-  'user.created',
-  'user.deleted',
-  'container.created',
-  'container.started',
-  'container.stopped',
-  'container.deleted',
-  'storage.upload',
-  'storage.delete',
-  'route.created',
-  'route.updated',
-  'route.deleted',
+  "user.login",
+  "user.logout",
+  "user.created",
+  "user.deleted",
+  "container.created",
+  "container.started",
+  "container.stopped",
+  "container.deleted",
+  "storage.upload",
+  "storage.delete",
+  "route.created",
+  "route.updated",
+  "route.deleted",
 ];
-import { toast } from 'sonner';
-import { Textarea } from '@/components/ui/textarea';
-import { AiRoutingSettings } from '@/components/settings/ai-routing-settings';
-import { ProfileSettings } from '@/components/settings/profile-settings';
-import { AppearanceSettings } from '@/components/settings/appearance-settings';
-import { DyslexiaFontToggle } from '@/components/accessibility/dyslexia-font';
-import { TextToSpeech } from '@/components/accessibility/text-to-speech';
-import { ScreenMagnifier } from '@/components/accessibility/screen-magnifier';
-import { FocusOrderValidator } from '@/components/accessibility/focus-order-validator';
-import { VoiceNavigation } from '@/components/accessibility/voice-navigation';
-import { ColorBlindnessFilters } from '@/components/accessibility/color-blindness';
-import { ReduceMotionToggle } from '@/components/accessibility/reduce-motion';
-import { ReadingGuideToggle } from '@/components/accessibility/reading-guide';
-import { EnhancedCursorToggle } from '@/components/accessibility/enhanced-cursor';
-import { ComfortableReadingConfig } from '@/components/accessibility/comfortable-reading';
-import { HighContrastFocusToggle } from '@/components/accessibility/high-contrast-focus';
-import { CustomCssEditor } from '@/components/settings/CustomCssEditor';
-import { BrandColorSettings } from '@/components/settings/BrandColorSettings';
-import { ThemePresetsLibrary } from '@/components/settings/ThemePresetsLibrary';
-import { ModuleDarkModeSettings } from '@/components/settings/ModuleDarkMode';
-import { InstanceBranding } from '@/components/settings/InstanceBranding';
-import { DensityModeToggle } from '@/components/settings/DensityModeToggle';
-import { useLocale, SUPPORTED_LANGUAGES, FlagIcon } from '@/components/i18n/language-switcher';
-import { Card as _Card, CardContent as _CardContent, CardHeader as _CardHeader, CardTitle as _CardTitle } from '@/components/ui/card';
+import { toast } from "sonner";
+import { Textarea } from "@/components/ui/textarea";
+import { AiRoutingSettings } from "@/components/settings/ai-routing-settings";
+import { ProfileSettings } from "@/components/settings/profile-settings";
+import { AppearanceSettings } from "@/components/settings/appearance-settings";
+import { DyslexiaFontToggle } from "@/components/accessibility/dyslexia-font";
+import { TextToSpeech } from "@/components/accessibility/text-to-speech";
+import { ScreenMagnifier } from "@/components/accessibility/screen-magnifier";
+import { FocusOrderValidator } from "@/components/accessibility/focus-order-validator";
+import { VoiceNavigation } from "@/components/accessibility/voice-navigation";
+import { ColorBlindnessFilters } from "@/components/accessibility/color-blindness";
+import { ReduceMotionToggle } from "@/components/accessibility/reduce-motion";
+import { ReadingGuideToggle } from "@/components/accessibility/reading-guide";
+import { EnhancedCursorToggle } from "@/components/accessibility/enhanced-cursor";
+import { ComfortableReadingConfig } from "@/components/accessibility/comfortable-reading";
+import { HighContrastFocusToggle } from "@/components/accessibility/high-contrast-focus";
+import { CustomCssEditor } from "@/components/settings/CustomCssEditor";
+import { BrandColorSettings } from "@/components/settings/BrandColorSettings";
+import { ThemePresetsLibrary } from "@/components/settings/ThemePresetsLibrary";
+import { ModuleDarkModeSettings } from "@/components/settings/ModuleDarkMode";
+import { InstanceBranding } from "@/components/settings/InstanceBranding";
+import { DensityModeToggle } from "@/components/settings/DensityModeToggle";
+import {
+  useLocale,
+  SUPPORTED_LANGUAGES,
+  FlagIcon,
+} from "@/components/i18n/language-switcher";
+import {
+  Card as _Card,
+  CardContent as _CardContent,
+  CardHeader as _CardHeader,
+  CardTitle as _CardTitle,
+} from "@/components/ui/card";
 
 function LanguageSettingsTab() {
   const { locale, setLocale } = useLocale();
@@ -119,7 +144,7 @@ function LanguageSettingsTab() {
         {/* Glow effect in background */}
         <div className="absolute top-0 right-0 p-32 bg-primary/10 blur-[120px] rounded-full pointer-events-none" />
         <div className="absolute bottom-0 left-0 p-32 bg-secondary/10 blur-[120px] rounded-full pointer-events-none" />
-        
+
         <_CardHeader className="relative z-10">
           <_CardTitle className="text-2xl font-bold flex items-center gap-3">
             <span className="p-2.5 bg-primary/10 text-primary rounded-xl shadow-inner inline-flex">
@@ -128,12 +153,14 @@ function LanguageSettingsTab() {
             Interface Language
           </_CardTitle>
           <p className="text-sm text-muted-foreground mt-2 max-w-2xl">
-            Select your preferred display language. RTL languages automatically flip the layout direction for an authentic, culturally accurate experience.
+            Select your preferred display language. RTL languages automatically
+            flip the layout direction for an authentic, culturally accurate
+            experience.
           </p>
         </_CardHeader>
         <_CardContent className="space-y-6 relative z-10">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {SUPPORTED_LANGUAGES.map(l => {
+            {SUPPORTED_LANGUAGES.map((l) => {
               const isActive = locale === l.code;
               return (
                 <button
@@ -141,15 +168,19 @@ function LanguageSettingsTab() {
                   onClick={() => setLocale(l.code)}
                   className={`
                     group relative p-5 rounded-2xl border-2 transition-all duration-300 ease-out text-left flex flex-col items-start gap-4 hover:-translate-y-1 hover:shadow-xl overflow-hidden
-                    ${isActive 
-                      ? 'border-primary bg-primary/5 shadow-primary/20 shadow-lg' 
-                      : 'border-transparent bg-background hover:border-primary/30 hover:bg-accent/50 ring-1 ring-border'
+                    ${
+                      isActive
+                        ? "border-primary bg-primary/5 shadow-primary/20 shadow-lg"
+                        : "border-transparent bg-background hover:border-primary/30 hover:bg-accent/50 ring-1 ring-border"
                     }
                   `}
                 >
                   <div className="flex items-center justify-between w-full relative z-10">
                     <div className="group-hover:scale-110 transition-transform duration-300 origin-bottom-left">
-                      <FlagIcon countryCode={l.countryCode} className="w-10 h-7" />
+                      <FlagIcon
+                        countryCode={l.countryCode}
+                        className="w-10 h-7"
+                      />
                     </div>
                     {isActive && (
                       <div className="h-7 w-7 rounded-full bg-primary flex items-center justify-center shadow-md animate-in zoom-in duration-300">
@@ -157,14 +188,18 @@ function LanguageSettingsTab() {
                       </div>
                     )}
                   </div>
-                  
+
                   <div className="flex flex-col mt-2 relative z-10">
                     <div className="flex items-center gap-2">
-                      <span className={`font-bold text-lg tracking-tight ${isActive ? 'text-primary' : 'text-foreground'}`}>
+                      <span
+                        className={`font-bold text-lg tracking-tight ${isActive ? "text-primary" : "text-foreground"}`}
+                      >
                         {l.label}
                       </span>
-                      {l.dir === 'rtl' && (
-                        <span className="text-[10px] font-black uppercase tracking-widest bg-orange-500/15 text-orange-600 px-2 py-0.5 rounded-full ring-1 ring-orange-500/20">RTL</span>
+                      {l.dir === "rtl" && (
+                        <span className="text-[10px] font-black uppercase tracking-widest bg-orange-500/15 text-orange-600 px-2 py-0.5 rounded-full ring-1 ring-orange-500/20">
+                          RTL
+                        </span>
                       )}
                     </div>
                     <span className="text-sm text-muted-foreground font-medium flex items-center gap-1 mt-0.5">
@@ -190,14 +225,14 @@ function LanguageSettingsTab() {
 }
 
 export default function SettingsPage() {
-  usePageTitle('Paramètres');
+  usePageTitle("Paramètres");
   // Support ?tab= query param for deep-linking (e.g. from /settings/webhooks redirect)
   const searchParams = useSearchParams();
-  const defaultTab = searchParams.get('tab') || 'users';
+  const defaultTab = searchParams.get("tab") || "users";
 
   // General tab state
   const [tenant, setTenant] = useState<Tenant | null>(null);
-  const [siteName, setSiteName] = useState('SignApps');
+  const [siteName, setSiteName] = useState("SignApps");
   const [maintenanceMode, setMaintenanceMode] = useState(false);
   const [generalSaving, setGeneralSaving] = useState(false);
 
@@ -207,15 +242,15 @@ export default function SettingsPage() {
   // LDAP config state
   const [ldapConfig, setLdapConfig] = useState<LdapConfig>({
     enabled: false,
-    url: '',
-    server_url: '',
-    bind_dn: '',
-    bind_password: '',
-    base_dn: '',
-    user_filter: '',
-    group_filter: '',
-    email_attribute: '',
-    display_name_attribute: '',
+    url: "",
+    server_url: "",
+    bind_dn: "",
+    bind_password: "",
+    base_dn: "",
+    user_filter: "",
+    group_filter: "",
+    email_attribute: "",
+    display_name_attribute: "",
     sync_interval_seconds: 3600,
   });
   const [ldapSaving, setLdapSaving] = useState(false);
@@ -225,7 +260,10 @@ export default function SettingsPage() {
   const [groupSheetOpen, setGroupSheetOpen] = useState(false);
   const [editingGroup, setEditingGroup] = useState<Group | null>(null);
   const [groupSaving, setGroupSaving] = useState(false);
-  const [deleteGroupDialog, setDeleteGroupDialog] = useState<{ open: boolean; group: Group | null }>({
+  const [deleteGroupDialog, setDeleteGroupDialog] = useState<{
+    open: boolean;
+    group: Group | null;
+  }>({
     open: false,
     group: null,
   });
@@ -234,9 +272,14 @@ export default function SettingsPage() {
   const [webhooks, setWebhooks] = useState<WebhookConfig[]>([]);
   const [webhooksLoading, setWebhooksLoading] = useState(true);
   const [webhookSheetOpen, setWebhookSheetOpen] = useState(false);
-  const [editingWebhook, setEditingWebhook] = useState<WebhookConfig | null>(null);
+  const [editingWebhook, setEditingWebhook] = useState<WebhookConfig | null>(
+    null,
+  );
   const [webhookSaving, setWebhookSaving] = useState(false);
-  const [deleteWebhookDialog, setDeleteWebhookDialog] = useState<{ open: boolean; webhook: WebhookConfig | null }>({
+  const [deleteWebhookDialog, setDeleteWebhookDialog] = useState<{
+    open: boolean;
+    webhook: WebhookConfig | null;
+  }>({
     open: false,
     webhook: null,
   });
@@ -280,7 +323,7 @@ export default function SettingsPage() {
   const fetchWebhooks = useCallback(async () => {
     setWebhooksLoading(true);
     try {
-      const response = await api.get<WebhookConfig[]>('/webhooks');
+      const response = await api.get<WebhookConfig[]>("/webhooks");
       setWebhooks(response.data || []);
     } catch {
       setWebhooks([]);
@@ -300,7 +343,7 @@ export default function SettingsPage() {
     setLdapSaving(true);
     try {
       await authApi.ldapUpdateConfig(ldapConfig);
-      toast.success('LDAP configuration saved');
+      toast.success("LDAP configuration saved");
     } catch {
       toast.error("Impossible d'enregistrer LDAP configuration");
     } finally {
@@ -313,12 +356,12 @@ export default function SettingsPage() {
     try {
       const response = await authApi.ldapTestConnection();
       if (response.data.success) {
-        toast.success('LDAP connection successful');
+        toast.success("LDAP connection successful");
       } else {
-        toast.error(response.data.message || 'LDAP connection failed');
+        toast.error(response.data.message || "LDAP connection failed");
       }
     } catch {
-      toast.error('Failed to test LDAP connection');
+      toast.error("Failed to test LDAP connection");
     } finally {
       setLdapTesting(false);
     }
@@ -326,7 +369,7 @@ export default function SettingsPage() {
 
   const handleGeneralSave = async () => {
     if (!tenant) {
-      toast.error('Tenant not loaded');
+      toast.error("Tenant not loaded");
       return;
     }
     setGeneralSaving(true);
@@ -336,7 +379,7 @@ export default function SettingsPage() {
         is_active: !maintenanceMode,
       });
       setTenant(response.data);
-      toast.success('General settings saved successfully');
+      toast.success("General settings saved successfully");
     } catch {
       toast.error("Impossible d'enregistrer general settings");
     } finally {
@@ -354,10 +397,10 @@ export default function SettingsPage() {
     try {
       if (editingGroup) {
         await groupsApi.update(editingGroup.id, data);
-        toast.success('Group updated successfully');
+        toast.success("Group updated successfully");
       } else {
         await groupsApi.create(data);
-        toast.success('Group created successfully');
+        toast.success("Group created successfully");
       }
       setGroupSheetOpen(false);
       fetchGroups();
@@ -382,21 +425,26 @@ export default function SettingsPage() {
     {
       accessorKey: "description",
       header: "Description",
-      cell: ({ row }) => <span className="text-muted-foreground">{row.original.description || '-'}</span>,
+      cell: ({ row }) => (
+        <span className="text-muted-foreground">
+          {row.original.description || "-"}
+        </span>
+      ),
     },
     {
       accessorKey: "member_count",
       header: "Members",
       cell: ({ row }) => (
         <Badge variant="secondary">
-          {row.original.member_count} member{row.original.member_count !== 1 ? 's' : ''}
+          {row.original.member_count} member
+          {row.original.member_count !== 1 ? "s" : ""}
         </Badge>
       ),
     },
     {
       accessorKey: "source",
       header: "Source",
-      cell: ({ row }) => (
+      cell: ({ row }) =>
         row.original.ldap_dn ? (
           <Badge variant="outline">
             <LinkIcon className="mr-1 h-3 w-3" />
@@ -404,8 +452,7 @@ export default function SettingsPage() {
           </Badge>
         ) : (
           <Badge variant="outline">Local</Badge>
-        )
-      ),
+        ),
     },
     {
       id: "actions",
@@ -423,7 +470,7 @@ export default function SettingsPage() {
                 <Pencil className="mr-2 h-4 w-4" />
                 Edit
               </DropdownMenuItem>
-{/* Member management retiré - feature non implémentée (NO DEAD ENDS) */}
+              {/* Member management retiré - feature non implémentée (NO DEAD ENDS) */}
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 className="text-destructive"
@@ -445,11 +492,11 @@ export default function SettingsPage() {
 
     try {
       await groupsApi.delete(deleteGroupDialog.group.id);
-      toast.success('Group deleted successfully');
+      toast.success("Group deleted successfully");
       setDeleteGroupDialog({ open: false, group: null });
       fetchGroups();
     } catch {
-      toast.error('Impossible de supprimer group');
+      toast.error("Impossible de supprimer group");
     }
   };
 
@@ -459,15 +506,20 @@ export default function SettingsPage() {
     setWebhookSheetOpen(true);
   };
 
-  const handleSaveWebhook = async (data: Omit<WebhookConfig, "id" | "enabled" | "last_triggered" | "last_status" | "created_at">) => {
+  const handleSaveWebhook = async (
+    data: Omit<
+      WebhookConfig,
+      "id" | "enabled" | "last_triggered" | "last_status" | "created_at"
+    >,
+  ) => {
     setWebhookSaving(true);
     try {
       if (editingWebhook) {
         await api.put(`/webhooks/${editingWebhook.id}`, data);
-        toast.success('Webhook updated successfully');
+        toast.success("Webhook updated successfully");
       } else {
-        await api.post('/webhooks', data);
-        toast.success('Webhook created successfully');
+        await api.post("/webhooks", data);
+        toast.success("Webhook created successfully");
       }
       setWebhookSheetOpen(false);
       fetchWebhooks();
@@ -481,20 +533,20 @@ export default function SettingsPage() {
   const handleToggleWebhook = async (webhook: WebhookConfig) => {
     try {
       await api.put(`/webhooks/${webhook.id}`, { enabled: !webhook.enabled });
-      toast.success(`Webhook ${webhook.enabled ? 'disabled' : 'enabled'}`);
+      toast.success(`Webhook ${webhook.enabled ? "disabled" : "enabled"}`);
       fetchWebhooks();
     } catch {
-      toast.error('Impossible de mettre à jour webhook');
+      toast.error("Impossible de mettre à jour webhook");
     }
   };
 
   const handleTestWebhook = async (webhook: WebhookConfig) => {
     try {
       await api.post(`/webhooks/${webhook.id}/test`);
-      toast.success('Test webhook sent');
+      toast.success("Test webhook sent");
       fetchWebhooks();
     } catch {
-      toast.error('Failed to send test webhook');
+      toast.error("Failed to send test webhook");
     }
   };
 
@@ -503,11 +555,11 @@ export default function SettingsPage() {
 
     try {
       await api.delete(`/webhooks/${deleteWebhookDialog.webhook.id}`);
-      toast.success('Webhook deleted successfully');
+      toast.success("Webhook deleted successfully");
       setDeleteWebhookDialog({ open: false, webhook: null });
       fetchWebhooks();
     } catch {
-      toast.error('Impossible de supprimer webhook');
+      toast.error("Impossible de supprimer webhook");
     }
   };
 
@@ -515,13 +567,12 @@ export default function SettingsPage() {
     {
       accessorKey: "enabled",
       header: "Status",
-      cell: ({ row }) => (
+      cell: ({ row }) =>
         row.original.enabled ? (
           <Badge className="bg-green-500/10 text-green-600">Active</Badge>
         ) : (
           <Badge variant="secondary">Disabled</Badge>
-        )
-      ),
+        ),
     },
     {
       accessorKey: "name",
@@ -547,7 +598,8 @@ export default function SettingsPage() {
       header: "Events",
       cell: ({ row }) => (
         <Badge variant="outline">
-          {row.original.events.length} event{row.original.events.length !== 1 ? 's' : ''}
+          {row.original.events.length} event
+          {row.original.events.length !== 1 ? "s" : ""}
         </Badge>
       ),
     },
@@ -559,15 +611,16 @@ export default function SettingsPage() {
         return (
           <span className="text-muted-foreground whitespace-nowrap">
             {webhook.last_triggered
-              ? new Date(webhook.last_triggered).toLocaleString('fr-FR')
-              : 'Never'}
+              ? new Date(webhook.last_triggered).toLocaleString("fr-FR")
+              : "Never"}
             {webhook.last_status && (
               <Badge
                 variant="outline"
-                className={`ml-2 ${webhook.last_status >= 200 && webhook.last_status < 300
-                    ? 'text-green-600'
-                    : 'text-red-600'
-                  }`}
+                className={`ml-2 ${
+                  webhook.last_status >= 200 && webhook.last_status < 300
+                    ? "text-green-600"
+                    : "text-red-600"
+                }`}
               >
                 {webhook.last_status}
               </Badge>
@@ -653,9 +706,12 @@ export default function SettingsPage() {
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-12 text-center">
                 <Settings className="h-12 w-12 text-muted-foreground mb-4" />
-                <h3 className="text-lg font-semibold">Preferences utilisateur</h3>
+                <h3 className="text-lg font-semibold">
+                  Preferences utilisateur
+                </h3>
                 <p className="text-sm text-muted-foreground mt-1 mb-4">
-                  Langue, format de date, notifications, calendrier, editeur et bien plus.
+                  Langue, format de date, notifications, calendrier, editeur et
+                  bien plus.
                 </p>
                 <Link href="/settings/preferences">
                   <Button>
@@ -675,9 +731,12 @@ export default function SettingsPage() {
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-8 text-center">
                 <Palette className="h-12 w-12 text-muted-foreground mb-4" />
-                <h3 className="text-lg font-semibold">Personnalisation avancee</h3>
+                <h3 className="text-lg font-semibold">
+                  Personnalisation avancee
+                </h3>
                 <p className="text-sm text-muted-foreground mt-1 mb-4">
-                  Couleur primaire, taille de police, mode compact, coins arrondis et plus.
+                  Couleur primaire, taille de police, mode compact, coins
+                  arrondis et plus.
                 </p>
                 <Link href="/settings/appearance">
                   <Button>
@@ -723,7 +782,15 @@ export default function SettingsPage() {
                   />
                 </div>
                 <Button onClick={handleGeneralSave} disabled={generalSaving}>
-                  {generalSaving && <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />}
+                  {generalSaving && (
+                    <SpinnerInfinity
+                      size={24}
+                      secondaryColor="rgba(128,128,128,0.2)"
+                      color="currentColor"
+                      speed={120}
+                      className="mr-2 h-4 w-4 "
+                    />
+                  )}
                   Save Changes
                 </Button>
               </CardContent>
@@ -736,7 +803,8 @@ export default function SettingsPage() {
                 <Users className="h-12 w-12 text-muted-foreground mb-4" />
                 <h3 className="text-lg font-semibold">User Management</h3>
                 <p className="text-sm text-muted-foreground mt-1 mb-4">
-                  Manage user accounts, roles, and permissions from the dedicated Users page.
+                  Manage user accounts, roles, and permissions from the
+                  dedicated Users page.
                 </p>
                 <Link href="/users">
                   <Button>
@@ -777,8 +845,8 @@ export default function SettingsPage() {
             </Card>
 
             <p className="text-sm text-muted-foreground">
-              <LinkIcon className="mr-1 inline h-3 w-3" />
-              = Synced from LDAP/Active Directory
+              <LinkIcon className="mr-1 inline h-3 w-3" />= Synced from
+              LDAP/Active Directory
             </p>
           </TabsContent>
 
@@ -811,7 +879,10 @@ export default function SettingsPage() {
                       placeholder="ldap://dc.corp.local:389"
                       value={ldapConfig.server_url}
                       onChange={(e) =>
-                        setLdapConfig({ ...ldapConfig, server_url: e.target.value })
+                        setLdapConfig({
+                          ...ldapConfig,
+                          server_url: e.target.value,
+                        })
                       }
                     />
                   </div>
@@ -822,7 +893,10 @@ export default function SettingsPage() {
                       placeholder="CN=service,OU=Services,DC=corp,DC=local"
                       value={ldapConfig.bind_dn}
                       onChange={(e) =>
-                        setLdapConfig({ ...ldapConfig, bind_dn: e.target.value })
+                        setLdapConfig({
+                          ...ldapConfig,
+                          bind_dn: e.target.value,
+                        })
                       }
                     />
                   </div>
@@ -832,9 +906,12 @@ export default function SettingsPage() {
                       id="ldapBindPassword"
                       type="password"
                       placeholder="Service account password"
-                      value={ldapConfig.bind_password || ''}
+                      value={ldapConfig.bind_password || ""}
                       onChange={(e) =>
-                        setLdapConfig({ ...ldapConfig, bind_password: e.target.value })
+                        setLdapConfig({
+                          ...ldapConfig,
+                          bind_password: e.target.value,
+                        })
                       }
                     />
                   </div>
@@ -845,7 +922,10 @@ export default function SettingsPage() {
                       placeholder="DC=corp,DC=local"
                       value={ldapConfig.base_dn}
                       onChange={(e) =>
-                        setLdapConfig({ ...ldapConfig, base_dn: e.target.value })
+                        setLdapConfig({
+                          ...ldapConfig,
+                          base_dn: e.target.value,
+                        })
                       }
                     />
                   </div>
@@ -857,11 +937,27 @@ export default function SettingsPage() {
                     onClick={handleLdapTest}
                     disabled={ldapTesting || !ldapConfig.server_url}
                   >
-                    {ldapTesting && <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />}
+                    {ldapTesting && (
+                      <SpinnerInfinity
+                        size={24}
+                        secondaryColor="rgba(128,128,128,0.2)"
+                        color="currentColor"
+                        speed={120}
+                        className="mr-2 h-4 w-4 "
+                      />
+                    )}
                     Test Connection
                   </Button>
                   <Button onClick={handleLdapSave} disabled={ldapSaving}>
-                    {ldapSaving && <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />}
+                    {ldapSaving && (
+                      <SpinnerInfinity
+                        size={24}
+                        secondaryColor="rgba(128,128,128,0.2)"
+                        color="currentColor"
+                        speed={120}
+                        className="mr-2 h-4 w-4 "
+                      />
+                    )}
                     Save Configuration
                   </Button>
                 </div>
@@ -907,13 +1003,19 @@ export default function SettingsPage() {
               </CardHeader>
               <CardContent className="text-sm text-muted-foreground space-y-2">
                 <p>
-                  Webhooks allow external services to receive real-time notifications when events occur in SignApps.
+                  Webhooks allow external services to receive real-time
+                  notifications when events occur in SignApps.
                 </p>
                 <p>
-                  Each webhook can subscribe to multiple events. When an event occurs, SignApps will send a POST request to your URL with event details.
+                  Each webhook can subscribe to multiple events. When an event
+                  occurs, SignApps will send a POST request to your URL with
+                  event details.
                 </p>
                 <p>
-                  If you provide a secret, requests will include an HMAC-SHA256 signature in the <code className="bg-muted px-1 rounded">X-Signature</code> header.
+                  If you provide a secret, requests will include an HMAC-SHA256
+                  signature in the{" "}
+                  <code className="bg-muted px-1 rounded">X-Signature</code>{" "}
+                  header.
                 </p>
               </CardContent>
             </Card>
@@ -940,11 +1042,12 @@ export default function SettingsPage() {
                 <CardTitle>Accessibility</CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
-                
                 {/* 1. Visuel et Mouvement */}
                 <div className="space-y-4">
                   <h3 className="font-semibold text-lg text-primary flex items-center gap-2">
-                    <span className="w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center text-primary text-base">👁️</span>
+                    <span className="w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center text-primary text-base">
+                      👁️
+                    </span>
                     Visuel & Mouvement
                   </h3>
                   <div className="grid gap-6 pl-3 border-l-2 border-primary/10 ml-4 py-2">
@@ -957,7 +1060,9 @@ export default function SettingsPage() {
                 {/* 2. Confort de Lecture */}
                 <div className="space-y-4 pt-6 border-t">
                   <h3 className="font-semibold text-lg text-primary flex items-center gap-2">
-                    <span className="w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center text-primary text-base">📚</span>
+                    <span className="w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center text-primary text-base">
+                      📚
+                    </span>
                     Confort de Lecture
                   </h3>
                   <div className="grid gap-6 pl-3 border-l-2 border-primary/10 ml-4 py-2">
@@ -970,7 +1075,9 @@ export default function SettingsPage() {
                 {/* 3. Navigation & Saisie */}
                 <div className="space-y-4 pt-6 border-t">
                   <h3 className="font-semibold text-lg text-primary flex items-center gap-2">
-                    <span className="w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center text-primary text-base">⌨️</span>
+                    <span className="w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center text-primary text-base">
+                      ⌨️
+                    </span>
                     Navigation & Saisie
                   </h3>
                   <div className="grid gap-6 pl-3 border-l-2 border-primary/10 ml-4 py-2">
@@ -981,7 +1088,9 @@ export default function SettingsPage() {
                       <VoiceNavigation />
                     </div>
                     <div className="space-y-2">
-                      <p className="text-sm font-medium">Synthèse Vocale (Text-to-Speech)</p>
+                      <p className="text-sm font-medium">
+                        Synthèse Vocale (Text-to-Speech)
+                      </p>
                       <TextToSpeech />
                     </div>
                   </div>
@@ -990,17 +1099,20 @@ export default function SettingsPage() {
                 {/* Outils Développeur */}
                 <div className="space-y-4 pt-6 border-t">
                   <h3 className="font-semibold text-lg text-muted-foreground flex items-center gap-2">
-                    <span className="w-8 h-8 rounded-md bg-muted flex items-center justify-center text-muted-foreground text-base">🛠️</span>
+                    <span className="w-8 h-8 rounded-md bg-muted flex items-center justify-center text-muted-foreground text-base">
+                      🛠️
+                    </span>
                     Outils Développeur
                   </h3>
                   <div className="grid gap-6 pl-3 border-l-2 border-muted ml-4 py-2">
                     <div className="space-y-2">
-                      <p className="text-sm font-medium">Aperçu de la Séquence de Focus (Focus Order Validator)</p>
+                      <p className="text-sm font-medium">
+                        Aperçu de la Séquence de Focus (Focus Order Validator)
+                      </p>
                       <FocusOrderValidator />
                     </div>
                   </div>
                 </div>
-
               </CardContent>
             </Card>
           </TabsContent>
@@ -1024,8 +1136,9 @@ export default function SettingsPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Supprimer le groupe</AlertDialogTitle>
             <AlertDialogDescription>
-              Êtes-vous sûr de vouloir supprimer le groupe "{deleteGroupDialog.group?.name}" ?
-              Cela supprimera toutes les associations de membres. Cette action est irréversible.
+              Êtes-vous sûr de vouloir supprimer le groupe "
+              {deleteGroupDialog.group?.name}" ? Cela supprimera toutes les
+              associations de membres. Cette action est irréversible.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -1058,8 +1171,9 @@ export default function SettingsPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Supprimer le webhook</AlertDialogTitle>
             <AlertDialogDescription>
-              Êtes-vous sûr de vouloir supprimer le webhook "{deleteWebhookDialog.webhook?.name}" ?
-              Cette action est irréversible.
+              Êtes-vous sûr de vouloir supprimer le webhook "
+              {deleteWebhookDialog.webhook?.name}" ? Cette action est
+              irréversible.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

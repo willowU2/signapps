@@ -1,38 +1,44 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Lock, Eye, EyeOff, KeyRound } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useVaultStore } from '@/stores/vault-store';
+import { useState } from "react";
+import { Lock, Eye, EyeOff, KeyRound } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useVaultStore } from "@/stores/vault-store";
 
 // Retrieve connected user email from auth store
 function useCurrentUserEmail(): string {
   // Try to get from localStorage / auth store
-  if (typeof window !== 'undefined') {
+  if (typeof window !== "undefined") {
     try {
-      const authRaw = localStorage.getItem('auth-storage');
+      const authRaw = localStorage.getItem("auth-storage");
       if (authRaw) {
         const auth = JSON.parse(authRaw);
-        return auth?.state?.user?.email || auth?.state?.email || '';
+        return auth?.state?.user?.email || auth?.state?.email || "";
       }
     } catch {
       // ignore
     }
   }
-  return '';
+  return "";
 }
 
 export function VaultUnlock() {
   const { unlock, initialize, loading, error, clearError } = useVaultStore();
   const email = useCurrentUserEmail();
 
-  const [password, setPassword] = useState('');
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [mode, setMode] = useState<'unlock' | 'init'>('unlock');
+  const [mode, setMode] = useState<"unlock" | "init">("unlock");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,7 +46,7 @@ export function VaultUnlock() {
     clearError();
 
     try {
-      if (mode === 'init') {
+      if (mode === "init") {
         await initialize(password, email);
       } else {
         await unlock(password, email);
@@ -57,12 +63,14 @@ export function VaultUnlock() {
           <Lock className="h-8 w-8 text-emerald-500" />
         </div>
         <CardTitle className="text-xl">
-          {mode === 'unlock' ? 'Déverrouiller le coffre-fort' : 'Initialiser le coffre-fort'}
+          {mode === "unlock"
+            ? "Déverrouiller le coffre-fort"
+            : "Initialiser le coffre-fort"}
         </CardTitle>
         <CardDescription>
-          {mode === 'unlock'
-            ? 'Saisissez votre mot de passe maître pour accéder à vos secrets.'
-            : 'Choisissez un mot de passe maître pour votre nouveau coffre-fort.'}
+          {mode === "unlock"
+            ? "Saisissez votre mot de passe maître pour accéder à vos secrets."
+            : "Choisissez un mot de passe maître pour votre nouveau coffre-fort."}
         </CardDescription>
       </CardHeader>
 
@@ -79,11 +87,13 @@ export function VaultUnlock() {
             <div className="relative">
               <Input
                 id="vault-password"
-                type={showPassword ? 'text' : 'password'}
+                type={showPassword ? "text" : "password"}
                 placeholder="••••••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                autoComplete={mode === 'unlock' ? 'current-password' : 'new-password'}
+                autoComplete={
+                  mode === "unlock" ? "current-password" : "new-password"
+                }
                 autoFocus
                 className="pr-10"
               />
@@ -93,7 +103,11 @@ export function VaultUnlock() {
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                 tabIndex={-1}
               >
-                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                {showPassword ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )}
               </button>
             </div>
           </div>
@@ -105,17 +119,24 @@ export function VaultUnlock() {
           >
             <KeyRound className="h-4 w-4" />
             {loading
-              ? mode === 'unlock' ? 'Déverrouillage…' : 'Initialisation…'
-              : mode === 'unlock' ? 'Déverrouiller' : 'Créer le coffre-fort'}
+              ? mode === "unlock"
+                ? "Déverrouillage…"
+                : "Initialisation…"
+              : mode === "unlock"
+                ? "Déverrouiller"
+                : "Créer le coffre-fort"}
           </Button>
         </form>
 
         {/* Toggle mode */}
         <div className="text-center text-sm text-muted-foreground pt-2 border-t border-border">
-          {mode === 'unlock' ? (
+          {mode === "unlock" ? (
             <button
               type="button"
-              onClick={() => { setMode('init'); clearError(); }}
+              onClick={() => {
+                setMode("init");
+                clearError();
+              }}
               className="text-emerald-600 hover:text-emerald-500 hover:underline transition-colors"
             >
               Première utilisation ? Initialiser le coffre-fort
@@ -123,7 +144,10 @@ export function VaultUnlock() {
           ) : (
             <button
               type="button"
-              onClick={() => { setMode('unlock'); clearError(); }}
+              onClick={() => {
+                setMode("unlock");
+                clearError();
+              }}
               className="text-muted-foreground hover:text-foreground hover:underline transition-colors"
             >
               Retour à la connexion

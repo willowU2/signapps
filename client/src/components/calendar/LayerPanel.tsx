@@ -22,18 +22,53 @@ interface LayerMeta {
 
 const STATIC_LAYERS: LayerMeta[] = [
   // Personal
-  { id: "my-events", label: "Mes événements", color: "#3b82f6", section: "personal" },
-  { id: "my-tasks", label: "Mes tâches", color: "#8b5cf6", section: "personal" },
+  {
+    id: "my-events",
+    label: "Mes événements",
+    color: "#3b82f6",
+    section: "personal",
+  },
+  {
+    id: "my-tasks",
+    label: "Mes tâches",
+    color: "#8b5cf6",
+    section: "personal",
+  },
   { id: "projects", label: "Projets", color: "#6366f1", section: "personal" },
   // Team
-  { id: "team-leaves", label: "Congés équipe", color: "#f97316", section: "team" },
-  { id: "team-shifts", label: "Planning équipe", color: "#f43f5e", section: "team" },
+  {
+    id: "team-leaves",
+    label: "Congés équipe",
+    color: "#f97316",
+    section: "team",
+  },
+  {
+    id: "team-shifts",
+    label: "Planning équipe",
+    color: "#f43f5e",
+    section: "team",
+  },
   // Resources
   { id: "rooms", label: "Salles", color: "#22c55e", section: "resources" },
-  { id: "equipment", label: "Matériel", color: "#06b6d4", section: "resources" },
-  { id: "vehicles", label: "Véhicules", color: "#eab308", section: "resources" },
+  {
+    id: "equipment",
+    label: "Matériel",
+    color: "#06b6d4",
+    section: "resources",
+  },
+  {
+    id: "vehicles",
+    label: "Véhicules",
+    color: "#eab308",
+    section: "resources",
+  },
   // External
-  { id: "external", label: "Calendriers externes", color: "#6b7280", section: "external" },
+  {
+    id: "external",
+    label: "Calendriers externes",
+    color: "#6b7280",
+    section: "external",
+  },
 ];
 
 const SECTION_LABELS: Record<string, string> = {
@@ -75,7 +110,10 @@ interface ColorDotProps {
 function ColorDot({ color, className }: ColorDotProps) {
   return (
     <span
-      className={cn("inline-block w-2.5 h-2.5 rounded-full shrink-0", className)}
+      className={cn(
+        "inline-block w-2.5 h-2.5 rounded-full shrink-0",
+        className,
+      )}
       style={{ backgroundColor: color }}
     />
   );
@@ -97,7 +135,7 @@ function OpacityPicker({ value, onChange }: OpacityPickerProps) {
             "text-[10px] px-1.5 py-0.5 rounded transition-colors",
             value === opt.value
               ? "bg-primary text-primary-foreground"
-              : "bg-muted text-muted-foreground hover:bg-muted/80"
+              : "bg-muted text-muted-foreground hover:bg-muted/80",
           )}
         >
           {opt.label}
@@ -117,7 +155,15 @@ interface LayerRowProps {
   onOpacityChange: (v: number) => void;
 }
 
-function LayerRow({ layerId, label, color, enabled, opacity, onToggle, onOpacityChange }: LayerRowProps) {
+function LayerRow({
+  layerId,
+  label,
+  color,
+  enabled,
+  opacity,
+  onToggle,
+  onOpacityChange,
+}: LayerRowProps) {
   const [hovered, setHovered] = useState(false);
 
   return (
@@ -131,7 +177,9 @@ function LayerRow({ layerId, label, color, enabled, opacity, onToggle, onOpacity
         checked={enabled}
         onCheckedChange={onToggle}
         className="shrink-0"
-        style={enabled ? { backgroundColor: color, borderColor: color } : undefined}
+        style={
+          enabled ? { backgroundColor: color, borderColor: color } : undefined
+        }
       />
       <ColorDot color={color} />
       <label
@@ -190,11 +238,17 @@ export function LayerPanel() {
 
   // Derived helpers
   const getLayer = (id: string) =>
-    layers.find((l) => l.layer_id === id) ?? { layer_id: id, enabled: false, opacity: 100 };
+    layers.find((l) => l.layer_id === id) ?? {
+      layer_id: id,
+      enabled: false,
+      opacity: 100,
+    };
 
   // Categories from API
   const [categories, setCategories] = useState<Category[]>([]);
-  const [categoryLayers, setCategoryLayers] = useState<Map<string, { enabled: boolean; opacity: number }>>(new Map());
+  const [categoryLayers, setCategoryLayers] = useState<
+    Map<string, { enabled: boolean; opacity: number }>
+  >(new Map());
 
   // Colleague search
   const [colleagueQuery, setColleagueQuery] = useState("");
@@ -216,22 +270,28 @@ export function LayerPanel() {
         });
       }, 500);
     },
-    [] // updatedLayers is passed as argument, not captured from closure
+    [], // updatedLayers is passed as argument, not captured from closure
   );
 
   // Load categories once
   useEffect(() => {
-    categoriesApi.list().then((res) => {
-      const cats: Category[] = Array.isArray(res.data) ? res.data : [];
-      setCategories(cats);
-      // Initialise categoryLayers from store
-      const map = new Map<string, { enabled: boolean; opacity: number }>();
-      cats.forEach((cat) => {
-        const existing = layers.find((l) => l.layer_id === cat.id);
-        map.set(cat.id, { enabled: existing?.enabled ?? false, opacity: existing?.opacity ?? 100 });
-      });
-      setCategoryLayers(map);
-    }).catch(() => {});
+    categoriesApi
+      .list()
+      .then((res) => {
+        const cats: Category[] = Array.isArray(res.data) ? res.data : [];
+        setCategories(cats);
+        // Initialise categoryLayers from store
+        const map = new Map<string, { enabled: boolean; opacity: number }>();
+        cats.forEach((cat) => {
+          const existing = layers.find((l) => l.layer_id === cat.id);
+          map.set(cat.id, {
+            enabled: existing?.enabled ?? false,
+            opacity: existing?.opacity ?? 100,
+          });
+        });
+        setCategoryLayers(map);
+      })
+      .catch(() => {});
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Handlers that also schedule save
@@ -240,22 +300,22 @@ export function LayerPanel() {
       toggleLayer(layerId);
       // Build the projected state for saving
       const projected = layers.map((l) =>
-        l.layer_id === layerId ? { ...l, enabled: !l.enabled } : l
+        l.layer_id === layerId ? { ...l, enabled: !l.enabled } : l,
       );
       scheduleSave(projected);
     },
-    [layers, toggleLayer, scheduleSave]
+    [layers, toggleLayer, scheduleSave],
   );
 
   const handleOpacity = useCallback(
     (layerId: string, opacity: number) => {
       setLayerOpacity(layerId, opacity);
       const projected = layers.map((l) =>
-        l.layer_id === layerId ? { ...l, opacity } : l
+        l.layer_id === layerId ? { ...l, opacity } : l,
       );
       scheduleSave(projected);
     },
-    [layers, setLayerOpacity, scheduleSave]
+    [layers, setLayerOpacity, scheduleSave],
   );
 
   // Category layer toggle (adds/updates in the store)
@@ -272,7 +332,7 @@ export function LayerPanel() {
       if (existing) {
         toggleLayer(catId);
         const projected = layers.map((l) =>
-          l.layer_id === catId ? { ...l, enabled: !l.enabled } : l
+          l.layer_id === catId ? { ...l, enabled: !l.enabled } : l,
         );
         scheduleSave(projected);
       } else {
@@ -282,7 +342,7 @@ export function LayerPanel() {
         scheduleSave(projected);
       }
     },
-    [layers, toggleLayer, setLayers, scheduleSave]
+    [layers, toggleLayer, setLayers, scheduleSave],
   );
 
   const handleCategoryOpacity = useCallback(
@@ -303,17 +363,19 @@ export function LayerPanel() {
         scheduleSave(projected);
       }
     },
-    [layers, handleOpacity, setLayers, scheduleSave]
+    [layers, handleOpacity, setLayers, scheduleSave],
   );
 
   // Filtered colleagues / resources
   const filteredColleagues = colleagues.filter((c) =>
-    c.name.toLowerCase().includes(colleagueQuery.toLowerCase())
+    c.name.toLowerCase().includes(colleagueQuery.toLowerCase()),
   );
   const filteredResources = (type: ResourceStub["resource_type"]) =>
     resources
       .filter((r) => r.resource_type === type)
-      .filter((r) => r.name.toLowerCase().includes(resourceQuery.toLowerCase()));
+      .filter((r) =>
+        r.name.toLowerCase().includes(resourceQuery.toLowerCase()),
+      );
 
   const layersBySection = (section: LayerMeta["section"]) =>
     STATIC_LAYERS.filter((l) => l.section === section);
@@ -327,7 +389,6 @@ export function LayerPanel() {
 
       <ScrollArea className="flex-1">
         <div className="px-2 py-2 space-y-1">
-
           {/* ── Section: Mes vues ─────────────────────────────────────────── */}
           <Section title={SECTION_LABELS.personal}>
             {layersBySection("personal").map((meta) => {
@@ -377,7 +438,9 @@ export function LayerPanel() {
                 />
               </div>
               {filteredColleagues.length === 0 && colleagueQuery === "" && (
-                <p className="text-xs text-muted-foreground px-1 py-1">Aucun collègue</p>
+                <p className="text-xs text-muted-foreground px-1 py-1">
+                  Aucun collègue
+                </p>
               )}
               {filteredColleagues.map((colleague) => (
                 <div
@@ -483,7 +546,10 @@ export function LayerPanel() {
           {categories.length > 0 && (
             <Section title="Catégories" defaultOpen={false}>
               {categories.map((cat) => {
-                const state = categoryLayers.get(cat.id) ?? { enabled: false, opacity: 100 };
+                const state = categoryLayers.get(cat.id) ?? {
+                  enabled: false,
+                  opacity: 100,
+                };
                 return (
                   <LayerRow
                     key={cat.id}
@@ -499,7 +565,6 @@ export function LayerPanel() {
               })}
             </Section>
           )}
-
         </div>
       </ScrollArea>
 

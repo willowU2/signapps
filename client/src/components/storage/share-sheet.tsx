@@ -1,6 +1,6 @@
 "use client";
 
-import { SpinnerInfinity } from 'spinners-react';
+import { SpinnerInfinity } from "spinners-react";
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { sharesApi } from "@/lib/api";
 import { toast } from "sonner";
-import { Link as LinkIcon, Lock, Calendar } from 'lucide-react';
+import { Link as LinkIcon, Lock, Calendar } from "lucide-react";
 import { FileItem } from "./types";
 
 interface ShareSheetProps {
@@ -96,9 +96,16 @@ export function ShareSheet({ open, onOpenChange, item }: ShareSheetProps) {
         <div className="flex-1 space-y-6 mt-6 min-h-0">
           {shareUrl ? (
             <div className="space-y-3 p-4 bg-muted/30 rounded-lg border">
-              <Label className="text-base font-semibold text-primary">Share Link Ready!</Label>
+              <Label className="text-base font-semibold text-primary">
+                Share Link Ready!
+              </Label>
               <div className="flex flex-col gap-3">
-                <Input readOnly value={shareUrl} className="bg-background cursor-copy" onClick={handleCopy} />
+                <Input
+                  readOnly
+                  value={shareUrl}
+                  className="bg-background cursor-copy"
+                  onClick={handleCopy}
+                />
                 <Button onClick={handleCopy} className="w-full">
                   Copy Link to Clipboard
                 </Button>
@@ -108,7 +115,8 @@ export function ShareSheet({ open, onOpenChange, item }: ShareSheetProps) {
             <>
               <div className="space-y-3 p-4 bg-card border rounded-lg shadow-sm">
                 <Label className="flex items-center gap-2 text-base">
-                  <Lock className="w-4 h-4 text-muted-foreground" /> Optional Password
+                  <Lock className="w-4 h-4 text-muted-foreground" /> Optional
+                  Password
                 </Label>
                 <Input
                   type="password"
@@ -120,7 +128,8 @@ export function ShareSheet({ open, onOpenChange, item }: ShareSheetProps) {
               </div>
               <div className="space-y-3 p-4 bg-card border rounded-lg shadow-sm">
                 <Label className="flex items-center gap-2 text-base">
-                  <Calendar className="w-4 h-4 text-muted-foreground" /> Expiration (Hours)
+                  <Calendar className="w-4 h-4 text-muted-foreground" />{" "}
+                  Expiration (Hours)
                 </Label>
                 <Input
                   type="number"
@@ -146,7 +155,13 @@ export function ShareSheet({ open, onOpenChange, item }: ShareSheetProps) {
             </Button>
             <Button onClick={handleShare} disabled={loading} className="gap-2">
               {loading ? (
-                <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="w-4 h-4 " />
+                <SpinnerInfinity
+                  size={24}
+                  secondaryColor="rgba(128,128,128,0.2)"
+                  color="currentColor"
+                  speed={120}
+                  className="w-4 h-4 "
+                />
               ) : (
                 <LinkIcon className="w-4 h-4" />
               )}

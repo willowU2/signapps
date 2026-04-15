@@ -4,8 +4,8 @@
  * Lazy loads editor components and extensions for better initial load performance.
  */
 
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { createLazyLoader, preloadInIdle } from '@/lib/office/performance';
+import { useState, useEffect, useCallback, useRef } from "react";
+import { createLazyLoader, preloadInIdle } from "@/lib/office/performance";
 
 // ============================================================================
 // Types
@@ -54,15 +54,15 @@ interface UseLazyEditorReturn extends LazyEditorState {
 // Dynamic imports - these modules may not exist yet, so we return placeholder components
 const editorLoaders = {
   document: () =>
-    import('@/components/docs/document-editor').catch(() => ({
+    import("@/components/docs/document-editor").catch(() => ({
       default: (() => null) as React.ComponentType<EditorProps>,
     })),
   spreadsheet: () =>
-    import('@/components/sheets/sheet-editor').catch(() => ({
+    import("@/components/sheets/sheet-editor").catch(() => ({
       default: (() => null) as React.ComponentType<EditorProps>,
     })),
   presentation: () =>
-    import('@/components/slides/slide-editor').catch(() => ({
+    import("@/components/slides/slide-editor").catch(() => ({
       default: (() => null) as React.ComponentType<EditorProps>,
     })),
 } as const;
@@ -75,9 +75,9 @@ type EditorType = keyof typeof editorLoaders;
 
 export function useLazyEditor(
   type: EditorType,
-  options: UseLazyEditorOptions = {}
+  options: UseLazyEditorOptions = {},
 ): UseLazyEditorReturn {
-  const { preload = true, rootMargin = '100px', threshold = 0.1 } = options;
+  const { preload = true, rootMargin = "100px", threshold = 0.1 } = options;
 
   const [state, setState] = useState<LazyEditorState>({
     isLoading: false,
@@ -108,7 +108,8 @@ export function useLazyEditor(
       setState((prev) => ({
         ...prev,
         isLoading: false,
-        error: error instanceof Error ? error : new Error('Failed to load editor'),
+        error:
+          error instanceof Error ? error : new Error("Failed to load editor"),
       }));
     }
   }, [type, state.Editor, state.isLoading]);
@@ -138,7 +139,7 @@ export function useLazyEditor(
           }
         }
       },
-      { rootMargin, threshold }
+      { rootMargin, threshold },
     );
 
     observerRef.current.observe(element);
@@ -154,9 +155,9 @@ export function useLazyEditor(
   useEffect(() => {
     if (preload && !state.Editor && !loadAttempted.current) {
       const editorPaths: Record<EditorType, string> = {
-        document: '/chunks/document-editor.js',
-        spreadsheet: '/chunks/sheet-editor.js',
-        presentation: '/chunks/slide-editor.js',
+        document: "/chunks/document-editor.js",
+        spreadsheet: "/chunks/sheet-editor.js",
+        presentation: "/chunks/slide-editor.js",
       };
       preloadInIdle([editorPaths[type]]);
     }
@@ -188,21 +189,31 @@ export async function loadExtension(name: string): Promise<unknown> {
   const extensionLoaders: Record<string, () => Promise<ExtensionModule>> = {
     // Tiptap extensions
     comments: () =>
-      import('@/lib/tiptap/extensions/comments').catch(() => ({ default: null })),
+      import("@/lib/tiptap/extensions/comments").catch(() => ({
+        default: null,
+      })),
     trackChanges: () =>
-      import('@/lib/tiptap/extensions/track-changes').catch(() => ({ default: null })),
+      import("@/lib/tiptap/extensions/track-changes").catch(() => ({
+        default: null,
+      })),
     collaboration: () =>
-      import('@/lib/tiptap/extensions/collaboration').catch(() => ({ default: null })),
+      import("@/lib/tiptap/extensions/collaboration").catch(() => ({
+        default: null,
+      })),
     mentions: () =>
-      import('@/lib/tiptap/extensions/mentions').catch(() => ({ default: null })),
+      import("@/lib/tiptap/extensions/mentions").catch(() => ({
+        default: null,
+      })),
     emoji: () =>
-      import('@/lib/tiptap/extensions/emoji').catch(() => ({ default: null })),
+      import("@/lib/tiptap/extensions/emoji").catch(() => ({ default: null })),
     math: () =>
-      import('@/lib/tiptap/extensions/math').catch(() => ({ default: null })),
+      import("@/lib/tiptap/extensions/math").catch(() => ({ default: null })),
     codeBlock: () =>
-      import('@/lib/tiptap/extensions/code-block').catch(() => ({ default: null })),
+      import("@/lib/tiptap/extensions/code-block").catch(() => ({
+        default: null,
+      })),
     table: () =>
-      import('@/lib/tiptap/extensions/table').catch(() => ({ default: null })),
+      import("@/lib/tiptap/extensions/table").catch(() => ({ default: null })),
   };
 
   const loader = extensionLoaders[name];
@@ -215,12 +226,14 @@ export async function loadExtension(name: string): Promise<unknown> {
   return module.default;
 }
 
-export async function loadExtensions(names: string[]): Promise<Record<string, unknown>> {
+export async function loadExtensions(
+  names: string[],
+): Promise<Record<string, unknown>> {
   const results = await Promise.all(
     names.map(async (name) => {
       const extension = await loadExtension(name);
       return [name, extension] as const;
-    })
+    }),
   );
 
   return Object.fromEntries(results);
@@ -232,8 +245,8 @@ export async function loadExtensions(names: string[]): Promise<Record<string, un
 
 export function preloadCommonExtensions(): void {
   preloadInIdle([
-    '/chunks/extension-comments.js',
-    '/chunks/extension-track-changes.js',
-    '/chunks/extension-collaboration.js',
+    "/chunks/extension-comments.js",
+    "/chunks/extension-track-changes.js",
+    "/chunks/extension-collaboration.js",
   ]);
 }

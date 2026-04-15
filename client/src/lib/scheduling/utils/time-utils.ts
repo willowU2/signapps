@@ -35,10 +35,10 @@ import {
   getMinutes,
   eachDayOfInterval,
   eachHourOfInterval,
-} from 'date-fns';
-import { fr } from 'date-fns/locale';
+} from "date-fns";
+import { fr } from "date-fns/locale";
 
-import type { TimeSlot, EnergyRequired, TimeOfDay } from '../types';
+import type { TimeSlot, EnergyRequired, TimeOfDay } from "../types";
 
 // ============================================================================
 // DATE PARSING & VALIDATION
@@ -75,21 +75,21 @@ export function isValidDateString(dateString: string): boolean {
  * Format date for display (e.g., "Lundi 18 Mars 2026")
  */
 export function formatFullDate(date: Date): string {
-  return format(date, 'EEEE d MMMM yyyy', { locale: fr });
+  return format(date, "EEEE d MMMM yyyy", { locale: fr });
 }
 
 /**
  * Format date short (e.g., "18 mars")
  */
 export function formatShortDate(date: Date): string {
-  return format(date, 'd MMM', { locale: fr });
+  return format(date, "d MMM", { locale: fr });
 }
 
 /**
  * Format date for month header (e.g., "Mars 2026")
  */
 export function formatMonthYear(date: Date): string {
-  return format(date, 'MMMM yyyy', { locale: fr });
+  return format(date, "MMMM yyyy", { locale: fr });
 }
 
 /**
@@ -100,16 +100,16 @@ export function formatWeekRange(date: Date, weekStartsOn: 0 | 1 = 1): string {
   const end = endOfWeek(date, { weekStartsOn });
 
   if (isSameMonth(start, end)) {
-    return `${format(start, 'd')} - ${format(end, 'd MMMM yyyy', { locale: fr })}`;
+    return `${format(start, "d")} - ${format(end, "d MMMM yyyy", { locale: fr })}`;
   }
-  return `${format(start, 'd MMM', { locale: fr })} - ${format(end, 'd MMM yyyy', { locale: fr })}`;
+  return `${format(start, "d MMM", { locale: fr })} - ${format(end, "d MMM yyyy", { locale: fr })}`;
 }
 
 /**
  * Format time (e.g., "14:30" or "2:30 PM")
  */
 export function formatTime(date: Date, use24Hour: boolean = true): string {
-  return format(date, use24Hour ? 'HH:mm' : 'h:mm a');
+  return format(date, use24Hour ? "HH:mm" : "h:mm a");
 }
 
 /**
@@ -118,7 +118,7 @@ export function formatTime(date: Date, use24Hour: boolean = true): string {
 export function formatTimeFromHoursMinutes(
   hour: number,
   minute: number = 0,
-  use24Hour: boolean = true
+  use24Hour: boolean = true,
 ): string {
   const date = setMinutes(setHours(new Date(), hour), minute);
   return formatTime(date, use24Hour);
@@ -154,16 +154,16 @@ export function formatSmartDate(date: Date): string {
     return "Aujourd'hui";
   }
   if (isTomorrow(date)) {
-    return 'Demain';
+    return "Demain";
   }
   if (isYesterday(date)) {
-    return 'Hier';
+    return "Hier";
   }
   if (isThisWeek(date)) {
-    return format(date, 'EEEE', { locale: fr }); // Day name
+    return format(date, "EEEE", { locale: fr }); // Day name
   }
   if (isThisMonth(date)) {
-    return format(date, 'EEEE d', { locale: fr }); // "Lundi 18"
+    return format(date, "EEEE d", { locale: fr }); // "Lundi 18"
   }
   return formatShortDate(date);
 }
@@ -216,7 +216,7 @@ export function isInMonth(date: Date, monthDate: Date): boolean {
 export function generateTimeSlots(
   hourStart: number = 6,
   hourEnd: number = 22,
-  slotDuration: number = 30 // minutes
+  slotDuration: number = 30, // minutes
 ): TimeSlot[] {
   const slots: TimeSlot[] = [];
   const baseDate = new Date();
@@ -237,7 +237,7 @@ export function generateTimeSlots(
  */
 export function getTimeSlotForDate(
   date: Date,
-  slotDuration: number = 30
+  slotDuration: number = 30,
 ): { hour: number; minute: number } {
   const hour = getHours(date);
   const minute = Math.floor(getMinutes(date) / slotDuration) * slotDuration;
@@ -282,7 +282,7 @@ export function addDuration(date: Date, minutes: number): Date {
  */
 export function pomodorosToMinutes(
   pomodoros: number,
-  pomodoroLength: number = 25
+  pomodoroLength: number = 25,
 ): number {
   return pomodoros * pomodoroLength;
 }
@@ -292,7 +292,7 @@ export function pomodorosToMinutes(
  */
 export function estimatePomodoros(
   durationMinutes: number,
-  pomodoroLength: number = 25
+  pomodoroLength: number = 25,
 ): number {
   return Math.ceil(durationMinutes / pomodoroLength);
 }
@@ -320,7 +320,7 @@ const defaultEnergyConfig: EnergyZoneConfig = {
  */
 export function getEnergyLevel(
   hour: number,
-  config: Partial<EnergyZoneConfig> = {}
+  config: Partial<EnergyZoneConfig> = {},
 ): EnergyRequired {
   const { morningStart, morningEnd, middayEnd, afternoonEnd } = {
     ...defaultEnergyConfig,
@@ -328,25 +328,25 @@ export function getEnergyLevel(
   };
 
   if (hour >= morningStart && hour < morningEnd) {
-    return 'high'; // Morning peak
+    return "high"; // Morning peak
   }
   if (hour >= morningEnd && hour < middayEnd) {
-    return 'medium'; // Midday
+    return "medium"; // Midday
   }
   if (hour >= middayEnd && hour < afternoonEnd) {
-    return 'low'; // Afternoon dip
+    return "low"; // Afternoon dip
   }
-  return 'medium'; // Evening recovery
+  return "medium"; // Evening recovery
 }
 
 /**
  * Get time of day category
  */
 export function getTimeOfDay(hour: number): TimeOfDay {
-  if (hour >= 6 && hour < 12) return 'morning';
-  if (hour >= 12 && hour < 14) return 'midday';
-  if (hour >= 14 && hour < 18) return 'afternoon';
-  return 'evening';
+  if (hour >= 6 && hour < 12) return "morning";
+  if (hour >= 12 && hour < 14) return "midday";
+  if (hour >= 14 && hour < 18) return "afternoon";
+  return "evening";
 }
 
 /**
@@ -354,7 +354,7 @@ export function getTimeOfDay(hour: number): TimeOfDay {
  */
 export function getOptimalHours(
   energyRequired: EnergyRequired,
-  config: Partial<EnergyZoneConfig> = {}
+  config: Partial<EnergyZoneConfig> = {},
 ): number[] {
   const { morningStart, morningEnd, middayEnd, afternoonEnd } = {
     ...defaultEnergyConfig,
@@ -362,20 +362,23 @@ export function getOptimalHours(
   };
 
   switch (energyRequired) {
-    case 'high':
+    case "high":
       return Array.from(
         { length: morningEnd - morningStart },
-        (_, i) => morningStart + i
+        (_, i) => morningStart + i,
       );
-    case 'medium':
+    case "medium":
       return [
-        ...Array.from({ length: middayEnd - morningEnd }, (_, i) => morningEnd + i),
+        ...Array.from(
+          { length: middayEnd - morningEnd },
+          (_, i) => morningEnd + i,
+        ),
         ...Array.from({ length: 4 }, (_, i) => afternoonEnd + i), // Evening
       ];
-    case 'low':
+    case "low":
       return Array.from(
         { length: afternoonEnd - middayEnd },
-        (_, i) => middayEnd + i
+        (_, i) => middayEnd + i,
       );
     default:
       return [];
@@ -411,7 +414,7 @@ export function isTimeInRange(time: Date, range: TimeRange): boolean {
 export function findOverlappingRanges(ranges: TimeRange[]): TimeRange[][] {
   const groups: TimeRange[][] = [];
   const sorted = [...ranges].sort(
-    (a, b) => a.start.getTime() - b.start.getTime()
+    (a, b) => a.start.getTime() - b.start.getTime(),
   );
 
   for (const range of sorted) {
@@ -443,7 +446,7 @@ export function findOverlappingRanges(ranges: TimeRange[]): TimeRange[][] {
 export function calculateTopPosition(
   date: Date,
   hourStart: number,
-  hourEnd: number
+  hourEnd: number,
 ): number {
   const totalHours = hourEnd - hourStart;
   const hour = getHours(date);
@@ -458,7 +461,7 @@ export function calculateTopPosition(
 export function calculateHeightPercentage(
   durationMinutes: number,
   hourStart: number,
-  hourEnd: number
+  hourEnd: number,
 ): number {
   const totalMinutes = (hourEnd - hourStart) * 60;
   return (durationMinutes / totalMinutes) * 100;
@@ -469,7 +472,7 @@ export function calculateHeightPercentage(
  */
 export function percentageToPixels(
   percentage: number,
-  containerHeight: number
+  containerHeight: number,
 ): number {
   return (percentage / 100) * containerHeight;
 }

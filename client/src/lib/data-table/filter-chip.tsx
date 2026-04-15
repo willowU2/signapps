@@ -88,7 +88,10 @@ export function FilterChip({
         const suffix = value.length > 2 ? ` +${value.length - 2}` : "";
         return labels.join(", ") + suffix;
       }
-      return value.slice(0, 2).join(", ") + (value.length > 2 ? ` +${value.length - 2}` : "");
+      return (
+        value.slice(0, 2).join(", ") +
+        (value.length > 2 ? ` +${value.length - 2}` : "")
+      );
     }
 
     // Handle select options
@@ -119,7 +122,7 @@ export function FilterChip({
       variant="secondary"
       className={cn(
         "flex items-center gap-1.5 pl-2 pr-1 py-1 cursor-pointer hover:bg-muted",
-        className
+        className,
       )}
       onClick={onEdit}
     >

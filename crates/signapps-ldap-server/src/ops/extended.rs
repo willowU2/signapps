@@ -79,7 +79,7 @@ pub async fn handle_extended(
                 value: None,
                 error_message: format!("Unknown OID: {unknown}"),
             }
-        }
+        },
     }
 }
 
@@ -172,14 +172,11 @@ fn handle_password_modify(request_value: Option<&[u8]>, bound_dn: Option<&str>) 
                 value: None,
                 error_message: "Invalid request format".to_string(),
             };
-        }
+        },
     };
 
     let new_password = req.get("new_password").and_then(|v| v.as_str());
-    let user_dn = req
-        .get("user_dn")
-        .and_then(|v| v.as_str())
-        .or(bound_dn);
+    let user_dn = req.get("user_dn").and_then(|v| v.as_str()).or(bound_dn);
 
     match (user_dn, new_password) {
         (Some(dn), Some(pwd)) => {
@@ -191,7 +188,7 @@ fn handle_password_modify(request_value: Option<&[u8]>, bound_dn: Option<&str>) 
                 value: None,
                 error_message: String::new(),
             }
-        }
+        },
         _ => ExtendedResult {
             success: false,
             oid: Some(oid::PASSWORD_MODIFY.to_string()),
@@ -228,9 +225,13 @@ mod tests {
 
     #[tokio::test]
     async fn who_am_i_bound() {
-        let result =
-            handle_extended(oid::WHO_AM_I, None, false, Some("CN=admin,DC=example,DC=com"))
-                .await;
+        let result = handle_extended(
+            oid::WHO_AM_I,
+            None,
+            false,
+            Some("CN=admin,DC=example,DC=com"),
+        )
+        .await;
         assert!(result.success);
         let val = String::from_utf8(result.value.unwrap()).unwrap();
         assert_eq!(val, "dn:CN=admin,DC=example,DC=com");
@@ -254,10 +255,11 @@ mod tests {
     #[tokio::test]
     async fn password_modify_missing_fields() {
         let req = serde_json::json!({"user_dn": "CN=alice,DC=example,DC=com"}).to_string();
-        let result =
-            handle_extended(oid::PASSWORD_MODIFY, Some(req.as_bytes()), false, None).await;
+        let result = handle_extended(oid::PASSWORD_MODIFY, Some(req.as_bytes()), false, None).await;
         assert!(!result.success);
-        assert!(result.error_message.contains("Missing user_dn or new_password"));
+        assert!(result
+            .error_message
+            .contains("Missing user_dn or new_password"));
     }
 
     #[tokio::test]
@@ -267,8 +269,7 @@ mod tests {
             "new_password": "s3cr3t!Password"
         })
         .to_string();
-        let result =
-            handle_extended(oid::PASSWORD_MODIFY, Some(req.as_bytes()), false, None).await;
+        let result = handle_extended(oid::PASSWORD_MODIFY, Some(req.as_bytes()), false, None).await;
         assert!(result.success);
         assert_eq!(result.oid.as_deref(), Some(oid::PASSWORD_MODIFY));
         assert!(result.error_message.is_empty());

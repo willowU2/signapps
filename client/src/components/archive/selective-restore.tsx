@@ -19,16 +19,40 @@ export function SelectiveRestore() {
 
   useEffect(() => {
     setItems([
-      { id: "1", name: "Contracts_2022.pdf", size: 12.5, archivedDate: new Date(Date.now() - 180 * 24 * 3600000), selected: false },
-      { id: "2", name: "Budget_Plan_Q1.xlsx", size: 2.8, archivedDate: new Date(Date.now() - 120 * 24 * 3600000), selected: false },
-      { id: "3", name: "ProjectData_Archive.zip", size: 45.3, archivedDate: new Date(Date.now() - 90 * 24 * 3600000), selected: false },
-      { id: "4", name: "OldDocuments_Backup.tar", size: 78.2, archivedDate: new Date(Date.now() - 60 * 24 * 3600000), selected: false },
+      {
+        id: "1",
+        name: "Contracts_2022.pdf",
+        size: 12.5,
+        archivedDate: new Date(Date.now() - 180 * 24 * 3600000),
+        selected: false,
+      },
+      {
+        id: "2",
+        name: "Budget_Plan_Q1.xlsx",
+        size: 2.8,
+        archivedDate: new Date(Date.now() - 120 * 24 * 3600000),
+        selected: false,
+      },
+      {
+        id: "3",
+        name: "ProjectData_Archive.zip",
+        size: 45.3,
+        archivedDate: new Date(Date.now() - 90 * 24 * 3600000),
+        selected: false,
+      },
+      {
+        id: "4",
+        name: "OldDocuments_Backup.tar",
+        size: 78.2,
+        archivedDate: new Date(Date.now() - 60 * 24 * 3600000),
+        selected: false,
+      },
     ]);
   }, []);
 
   const toggleItem = (id: string) => {
     const updated = items.map((item) =>
-      item.id === id ? { ...item, selected: !item.selected } : item
+      item.id === id ? { ...item, selected: !item.selected } : item,
     );
     setItems(updated);
     setSelectedCount(updated.filter((i) => i.selected).length);
@@ -84,7 +108,10 @@ export function SelectiveRestore() {
         </div>
 
         {items.map((item) => (
-          <div key={item.id} className="border rounded-lg p-4 flex items-center space-x-3">
+          <div
+            key={item.id}
+            className="border rounded-lg p-4 flex items-center space-x-3"
+          >
             <button
               onClick={() => toggleItem(item.id)}
               className="flex-shrink-0"
@@ -99,7 +126,8 @@ export function SelectiveRestore() {
             <div className="flex-1">
               <p className="font-medium">{item.name}</p>
               <p className="text-sm text-muted-foreground">
-                {formatSize(item.size)} • Archived: {item.archivedDate.toLocaleDateString()}
+                {formatSize(item.size)} • Archived:{" "}
+                {item.archivedDate.toLocaleDateString()}
               </p>
             </div>
           </div>
@@ -110,16 +138,32 @@ export function SelectiveRestore() {
         <label className="block font-semibold mb-3">Restore Destination</label>
         <div className="space-y-2">
           <label className="flex items-center space-x-2">
-            <input type="radio" name="destination" value="original" checked={destination === "original"} onChange={(e) => setDestination(e.target.value)} />
+            <input
+              type="radio"
+              name="destination"
+              value="original"
+              checked={destination === "original"}
+              onChange={(e) => setDestination(e.target.value)}
+            />
             <span>Original Location</span>
           </label>
           <label className="flex items-center space-x-2">
-            <input type="radio" name="destination" value="select" checked={destination === "select"} onChange={(e) => setDestination(e.target.value)} />
+            <input
+              type="radio"
+              name="destination"
+              value="select"
+              checked={destination === "select"}
+              onChange={(e) => setDestination(e.target.value)}
+            />
             <span>Choose Location</span>
           </label>
         </div>
         {destination === "select" && (
-          <input type="text" placeholder="Enter destination path" className="w-full border rounded px-3 py-2 mt-2" />
+          <input
+            type="text"
+            placeholder="Enter destination path"
+            className="w-full border rounded px-3 py-2 mt-2"
+          />
         )}
       </div>
 

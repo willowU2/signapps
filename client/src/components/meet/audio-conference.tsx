@@ -34,16 +34,21 @@ export function AudioConference() {
   const handleToggleMute = (participantId: string) => {
     setParticipants(
       participants.map((p) =>
-        p.id === participantId ? { ...p, isMuted: !p.isMuted } : p
-      )
+        p.id === participantId ? { ...p, isMuted: !p.isMuted } : p,
+      ),
     );
   };
 
   const handleJoin = async () => {
     try {
-      const room = await meetApi.createRoom({ name: `audio-${Date.now()}`, is_private: false });
+      const room = await meetApi.createRoom({
+        name: `audio-${Date.now()}`,
+        is_private: false,
+      });
       setRoomId(room.data.id);
-      const partsRes = await meetApi.listParticipants(room.data.id).catch(() => ({ data: [] }));
+      const partsRes = await meetApi
+        .listParticipants(room.data.id)
+        .catch(() => ({ data: [] }));
       const mapped: Participant[] = (partsRes.data ?? []).map((p) => ({
         id: p.id,
         name: p.display_name,
@@ -53,7 +58,7 @@ export function AudioConference() {
       setParticipants(mapped);
       setIsJoined(true);
     } catch {
-      toast.error('Failed to join conference — check Meet service');
+      toast.error("Failed to join conference — check Meet service");
       setIsJoined(true);
       setParticipants([]);
     }
@@ -82,14 +87,16 @@ export function AudioConference() {
               <div
                 className={cn(
                   "absolute inset-0 rounded-full border-2 border-primary",
-                  activeSpeaker.isSpeaking && "animate-pulse"
+                  activeSpeaker.isSpeaking && "animate-pulse",
                 )}
               />
             </div>
           </div>
           <div>
             <h3 className="font-semibold">{activeSpeaker.name}</h3>
-            <p className="text-xs text-muted-foreground">En train de parler...</p>
+            <p className="text-xs text-muted-foreground">
+              En train de parler...
+            </p>
           </div>
         </div>
       )}
@@ -112,7 +119,7 @@ export function AudioConference() {
                 key={participant.id}
                 className={cn(
                   "flex items-center justify-between p-2 rounded-md transition-colors",
-                  participant.isSpeaking ? "bg-primary/10" : "bg-muted/50"
+                  participant.isSpeaking ? "bg-primary/10" : "bg-muted/50",
                 )}
               >
                 <div className="flex items-center gap-3 flex-1">
@@ -173,9 +180,7 @@ export function AudioConference() {
           size="sm"
           onClick={() => setIsSpeakerMuted(!isSpeakerMuted)}
           disabled={!isJoined}
-          className={cn(
-            isSpeakerMuted && "bg-destructive/10 text-destructive"
-          )}
+          className={cn(isSpeakerMuted && "bg-destructive/10 text-destructive")}
         >
           {isSpeakerMuted ? (
             <VolumeX className="h-4 w-4 mr-2" />

@@ -101,9 +101,15 @@ export function CronManager() {
         name: editForm.name,
         cronExpression: editForm.cronExpression,
         command: editForm.command,
-        nextRun: editingId === "new" ? new Date() : jobs.find((j) => j.id === editingId)?.nextRun || null,
+        nextRun:
+          editingId === "new"
+            ? new Date()
+            : jobs.find((j) => j.id === editingId)?.nextRun || null,
         lastRun: jobs.find((j) => j.id === editingId)?.lastRun || null,
-        isActive: editingId === "new" ? true : jobs.find((j) => j.id === editingId)?.isActive || true,
+        isActive:
+          editingId === "new"
+            ? true
+            : jobs.find((j) => j.id === editingId)?.isActive || true,
         logCount: jobs.find((j) => j.id === editingId)?.logCount || 0,
       };
 
@@ -136,7 +142,9 @@ export function CronManager() {
 
   const toggleActive = (id: string) => {
     try {
-      setJobs(jobs.map((j) => (j.id === id ? { ...j, isActive: !j.isActive } : j)));
+      setJobs(
+        jobs.map((j) => (j.id === id ? { ...j, isActive: !j.isActive } : j)),
+      );
     } catch (error) {
       toast.error("Impossible de modifier l'état de la tâche");
       console.warn(error);
@@ -160,7 +168,11 @@ export function CronManager() {
           <Clock className="h-5 w-5" />
           Scheduled Cron Jobs
         </h3>
-        <Button onClick={handleCreateNew} disabled={editingId !== null} size="sm">
+        <Button
+          onClick={handleCreateNew}
+          disabled={editingId !== null}
+          size="sm"
+        >
           <Plus className="h-4 w-4 mr-2" />
           Add Job
         </Button>
@@ -188,7 +200,10 @@ export function CronManager() {
               </TableRow>
             ) : jobs.length === 0 && editingId !== "new" ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center h-24 text-muted-foreground">
+                <TableCell
+                  colSpan={7}
+                  className="text-center h-24 text-muted-foreground"
+                >
                   No cron jobs configured.
                 </TableCell>
               </TableRow>
@@ -211,7 +226,10 @@ export function CronManager() {
                     placeholder="0 2 * * *"
                     value={editForm.cronExpression}
                     onChange={(e) =>
-                      setEditForm({ ...editForm, cronExpression: e.target.value })
+                      setEditForm({
+                        ...editForm,
+                        cronExpression: e.target.value,
+                      })
                     }
                     className="h-8 font-mono text-sm"
                   />
@@ -229,10 +247,20 @@ export function CronManager() {
                 <TableCell></TableCell>
                 <TableCell>
                   <div className="flex items-center gap-2">
-                    <Button size="icon" variant="ghost" className="h-8 w-8 text-green-600" onClick={handleSave}>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-8 w-8 text-green-600"
+                      onClick={handleSave}
+                    >
                       <Save className="h-4 w-4" />
                     </Button>
-                    <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => setEditingId(null)}>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-8 w-8 text-destructive"
+                      onClick={() => setEditingId(null)}
+                    >
                       <X className="h-4 w-4" />
                     </Button>
                   </div>
@@ -256,7 +284,10 @@ export function CronManager() {
                     <Input
                       value={editForm.cronExpression}
                       onChange={(e) =>
-                        setEditForm({ ...editForm, cronExpression: e.target.value })
+                        setEditForm({
+                          ...editForm,
+                          cronExpression: e.target.value,
+                        })
                       }
                       className="h-8 font-mono text-sm"
                     />
@@ -273,21 +304,40 @@ export function CronManager() {
                   <TableCell></TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      <Button size="icon" variant="ghost" className="h-8 w-8 text-green-600" onClick={handleSave}>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-8 w-8 text-green-600"
+                        onClick={handleSave}
+                      >
                         <Save className="h-4 w-4" />
                       </Button>
-                      <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => setEditingId(null)}>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-8 w-8 text-destructive"
+                        onClick={() => setEditingId(null)}
+                      >
                         <X className="h-4 w-4" />
                       </Button>
                     </div>
                   </TableCell>
                 </TableRow>
               ) : (
-                <TableRow key={job.id} className={!job.isActive ? "opacity-60" : ""}>
+                <TableRow
+                  key={job.id}
+                  className={!job.isActive ? "opacity-60" : ""}
+                >
                   <TableCell className="font-medium">{job.name}</TableCell>
-                  <TableCell className="font-mono text-sm">{job.cronExpression}</TableCell>
-                  <TableCell className="text-sm">{formatDateTime(job.nextRun)}</TableCell>
-                  <TableCell className="text-sm">{formatDateTime(job.lastRun)}</TableCell>
+                  <TableCell className="font-mono text-sm">
+                    {job.cronExpression}
+                  </TableCell>
+                  <TableCell className="text-sm">
+                    {formatDateTime(job.nextRun)}
+                  </TableCell>
+                  <TableCell className="text-sm">
+                    {formatDateTime(job.lastRun)}
+                  </TableCell>
                   <TableCell className="text-sm">{job.logCount}</TableCell>
                   <TableCell>
                     <Toggle
@@ -296,7 +346,9 @@ export function CronManager() {
                       disabled={editingId !== null}
                       className="h-8 w-8"
                     >
-                      <div className={`w-2 h-2 rounded-full ${job.isActive ? "bg-green-500" : "bg-gray-400"}`} />
+                      <div
+                        className={`w-2 h-2 rounded-full ${job.isActive ? "bg-green-500" : "bg-gray-400"}`}
+                      />
                     </Toggle>
                   </TableCell>
                   <TableCell>
@@ -322,7 +374,7 @@ export function CronManager() {
                     </div>
                   </TableCell>
                 </TableRow>
-              )
+              ),
             )}
           </TableBody>
         </Table>

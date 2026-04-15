@@ -24,7 +24,12 @@ export function InterSiteSync() {
     lastSyncTime: new Date(Date.now() - 2 * 3600000),
   });
   const [syncing, setSyncing] = useState(false);
-  const [sites] = useState(["New York HQ", "San Francisco Office", "Chicago Branch", "Boston Tech Center"]);
+  const [sites] = useState([
+    "New York HQ",
+    "San Francisco Office",
+    "Chicago Branch",
+    "Boston Tech Center",
+  ]);
 
   const toggleDataType = (index: number) => {
     const updated = [...config.dataTypes];
@@ -40,7 +45,8 @@ export function InterSiteSync() {
     }, 2000);
   };
 
-  const getEnabledCount = () => config.dataTypes.filter((d) => d.enabled).length;
+  const getEnabledCount = () =>
+    config.dataTypes.filter((d) => d.enabled).length;
 
   return (
     <div className="space-y-6">
@@ -48,10 +54,14 @@ export function InterSiteSync() {
         <h3 className="font-semibold mb-3">Sync Configuration</h3>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium mb-1">Source Site</label>
+            <label className="block text-sm font-medium mb-1">
+              Source Site
+            </label>
             <select
               value={config.sourceSite}
-              onChange={(e) => setConfig({ ...config, sourceSite: e.target.value })}
+              onChange={(e) =>
+                setConfig({ ...config, sourceSite: e.target.value })
+              }
               className="w-full border rounded px-3 py-2"
             >
               {sites.map((site) => (
@@ -62,10 +72,14 @@ export function InterSiteSync() {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Target Site</label>
+            <label className="block text-sm font-medium mb-1">
+              Target Site
+            </label>
             <select
               value={config.targetSite}
-              onChange={(e) => setConfig({ ...config, targetSite: e.target.value })}
+              onChange={(e) =>
+                setConfig({ ...config, targetSite: e.target.value })
+              }
               className="w-full border rounded px-3 py-2"
             >
               {sites.map((site) => (
@@ -82,7 +96,10 @@ export function InterSiteSync() {
         <h3 className="font-semibold mb-3">Data Types to Sync</h3>
         <div className="space-y-2">
           {config.dataTypes.map((dataType, index) => (
-            <label key={index} className="flex items-center space-x-3 p-3 bg-muted rounded cursor-pointer hover:bg-muted">
+            <label
+              key={index}
+              className="flex items-center space-x-3 p-3 bg-muted rounded cursor-pointer hover:bg-muted"
+            >
               <input
                 type="checkbox"
                 checked={dataType.enabled}

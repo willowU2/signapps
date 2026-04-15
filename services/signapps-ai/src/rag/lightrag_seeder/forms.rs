@@ -47,7 +47,7 @@ where
                 relations_created: 0,
                 source: "forms.forms".to_string(),
             });
-        }
+        },
     };
 
     let mut count = 0usize;

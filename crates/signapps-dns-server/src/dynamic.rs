@@ -46,7 +46,11 @@ pub async fn process_dynamic_update(
     )
     .await?;
 
-    tracing::info!(hostname = hostname, ip = ip_address, "Dynamic DNS update processed");
+    tracing::info!(
+        hostname = hostname,
+        ip = ip_address,
+        "Dynamic DNS update processed"
+    );
     Ok(())
 }
 

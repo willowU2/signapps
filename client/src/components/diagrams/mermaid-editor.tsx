@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Copy, Download, RotateCcw } from 'lucide-react';
+import { useState } from "react";
+import { Copy, Download, RotateCcw } from "lucide-react";
 
 // Mermaid diagram templates
 const DIAGRAM_TEMPLATES = {
@@ -30,7 +30,7 @@ const DIAGRAM_TEMPLATES = {
     class Dog {
       +void bark()
     }
-    Animal <|-- Dog`
+    Animal <|-- Dog`,
 };
 
 export default function MermaidEditor() {
@@ -48,10 +48,13 @@ export default function MermaidEditor() {
   };
 
   const handleDownload = () => {
-    const element = document.createElement('a');
-    element.setAttribute('href', `data:text/plain;charset=utf-8,${encodeURIComponent(diagram)}`);
-    element.setAttribute('download', 'diagram.mmd');
-    element.style.display = 'none';
+    const element = document.createElement("a");
+    element.setAttribute(
+      "href",
+      `data:text/plain;charset=utf-8,${encodeURIComponent(diagram)}`,
+    );
+    element.setAttribute("download", "diagram.mmd");
+    element.style.display = "none";
     document.body.appendChild(element);
     element.click();
     document.body.removeChild(element);
@@ -66,19 +69,19 @@ export default function MermaidEditor() {
       {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-2 p-4 border-b border-border bg-card">
         <button
-          onClick={() => handleTemplateSelect('flowchart')}
+          onClick={() => handleTemplateSelect("flowchart")}
           className="px-3 py-2 text-sm font-medium text-muted-foreground bg-muted hover:bg-gray-200 rounded border border-border transition-colors"
         >
           Flowchart
         </button>
         <button
-          onClick={() => handleTemplateSelect('sequence')}
+          onClick={() => handleTemplateSelect("sequence")}
           className="px-3 py-2 text-sm font-medium text-muted-foreground bg-muted hover:bg-gray-200 rounded border border-border transition-colors"
         >
           Sequence
         </button>
         <button
-          onClick={() => handleTemplateSelect('class')}
+          onClick={() => handleTemplateSelect("class")}
           className="px-3 py-2 text-sm font-medium text-muted-foreground bg-muted hover:bg-gray-200 rounded border border-border transition-colors"
         >
           Class Diagram
@@ -108,7 +111,9 @@ export default function MermaidEditor() {
           <RotateCcw size={18} />
         </button>
 
-        {copied && <span className="text-sm text-green-600 font-medium">Copied!</span>}
+        {copied && (
+          <span className="text-sm text-green-600 font-medium">Copied!</span>
+        )}
       </div>
 
       {/* Editor Split View */}

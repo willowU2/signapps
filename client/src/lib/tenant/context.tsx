@@ -71,7 +71,7 @@ export function TenantProvider({
   tenantSlug,
 }: TenantProviderProps) {
   const [config, setConfig] = React.useState<TenantConfig | null>(
-    initialConfig || null
+    initialConfig || null,
   );
   const [isLoading, setIsLoading] = React.useState(!initialConfig);
   const [error, setError] = React.useState<Error | null>(null);
@@ -111,7 +111,9 @@ export function TenantProvider({
       };
       setConfig(defaultConfig);
     } catch (err) {
-      setError(err instanceof Error ? err : new Error("Failed to load tenant config"));
+      setError(
+        err instanceof Error ? err : new Error("Failed to load tenant config"),
+      );
     } finally {
       setIsLoading(false);
     }
@@ -148,14 +150,14 @@ export function TenantProvider({
                 [section]: { ...prev[section], ...(data as object) },
                 updatedAt: new Date().toISOString(),
               }
-            : prev
+            : prev,
         );
       } catch (err) {
         console.error("Impossible de mettre à jour tenant config:", err);
         throw err;
       }
     },
-    [config]
+    [config],
   );
 
   // Quick accessors
@@ -166,7 +168,7 @@ export function TenantProvider({
     (feature: FeatureToggleKey) => {
       return features[feature] ?? DEFAULT_FEATURE_TOGGLES[feature];
     },
-    [features]
+    [features],
   );
 
   const tenantName = config?.branding.name || "SignApps";
@@ -232,7 +234,11 @@ interface FeatureGateProps {
   fallback?: React.ReactNode;
 }
 
-export function FeatureGate({ feature, children, fallback = null }: FeatureGateProps) {
+export function FeatureGate({
+  feature,
+  children,
+  fallback = null,
+}: FeatureGateProps) {
   const enabled = useFeatureEnabled(feature);
   return enabled ? <>{children}</> : <>{fallback}</>;
 }

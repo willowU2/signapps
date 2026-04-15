@@ -32,7 +32,7 @@ pub(crate) async fn process_message(
             let result = match req.authentication {
                 BindAuthentication::Simple(password) => {
                     ops::bind::handle_simple_bind(pool, &req.name, &password).await
-                }
+                },
                 BindAuthentication::Sasl(_sasl) => {
                     // SASL/GSSAPI is wired in Phase 3.
                     ops::bind::BindResult {
@@ -42,7 +42,7 @@ pub(crate) async fn process_message(
                         bound_dn: None,
                         error_message: "SASL not yet implemented".to_string(),
                     }
-                }
+                },
             };
 
             if result.success {
@@ -61,12 +61,12 @@ pub(crate) async fn process_message(
                 message_id: id,
                 operation: LdapOperation::BindResponse(ldap_result),
             }]
-        }
+        },
 
         LdapOperation::UnbindRequest => {
             session.unbind();
             vec![] // No response for Unbind per RFC 4511 §4.3.
-        }
+        },
 
         LdapOperation::SearchRequest(req) => {
             let filter_str = search_filter_to_string(&req.filter);
@@ -100,10 +100,7 @@ pub(crate) async fn process_message(
                             .iter()
                             .map(|(name, values)| PartialAttribute {
                                 attr_type: name.clone(),
-                                values: values
-                                    .iter()
-                                    .map(|v| v.as_bytes().to_vec())
-                                    .collect(),
+                                values: values.iter().map(|v| v.as_bytes().to_vec()).collect(),
                             })
                             .collect(),
                     }),
@@ -116,27 +113,25 @@ pub(crate) async fn process_message(
             });
 
             responses
-        }
+        },
 
         LdapOperation::AddRequest(req) => {
-            let result =
-                ops::write::handle_add(pool, session.user_role, &req.dn, &[]).await;
+            let result = ops::write::handle_add(pool, session.user_role, &req.dn, &[]).await;
             let ldap_result = write_result_to_ldap(&result);
             vec![LdapMessage {
                 message_id: id,
                 operation: LdapOperation::AddResponse(ldap_result),
             }]
-        }
+        },
 
         LdapOperation::ModifyRequest(req) => {
-            let result =
-                ops::write::handle_modify(pool, session.user_role, &req.dn, &[]).await;
+            let result = ops::write::handle_modify(pool, session.user_role, &req.dn, &[]).await;
             let ldap_result = write_result_to_ldap(&result);
             vec![LdapMessage {
                 message_id: id,
                 operation: LdapOperation::ModifyResponse(ldap_result),
             }]
-        }
+        },
 
         LdapOperation::DeleteRequest(dn) => {
             let result = ops::write::handle_delete(pool, session.user_role, &dn).await;
@@ -145,7 +140,7 @@ pub(crate) async fn process_message(
                 message_id: id,
                 operation: LdapOperation::DeleteResponse(ldap_result),
             }]
-        }
+        },
 
         LdapOperation::ModifyDnRequest(req) => {
             let result = ops::write::handle_modify_dn(
@@ -162,7 +157,7 @@ pub(crate) async fn process_message(
                 message_id: id,
                 operation: LdapOperation::ModifyDnResponse(ldap_result),
             }]
-        }
+        },
 
         LdapOperation::CompareRequest(req) => {
             let result = ops::compare::handle_compare(
@@ -187,7 +182,7 @@ pub(crate) async fn process_message(
                     diagnostic_message: String::new(),
                 }),
             }]
-        }
+        },
 
         LdapOperation::ExtendedRequest(req) => {
             let is_start_tls = req.oid == ops::extended::oid::START_TLS;
@@ -220,27 +215,24 @@ pub(crate) async fn process_message(
                     value: result.value,
                 }),
             }]
-        }
+        },
 
         LdapOperation::AbandonRequest(_) => {
             // No response for Abandon per RFC 4511 §4.11.
             vec![]
-        }
+        },
 
         _ => {
             // Server received an unexpected response-type operation from the client.
             vec![LdapMessage {
                 message_id: id,
                 operation: LdapOperation::ExtendedResponse(ExtendedResponse {
-                    result: LdapResult::error(
-                        ResultCode::ProtocolError,
-                        "Unexpected operation",
-                    ),
+                    result: LdapResult::error(ResultCode::ProtocolError, "Unexpected operation"),
                     oid: None,
                     value: None,
                 }),
             }]
-        }
+        },
     }
 }
 

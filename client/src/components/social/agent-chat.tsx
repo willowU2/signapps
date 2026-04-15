@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import {
   useState,
@@ -6,20 +6,20 @@ import {
   useRef,
   useCallback,
   type KeyboardEvent,
-} from 'react';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
+} from "react";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@/components/ui/tooltip';
+} from "@/components/ui/tooltip";
 import {
   Send,
   Bot,
@@ -35,18 +35,22 @@ import {
   Check,
   Clock,
   TrendingUp,
-} from 'lucide-react';
-import { toast } from 'sonner';
-import { useSocialStore } from '@/stores/social-store';
-import { socialApi, socialApiClient } from '@/lib/api/social';
-import { PLATFORM_COLORS, PLATFORM_LABELS } from './platform-utils';
-import type { SocialAccount } from '@/lib/api/social';
+} from "lucide-react";
+import { toast } from "sonner";
+import { useSocialStore } from "@/stores/social-store";
+import { socialApi, socialApiClient } from "@/lib/api/social";
+import { PLATFORM_COLORS, PLATFORM_LABELS } from "./platform-utils";
+import type { SocialAccount } from "@/lib/api/social";
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
-type AIResponseType = 'text' | 'post-preview' | 'schedule-confirmation' | 'analytics-insight';
+type AIResponseType =
+  | "text"
+  | "post-preview"
+  | "schedule-confirmation"
+  | "analytics-insight";
 
 interface PostPreviewData {
   content: string;
@@ -72,7 +76,7 @@ interface AnalyticsData {
 
 interface ChatMessage {
   id: string;
-  role: 'user' | 'assistant';
+  role: "user" | "assistant";
   content: string;
   type: AIResponseType;
   postPreview?: PostPreviewData;
@@ -92,10 +96,10 @@ interface ChatThread {
 // localStorage helpers
 // ---------------------------------------------------------------------------
 
-const THREADS_STORAGE_KEY = 'signsocial-agent-threads';
+const THREADS_STORAGE_KEY = "signsocial-agent-threads";
 
 function loadThreadsFromStorage(): ChatThread[] {
-  if (typeof window === 'undefined') return [];
+  if (typeof window === "undefined") return [];
   try {
     const raw = localStorage.getItem(THREADS_STORAGE_KEY);
     return raw ? JSON.parse(raw) : [];
@@ -114,10 +118,10 @@ function saveThreads(threads: ChatThread[]) {
 
 async function loadThreadsFromApi(): Promise<ChatThread[]> {
   try {
-    const res = await socialApiClient.get<any[]>('/social/ai-threads');
+    const res = await socialApiClient.get<any[]>("/social/ai-threads");
     const threads: ChatThread[] = (res.data ?? []).map((t: any) => ({
       id: t.id ?? crypto.randomUUID(),
-      title: t.title ?? 'Untitled',
+      title: t.title ?? "Untitled",
       messages: Array.isArray(t.messages) ? t.messages : [],
       createdAt: t.created_at ?? t.createdAt ?? new Date().toISOString(),
     }));
@@ -133,10 +137,10 @@ async function loadThreadsFromApi(): Promise<ChatThread[]> {
 // ---------------------------------------------------------------------------
 
 const SUGGESTED_PROMPTS = [
-  { icon: Calendar, text: 'Schedule a post for tomorrow' },
-  { icon: Sparkles, text: 'Generate content about our new product launch' },
+  { icon: Calendar, text: "Schedule a post for tomorrow" },
+  { icon: Sparkles, text: "Generate content about our new product launch" },
   { icon: BarChart3, text: "What's the best time to post on LinkedIn?" },
-  { icon: MessageSquare, text: 'Create a thread about sustainable technology' },
+  { icon: MessageSquare, text: "Create a thread about sustainable technology" },
 ];
 
 // ---------------------------------------------------------------------------
@@ -146,20 +150,23 @@ const SUGGESTED_PROMPTS = [
 function generateTitle(firstMessage: string): string {
   const trimmed = firstMessage.trim();
   if (trimmed.length <= 40) return trimmed;
-  return trimmed.slice(0, 37) + '...';
+  return trimmed.slice(0, 37) + "...";
 }
 
 function fallbackHashtags(topic: string): string[] {
-  const words = topic.toLowerCase().split(/\s+/).filter((w) => w.length > 2);
+  const words = topic
+    .toLowerCase()
+    .split(/\s+/)
+    .filter((w) => w.length > 2);
   const base = words.map((w) => `#${w.charAt(0).toUpperCase() + w.slice(1)}`);
   const extras = [
-    '#SocialMedia',
-    '#ContentStrategy',
-    '#DigitalMarketing',
-    '#Growth',
-    '#Branding',
-    '#MarketingTips',
-    '#BusinessGrowth',
+    "#SocialMedia",
+    "#ContentStrategy",
+    "#DigitalMarketing",
+    "#Growth",
+    "#Branding",
+    "#MarketingTips",
+    "#BusinessGrowth",
   ];
   const combined = [...new Set([...base, ...extras])];
   return combined.slice(0, 7);
@@ -167,72 +174,103 @@ function fallbackHashtags(topic: string): string[] {
 
 async function buildAIResponse(
   userMessage: string,
-  selectedAccounts: SocialAccount[]
+  selectedAccounts: SocialAccount[],
 ): Promise<ChatMessage> {
   const lower = userMessage.toLowerCase();
-  const base: Omit<ChatMessage, 'content' | 'type' | 'postPreview' | 'scheduleData' | 'analyticsData'> = {
+  const base: Omit<
+    ChatMessage,
+    "content" | "type" | "postPreview" | "scheduleData" | "analyticsData"
+  > = {
     id: crypto.randomUUID(),
-    role: 'assistant',
+    role: "assistant",
     timestamp: new Date().toISOString(),
   };
 
-  const platforms = selectedAccounts.length > 0
-    ? selectedAccounts.map((a) => PLATFORM_LABELS[a.platform])
-    : ['Twitter / X', 'LinkedIn'];
+  const platforms =
+    selectedAccounts.length > 0
+      ? selectedAccounts.map((a) => PLATFORM_LABELS[a.platform])
+      : ["Twitter / X", "LinkedIn"];
 
-  const selectedPlatform: SocialAccount['platform'] =
-    selectedAccounts.length > 0 ? selectedAccounts[0].platform : 'twitter';
+  const selectedPlatform: SocialAccount["platform"] =
+    selectedAccounts.length > 0 ? selectedAccounts[0].platform : "twitter";
 
   // --- Schedule intent ---
-  if (lower.includes('schedule') && (lower.includes('post') || lower.includes('tomorrow') || lower.includes('next'))) {
+  if (
+    lower.includes("schedule") &&
+    (lower.includes("post") ||
+      lower.includes("tomorrow") ||
+      lower.includes("next"))
+  ) {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
     tomorrow.setHours(10, 0, 0, 0);
-    const dateStr = tomorrow.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+    const dateStr = tomorrow.toLocaleDateString("en-US", {
+      weekday: "long",
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    });
 
     return {
       ...base,
-      type: 'schedule-confirmation',
+      type: "schedule-confirmation",
       content: `I've prepared a scheduling slot for you. Here's what I suggest:`,
       scheduleData: {
         date: dateStr,
-        time: '10:00 AM',
+        time: "10:00 AM",
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-        postSummary: userMessage.replace(/schedule\s*(a\s*)?/i, '').replace(/for\s*tomorrow/i, '').trim() || 'Your upcoming post',
+        postSummary:
+          userMessage
+            .replace(/schedule\s*(a\s*)?/i, "")
+            .replace(/for\s*tomorrow/i, "")
+            .trim() || "Your upcoming post",
       },
     };
   }
 
   // --- Generate / create content intent ---
-  if (lower.includes('generate') || lower.includes('create') || lower.includes('write') || lower.includes('draft') || lower.includes('compose')) {
+  if (
+    lower.includes("generate") ||
+    lower.includes("create") ||
+    lower.includes("write") ||
+    lower.includes("draft") ||
+    lower.includes("compose")
+  ) {
     let topic = userMessage
-      .replace(/^(generate|create|write|draft|compose)\s*(a\s*)?(post|content|thread|tweet|article)?\s*(about|on|for|regarding)?\s*/i, '')
+      .replace(
+        /^(generate|create|write|draft|compose)\s*(a\s*)?(post|content|thread|tweet|article)?\s*(about|on|for|regarding)?\s*/i,
+        "",
+      )
       .trim();
-    if (!topic) topic = 'your brand';
+    if (!topic) topic = "your brand";
 
     try {
       const res = await socialApi.ai.generate({
         topic,
-        tone: 'personal',
+        tone: "personal",
         platform: selectedPlatform,
       });
       const postContent = res.data.content;
-      const hashtags: string[] = (res.data.hashtags && res.data.hashtags.length > 0) ? res.data.hashtags : fallbackHashtags(topic);
+      const hashtags: string[] =
+        res.data.hashtags && res.data.hashtags.length > 0
+          ? res.data.hashtags
+          : fallbackHashtags(topic);
 
       return {
         ...base,
-        type: 'post-preview',
-        content: `Here's a post about **${topic}** for ${platforms.join(' and ')}:`,
+        type: "post-preview",
+        content: `Here's a post about **${topic}** for ${platforms.join(" and ")}:`,
         postPreview: {
           content: postContent,
           platforms,
           hashtags,
-          suggestedTime: 'Today at 2:00 PM',
+          suggestedTime: "Today at 2:00 PM",
         },
       };
     } catch {
       // Fallback to local generation if API is unavailable
-      const postContent = `We're excited to share our perspective on ${topic}.\n\n` +
+      const postContent =
+        `We're excited to share our perspective on ${topic}.\n\n` +
         `The key takeaway? Businesses that embrace ${topic} are seeing remarkable growth -- both in engagement and customer loyalty.\n\n` +
         `Here are 3 things we've learned:\n` +
         `1. Authenticity matters more than ever\n` +
@@ -242,37 +280,50 @@ async function buildAIResponse(
 
       return {
         ...base,
-        type: 'post-preview',
-        content: `Here's a post about **${topic}** for ${platforms.join(' and ')}:`,
+        type: "post-preview",
+        content: `Here's a post about **${topic}** for ${platforms.join(" and ")}:`,
         postPreview: {
           content: postContent,
           platforms,
           hashtags: fallbackHashtags(topic),
-          suggestedTime: 'Today at 2:00 PM',
+          suggestedTime: "Today at 2:00 PM",
         },
       };
     }
   }
 
   // --- Analytics / best time intent ---
-  if (lower.includes('best time') || lower.includes('analytics') || lower.includes('performance') || lower.includes('engagement') || lower.includes('stats') || lower.includes('insights')) {
-    let platformLabel = 'your accounts';
-    if (lower.includes('linkedin')) platformLabel = 'LinkedIn';
-    else if (lower.includes('twitter') || lower.includes(' x ')) platformLabel = 'Twitter / X';
-    else if (lower.includes('instagram')) platformLabel = 'Instagram';
-    else if (lower.includes('facebook')) platformLabel = 'Facebook';
-    else if (lower.includes('mastodon')) platformLabel = 'Mastodon';
-    else if (lower.includes('bluesky')) platformLabel = 'Bluesky';
+  if (
+    lower.includes("best time") ||
+    lower.includes("analytics") ||
+    lower.includes("performance") ||
+    lower.includes("engagement") ||
+    lower.includes("stats") ||
+    lower.includes("insights")
+  ) {
+    let platformLabel = "your accounts";
+    if (lower.includes("linkedin")) platformLabel = "LinkedIn";
+    else if (lower.includes("twitter") || lower.includes(" x "))
+      platformLabel = "Twitter / X";
+    else if (lower.includes("instagram")) platformLabel = "Instagram";
+    else if (lower.includes("facebook")) platformLabel = "Facebook";
+    else if (lower.includes("mastodon")) platformLabel = "Mastodon";
+    else if (lower.includes("bluesky")) platformLabel = "Bluesky";
 
     // Try to get best time from API for the first selected account
     let bestTimeInfo: string | null = null;
     if (selectedAccounts.length > 0) {
       try {
         const btRes = await socialApi.ai.bestTime(selectedAccounts[0].id);
-        const bt = btRes.data as { day?: string; hour?: number; reason?: string; bestTimes?: { dayOfWeek: number; hour: number }[] };
+        const bt = btRes.data as {
+          day?: string;
+          hour?: number;
+          reason?: string;
+          bestTimes?: { dayOfWeek: number; hour: number }[];
+        };
         const day = bt.day ?? bt.bestTimes?.[0]?.dayOfWeek;
         const hour = bt.hour ?? bt.bestTimes?.[0]?.hour;
-        bestTimeInfo = `Best time to post: **${day} at ${hour}:00** -- ${bt.reason ?? ''}`;
+        bestTimeInfo = `Best time to post: **${day} at ${hour}:00** -- ${bt.reason ?? ""}`;
       } catch {
         // API unavailable, use fallback data
       }
@@ -280,55 +331,71 @@ async function buildAIResponse(
 
     return {
       ...base,
-      type: 'analytics-insight',
+      type: "analytics-insight",
       content: bestTimeInfo
         ? `Here's an engagement analysis for **${platformLabel}**:\n\n${bestTimeInfo}`
         : `Here's an engagement analysis for **${platformLabel}**:`,
       analyticsData: {
-        metric: 'Engagement Rate',
-        value: '4.7%',
-        change: '+0.8%',
+        metric: "Engagement Rate",
+        value: "4.7%",
+        change: "+0.8%",
         positive: true,
         breakdown: [
-          { label: 'Mon', value: 62 },
-          { label: 'Tue', value: 78 },
-          { label: 'Wed', value: 91 },
-          { label: 'Thu', value: 85 },
-          { label: 'Fri', value: 70 },
-          { label: 'Sat', value: 45 },
-          { label: 'Sun', value: 38 },
+          { label: "Mon", value: 62 },
+          { label: "Tue", value: 78 },
+          { label: "Wed", value: 91 },
+          { label: "Thu", value: 85 },
+          { label: "Fri", value: 70 },
+          { label: "Sat", value: 45 },
+          { label: "Sun", value: 38 },
         ],
       },
     };
   }
 
   // --- Hashtag intent ---
-  if (lower.includes('hashtag') || lower.includes('#')) {
-    const topicText = userMessage.replace(/.*(?:hashtag|#|suggest|recommend)s?\s*(?:for|about)?\s*/i, '').trim() || 'social media';
+  if (lower.includes("hashtag") || lower.includes("#")) {
+    const topicText =
+      userMessage
+        .replace(/.*(?:hashtag|#|suggest|recommend)s?\s*(?:for|about)?\s*/i, "")
+        .trim() || "social media";
 
     let tags: string[];
     try {
       const hashRes = await socialApi.ai.hashtags(topicText);
-      tags = hashRes.data.hashtags?.length > 0 ? hashRes.data.hashtags : fallbackHashtags(topicText);
+      tags =
+        hashRes.data.hashtags?.length > 0
+          ? hashRes.data.hashtags
+          : fallbackHashtags(topicText);
     } catch {
       tags = fallbackHashtags(topicText);
     }
 
     return {
       ...base,
-      type: 'text',
-      content: `Here are some hashtag suggestions for **${topicText}**:\n\n` +
-        tags.map((t) => `- \`${t}\` -- High relevance, moderate competition`).join('\n') +
+      type: "text",
+      content:
+        `Here are some hashtag suggestions for **${topicText}**:\n\n` +
+        tags
+          .map((t) => `- \`${t}\` -- High relevance, moderate competition`)
+          .join("\n") +
         `\n\nI recommend using 3-5 of these for the best reach. Mix popular and niche hashtags for optimal discoverability.`,
     };
   }
 
   // --- Help / generic intent ---
-  if (lower.includes('help') || lower.includes('what can you do') || lower === 'hi' || lower === 'hello' || lower === 'hey') {
+  if (
+    lower.includes("help") ||
+    lower.includes("what can you do") ||
+    lower === "hi" ||
+    lower === "hello" ||
+    lower === "hey"
+  ) {
     return {
       ...base,
-      type: 'text',
-      content: `Hello! I'm your SignSocial AI assistant. Here's what I can help you with:\n\n` +
+      type: "text",
+      content:
+        `Hello! I'm your SignSocial AI assistant. Here's what I can help you with:\n\n` +
         `- **Generate content**: "Write a post about our new feature"\n` +
         `- **Create threads**: "Create a thread about AI trends"\n` +
         `- **Schedule posts**: "Schedule a post for tomorrow at 10am"\n` +
@@ -340,11 +407,17 @@ async function buildAIResponse(
   }
 
   // --- Content ideas ---
-  if (lower.includes('idea') || lower.includes('suggest') || lower.includes('recommend') || lower.includes('inspiration')) {
+  if (
+    lower.includes("idea") ||
+    lower.includes("suggest") ||
+    lower.includes("recommend") ||
+    lower.includes("inspiration")
+  ) {
     return {
       ...base,
-      type: 'text',
-      content: `Here are 5 content ideas for this week:\n\n` +
+      type: "text",
+      content:
+        `Here are 5 content ideas for this week:\n\n` +
         `1. **Behind-the-scenes**: Share a day-in-the-life at your company. This type of content gets 2x more engagement.\n\n` +
         `2. **Industry poll**: Ask your audience about a trending topic. Polls drive 25% higher interaction rates.\n\n` +
         `3. **Customer spotlight**: Feature a customer success story. Social proof increases trust by 72%.\n\n` +
@@ -358,19 +431,20 @@ async function buildAIResponse(
   try {
     const res = await socialApi.ai.generate({
       topic: userMessage,
-      tone: 'personal',
+      tone: "personal",
       platform: selectedPlatform,
     });
     return {
       ...base,
-      type: 'text',
+      type: "text",
       content: res.data.content,
     };
   } catch {
     return {
       ...base,
-      type: 'text',
-      content: `That's a great question! Here's what I think:\n\n` +
+      type: "text",
+      content:
+        `That's a great question! Here's what I think:\n\n` +
         `Based on current social media trends, the best approach for "${userMessage.slice(0, 80)}" would involve:\n\n` +
         `1. **Craft a compelling hook** -- The first line determines whether people stop scrolling.\n` +
         `2. **Use visual content** -- Posts with images or videos see 2.3x more engagement.\n` +
@@ -396,19 +470,22 @@ function PostPreviewCard({ data }: { data: PostPreviewData }) {
     setIsSubmitting(true);
     try {
       const accountIds = accounts
-        .filter((a) => data.platforms.some((p) => PLATFORM_LABELS[a.platform] === p))
+        .filter((a) =>
+          data.platforms.some((p) => PLATFORM_LABELS[a.platform] === p),
+        )
         .map((a) => a.id);
       const post = await createPost({
         content,
-        accounts: accountIds.length > 0 ? accountIds : accounts.map((a) => a.id),
+        accounts:
+          accountIds.length > 0 ? accountIds : accounts.map((a) => a.id),
         hashtags: data.hashtags,
-        status: 'draft',
+        status: "draft",
       });
       await publishPost(post.id);
       setPublished(true);
-      toast.success('Post published successfully');
+      toast.success("Post published successfully");
     } catch {
-      toast.error('Failed to publish post');
+      toast.error("Failed to publish post");
     } finally {
       setIsSubmitting(false);
     }
@@ -418,22 +495,25 @@ function PostPreviewCard({ data }: { data: PostPreviewData }) {
     setIsSubmitting(true);
     try {
       const accountIds = accounts
-        .filter((a) => data.platforms.some((p) => PLATFORM_LABELS[a.platform] === p))
+        .filter((a) =>
+          data.platforms.some((p) => PLATFORM_LABELS[a.platform] === p),
+        )
         .map((a) => a.id);
       const post = await createPost({
         content,
-        accounts: accountIds.length > 0 ? accountIds : accounts.map((a) => a.id),
+        accounts:
+          accountIds.length > 0 ? accountIds : accounts.map((a) => a.id),
         hashtags: data.hashtags,
-        status: 'draft',
+        status: "draft",
       });
       const tomorrow = new Date();
       tomorrow.setDate(tomorrow.getDate() + 1);
       tomorrow.setHours(10, 0, 0, 0);
       await schedulePost(post.id, tomorrow.toISOString());
       setScheduled(true);
-      toast.success('Post scheduled successfully');
+      toast.success("Post scheduled successfully");
     } catch {
-      toast.error('Failed to schedule post');
+      toast.error("Failed to schedule post");
     } finally {
       setIsSubmitting(false);
     }
@@ -464,7 +544,9 @@ function PostPreviewCard({ data }: { data: PostPreviewData }) {
             autoFocus
           />
         ) : (
-          <p className="text-sm whitespace-pre-wrap leading-relaxed">{content}</p>
+          <p className="text-sm whitespace-pre-wrap leading-relaxed">
+            {content}
+          </p>
         )}
         {data.hashtags.length > 0 && (
           <div className="flex flex-wrap gap-1.5">
@@ -548,7 +630,7 @@ function ScheduleCard({ data }: { data: ScheduleData }) {
       const post = await createPost({
         content: data.postSummary,
         accounts: accountIds,
-        status: 'draft',
+        status: "draft",
       });
       // Parse the date and time from the schedule data
       const scheduledAt = new Date(`${data.date} ${data.time}`);
@@ -562,9 +644,9 @@ function ScheduleCard({ data }: { data: ScheduleData }) {
         await schedulePost(post.id, scheduledAt.toISOString());
       }
       setConfirmed(true);
-      toast.success('Post scheduled successfully');
+      toast.success("Post scheduled successfully");
     } catch {
-      toast.error('Failed to schedule post');
+      toast.error("Failed to schedule post");
     } finally {
       setIsSubmitting(false);
     }
@@ -640,9 +722,15 @@ function AnalyticsCard({ data }: { data: AnalyticsData }) {
             <span className="text-lg font-bold">{data.value}</span>
             <Badge
               variant="secondary"
-              className={data.positive ? 'text-green-600 bg-green-50' : 'text-red-600 bg-red-50'}
+              className={
+                data.positive
+                  ? "text-green-600 bg-green-50"
+                  : "text-red-600 bg-red-50"
+              }
             >
-              <TrendingUp className={`h-3 w-3 mr-0.5 ${!data.positive ? 'rotate-180' : ''}`} />
+              <TrendingUp
+                className={`h-3 w-3 mr-0.5 ${!data.positive ? "rotate-180" : ""}`}
+              />
               {data.change}
             </Badge>
           </div>
@@ -650,18 +738,27 @@ function AnalyticsCard({ data }: { data: AnalyticsData }) {
         <Separator />
         <div className="flex items-end gap-1.5 h-20">
           {data.breakdown.map((item) => (
-            <div key={item.label} className="flex-1 flex flex-col items-center gap-1">
+            <div
+              key={item.label}
+              className="flex-1 flex flex-col items-center gap-1"
+            >
               <div
                 className="w-full rounded-sm bg-primary/80 transition-all"
-                style={{ height: `${(item.value / maxVal) * 100}%`, minHeight: 4 }}
+                style={{
+                  height: `${(item.value / maxVal) * 100}%`,
+                  minHeight: 4,
+                }}
               />
-              <span className="text-[10px] text-muted-foreground">{item.label}</span>
+              <span className="text-[10px] text-muted-foreground">
+                {item.label}
+              </span>
             </div>
           ))}
         </div>
         <p className="text-xs text-muted-foreground">
-          Best days to post: <strong>Wednesday</strong> and <strong>Thursday</strong> based on
-          your engagement data. Aim for 9-11 AM or 1-3 PM for maximum reach.
+          Best days to post: <strong>Wednesday</strong> and{" "}
+          <strong>Thursday</strong> based on your engagement data. Aim for 9-11
+          AM or 1-3 PM for maximum reach.
         </p>
       </div>
     </Card>
@@ -672,7 +769,7 @@ function AnalyticsCard({ data }: { data: AnalyticsData }) {
 // Platform icon (compact inline version)
 // ---------------------------------------------------------------------------
 
-function PlatformDot({ platform }: { platform: SocialAccount['platform'] }) {
+function PlatformDot({ platform }: { platform: SocialAccount["platform"] }) {
   return (
     <span
       className="inline-block w-2.5 h-2.5 rounded-full shrink-0"
@@ -694,9 +791,9 @@ export function AgentChat() {
 
   // Chat state
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [input, setInput] = useState('');
+  const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
-  const [streamedContent, setStreamedContent] = useState('');
+  const [streamedContent, setStreamedContent] = useState("");
 
   // Channel selection
   const [selectedAccountIds, setSelectedAccountIds] = useState<string[]>([]);
@@ -728,33 +825,34 @@ export function AgentChat() {
 
   // -- Scroll to bottom on new messages --
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, streamedContent]);
 
   // -- Persist threads helper --
-  const persistThreads = useCallback(
-    (updated: ChatThread[]) => {
-      setThreads(updated);
-      threadsRef.current = updated;
-      saveThreads(updated);
-    },
-    []
-  );
+  const persistThreads = useCallback((updated: ChatThread[]) => {
+    setThreads(updated);
+    threadsRef.current = updated;
+    saveThreads(updated);
+  }, []);
 
   // -- Sync a single thread to API --
   const syncThreadToApi = useCallback((thread: ChatThread, isNew: boolean) => {
     if (isNew) {
-      socialApiClient.post('/social/ai-threads', {
-        id: thread.id,
-        title: thread.title,
-        messages: thread.messages,
-        created_at: thread.createdAt,
-      }).catch(() => {});
+      socialApiClient
+        .post("/social/ai-threads", {
+          id: thread.id,
+          title: thread.title,
+          messages: thread.messages,
+          created_at: thread.createdAt,
+        })
+        .catch(() => {});
     } else {
-      socialApiClient.put(`/social/ai-threads/${thread.id}`, {
-        title: thread.title,
-        messages: thread.messages,
-      }).catch(() => {});
+      socialApiClient
+        .put(`/social/ai-threads/${thread.id}`, {
+          title: thread.title,
+          messages: thread.messages,
+        })
+        .catch(() => {});
     }
   }, []);
 
@@ -763,9 +861,9 @@ export function AgentChat() {
     setActiveThreadId(thread.id);
     activeThreadIdRef.current = thread.id;
     setMessages(thread.messages);
-    setInput('');
+    setInput("");
     setIsTyping(false);
-    setStreamedContent('');
+    setStreamedContent("");
   }, []);
 
   // -- New chat --
@@ -773,9 +871,9 @@ export function AgentChat() {
     setActiveThreadId(null);
     activeThreadIdRef.current = null;
     setMessages([]);
-    setInput('');
+    setInput("");
     setIsTyping(false);
-    setStreamedContent('');
+    setStreamedContent("");
     inputRef.current?.focus();
   }, []);
 
@@ -789,7 +887,7 @@ export function AgentChat() {
         startNewChat();
       }
     },
-    [persistThreads, startNewChat]
+    [persistThreads, startNewChat],
   );
 
   // -- Streaming simulation --
@@ -797,7 +895,7 @@ export function AgentChat() {
     (response: ChatMessage, currentMessages: ChatMessage[]) => {
       const fullContent = response.content;
       let index = 0;
-      setStreamedContent('');
+      setStreamedContent("");
       setIsTyping(true);
 
       const interval = setInterval(() => {
@@ -808,7 +906,7 @@ export function AgentChat() {
         if (index >= fullContent.length) {
           clearInterval(interval);
           setIsTyping(false);
-          setStreamedContent('');
+          setStreamedContent("");
 
           const newMessages = [...currentMessages, response];
           setMessages(newMessages);
@@ -822,14 +920,14 @@ export function AgentChat() {
           if (existing) {
             const updatedThread = { ...existing, messages: newMessages };
             updated = prev.map((t) =>
-              t.id === currentThreadId ? updatedThread : t
+              t.id === currentThreadId ? updatedThread : t,
             );
             syncThreadToApi(updatedThread, false);
           } else {
-            const firstUserMsg = newMessages.find((m) => m.role === 'user');
+            const firstUserMsg = newMessages.find((m) => m.role === "user");
             const newThread: ChatThread = {
               id: crypto.randomUUID(),
-              title: generateTitle(firstUserMsg?.content || 'New conversation'),
+              title: generateTitle(firstUserMsg?.content || "New conversation"),
               messages: newMessages,
               createdAt: new Date().toISOString(),
             };
@@ -845,7 +943,7 @@ export function AgentChat() {
 
       return () => clearInterval(interval);
     },
-    [persistThreads, syncThreadToApi]
+    [persistThreads, syncThreadToApi],
   );
 
   // -- Send message --
@@ -856,41 +954,43 @@ export function AgentChat() {
 
       const userMessage: ChatMessage = {
         id: crypto.randomUUID(),
-        role: 'user',
+        role: "user",
         content: msg,
-        type: 'text',
+        type: "text",
         timestamp: new Date().toISOString(),
       };
 
       const newMessages = [...messages, userMessage];
       setMessages(newMessages);
-      setInput('');
+      setInput("");
 
       // Brief delay before AI starts responding
       setIsTyping(true);
-      const selectedAccts = accounts.filter((a) => selectedAccountIds.includes(a.id));
+      const selectedAccts = accounts.filter((a) =>
+        selectedAccountIds.includes(a.id),
+      );
       setTimeout(async () => {
         try {
           const response = await buildAIResponse(msg, selectedAccts);
           streamResponse(response, newMessages);
         } catch {
           setIsTyping(false);
-          toast.error('Failed to get AI response');
+          toast.error("Failed to get AI response");
         }
       }, 600);
     },
-    [input, isTyping, messages, accounts, selectedAccountIds, streamResponse]
+    [input, isTyping, messages, accounts, selectedAccountIds, streamResponse],
   );
 
   // -- Keyboard handling --
   const handleKeyDown = useCallback(
     (e: KeyboardEvent<HTMLTextAreaElement>) => {
-      if (e.key === 'Enter' && !e.shiftKey) {
+      if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
         sendMessage();
       }
     },
-    [sendMessage]
+    [sendMessage],
   );
 
   // -- Toggle account selection --
@@ -898,7 +998,7 @@ export function AgentChat() {
     setSelectedAccountIds((prev) =>
       prev.includes(accountId)
         ? prev.filter((id) => id !== accountId)
-        : [...prev, accountId]
+        : [...prev, accountId],
     );
   }, []);
 
@@ -906,7 +1006,9 @@ export function AgentChat() {
   // Render
   // ---------------------------------------------------------------------------
 
-  const selectedAccounts = accounts.filter((a) => selectedAccountIds.includes(a.id));
+  const selectedAccounts = accounts.filter((a) =>
+    selectedAccountIds.includes(a.id),
+  );
 
   return (
     <TooltipProvider delayDuration={300}>
@@ -925,7 +1027,10 @@ export function AgentChat() {
                 <p className="text-xs text-muted-foreground text-center py-6">
                   No accounts connected.
                   <br />
-                  <a href="/social/accounts" className="text-primary underline mt-1 inline-block">
+                  <a
+                    href="/social/accounts"
+                    className="text-primary underline mt-1 inline-block"
+                  >
                     Add accounts
                   </a>
                 </p>
@@ -938,24 +1043,26 @@ export function AgentChat() {
                     onClick={() => toggleAccount(account.id)}
                     className={`w-full flex items-center gap-2.5 rounded-lg px-3 py-2 text-left transition-colors ${
                       isSelected
-                        ? 'bg-primary/10 ring-1 ring-primary/30'
-                        : 'hover:bg-muted/60'
+                        ? "bg-primary/10 ring-1 ring-primary/30"
+                        : "hover:bg-muted/60"
                     }`}
                   >
                     <div className="relative shrink-0">
                       <div
                         className="w-8 h-8 rounded-full flex items-center justify-center"
-                        style={{ backgroundColor: `${PLATFORM_COLORS[account.platform]}18` }}
+                        style={{
+                          backgroundColor: `${PLATFORM_COLORS[account.platform]}18`,
+                        }}
                       >
                         <PlatformDot platform={account.platform} />
                       </div>
                       <span
                         className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-card ${
-                          account.status === 'connected'
-                            ? 'bg-green-500'
-                            : account.status === 'expired'
-                              ? 'bg-yellow-500'
-                              : 'bg-red-500'
+                          account.status === "connected"
+                            ? "bg-green-500"
+                            : account.status === "expired"
+                              ? "bg-yellow-500"
+                              : "bg-red-500"
                         }`}
                       />
                     </div>
@@ -980,7 +1087,8 @@ export function AgentChat() {
               <Separator />
               <div className="p-2">
                 <p className="text-xs text-muted-foreground text-center">
-                  {selectedAccounts.length} channel{selectedAccounts.length !== 1 ? 's' : ''} selected
+                  {selectedAccounts.length} channel
+                  {selectedAccounts.length !== 1 ? "s" : ""} selected
                 </p>
               </div>
             </>
@@ -1014,9 +1122,9 @@ export function AgentChat() {
                       How can I help with your social media?
                     </h2>
                     <p className="text-sm text-muted-foreground max-w-md">
-                      I can generate content, schedule posts, analyze performance, suggest
-                      hashtags, and more. Select channels on the left to target specific
-                      platforms.
+                      I can generate content, schedule posts, analyze
+                      performance, suggest hashtags, and more. Select channels
+                      on the left to target specific platforms.
                     </p>
                   </div>
                   <div className="grid grid-cols-2 gap-3 w-full max-w-lg">
@@ -1038,9 +1146,9 @@ export function AgentChat() {
               {messages.map((message) => (
                 <div
                   key={message.id}
-                  className={`flex gap-3 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                  className={`flex gap-3 ${message.role === "user" ? "justify-end" : "justify-start"}`}
                 >
-                  {message.role === 'assistant' && (
+                  {message.role === "assistant" && (
                     <Avatar className="h-8 w-8 shrink-0 mt-0.5">
                       <AvatarFallback className="bg-primary/10 text-primary">
                         <Bot className="h-4 w-4" />
@@ -1049,36 +1157,38 @@ export function AgentChat() {
                   )}
                   <div
                     className={`max-w-[85%] ${
-                      message.role === 'user' ? 'order-first' : ''
+                      message.role === "user" ? "order-first" : ""
                     }`}
                   >
                     <div
                       className={`rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
-                        message.role === 'user'
-                          ? 'bg-primary text-primary-foreground ml-auto'
-                          : 'bg-muted'
+                        message.role === "user"
+                          ? "bg-primary text-primary-foreground ml-auto"
+                          : "bg-muted"
                       }`}
                     >
                       <MarkdownLite text={message.content} />
                     </div>
                     {/* Structured action cards */}
-                    {message.type === 'post-preview' && message.postPreview && (
+                    {message.type === "post-preview" && message.postPreview && (
                       <PostPreviewCard data={message.postPreview} />
                     )}
-                    {message.type === 'schedule-confirmation' && message.scheduleData && (
-                      <ScheduleCard data={message.scheduleData} />
-                    )}
-                    {message.type === 'analytics-insight' && message.analyticsData && (
-                      <AnalyticsCard data={message.analyticsData} />
-                    )}
+                    {message.type === "schedule-confirmation" &&
+                      message.scheduleData && (
+                        <ScheduleCard data={message.scheduleData} />
+                      )}
+                    {message.type === "analytics-insight" &&
+                      message.analyticsData && (
+                        <AnalyticsCard data={message.analyticsData} />
+                      )}
                     <p className="text-[10px] text-muted-foreground mt-1 px-1">
                       {new Date(message.timestamp).toLocaleTimeString([], {
-                        hour: '2-digit',
-                        minute: '2-digit',
+                        hour: "2-digit",
+                        minute: "2-digit",
                       })}
                     </p>
                   </div>
-                  {message.role === 'user' && (
+                  {message.role === "user" && (
                     <Avatar className="h-8 w-8 shrink-0 mt-0.5">
                       <AvatarFallback className="bg-blue-600 text-white">
                         <User className="h-4 w-4" />
@@ -1105,7 +1215,9 @@ export function AgentChat() {
                     ) : (
                       <div className="rounded-2xl px-4 py-3 bg-muted flex items-center gap-1.5">
                         <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                        <span className="text-sm text-muted-foreground">Thinking...</span>
+                        <span className="text-sm text-muted-foreground">
+                          Thinking...
+                        </span>
                       </div>
                     )}
                   </div>
@@ -1121,15 +1233,16 @@ export function AgentChat() {
             <div className="max-w-3xl mx-auto">
               {selectedAccounts.length > 0 && (
                 <div className="flex items-center gap-1.5 mb-2 flex-wrap">
-                  <span className="text-xs text-muted-foreground mr-1">Targeting:</span>
+                  <span className="text-xs text-muted-foreground mr-1">
+                    Targeting:
+                  </span>
                   {selectedAccounts.map((a) => (
                     <Badge
                       key={a.id}
                       variant="secondary"
                       className="text-xs gap-1"
                     >
-                      <PlatformDot platform={a.platform} />
-                      @{a.username}
+                      <PlatformDot platform={a.platform} />@{a.username}
                     </Badge>
                   ))}
                 </div>
@@ -1205,8 +1318,8 @@ export function AgentChat() {
                     key={thread.id}
                     className={`group relative rounded-lg px-2.5 py-2 cursor-pointer transition-colors ${
                       isActive
-                        ? 'bg-primary/10 ring-1 ring-primary/30'
-                        : 'hover:bg-muted/60'
+                        ? "bg-primary/10 ring-1 ring-primary/30"
+                        : "hover:bg-muted/60"
                     }`}
                     onClick={() => loadThread(thread)}
                   >
@@ -1217,7 +1330,7 @@ export function AgentChat() {
                           {thread.title}
                         </p>
                         <p className="text-[10px] text-muted-foreground mt-0.5">
-                          {msgCount} message{msgCount !== 1 ? 's' : ''} &middot;{' '}
+                          {msgCount} message{msgCount !== 1 ? "s" : ""} &middot;{" "}
                           {formatRelativeTime(thread.createdAt)}
                         </p>
                       </div>
@@ -1252,7 +1365,7 @@ export function AgentChat() {
 // ---------------------------------------------------------------------------
 
 function MarkdownLite({ text }: { text: string }) {
-  const lines = text.split('\n');
+  const lines = text.split("\n");
   const elements: React.ReactNode[] = [];
 
   for (let i = 0; i < lines.length; i++) {
@@ -1287,7 +1400,7 @@ function InlineMarkdown({ text }: { text: string }) {
       parts.push(
         <strong key={match.index} className="font-semibold">
           {match[2]}
-        </strong>
+        </strong>,
       );
     } else if (match[3]) {
       // Inline code
@@ -1297,7 +1410,7 @@ function InlineMarkdown({ text }: { text: string }) {
           className="rounded bg-black/10 px-1 py-0.5 text-xs font-mono"
         >
           {match[3]}
-        </code>
+        </code>,
       );
     }
 
@@ -1324,7 +1437,7 @@ function formatRelativeTime(isoDate: string): string {
   const diffHour = Math.floor(diffMs / 3_600_000);
   const diffDay = Math.floor(diffMs / 86_400_000);
 
-  if (diffMin < 1) return 'just now';
+  if (diffMin < 1) return "just now";
   if (diffMin < 60) return `${diffMin}m ago`;
   if (diffHour < 24) return `${diffHour}h ago`;
   if (diffDay < 7) return `${diffDay}d ago`;

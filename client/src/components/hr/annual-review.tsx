@@ -68,28 +68,27 @@ const DEFAULT_ACTIONS: ActionPlan[] = [
 ];
 
 export function AnnualReview() {
-  const [objectives, setObjectives] = useState<ReviewObjective[]>(
-    DEFAULT_OBJECTIVES
-  );
+  const [objectives, setObjectives] =
+    useState<ReviewObjective[]>(DEFAULT_OBJECTIVES);
   const [actions, setActions] = useState<ActionPlan[]>(DEFAULT_ACTIONS);
   const [overallRating, setOverallRating] = useState(4);
   const [managerComments, setManagerComments] = useState(
-    "Excellent performance this year. Strong technical skills and leadership potential."
+    "Excellent performance this year. Strong technical skills and leadership potential.",
   );
   const [employeeComments, setEmployeeComments] = useState("");
   const [isSigned, setIsSigned] = useState(false);
 
   const handleToggleAction = (id: string) => {
     setActions(
-      actions.map((a) =>
-        a.id === id ? { ...a, completed: !a.completed } : a
-      )
+      actions.map((a) => (a.id === id ? { ...a, completed: !a.completed } : a)),
     );
   };
 
   const avgObjectiveRating =
     objectives.length > 0
-      ? (objectives.reduce((sum, o) => sum + o.rating, 0) / objectives.length).toFixed(1)
+      ? (
+          objectives.reduce((sum, o) => sum + o.rating, 0) / objectives.length
+        ).toFixed(1)
       : 0;
 
   const completedActions = actions.filter((a) => a.completed).length;
@@ -115,15 +114,21 @@ export function AnnualReview() {
         </div>
 
         <div className="rounded-lg border bg-purple-50 p-4">
-          <p className="text-sm text-purple-700 font-medium">Objectives Average</p>
+          <p className="text-sm text-purple-700 font-medium">
+            Objectives Average
+          </p>
           <div className="flex items-baseline gap-2 mt-1">
-            <p className="text-2xl font-bold text-purple-900">{avgObjectiveRating}</p>
+            <p className="text-2xl font-bold text-purple-900">
+              {avgObjectiveRating}
+            </p>
             <span className="text-sm text-purple-700">/5</span>
           </div>
         </div>
 
         <div className="rounded-lg border bg-green-50 p-4">
-          <p className="text-sm text-green-700 font-medium">Development Actions</p>
+          <p className="text-sm text-green-700 font-medium">
+            Development Actions
+          </p>
           <p className="text-2xl font-bold text-green-900">
             {completedActions}/{actions.length}
           </p>
@@ -132,7 +137,9 @@ export function AnnualReview() {
 
       <div className="border rounded-lg overflow-hidden bg-card">
         <div className="bg-muted border-b p-4">
-          <h3 className="font-semibold text-foreground">Performance Objectives</h3>
+          <h3 className="font-semibold text-foreground">
+            Performance Objectives
+          </h3>
         </div>
 
         <div className="divide-y">
@@ -141,7 +148,9 @@ export function AnnualReview() {
               <div className="flex items-start justify-between mb-2">
                 <div>
                   <p className="font-medium text-foreground">{obj.title}</p>
-                  <p className="text-sm text-muted-foreground">{obj.description}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {obj.description}
+                  </p>
                 </div>
                 <div className="flex-shrink-0 text-right">
                   <span
@@ -149,8 +158,8 @@ export function AnnualReview() {
                       obj.status === "achieved"
                         ? "bg-green-100 text-green-800"
                         : obj.status === "partial"
-                        ? "bg-yellow-100 text-yellow-800"
-                        : "bg-red-100 text-red-800"
+                          ? "bg-yellow-100 text-yellow-800"
+                          : "bg-red-100 text-red-800"
                     }`}
                   >
                     {obj.status.charAt(0).toUpperCase() + obj.status.slice(1)}

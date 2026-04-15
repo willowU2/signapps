@@ -5,11 +5,14 @@
  * Supports create, update, delete, move, and batch operations.
  */
 
-'use client';
+"use client";
 
-import * as React from 'react';
-import { toast } from 'sonner';
-import type { UndoableAction, ScheduleBlock } from '@/lib/scheduling/types/scheduling';
+import * as React from "react";
+import { toast } from "sonner";
+import type {
+  UndoableAction,
+  ScheduleBlock,
+} from "@/lib/scheduling/types/scheduling";
 
 // ============================================================================
 // Types
@@ -52,7 +55,7 @@ export interface UseUndoRedoResult {
   createEventAction: (
     event: ScheduleBlock,
     onUndo: () => Promise<void>,
-    onRedo: () => Promise<void>
+    onRedo: () => Promise<void>,
   ) => void;
   /** Create an undoable action for event update */
   updateEventAction: (
@@ -60,13 +63,13 @@ export interface UseUndoRedoResult {
     before: Partial<ScheduleBlock>,
     after: Partial<ScheduleBlock>,
     onUndo: () => Promise<void>,
-    onRedo: () => Promise<void>
+    onRedo: () => Promise<void>,
   ) => void;
   /** Create an undoable action for event deletion */
   deleteEventAction: (
     event: ScheduleBlock,
     onUndo: () => Promise<void>,
-    onRedo: () => Promise<void>
+    onRedo: () => Promise<void>,
   ) => void;
   /** Create an undoable action for event move */
   moveEventAction: (
@@ -76,7 +79,7 @@ export interface UseUndoRedoResult {
     newStart: Date,
     newEnd: Date | undefined,
     onUndo: () => Promise<void>,
-    onRedo: () => Promise<void>
+    onRedo: () => Promise<void>,
   ) => void;
   /** Create a batch action from multiple actions */
   batchAction: (actions: UndoableAction[], description: string) => void;
@@ -99,12 +102,11 @@ const DEFAULT_CONFIG: Required<UndoRedoConfig> = {
 // ============================================================================
 
 export function useUndoRedo(config: UndoRedoConfig = {}): UseUndoRedoResult {
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const mergedConfig = React.useMemo(() => ({ ...DEFAULT_CONFIG, ...config }), [
-    config.maxHistory,
-    config.showToasts,
-    config.toastDuration,
-  ]);
+  const mergedConfig = React.useMemo(
+    () => ({ ...DEFAULT_CONFIG, ...config }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [config.maxHistory, config.showToasts, config.toastDuration],
+  );
 
   const [state, setState] = React.useState<UndoRedoState>({
     undoStack: [],
@@ -117,13 +119,17 @@ export function useUndoRedo(config: UndoRedoConfig = {}): UseUndoRedoResult {
   const canRedo = state.redoStack.length > 0 && !state.isExecuting;
 
   // Generate unique ID for actions
-  const generateId = () => `action-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+  const generateId = () =>
+    `action-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 
   // Push action onto undo stack
   const pushAction = React.useCallback(
     (action: UndoableAction) => {
       setState((prev) => {
-        const newUndoStack = [action, ...prev.undoStack].slice(0, mergedConfig.maxHistory);
+        const newUndoStack = [action, ...prev.undoStack].slice(
+          0,
+          mergedConfig.maxHistory,
+        );
         return {
           ...prev,
           undoStack: newUndoStack,
@@ -136,7 +142,7 @@ export function useUndoRedo(config: UndoRedoConfig = {}): UseUndoRedoResult {
         toast.success(action.description, {
           duration: mergedConfig.toastDuration,
           action: {
-            label: 'Annuler',
+            label: "Annuler",
             onClick: () => {
               // Trigger undo through state
               undo();
@@ -147,7 +153,7 @@ export function useUndoRedo(config: UndoRedoConfig = {}): UseUndoRedoResult {
     },
     // undo is defined below — circular dep avoided intentionally
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [mergedConfig]
+    [mergedConfig],
   );
 
   // Undo last action
@@ -165,7 +171,10 @@ export function useUndoRedo(config: UndoRedoConfig = {}): UseUndoRedoResult {
       setState((prev) => ({
         ...prev,
         undoStack: restUndo,
-        redoStack: [action, ...prev.redoStack].slice(0, mergedConfig.maxHistory),
+        redoStack: [action, ...prev.redoStack].slice(
+          0,
+          mergedConfig.maxHistory,
+        ),
         isExecuting: false,
         lastAction: action,
       }));
@@ -174,7 +183,7 @@ export function useUndoRedo(config: UndoRedoConfig = {}): UseUndoRedoResult {
         toast.info(`Action annul\u00e9e: ${action.description}`, {
           duration: mergedConfig.toastDuration,
           action: {
-            label: 'R\u00e9tablir',
+            label: "R\u00e9tablir",
             onClick: () => redo(),
           },
         });
@@ -182,10 +191,10 @@ export function useUndoRedo(config: UndoRedoConfig = {}): UseUndoRedoResult {
     } catch (error) {
       setState((prev) => ({ ...prev, isExecuting: false }));
       toast.error("Impossible d'annuler cette action");
-      console.error('Undo failed:', error);
+      console.error("Undo failed:", error);
     }
-  // redo is defined below — circular dep avoided intentionally
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // redo is defined below — circular dep avoided intentionally
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [canUndo, state.undoStack, mergedConfig]);
 
   // Redo last undone action
@@ -202,7 +211,10 @@ export function useUndoRedo(config: UndoRedoConfig = {}): UseUndoRedoResult {
 
       setState((prev) => ({
         ...prev,
-        undoStack: [action, ...prev.undoStack].slice(0, mergedConfig.maxHistory),
+        undoStack: [action, ...prev.undoStack].slice(
+          0,
+          mergedConfig.maxHistory,
+        ),
         redoStack: restRedo,
         isExecuting: false,
         lastAction: action,
@@ -215,8 +227,8 @@ export function useUndoRedo(config: UndoRedoConfig = {}): UseUndoRedoResult {
       }
     } catch (error) {
       setState((prev) => ({ ...prev, isExecuting: false }));
-      toast.error('Impossible de r\u00e9tablir cette action');
-      console.error('Redo failed:', error);
+      toast.error("Impossible de r\u00e9tablir cette action");
+      console.error("Redo failed:", error);
     }
   }, [canRedo, state.redoStack, mergedConfig]);
 
@@ -225,11 +237,11 @@ export function useUndoRedo(config: UndoRedoConfig = {}): UseUndoRedoResult {
     (
       event: ScheduleBlock,
       onUndo: () => Promise<void>,
-      onRedo: () => Promise<void>
+      onRedo: () => Promise<void>,
     ) => {
       const action: UndoableAction = {
         id: generateId(),
-        type: 'create',
+        type: "create",
         timestamp: new Date(),
         description: `\u00c9v\u00e9nement cr\u00e9\u00e9: ${event.title}`,
         undo: onUndo,
@@ -240,7 +252,7 @@ export function useUndoRedo(config: UndoRedoConfig = {}): UseUndoRedoResult {
       };
       pushAction(action);
     },
-    [pushAction]
+    [pushAction],
   );
 
   // Helper: Update event action
@@ -250,18 +262,18 @@ export function useUndoRedo(config: UndoRedoConfig = {}): UseUndoRedoResult {
       before: Partial<ScheduleBlock>,
       after: Partial<ScheduleBlock>,
       onUndo: () => Promise<void>,
-      onRedo: () => Promise<void>
+      onRedo: () => Promise<void>,
     ) => {
       const changes: string[] = [];
-      if (before.title !== after.title) changes.push('titre');
-      if (before.start !== after.start) changes.push('date');
-      if (before.description !== after.description) changes.push('description');
+      if (before.title !== after.title) changes.push("titre");
+      if (before.start !== after.start) changes.push("date");
+      if (before.description !== after.description) changes.push("description");
 
       const action: UndoableAction = {
         id: generateId(),
-        type: 'update',
+        type: "update",
         timestamp: new Date(),
-        description: `\u00c9v\u00e9nement modifi\u00e9${changes.length ? `: ${changes.join(', ')}` : ''}`,
+        description: `\u00c9v\u00e9nement modifi\u00e9${changes.length ? `: ${changes.join(", ")}` : ""}`,
         undo: onUndo,
         redo: onRedo,
         data: {
@@ -271,7 +283,7 @@ export function useUndoRedo(config: UndoRedoConfig = {}): UseUndoRedoResult {
       };
       pushAction(action);
     },
-    [pushAction]
+    [pushAction],
   );
 
   // Helper: Delete event action
@@ -279,11 +291,11 @@ export function useUndoRedo(config: UndoRedoConfig = {}): UseUndoRedoResult {
     (
       event: ScheduleBlock,
       onUndo: () => Promise<void>,
-      onRedo: () => Promise<void>
+      onRedo: () => Promise<void>,
     ) => {
       const action: UndoableAction = {
         id: generateId(),
-        type: 'delete',
+        type: "delete",
         timestamp: new Date(),
         description: `\u00c9v\u00e9nement supprim\u00e9: ${event.title}`,
         undo: onUndo,
@@ -294,7 +306,7 @@ export function useUndoRedo(config: UndoRedoConfig = {}): UseUndoRedoResult {
       };
       pushAction(action);
     },
-    [pushAction]
+    [pushAction],
   );
 
   // Helper: Move event action
@@ -306,19 +318,19 @@ export function useUndoRedo(config: UndoRedoConfig = {}): UseUndoRedoResult {
       newStart: Date,
       newEnd: Date | undefined,
       onUndo: () => Promise<void>,
-      onRedo: () => Promise<void>
+      onRedo: () => Promise<void>,
     ) => {
       const formatDate = (d: Date) =>
-        d.toLocaleString('fr-FR', {
-          day: 'numeric',
-          month: 'short',
-          hour: '2-digit',
-          minute: '2-digit',
+        d.toLocaleString("fr-FR", {
+          day: "numeric",
+          month: "short",
+          hour: "2-digit",
+          minute: "2-digit",
         });
 
       const action: UndoableAction = {
         id: generateId(),
-        type: 'move',
+        type: "move",
         timestamp: new Date(),
         description: `\u00c9v\u00e9nement d\u00e9plac\u00e9: ${event.title} \u2192 ${formatDate(newStart)}`,
         undo: onUndo,
@@ -330,7 +342,7 @@ export function useUndoRedo(config: UndoRedoConfig = {}): UseUndoRedoResult {
       };
       pushAction(action);
     },
-    [pushAction]
+    [pushAction],
   );
 
   // Helper: Batch action
@@ -350,7 +362,7 @@ export function useUndoRedo(config: UndoRedoConfig = {}): UseUndoRedoResult {
 
       const action: UndoableAction = {
         id: generateId(),
-        type: 'batch',
+        type: "batch",
         timestamp: new Date(),
         description,
         undo: batchUndo,
@@ -361,7 +373,7 @@ export function useUndoRedo(config: UndoRedoConfig = {}): UseUndoRedoResult {
       };
       pushAction(action);
     },
-    [pushAction]
+    [pushAction],
   );
 
   // Clear history
@@ -378,23 +390,23 @@ export function useUndoRedo(config: UndoRedoConfig = {}): UseUndoRedoResult {
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Check for Ctrl/Cmd + Z (Undo)
-      if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+      if ((e.ctrlKey || e.metaKey) && e.key === "z" && !e.shiftKey) {
         e.preventDefault();
         if (canUndo) undo();
       }
 
       // Check for Ctrl/Cmd + Shift + Z or Ctrl/Cmd + Y (Redo)
       if (
-        ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'z') ||
-        ((e.ctrlKey || e.metaKey) && e.key === 'y')
+        ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === "z") ||
+        ((e.ctrlKey || e.metaKey) && e.key === "y")
       ) {
         e.preventDefault();
         if (canRedo) redo();
       }
     };
 
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
   }, [canUndo, canRedo, undo, redo]);
 
   return {
@@ -430,14 +442,18 @@ export function UndoRedoProvider({ children, config }: UndoRedoProviderProps) {
   const undoRedo = useUndoRedo(config);
 
   return (
-    <UndoRedoContext.Provider value={undoRedo}>{children}</UndoRedoContext.Provider>
+    <UndoRedoContext.Provider value={undoRedo}>
+      {children}
+    </UndoRedoContext.Provider>
   );
 }
 
 export function useUndoRedoContext(): UndoRedoContextValue {
   const context = React.useContext(UndoRedoContext);
   if (!context) {
-    throw new Error('useUndoRedoContext must be used within an UndoRedoProvider');
+    throw new Error(
+      "useUndoRedoContext must be used within an UndoRedoProvider",
+    );
   }
   return context;
 }

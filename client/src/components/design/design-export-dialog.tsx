@@ -30,11 +30,36 @@ interface DesignExportDialogProps {
   fabricCanvasRef: React.MutableRefObject<any | null>;
 }
 
-const FORMAT_OPTIONS: { id: ExportFormat; label: string; icon: React.ReactNode; desc: string }[] = [
-  { id: "png", label: "PNG", icon: <FileImage className="h-5 w-5" />, desc: "Transparent background support" },
-  { id: "jpg", label: "JPG", icon: <ImageIcon className="h-5 w-5" />, desc: "Smaller file size" },
-  { id: "pdf", label: "PDF", icon: <FileText className="h-5 w-5" />, desc: "Print-ready format" },
-  { id: "svg", label: "SVG", icon: <FileCode className="h-5 w-5" />, desc: "Scalable vector format" },
+const FORMAT_OPTIONS: {
+  id: ExportFormat;
+  label: string;
+  icon: React.ReactNode;
+  desc: string;
+}[] = [
+  {
+    id: "png",
+    label: "PNG",
+    icon: <FileImage className="h-5 w-5" />,
+    desc: "Transparent background support",
+  },
+  {
+    id: "jpg",
+    label: "JPG",
+    icon: <ImageIcon className="h-5 w-5" />,
+    desc: "Smaller file size",
+  },
+  {
+    id: "pdf",
+    label: "PDF",
+    icon: <FileText className="h-5 w-5" />,
+    desc: "Print-ready format",
+  },
+  {
+    id: "svg",
+    label: "SVG",
+    icon: <FileCode className="h-5 w-5" />,
+    desc: "Scalable vector format",
+  },
 ];
 
 // IDEA-062: DPI-aware export — resolution selector (72/150/300 DPI) in export dialog
@@ -44,7 +69,11 @@ const DPI_OPTIONS: { value: ExportDPI; label: string; desc: string }[] = [
   { value: 300, label: "300 DPI", desc: "Print / High-res" },
 ];
 
-export default function DesignExportDialog({ open, onOpenChange, fabricCanvasRef }: DesignExportDialogProps) {
+export default function DesignExportDialog({
+  open,
+  onOpenChange,
+  fabricCanvasRef,
+}: DesignExportDialogProps) {
   const { currentDesign } = useDesignStore();
   const [format, setFormat] = useState<ExportFormat>("png");
   const [quality, setQuality] = useState(90);
@@ -64,7 +93,10 @@ export default function DesignExportDialog({ open, onOpenChange, fabricCanvasRef
 
       if (format === "svg") {
         const svgData = canvas.toSVG();
-        downloadBlob(new Blob([svgData], { type: "image/svg+xml" }), `${name}.svg`);
+        downloadBlob(
+          new Blob([svgData], { type: "image/svg+xml" }),
+          `${name}.svg`,
+        );
       } else if (format === "png") {
         const dataUrl = canvas.toDataURL({
           format: "png",
@@ -121,12 +153,14 @@ export default function DesignExportDialog({ open, onOpenChange, fabricCanvasRef
                     "flex flex-col items-center gap-1.5 rounded-lg border-2 p-3 transition-all text-center",
                     format === opt.id
                       ? "border-primary bg-primary/5"
-                      : "border-border hover:border-muted-foreground/30"
+                      : "border-border hover:border-muted-foreground/30",
                   )}
                 >
                   {opt.icon}
                   <span className="text-xs font-semibold">{opt.label}</span>
-                  <span className="text-[10px] text-muted-foreground leading-tight">{opt.desc}</span>
+                  <span className="text-[10px] text-muted-foreground leading-tight">
+                    {opt.desc}
+                  </span>
                 </button>
               ))}
             </div>
@@ -137,7 +171,9 @@ export default function DesignExportDialog({ open, onOpenChange, fabricCanvasRef
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label className="text-sm font-medium">Quality</Label>
-                <span className="text-xs text-muted-foreground tabular-nums">{quality}%</span>
+                <span className="text-xs text-muted-foreground tabular-nums">
+                  {quality}%
+                </span>
               </div>
               <Slider
                 value={[quality]}
@@ -161,11 +197,13 @@ export default function DesignExportDialog({ open, onOpenChange, fabricCanvasRef
                     "flex-1 flex flex-col items-center gap-0.5 rounded-lg border-2 p-2.5 transition-all",
                     dpi === opt.value
                       ? "border-primary bg-primary/5"
-                      : "border-border hover:border-muted-foreground/30"
+                      : "border-border hover:border-muted-foreground/30",
                   )}
                 >
                   <span className="text-xs font-semibold">{opt.label}</span>
-                  <span className="text-[10px] text-muted-foreground">{opt.desc}</span>
+                  <span className="text-[10px] text-muted-foreground">
+                    {opt.desc}
+                  </span>
                 </button>
               ))}
             </div>
@@ -178,7 +216,8 @@ export default function DesignExportDialog({ open, onOpenChange, fabricCanvasRef
             <div className="flex items-center justify-between text-xs text-muted-foreground bg-muted/30 rounded-lg p-3">
               <span>Output size</span>
               <span className="font-medium tabular-nums">
-                {Math.round(currentDesign.format.width * (dpi / 72))} x {Math.round(currentDesign.format.height * (dpi / 72))} px
+                {Math.round(currentDesign.format.width * (dpi / 72))} x{" "}
+                {Math.round(currentDesign.format.height * (dpi / 72))} px
               </span>
             </div>
           )}

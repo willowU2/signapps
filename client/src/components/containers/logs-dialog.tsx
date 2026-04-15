@@ -1,17 +1,17 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from "react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Badge } from '@/components/ui/badge';
-import { Download, Trash2, Pause, Play } from 'lucide-react';
-import { containersApi } from '@/lib/api';
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
+import { Download, Trash2, Pause, Play } from "lucide-react";
+import { containersApi } from "@/lib/api";
 
 interface LogsDialogProps {
   open: boolean;
@@ -20,7 +20,12 @@ interface LogsDialogProps {
   containerName: string;
 }
 
-export function LogsDialog({ open, onOpenChange, containerId, containerName }: LogsDialogProps) {
+export function LogsDialog({
+  open,
+  onOpenChange,
+  containerId,
+  containerName,
+}: LogsDialogProps) {
   const [logs, setLogs] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [paused, setPaused] = useState(false);
@@ -34,12 +39,12 @@ export function LogsDialog({ open, onOpenChange, containerId, containerName }: L
     return () => {
       setLogs([]);
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, containerId]);
 
   useEffect(() => {
     if (!paused && logsEndRef.current) {
-      logsEndRef.current.scrollIntoView({ behavior: 'smooth' });
+      logsEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [logs, paused]);
 
@@ -51,25 +56,27 @@ export function LogsDialog({ open, onOpenChange, containerId, containerName }: L
       let logLines: string[];
       if (Array.isArray(response.data)) {
         logLines = response.data.filter((line: string) => line.trim());
-      } else if (typeof response.data === 'string') {
-        logLines = response.data.split('\n').filter((line: string) => line.trim());
+      } else if (typeof response.data === "string") {
+        logLines = response.data
+          .split("\n")
+          .filter((line: string) => line.trim());
       } else {
         logLines = [];
       }
       setLogs(logLines);
     } catch {
       // Show error message instead of mock data
-      setLogs(['Error: Failed to fetch container logs']);
+      setLogs(["Error: Failed to fetch container logs"]);
     } finally {
       setLoading(false);
     }
   };
 
   const handleDownload = () => {
-    const content = logs.join('\n');
-    const blob = new Blob([content], { type: 'text/plain' });
+    const content = logs.join("\n");
+    const blob = new Blob([content], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    const a = document.createElement("a");
     a.href = url;
     a.download = `${containerName}-logs.txt`;
     document.body.appendChild(a);
@@ -124,24 +131,31 @@ export function LogsDialog({ open, onOpenChange, containerId, containerName }: L
           </div>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 rounded-md border bg-black p-4" ref={scrollRef}>
+        <ScrollArea
+          className="flex-1 rounded-md border bg-black p-4"
+          ref={scrollRef}
+        >
           {loading ? (
-            <div className="text-green-400 font-mono text-sm">Chargement...</div>
+            <div className="text-green-400 font-mono text-sm">
+              Chargement...
+            </div>
           ) : logs.length === 0 ? (
-            <div className="text-muted-foreground font-mono text-sm">No logs available</div>
+            <div className="text-muted-foreground font-mono text-sm">
+              No logs available
+            </div>
           ) : (
             <div className="font-mono text-sm space-y-0.5">
               {logs.map((line, index) => (
                 <div
                   key={index}
                   className={
-                    line.includes('ERROR') || line.includes('error')
-                      ? 'text-red-400'
-                      : line.includes('WARN') || line.includes('warn')
-                      ? 'text-yellow-400'
-                      : line.includes('INFO') || line.includes('info')
-                      ? 'text-blue-400'
-                      : 'text-green-400'
+                    line.includes("ERROR") || line.includes("error")
+                      ? "text-red-400"
+                      : line.includes("WARN") || line.includes("warn")
+                        ? "text-yellow-400"
+                        : line.includes("INFO") || line.includes("info")
+                          ? "text-blue-400"
+                          : "text-green-400"
                   }
                 >
                   {line}

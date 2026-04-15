@@ -198,7 +198,9 @@ export interface ViewsState {
 
 export interface ViewActions {
   // View CRUD
-  createView: (view: Omit<ViewDefinition, "id" | "createdAt" | "updatedAt">) => Promise<ViewDefinition>;
+  createView: (
+    view: Omit<ViewDefinition, "id" | "createdAt" | "updatedAt">,
+  ) => Promise<ViewDefinition>;
   updateView: (id: string, updates: Partial<ViewDefinition>) => Promise<void>;
   deleteView: (id: string) => Promise<void>;
   duplicateView: (id: string, newName: string) => Promise<ViewDefinition>;
@@ -217,7 +219,11 @@ export interface ViewActions {
 
   // Sharing
   shareView: (viewId: string, config: ViewShareConfig) => Promise<void>;
-  unshareView: (viewId: string, targetType: string, targetId?: string) => Promise<void>;
+  unshareView: (
+    viewId: string,
+    targetType: string,
+    targetId?: string,
+  ) => Promise<void>;
 
   // Import/Export
   exportView: (viewId: string) => ViewDefinition;

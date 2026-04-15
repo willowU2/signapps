@@ -4,7 +4,7 @@
  * API client for managing external calendar connections and syncing.
  */
 
-import { calendarApi } from '@/lib/api';
+import { calendarApi } from "@/lib/api";
 import type {
   CalendarProvider,
   ProviderConnection,
@@ -20,13 +20,13 @@ import type {
   SyncLogFilter,
   SyncConflict,
   ResolveConflictRequest,
-} from './types';
+} from "./types";
 
 // ============================================================================
 // Base Path
 // ============================================================================
 
-const SYNC_API_PATH = '/external-sync';
+const SYNC_API_PATH = "/external-sync";
 
 // ============================================================================
 // Connection API
@@ -37,7 +37,7 @@ const SYNC_API_PATH = '/external-sync';
  */
 export async function getConnections(): Promise<ProviderConnection[]> {
   const response = await calendarApi.get<ProviderConnection[]>(
-    `${SYNC_API_PATH}/connections`
+    `${SYNC_API_PATH}/connections`,
   );
   return response.data;
 }
@@ -45,9 +45,11 @@ export async function getConnections(): Promise<ProviderConnection[]> {
 /**
  * Get a specific connection
  */
-export async function getConnection(connectionId: string): Promise<ProviderConnection> {
+export async function getConnection(
+  connectionId: string,
+): Promise<ProviderConnection> {
   const response = await calendarApi.get<ProviderConnection>(
-    `${SYNC_API_PATH}/connections/${connectionId}`
+    `${SYNC_API_PATH}/connections/${connectionId}`,
   );
   return response.data;
 }
@@ -56,11 +58,11 @@ export async function getConnection(connectionId: string): Promise<ProviderConne
  * Initiate OAuth flow for a provider
  */
 export async function connectProvider(
-  request: ConnectProviderRequest
+  request: ConnectProviderRequest,
 ): Promise<ConnectProviderResponse> {
   const response = await calendarApi.post<ConnectProviderResponse>(
     `${SYNC_API_PATH}/connections/connect`,
-    request
+    request,
   );
   return response.data;
 }
@@ -69,11 +71,11 @@ export async function connectProvider(
  * Complete OAuth callback
  */
 export async function handleCallback(
-  callback: ProviderCallback
+  callback: ProviderCallback,
 ): Promise<ProviderConnection> {
   const response = await calendarApi.post<ProviderConnection>(
     `${SYNC_API_PATH}/connections/callback`,
-    callback
+    callback,
   );
   return response.data;
 }
@@ -88,9 +90,11 @@ export async function disconnectProvider(connectionId: string): Promise<void> {
 /**
  * Refresh a provider token
  */
-export async function refreshToken(connectionId: string): Promise<ProviderConnection> {
+export async function refreshToken(
+  connectionId: string,
+): Promise<ProviderConnection> {
   const response = await calendarApi.post<ProviderConnection>(
-    `${SYNC_API_PATH}/connections/${connectionId}/refresh`
+    `${SYNC_API_PATH}/connections/${connectionId}/refresh`,
   );
   return response.data;
 }
@@ -103,10 +107,10 @@ export async function refreshToken(connectionId: string): Promise<ProviderConnec
  * List all external calendars from a connection
  */
 export async function listExternalCalendars(
-  connectionId: string
+  connectionId: string,
 ): Promise<ExternalCalendarListResponse> {
   const response = await calendarApi.get<ExternalCalendarListResponse>(
-    `${SYNC_API_PATH}/connections/${connectionId}/calendars`
+    `${SYNC_API_PATH}/connections/${connectionId}/calendars`,
   );
   return response.data;
 }
@@ -117,11 +121,11 @@ export async function listExternalCalendars(
 export async function toggleCalendarSelection(
   connectionId: string,
   externalCalendarId: string,
-  selected: boolean
+  selected: boolean,
 ): Promise<ExternalCalendar> {
   const response = await calendarApi.patch<ExternalCalendar>(
     `${SYNC_API_PATH}/connections/${connectionId}/calendars/${externalCalendarId}`,
-    { is_selected: selected }
+    { is_selected: selected },
   );
   return response.data;
 }
@@ -134,7 +138,9 @@ export async function toggleCalendarSelection(
  * Get all sync configurations
  */
 export async function getSyncConfigs(): Promise<SyncConfig[]> {
-  const response = await calendarApi.get<SyncConfig[]>(`${SYNC_API_PATH}/configs`);
+  const response = await calendarApi.get<SyncConfig[]>(
+    `${SYNC_API_PATH}/configs`,
+  );
   return response.data;
 }
 
@@ -142,10 +148,10 @@ export async function getSyncConfigs(): Promise<SyncConfig[]> {
  * Get sync config for a local calendar
  */
 export async function getSyncConfigForCalendar(
-  localCalendarId: string
+  localCalendarId: string,
 ): Promise<SyncConfig | null> {
   const response = await calendarApi.get<SyncConfig | null>(
-    `${SYNC_API_PATH}/configs/by-calendar/${localCalendarId}`
+    `${SYNC_API_PATH}/configs/by-calendar/${localCalendarId}`,
   );
   return response.data;
 }
@@ -154,11 +160,11 @@ export async function getSyncConfigForCalendar(
  * Create a new sync configuration
  */
 export async function createSyncConfig(
-  request: CreateSyncConfigRequest
+  request: CreateSyncConfigRequest,
 ): Promise<SyncConfig> {
   const response = await calendarApi.post<SyncConfig>(
     `${SYNC_API_PATH}/configs`,
-    request
+    request,
   );
   return response.data;
 }
@@ -168,11 +174,11 @@ export async function createSyncConfig(
  */
 export async function updateSyncConfig(
   configId: string,
-  request: UpdateSyncConfigRequest
+  request: UpdateSyncConfigRequest,
 ): Promise<SyncConfig> {
   const response = await calendarApi.patch<SyncConfig>(
     `${SYNC_API_PATH}/configs/${configId}`,
-    request
+    request,
   );
   return response.data;
 }
@@ -189,7 +195,7 @@ export async function deleteSyncConfig(configId: string): Promise<void> {
  */
 export async function toggleSyncConfig(
   configId: string,
-  enabled: boolean
+  enabled: boolean,
 ): Promise<SyncConfig> {
   return updateSyncConfig(configId, { is_enabled: enabled });
 }
@@ -203,7 +209,7 @@ export async function toggleSyncConfig(
  */
 export async function triggerSync(configId: string): Promise<SyncLogEntry> {
   const response = await calendarApi.post<SyncLogEntry>(
-    `${SYNC_API_PATH}/configs/${configId}/sync`
+    `${SYNC_API_PATH}/configs/${configId}/sync`,
   );
   return response.data;
 }
@@ -213,7 +219,7 @@ export async function triggerSync(configId: string): Promise<SyncLogEntry> {
  */
 export async function triggerSyncAll(): Promise<{ triggered: number }> {
   const response = await calendarApi.post<{ triggered: number }>(
-    `${SYNC_API_PATH}/sync-all`
+    `${SYNC_API_PATH}/sync-all`,
   );
   return response.data;
 }
@@ -226,17 +232,18 @@ export async function triggerSyncAll(): Promise<{ triggered: number }> {
  * Get sync logs
  */
 export async function getSyncLogs(
-  filter?: SyncLogFilter
+  filter?: SyncLogFilter,
 ): Promise<{ logs: SyncLogEntry[]; total: number }> {
   const params = new URLSearchParams();
-  if (filter?.config_id) params.set('config_id', filter.config_id);
-  if (filter?.status) params.set('status', filter.status);
-  if (filter?.from_date) params.set('from_date', filter.from_date);
-  if (filter?.to_date) params.set('to_date', filter.to_date);
+  if (filter?.config_id) params.set("config_id", filter.config_id);
+  if (filter?.status) params.set("status", filter.status);
+  if (filter?.from_date) params.set("from_date", filter.from_date);
+  if (filter?.to_date) params.set("to_date", filter.to_date);
 
-  const response = await calendarApi.get<{ logs: SyncLogEntry[]; total: number }>(
-    `${SYNC_API_PATH}/logs?${params.toString()}`
-  );
+  const response = await calendarApi.get<{
+    logs: SyncLogEntry[];
+    total: number;
+  }>(`${SYNC_API_PATH}/logs?${params.toString()}`);
   return response.data;
 }
 
@@ -245,10 +252,10 @@ export async function getSyncLogs(
  */
 export async function getConfigSyncLogs(
   configId: string,
-  limit = 20
+  limit = 20,
 ): Promise<SyncLogEntry[]> {
   const response = await calendarApi.get<SyncLogEntry[]>(
-    `${SYNC_API_PATH}/configs/${configId}/logs?limit=${limit}`
+    `${SYNC_API_PATH}/configs/${configId}/logs?limit=${limit}`,
   );
   return response.data;
 }
@@ -262,7 +269,7 @@ export async function getConfigSyncLogs(
  */
 export async function getConflicts(): Promise<SyncConflict[]> {
   const response = await calendarApi.get<SyncConflict[]>(
-    `${SYNC_API_PATH}/conflicts`
+    `${SYNC_API_PATH}/conflicts`,
   );
   return response.data;
 }
@@ -270,9 +277,11 @@ export async function getConflicts(): Promise<SyncConflict[]> {
 /**
  * Get conflicts for a specific configuration
  */
-export async function getConfigConflicts(configId: string): Promise<SyncConflict[]> {
+export async function getConfigConflicts(
+  configId: string,
+): Promise<SyncConflict[]> {
   const response = await calendarApi.get<SyncConflict[]>(
-    `${SYNC_API_PATH}/configs/${configId}/conflicts`
+    `${SYNC_API_PATH}/configs/${configId}/conflicts`,
   );
   return response.data;
 }
@@ -282,11 +291,11 @@ export async function getConfigConflicts(configId: string): Promise<SyncConflict
  */
 export async function resolveConflict(
   conflictId: string,
-  request: ResolveConflictRequest
+  request: ResolveConflictRequest,
 ): Promise<SyncConflict> {
   const response = await calendarApi.post<SyncConflict>(
     `${SYNC_API_PATH}/conflicts/${conflictId}/resolve`,
-    request
+    request,
   );
   return response.data;
 }
@@ -296,11 +305,11 @@ export async function resolveConflict(
  */
 export async function resolveAllConflicts(
   configId: string,
-  resolution: 'local' | 'remote'
+  resolution: "local" | "remote",
 ): Promise<{ resolved: number }> {
   const response = await calendarApi.post<{ resolved: number }>(
     `${SYNC_API_PATH}/configs/${configId}/conflicts/resolve-all`,
-    { resolution }
+    { resolution },
   );
   return response.data;
 }

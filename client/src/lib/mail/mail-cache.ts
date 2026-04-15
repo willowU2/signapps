@@ -5,12 +5,12 @@
  * render data when the API is unreachable (offline or server down).
  */
 
-import { get, set } from 'idb-keyval';
-import type { Mail } from '@/lib/data/mail';
+import { get, set } from "idb-keyval";
+import type { Mail } from "@/lib/data/mail";
 
-type MailFolder = 'inbox' | 'sent' | 'drafts' | 'starred' | 'snoozed';
+type MailFolder = "inbox" | "sent" | "drafts" | "starred" | "snoozed";
 
-const PREFIX = 'mail-cache:';
+const PREFIX = "mail-cache:";
 const MAX_CACHED = 100;
 
 function cacheKey(folder: MailFolder): string {

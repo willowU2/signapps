@@ -1,19 +1,20 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { Download, X } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
+import { useState, useEffect } from "react";
+import { Download, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>;
-  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
+  userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
 }
 
-const DISMISSED_KEY = 'pwa-install-dismissed';
+const DISMISSED_KEY = "pwa-install-dismissed";
 
 export function PwaInstallPrompt() {
-  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+  const [deferredPrompt, setDeferredPrompt] =
+    useState<BeforeInstallPromptEvent | null>(null);
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -30,15 +31,15 @@ export function PwaInstallPrompt() {
       setVisible(true);
     };
 
-    window.addEventListener('beforeinstallprompt', handler);
-    return () => window.removeEventListener('beforeinstallprompt', handler);
+    window.addEventListener("beforeinstallprompt", handler);
+    return () => window.removeEventListener("beforeinstallprompt", handler);
   }, []);
 
   const handleInstall = async () => {
     if (!deferredPrompt) return;
     await deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
-    if (outcome === 'accepted') {
+    if (outcome === "accepted") {
       setVisible(false);
     }
     setDeferredPrompt(null);
@@ -55,8 +56,8 @@ export function PwaInstallPrompt() {
   return (
     <div
       className={cn(
-        'fixed bottom-20 left-4 right-4 z-[60] md:bottom-6 md:left-auto md:right-6 md:w-96',
-        'animate-in slide-in-from-bottom-4 fade-in duration-300',
+        "fixed bottom-20 left-4 right-4 z-[60] md:bottom-6 md:left-auto md:right-6 md:w-96",
+        "animate-in slide-in-from-bottom-4 fade-in duration-300",
       )}
     >
       <div className="flex items-center gap-3 rounded-xl border border-border bg-background/95 p-4 shadow-lg backdrop-blur-sm">
@@ -64,7 +65,9 @@ export function PwaInstallPrompt() {
           <Download className="h-5 w-5" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium">Installez SignApps sur votre appareil</p>
+          <p className="text-sm font-medium">
+            Installez SignApps sur votre appareil
+          </p>
           <p className="text-xs text-muted-foreground mt-0.5">
             {"Acc\u00E9dez rapidement \u00E0 votre espace de travail"}
           </p>

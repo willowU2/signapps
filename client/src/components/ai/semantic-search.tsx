@@ -1,18 +1,12 @@
-'use client';
+"use client";
 
-import { useState, useCallback, useRef } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  Search,
-  Loader2,
-  FileText,
-  Sparkles,
-  X,
-} from 'lucide-react';
-import { aiApi, SearchResult } from '@/lib/api';
-import { toast } from 'sonner';
+import { useState, useCallback, useRef } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Search, Loader2, FileText, Sparkles, X } from "lucide-react";
+import { aiApi, SearchResult } from "@/lib/api";
+import { toast } from "sonner";
 
 interface SemanticSearchProps {
   /** Restrict search to specific collections */
@@ -22,16 +16,16 @@ interface SemanticSearchProps {
   /** Callback when a result is selected */
   onResultClick?: (result: SearchResult) => void;
   /** Show as standalone card or inline */
-  variant?: 'card' | 'inline';
+  variant?: "card" | "inline";
 }
 
 export function SemanticSearch({
   collections,
   limit = 10,
   onResultClick,
-  variant = 'card',
+  variant = "card",
 }: SemanticSearchProps) {
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
@@ -52,13 +46,13 @@ export function SemanticSearch({
         const response = await aiApi.search(searchQuery, limit, collections);
         setResults(response.data);
       } catch (error) {
-        toast.error('Semantic search failed');
+        toast.error("Semantic search failed");
         setResults([]);
       } finally {
         setIsSearching(false);
       }
     },
-    [collections, limit]
+    [collections, limit],
   );
 
   const handleSearch = () => {
@@ -66,7 +60,7 @@ export function SemanticSearch({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
+    if (e.key === "Enter") {
       handleSearch();
     }
   };
@@ -86,18 +80,18 @@ export function SemanticSearch({
   };
 
   const clearSearch = () => {
-    setQuery('');
+    setQuery("");
     setResults([]);
     setHasSearched(false);
   };
 
   const escapeHtml = (str: string): string => {
     return str
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#39;');
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
   };
 
   const highlightMatch = (text: string, searchQuery: string) => {
@@ -109,26 +103,32 @@ export function SemanticSearch({
     let highlighted = escaped;
 
     for (const word of words) {
-      const escapedWord = escapeHtml(word).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const regex = new RegExp(`(${escapedWord})`, 'gi');
-      highlighted = highlighted.replace(regex, '<mark class="bg-yellow-200 dark:bg-yellow-800 rounded px-0.5">$1</mark>');
+      const escapedWord = escapeHtml(word).replace(
+        /[.*+?^${}()|[\]\\]/g,
+        "\\$&",
+      );
+      const regex = new RegExp(`(${escapedWord})`, "gi");
+      highlighted = highlighted.replace(
+        regex,
+        '<mark class="bg-yellow-200 dark:bg-yellow-800 rounded px-0.5">$1</mark>',
+      );
     }
 
     return highlighted;
   };
 
   const getScoreColor = (score: number) => {
-    if (score >= 0.8) return 'text-green-600 dark:text-green-400';
-    if (score >= 0.6) return 'text-blue-600 dark:text-blue-400';
-    if (score >= 0.4) return 'text-yellow-600 dark:text-yellow-400';
-    return 'text-muted-foreground';
+    if (score >= 0.8) return "text-green-600 dark:text-green-400";
+    if (score >= 0.6) return "text-blue-600 dark:text-blue-400";
+    if (score >= 0.4) return "text-yellow-600 dark:text-yellow-400";
+    return "text-muted-foreground";
   };
 
   const getScoreBarColor = (score: number) => {
-    if (score >= 0.8) return 'bg-green-500';
-    if (score >= 0.6) return 'bg-blue-500';
-    if (score >= 0.4) return 'bg-yellow-500';
-    return 'bg-gray-400';
+    if (score >= 0.8) return "bg-green-500";
+    if (score >= 0.6) return "bg-blue-500";
+    if (score >= 0.4) return "bg-yellow-500";
+    return "bg-gray-400";
   };
 
   const content = (
@@ -199,9 +199,7 @@ export function SemanticSearch({
               key={result.id}
               onClick={() => onResultClick?.(result)}
               className={`p-3 border rounded-lg transition-colors ${
-                onResultClick
-                  ? 'hover:bg-accent cursor-pointer'
-                  : ''
+                onResultClick ? "hover:bg-accent cursor-pointer" : ""
               }`}
             >
               <div className="flex items-start justify-between mb-2">
@@ -212,7 +210,9 @@ export function SemanticSearch({
                   </span>
                 </div>
                 <div className="flex items-center gap-2 ml-2 shrink-0">
-                  <span className={`text-xs font-semibold ${getScoreColor(result.score)}`}>
+                  <span
+                    className={`text-xs font-semibold ${getScoreColor(result.score)}`}
+                  >
                     {Math.round(result.score * 100)}%
                   </span>
                   <div className="w-16 h-1.5 bg-muted rounded-full overflow-hidden">
@@ -234,7 +234,7 @@ export function SemanticSearch({
 
         {!isSearching && results.length > 0 && (
           <p className="text-xs text-muted-foreground text-center pt-2">
-            {results.length} result{results.length !== 1 ? 's' : ''} found by
+            {results.length} result{results.length !== 1 ? "s" : ""} found by
             semantic similarity
           </p>
         )}
@@ -242,7 +242,7 @@ export function SemanticSearch({
     </div>
   );
 
-  if (variant === 'inline') {
+  if (variant === "inline") {
     return content;
   }
 

@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { toast } from 'sonner';
+import { useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { toast } from "sonner";
 
 import {
   Sheet,
@@ -12,7 +12,7 @@ import {
   SheetDescription,
   SheetHeader,
   SheetTitle,
-} from '@/components/ui/sheet';
+} from "@/components/ui/sheet";
 import {
   Form,
   FormControl,
@@ -20,23 +20,23 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
+} from "@/components/ui/form";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Button } from '@/components/ui/button';
+} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
 
 const contractSchema = z.object({
-  name: z.string().min(2, 'Le nom doit contenir au moins 2 caractères.'),
-  type: z.enum(['Fournisseur', 'Client', 'Employe']),
-  startDate: z.string().min(1, 'La date de démarrage est requise.'),
-  endDate: z.string().min(1, 'La date de fin est requise.'),
+  name: z.string().min(2, "Le nom doit contenir au moins 2 caractères."),
+  type: z.enum(["Fournisseur", "Client", "Employe"]),
+  startDate: z.string().min(1, "La date de démarrage est requise."),
+  endDate: z.string().min(1, "La date de fin est requise."),
   description: z.string().optional().nullable(),
   parties: z.string().optional().nullable(),
   value: z.string().optional().nullable(),
@@ -61,13 +61,13 @@ export function ContractForm({
   const form = useForm<ContractFormValues>({
     resolver: zodResolver(contractSchema),
     defaultValues: {
-      name: '',
-      type: 'Fournisseur',
-      startDate: '',
-      endDate: '',
-      description: '',
-      parties: '',
-      value: '',
+      name: "",
+      type: "Fournisseur",
+      startDate: "",
+      endDate: "",
+      description: "",
+      parties: "",
+      value: "",
     },
   });
 
@@ -78,19 +78,19 @@ export function ContractForm({
         type: initialData.type,
         startDate: initialData.startDate,
         endDate: initialData.endDate,
-        description: initialData.description || '',
-        parties: initialData.parties || '',
-        value: initialData.value || '',
+        description: initialData.description || "",
+        parties: initialData.parties || "",
+        value: initialData.value || "",
       });
     } else if (!open) {
       form.reset({
-        name: '',
-        type: 'Fournisseur',
-        startDate: '',
-        endDate: '',
-        description: '',
-        parties: '',
-        value: '',
+        name: "",
+        type: "Fournisseur",
+        startDate: "",
+        endDate: "",
+        description: "",
+        parties: "",
+        value: "",
       });
     }
   }, [initialData, open, form]);
@@ -99,11 +99,13 @@ export function ContractForm({
     try {
       await onSubmit(values);
       toast.success(
-        isEditing ? 'Contrat mis à jour avec succès' : 'Contrat créé avec succès'
+        isEditing
+          ? "Contrat mis à jour avec succès"
+          : "Contrat créé avec succès",
       );
       onOpenChange(false);
     } catch (error) {
-      toast.error('Erreur lors de la sauvegarde du contrat');
+      toast.error("Erreur lors de la sauvegarde du contrat");
       console.error(error);
     }
   };
@@ -113,17 +115,20 @@ export function ContractForm({
       <SheetContent className="sm:max-w-lg overflow-y-auto">
         <SheetHeader>
           <SheetTitle>
-            {isEditing ? 'Modifier le Contrat' : 'Ajouter un Contrat'}
+            {isEditing ? "Modifier le Contrat" : "Ajouter un Contrat"}
           </SheetTitle>
           <SheetDescription>
             {isEditing
-              ? 'Modifiez les informations du contrat.'
-              : 'Remplissez ce formulaire pour créer un nouveau contrat.'}
+              ? "Modifiez les informations du contrat."
+              : "Remplissez ce formulaire pour créer un nouveau contrat."}
           </SheetDescription>
         </SheetHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4 mt-6">
+          <form
+            onSubmit={form.handleSubmit(handleSubmit)}
+            className="space-y-4 mt-6"
+          >
             <FormField
               control={form.control}
               name="name"
@@ -131,7 +136,10 @@ export function ContractForm({
                 <FormItem>
                   <FormLabel>Nom du Contrat</FormLabel>
                   <FormControl>
-                    <Input placeholder="ex: Contrat Fournisseur ABC" {...field} />
+                    <Input
+                      placeholder="ex: Contrat Fournisseur ABC"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -144,7 +152,10 @@ export function ContractForm({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Type</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Sélectionner un type" />
@@ -169,7 +180,7 @@ export function ContractForm({
                   <FormItem>
                     <FormLabel>Date de Démarrage</FormLabel>
                     <FormControl>
-                      <Input type="date" {...field} value={field.value || ''} />
+                      <Input type="date" {...field} value={field.value || ""} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -183,7 +194,7 @@ export function ContractForm({
                   <FormItem>
                     <FormLabel>Date de Fin</FormLabel>
                     <FormControl>
-                      <Input type="date" {...field} value={field.value || ''} />
+                      <Input type="date" {...field} value={field.value || ""} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -201,7 +212,7 @@ export function ContractForm({
                     <Input
                       placeholder="ex: 5000 EUR"
                       {...field}
-                      value={field.value || ''}
+                      value={field.value || ""}
                     />
                   </FormControl>
                   <FormMessage />
@@ -220,7 +231,7 @@ export function ContractForm({
                       placeholder="ex: Entreprise ABC, Personne XYZ"
                       className="resize-none"
                       {...field}
-                      value={field.value || ''}
+                      value={field.value || ""}
                     />
                   </FormControl>
                   <FormMessage />
@@ -239,7 +250,7 @@ export function ContractForm({
                       placeholder="Détails du contrat..."
                       className="resize-none"
                       {...field}
-                      value={field.value || ''}
+                      value={field.value || ""}
                     />
                   </FormControl>
                   <FormMessage />
@@ -256,7 +267,7 @@ export function ContractForm({
                 Annuler
               </Button>
               <Button type="submit">
-                {isEditing ? 'Mettre à jour' : 'Créer le Contrat'}
+                {isEditing ? "Mettre à jour" : "Créer le Contrat"}
               </Button>
             </div>
           </form>

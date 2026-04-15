@@ -1,15 +1,28 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 import {
-  Key, FileText, CreditCard, Terminal, Code, User, Shield,
-  Eye, EyeOff, Copy, Wand2, Plus, Trash2, Star, RefreshCw,
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Switch } from '@/components/ui/switch';
+  Key,
+  FileText,
+  CreditCard,
+  Terminal,
+  Code,
+  User,
+  Shield,
+  Eye,
+  EyeOff,
+  Copy,
+  Wand2,
+  Plus,
+  Trash2,
+  Star,
+  RefreshCw,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import {
   Sheet,
   SheetContent,
@@ -17,34 +30,37 @@ import {
   SheetTitle,
   SheetDescription,
   SheetFooter,
-} from '@/components/ui/sheet';
+} from "@/components/ui/sheet";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from '@/components/ui/popover';
-import { Separator } from '@/components/ui/separator';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { cn } from '@/lib/utils';
-import { toast } from 'sonner';
-import { useVaultStore } from '@/stores/vault-store';
-import { TotpDisplay } from '@/components/vault/totp-display';
-import { PasswordGenerator } from '@/components/vault/password-generator';
-import { evaluatePasswordStrength } from '@/lib/vault-crypto';
-import type { DecryptedVaultItem, VaultItemType } from '@/types/vault';
+} from "@/components/ui/popover";
+import { Separator } from "@/components/ui/separator";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { cn } from "@/lib/utils";
+import { toast } from "sonner";
+import { useVaultStore } from "@/stores/vault-store";
+import { TotpDisplay } from "@/components/vault/totp-display";
+import { PasswordGenerator } from "@/components/vault/password-generator";
+import { evaluatePasswordStrength } from "@/lib/vault-crypto";
+import type { DecryptedVaultItem, VaultItemType } from "@/types/vault";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Type metadata
 // ─────────────────────────────────────────────────────────────────────────────
 
-const TYPE_META: Record<VaultItemType, { label: string; icon: React.ComponentType<{ className?: string }> }> = {
-  login:       { label: 'Identifiants',   icon: Key },
-  secure_note: { label: 'Note sécurisée', icon: FileText },
-  card:        { label: 'Carte bancaire', icon: CreditCard },
-  ssh_key:     { label: 'Clé SSH',        icon: Terminal },
-  api_token:   { label: 'Jeton API',      icon: Code },
-  identity:    { label: 'Identité',       icon: User },
-  passkey:     { label: 'Passkey',        icon: Shield },
+const TYPE_META: Record<
+  VaultItemType,
+  { label: string; icon: React.ComponentType<{ className?: string }> }
+> = {
+  login: { label: "Identifiants", icon: Key },
+  secure_note: { label: "Note sécurisée", icon: FileText },
+  card: { label: "Carte bancaire", icon: CreditCard },
+  ssh_key: { label: "Clé SSH", icon: Terminal },
+  api_token: { label: "Jeton API", icon: Code },
+  identity: { label: "Identité", icon: User },
+  passkey: { label: "Passkey", icon: Shield },
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -65,7 +81,7 @@ interface VaultItemFormProps {
 function PasswordField({
   value,
   onChange,
-  label = 'Mot de passe',
+  label = "Mot de passe",
 }: {
   value: string;
   onChange: (v: string) => void;
@@ -75,17 +91,19 @@ function PasswordField({
   const { score, label: strengthLabel } = evaluatePasswordStrength(value);
 
   const strengthColors = [
-    'bg-transparent',
-    'bg-red-500',
-    'bg-amber-500',
-    'bg-blue-500',
-    'bg-emerald-500',
+    "bg-transparent",
+    "bg-red-500",
+    "bg-amber-500",
+    "bg-blue-500",
+    "bg-emerald-500",
   ];
-  const strengthColor = strengthColors[score] || 'bg-transparent';
+  const strengthColor = strengthColors[score] || "bg-transparent";
 
   const copyPassword = () => {
     if (!value) return;
-    navigator.clipboard.writeText(value).then(() => toast.success('Mot de passe copié'));
+    navigator.clipboard
+      .writeText(value)
+      .then(() => toast.success("Mot de passe copié"));
   };
 
   return (
@@ -94,7 +112,7 @@ function PasswordField({
       <div className="flex gap-1.5">
         <div className="relative flex-1">
           <Input
-            type={show ? 'text' : 'password'}
+            type={show ? "text" : "password"}
             value={value}
             onChange={(e) => onChange(e.target.value)}
             className="pr-8 font-mono"
@@ -106,12 +124,22 @@ function PasswordField({
             className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
             tabIndex={-1}
           >
-            {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            {show ? (
+              <EyeOff className="h-4 w-4" />
+            ) : (
+              <Eye className="h-4 w-4" />
+            )}
           </button>
         </div>
 
         {/* Copy */}
-        <Button variant="outline" size="icon" type="button" onClick={copyPassword} title="Copier">
+        <Button
+          variant="outline"
+          size="icon"
+          type="button"
+          onClick={copyPassword}
+          title="Copier"
+        >
           <Copy className="h-4 w-4" />
         </Button>
 
@@ -136,13 +164,15 @@ function PasswordField({
               <div
                 key={i}
                 className={cn(
-                  'flex-1 h-1 rounded-full transition-colors',
-                  i <= score ? strengthColor : 'bg-muted',
+                  "flex-1 h-1 rounded-full transition-colors",
+                  i <= score ? strengthColor : "bg-muted",
                 )}
               />
             ))}
           </div>
-          <p className="text-xs text-muted-foreground capitalize">{strengthLabel}</p>
+          <p className="text-xs text-muted-foreground capitalize">
+            {strengthLabel}
+          </p>
         </div>
       )}
     </div>
@@ -153,81 +183,146 @@ function PasswordField({
 // Main component
 // ─────────────────────────────────────────────────────────────────────────────
 
-export function VaultItemForm({ open, itemType, item, onClose }: VaultItemFormProps) {
+export function VaultItemForm({
+  open,
+  itemType,
+  item,
+  onClose,
+}: VaultItemFormProps) {
   const { createItem, updateItem, loading } = useVaultStore();
   const meta = TYPE_META[itemType];
   const Icon = meta.icon;
   const isEdit = !!item;
 
   // ── Common fields ──────────────────────────────────────────────────────────
-  const [name, setName] = useState(item?.name || '');
-  const [notes, setNotes] = useState(item?.notes || '');
+  const [name, setName] = useState(item?.name || "");
+  const [notes, setNotes] = useState(item?.notes || "");
   const [favorite, setFavorite] = useState(item?.favorite || false);
   const [reprompt, setReprompt] = useState(item?.reprompt || false);
-  const [totpSecret, setTotpSecret] = useState(item?.totp_secret || '');
-  const [uri, setUri] = useState(item?.uri || '');
+  const [totpSecret, setTotpSecret] = useState(item?.totp_secret || "");
+  const [uri, setUri] = useState(item?.uri || "");
 
   // ── Login fields ───────────────────────────────────────────────────────────
-  const [loginUsername, setLoginUsername] = useState((item?.data as Record<string, string>)?.username || '');
-  const [loginPassword, setLoginPassword] = useState((item?.data as Record<string, string>)?.password || '');
+  const [loginUsername, setLoginUsername] = useState(
+    (item?.data as Record<string, string>)?.username || "",
+  );
+  const [loginPassword, setLoginPassword] = useState(
+    (item?.data as Record<string, string>)?.password || "",
+  );
   const [uris, setUris] = useState<string[]>(
-    (item?.data as Record<string, string[]>)?.uris || (item?.uri ? [item.uri] : ['']),
+    (item?.data as Record<string, string[]>)?.uris ||
+      (item?.uri ? [item.uri] : [""]),
   );
 
   // ── Card fields ────────────────────────────────────────────────────────────
-  const [cardHolder, setCardHolder] = useState((item?.data as Record<string, string>)?.cardholder || '');
-  const [cardNumber, setCardNumber] = useState((item?.data as Record<string, string>)?.number || '');
-  const [cardExpiry, setCardExpiry] = useState((item?.data as Record<string, string>)?.expiry || '');
-  const [cardCvv, setCardCvv] = useState((item?.data as Record<string, string>)?.cvv || '');
+  const [cardHolder, setCardHolder] = useState(
+    (item?.data as Record<string, string>)?.cardholder || "",
+  );
+  const [cardNumber, setCardNumber] = useState(
+    (item?.data as Record<string, string>)?.number || "",
+  );
+  const [cardExpiry, setCardExpiry] = useState(
+    (item?.data as Record<string, string>)?.expiry || "",
+  );
+  const [cardCvv, setCardCvv] = useState(
+    (item?.data as Record<string, string>)?.cvv || "",
+  );
   const [showCardNumber, setShowCardNumber] = useState(false);
   const [showCvv, setShowCvv] = useState(false);
 
   // ── SSH key fields ─────────────────────────────────────────────────────────
-  const [sshPrivateKey, setSshPrivateKey] = useState((item?.data as Record<string, string>)?.private_key || '');
-  const [sshPublicKey, setSshPublicKey] = useState((item?.data as Record<string, string>)?.public_key || '');
-  const [sshPassphrase, setSshPassphrase] = useState((item?.data as Record<string, string>)?.passphrase || '');
+  const [sshPrivateKey, setSshPrivateKey] = useState(
+    (item?.data as Record<string, string>)?.private_key || "",
+  );
+  const [sshPublicKey, setSshPublicKey] = useState(
+    (item?.data as Record<string, string>)?.public_key || "",
+  );
+  const [sshPassphrase, setSshPassphrase] = useState(
+    (item?.data as Record<string, string>)?.passphrase || "",
+  );
 
   // ── API token fields ───────────────────────────────────────────────────────
-  const [apiToken, setApiToken] = useState((item?.data as Record<string, string>)?.token || '');
-  const [apiEndpoint, setApiEndpoint] = useState((item?.data as Record<string, string>)?.endpoint || '');
+  const [apiToken, setApiToken] = useState(
+    (item?.data as Record<string, string>)?.token || "",
+  );
+  const [apiEndpoint, setApiEndpoint] = useState(
+    (item?.data as Record<string, string>)?.endpoint || "",
+  );
 
   // ── Identity fields ────────────────────────────────────────────────────────
-  const [idFirstName, setIdFirstName] = useState((item?.data as Record<string, string>)?.first_name || '');
-  const [idLastName, setIdLastName] = useState((item?.data as Record<string, string>)?.last_name || '');
-  const [idEmail, setIdEmail] = useState((item?.data as Record<string, string>)?.email || '');
-  const [idPhone, setIdPhone] = useState((item?.data as Record<string, string>)?.phone || '');
-  const [idAddress, setIdAddress] = useState((item?.data as Record<string, string>)?.address || '');
-  const [idNumber, setIdNumber] = useState((item?.data as Record<string, string>)?.id_number || '');
+  const [idFirstName, setIdFirstName] = useState(
+    (item?.data as Record<string, string>)?.first_name || "",
+  );
+  const [idLastName, setIdLastName] = useState(
+    (item?.data as Record<string, string>)?.last_name || "",
+  );
+  const [idEmail, setIdEmail] = useState(
+    (item?.data as Record<string, string>)?.email || "",
+  );
+  const [idPhone, setIdPhone] = useState(
+    (item?.data as Record<string, string>)?.phone || "",
+  );
+  const [idAddress, setIdAddress] = useState(
+    (item?.data as Record<string, string>)?.address || "",
+  );
+  const [idNumber, setIdNumber] = useState(
+    (item?.data as Record<string, string>)?.id_number || "",
+  );
 
   // ── Secure note ────────────────────────────────────────────────────────────
-  const [noteContent, setNoteContent] = useState((item?.data as Record<string, string>)?.content || '');
+  const [noteContent, setNoteContent] = useState(
+    (item?.data as Record<string, string>)?.content || "",
+  );
 
   // ── Passkey (read-only) ────────────────────────────────────────────────────
-  const [pkRelyingParty] = useState((item?.data as Record<string, string>)?.relying_party || '');
-  const [pkCredentialId] = useState((item?.data as Record<string, string>)?.credential_id || '');
-  const [pkPublicKey] = useState((item?.data as Record<string, string>)?.public_key || '');
+  const [pkRelyingParty] = useState(
+    (item?.data as Record<string, string>)?.relying_party || "",
+  );
+  const [pkCredentialId] = useState(
+    (item?.data as Record<string, string>)?.credential_id || "",
+  );
+  const [pkPublicKey] = useState(
+    (item?.data as Record<string, string>)?.public_key || "",
+  );
 
   // ── Submit ─────────────────────────────────────────────────────────────────
 
   const buildData = (): Record<string, unknown> => {
     switch (itemType) {
-      case 'login':
+      case "login":
         return { username: loginUsername, password: loginPassword, uris };
-      case 'secure_note':
+      case "secure_note":
         return { content: noteContent };
-      case 'card':
-        return { cardholder: cardHolder, number: cardNumber, expiry: cardExpiry, cvv: cardCvv };
-      case 'ssh_key':
-        return { private_key: sshPrivateKey, public_key: sshPublicKey, passphrase: sshPassphrase };
-      case 'api_token':
-        return { token: apiToken, endpoint: apiEndpoint };
-      case 'identity':
+      case "card":
         return {
-          first_name: idFirstName, last_name: idLastName,
-          email: idEmail, phone: idPhone, address: idAddress, id_number: idNumber,
+          cardholder: cardHolder,
+          number: cardNumber,
+          expiry: cardExpiry,
+          cvv: cardCvv,
         };
-      case 'passkey':
-        return { relying_party: pkRelyingParty, credential_id: pkCredentialId, public_key: pkPublicKey };
+      case "ssh_key":
+        return {
+          private_key: sshPrivateKey,
+          public_key: sshPublicKey,
+          passphrase: sshPassphrase,
+        };
+      case "api_token":
+        return { token: apiToken, endpoint: apiEndpoint };
+      case "identity":
+        return {
+          first_name: idFirstName,
+          last_name: idLastName,
+          email: idEmail,
+          phone: idPhone,
+          address: idAddress,
+          id_number: idNumber,
+        };
+      case "passkey":
+        return {
+          relying_party: pkRelyingParty,
+          credential_id: pkCredentialId,
+          public_key: pkPublicKey,
+        };
       default:
         return {};
     }
@@ -236,7 +331,7 @@ export function VaultItemForm({ open, itemType, item, onClose }: VaultItemFormPr
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) {
-      toast.error('Le nom est obligatoire');
+      toast.error("Le nom est obligatoire");
       return;
     }
 
@@ -244,7 +339,7 @@ export function VaultItemForm({ open, itemType, item, onClose }: VaultItemFormPr
     const opts = {
       notes: notes || undefined,
       totp_secret: totpSecret || undefined,
-      uri: itemType === 'login' ? uris.filter(Boolean)[0] : uri || undefined,
+      uri: itemType === "login" ? uris.filter(Boolean)[0] : uri || undefined,
       favorite,
       reprompt,
     };
@@ -252,14 +347,14 @@ export function VaultItemForm({ open, itemType, item, onClose }: VaultItemFormPr
     try {
       if (isEdit && item) {
         await updateItem(item.id, name, data, opts);
-        toast.success('Élément mis à jour');
+        toast.success("Élément mis à jour");
       } else {
         await createItem(itemType, name, data, opts);
-        toast.success('Élément créé');
+        toast.success("Élément créé");
       }
       onClose();
     } catch {
-      toast.error('Erreur lors de la sauvegarde');
+      toast.error("Erreur lors de la sauvegarde");
     }
   };
 
@@ -277,13 +372,17 @@ export function VaultItemForm({ open, itemType, item, onClose }: VaultItemFormPr
           </SheetTitle>
           <SheetDescription>
             {isEdit
-              ? 'Modifiez les champs et enregistrez.'
-              : 'Renseignez les informations et enregistrez.'}
+              ? "Modifiez les champs et enregistrez."
+              : "Renseignez les informations et enregistrez."}
           </SheetDescription>
         </SheetHeader>
 
         <ScrollArea className="flex-1">
-          <form id="vault-item-form" onSubmit={handleSubmit} className="px-6 py-4 space-y-4">
+          <form
+            id="vault-item-form"
+            onSubmit={handleSubmit}
+            className="px-6 py-4 space-y-4"
+          >
             {/* Name */}
             <div className="space-y-1.5">
               <Label htmlFor="item-name">Nom *</Label>
@@ -291,7 +390,7 @@ export function VaultItemForm({ open, itemType, item, onClose }: VaultItemFormPr
                 id="item-name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder={`Ex. : ${itemType === 'login' ? 'GitHub' : meta.label}`}
+                placeholder={`Ex. : ${itemType === "login" ? "GitHub" : meta.label}`}
                 required
               />
             </div>
@@ -299,7 +398,7 @@ export function VaultItemForm({ open, itemType, item, onClose }: VaultItemFormPr
             <Separator />
 
             {/* ── Login ── */}
-            {itemType === 'login' && (
+            {itemType === "login" && (
               <>
                 <div className="space-y-1.5">
                   <Label>Identifiant</Label>
@@ -310,7 +409,10 @@ export function VaultItemForm({ open, itemType, item, onClose }: VaultItemFormPr
                     autoComplete="off"
                   />
                 </div>
-                <PasswordField value={loginPassword} onChange={setLoginPassword} />
+                <PasswordField
+                  value={loginPassword}
+                  onChange={setLoginPassword}
+                />
                 {/* URIs */}
                 <div className="space-y-1.5">
                   <Label>URL(s)</Label>
@@ -330,7 +432,9 @@ export function VaultItemForm({ open, itemType, item, onClose }: VaultItemFormPr
                           variant="ghost"
                           size="icon"
                           type="button"
-                          onClick={() => setUris(uris.filter((_, j) => j !== i))}
+                          onClick={() =>
+                            setUris(uris.filter((_, j) => j !== i))
+                          }
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -342,7 +446,7 @@ export function VaultItemForm({ open, itemType, item, onClose }: VaultItemFormPr
                     size="sm"
                     type="button"
                     className="gap-1.5 text-xs"
-                    onClick={() => setUris([...uris, ''])}
+                    onClick={() => setUris([...uris, ""])}
                   >
                     <Plus className="h-3.5 w-3.5" /> Ajouter une URL
                   </Button>
@@ -356,13 +460,15 @@ export function VaultItemForm({ open, itemType, item, onClose }: VaultItemFormPr
                     placeholder="JBSWY3DPEHPK3PXP"
                     className="font-mono"
                   />
-                  {totpSecret && <TotpDisplay totpSecret={totpSecret} className="pt-1" />}
+                  {totpSecret && (
+                    <TotpDisplay totpSecret={totpSecret} className="pt-1" />
+                  )}
                 </div>
               </>
             )}
 
             {/* ── Secure note ── */}
-            {itemType === 'secure_note' && (
+            {itemType === "secure_note" && (
               <div className="space-y-1.5">
                 <Label>Contenu</Label>
                 <Textarea
@@ -376,7 +482,7 @@ export function VaultItemForm({ open, itemType, item, onClose }: VaultItemFormPr
             )}
 
             {/* ── Card ── */}
-            {itemType === 'card' && (
+            {itemType === "card" && (
               <>
                 <div className="space-y-1.5">
                   <Label>Titulaire</Label>
@@ -390,7 +496,7 @@ export function VaultItemForm({ open, itemType, item, onClose }: VaultItemFormPr
                   <Label>Numéro</Label>
                   <div className="relative">
                     <Input
-                      type={showCardNumber ? 'text' : 'password'}
+                      type={showCardNumber ? "text" : "password"}
                       value={cardNumber}
                       onChange={(e) => setCardNumber(e.target.value)}
                       placeholder="4111 1111 1111 1111"
@@ -401,7 +507,11 @@ export function VaultItemForm({ open, itemType, item, onClose }: VaultItemFormPr
                       onClick={() => setShowCardNumber((v) => !v)}
                       className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground"
                     >
-                      {showCardNumber ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      {showCardNumber ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
                     </button>
                   </div>
                 </div>
@@ -419,7 +529,7 @@ export function VaultItemForm({ open, itemType, item, onClose }: VaultItemFormPr
                     <Label>CVV</Label>
                     <div className="relative">
                       <Input
-                        type={showCvv ? 'text' : 'password'}
+                        type={showCvv ? "text" : "password"}
                         value={cardCvv}
                         onChange={(e) => setCardCvv(e.target.value)}
                         placeholder="•••"
@@ -431,7 +541,11 @@ export function VaultItemForm({ open, itemType, item, onClose }: VaultItemFormPr
                         onClick={() => setShowCvv((v) => !v)}
                         className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground"
                       >
-                        {showCvv ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        {showCvv ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
                       </button>
                     </div>
                   </div>
@@ -440,7 +554,7 @@ export function VaultItemForm({ open, itemType, item, onClose }: VaultItemFormPr
             )}
 
             {/* ── SSH key ── */}
-            {itemType === 'ssh_key' && (
+            {itemType === "ssh_key" && (
               <>
                 <div className="space-y-1.5">
                   <Label>Clé privée</Label>
@@ -471,9 +585,13 @@ export function VaultItemForm({ open, itemType, item, onClose }: VaultItemFormPr
             )}
 
             {/* ── API token ── */}
-            {itemType === 'api_token' && (
+            {itemType === "api_token" && (
               <>
-                <PasswordField value={apiToken} onChange={setApiToken} label="Jeton" />
+                <PasswordField
+                  value={apiToken}
+                  onChange={setApiToken}
+                  label="Jeton"
+                />
                 <div className="space-y-1.5">
                   <Label>URL de l&apos;API (optionnel)</Label>
                   <Input
@@ -486,25 +604,39 @@ export function VaultItemForm({ open, itemType, item, onClose }: VaultItemFormPr
             )}
 
             {/* ── Identity ── */}
-            {itemType === 'identity' && (
+            {itemType === "identity" && (
               <>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
                     <Label>Prénom</Label>
-                    <Input value={idFirstName} onChange={(e) => setIdFirstName(e.target.value)} />
+                    <Input
+                      value={idFirstName}
+                      onChange={(e) => setIdFirstName(e.target.value)}
+                    />
                   </div>
                   <div className="space-y-1.5">
                     <Label>Nom</Label>
-                    <Input value={idLastName} onChange={(e) => setIdLastName(e.target.value)} />
+                    <Input
+                      value={idLastName}
+                      onChange={(e) => setIdLastName(e.target.value)}
+                    />
                   </div>
                 </div>
                 <div className="space-y-1.5">
                   <Label>Email</Label>
-                  <Input type="email" value={idEmail} onChange={(e) => setIdEmail(e.target.value)} />
+                  <Input
+                    type="email"
+                    value={idEmail}
+                    onChange={(e) => setIdEmail(e.target.value)}
+                  />
                 </div>
                 <div className="space-y-1.5">
                   <Label>Téléphone</Label>
-                  <Input type="tel" value={idPhone} onChange={(e) => setIdPhone(e.target.value)} />
+                  <Input
+                    type="tel"
+                    value={idPhone}
+                    onChange={(e) => setIdPhone(e.target.value)}
+                  />
                 </div>
                 <div className="space-y-1.5">
                   <Label>Adresse</Label>
@@ -516,21 +648,32 @@ export function VaultItemForm({ open, itemType, item, onClose }: VaultItemFormPr
                 </div>
                 <div className="space-y-1.5">
                   <Label>N° de pièce d&apos;identité</Label>
-                  <Input value={idNumber} onChange={(e) => setIdNumber(e.target.value)} />
+                  <Input
+                    value={idNumber}
+                    onChange={(e) => setIdNumber(e.target.value)}
+                  />
                 </div>
               </>
             )}
 
             {/* ── Passkey (read-only) ── */}
-            {itemType === 'passkey' && (
+            {itemType === "passkey" && (
               <>
                 <div className="space-y-1.5">
                   <Label>Partie relying</Label>
-                  <Input value={pkRelyingParty} readOnly className="bg-muted font-mono text-xs" />
+                  <Input
+                    value={pkRelyingParty}
+                    readOnly
+                    className="bg-muted font-mono text-xs"
+                  />
                 </div>
                 <div className="space-y-1.5">
                   <Label>ID de credential</Label>
-                  <Input value={pkCredentialId} readOnly className="bg-muted font-mono text-xs" />
+                  <Input
+                    value={pkCredentialId}
+                    readOnly
+                    className="bg-muted font-mono text-xs"
+                  />
                 </div>
                 <div className="space-y-1.5">
                   <Label>Clé publique</Label>
@@ -545,7 +688,7 @@ export function VaultItemForm({ open, itemType, item, onClose }: VaultItemFormPr
             )}
 
             {/* ── Notes (shared) ── */}
-            {itemType !== 'secure_note' && (
+            {itemType !== "secure_note" && (
               <div className="space-y-1.5">
                 <Label>Notes (optionnel)</Label>
                 <Textarea
@@ -564,17 +707,39 @@ export function VaultItemForm({ open, itemType, item, onClose }: VaultItemFormPr
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <div>
-                  <Label htmlFor="favorite-toggle" className="text-sm font-medium">Favori</Label>
-                  <p className="text-xs text-muted-foreground">Épingler dans les favoris</p>
+                  <Label
+                    htmlFor="favorite-toggle"
+                    className="text-sm font-medium"
+                  >
+                    Favori
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    Épingler dans les favoris
+                  </p>
                 </div>
-                <Switch id="favorite-toggle" checked={favorite} onCheckedChange={setFavorite} />
+                <Switch
+                  id="favorite-toggle"
+                  checked={favorite}
+                  onCheckedChange={setFavorite}
+                />
               </div>
               <div className="flex items-center justify-between">
                 <div>
-                  <Label htmlFor="reprompt-toggle" className="text-sm font-medium">Reprompt</Label>
-                  <p className="text-xs text-muted-foreground">Demander le MDP maître avant d'afficher</p>
+                  <Label
+                    htmlFor="reprompt-toggle"
+                    className="text-sm font-medium"
+                  >
+                    Reprompt
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    Demander le MDP maître avant d'afficher
+                  </p>
                 </div>
-                <Switch id="reprompt-toggle" checked={reprompt} onCheckedChange={setReprompt} />
+                <Switch
+                  id="reprompt-toggle"
+                  checked={reprompt}
+                  onCheckedChange={setReprompt}
+                />
               </div>
             </div>
           </form>
@@ -590,7 +755,7 @@ export function VaultItemForm({ open, itemType, item, onClose }: VaultItemFormPr
             disabled={loading}
             className="gap-1.5"
           >
-            {loading ? 'Enregistrement…' : isEdit ? 'Mettre à jour' : 'Créer'}
+            {loading ? "Enregistrement…" : isEdit ? "Mettre à jour" : "Créer"}
           </Button>
         </SheetFooter>
       </SheetContent>

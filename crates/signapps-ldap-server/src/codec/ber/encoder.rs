@@ -53,18 +53,24 @@ fn encode_tag(tag: &BerTag) -> Vec<u8> {
         BerTag::Enumerated => 0x0A,
         BerTag::Sequence => 0x30, // class=universal, constructed=1, tag=16
         BerTag::Set => 0x31,      // class=universal, constructed=1, tag=17
-        BerTag::Application { number, constructed } => {
+        BerTag::Application {
+            number,
+            constructed,
+        } => {
             assert!(*number < 31, "multi-byte application tags not supported");
             let class_bits: u8 = 0b0100_0000; // application
             let constructed_bit: u8 = if *constructed { 0b0010_0000 } else { 0 };
             class_bits | constructed_bit | number
-        }
-        BerTag::Context { number, constructed } => {
+        },
+        BerTag::Context {
+            number,
+            constructed,
+        } => {
             assert!(*number < 31, "multi-byte context tags not supported");
             let class_bits: u8 = 0b1000_0000; // context-specific
             let constructed_bit: u8 = if *constructed { 0b0010_0000 } else { 0 };
             class_bits | constructed_bit | number
-        }
+        },
     };
     vec![byte]
 }
@@ -247,7 +253,10 @@ pub fn encode_set(children: Vec<BerElement>) -> BerElement {
 pub fn encode_context(number: u8, constructed: bool, data: BerData) -> BerElement {
     assert!(number < 31, "multi-byte context tags not supported");
     BerElement {
-        tag: BerTag::Context { number, constructed },
+        tag: BerTag::Context {
+            number,
+            constructed,
+        },
         data,
     }
 }
@@ -256,7 +265,10 @@ pub fn encode_context(number: u8, constructed: bool, data: BerData) -> BerElemen
 pub fn encode_application(number: u8, constructed: bool, data: BerData) -> BerElement {
     assert!(number < 31, "multi-byte application tags not supported");
     BerElement {
-        tag: BerTag::Application { number, constructed },
+        tag: BerTag::Application {
+            number,
+            constructed,
+        },
         data,
     }
 }
@@ -280,8 +292,8 @@ fn integer_to_bytes(value: i64) -> Vec<u8> {
     while start + 1 < full.len() {
         let current = full[start];
         let next = full[start + 1];
-        let can_strip = (current == 0x00 && next & 0x80 == 0)
-            || (current == 0xFF && next & 0x80 != 0);
+        let can_strip =
+            (current == 0x00 && next & 0x80 == 0) || (current == 0xFF && next & 0x80 != 0);
         if !can_strip {
             break;
         }

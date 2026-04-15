@@ -13,7 +13,13 @@ interface SDG {
 
 export default function OddTracker() {
   const [sdgs] = useState<SDG[]>([
-    { id: 1, name: "No Poverty", emoji: "🤝", progress: 45, contributions: 120 },
+    {
+      id: 1,
+      name: "No Poverty",
+      emoji: "🤝",
+      progress: 45,
+      contributions: 120,
+    },
     {
       id: 2,
       name: "Zero Hunger",
@@ -21,7 +27,13 @@ export default function OddTracker() {
       progress: 62,
       contributions: 180,
     },
-    { id: 3, name: "Good Health", emoji: "🏥", progress: 55, contributions: 150 },
+    {
+      id: 3,
+      name: "Good Health",
+      emoji: "🏥",
+      progress: 55,
+      contributions: 150,
+    },
     {
       id: 4,
       name: "Quality Education",
@@ -122,7 +134,9 @@ export default function OddTracker() {
     },
   ]);
 
-  const avgProgress = (sdgs.reduce((sum, s) => sum + s.progress, 0) / sdgs.length).toFixed(1);
+  const avgProgress = (
+    sdgs.reduce((sum, s) => sum + s.progress, 0) / sdgs.length
+  ).toFixed(1);
   const totalContributions = sdgs.reduce((sum, s) => sum + s.contributions, 0);
 
   return (
@@ -139,7 +153,9 @@ export default function OddTracker() {
         </div>
         <div className="p-3 bg-green-50 rounded-lg border border-green-200">
           <p className="text-muted-foreground">Total Contributions</p>
-          <p className="text-2xl font-bold text-green-900">{totalContributions}</p>
+          <p className="text-2xl font-bold text-green-900">
+            {totalContributions}
+          </p>
         </div>
       </div>
 
@@ -160,8 +176,12 @@ export default function OddTracker() {
               ></div>
             </div>
             <div className="text-center">
-              <p className="text-xs font-bold text-muted-foreground">{sdg.progress}%</p>
-              <p className="text-xs text-muted-foreground">{sdg.contributions} pts</p>
+              <p className="text-xs font-bold text-muted-foreground">
+                {sdg.progress}%
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {sdg.contributions} pts
+              </p>
             </div>
           </div>
         ))}
@@ -169,8 +189,8 @@ export default function OddTracker() {
 
       <div className="p-3 bg-purple-50 rounded-lg border border-purple-200 text-sm">
         <p className="text-purple-900">
-          <strong>Great progress!</strong> Your company contributes to all 17 UN Sustainable
-          Development Goals.
+          <strong>Great progress!</strong> Your company contributes to all 17 UN
+          Sustainable Development Goals.
         </p>
       </div>
     </div>

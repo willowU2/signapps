@@ -1,23 +1,24 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Bookmark, Plus, ExternalLink, Trash2, X } from 'lucide-react';
-import { useDashboardStore, BookmarkItem } from '@/stores/dashboard-store';
+import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Bookmark, Plus, ExternalLink, Trash2, X } from "lucide-react";
+import { useDashboardStore, BookmarkItem } from "@/stores/dashboard-store";
 
 export function WidgetBookmarks() {
-  const { bookmarks, addBookmark, removeBookmark, editMode } = useDashboardStore();
+  const { bookmarks, addBookmark, removeBookmark, editMode } =
+    useDashboardStore();
   const [adding, setAdding] = useState(false);
-  const [label, setLabel] = useState('');
-  const [url, setUrl] = useState('');
+  const [label, setLabel] = useState("");
+  const [url, setUrl] = useState("");
 
   const handleAdd = () => {
     if (!label.trim() || !url.trim()) return;
     addBookmark({ label: label.trim(), url: url.trim() });
-    setLabel('');
-    setUrl('');
+    setLabel("");
+    setUrl("");
     setAdding(false);
   };
 
@@ -41,19 +42,27 @@ export function WidgetBookmarks() {
               placeholder="Label"
               value={label}
               onChange={(e) => setLabel(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
+              onKeyDown={(e) => e.key === "Enter" && handleAdd()}
             />
             <Input
               placeholder="https://..."
               value={url}
               onChange={(e) => setUrl(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
+              onKeyDown={(e) => e.key === "Enter" && handleAdd()}
             />
             <div className="flex gap-2">
-              <Button size="sm" onClick={handleAdd} disabled={!label.trim() || !url.trim()}>
+              <Button
+                size="sm"
+                onClick={handleAdd}
+                disabled={!label.trim() || !url.trim()}
+              >
                 Add
               </Button>
-              <Button size="sm" variant="ghost" onClick={() => setAdding(false)}>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => setAdding(false)}
+              >
                 <X className="h-4 w-4" />
               </Button>
             </div>

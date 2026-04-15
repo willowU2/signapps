@@ -4,126 +4,126 @@
  * Migrated to use API Factory pattern.
  * @see factory.ts for client creation details
  */
-import { getClient, ServiceName } from './factory';
+import { getClient, ServiceName } from "./factory";
 
 // Get the proxy service client (cached)
 const proxyClient = getClient(ServiceName.PROXY);
 
 // Proxy API (Routes)
 export const routesApi = {
-    list: () => proxyClient.get<Route[]>('/routes'),
-    get: (id: string) => proxyClient.get<Route>(`/routes/${id}`),
-    create: (data: CreateRouteRequest) => proxyClient.post<Route>('/routes', data),
-    update: (id: string, data: Partial<CreateRouteRequest>) =>
-        proxyClient.put<Route>(`/routes/${id}`, data),
-    delete: (id: string) => proxyClient.delete(`/routes/${id}`),
-    // Certificates
-    listCertificates: () => proxyClient.get<Certificate[]>('/certificates'),
-    verifyDomain: (domain: string) =>
-        proxyClient.post(`/certificates/verify`, { domain }),
-    requestCertificate: (domain: string) =>
-        proxyClient.post(`/certificates/verify`, { domain }),
-    renewCertificate: (id: string) =>
-        proxyClient.post(`/certificates/${id}/renew`),
-    deleteCertificate: (id: string) =>
-        proxyClient.delete(`/certificates/${id}`),
-    // Shield stats
-    shieldStats: () => proxyClient.get<ShieldStats>('/shield/stats'),
-    // Proxy status
-    proxyStatus: () => proxyClient.get<ProxyStatus>('/proxy/status'),
+  list: () => proxyClient.get<Route[]>("/routes"),
+  get: (id: string) => proxyClient.get<Route>(`/routes/${id}`),
+  create: (data: CreateRouteRequest) =>
+    proxyClient.post<Route>("/routes", data),
+  update: (id: string, data: Partial<CreateRouteRequest>) =>
+    proxyClient.put<Route>(`/routes/${id}`, data),
+  delete: (id: string) => proxyClient.delete(`/routes/${id}`),
+  // Certificates
+  listCertificates: () => proxyClient.get<Certificate[]>("/certificates"),
+  verifyDomain: (domain: string) =>
+    proxyClient.post(`/certificates/verify`, { domain }),
+  requestCertificate: (domain: string) =>
+    proxyClient.post(`/certificates/verify`, { domain }),
+  renewCertificate: (id: string) =>
+    proxyClient.post(`/certificates/${id}/renew`),
+  deleteCertificate: (id: string) => proxyClient.delete(`/certificates/${id}`),
+  // Shield stats
+  shieldStats: () => proxyClient.get<ShieldStats>("/shield/stats"),
+  // Proxy status
+  proxyStatus: () => proxyClient.get<ProxyStatus>("/proxy/status"),
 };
 
 export interface Route {
-    id: string;
-    name: string;
-    host: string;
-    target: string;
-    mode: 'proxy' | 'redirect' | 'static' | 'loadbalancer';
-    tls_enabled: boolean;
-    tls_config?: TlsConfig;
-    auth_required: boolean;
-    enabled: boolean;
-    shield_config?: ShieldConfig;
-    headers?: HeadersConfig;
-    dns_records?: DnsRecord[];
-    created_at: string;
-    updated_at: string;
+  id: string;
+  name: string;
+  host: string;
+  target: string;
+  mode: "proxy" | "redirect" | "static" | "loadbalancer";
+  tls_enabled: boolean;
+  tls_config?: TlsConfig;
+  auth_required: boolean;
+  enabled: boolean;
+  shield_config?: ShieldConfig;
+  headers?: HeadersConfig;
+  dns_records?: DnsRecord[];
+  created_at: string;
+  updated_at: string;
 }
 
 export interface CreateRouteRequest {
-    name: string;
-    host: string;
-    target: string;
-    mode?: 'proxy' | 'redirect' | 'static' | 'loadbalancer';
-    tls_enabled?: boolean;
-    tls_config?: TlsConfig;
-    auth_required?: boolean;
-    shield_config?: ShieldConfig;
-    headers?: HeadersConfig;
-    dns_records?: DnsRecord[];
-    enabled?: boolean;
+  name: string;
+  host: string;
+  target: string;
+  mode?: "proxy" | "redirect" | "static" | "loadbalancer";
+  tls_enabled?: boolean;
+  tls_config?: TlsConfig;
+  auth_required?: boolean;
+  shield_config?: ShieldConfig;
+  headers?: HeadersConfig;
+  dns_records?: DnsRecord[];
+  enabled?: boolean;
 }
 
 export interface TlsConfig {
-    wildcard: boolean;
-    force_https: boolean;
-    min_version?: 'TLS1.2' | 'TLS1.3';
-    covered_domains?: string[];
+  wildcard: boolean;
+  force_https: boolean;
+  min_version?: "TLS1.2" | "TLS1.3";
+  covered_domains?: string[];
 }
 
 export interface DnsRecord {
-    type: 'A' | 'AAAA' | 'CNAME' | 'TXT' | 'MX' | 'NS';
-    name: string;
-    value: string;
-    ttl: number;
-    priority?: number;
+  type: "A" | "AAAA" | "CNAME" | "TXT" | "MX" | "NS";
+  name: string;
+  value: string;
+  ttl: number;
+  priority?: number;
 }
 
 export interface ShieldConfig {
-    enabled: boolean;
-    requests_per_second: number;
-    burst_size: number;
-    block_duration_seconds: number;
-    whitelist: string[];
-    blacklist: string[];
-    geo_block?: GeoBlockConfig;
+  enabled: boolean;
+  requests_per_second: number;
+  burst_size: number;
+  block_duration_seconds: number;
+  whitelist: string[];
+  blacklist: string[];
+  geo_block?: GeoBlockConfig;
 }
 
 export interface GeoBlockConfig {
-    enabled: boolean;
-    blocked_countries: string[];
+  enabled: boolean;
+  blocked_countries: string[];
 }
 
 export interface HeadersConfig {
-    request_headers: HeaderEntry[];
-    response_headers: HeaderEntry[];
-    remove_request_headers: string[];
-    remove_response_headers: string[];
+  request_headers: HeaderEntry[];
+  response_headers: HeaderEntry[];
+  remove_request_headers: string[];
+  remove_response_headers: string[];
 }
 
 export interface HeaderEntry {
-    name: string;
-    value: string;
+  name: string;
+  value: string;
 }
 
 export interface Certificate {
-    id: string;
-    domain: string;
-    issuer: string;
-    expires_at: string;
-    auto_renew: boolean;
+  id: string;
+  domain: string;
+  issuer: string;
+  expires_at: string;
+  auto_renew: boolean;
 }
 
 export interface ShieldStats {
-    requests_total: number;
-    requests_blocked: number;
-    active_rules: number;
+  requests_total: number;
+  requests_blocked: number;
+  active_rules: number;
 }
 
 export interface ProxyStatus {
-    http_listener: { port: number; active: boolean };
-    https_listener: { port: number; active: boolean };
-    routes_cached: number;
-    certificates_loaded: number;
-    requests_total: number;
+  http_listener: { port: number; active: boolean };
+  https_listener: { port: number; active: boolean };
+  routes_cached: number;
+  certificates_loaded: number;
+  requests_total: number;
 }

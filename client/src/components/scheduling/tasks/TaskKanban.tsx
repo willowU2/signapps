@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * TaskKanban Component
@@ -7,7 +7,7 @@
  * Supports drag and drop between columns.
  */
 
-import * as React from 'react';
+import * as React from "react";
 import {
   DndContext,
   DragOverlay,
@@ -19,12 +19,12 @@ import {
   type DragEndEvent,
   type DragOverEvent,
   type DragStartEvent,
-} from '@dnd-kit/core';
-import { arrayMove, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
-import { Plus, Search, Filter, SlidersHorizontal } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+} from "@dnd-kit/core";
+import { arrayMove, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
+import { Plus, Search, Filter, SlidersHorizontal } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -32,11 +32,15 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { TaskColumn, columnConfig } from './TaskColumn';
-import { TaskCard } from './TaskCard';
-import { TaskSheet } from './TaskSheet';
-import type { Task, TaskStatus, Priority } from '@/lib/scheduling/types/scheduling';
+} from "@/components/ui/dropdown-menu";
+import { TaskColumn, columnConfig } from "./TaskColumn";
+import { TaskCard } from "./TaskCard";
+import { TaskSheet } from "./TaskSheet";
+import type {
+  Task,
+  TaskStatus,
+  Priority,
+} from "@/lib/scheduling/types/scheduling";
 
 // ============================================================================
 // Types
@@ -45,7 +49,7 @@ import type { Task, TaskStatus, Priority } from '@/lib/scheduling/types/scheduli
 interface TaskKanbanProps {
   tasks: Task[];
   onTaskUpdate: (taskId: string, updates: Partial<Task>) => void;
-  onTaskCreate: (task: Omit<Task, 'id' | 'createdAt' | 'updatedAt'>) => void;
+  onTaskCreate: (task: Omit<Task, "id" | "createdAt" | "updatedAt">) => void;
   onTaskDelete: (taskId: string) => void;
   isLoading?: boolean;
 }
@@ -75,13 +79,15 @@ export function TaskKanban({
   const [activeTask, setActiveTask] = React.useState<Task | null>(null);
   const [localTasks, setLocalTasks] = React.useState<Task[]>(tasks);
   const [filters, setFilters] = React.useState<TaskFilters>({
-    search: '',
+    search: "",
     priorities: [],
     showCompleted: true,
   });
   const [isSheetOpen, setIsSheetOpen] = React.useState(false);
   const [editingTask, setEditingTask] = React.useState<Task | null>(null);
-  const [newTaskStatus, setNewTaskStatus] = React.useState<TaskStatus | null>(null);
+  const [newTaskStatus, setNewTaskStatus] = React.useState<TaskStatus | null>(
+    null,
+  );
 
   // Sync local tasks with props
   React.useEffect(() => {
@@ -97,7 +103,7 @@ export function TaskKanban({
     }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
-    })
+    }),
   );
 
   // Filter tasks
@@ -121,7 +127,7 @@ export function TaskKanban({
       }
 
       // Completed filter
-      if (!filters.showCompleted && task.status === 'done') {
+      if (!filters.showCompleted && task.status === "done") {
         return false;
       }
 
@@ -134,7 +140,7 @@ export function TaskKanban({
     const grouped: Record<TaskStatus, Task[]> = {
       backlog: [],
       today: [],
-      'in-progress': [],
+      "in-progress": [],
       done: [],
     };
 
@@ -168,13 +174,13 @@ export function TaskKanban({
 
     // Check if we're over a column
     const overData = over.data.current;
-    if (overData?.type === 'column') {
+    if (overData?.type === "column") {
       const newStatus = overData.status as TaskStatus;
       if (activeTask.status !== newStatus) {
         setLocalTasks((prev) =>
           prev.map((t) =>
-            t.id === activeId ? { ...t, status: newStatus } : t
-          )
+            t.id === activeId ? { ...t, status: newStatus } : t,
+          ),
         );
       }
       return;
@@ -185,8 +191,8 @@ export function TaskKanban({
     if (overTask && activeTask.status !== overTask.status) {
       setLocalTasks((prev) =>
         prev.map((t) =>
-          t.id === activeId ? { ...t, status: overTask.status } : t
-        )
+          t.id === activeId ? { ...t, status: overTask.status } : t,
+        ),
       );
     }
   };
@@ -207,7 +213,7 @@ export function TaskKanban({
     const overData = over.data.current;
     let finalStatus = activeTask.status;
 
-    if (overData?.type === 'column') {
+    if (overData?.type === "column") {
       finalStatus = overData.status as TaskStatus;
     } else {
       const overTask = localTasks.find((t) => t.id === overId);
@@ -248,10 +254,10 @@ export function TaskKanban({
   const handleTaskComplete = (taskId: string) => {
     const task = localTasks.find((t) => t.id === taskId);
     if (task) {
-      const newStatus = task.status === 'done' ? 'today' : 'done';
+      const newStatus = task.status === "done" ? "today" : "done";
       onTaskUpdate(taskId, {
         status: newStatus,
-        completedAt: newStatus === 'done' ? new Date() : undefined,
+        completedAt: newStatus === "done" ? new Date() : undefined,
       });
     }
   };
@@ -272,13 +278,13 @@ export function TaskKanban({
       onTaskUpdate(editingTask.id, taskData);
     } else if (newTaskStatus) {
       onTaskCreate({
-        type: 'task',
-        title: taskData.title ?? 'Nouvelle tâche',
+        type: "task",
+        title: taskData.title ?? "Nouvelle tâche",
         status: newTaskStatus,
         allDay: false,
         start: new Date(),
         ...taskData,
-      } as Omit<Task, 'id' | 'createdAt' | 'updatedAt'>);
+      } as Omit<Task, "id" | "createdAt" | "updatedAt">);
     }
     setIsSheetOpen(false);
     setEditingTask(null);
@@ -315,7 +321,7 @@ export function TaskKanban({
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">
             <DropdownMenuLabel>Priorité</DropdownMenuLabel>
-            {(['urgent', 'high', 'medium', 'low'] as Priority[]).map((p) => (
+            {(["urgent", "high", "medium", "low"] as Priority[]).map((p) => (
               <DropdownMenuCheckboxItem
                 key={p}
                 checked={filters.priorities.includes(p)}
@@ -328,10 +334,10 @@ export function TaskKanban({
                   }));
                 }}
               >
-                {p === 'urgent' && 'Urgente'}
-                {p === 'high' && 'Haute'}
-                {p === 'medium' && 'Moyenne'}
-                {p === 'low' && 'Basse'}
+                {p === "urgent" && "Urgente"}
+                {p === "high" && "Haute"}
+                {p === "medium" && "Moyenne"}
+                {p === "low" && "Basse"}
               </DropdownMenuCheckboxItem>
             ))}
             <DropdownMenuSeparator />
@@ -346,7 +352,7 @@ export function TaskKanban({
           </DropdownMenuContent>
         </DropdownMenu>
 
-        <Button size="sm" onClick={() => handleAddTask('today')}>
+        <Button size="sm" onClick={() => handleAddTask("today")}>
           <Plus className="h-4 w-4 mr-2" />
           Nouvelle tâche
         </Button>

@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * VirtualList Component
@@ -15,15 +15,15 @@ import React, {
   useMemo,
   forwardRef,
   useImperativeHandle,
-} from 'react';
-import { cn } from '@/lib/utils';
+} from "react";
+import { cn } from "@/lib/utils";
 import {
   calculateVirtualItems,
   VirtualScrollState,
   calculateScrollToOffset,
   type VirtualItem,
   type ScrollToOptions,
-} from '@/lib/office/virtual-scroll';
+} from "@/lib/office/virtual-scroll";
 
 // ============================================================================
 // Types
@@ -37,7 +37,11 @@ export interface VirtualListProps<T> {
   /** Number of items to render outside visible area */
   overscan?: number;
   /** Render function for each item */
-  renderItem: (item: T, index: number, style: React.CSSProperties) => React.ReactNode;
+  renderItem: (
+    item: T,
+    index: number,
+    style: React.CSSProperties,
+  ) => React.ReactNode;
   /** Get unique key for item */
   getItemKey?: (item: T, index: number) => string | number;
   /** Called when an item becomes visible */
@@ -81,7 +85,7 @@ function VirtualListInner<T>(
     isLoading,
     loadingContent,
   }: VirtualListProps<T>,
-  ref: React.ForwardedRef<VirtualListRef>
+  ref: React.ForwardedRef<VirtualListRef>,
 ) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [scrollOffset, setScrollOffset] = useState(0);
@@ -96,7 +100,7 @@ function VirtualListInner<T>(
     (index: number) => {
       return measuredHeightsRef.current.get(index) || estimatedItemHeight;
     },
-    [estimatedItemHeight]
+    [estimatedItemHeight],
   );
 
   // Calculate virtual items
@@ -110,7 +114,14 @@ function VirtualListInner<T>(
         overscan,
         getItemHeight,
       }),
-    [items.length, containerHeight, estimatedItemHeight, scrollOffset, overscan, getItemHeight]
+    [
+      items.length,
+      containerHeight,
+      estimatedItemHeight,
+      scrollOffset,
+      overscan,
+      getItemHeight,
+    ],
   );
 
   // Handle scroll
@@ -122,7 +133,7 @@ function VirtualListInner<T>(
       scrollStateRef.current.handleScroll(newOffset);
       onScroll?.(newOffset);
     },
-    [onScroll]
+    [onScroll],
   );
 
   // Measure container height
@@ -141,15 +152,18 @@ function VirtualListInner<T>(
   }, []);
 
   // Measure item heights
-  const measureItem = useCallback((index: number, element: HTMLElement | null) => {
-    if (element) {
-      const height = element.getBoundingClientRect().height;
-      if (height > 0) {
-        measuredHeightsRef.current.set(index, height);
-        scrollStateRef.current.setItemHeight(index, height);
+  const measureItem = useCallback(
+    (index: number, element: HTMLElement | null) => {
+      if (element) {
+        const height = element.getBoundingClientRect().height;
+        if (height > 0) {
+          measuredHeightsRef.current.set(index, height);
+          scrollStateRef.current.setItemHeight(index, height);
+        }
       }
-    }
-  }, []);
+    },
+    [],
+  );
 
   // Notify visible items
   useEffect(() => {
@@ -168,30 +182,45 @@ function VirtualListInner<T>(
         const container = containerRef.current;
         if (!container) return;
 
-        const offset = calculateScrollToOffset(options, containerHeight, (index) => ({
-          start: virtualItems.find((v) => v.index === index)?.start || index * estimatedItemHeight,
-          size: getItemHeight(index),
-        }));
+        const offset = calculateScrollToOffset(
+          options,
+          containerHeight,
+          (index) => ({
+            start:
+              virtualItems.find((v) => v.index === index)?.start ||
+              index * estimatedItemHeight,
+            size: getItemHeight(index),
+          }),
+        );
 
         container.scrollTo({
           top: offset,
-          behavior: options.behavior || 'smooth',
+          behavior: options.behavior || "smooth",
         });
       },
       scrollToTop: () => {
-        containerRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+        containerRef.current?.scrollTo({ top: 0, behavior: "smooth" });
       },
       scrollToBottom: () => {
-        containerRef.current?.scrollTo({ top: totalHeight, behavior: 'smooth' });
+        containerRef.current?.scrollTo({
+          top: totalHeight,
+          behavior: "smooth",
+        });
       },
     }),
-    [containerHeight, virtualItems, estimatedItemHeight, getItemHeight, totalHeight]
+    [
+      containerHeight,
+      virtualItems,
+      estimatedItemHeight,
+      getItemHeight,
+      totalHeight,
+    ],
   );
 
   // Loading state
   if (isLoading) {
     return (
-      <div className={cn('flex h-full items-center justify-center', className)}>
+      <div className={cn("flex h-full items-center justify-center", className)}>
         {loadingContent || (
           <div className="text-sm text-muted-foreground">Chargement...</div>
         )}
@@ -202,7 +231,7 @@ function VirtualListInner<T>(
   // Empty state
   if (items.length === 0) {
     return (
-      <div className={cn('flex h-full items-center justify-center', className)}>
+      <div className={cn("flex h-full items-center justify-center", className)}>
         {emptyContent || (
           <div className="text-sm text-muted-foreground">No items</div>
         )}
@@ -213,11 +242,11 @@ function VirtualListInner<T>(
   return (
     <div
       ref={containerRef}
-      className={cn('overflow-auto', className)}
+      className={cn("overflow-auto", className)}
       onScroll={handleScroll}
     >
       <div
-        className={cn('relative', innerClassName)}
+        className={cn("relative", innerClassName)}
         style={{ height: totalHeight }}
       >
         {virtualItems.map((vItem) => {
@@ -231,10 +260,10 @@ function VirtualListInner<T>(
               measureItem={measureItem}
             >
               {renderItem(item, vItem.index, {
-                position: 'absolute',
+                position: "absolute",
                 top: 0,
                 left: 0,
-                width: '100%',
+                width: "100%",
                 transform: `translateY(${vItem.start}px)`,
               })}
             </VirtualItemWrapper>
@@ -255,12 +284,16 @@ interface VirtualItemWrapperProps {
   children: React.ReactNode;
 }
 
-function VirtualItemWrapper({ vItem, measureItem, children }: VirtualItemWrapperProps) {
+function VirtualItemWrapper({
+  vItem,
+  measureItem,
+  children,
+}: VirtualItemWrapperProps) {
   const itemRef = useCallback(
     (el: HTMLDivElement | null) => {
       measureItem(vItem.index, el);
     },
-    [vItem.index, measureItem]
+    [vItem.index, measureItem],
   );
 
   return <div ref={itemRef}>{children}</div>;
@@ -271,7 +304,7 @@ function VirtualItemWrapper({ vItem, measureItem, children }: VirtualItemWrapper
 // ============================================================================
 
 export const VirtualList = forwardRef(VirtualListInner) as <T>(
-  props: VirtualListProps<T> & { ref?: React.ForwardedRef<VirtualListRef> }
+  props: VirtualListProps<T> & { ref?: React.ForwardedRef<VirtualListRef> },
 ) => React.ReactElement;
 
 // ============================================================================
@@ -302,19 +335,21 @@ export function VirtualCommentList({
       <div
         style={style}
         className={cn(
-          'border-b p-3 transition-colors hover:bg-muted/50',
-          comment.resolved && 'opacity-60'
+          "border-b p-3 transition-colors hover:bg-muted/50",
+          comment.resolved && "opacity-60",
         )}
         onClick={() => onCommentClick?.(comment)}
       >
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium">{comment.author}</span>
-          <span className="text-xs text-muted-foreground">{comment.createdAt}</span>
+          <span className="text-xs text-muted-foreground">
+            {comment.createdAt}
+          </span>
         </div>
         <p className="mt-1 text-sm">{comment.content}</p>
       </div>
     ),
-    [onCommentClick]
+    [onCommentClick],
   );
 
   return (
@@ -335,7 +370,7 @@ export function VirtualCommentList({
 
 interface ChangeItem {
   id: string;
-  type: 'insert' | 'delete' | 'format';
+  type: "insert" | "delete" | "format";
   author: string;
   content: string;
   timestamp: string;
@@ -362,21 +397,23 @@ export function VirtualChangeList({
         <div className="flex items-center gap-2">
           <span
             className={cn(
-              'rounded px-1.5 py-0.5 text-xs font-medium',
-              change.type === 'insert' && 'bg-green-100 text-green-800',
-              change.type === 'delete' && 'bg-red-100 text-red-800',
-              change.type === 'format' && 'bg-blue-100 text-blue-800'
+              "rounded px-1.5 py-0.5 text-xs font-medium",
+              change.type === "insert" && "bg-green-100 text-green-800",
+              change.type === "delete" && "bg-red-100 text-red-800",
+              change.type === "format" && "bg-blue-100 text-blue-800",
             )}
           >
             {change.type}
           </span>
           <span className="text-sm">{change.author}</span>
-          <span className="text-xs text-muted-foreground">{change.timestamp}</span>
+          <span className="text-xs text-muted-foreground">
+            {change.timestamp}
+          </span>
         </div>
         <p className="mt-1 truncate text-sm">{change.content}</p>
       </div>
     ),
-    [onChangeClick]
+    [onChangeClick],
   );
 
   return (

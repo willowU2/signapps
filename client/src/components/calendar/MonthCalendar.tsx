@@ -195,10 +195,13 @@ function DraggableMonthEvent({
           <TooltipContent side="top" align="start" className="max-w-xs">
             <div className="font-semibold">{event.title}</div>
             <div className="text-[11px] opacity-80">
-              {format(start, "EEEE d MMM", { locale: fr })} · {format(start, "HH:mm")} → {format(end, "HH:mm")}
+              {format(start, "EEEE d MMM", { locale: fr })} ·{" "}
+              {format(start, "HH:mm")} → {format(end, "HH:mm")}
             </div>
             {event.location && (
-              <div className="text-[11px] mt-1 opacity-80">{event.location}</div>
+              <div className="text-[11px] mt-1 opacity-80">
+                {event.location}
+              </div>
             )}
             {event.description && (
               <div className="text-[11px] mt-1 opacity-80 line-clamp-3">
@@ -317,59 +320,59 @@ export function MonthCalendar({
 
   return (
     <TooltipProvider delayDuration={350}>
-    <div className="flex flex-col h-full bg-background relative">
-      {/* Day headers */}
-      <div className="grid grid-cols-7 border-b border-border">
-        {weekDays.map((day) => (
-          <div
-            key={day}
-            className="py-2 text-center text-[11px] font-medium text-[#70757a] uppercase tracking-wider"
-          >
-            {day}
-          </div>
-        ))}
-      </div>
-
-      {/* Grid */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {weeks.map((week, weekIdx) => (
-          <div
-            key={weekIdx}
-            className="flex-1 grid grid-cols-7 border-b border-border min-h-[100px]"
-          >
-            {week.map((day, dayIdx) => {
-              const isCurrentMonth = isSameMonth(day, currentDate);
-              const isTodayDate = isToday(day);
-              const dayStr = day.toDateString();
-              const dayEvents = eventsByDate.get(dayStr) || [];
-
-              return (
-                <DroppableDay
-                  key={dayIdx}
-                  day={day}
-                  isCurrentMonth={isCurrentMonth}
-                  isTodayDate={isTodayDate}
-                  dayEvents={dayEvents}
-                  selectedEventId={selectedEventId}
-                  selectEvent={selectEvent}
-                  onCreateEvent={onCreateEvent}
-                  onEditEvent={onEditEvent}
-                  onDeleteEvent={onDeleteEvent}
-                  onDuplicateEvent={onDuplicateEvent}
-                  onShareEvent={onShareEvent}
-                />
-              );
-            })}
-          </div>
-        ))}
-      </div>
-
-      {isLoading && (
-        <div className="absolute inset-0 bg-background/50 flex items-center justify-center pointer-events-none">
-          <span className="text-[#5f6368] text-sm">Chargement…</span>
+      <div className="flex flex-col h-full bg-background relative">
+        {/* Day headers */}
+        <div className="grid grid-cols-7 border-b border-border">
+          {weekDays.map((day) => (
+            <div
+              key={day}
+              className="py-2 text-center text-[11px] font-medium text-[#70757a] uppercase tracking-wider"
+            >
+              {day}
+            </div>
+          ))}
         </div>
-      )}
-    </div>
+
+        {/* Grid */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {weeks.map((week, weekIdx) => (
+            <div
+              key={weekIdx}
+              className="flex-1 grid grid-cols-7 border-b border-border min-h-[100px]"
+            >
+              {week.map((day, dayIdx) => {
+                const isCurrentMonth = isSameMonth(day, currentDate);
+                const isTodayDate = isToday(day);
+                const dayStr = day.toDateString();
+                const dayEvents = eventsByDate.get(dayStr) || [];
+
+                return (
+                  <DroppableDay
+                    key={dayIdx}
+                    day={day}
+                    isCurrentMonth={isCurrentMonth}
+                    isTodayDate={isTodayDate}
+                    dayEvents={dayEvents}
+                    selectedEventId={selectedEventId}
+                    selectEvent={selectEvent}
+                    onCreateEvent={onCreateEvent}
+                    onEditEvent={onEditEvent}
+                    onDeleteEvent={onDeleteEvent}
+                    onDuplicateEvent={onDuplicateEvent}
+                    onShareEvent={onShareEvent}
+                  />
+                );
+              })}
+            </div>
+          ))}
+        </div>
+
+        {isLoading && (
+          <div className="absolute inset-0 bg-background/50 flex items-center justify-center pointer-events-none">
+            <span className="text-[#5f6368] text-sm">Chargement…</span>
+          </div>
+        )}
+      </div>
     </TooltipProvider>
   );
 }

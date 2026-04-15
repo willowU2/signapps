@@ -1,11 +1,15 @@
-'use client';
+"use client";
 
-import { useState, useCallback } from 'react';
-import { Editor } from '@tiptap/react';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { MessageSquarePlus } from 'lucide-react';
+import { useState, useCallback } from "react";
+import { Editor } from "@tiptap/react";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { MessageSquarePlus } from "lucide-react";
 
 interface AddCommentButtonProps {
   editor: Editor | null;
@@ -13,26 +17,35 @@ interface AddCommentButtonProps {
   disabled?: boolean;
 }
 
-export function AddCommentButton({ editor, onAddComment, disabled }: AddCommentButtonProps) {
+export function AddCommentButton({
+  editor,
+  onAddComment,
+  disabled,
+}: AddCommentButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [content, setContent] = useState('');
+  const [content, setContent] = useState("");
 
-  const hasSelection = editor ? editor.state.selection.from !== editor.state.selection.to : false;
+  const hasSelection = editor
+    ? editor.state.selection.from !== editor.state.selection.to
+    : false;
 
   const handleSubmit = useCallback(() => {
     if (!content.trim()) return;
 
     onAddComment(content.trim());
-    setContent('');
+    setContent("");
     setIsOpen(false);
   }, [content, onAddComment]);
 
-  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
-      e.preventDefault();
-      handleSubmit();
-    }
-  }, [handleSubmit]);
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        handleSubmit();
+      }
+    },
+    [handleSubmit],
+  );
 
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
@@ -42,7 +55,11 @@ export function AddCommentButton({ editor, onAddComment, disabled }: AddCommentB
           size="icon"
           className="h-7 w-7 rounded-sm text-[#444746] dark:text-[#e8eaed]"
           disabled={disabled || !hasSelection}
-          title={hasSelection ? 'Ajouter un commentaire' : 'Sélectionnez du texte pour commenter'}
+          title={
+            hasSelection
+              ? "Ajouter un commentaire"
+              : "Sélectionnez du texte pour commenter"
+          }
         >
           <MessageSquarePlus className="h-4 w-4" />
         </Button>
@@ -72,7 +89,7 @@ export function AddCommentButton({ editor, onAddComment, disabled }: AddCommentB
                 variant="ghost"
                 size="sm"
                 onClick={() => {
-                  setContent('');
+                  setContent("");
                   setIsOpen(false);
                 }}
               >

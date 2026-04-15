@@ -1,5 +1,5 @@
-import { create } from 'zustand';
-import { getClient, ServiceName } from '@/lib/api/factory';
+import { create } from "zustand";
+import { getClient, ServiceName } from "@/lib/api/factory";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -58,13 +58,13 @@ export const useAiImageGen = create<ImageGenState>()((set) => ({
     set({ generating: true, error: null, result: null });
     try {
       const res = await aiClient.post<ImageGenResult>(
-        '/ai/image/generate',
+        "/ai/image/generate",
         params,
       );
       set({ result: res.data, generating: false });
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : 'Image generation failed';
+        err instanceof Error ? err.message : "Image generation failed";
       set({ error: message, generating: false });
     }
   },
@@ -73,19 +73,18 @@ export const useAiImageGen = create<ImageGenState>()((set) => ({
     set({ generating: true, error: null, result: null });
     try {
       const formData = new FormData();
-      formData.append('image', image);
-      formData.append('mask', mask);
-      formData.append('prompt', prompt);
+      formData.append("image", image);
+      formData.append("mask", mask);
+      formData.append("prompt", prompt);
 
       const res = await aiClient.post<ImageGenResult>(
-        '/ai/image/inpaint',
+        "/ai/image/inpaint",
         formData,
-        { headers: { 'Content-Type': 'multipart/form-data' } },
+        { headers: { "Content-Type": "multipart/form-data" } },
       );
       set({ result: res.data, generating: false });
     } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : 'Inpainting failed';
+      const message = err instanceof Error ? err.message : "Inpainting failed";
       set({ error: message, generating: false });
     }
   },
@@ -94,21 +93,21 @@ export const useAiImageGen = create<ImageGenState>()((set) => ({
     set({ generating: true, error: null, result: null });
     try {
       const formData = new FormData();
-      formData.append('image', image);
-      formData.append('prompt', prompt);
+      formData.append("image", image);
+      formData.append("prompt", prompt);
       if (strength !== undefined) {
-        formData.append('strength', String(strength));
+        formData.append("strength", String(strength));
       }
 
       const res = await aiClient.post<ImageGenResult>(
-        '/ai/image/img2img',
+        "/ai/image/img2img",
         formData,
-        { headers: { 'Content-Type': 'multipart/form-data' } },
+        { headers: { "Content-Type": "multipart/form-data" } },
       );
       set({ result: res.data, generating: false });
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : 'Image-to-image failed';
+        err instanceof Error ? err.message : "Image-to-image failed";
       set({ error: message, generating: false });
     }
   },
@@ -117,20 +116,19 @@ export const useAiImageGen = create<ImageGenState>()((set) => ({
     set({ generating: true, error: null, result: null });
     try {
       const formData = new FormData();
-      formData.append('image', image);
+      formData.append("image", image);
       if (scale !== undefined) {
-        formData.append('scale', String(scale));
+        formData.append("scale", String(scale));
       }
 
       const res = await aiClient.post<ImageGenResult>(
-        '/ai/image/upscale',
+        "/ai/image/upscale",
         formData,
-        { headers: { 'Content-Type': 'multipart/form-data' } },
+        { headers: { "Content-Type": "multipart/form-data" } },
       );
       set({ result: res.data, generating: false });
     } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : 'Upscale failed';
+      const message = err instanceof Error ? err.message : "Upscale failed";
       set({ error: message, generating: false });
     }
   },
@@ -138,7 +136,7 @@ export const useAiImageGen = create<ImageGenState>()((set) => ({
   fetchModels: async () => {
     try {
       const res = await aiClient.get<{ models: ModelInfo[] }>(
-        '/ai/image/models',
+        "/ai/image/models",
       );
       set({ models: res.data.models ?? [] });
     } catch {

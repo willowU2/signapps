@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { cn } from '@/lib/utils';
+import { cn } from "@/lib/utils";
 
 interface ResourceGaugeProps {
   label: string;
@@ -15,20 +15,20 @@ export function ResourceGauge({
   label,
   value,
   max = 100,
-  unit = '%',
+  unit = "%",
   className,
   showLabel = true,
 }: ResourceGaugeProps) {
   const percentage = Math.min((value / max) * 100, 100);
 
   const getColor = () => {
-    if (percentage >= 90) return 'bg-red-500';
-    if (percentage >= 70) return 'bg-yellow-500';
-    return 'bg-green-500';
+    if (percentage >= 90) return "bg-red-500";
+    if (percentage >= 70) return "bg-yellow-500";
+    return "bg-green-500";
   };
 
   return (
-    <div className={cn('space-y-2', className)}>
+    <div className={cn("space-y-2", className)}>
       {showLabel && (
         <div className="flex items-center justify-between text-sm">
           <span className="font-medium">{label}</span>
@@ -40,7 +40,7 @@ export function ResourceGauge({
       )}
       <div className="h-2 overflow-hidden rounded-full bg-secondary">
         <div
-          className={cn('h-full transition-all duration-500', getColor())}
+          className={cn("h-full transition-all duration-500", getColor())}
           style={{ width: `${percentage}%` }}
         />
       </div>

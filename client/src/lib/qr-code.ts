@@ -38,7 +38,12 @@ export function generateQrDataUrl(text: string, size = 200): string {
   return canvas.toDataURL("image/png");
 }
 
-function drawMarker(ctx: CanvasRenderingContext2D, x: number, y: number, cell: number) {
+function drawMarker(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  cell: number,
+) {
   ctx.fillRect(x, y, 7 * cell, 7 * cell);
   ctx.fillStyle = "#ffffff";
   ctx.fillRect(x + cell, y + cell, 5 * cell, 5 * cell);

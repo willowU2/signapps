@@ -1,9 +1,9 @@
 //! RAID repository for storage management.
 
 use crate::models::raid::{Disk, RaidArray, RaidEvent, RaidHealth};
-use signapps_db_shared::DatabasePool;
 use chrono::Utc;
 use signapps_common::Result;
+use signapps_db_shared::DatabasePool;
 use uuid::Uuid;
 
 /// Repository for RAID operations.

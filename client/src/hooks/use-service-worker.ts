@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useEffect } from 'react';
+import { useEffect } from "react";
 
 /**
  * Registers the service worker on mount.
@@ -8,9 +8,9 @@ import { useEffect } from 'react';
  */
 export function useServiceWorker() {
   useEffect(() => {
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js').catch((err) => {
-        console.warn('[SW] registration failed:', err);
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/sw.js").catch((err) => {
+        console.warn("[SW] registration failed:", err);
       });
     }
   }, []);

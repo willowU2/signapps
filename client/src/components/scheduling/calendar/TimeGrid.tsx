@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * TimeGrid Component
@@ -8,7 +8,7 @@
  * Supports day, week, roster views with TimeItem rendering.
  */
 
-import * as React from 'react';
+import * as React from "react";
 import {
   addDays,
   startOfWeek,
@@ -19,14 +19,18 @@ import {
   setHours,
   setMinutes,
   parseISO,
-} from 'date-fns';
-import { cn } from '@/lib/utils';
-import { useCalendarStore } from '@/stores/scheduling/calendar-store';
-import { usePreferencesStore } from '@/stores/scheduling/preferences-store';
-import { TimeGutter, TimeGutterCompact } from './TimeGutter';
-import { DayColumn, DayHeader } from './DayColumn';
-import { AllDayItemBlock } from './TimeItemBlock';
-import type { TimeItem, ViewType, PositionedItem } from '@/lib/scheduling/types';
+} from "date-fns";
+import { cn } from "@/lib/utils";
+import { useCalendarStore } from "@/stores/scheduling/calendar-store";
+import { usePreferencesStore } from "@/stores/scheduling/preferences-store";
+import { TimeGutter, TimeGutterCompact } from "./TimeGutter";
+import { DayColumn, DayHeader } from "./DayColumn";
+import { AllDayItemBlock } from "./TimeItemBlock";
+import type {
+  TimeItem,
+  ViewType,
+  PositionedItem,
+} from "@/lib/scheduling/types";
 
 // ============================================================================
 // Types
@@ -47,14 +51,18 @@ interface TimeGridProps {
 // Helpers
 // ============================================================================
 
-function getDaysForView(date: Date, view: ViewType, weekStartsOn: 0 | 1): Date[] {
+function getDaysForView(
+  date: Date,
+  view: ViewType,
+  weekStartsOn: 0 | 1,
+): Date[] {
   switch (view) {
-    case 'day':
-    case 'focus':
+    case "day":
+    case "focus":
       return [date];
 
-    case 'week':
-    case 'roster':
+    case "week":
+    case "roster":
       return eachDayOfInterval({
         start: startOfWeek(date, { weekStartsOn }),
         end: endOfWeek(date, { weekStartsOn }),
@@ -67,7 +75,9 @@ function getDaysForView(date: Date, view: ViewType, weekStartsOn: 0 | 1): Date[]
 
 function getItemDate(item: TimeItem): Date | null {
   if (!item.startTime) return null;
-  return typeof item.startTime === 'string' ? parseISO(item.startTime) : item.startTime;
+  return typeof item.startTime === "string"
+    ? parseISO(item.startTime)
+    : item.startTime;
 }
 
 // ============================================================================
@@ -142,7 +152,12 @@ export function TimeGrid({
   const hourStart = useCalendarStore((state) => state.hourStart);
   const hourEnd = useCalendarStore((state) => state.hourEnd);
   const slotDuration = useCalendarStore((state) => state.slotDuration);
-  const currentIndicatorPosition = useCurrentTimeIndicator(hourStart, hourEnd, slotHeight, slotDuration);
+  const currentIndicatorPosition = useCurrentTimeIndicator(
+    hourStart,
+    hourEnd,
+    slotHeight,
+    slotDuration,
+  );
   const weekStartsOn = useCalendarStore((state) => state.weekStartsOn);
   const showWeekends = useCalendarStore((state) => state.showWeekends);
   const compactMode = useCalendarStore((state) => state.compactMode);
@@ -185,7 +200,7 @@ export function TimeGrid({
   }, [slotHeight, slotDuration, hourStart]);
 
   return (
-    <div className={cn('flex h-full flex-col', className)}>
+    <div className={cn("flex h-full flex-col", className)}>
       {/* Header Row */}
       <div className="flex shrink-0 border-b">
         {/* Gutter spacer */}
@@ -205,11 +220,7 @@ export function TimeGrid({
       </div>
 
       {/* All-Day Items Row */}
-      <AllDayRow
-        days={days}
-        items={visibleItems}
-        onItemClick={onItemClick}
-      />
+      <AllDayRow days={days} items={visibleItems} onItemClick={onItemClick} />
 
       {/* Scrollable Grid */}
       <div ref={scrollRef} className="flex flex-1 overflow-auto">
@@ -224,17 +235,19 @@ export function TimeGrid({
 
         {/* Day Columns */}
         <div className="relative flex flex-1">
-          {days.some((d) => isToday(d)) && currentIndicatorPosition !== null && currentIndicatorPosition >= 0 && (
-            <div
-              className="absolute left-0 right-0 z-20 pointer-events-none"
-              style={{ top: currentIndicatorPosition }}
-            >
-              <div className="relative flex items-center">
-                <div className="h-3 w-3 rounded-full bg-red-500 -ml-1.5" />
-                <div className="flex-1 h-0.5 bg-red-500" />
+          {days.some((d) => isToday(d)) &&
+            currentIndicatorPosition !== null &&
+            currentIndicatorPosition >= 0 && (
+              <div
+                className="absolute left-0 right-0 z-20 pointer-events-none"
+                style={{ top: currentIndicatorPosition }}
+              >
+                <div className="relative flex items-center">
+                  <div className="h-3 w-3 rounded-full bg-red-500 -ml-1.5" />
+                  <div className="flex-1 h-0.5 bg-red-500" />
+                </div>
               </div>
-            </div>
-          )}
+            )}
           {days.map((day) => (
             <DayColumn
               key={day.toISOString()}
@@ -272,7 +285,7 @@ export function useSlotClickHandler(options?: {
 
       options?.onCreate?.(start, end);
     },
-    [defaultDuration, options]
+    [defaultDuration, options],
   );
 }
 
@@ -284,7 +297,7 @@ export function useCurrentTimeIndicator(
   hourStart: number,
   hourEnd: number,
   slotHeight: number,
-  slotDuration: number
+  slotDuration: number,
 ) {
   const [position, setPosition] = React.useState<number | null>(null);
 

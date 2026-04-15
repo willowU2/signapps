@@ -47,7 +47,8 @@ export function QAKnowledgeBase() {
     {
       id: "1",
       question: "How do I reset my password?",
-      answer: "Go to Settings > Security > Password. Click Change Password and follow the prompts.",
+      answer:
+        "Go to Settings > Security > Password. Click Change Password and follow the prompts.",
       tags: ["account", "security"],
       author: "Admin",
       date: new Date(Date.now() - 86400000),
@@ -55,7 +56,8 @@ export function QAKnowledgeBase() {
     {
       id: "2",
       question: "What are the system requirements?",
-      answer: "SignApps requires a modern browser and stable internet connection. Minimum 2GB RAM recommended.",
+      answer:
+        "SignApps requires a modern browser and stable internet connection. Minimum 2GB RAM recommended.",
       tags: ["system", "requirements"],
       author: "Support Team",
       date: new Date(Date.now() - 172800000),
@@ -74,9 +76,12 @@ export function QAKnowledgeBase() {
     },
   });
 
-  const filteredQA = qa.filter((item) =>
-    item.question.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.tags.some((tag) => tag.toLowerCase().includes(searchTerm.toLowerCase()))
+  const filteredQA = qa.filter(
+    (item) =>
+      item.question.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.tags.some((tag) =>
+        tag.toLowerCase().includes(searchTerm.toLowerCase()),
+      ),
   );
 
   const onSubmit = (values: AskQuestionValues) => {
@@ -110,10 +115,7 @@ export function QAKnowledgeBase() {
             className="pl-10"
           />
         </div>
-        <Button
-          onClick={() => setShowForm(!showForm)}
-          className="gap-2"
-        >
+        <Button onClick={() => setShowForm(!showForm)} className="gap-2">
           <Plus className="w-4 h-4" />
           Ask Question
         </Button>
@@ -121,7 +123,10 @@ export function QAKnowledgeBase() {
 
       {showForm && (
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="border rounded-lg p-4 bg-blue-50 space-y-4">
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="border rounded-lg p-4 bg-blue-50 space-y-4"
+          >
             <h3 className="font-semibold text-blue-900">Ask a Question</h3>
 
             <FormField
@@ -148,7 +153,10 @@ export function QAKnowledgeBase() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Category</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select a category" />
@@ -189,7 +197,9 @@ export function QAKnowledgeBase() {
 
       <div className="space-y-2">
         {filteredQA.length === 0 ? (
-          <p className="text-center text-muted-foreground py-8">No Q&A found. Try a different search term.</p>
+          <p className="text-center text-muted-foreground py-8">
+            No Q&A found. Try a different search term.
+          </p>
         ) : (
           filteredQA.map((item) => (
             <div
@@ -201,7 +211,9 @@ export function QAKnowledgeBase() {
                 className="w-full text-left p-4 flex items-start justify-between gap-4"
               >
                 <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-base break-words">{item.question}</p>
+                  <p className="font-semibold text-base break-words">
+                    {item.question}
+                  </p>
                   <div className="flex gap-2 items-center mt-2 flex-wrap">
                     {item.tags.map((tag) => (
                       <Badge key={tag} variant="secondary" className="text-xs">

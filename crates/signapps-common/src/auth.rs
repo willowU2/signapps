@@ -194,13 +194,13 @@ impl JwtConfig {
             Ok(s) if s.len() >= 32 => {
                 tracing::info!("JWT: HS256 mode (shared secret)");
                 Self::hs256(s)
-            }
+            },
             Ok(s) => {
                 panic!(
                     "JWT_SECRET is too short ({} bytes). HS256 requires at least 32 bytes.",
                     s.len()
                 );
-            }
+            },
             Err(_) => {
                 if cfg!(debug_assertions) && std::env::var("SIGNAPPS_DEV").is_ok() {
                     tracing::error!(
@@ -215,7 +215,7 @@ impl JwtConfig {
                          In a development build, set SIGNAPPS_DEV=1 to allow an insecure default."
                     );
                 }
-            }
+            },
         }
     }
 

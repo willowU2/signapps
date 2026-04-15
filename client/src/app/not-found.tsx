@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { Home, ArrowLeft, Search } from 'lucide-react';
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Home, ArrowLeft, Search } from "lucide-react";
 
 export default function NotFound() {
   return (
@@ -38,7 +38,8 @@ export default function NotFound() {
 
         {/* Help text */}
         <p className="text-sm text-muted-foreground">
-          Si vous pensez qu'il s'agit d'une erreur, contactez votre administrateur.
+          Si vous pensez qu'il s'agit d'une erreur, contactez votre
+          administrateur.
         </p>
       </div>
     </div>

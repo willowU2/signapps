@@ -130,7 +130,7 @@ export function AiChatBar() {
   const [focused, setFocused] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [isMinimized, setIsMinimized] = useState(true);
-  
+
   // ── Drag state ──
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
@@ -150,12 +150,12 @@ export function AiChatBar() {
 
         const clampedX = Math.max(minX, Math.min(maxX, parsed.x || 0));
         const clampedY = Math.max(minY, Math.min(maxY, parsed.y || 0));
-        
+
         setPosition({ x: clampedX, y: clampedY });
       }
     } catch {}
   }, []);
-  
+
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
   const [interimText, setInterimText] = useState("");
@@ -206,56 +206,65 @@ export function AiChatBar() {
   }, [messages, expanded]);
 
   // ── Drag & Drop Handlers ──
-  const handlePointerDown = useCallback((e: React.PointerEvent) => {
-    if (!isMinimized) return;
-    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-    dragRef.current = {
-      startX: e.clientX,
-      startY: e.clientY,
-      x: position.x,
-      y: position.y,
-      moved: false,
-    };
-  }, [isMinimized, position.x, position.y]);
+  const handlePointerDown = useCallback(
+    (e: React.PointerEvent) => {
+      if (!isMinimized) return;
+      (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+      dragRef.current = {
+        startX: e.clientX,
+        startY: e.clientY,
+        x: position.x,
+        y: position.y,
+        moved: false,
+      };
+    },
+    [isMinimized, position.x, position.y],
+  );
 
-  const handlePointerMove = useCallback((e: React.PointerEvent) => {
-    if (!isMinimized || !e.currentTarget.hasPointerCapture(e.pointerId)) return;
-    
-    const dx = e.clientX - dragRef.current.startX;
-    const dy = e.clientY - dragRef.current.startY;
-    
-    if (!dragRef.current.moved && (Math.abs(dx) > 3 || Math.abs(dy) > 3)) {
-      dragRef.current.moved = true;
-      setIsDragging(true);
-    }
-    
-    if (dragRef.current.moved) {
-      setPosition({
-        x: dragRef.current.x + dx,
-        y: dragRef.current.y + dy
-      });
-    }
-  }, [isMinimized]);
+  const handlePointerMove = useCallback(
+    (e: React.PointerEvent) => {
+      if (!isMinimized || !e.currentTarget.hasPointerCapture(e.pointerId))
+        return;
 
-  const handlePointerUp = useCallback((e: React.PointerEvent) => {
-    if (!isMinimized) return;
-    (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
-    
-    if (dragRef.current.moved) {
-      setTimeout(() => setIsDragging(false), 50);
-      try {
-        localStorage.setItem("ai-chat-pos", JSON.stringify(position));
-      } catch {}
-    } else {
-      setIsDragging(false);
-    }
-  }, [isMinimized, position]);
+      const dx = e.clientX - dragRef.current.startX;
+      const dy = e.clientY - dragRef.current.startY;
+
+      if (!dragRef.current.moved && (Math.abs(dx) > 3 || Math.abs(dy) > 3)) {
+        dragRef.current.moved = true;
+        setIsDragging(true);
+      }
+
+      if (dragRef.current.moved) {
+        setPosition({
+          x: dragRef.current.x + dx,
+          y: dragRef.current.y + dy,
+        });
+      }
+    },
+    [isMinimized],
+  );
+
+  const handlePointerUp = useCallback(
+    (e: React.PointerEvent) => {
+      if (!isMinimized) return;
+      (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+
+      if (dragRef.current.moved) {
+        setTimeout(() => setIsDragging(false), 50);
+        try {
+          localStorage.setItem("ai-chat-pos", JSON.stringify(position));
+        } catch {}
+      } else {
+        setIsDragging(false);
+      }
+    },
+    [isMinimized, position],
+  );
 
   const handleBotClick = useCallback(() => {
     if (isDragging) return;
     setIsMinimized(!isMinimized);
   }, [isDragging, isMinimized]);
-
 
   // Load conversation when selected from history
   useEffect(() => {
@@ -693,9 +702,15 @@ export function AiChatBar() {
         setIsStreaming(false);
         abortControllerRef.current = null;
       }
-      // eslint-disable-next-line react-hooks/exhaustive-deps
     },
-    [value, isStreaming, attachments, conversationId, mediaGenMode, tryNavigate],
+    [
+      value,
+      isStreaming,
+      attachments,
+      conversationId,
+      mediaGenMode,
+      tryNavigate,
+    ],
   );
 
   const handleSuggestion = (suggestion: string) => {
@@ -756,15 +771,17 @@ export function AiChatBar() {
         rightSidebarOpen ? "md:pr-[24rem]" : "md:pr-16",
       )}
     >
-      <div 
+      <div
         className={cn(
           "px-4 pointer-events-auto flex flex-col items-center",
-          isMinimized ? "w-auto" : "w-full max-w-2xl"
+          isMinimized ? "w-auto" : "w-full max-w-2xl",
         )}
         style={{
-          transform: isMinimized ? `translate(${position.x}px, ${position.y}px)` : `translate(0px, 0px)`,
-          transitionDuration: isDragging ? '0ms' : '300ms',
-          transitionProperty: isDragging ? 'none' : 'transform, width',
+          transform: isMinimized
+            ? `translate(${position.x}px, ${position.y}px)`
+            : `translate(0px, 0px)`,
+          transitionDuration: isDragging ? "0ms" : "300ms",
+          transitionProperty: isDragging ? "none" : "transform, width",
         }}
       >
         {/* Suggestions (only when collapsed and focused) */}
@@ -1070,11 +1087,11 @@ export function AiChatBar() {
         )}
 
         {/* Input bar */}
-        <div 
+        <div
           className={cn(
-            "glass-panel flex items-center rounded-full p-2 shadow-2xl transition-all", 
+            "glass-panel flex items-center rounded-full p-2 shadow-2xl transition-all",
             !isMinimized ? "ai-glow w-full duration-300" : "w-14",
-            isDragging && "scale-105 shadow-[0_20px_50px_rgba(0,0,0,0.5)]"
+            isDragging && "scale-105 shadow-[0_20px_50px_rgba(0,0,0,0.5)]",
           )}
         >
           {/* Bot icon */}
@@ -1084,15 +1101,24 @@ export function AiChatBar() {
             onPointerUp={handlePointerUp}
             onPointerCancel={handlePointerUp}
             onClick={handleBotClick}
-            title={isMinimized ? "Déployer la recherche (ou glisser pour déplacer)" : "Réduire la recherche"}
+            title={
+              isMinimized
+                ? "Déployer la recherche (ou glisser pour déplacer)"
+                : "Réduire la recherche"
+            }
             className={cn(
               "flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-white shadow-lg shadow-primary/30 transition-transform active:scale-[0.98]",
               isStreaming ? "bg-ai-purple animate-pulse" : "bg-primary",
               isMinimized && "cursor-grab",
-              isDragging && "cursor-grabbing"
+              isDragging && "cursor-grabbing",
             )}
           >
-            <Bot className={cn("transition-all", isMinimized ? "h-6 w-6" : "h-5 w-5")} />
+            <Bot
+              className={cn(
+                "transition-all",
+                isMinimized ? "h-6 w-6" : "h-5 w-5",
+              )}
+            />
           </button>
 
           {!isMinimized && (

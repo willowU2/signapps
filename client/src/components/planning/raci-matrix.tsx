@@ -27,7 +27,7 @@ export default function RACIMatrix() {
       ["Testing-QA Lead", "R"],
       ["Testing-Dev Lead", "C"],
       ["Deployment-DevOps", "R"],
-    ])
+    ]),
   );
 
   const options: RACIRole[] = ["R", "A", "C", "I", ""];
@@ -75,7 +75,10 @@ export default function RACIMatrix() {
             <tr>
               <th className="border p-2 bg-muted font-bold text-left">Task</th>
               {roles.map((role) => (
-                <th key={role} className="border p-2 bg-muted font-bold text-center w-16">
+                <th
+                  key={role}
+                  className="border p-2 bg-muted font-bold text-center w-16"
+                >
                   {role}
                 </th>
               ))}

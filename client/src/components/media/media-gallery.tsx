@@ -46,9 +46,7 @@ export function MediaGallery({
   };
 
   const goToPrevious = () => {
-    setCurrentPhotoIndex(
-      (prev) => (prev - 1 + photos.length) % photos.length
-    );
+    setCurrentPhotoIndex((prev) => (prev - 1 + photos.length) % photos.length);
   };
 
   const goToNext = () => {

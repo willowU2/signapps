@@ -3,8 +3,8 @@
  * Manages user notification preferences (email, push, SMS, etc.)
  */
 
-import { useEffect, useState, useCallback } from 'react';
-import { calendarApiClient } from '@/lib/api/core';
+import { useEffect, useState, useCallback } from "react";
+import { calendarApiClient } from "@/lib/api/core";
 
 export interface NotificationPreferences {
   id: string;
@@ -31,7 +31,8 @@ export interface UseNotificationPreferencesReturn extends NotificationPreference
  * Hook to manage notification preferences
  */
 export function useNotificationPreferences(): UseNotificationPreferencesReturn {
-  const [preferences, setPreferences] = useState<NotificationPreferences | null>(null);
+  const [preferences, setPreferences] =
+    useState<NotificationPreferences | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -43,16 +44,16 @@ export function useNotificationPreferences(): UseNotificationPreferencesReturn {
         setError(null);
 
         const response = await calendarApiClient.get(
-          '/notifications/preferences'
+          "/notifications/preferences",
         );
 
         setPreferences(response.data);
       } catch {
-        setError('Failed to load notification preferences');
+        setError("Failed to load notification preferences");
         // Set defaults if fetch fails
         setPreferences({
-          id: 'default',
-          user_id: 'unknown',
+          id: "default",
+          user_id: "unknown",
           email_enabled: true,
           push_enabled: true,
           sms_enabled: false,
@@ -81,8 +82,8 @@ export function useNotificationPreferences(): UseNotificationPreferencesReturn {
         const updatedPrefs = { ...preferences, ...updates };
 
         const response = await calendarApiClient.put(
-          '/notifications/preferences',
-          updatedPrefs
+          "/notifications/preferences",
+          updatedPrefs,
         );
 
         setPreferences(response.data);
@@ -91,7 +92,7 @@ export function useNotificationPreferences(): UseNotificationPreferencesReturn {
         throw err;
       }
     },
-    [preferences]
+    [preferences],
   );
 
   // Reset to defaults
@@ -111,8 +112,8 @@ export function useNotificationPreferences(): UseNotificationPreferencesReturn {
 
   return {
     ...(preferences || {
-      id: 'default',
-      user_id: 'unknown',
+      id: "default",
+      user_id: "unknown",
       email_enabled: true,
       push_enabled: true,
       sms_enabled: false,

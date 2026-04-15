@@ -9,9 +9,15 @@ interface SpeechRecognition extends EventTarget {
   onaudioend: ((this: SpeechRecognition, ev: Event) => unknown) | null;
   onaudiostart: ((this: SpeechRecognition, ev: Event) => unknown) | null;
   onend: ((this: SpeechRecognition, ev: Event) => unknown) | null;
-  onerror: ((this: SpeechRecognition, ev: SpeechRecognitionErrorEvent) => unknown) | null;
-  onnomatch: ((this: SpeechRecognition, ev: SpeechRecognitionEvent) => unknown) | null;
-  onresult: ((this: SpeechRecognition, ev: SpeechRecognitionEvent) => unknown) | null;
+  onerror:
+    | ((this: SpeechRecognition, ev: SpeechRecognitionErrorEvent) => unknown)
+    | null;
+  onnomatch:
+    | ((this: SpeechRecognition, ev: SpeechRecognitionEvent) => unknown)
+    | null;
+  onresult:
+    | ((this: SpeechRecognition, ev: SpeechRecognitionEvent) => unknown)
+    | null;
   onsoundend: ((this: SpeechRecognition, ev: Event) => unknown) | null;
   onsoundstart: ((this: SpeechRecognition, ev: Event) => unknown) | null;
   onspeechend: ((this: SpeechRecognition, ev: Event) => unknown) | null;
@@ -24,20 +30,23 @@ interface SpeechRecognition extends EventTarget {
 
 declare var SpeechRecognition: {
   prototype: SpeechRecognition;
-  new(): SpeechRecognition;
+  new (): SpeechRecognition;
 };
 
 declare global {
   interface Window {
     __signAppsAddConflict?: (
-      type: 'merge' | 'auto-resolved' | 'overwritten',
+      type: "merge" | "auto-resolved" | "overwritten",
       affectedBy: string[],
-      description: string
+      description: string,
     ) => void;
     SpeechRecognition?: typeof SpeechRecognition;
     webkitSpeechRecognition?: typeof SpeechRecognition;
     katex?: {
-      renderToString: (tex: string, options?: { displayMode?: boolean; throwOnError?: boolean }) => string;
+      renderToString: (
+        tex: string,
+        options?: { displayMode?: boolean; throwOnError?: boolean },
+      ) => string;
     };
   }
   var scheduler: { yield: () => Promise<void> } | undefined;

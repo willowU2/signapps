@@ -80,8 +80,7 @@ export function GuestAccess() {
   };
 
   const activeLinks = links.filter(
-    (l) =>
-      new Date(l.expiresAt) > new Date()
+    (l) => new Date(l.expiresAt) > new Date(),
   ).length;
 
   return (
@@ -89,7 +88,9 @@ export function GuestAccess() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-foreground">Guest Access</h2>
-          <p className="text-muted-foreground">Generate temporary guest access links</p>
+          <p className="text-muted-foreground">
+            Generate temporary guest access links
+          </p>
         </div>
       </div>
 
@@ -99,7 +100,9 @@ export function GuestAccess() {
       </div>
 
       <div className="border rounded-lg p-6 bg-card">
-        <h3 className="font-semibold text-foreground mb-4">Generate New Link</h3>
+        <h3 className="font-semibold text-foreground mb-4">
+          Generate New Link
+        </h3>
 
         <div className="space-y-4">
           <div>

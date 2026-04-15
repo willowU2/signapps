@@ -1,17 +1,17 @@
-'use client';
+"use client";
 
-import { useEffect, useState, useCallback } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { useEffect, useState, useCallback } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { RefreshCw, Brain, DollarSign, Zap, Hash } from 'lucide-react';
+} from "@/components/ui/select";
+import { RefreshCw, Brain, DollarSign, Zap, Hash } from "lucide-react";
 import {
   LineChart,
   Line,
@@ -23,9 +23,9 @@ import {
   Legend,
   BarChart,
   Bar,
-} from 'recharts';
-import { aiApi } from '@/lib/api/ai';
-import { getClient, ServiceName } from '@/lib/api/factory';
+} from "recharts";
+import { aiApi } from "@/lib/api/ai";
+import { getClient, ServiceName } from "@/lib/api/factory";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -45,7 +45,7 @@ interface ModelBreakdown {
   cost: number;
 }
 
-type Period = '7d' | '30d' | '90d';
+type Period = "7d" | "30d" | "90d";
 
 // ---------------------------------------------------------------------------
 // Cost estimation (local models = ~free, API = token-based)
@@ -64,7 +64,7 @@ export function AiCostTracker() {
   const [totalTokens, setTotalTokens] = useState(0);
   const [totalCost, setTotalCost] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [period, setPeriod] = useState<Period>('30d');
+  const [period, setPeriod] = useState<Period>("30d");
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -74,7 +74,7 @@ export function AiCostTracker() {
       // Try to get inference logs/stats from the AI service
       let inferenceData: any[] = [];
       try {
-        const res = await client.get('/ai/inference/logs', {
+        const res = await client.get("/ai/inference/logs", {
           params: { limit: 5000, period },
         });
         inferenceData = res.data?.logs || res.data || [];
@@ -84,15 +84,26 @@ export function AiCostTracker() {
           const statsRes = await aiApi.stats();
           const stats = statsRes.data;
           // Build synthetic data from available stats
-          const days = period === '7d' ? 7 : period === '30d' ? 30 : 90;
+          const days = period === "7d" ? 7 : period === "30d" ? 30 : 90;
           for (let i = days - 1; i >= 0; i--) {
             const d = new Date();
             d.setDate(d.getDate() - i);
             inferenceData.push({
               date: d.toISOString().slice(0, 10),
-              calls: Math.max(0, Math.floor((stats.chunks_count || 0) / days + (Math.random() - 0.5) * 5)),
-              tokens: Math.max(0, Math.floor(((stats.chunks_count || 0) * 512) / days + (Math.random() - 0.5) * 1000)),
-              model: 'local',
+              calls: Math.max(
+                0,
+                Math.floor(
+                  (stats.chunks_count || 0) / days + (Math.random() - 0.5) * 5,
+                ),
+              ),
+              tokens: Math.max(
+                0,
+                Math.floor(
+                  ((stats.chunks_count || 0) * 512) / days +
+                    (Math.random() - 0.5) * 1000,
+                ),
+              ),
+              model: "local",
             });
           }
         } catch {
@@ -105,12 +116,12 @@ export function AiCostTracker() {
       const modelMap = new Map<string, { calls: number; tokens: number }>();
 
       for (const entry of inferenceData) {
-        const dateKey = (entry.date || entry.created_at || '').slice(0, 10);
+        const dateKey = (entry.date || entry.created_at || "").slice(0, 10);
         if (!dateKey) continue;
 
         const calls = entry.calls || 1;
         const tokens = entry.tokens || entry.tokens_used || 0;
-        const model = entry.model || 'unknown';
+        const model = entry.model || "unknown";
 
         const existing = dateMap.get(dateKey) || { calls: 0, tokens: 0 };
         existing.calls += calls;
@@ -125,7 +136,10 @@ export function AiCostTracker() {
 
       const dateBuckets: CostBucket[] = Array.from(dateMap.entries())
         .map(([date, v]) => ({
-          date: new Date(date).toLocaleDateString('fr-FR', { month: 'short', day: 'numeric' }),
+          date: new Date(date).toLocaleDateString("fr-FR", {
+            month: "short",
+            day: "numeric",
+          }),
           calls: v.calls,
           tokens: v.tokens,
           cost: parseFloat(((v.tokens / 1000) * COST_PER_1K_TOKENS).toFixed(4)),
@@ -177,8 +191,13 @@ export function AiCostTracker() {
               <SelectItem value="90d">90 days</SelectItem>
             </SelectContent>
           </Select>
-          <Button variant="outline" size="sm" onClick={fetchData} disabled={loading}>
-            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={fetchData}
+            disabled={loading}
+          >
+            <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
           </Button>
         </div>
       </div>
@@ -207,10 +226,14 @@ export function AiCostTracker() {
           <CardContent className="pt-4">
             <div className="flex items-center gap-2 mb-2">
               <DollarSign className="h-4 w-4 text-yellow-500" />
-              <span className="text-xs text-muted-foreground">Estimated Cost</span>
+              <span className="text-xs text-muted-foreground">
+                Estimated Cost
+              </span>
             </div>
             <p className="text-2xl font-bold">${totalCost.toFixed(4)}</p>
-            <p className="text-[10px] text-muted-foreground">Local inference only</p>
+            <p className="text-[10px] text-muted-foreground">
+              Local inference only
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -223,7 +246,7 @@ export function AiCostTracker() {
         <CardContent>
           {buckets.length === 0 ? (
             <div className="flex items-center justify-center h-48 text-muted-foreground text-sm">
-              {loading ? 'Chargement...' : 'No inference data available'}
+              {loading ? "Chargement..." : "No inference data available"}
             </div>
           ) : (
             <ResponsiveContainer width="100%" height={300}>
@@ -231,11 +254,31 @@ export function AiCostTracker() {
                 <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                 <XAxis dataKey="date" tick={{ fontSize: 10 }} />
                 <YAxis yAxisId="left" tick={{ fontSize: 10 }} />
-                <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 10 }} />
+                <YAxis
+                  yAxisId="right"
+                  orientation="right"
+                  tick={{ fontSize: 10 }}
+                />
                 <Tooltip />
                 <Legend />
-                <Line yAxisId="left" type="monotone" dataKey="tokens" stroke="#3b82f6" strokeWidth={2} dot={false} name="Tokens" />
-                <Line yAxisId="right" type="monotone" dataKey="calls" stroke="#22c55e" strokeWidth={2} dot={false} name="Calls" />
+                <Line
+                  yAxisId="left"
+                  type="monotone"
+                  dataKey="tokens"
+                  stroke="#3b82f6"
+                  strokeWidth={2}
+                  dot={false}
+                  name="Tokens"
+                />
+                <Line
+                  yAxisId="right"
+                  type="monotone"
+                  dataKey="calls"
+                  stroke="#22c55e"
+                  strokeWidth={2}
+                  dot={false}
+                  name="Calls"
+                />
               </LineChart>
             </ResponsiveContainer>
           )}
@@ -255,7 +298,12 @@ export function AiCostTracker() {
                 <XAxis dataKey="model" tick={{ fontSize: 10 }} />
                 <YAxis tick={{ fontSize: 10 }} />
                 <Tooltip />
-                <Bar dataKey="tokens" fill="#a855f7" name="Tokens" radius={[4, 4, 0, 0]} />
+                <Bar
+                  dataKey="tokens"
+                  fill="#a855f7"
+                  name="Tokens"
+                  radius={[4, 4, 0, 0]}
+                />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>

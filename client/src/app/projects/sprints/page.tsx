@@ -1,12 +1,12 @@
-"use client"
+"use client";
 
-import { AppLayout } from "@/components/layout/app-layout"
-import { SprintBoard } from "@/components/projects/sprint-board"
-import { usePageTitle } from "@/hooks/use-page-title"
-import { Zap } from "lucide-react"
+import { AppLayout } from "@/components/layout/app-layout";
+import { SprintBoard } from "@/components/projects/sprint-board";
+import { usePageTitle } from "@/hooks/use-page-title";
+import { Zap } from "lucide-react";
 
 export default function SprintsPage() {
-  usePageTitle("Sprints — Projets")
+  usePageTitle("Sprints — Projets");
 
   return (
     <AppLayout>
@@ -26,5 +26,5 @@ export default function SprintsPage() {
         <SprintBoard />
       </div>
     </AppLayout>
-  )
+  );
 }

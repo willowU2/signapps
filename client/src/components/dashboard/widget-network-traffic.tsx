@@ -1,15 +1,15 @@
-'use client';
+"use client";
 
-import { Card, CardContent } from '@/components/ui/card';
-import { ArrowUpRight, ArrowDownRight } from 'lucide-react';
-import { useDashboardData } from '@/hooks/use-dashboard';
+import { Card, CardContent } from "@/components/ui/card";
+import { ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { useDashboardData } from "@/hooks/use-dashboard";
 
 function formatBytes(bytes: number) {
-  if (bytes === 0) return '0 B';
+  if (bytes === 0) return "0 B";
   const k = 1024;
-  const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+  const sizes = ["B", "KB", "MB", "GB", "TB"];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
 }
 
 export function WidgetNetworkTraffic() {
@@ -24,7 +24,9 @@ export function WidgetNetworkTraffic() {
           </div>
           <div>
             <p className="text-sm text-muted-foreground">Outbound Traffic</p>
-            <p className="text-2xl font-bold">{formatBytes(dashboardData?.networkTx || 0)}</p>
+            <p className="text-2xl font-bold">
+              {formatBytes(dashboardData?.networkTx || 0)}
+            </p>
             <p className="text-xs text-muted-foreground">Since boot</p>
           </div>
         </CardContent>
@@ -36,7 +38,9 @@ export function WidgetNetworkTraffic() {
           </div>
           <div>
             <p className="text-sm text-muted-foreground">Inbound Traffic</p>
-            <p className="text-2xl font-bold">{formatBytes(dashboardData?.networkRx || 0)}</p>
+            <p className="text-2xl font-bold">
+              {formatBytes(dashboardData?.networkRx || 0)}
+            </p>
             <p className="text-xs text-muted-foreground">Since boot</p>
           </div>
         </CardContent>

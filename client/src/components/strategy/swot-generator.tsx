@@ -117,7 +117,10 @@ Respond ONLY with a valid JSON object (no markdown, no explanation) in this exac
 }
 Each array should have 3-5 concise items.`;
 
-      const response = await aiApi.chat(prompt, { enableTools: false, includesSources: false });
+      const response = await aiApi.chat(prompt, {
+        enableTools: false,
+        includesSources: false,
+      });
       const raw = response.data?.answer ?? "";
 
       // Extract JSON from response (strip any surrounding markdown if present)
@@ -131,7 +134,10 @@ Each array should have 3-5 concise items.`;
       };
 
       const toItems = (arr: string[] | undefined, prefix: string): SWOTItem[] =>
-        (arr ?? []).map((text, i) => ({ id: `${prefix}${Date.now()}${i}`, text }));
+        (arr ?? []).map((text, i) => ({
+          id: `${prefix}${Date.now()}${i}`,
+          text,
+        }));
 
       setSWOTData({
         strengths: toItems(parsed.strengths, "s"),
@@ -176,7 +182,9 @@ Each array should have 3-5 concise items.`;
           onChange={(e) => setAiContext(e.target.value)}
           placeholder="Describe your company / product for AI suggestions..."
           className="text-sm h-8"
-          onKeyDown={(e) => { if (e.key === "Enter") handleAISuggestions(); }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") handleAISuggestions();
+          }}
         />
       </div>
 
@@ -195,7 +203,9 @@ Each array should have 3-5 concise items.`;
               <div className="flex items-center gap-2">
                 <Icon className={cn("h-4 w-4", quadrant.textColor)} />
                 <div>
-                  <h3 className={cn("font-semibold text-sm", quadrant.textColor)}>
+                  <h3
+                    className={cn("font-semibold text-sm", quadrant.textColor)}
+                  >
                     {quadrant.label}
                   </h3>
                   <p className="text-xs text-muted-foreground">
@@ -214,9 +224,7 @@ Each array should have 3-5 concise items.`;
                     >
                       <span className="flex-1">{item.text}</span>
                       <button
-                        onClick={() =>
-                          handleRemoveItem(quadrant.key, item.id)
-                        }
+                        onClick={() => handleRemoveItem(quadrant.key, item.id)}
                         className="text-muted-foreground hover:text-destructive transition-colors"
                       >
                         <X className="h-3 w-3" />
@@ -260,7 +268,9 @@ Each array should have 3-5 concise items.`;
       {/* Summary */}
       <div className="pt-2 border-t border-border/50 text-xs text-muted-foreground">
         <p>
-          Total: {Object.values(swotData).reduce((sum, arr) => sum + arr.length, 0)} éléments
+          Total:{" "}
+          {Object.values(swotData).reduce((sum, arr) => sum + arr.length, 0)}{" "}
+          éléments
         </p>
       </div>
     </div>

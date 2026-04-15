@@ -5,8 +5,8 @@
  */
 
 // Components
-export { MetricsDashboard } from './metrics-dashboard';
-export { HealthStatusWidget } from './health-status-widget';
+export { MetricsDashboard } from "./metrics-dashboard";
+export { HealthStatusWidget } from "./health-status-widget";
 
 // Types
 export type {
@@ -28,7 +28,7 @@ export type {
   Granularity,
   EventSeverity,
   EventType,
-} from '@/lib/office/monitoring/types';
+} from "@/lib/office/monitoring/types";
 
 // Constants
 export {
@@ -39,10 +39,10 @@ export {
   HEALTH_STATUS_COLORS,
   TIME_RANGE_LABELS,
   METRIC_CATEGORY_LABELS,
-} from '@/lib/office/monitoring/types';
+} from "@/lib/office/monitoring/types";
 
 // API
-export { monitoringApi } from '@/lib/office/monitoring/api';
+export { monitoringApi } from "@/lib/office/monitoring/api";
 
 // Store
-export { useMonitoringStore } from '@/stores/monitoring-store';
+export { useMonitoringStore } from "@/stores/monitoring-store";

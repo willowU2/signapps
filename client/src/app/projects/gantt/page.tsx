@@ -1,12 +1,12 @@
-"use client"
+"use client";
 
-import { AppLayout } from "@/components/layout/app-layout"
-import { GanttChart } from "@/components/projects/gantt-chart"
-import { usePageTitle } from "@/hooks/use-page-title"
-import { BarChart2 } from "lucide-react"
+import { AppLayout } from "@/components/layout/app-layout";
+import { GanttChart } from "@/components/projects/gantt-chart";
+import { usePageTitle } from "@/hooks/use-page-title";
+import { BarChart2 } from "lucide-react";
 
 export default function GanttPage() {
-  usePageTitle("Gantt — Projets")
+  usePageTitle("Gantt — Projets");
 
   return (
     <AppLayout>
@@ -28,5 +28,5 @@ export default function GanttPage() {
         </div>
       </div>
     </AppLayout>
-  )
+  );
 }

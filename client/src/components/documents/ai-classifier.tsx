@@ -31,14 +31,23 @@ export interface AIClassifierProps {
 function ConfidenceBar({ confidence }: { confidence: number }) {
   const percentage = Math.round(confidence * 100);
   const color =
-    percentage >= 80 ? "bg-green-500" : percentage >= 60 ? "bg-yellow-500" : "bg-red-500";
+    percentage >= 80
+      ? "bg-green-500"
+      : percentage >= 60
+        ? "bg-yellow-500"
+        : "bg-red-500";
 
   return (
     <div className="flex items-center gap-2">
       <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
-        <div className={`h-full ${color} transition-all`} style={{ width: `${percentage}%` }} />
+        <div
+          className={`h-full ${color} transition-all`}
+          style={{ width: `${percentage}%` }}
+        />
       </div>
-      <span className="text-xs font-semibold text-muted-foreground w-10 text-right">{percentage}%</span>
+      <span className="text-xs font-semibold text-muted-foreground w-10 text-right">
+        {percentage}%
+      </span>
     </div>
   );
 }
@@ -95,8 +104,8 @@ export function AIClassifier({
         prev.map((f) =>
           f.fileId === fileId
             ? { ...f, accepted: true, selectedCategoryId: categoryId }
-            : f
-        )
+            : f,
+        ),
       );
 
       toast.success("Classification acceptée");
@@ -121,8 +130,8 @@ export function AIClassifier({
         prev.map((f) =>
           f.fileId === fileId
             ? { ...f, accepted: false, selectedCategoryId: undefined }
-            : f
-        )
+            : f,
+        ),
       );
 
       toast.success("Classification rejetée");
@@ -145,7 +154,9 @@ export function AIClassifier({
     <Card className="p-6 space-y-4">
       <div className="flex justify-between items-start">
         <div>
-          <h3 className="text-lg font-semibold">Classification IA par catégorie</h3>
+          <h3 className="text-lg font-semibold">
+            Classification IA par catégorie
+          </h3>
           <p className="text-sm text-muted-foreground">
             {acceptedCount} sur {totalFiles} fichiers acceptés
           </p>
@@ -209,8 +220,8 @@ export function AIClassifier({
                         idx === 0
                           ? "bg-blue-600"
                           : file.selectedCategoryId === category.id
-                          ? "border-blue-600 text-blue-600"
-                          : ""
+                            ? "border-blue-600 text-blue-600"
+                            : ""
                       }
                     >
                       {category.name}
@@ -228,7 +239,7 @@ export function AIClassifier({
                   onClick={() =>
                     handleAcceptCategory(
                       file.fileId,
-                      file.suggestedCategories[0]?.id
+                      file.suggestedCategories[0]?.id,
                     )
                   }
                   disabled={processingFileId === file.fileId}

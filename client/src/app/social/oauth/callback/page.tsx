@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 
 /**
  * OAuth callback landing page.
@@ -14,20 +14,22 @@ import { useSearchParams } from 'next/navigation';
  */
 export default function OAuthCallbackPage() {
   const searchParams = useSearchParams();
-  const [status, setStatus] = useState<'processing' | 'success' | 'error'>('processing');
+  const [status, setStatus] = useState<"processing" | "success" | "error">(
+    "processing",
+  );
 
   useEffect(() => {
-    const success = searchParams.get('oauth_success') === 'true';
-    const platform = searchParams.get('platform') ?? '';
-    const accountId = searchParams.get('account_id') ?? '';
-    const error = searchParams.get('oauth_error');
+    const success = searchParams.get("oauth_success") === "true";
+    const platform = searchParams.get("platform") ?? "";
+    const accountId = searchParams.get("account_id") ?? "";
+    const error = searchParams.get("oauth_error");
 
     if (success) {
-      setStatus('success');
+      setStatus("success");
       if (window.opener) {
         // Popup flow: notify parent and close
         window.opener.postMessage(
-          { type: 'oauth-success', platform, accountId },
+          { type: "oauth-success", platform, accountId },
           window.location.origin,
         );
         window.close();
@@ -36,11 +38,11 @@ export default function OAuthCallbackPage() {
         window.location.href = `/social/accounts?connected=true&platform=${encodeURIComponent(platform)}`;
       }
     } else {
-      setStatus('error');
-      const desc = error ?? 'unknown_error';
+      setStatus("error");
+      const desc = error ?? "unknown_error";
       if (window.opener) {
         window.opener.postMessage(
-          { type: 'oauth-error', platform, error: desc },
+          { type: "oauth-error", platform, error: desc },
           window.location.origin,
         );
         window.close();
@@ -53,17 +55,21 @@ export default function OAuthCallbackPage() {
   return (
     <div className="flex min-h-screen items-center justify-center">
       <div className="text-center space-y-3">
-        {status === 'processing' && (
+        {status === "processing" && (
           <>
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto" />
             <p className="text-muted-foreground text-sm">Connecting account…</p>
           </>
         )}
-        {status === 'success' && (
-          <p className="text-green-600 font-medium">Account connected! Closing…</p>
+        {status === "success" && (
+          <p className="text-green-600 font-medium">
+            Account connected! Closing…
+          </p>
         )}
-        {status === 'error' && (
-          <p className="text-destructive font-medium">Connection failed. Redirecting…</p>
+        {status === "error" && (
+          <p className="text-destructive font-medium">
+            Connection failed. Redirecting…
+          </p>
         )}
       </div>
     </div>

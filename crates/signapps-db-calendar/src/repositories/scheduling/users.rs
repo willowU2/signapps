@@ -1,8 +1,8 @@
 //! TimeItemUserRepository — user participant operations on time items.
 
 use crate::models::{AddTimeItemUser, TimeItemUser};
-use signapps_db_shared::DatabasePool;
 use signapps_common::Result;
+use signapps_db_shared::DatabasePool;
 use uuid::Uuid;
 
 /// Repository for managing user participants on time items.

@@ -1,9 +1,9 @@
 "use client";
 
-import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
-import { useShallow } from 'zustand/react/shallow';
-import type { Mail } from '@/lib/data/mail';
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
+import { useShallow } from "zustand/react/shallow";
+import type { Mail } from "@/lib/data/mail";
 
 // ============================================================================
 // Store Interface
@@ -14,7 +14,7 @@ interface MailState {
   mailList: Mail[];
 
   // Selection
-  selectedId: Mail['id'] | null;
+  selectedId: Mail["id"] | null;
 
   // UI State
   composeAiOpen: boolean;
@@ -28,7 +28,7 @@ interface MailState {
   removeMail: (id: string) => void;
 
   // Selection Actions
-  setSelectedId: (id: Mail['id'] | null) => void;
+  setSelectedId: (id: Mail["id"] | null) => void;
   clearSelection: () => void;
 
   // UI Actions
@@ -68,7 +68,7 @@ export const useMailStore = create<MailState>()(
       updateMail: (id, updates) =>
         set((state) => ({
           mailList: state.mailList.map((mail) =>
-            mail.id === id ? { ...mail, ...updates } : mail
+            mail.id === id ? { ...mail, ...updates } : mail,
           ),
         })),
 
@@ -90,35 +90,42 @@ export const useMailStore = create<MailState>()(
       // ========================================
 
       setComposeAiOpen: (open) => set({ composeAiOpen: open }),
-      toggleComposeAi: () => set((state) => ({ composeAiOpen: !state.composeAiOpen })),
+      toggleComposeAi: () =>
+        set((state) => ({ composeAiOpen: !state.composeAiOpen })),
 
       setComposeRichOpen: (open) => set({ composeRichOpen: open }),
-      toggleComposeRich: () => set((state) => ({ composeRichOpen: !state.composeRichOpen })),
+      toggleComposeRich: () =>
+        set((state) => ({ composeRichOpen: !state.composeRichOpen })),
 
       setLabelsExpanded: (expanded) => set({ labelsExpanded: expanded }),
-      toggleLabelsExpanded: () => set((state) => ({ labelsExpanded: !state.labelsExpanded })),
+      toggleLabelsExpanded: () =>
+        set((state) => ({ labelsExpanded: !state.labelsExpanded })),
     }),
     {
-      name: 'mail-storage',
+      name: "mail-storage",
       partialize: (state) => ({
         labelsExpanded: state.labelsExpanded,
       }),
-    }
-  )
+    },
+  ),
 );
 
 // ============================================================================
 // Selectors
 // ============================================================================
 
-export const selectMailsByFolder = (state: MailState, folder: Mail['folder']): Mail[] =>
-  state.mailList.filter((mail) => mail.folder === folder);
+export const selectMailsByFolder = (
+  state: MailState,
+  folder: Mail["folder"],
+): Mail[] => state.mailList.filter((mail) => mail.folder === folder);
 
 export const selectUnreadMails = (state: MailState): Mail[] =>
   state.mailList.filter((mail) => !mail.read);
 
-export const selectMailById = (state: MailState, id: string): Mail | undefined =>
-  state.mailList.find((mail) => mail.id === id);
+export const selectMailById = (
+  state: MailState,
+  id: string,
+): Mail | undefined => state.mailList.find((mail) => mail.id === id);
 
 // ============================================================================
 // Granular Selector Hooks (optimized for minimal re-renders)
@@ -126,11 +133,14 @@ export const selectMailById = (state: MailState, id: string): Mail | undefined =
 
 export const useMailList = () => useMailStore((state) => state.mailList);
 
-export const useSelectedMailId = () => useMailStore((state) => state.selectedId);
+export const useSelectedMailId = () =>
+  useMailStore((state) => state.selectedId);
 
 export const useSelectedMail = () =>
   useMailStore((state) =>
-    state.selectedId ? state.mailList.find((m) => m.id === state.selectedId) ?? null : null
+    state.selectedId
+      ? (state.mailList.find((m) => m.id === state.selectedId) ?? null)
+      : null,
   );
 
 export const useMailUIState = () =>
@@ -139,7 +149,7 @@ export const useMailUIState = () =>
       composeAiOpen: state.composeAiOpen,
       composeRichOpen: state.composeRichOpen,
       labelsExpanded: state.labelsExpanded,
-    }))
+    })),
   );
 
 export const useMailUIActions = () =>
@@ -151,7 +161,7 @@ export const useMailUIActions = () =>
       toggleComposeRich: state.toggleComposeRich,
       setLabelsExpanded: state.setLabelsExpanded,
       toggleLabelsExpanded: state.toggleLabelsExpanded,
-    }))
+    })),
   );
 
 export const useMailSelectionActions = () =>
@@ -159,7 +169,7 @@ export const useMailSelectionActions = () =>
     useShallow((state) => ({
       setSelectedId: state.setSelectedId,
       clearSelection: state.clearSelection,
-    }))
+    })),
   );
 
 export const useMailDataActions = () =>
@@ -169,5 +179,5 @@ export const useMailDataActions = () =>
       addMail: state.addMail,
       updateMail: state.updateMail,
       removeMail: state.removeMail,
-    }))
+    })),
   );

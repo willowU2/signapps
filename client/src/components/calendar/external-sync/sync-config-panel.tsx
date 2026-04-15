@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { SpinnerInfinity } from 'spinners-react';
+import { SpinnerInfinity } from "spinners-react";
 
 /**
  * SyncConfigPanel Component
@@ -8,20 +8,26 @@ import { SpinnerInfinity } from 'spinners-react';
  * Panel for configuring sync settings between local and external calendars.
  */
 
-import React, { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
+import React, { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -30,10 +36,22 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog';
-import { RefreshCw, Settings2, Trash2, ArrowLeftRight, ArrowRight, ArrowLeft, Clock, AlertTriangle, CheckCircle2, Play, Pause } from 'lucide-react';
-import { useExternalSyncStore } from '@/stores/external-sync-store';
-import { useCalendarStore } from '@/stores/calendar-store';
+} from "@/components/ui/dialog";
+import {
+  RefreshCw,
+  Settings2,
+  Trash2,
+  ArrowLeftRight,
+  ArrowRight,
+  ArrowLeft,
+  Clock,
+  AlertTriangle,
+  CheckCircle2,
+  Play,
+  Pause,
+} from "lucide-react";
+import { useExternalSyncStore } from "@/stores/external-sync-store";
+import { useCalendarStore } from "@/stores/calendar-store";
 import type {
   SyncConfig,
   SyncDirection,
@@ -41,12 +59,12 @@ import type {
   ExternalCalendar,
   ProviderConnection,
   CreateSyncConfigRequest,
-} from '@/lib/calendar/external-sync/types';
+} from "@/lib/calendar/external-sync/types";
 import {
   SYNC_DIRECTION_LABELS,
   CONFLICT_RESOLUTION_LABELS,
   PROVIDER_LABELS,
-} from '@/lib/calendar/external-sync/types';
+} from "@/lib/calendar/external-sync/types";
 
 // ============================================================================
 // Direction Icon
@@ -54,11 +72,11 @@ import {
 
 function DirectionIcon({ direction }: { direction: SyncDirection }) {
   switch (direction) {
-    case 'import':
+    case "import":
       return <ArrowLeft className="h-4 w-4" />;
-    case 'export':
+    case "export":
       return <ArrowRight className="h-4 w-4" />;
-    case 'bidirectional':
+    case "bidirectional":
       return <ArrowLeftRight className="h-4 w-4" />;
   }
 }
@@ -89,24 +107,28 @@ function SyncConfigItem({
   isSyncing,
 }: SyncConfigItemProps) {
   const localCalendars = useCalendarStore((state) => state.calendars);
-  const localCalendar = localCalendars.find((c) => c.id === config.local_calendar_id);
+  const localCalendar = localCalendars.find(
+    (c) => c.id === config.local_calendar_id,
+  );
 
   return (
-    <Card className={!config.is_enabled ? 'opacity-60' : ''}>
+    <Card className={!config.is_enabled ? "opacity-60" : ""}>
       <CardContent className="p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             {/* Status indicator */}
             <div
               className={`w-3 h-3 rounded-full ${
-                config.is_enabled ? 'bg-green-500' : 'bg-gray-300'
+                config.is_enabled ? "bg-green-500" : "bg-gray-300"
               }`}
             />
 
             {/* Calendars */}
             <div className="flex items-center gap-2">
               <div>
-                <p className="font-medium">{localCalendar?.name || 'Calendrier local'}</p>
+                <p className="font-medium">
+                  {localCalendar?.name || "Calendrier local"}
+                </p>
                 <p className="text-xs text-muted-foreground">Local</p>
               </div>
 
@@ -114,10 +136,12 @@ function SyncConfigItem({
 
               <div>
                 <p className="font-medium">
-                  {externalCalendar?.name || 'Calendrier externe'}
+                  {externalCalendar?.name || "Calendrier externe"}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {connection ? PROVIDER_LABELS[connection.provider] : 'Externe'}
+                  {connection
+                    ? PROVIDER_LABELS[connection.provider]
+                    : "Externe"}
                 </p>
               </div>
             </div>
@@ -134,7 +158,9 @@ function SyncConfigItem({
               onClick={onSync}
               disabled={!config.is_enabled || isSyncing}
             >
-              <RefreshCw className={`h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} />
+              <RefreshCw
+                className={`h-4 w-4 ${isSyncing ? "animate-spin" : ""}`}
+              />
             </Button>
 
             <Button
@@ -205,21 +231,40 @@ function SyncConfigDialog({
 }: SyncConfigDialogProps) {
   const localCalendars = useCalendarStore((state) => state.calendars);
 
-  const [localCalendarId, setLocalCalendarId] = useState(config?.local_calendar_id || '');
-  const [connectionId, setConnectionId] = useState(config?.connection_id || '');
-  const [externalCalendarId, setExternalCalendarId] = useState(config?.external_calendar_id || '');
-  const [direction, setDirection] = useState<SyncDirection>(config?.direction || 'bidirectional');
-  const [conflictResolution, setConflictResolution] = useState<ConflictResolution>(
-    config?.conflict_resolution || 'newest_wins'
+  const [localCalendarId, setLocalCalendarId] = useState(
+    config?.local_calendar_id || "",
   );
-  const [syncPastDays, setSyncPastDays] = useState(config?.sync_past_days || 30);
-  const [syncFutureDays, setSyncFutureDays] = useState(config?.sync_future_days || 365);
-  const [syncIntervalMinutes, setSyncIntervalMinutes] = useState(config?.sync_interval_minutes || 15);
-  const [syncDeletions, setSyncDeletions] = useState(config?.sync_deletions ?? true);
-  const [syncAttendees, setSyncAttendees] = useState(config?.sync_attendees ?? true);
-  const [syncReminders, setSyncReminders] = useState(config?.sync_reminders ?? true);
+  const [connectionId, setConnectionId] = useState(config?.connection_id || "");
+  const [externalCalendarId, setExternalCalendarId] = useState(
+    config?.external_calendar_id || "",
+  );
+  const [direction, setDirection] = useState<SyncDirection>(
+    config?.direction || "bidirectional",
+  );
+  const [conflictResolution, setConflictResolution] =
+    useState<ConflictResolution>(config?.conflict_resolution || "newest_wins");
+  const [syncPastDays, setSyncPastDays] = useState(
+    config?.sync_past_days || 30,
+  );
+  const [syncFutureDays, setSyncFutureDays] = useState(
+    config?.sync_future_days || 365,
+  );
+  const [syncIntervalMinutes, setSyncIntervalMinutes] = useState(
+    config?.sync_interval_minutes || 15,
+  );
+  const [syncDeletions, setSyncDeletions] = useState(
+    config?.sync_deletions ?? true,
+  );
+  const [syncAttendees, setSyncAttendees] = useState(
+    config?.sync_attendees ?? true,
+  );
+  const [syncReminders, setSyncReminders] = useState(
+    config?.sync_reminders ?? true,
+  );
 
-  const selectedExternalCalendars = connectionId ? externalCalendars[connectionId] || [] : [];
+  const selectedExternalCalendars = connectionId
+    ? externalCalendars[connectionId] || []
+    : [];
 
   const handleSave = () => {
     onSave({
@@ -245,7 +290,9 @@ function SyncConfigDialog({
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>
-            {config ? 'Modifier la synchronisation' : 'Nouvelle synchronisation'}
+            {config
+              ? "Modifier la synchronisation"
+              : "Nouvelle synchronisation"}
           </DialogTitle>
           <DialogDescription>
             Configurez la synchronisation entre vos calendriers.
@@ -257,7 +304,10 @@ function SyncConfigDialog({
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Calendrier local</Label>
-              <Select value={localCalendarId} onValueChange={setLocalCalendarId}>
+              <Select
+                value={localCalendarId}
+                onValueChange={setLocalCalendarId}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Sélectionner..." />
                 </SelectTrigger>
@@ -278,11 +328,13 @@ function SyncConfigDialog({
                   <SelectValue placeholder="Sélectionner..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {connections.filter((c) => c.is_connected).map((conn) => (
-                    <SelectItem key={conn.id} value={conn.id}>
-                      {conn.account_email}
-                    </SelectItem>
-                  ))}
+                  {connections
+                    .filter((c) => c.is_connected)
+                    .map((conn) => (
+                      <SelectItem key={conn.id} value={conn.id}>
+                        {conn.account_email}
+                      </SelectItem>
+                    ))}
                 </SelectContent>
               </Select>
             </div>
@@ -291,7 +343,10 @@ function SyncConfigDialog({
           {connectionId && (
             <div className="space-y-2">
               <Label>Calendrier externe</Label>
-              <Select value={externalCalendarId} onValueChange={setExternalCalendarId}>
+              <Select
+                value={externalCalendarId}
+                onValueChange={setExternalCalendarId}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Sélectionner..." />
                 </SelectTrigger>
@@ -311,7 +366,10 @@ function SyncConfigDialog({
           {/* Direction */}
           <div className="space-y-2">
             <Label>Direction de synchronisation</Label>
-            <Select value={direction} onValueChange={(v) => setDirection(v as SyncDirection)}>
+            <Select
+              value={direction}
+              onValueChange={(v) => setDirection(v as SyncDirection)}
+            >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -343,17 +401,21 @@ function SyncConfigDialog({
             <Label>Résolution des conflits</Label>
             <Select
               value={conflictResolution}
-              onValueChange={(v) => setConflictResolution(v as ConflictResolution)}
+              onValueChange={(v) =>
+                setConflictResolution(v as ConflictResolution)
+              }
             >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {Object.entries(CONFLICT_RESOLUTION_LABELS).map(([value, label]) => (
-                  <SelectItem key={value} value={value}>
-                    {label}
-                  </SelectItem>
-                ))}
+                {Object.entries(CONFLICT_RESOLUTION_LABELS).map(
+                  ([value, label]) => (
+                    <SelectItem key={value} value={value}>
+                      {label}
+                    </SelectItem>
+                  ),
+                )}
               </SelectContent>
             </Select>
           </div>
@@ -366,10 +428,14 @@ function SyncConfigDialog({
               <div>
                 <Label>Synchroniser les suppressions</Label>
                 <p className="text-xs text-muted-foreground">
-                  Supprimer les événements quand ils sont supprimés de l'autre côté
+                  Supprimer les événements quand ils sont supprimés de l'autre
+                  côté
                 </p>
               </div>
-              <Switch checked={syncDeletions} onCheckedChange={setSyncDeletions} />
+              <Switch
+                checked={syncDeletions}
+                onCheckedChange={setSyncDeletions}
+              />
             </div>
 
             <div className="flex items-center justify-between">
@@ -379,7 +445,10 @@ function SyncConfigDialog({
                   Inclure la liste des participants
                 </p>
               </div>
-              <Switch checked={syncAttendees} onCheckedChange={setSyncAttendees} />
+              <Switch
+                checked={syncAttendees}
+                onCheckedChange={setSyncAttendees}
+              />
             </div>
 
             <div className="flex items-center justify-between">
@@ -389,7 +458,10 @@ function SyncConfigDialog({
                   Inclure les notifications de rappel
                 </p>
               </div>
-              <Switch checked={syncReminders} onCheckedChange={setSyncReminders} />
+              <Switch
+                checked={syncReminders}
+                onCheckedChange={setSyncReminders}
+              />
             </div>
           </div>
         </div>
@@ -399,7 +471,7 @@ function SyncConfigDialog({
             Annuler
           </Button>
           <Button onClick={handleSave} disabled={!isValid}>
-            {config ? 'Enregistrer' : 'Créer'}
+            {config ? "Enregistrer" : "Créer"}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -483,7 +555,9 @@ export function SyncConfigPanel({ className }: SyncConfigPanelProps) {
     <div className={className}>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-xl font-bold">Configurations de synchronisation</h2>
+          <h2 className="text-xl font-bold">
+            Configurations de synchronisation
+          </h2>
           <p className="text-sm text-muted-foreground mt-1">
             {syncConfigs.length} configuration(s) active(s)
           </p>
@@ -494,7 +568,9 @@ export function SyncConfigPanel({ className }: SyncConfigPanelProps) {
             onClick={() => triggerSyncAll()}
             disabled={isSyncing || syncConfigs.length === 0}
           >
-            <RefreshCw className={`h-4 w-4 mr-2 ${isSyncing ? 'animate-spin' : ''}`} />
+            <RefreshCw
+              className={`h-4 w-4 mr-2 ${isSyncing ? "animate-spin" : ""}`}
+            />
             Tout synchroniser
           </Button>
           <Button onClick={handleCreate} disabled={connectedCount === 0}>
@@ -505,17 +581,25 @@ export function SyncConfigPanel({ className }: SyncConfigPanelProps) {
 
       {isLoadingConfigs ? (
         <div className="flex items-center justify-center py-12">
-          <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-8 w-8  text-muted-foreground" />
+          <SpinnerInfinity
+            size={24}
+            secondaryColor="rgba(128,128,128,0.2)"
+            color="currentColor"
+            speed={120}
+            className="h-8 w-8  text-muted-foreground"
+          />
         </div>
       ) : syncConfigs.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center">
             <ArrowLeftRight className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <h3 className="font-medium mb-2">Aucune synchronisation configurée</h3>
+            <h3 className="font-medium mb-2">
+              Aucune synchronisation configurée
+            </h3>
             <p className="text-sm text-muted-foreground mb-4">
               {connectedCount === 0
-                ? 'Connectez d\'abord un calendrier externe ci-dessus.'
-                : 'Créez une nouvelle synchronisation pour commencer.'}
+                ? "Connectez d'abord un calendrier externe ci-dessus."
+                : "Créez une nouvelle synchronisation pour commencer."}
             </p>
             {connectedCount > 0 && (
               <Button onClick={handleCreate}>Créer une synchronisation</Button>
@@ -528,7 +612,10 @@ export function SyncConfigPanel({ className }: SyncConfigPanelProps) {
             <SyncConfigItem
               key={config.id}
               config={config}
-              externalCalendar={getExternalCalendar(config.connection_id, config.external_calendar_id)}
+              externalCalendar={getExternalCalendar(
+                config.connection_id,
+                config.external_calendar_id,
+              )}
               connection={getConnection(config.connection_id)}
               onEdit={() => handleEdit(config)}
               onDelete={() => deleteSyncConfig(config.id)}

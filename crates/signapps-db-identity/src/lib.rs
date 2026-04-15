@@ -36,11 +36,10 @@ pub use models::user_preferences::*;
 
 // Repository re-exports
 pub use repositories::{
-    AuditLogRepository, AuditRepository, AssignmentRepository, BoardRepository,
-    DelegationRepository, GroupRepository, LdapRepository, OrgGroupRepository,
-    OrgNodeRepository, OrgTreeRepository, PermissionProfileRepository, PersonRepository,
-    PolicyRepository, PolicyResolver, SiteRepository, UserPreferencesRepository,
-    UserRepository,
+    AssignmentRepository, AuditLogRepository, AuditRepository, BoardRepository,
+    DelegationRepository, GroupRepository, LdapRepository, OrgGroupRepository, OrgNodeRepository,
+    OrgTreeRepository, PermissionProfileRepository, PersonRepository, PolicyRepository,
+    PolicyResolver, SiteRepository, UserPreferencesRepository, UserRepository,
 };
 
 // Re-export DatabasePool from signapps-db-shared for convenience

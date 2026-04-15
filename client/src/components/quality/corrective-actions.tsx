@@ -35,16 +35,27 @@ export function CorrectiveActions({
   initialActions = [],
 }: CorrectiveActionsProps) {
   const [actions, setActions] = useState<ActionItem[]>(initialActions);
-  const [expandedPhase, setExpandedPhase] = useState<"Plan" | "Do" | "Check" | "Act" | null>(null);
-  const [newActionPhase, setNewActionPhase] = useState<"Plan" | "Do" | "Check" | "Act" | null>(null);
+  const [expandedPhase, setExpandedPhase] = useState<
+    "Plan" | "Do" | "Check" | "Act" | null
+  >(null);
+  const [newActionPhase, setNewActionPhase] = useState<
+    "Plan" | "Do" | "Check" | "Act" | null
+  >(null);
   const [newActionForm, setNewActionForm] = useState({
     title: "",
     owner: "",
-    deadline: new Date(Date.now() + 7 * 24 * 3600000).toISOString().split("T")[0],
+    deadline: new Date(Date.now() + 7 * 24 * 3600000)
+      .toISOString()
+      .split("T")[0],
     description: "",
   });
 
-  const phases: ("Plan" | "Do" | "Check" | "Act")[] = ["Plan", "Do", "Check", "Act"];
+  const phases: ("Plan" | "Do" | "Check" | "Act")[] = [
+    "Plan",
+    "Do",
+    "Check",
+    "Act",
+  ];
 
   const phaseDescriptions = {
     Plan: "Define the corrective action plan and strategy",
@@ -56,7 +67,8 @@ export function CorrectiveActions({
   const phaseColors = {
     Plan: "bg-blue-50 dark:bg-blue-950 border-blue-300 dark:border-blue-700",
     Do: "bg-orange-50 dark:bg-orange-950 border-orange-300 dark:border-orange-700",
-    Check: "bg-purple-50 dark:bg-purple-950 border-purple-300 dark:border-purple-700",
+    Check:
+      "bg-purple-50 dark:bg-purple-950 border-purple-300 dark:border-purple-700",
     Act: "bg-green-50 dark:bg-green-950 border-green-300 dark:border-green-700",
   };
 
@@ -79,21 +91,30 @@ export function CorrectiveActions({
     };
 
     setActions((prev) => [action, ...prev]);
-    onActionAdd?.(phase, { title: action.title, deadline: action.deadline, owner: action.owner, status: action.status, description: action.description });
+    onActionAdd?.(phase, {
+      title: action.title,
+      deadline: action.deadline,
+      owner: action.owner,
+      status: action.status,
+      description: action.description,
+    });
 
     setNewActionForm({
       title: "",
       owner: "",
-      deadline: new Date(Date.now() + 7 * 24 * 3600000).toISOString().split("T")[0],
+      deadline: new Date(Date.now() + 7 * 24 * 3600000)
+        .toISOString()
+        .split("T")[0],
       description: "",
     });
     setNewActionPhase(null);
   };
 
-  const handleUpdateAction = (id: string, status: "Pending" | "InProgress" | "Completed") => {
-    setActions((prev) =>
-      prev.map((a) => (a.id === id ? { ...a, status } : a))
-    );
+  const handleUpdateAction = (
+    id: string,
+    status: "Pending" | "InProgress" | "Completed",
+  ) => {
+    setActions((prev) => prev.map((a) => (a.id === id ? { ...a, status } : a)));
     onActionUpdate?.(id, { status });
   };
 
@@ -109,7 +130,8 @@ export function CorrectiveActions({
   };
 
   const overallCompletion = Math.round(
-    (actions.filter((a) => a.status === "Completed").length / actions.length) * 100 || 0
+    (actions.filter((a) => a.status === "Completed").length / actions.length) *
+      100 || 0,
   );
 
   return (
@@ -119,7 +141,9 @@ export function CorrectiveActions({
         <div className="space-y-3">
           <h1 className="text-3xl font-bold">PDCA Corrective Actions</h1>
           {ncrId && (
-            <p className="text-sm text-muted-foreground dark:text-gray-400">NCR ID: {ncrId}</p>
+            <p className="text-sm text-muted-foreground dark:text-gray-400">
+              NCR ID: {ncrId}
+            </p>
           )}
           <div className="flex items-center gap-4">
             <div>
@@ -154,7 +178,12 @@ export function CorrectiveActions({
                 <input
                   type="text"
                   value={newActionForm.title}
-                  onChange={(e) => setNewActionForm({ ...newActionForm, title: e.target.value })}
+                  onChange={(e) =>
+                    setNewActionForm({
+                      ...newActionForm,
+                      title: e.target.value,
+                    })
+                  }
                   placeholder="Action title..."
                   className="w-full px-3 py-2 border rounded text-sm bg-card dark:bg-gray-900 dark:border-gray-700"
                 />
@@ -162,7 +191,12 @@ export function CorrectiveActions({
                 <input
                   type="text"
                   value={newActionForm.owner}
-                  onChange={(e) => setNewActionForm({ ...newActionForm, owner: e.target.value })}
+                  onChange={(e) =>
+                    setNewActionForm({
+                      ...newActionForm,
+                      owner: e.target.value,
+                    })
+                  }
                   placeholder="Responsible person..."
                   className="w-full px-3 py-2 border rounded text-sm bg-card dark:bg-gray-900 dark:border-gray-700"
                 />
@@ -170,13 +204,23 @@ export function CorrectiveActions({
                 <input
                   type="date"
                   value={newActionForm.deadline}
-                  onChange={(e) => setNewActionForm({ ...newActionForm, deadline: e.target.value })}
+                  onChange={(e) =>
+                    setNewActionForm({
+                      ...newActionForm,
+                      deadline: e.target.value,
+                    })
+                  }
                   className="w-full px-3 py-2 border rounded text-sm bg-card dark:bg-gray-900 dark:border-gray-700"
                 />
 
                 <textarea
                   value={newActionForm.description}
-                  onChange={(e) => setNewActionForm({ ...newActionForm, description: e.target.value })}
+                  onChange={(e) =>
+                    setNewActionForm({
+                      ...newActionForm,
+                      description: e.target.value,
+                    })
+                  }
                   placeholder="Description (optional)..."
                   rows={2}
                   className="w-full px-3 py-2 border rounded text-sm bg-card dark:bg-gray-900 dark:border-gray-700"
@@ -213,7 +257,10 @@ export function CorrectiveActions({
                   return a.status === "Completed";
                 })
                 .map((action) => (
-                  <div key={action.id} className="flex items-start gap-3 p-3 border rounded bg-card dark:bg-gray-900/50">
+                  <div
+                    key={action.id}
+                    className="flex items-start gap-3 p-3 border rounded bg-card dark:bg-gray-900/50"
+                  >
                     <button
                       onClick={() => {
                         const nextStatus =
@@ -279,7 +326,10 @@ export function CorrectiveActions({
               .sort((a, b) => a.deadline.getTime() - b.deadline.getTime())
               .slice(0, 5)
               .map((action) => (
-                <div key={action.id} className="flex items-center justify-between p-3 border rounded">
+                <div
+                  key={action.id}
+                  className="flex items-center justify-between p-3 border rounded"
+                >
                   <div className="flex-1">
                     <p className="font-medium text-sm">{action.title}</p>
                     <p className="text-xs text-muted-foreground dark:text-gray-400">

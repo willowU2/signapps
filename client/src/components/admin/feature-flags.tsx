@@ -82,7 +82,7 @@ export function FeatureFlags() {
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await identityClient.get<any[]>('/admin/feature-flags');
+        const res = await identityClient.get<any[]>("/admin/feature-flags");
         const loaded = (res.data ?? []).map(mapFlagFromApi);
         setFlags(loaded);
         saveFlagsToStorage(loaded);
@@ -98,15 +98,17 @@ export function FeatureFlags() {
   const handleToggle = async (id: string) => {
     setFlags((prev) => {
       const updated = prev.map((flag) =>
-        flag.id === id ? { ...flag, enabled: !flag.enabled } : flag
+        flag.id === id ? { ...flag, enabled: !flag.enabled } : flag,
       );
       saveFlagsToStorage(updated);
       return updated;
     });
-    const flag = flags.find(f => f.id === id);
+    const flag = flags.find((f) => f.id === id);
     if (!flag) return;
     try {
-      await identityClient.put(`/admin/feature-flags/${id}`, { enabled: !flag.enabled });
+      await identityClient.put(`/admin/feature-flags/${id}`, {
+        enabled: !flag.enabled,
+      });
     } catch {
       // localStorage updated already
     }
@@ -116,13 +118,15 @@ export function FeatureFlags() {
     const boundedPercent = Math.max(0, Math.min(100, percent));
     setFlags((prev) => {
       const updated = prev.map((flag) =>
-        flag.id === id ? { ...flag, targetingPercent: boundedPercent } : flag
+        flag.id === id ? { ...flag, targetingPercent: boundedPercent } : flag,
       );
       saveFlagsToStorage(updated);
       return updated;
     });
     try {
-      await identityClient.put(`/admin/feature-flags/${id}`, { rollout_percentage: boundedPercent });
+      await identityClient.put(`/admin/feature-flags/${id}`, {
+        rollout_percentage: boundedPercent,
+      });
     } catch {
       // localStorage updated already
     }
@@ -157,7 +161,7 @@ export function FeatureFlags() {
     form.reset();
     setIsDialogOpen(false);
     try {
-      await identityClient.post('/admin/feature-flags', {
+      await identityClient.post("/admin/feature-flags", {
         name: data.name,
         description: data.description,
         enabled: false,
@@ -169,7 +173,9 @@ export function FeatureFlags() {
   };
 
   if (isLoading) {
-    return <div className="text-center text-muted-foreground">Chargement...</div>;
+    return (
+      <div className="text-center text-muted-foreground">Chargement...</div>
+    );
   }
 
   return (
@@ -237,7 +243,10 @@ export function FeatureFlags() {
                         max="100"
                         value={flag.targetingPercent}
                         onChange={(e) =>
-                          handleTargetingChange(flag.id, parseInt(e.target.value))
+                          handleTargetingChange(
+                            flag.id,
+                            parseInt(e.target.value),
+                          )
                         }
                         className="w-20 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
                       />
@@ -307,7 +316,10 @@ export function FeatureFlags() {
                 )}
               />
 
-              <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700">
+              <Button
+                type="submit"
+                className="w-full bg-blue-600 hover:bg-blue-700"
+              >
                 Create Flag
               </Button>
             </form>

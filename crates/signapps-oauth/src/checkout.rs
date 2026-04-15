@@ -56,14 +56,20 @@ pub async fn checkout_token<T: TokenTable + ?Sized>(
     if expires_at > Utc::now() + chrono::Duration::from_std(FRESHNESS_MARGIN).unwrap() {
         let access_token = decrypt_string(&enc.access_token_enc, dek.as_ref())
             .map_err(|e| OAuthError::Crypto(e.to_string()))?;
-        return Ok(TokenCheckout { access_token, expires_at });
+        return Ok(TokenCheckout {
+            access_token,
+            expires_at,
+        });
     }
 
     // Slow path: ask identity to refresh.
     let resp = reqwest::Client::new()
         .post(format!("{identity_base_url}/api/v1/oauth/internal/refresh"))
         .header("X-Internal-Token", internal_token)
-        .json(&InternalRefreshRequest { source_table: table.name().to_string(), source_id: id })
+        .json(&InternalRefreshRequest {
+            source_table: table.name().to_string(),
+            source_id: id,
+        })
         .timeout(Duration::from_secs(15))
         .send()
         .await
@@ -78,10 +84,11 @@ pub async fn checkout_token<T: TokenTable + ?Sized>(
             description: resp.text().await.ok(),
         });
     }
-    let body: InternalRefreshResponse = resp.json().await.map_err(|e| OAuthError::ProviderError {
-        error: "refresh_response_invalid".into(),
-        description: Some(e.to_string()),
-    })?;
+    let body: InternalRefreshResponse =
+        resp.json().await.map_err(|e| OAuthError::ProviderError {
+            error: "refresh_response_invalid".into(),
+            description: Some(e.to_string()),
+        })?;
     Ok(TokenCheckout {
         access_token: body.access_token,
         expires_at: body.expires_at,

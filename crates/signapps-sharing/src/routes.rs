@@ -142,10 +142,7 @@ pub fn sharing_global_routes() -> Router<SharingEngine> {
             delete(delete_template_handler),
         )
         .route("/api/v1/sharing/audit", get(list_audit_handler))
-        .route(
-            "/api/v1/sharing/bulk-grant",
-            post(bulk_grant_handler),
-        )
+        .route("/api/v1/sharing/bulk-grant", post(bulk_grant_handler))
         .route("/api/v1/shared-with-me", get(shared_with_me_handler))
 }
 

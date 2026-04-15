@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
-'use client';
+"use client";
 
-import { SpinnerInfinity } from 'spinners-react';
+import { SpinnerInfinity } from "spinners-react";
 
 /**
  * TemplateGallery
@@ -9,25 +9,53 @@ import { SpinnerInfinity } from 'spinners-react';
  * Main gallery component for browsing and selecting document templates.
  */
 
-import React, { useEffect, useCallback } from 'react';
-import { Search, Filter, Star, Clock, Grid3X3, List, FileText, Table, Presentation, Briefcase, GraduationCap, User, Megaphone, Scale, Users, Calculator, Palette, Folder, Heart, ChevronRight } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
+import React, { useEffect, useCallback } from "react";
+import {
+  Search,
+  Filter,
+  Star,
+  Clock,
+  Grid3X3,
+  List,
+  FileText,
+  Table,
+  Presentation,
+  Briefcase,
+  GraduationCap,
+  User,
+  Megaphone,
+  Scale,
+  Users,
+  Calculator,
+  Palette,
+  Folder,
+  Heart,
+  ChevronRight,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Separator } from '@/components/ui/separator';
-import { cn } from '@/lib/utils';
-import { useTemplatesStore } from '@/stores/templates-store';
-import type { TemplateMetadata, TemplateCategory, DocumentType } from '@/lib/office/templates/types';
-import { TEMPLATE_CATEGORIES, DOCUMENT_TYPE_LABELS } from '@/lib/office/templates/types';
+} from "@/components/ui/select";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
+import { useTemplatesStore } from "@/stores/templates-store";
+import type {
+  TemplateMetadata,
+  TemplateCategory,
+  DocumentType,
+} from "@/lib/office/templates/types";
+import {
+  TEMPLATE_CATEGORIES,
+  DOCUMENT_TYPE_LABELS,
+} from "@/lib/office/templates/types";
 
 // ============================================================================
 // Icons
@@ -60,7 +88,7 @@ interface TemplateCardProps {
   onSelect: (template: TemplateMetadata) => void;
   onFavorite?: (templateId: string) => void;
   isFavorite?: boolean;
-  viewMode?: 'grid' | 'list';
+  viewMode?: "grid" | "list";
 }
 
 function TemplateCard({
@@ -68,12 +96,12 @@ function TemplateCard({
   onSelect,
   onFavorite,
   isFavorite = false,
-  viewMode = 'grid',
+  viewMode = "grid",
 }: TemplateCardProps) {
   const DocIcon = DOCUMENT_TYPE_ICONS[template.documentType];
   const CategoryIcon = CATEGORY_ICONS[template.category];
 
-  if (viewMode === 'list') {
+  if (viewMode === "list") {
     return (
       <div
         className="flex items-center gap-4 p-3 rounded-lg border bg-card hover:bg-accent/50 cursor-pointer transition-colors group"
@@ -97,7 +125,10 @@ function TemplateCard({
           <div className="flex items-center gap-2">
             <h3 className="font-medium truncate">{template.name}</h3>
             {template.featured && (
-              <Badge variant="secondary" className="bg-amber-100 text-amber-800 text-xs">
+              <Badge
+                variant="secondary"
+                className="bg-amber-100 text-amber-800 text-xs"
+              >
                 <Star className="h-3 w-3 mr-1" />
                 Vedette
               </Badge>
@@ -137,8 +168,8 @@ function TemplateCard({
             >
               <Heart
                 className={cn(
-                  'h-4 w-4',
-                  isFavorite && 'fill-red-500 text-red-500'
+                  "h-4 w-4",
+                  isFavorite && "fill-red-500 text-red-500",
                 )}
               />
             </Button>
@@ -184,8 +215,8 @@ function TemplateCard({
             >
               <Heart
                 className={cn(
-                  'h-4 w-4',
-                  isFavorite && 'fill-red-500 text-red-500'
+                  "h-4 w-4",
+                  isFavorite && "fill-red-500 text-red-500",
                 )}
               />
             </Button>
@@ -267,7 +298,11 @@ function CategorySection({
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {templates.slice(0, 4).map((template) => (
-          <TemplateCard key={template.id} template={template} onSelect={onSelect} />
+          <TemplateCard
+            key={template.id}
+            template={template}
+            onSelect={onSelect}
+          />
         ))}
       </div>
     </div>
@@ -314,8 +349,8 @@ export function TemplateGallery({
     removeFromFavorites,
   } = useTemplatesStore();
 
-  const [viewMode, setViewMode] = React.useState<'grid' | 'list'>('grid');
-  const [activeTab, setActiveTab] = React.useState('browse');
+  const [viewMode, setViewMode] = React.useState<"grid" | "list">("grid");
+  const [activeTab, setActiveTab] = React.useState("browse");
 
   // Initialize
   useEffect(() => {
@@ -327,7 +362,7 @@ export function TemplateGallery({
     fetchFeaturedTemplates(documentType);
     fetchRecentTemplates();
     fetchFavoriteTemplates();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [documentType]);
 
   const handleFavorite = useCallback(
@@ -339,33 +374,33 @@ export function TemplateGallery({
         addToFavorites(templateId);
       }
     },
-    [favoriteTemplates, addToFavorites, removeFromFavorites]
+    [favoriteTemplates, addToFavorites, removeFromFavorites],
   );
 
   const isFavorite = useCallback(
     (templateId: string) => favoriteTemplates.some((t) => t.id === templateId),
-    [favoriteTemplates]
+    [favoriteTemplates],
   );
 
   return (
-    <div className={cn('flex flex-col h-full', className)}>
+    <div className={cn("flex flex-col h-full", className)}>
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b">
         <h2 className="text-lg font-semibold">Galerie de modèles</h2>
         <div className="flex items-center gap-2">
           <Button
-            variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
+            variant={viewMode === "grid" ? "secondary" : "ghost"}
             size="icon"
             className="h-8 w-8"
-            onClick={() => setViewMode('grid')}
+            onClick={() => setViewMode("grid")}
           >
             <Grid3X3 className="h-4 w-4" />
           </Button>
           <Button
-            variant={viewMode === 'list' ? 'secondary' : 'ghost'}
+            variant={viewMode === "list" ? "secondary" : "ghost"}
             size="icon"
             className="h-8 w-8"
-            onClick={() => setViewMode('list')}
+            onClick={() => setViewMode("list")}
           >
             <List className="h-4 w-4" />
           </Button>
@@ -373,7 +408,11 @@ export function TemplateGallery({
       </div>
 
       {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
+      <Tabs
+        value={activeTab}
+        onValueChange={setActiveTab}
+        className="flex-1 flex flex-col"
+      >
         <div className="border-b px-4">
           <TabsList className="h-10">
             <TabsTrigger value="browse" className="gap-2">
@@ -399,15 +438,15 @@ export function TemplateGallery({
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Rechercher un modèle..."
-                value={filters.search || ''}
+                value={filters.search || ""}
                 onChange={(e) => setSearch(e.target.value)}
                 className="pl-9 h-9"
               />
             </div>
 
             <Select
-              value={filters.category || 'all'}
-              onValueChange={(v) => setCategory(v as TemplateCategory | 'all')}
+              value={filters.category || "all"}
+              onValueChange={(v) => setCategory(v as TemplateCategory | "all")}
             >
               <SelectTrigger className="w-[180px] h-9">
                 <SelectValue placeholder="Catégorie" />
@@ -423,8 +462,8 @@ export function TemplateGallery({
             </Select>
 
             <Select
-              value={filters.documentType || 'all'}
-              onValueChange={(v) => setDocumentType(v as DocumentType | 'all')}
+              value={filters.documentType || "all"}
+              onValueChange={(v) => setDocumentType(v as DocumentType | "all")}
             >
               <SelectTrigger className="w-[160px] h-9">
                 <SelectValue placeholder="Type" />
@@ -439,7 +478,9 @@ export function TemplateGallery({
               </SelectContent>
             </Select>
 
-            {(filters.search || filters.category !== 'all' || filters.documentType !== 'all') && (
+            {(filters.search ||
+              filters.category !== "all" ||
+              filters.documentType !== "all") && (
               <Button variant="ghost" size="sm" onClick={resetFilters}>
                 Réinitialiser
               </Button>
@@ -450,34 +491,42 @@ export function TemplateGallery({
           <ScrollArea className="flex-1">
             <div className="p-4 space-y-6">
               {/* Featured Section */}
-              {featuredTemplates.length > 0 && !filters.search && filters.category === 'all' && (
-                <>
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-2">
-                      <Star className="h-5 w-5 text-amber-500" />
-                      <h3 className="font-semibold">Modèles en vedette</h3>
+              {featuredTemplates.length > 0 &&
+                !filters.search &&
+                filters.category === "all" && (
+                  <>
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2">
+                        <Star className="h-5 w-5 text-amber-500" />
+                        <h3 className="font-semibold">Modèles en vedette</h3>
+                      </div>
+                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                        {featuredTemplates.slice(0, 4).map((template) => (
+                          <TemplateCard
+                            key={template.id}
+                            template={template}
+                            onSelect={onSelectTemplate}
+                            onFavorite={handleFavorite}
+                            isFavorite={isFavorite(template.id)}
+                            viewMode={viewMode}
+                          />
+                        ))}
+                      </div>
                     </div>
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                      {featuredTemplates.slice(0, 4).map((template) => (
-                        <TemplateCard
-                          key={template.id}
-                          template={template}
-                          onSelect={onSelectTemplate}
-                          onFavorite={handleFavorite}
-                          isFavorite={isFavorite(template.id)}
-                          viewMode={viewMode}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                  <Separator />
-                </>
-              )}
+                    <Separator />
+                  </>
+                )}
 
               {/* Loading */}
               {isLoading ? (
                 <div className="flex items-center justify-center py-12">
-                  <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-8 w-8  text-muted-foreground" />
+                  <SpinnerInfinity
+                    size={24}
+                    secondaryColor="rgba(128,128,128,0.2)"
+                    color="currentColor"
+                    speed={120}
+                    className="h-8 w-8  text-muted-foreground"
+                  />
                 </div>
               ) : templates.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
@@ -494,9 +543,9 @@ export function TemplateGallery({
                   {/* Templates Grid */}
                   <div
                     className={cn(
-                      viewMode === 'grid'
-                        ? 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4'
-                        : 'space-y-2'
+                      viewMode === "grid"
+                        ? "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
+                        : "space-y-2",
                     )}
                   >
                     {templates.map((template) => (
@@ -520,7 +569,13 @@ export function TemplateGallery({
                         disabled={isLoadingMore}
                       >
                         {isLoadingMore ? (
-                          <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-4 w-4  mr-2" />
+                          <SpinnerInfinity
+                            size={24}
+                            secondaryColor="rgba(128,128,128,0.2)"
+                            color="currentColor"
+                            speed={120}
+                            className="h-4 w-4  mr-2"
+                          />
                         ) : null}
                         Charger plus
                       </Button>
@@ -544,9 +599,9 @@ export function TemplateGallery({
               ) : (
                 <div
                   className={cn(
-                    viewMode === 'grid'
-                      ? 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4'
-                      : 'space-y-2'
+                    viewMode === "grid"
+                      ? "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
+                      : "space-y-2",
                   )}
                 >
                   {recentTemplates.map((template) => (
@@ -573,14 +628,16 @@ export function TemplateGallery({
                 <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
                   <Heart className="h-12 w-12 mb-3 opacity-50" />
                   <p>Aucun modèle favori</p>
-                  <p className="text-sm">Ajoutez des modèles à vos favoris pour y accéder rapidement</p>
+                  <p className="text-sm">
+                    Ajoutez des modèles à vos favoris pour y accéder rapidement
+                  </p>
                 </div>
               ) : (
                 <div
                   className={cn(
-                    viewMode === 'grid'
-                      ? 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4'
-                      : 'space-y-2'
+                    viewMode === "grid"
+                      ? "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
+                      : "space-y-2",
                   )}
                 >
                   {favoriteTemplates.map((template) => (

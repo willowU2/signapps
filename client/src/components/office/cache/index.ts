@@ -5,8 +5,8 @@
  */
 
 // Components
-export { CacheManager } from './cache-manager';
-export { CacheStatsWidget } from './cache-stats-widget';
+export { CacheManager } from "./cache-manager";
+export { CacheStatsWidget } from "./cache-stats-widget";
 
 // Types
 export type {
@@ -20,7 +20,7 @@ export type {
   CacheSetOptions,
   CacheGetOptions,
   CacheInvalidateOptions,
-} from '@/lib/office/cache/types';
+} from "@/lib/office/cache/types";
 
 // Constants
 export {
@@ -29,10 +29,10 @@ export {
   CACHE_LOCATION_LABELS,
   CACHE_STRATEGY_LABELS,
   DEFAULT_CACHE_CONFIG,
-} from '@/lib/office/cache/types';
+} from "@/lib/office/cache/types";
 
 // API
-export { cacheApi } from '@/lib/office/cache/api';
+export { cacheApi } from "@/lib/office/cache/api";
 
 // Store
-export { useCacheStore } from '@/stores/cache-store';
+export { useCacheStore } from "@/stores/cache-store";

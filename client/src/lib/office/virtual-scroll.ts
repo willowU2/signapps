@@ -51,7 +51,9 @@ export interface VirtualScrollResult {
 // Virtual Scroll Calculator
 // ============================================================================
 
-export function calculateVirtualItems(config: VirtualScrollConfig): VirtualScrollResult {
+export function calculateVirtualItems(
+  config: VirtualScrollConfig,
+): VirtualScrollResult {
   const {
     count,
     containerHeight,
@@ -206,7 +208,7 @@ export function getVisibleRange(
   containerHeight: number,
   itemHeight: number,
   totalItems: number,
-  overscan = 3
+  overscan = 3,
 ): { start: number; end: number } {
   const start = Math.max(0, Math.floor(scrollTop / itemHeight) - overscan);
   const visibleCount = Math.ceil(containerHeight / itemHeight);
@@ -226,12 +228,12 @@ export function getOffsetForIndex(index: number, itemHeight: number): number {
  * Batch DOM updates for virtual list
  */
 export function batchDOMUpdates(updates: (() => void)[]): void {
-  if ('requestIdleCallback' in window) {
-    (window as unknown as { requestIdleCallback: (cb: () => void) => void }).requestIdleCallback(
-      () => {
-        updates.forEach((update) => update());
-      }
-    );
+  if ("requestIdleCallback" in window) {
+    (
+      window as unknown as { requestIdleCallback: (cb: () => void) => void }
+    ).requestIdleCallback(() => {
+      updates.forEach((update) => update());
+    });
   } else {
     requestAnimationFrame(() => {
       updates.forEach((update) => update());
@@ -245,26 +247,26 @@ export function batchDOMUpdates(updates: (() => void)[]): void {
 
 export interface ScrollToOptions {
   index: number;
-  align?: 'start' | 'center' | 'end' | 'auto';
-  behavior?: 'auto' | 'smooth';
+  align?: "start" | "center" | "end" | "auto";
+  behavior?: "auto" | "smooth";
 }
 
 export function calculateScrollToOffset(
   options: ScrollToOptions,
   containerHeight: number,
-  getItemOffset: (index: number) => { start: number; size: number }
+  getItemOffset: (index: number) => { start: number; size: number },
 ): number {
-  const { index, align = 'auto' } = options;
+  const { index, align = "auto" } = options;
   const { start, size } = getItemOffset(index);
 
   switch (align) {
-    case 'start':
+    case "start":
       return start;
-    case 'center':
+    case "center":
       return start - containerHeight / 2 + size / 2;
-    case 'end':
+    case "end":
       return start - containerHeight + size;
-    case 'auto':
+    case "auto":
     default:
       return start;
   }

@@ -45,9 +45,14 @@ export function RexForm() {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 max-w-2xl">
+      <form
+        onSubmit={form.handleSubmit(onSubmit)}
+        className="space-y-4 max-w-2xl"
+      >
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-          <h3 className="font-semibold text-blue-900">Return of Experience (REX)</h3>
+          <h3 className="font-semibold text-blue-900">
+            Return of Experience (REX)
+          </h3>
           <p className="text-sm text-blue-700 mt-1">
             Share learnings from your project to help the team improve processes
           </p>

@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * RSVP Actions Components
@@ -6,17 +6,17 @@
  * Components for responding to event invitations and displaying RSVP status.
  */
 
-import * as React from 'react';
-import { Check, X, HelpCircle, Clock, Users } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import * as React from "react";
+import { Check, X, HelpCircle, Clock, Users } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@/components/ui/tooltip';
+} from "@/components/ui/tooltip";
 import {
   Dialog,
   DialogContent,
@@ -24,10 +24,10 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import type { RSVPStatus, Attendee } from '@/lib/scheduling/types/scheduling';
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import type { RSVPStatus, Attendee } from "@/lib/scheduling/types/scheduling";
 
 // ============================================================================
 // Types
@@ -37,7 +37,7 @@ interface RSVPButtonsProps {
   currentStatus?: RSVPStatus;
   onResponse: (status: RSVPStatus, declineReason?: string) => void;
   isLoading?: boolean;
-  size?: 'sm' | 'default' | 'lg';
+  size?: "sm" | "default" | "lg";
   className?: string;
 }
 
@@ -58,12 +58,16 @@ interface RSVPBadgeProps {
 
 const STATUS_CONFIG: Record<
   RSVPStatus,
-  { label: string; icon: React.ElementType; variant: 'default' | 'secondary' | 'destructive' | 'outline' }
+  {
+    label: string;
+    icon: React.ElementType;
+    variant: "default" | "secondary" | "destructive" | "outline";
+  }
 > = {
-  accepted: { label: 'Accepté', icon: Check, variant: 'default' },
-  declined: { label: 'Refusé', icon: X, variant: 'destructive' },
-  tentative: { label: 'Peut-être', icon: HelpCircle, variant: 'secondary' },
-  pending: { label: 'En attente', icon: Clock, variant: 'outline' },
+  accepted: { label: "Accepté", icon: Check, variant: "default" },
+  declined: { label: "Refusé", icon: X, variant: "destructive" },
+  tentative: { label: "Peut-être", icon: HelpCircle, variant: "secondary" },
+  pending: { label: "En attente", icon: Clock, variant: "outline" },
 };
 
 // ============================================================================
@@ -75,7 +79,7 @@ export function RSVPBadge({ status, className }: RSVPBadgeProps) {
   const Icon = config.icon;
 
   return (
-    <Badge variant={config.variant} className={cn('gap-1', className)}>
+    <Badge variant={config.variant} className={cn("gap-1", className)}>
       <Icon className="h-3 w-3" />
       {config.label}
     </Badge>
@@ -87,21 +91,21 @@ export function RSVPBadge({ status, className }: RSVPBadgeProps) {
 // ============================================================================
 
 export function RSVPButtons({
-  currentStatus = 'pending',
+  currentStatus = "pending",
   onResponse,
   isLoading = false,
-  size = 'default',
+  size = "default",
   className,
 }: RSVPButtonsProps) {
   const [showDeclineDialog, setShowDeclineDialog] = React.useState(false);
-  const [declineReason, setDeclineReason] = React.useState('');
+  const [declineReason, setDeclineReason] = React.useState("");
 
   const handleAccept = () => {
-    onResponse('accepted');
+    onResponse("accepted");
   };
 
   const handleTentative = () => {
-    onResponse('tentative');
+    onResponse("tentative");
   };
 
   const handleDeclineClick = () => {
@@ -109,27 +113,29 @@ export function RSVPButtons({
   };
 
   const handleDeclineConfirm = () => {
-    onResponse('declined', declineReason.trim() || undefined);
+    onResponse("declined", declineReason.trim() || undefined);
     setShowDeclineDialog(false);
-    setDeclineReason('');
+    setDeclineReason("");
   };
 
-  const buttonSize = size === 'sm' ? 'sm' : size === 'lg' ? 'lg' : 'default';
-  const iconSize = size === 'sm' ? 'h-3 w-3' : size === 'lg' ? 'h-5 w-5' : 'h-4 w-4';
+  const buttonSize = size === "sm" ? "sm" : size === "lg" ? "lg" : "default";
+  const iconSize =
+    size === "sm" ? "h-3 w-3" : size === "lg" ? "h-5 w-5" : "h-4 w-4";
 
   return (
     <TooltipProvider>
-      <div className={cn('flex items-center gap-2', className)}>
+      <div className={cn("flex items-center gap-2", className)}>
         {/* Accept */}
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
-              variant={currentStatus === 'accepted' ? 'default' : 'outline'}
+              variant={currentStatus === "accepted" ? "default" : "outline"}
               size={buttonSize}
               onClick={handleAccept}
               disabled={isLoading}
               className={cn(
-                currentStatus === 'accepted' && 'bg-green-600 hover:bg-green-700'
+                currentStatus === "accepted" &&
+                  "bg-green-600 hover:bg-green-700",
               )}
             >
               <Check className={iconSize} />
@@ -143,7 +149,7 @@ export function RSVPButtons({
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
-              variant={currentStatus === 'tentative' ? 'secondary' : 'outline'}
+              variant={currentStatus === "tentative" ? "secondary" : "outline"}
               size={buttonSize}
               onClick={handleTentative}
               disabled={isLoading}
@@ -159,7 +165,7 @@ export function RSVPButtons({
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
-              variant={currentStatus === 'declined' ? 'destructive' : 'outline'}
+              variant={currentStatus === "declined" ? "destructive" : "outline"}
               size={buttonSize}
               onClick={handleDeclineClick}
               disabled={isLoading}
@@ -194,7 +200,10 @@ export function RSVPButtons({
             </div>
 
             <DialogFooter>
-              <Button variant="outline" onClick={() => setShowDeclineDialog(false)}>
+              <Button
+                variant="outline"
+                onClick={() => setShowDeclineDialog(false)}
+              >
                 Annuler
               </Button>
               <Button variant="destructive" onClick={handleDeclineConfirm}>
@@ -226,7 +235,7 @@ export function RSVPSummary({
     };
 
     for (const attendee of attendees) {
-      const status = attendee.status || 'pending';
+      const status = attendee.status || "pending";
       result[status].push(attendee);
     }
 
@@ -238,20 +247,20 @@ export function RSVPSummary({
 
   if (total === 0) {
     return (
-      <div className={cn('text-sm text-muted-foreground', className)}>
+      <div className={cn("text-sm text-muted-foreground", className)}>
         Aucun participant
       </div>
     );
   }
 
   return (
-    <div className={cn('space-y-3', className)}>
+    <div className={cn("space-y-3", className)}>
       {/* Summary badges */}
       <div className="flex items-center gap-2 flex-wrap">
         <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
           <Users className="h-4 w-4" />
           <span>
-            {respondedCount}/{total} réponse{respondedCount !== 1 ? 's' : ''}
+            {respondedCount}/{total} réponse{respondedCount !== 1 ? "s" : ""}
           </span>
         </div>
 
@@ -343,11 +352,16 @@ interface AttendeeGroupProps {
   iconClassName?: string;
 }
 
-function AttendeeGroup({ title, attendees, icon: Icon, iconClassName }: AttendeeGroupProps) {
+function AttendeeGroup({
+  title,
+  attendees,
+  icon: Icon,
+  iconClassName,
+}: AttendeeGroupProps) {
   return (
     <div className="space-y-1">
       <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
-        <Icon className={cn('h-3 w-3', iconClassName)} />
+        <Icon className={cn("h-3 w-3", iconClassName)} />
         {title}
       </div>
       <div className="flex flex-wrap gap-1 pl-5">
@@ -367,7 +381,8 @@ function AttendeeGroup({ title, attendees, icon: Icon, iconClassName }: Attendee
                   <p>{attendee.email}</p>
                   {attendee.respondedAt && (
                     <p className="text-muted-foreground">
-                      Répondu le {new Date(attendee.respondedAt).toLocaleDateString('fr')}
+                      Répondu le{" "}
+                      {new Date(attendee.respondedAt).toLocaleDateString("fr")}
                     </p>
                   )}
                 </div>
@@ -391,16 +406,21 @@ interface RSVPInlineProps {
   className?: string;
 }
 
-export function RSVPInline({ status, onResponse, isLoading, className }: RSVPInlineProps) {
+export function RSVPInline({
+  status,
+  onResponse,
+  isLoading,
+  className,
+}: RSVPInlineProps) {
   return (
-    <div className={cn('flex items-center gap-1', className)}>
+    <div className={cn("flex items-center gap-1", className)}>
       <button
         type="button"
-        onClick={() => onResponse('accepted')}
+        onClick={() => onResponse("accepted")}
         disabled={isLoading}
         className={cn(
-          'p-1 rounded hover:bg-green-100 transition-colors',
-          status === 'accepted' && 'bg-green-100 text-green-600'
+          "p-1 rounded hover:bg-green-100 transition-colors",
+          status === "accepted" && "bg-green-100 text-green-600",
         )}
         title="Accepter"
       >
@@ -408,11 +428,11 @@ export function RSVPInline({ status, onResponse, isLoading, className }: RSVPInl
       </button>
       <button
         type="button"
-        onClick={() => onResponse('tentative')}
+        onClick={() => onResponse("tentative")}
         disabled={isLoading}
         className={cn(
-          'p-1 rounded hover:bg-yellow-100 transition-colors',
-          status === 'tentative' && 'bg-yellow-100 text-yellow-600'
+          "p-1 rounded hover:bg-yellow-100 transition-colors",
+          status === "tentative" && "bg-yellow-100 text-yellow-600",
         )}
         title="Peut-être"
       >
@@ -420,11 +440,11 @@ export function RSVPInline({ status, onResponse, isLoading, className }: RSVPInl
       </button>
       <button
         type="button"
-        onClick={() => onResponse('declined')}
+        onClick={() => onResponse("declined")}
         disabled={isLoading}
         className={cn(
-          'p-1 rounded hover:bg-red-100 transition-colors',
-          status === 'declined' && 'bg-red-100 text-red-600'
+          "p-1 rounded hover:bg-red-100 transition-colors",
+          status === "declined" && "bg-red-100 text-red-600",
         )}
         title="Refuser"
       >

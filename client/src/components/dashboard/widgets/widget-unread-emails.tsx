@@ -62,8 +62,8 @@ export function WidgetUnreadEmails({ widget }: WidgetRenderProps) {
               {unreadCount === 0
                 ? "Boîte vide"
                 : unreadCount === 1
-                ? "message non lu"
-                : "messages non lus"}
+                  ? "message non lu"
+                  : "messages non lus"}
             </div>
           </div>
           {unreadCount > 0 && (

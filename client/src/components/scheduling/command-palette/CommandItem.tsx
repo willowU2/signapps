@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * CommandItem Component
@@ -7,9 +7,9 @@
  * Shows icon, label, description, and keyboard shortcut.
  */
 
-import * as React from 'react';
-import { cn } from '@/lib/utils';
-import type { Command } from '@/lib/scheduling/types/scheduling';
+import * as React from "react";
+import { cn } from "@/lib/utils";
+import type { Command } from "@/lib/scheduling/types/scheduling";
 
 // ============================================================================
 // Types
@@ -26,30 +26,34 @@ interface CommandItemProps {
 // Icon Component
 // ============================================================================
 
-function CommandIcon({ icon, className }: { icon: string; className?: string }) {
+function CommandIcon({
+  icon,
+  className,
+}: {
+  icon: string;
+  className?: string;
+}) {
   // Map icon names to Lucide icons
   // This is a simple implementation - could be expanded with a full icon registry
   const iconMap: Record<string, string> = {
-    calendar: '📅',
-    'calendar-plus': '➕',
-    'calendar-days': '📆',
-    search: '🔍',
-    settings: '⚙️',
-    home: '🏠',
-    clock: '⏰',
-    users: '👥',
-    building: '🏢',
-    check: '✓',
-    plus: '+',
-    'arrow-left': '←',
-    'arrow-right': '→',
-    today: '📌',
+    calendar: "📅",
+    "calendar-plus": "➕",
+    "calendar-days": "📆",
+    search: "🔍",
+    settings: "⚙️",
+    home: "🏠",
+    clock: "⏰",
+    users: "👥",
+    building: "🏢",
+    check: "✓",
+    plus: "+",
+    "arrow-left": "←",
+    "arrow-right": "→",
+    today: "📌",
   };
 
   return (
-    <span className={cn('text-base', className)}>
-      {iconMap[icon] || '•'}
-    </span>
+    <span className={cn("text-base", className)}>{iconMap[icon] || "•"}</span>
   );
 }
 
@@ -58,7 +62,7 @@ function CommandIcon({ icon, className }: { icon: string; className?: string }) 
 // ============================================================================
 
 function Shortcut({ keys }: { keys: string }) {
-  const parts = keys.split('+');
+  const parts = keys.split("+");
 
   return (
     <div className="flex items-center gap-0.5">
@@ -66,7 +70,13 @@ function Shortcut({ keys }: { keys: string }) {
         <React.Fragment key={index}>
           {index > 0 && <span className="text-muted-foreground/50">+</span>}
           <kbd className="min-w-[20px] h-5 flex items-center justify-center rounded bg-muted px-1.5 text-[10px] font-medium text-muted-foreground">
-            {key === 'Cmd' ? '⌘' : key === 'Ctrl' ? 'Ctrl' : key === 'Shift' ? '⇧' : key}
+            {key === "Cmd"
+              ? "⌘"
+              : key === "Ctrl"
+                ? "Ctrl"
+                : key === "Shift"
+                  ? "⇧"
+                  : key}
           </kbd>
         </React.Fragment>
       ))}
@@ -87,12 +97,10 @@ export function CommandItem({
   return (
     <button
       className={cn(
-        'flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left transition-colors',
-        'focus:outline-none',
-        isSelected
-          ? 'bg-accent text-accent-foreground'
-          : 'hover:bg-accent/50',
-        className
+        "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left transition-colors",
+        "focus:outline-none",
+        isSelected ? "bg-accent text-accent-foreground" : "hover:bg-accent/50",
+        className,
       )}
       onClick={onSelect}
       onMouseEnter={onSelect}

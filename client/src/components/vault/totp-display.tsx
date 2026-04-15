@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useCallback } from 'react';
-import { Copy, RefreshCw } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { toast } from 'sonner';
-import { generateTotpAsync } from '@/lib/vault-crypto';
-import { cn } from '@/lib/utils';
+import { useState, useEffect, useCallback } from "react";
+import { Copy, RefreshCw } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import { generateTotpAsync } from "@/lib/vault-crypto";
+import { cn } from "@/lib/utils";
 
 interface TotpDisplayProps {
   totpSecret: string;
@@ -19,7 +19,7 @@ function getSecondsRemaining(): number {
 }
 
 export function TotpDisplay({ totpSecret, className }: TotpDisplayProps) {
-  const [code, setCode] = useState<string>('------');
+  const [code, setCode] = useState<string>("------");
   const [remaining, setRemaining] = useState(getSecondsRemaining());
   const [loading, setLoading] = useState(false);
 
@@ -30,7 +30,7 @@ export function TotpDisplay({ totpSecret, className }: TotpDisplayProps) {
       const newCode = await generateTotpAsync(totpSecret);
       setCode(newCode);
     } catch {
-      setCode('------');
+      setCode("------");
     } finally {
       setLoading(false);
     }
@@ -58,7 +58,7 @@ export function TotpDisplay({ totpSecret, className }: TotpDisplayProps) {
 
   const handleCopy = () => {
     navigator.clipboard.writeText(code).then(() => {
-      toast.success('Code TOTP copié');
+      toast.success("Code TOTP copié");
     });
   };
 
@@ -66,23 +66,23 @@ export function TotpDisplay({ totpSecret, className }: TotpDisplayProps) {
   const isExpiringSoon = remaining <= 5;
 
   return (
-    <div className={cn('flex flex-col items-center gap-3 py-2', className)}>
+    <div className={cn("flex flex-col items-center gap-3 py-2", className)}>
       {/* Code display */}
       <div
         className={cn(
-          'font-mono text-3xl font-bold tracking-[0.25em] select-all cursor-text transition-colors',
-          isExpiringSoon ? 'text-red-500' : 'text-foreground',
+          "font-mono text-3xl font-bold tracking-[0.25em] select-all cursor-text transition-colors",
+          isExpiringSoon ? "text-red-500" : "text-foreground",
         )}
       >
-        {loading ? '••••••' : `${code.slice(0, 3)} ${code.slice(3)}`}
+        {loading ? "••••••" : `${code.slice(0, 3)} ${code.slice(3)}`}
       </div>
 
       {/* Progress bar */}
       <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
         <div
           className={cn(
-            'h-full rounded-full transition-all duration-1000 ease-linear',
-            isExpiringSoon ? 'bg-red-500' : 'bg-emerald-500',
+            "h-full rounded-full transition-all duration-1000 ease-linear",
+            isExpiringSoon ? "bg-red-500" : "bg-emerald-500",
           )}
           style={{ width: `${progress}%` }}
         />
@@ -91,8 +91,13 @@ export function TotpDisplay({ totpSecret, className }: TotpDisplayProps) {
       {/* Timer + actions */}
       <div className="flex items-center gap-3 text-sm text-muted-foreground">
         <span>
-          Expire dans{' '}
-          <span className={cn('font-medium', isExpiringSoon ? 'text-red-500' : 'text-foreground')}>
+          Expire dans{" "}
+          <span
+            className={cn(
+              "font-medium",
+              isExpiringSoon ? "text-red-500" : "text-foreground",
+            )}
+          >
             {remaining}s
           </span>
         </span>
@@ -104,7 +109,7 @@ export function TotpDisplay({ totpSecret, className }: TotpDisplayProps) {
           onClick={refresh}
           disabled={loading}
         >
-          <RefreshCw className={cn('h-3.5 w-3.5', loading && 'animate-spin')} />
+          <RefreshCw className={cn("h-3.5 w-3.5", loading && "animate-spin")} />
         </Button>
 
         <Button

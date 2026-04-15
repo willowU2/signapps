@@ -5,26 +5,26 @@
  * and actionable insights.
  */
 
-'use client';
+"use client";
 
-import * as React from 'react';
-import { cn } from '@/lib/utils';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import * as React from "react";
+import { cn } from "@/lib/utils";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from "@/components/ui/select";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@/components/ui/tooltip';
+} from "@/components/ui/tooltip";
 import {
   Clock,
   Users,
@@ -38,7 +38,7 @@ import {
   Info,
   Download,
   ChevronRight,
-} from 'lucide-react';
+} from "lucide-react";
 import {
   format,
   startOfWeek,
@@ -51,14 +51,14 @@ import {
   addDays,
   subWeeks,
   subMonths,
-} from 'date-fns';
-import { fr } from 'date-fns/locale';
+} from "date-fns";
+import { fr } from "date-fns/locale";
 import type {
   ScheduleBlock,
   TimeAnalytics,
   AnalyticsInsight,
   DateRange,
-} from '@/lib/scheduling/types/scheduling';
+} from "@/lib/scheduling/types/scheduling";
 
 // ============================================================================
 // Types
@@ -66,8 +66,8 @@ import type {
 
 interface AnalyticsDashboardProps {
   events: ScheduleBlock[];
-  period?: '7d' | '14d' | '30d';
-  onPeriodChange?: (period: '7d' | '14d' | '30d') => void;
+  period?: "7d" | "14d" | "30d";
+  onPeriodChange?: (period: "7d" | "14d" | "30d") => void;
   onExport?: () => void;
   className?: string;
 }
@@ -92,19 +92,19 @@ interface DayStats {
 // ============================================================================
 
 const CATEGORY_COLORS = {
-  meetings: { bg: 'bg-blue-500', text: 'text-blue-500', hex: '#3b82f6' },
-  focus: { bg: 'bg-green-500', text: 'text-green-500', hex: '#22c55e' },
-  tasks: { bg: 'bg-purple-500', text: 'text-purple-500', hex: '#a855f7' },
-  breaks: { bg: 'bg-amber-500', text: 'text-amber-500', hex: '#f59e0b' },
-  other: { bg: 'bg-gray-400', text: 'text-gray-400', hex: '#9ca3af' },
+  meetings: { bg: "bg-blue-500", text: "text-blue-500", hex: "#3b82f6" },
+  focus: { bg: "bg-green-500", text: "text-green-500", hex: "#22c55e" },
+  tasks: { bg: "bg-purple-500", text: "text-purple-500", hex: "#a855f7" },
+  breaks: { bg: "bg-amber-500", text: "text-amber-500", hex: "#f59e0b" },
+  other: { bg: "bg-gray-400", text: "text-gray-400", hex: "#9ca3af" },
 };
 
 const CATEGORY_LABELS: Record<string, string> = {
-  meetings: 'R\éunions',
-  focus: 'Temps de focus',
-  tasks: 'T\âches',
-  breaks: 'Pauses',
-  other: 'Autre',
+  meetings: "R\éunions",
+  focus: "Temps de focus",
+  tasks: "T\âches",
+  breaks: "Pauses",
+  other: "Autre",
 };
 
 // ============================================================================
@@ -113,7 +113,7 @@ const CATEGORY_LABELS: Record<string, string> = {
 
 export function AnalyticsDashboard({
   events,
-  period = '7d',
+  period = "7d",
   onPeriodChange,
   onExport,
   className,
@@ -123,7 +123,8 @@ export function AnalyticsDashboard({
   // Compute date range
   const dateRange = React.useMemo((): DateRange => {
     const now = new Date();
-    const days = selectedPeriod === '7d' ? 7 : selectedPeriod === '14d' ? 14 : 30;
+    const days =
+      selectedPeriod === "7d" ? 7 : selectedPeriod === "14d" ? 14 : 30;
     return {
       start: addDays(now, -days),
       end: now,
@@ -132,7 +133,8 @@ export function AnalyticsDashboard({
 
   // Compute previous period for comparison
   const previousRange = React.useMemo((): DateRange => {
-    const days = selectedPeriod === '7d' ? 7 : selectedPeriod === '14d' ? 14 : 30;
+    const days =
+      selectedPeriod === "7d" ? 7 : selectedPeriod === "14d" ? 14 : 30;
     return {
       start: addDays(dateRange.start, -days),
       end: dateRange.start,
@@ -142,29 +144,29 @@ export function AnalyticsDashboard({
   // Analyze current period
   const analytics = React.useMemo(
     () => analyzeTimeUsage(events, dateRange),
-    [events, dateRange]
+    [events, dateRange],
   );
 
   // Analyze previous period for comparison
   const previousAnalytics = React.useMemo(
     () => analyzeTimeUsage(events, previousRange),
-    [events, previousRange]
+    [events, previousRange],
   );
 
   // Daily stats for chart
   const dailyStats = React.useMemo(
     () => computeDailyStats(events, dateRange),
-    [events, dateRange]
+    [events, dateRange],
   );
 
   // Generate insights
   const insights = React.useMemo(
     () => generateInsights(analytics, previousAnalytics, events),
-    [analytics, previousAnalytics, events]
+    [analytics, previousAnalytics, events],
   );
 
   // Handle period change
-  const handlePeriodChange = (value: '7d' | '14d' | '30d') => {
+  const handlePeriodChange = (value: "7d" | "14d" | "30d") => {
     setSelectedPeriod(value);
     onPeriodChange?.(value);
   };
@@ -173,20 +175,24 @@ export function AnalyticsDashboard({
   const comparison = React.useMemo(() => {
     if (previousAnalytics.totalHours === 0) return null;
     const changePercent =
-      ((analytics.totalHours - previousAnalytics.totalHours) / previousAnalytics.totalHours) *
+      ((analytics.totalHours - previousAnalytics.totalHours) /
+        previousAnalytics.totalHours) *
       100;
-    return { changePercent, trend: changePercent > 0 ? 'up' : changePercent < 0 ? 'down' : 'stable' };
+    return {
+      changePercent,
+      trend: changePercent > 0 ? "up" : changePercent < 0 ? "down" : "stable",
+    };
   }, [analytics, previousAnalytics]);
 
   return (
-    <div className={cn('space-y-6', className)}>
+    <div className={cn("space-y-6", className)}>
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold">Statistiques</h2>
           <p className="text-sm text-muted-foreground">
-            {format(dateRange.start, 'd MMM', { locale: fr })} -{' '}
-            {format(dateRange.end, 'd MMM yyyy', { locale: fr })}
+            {format(dateRange.start, "d MMM", { locale: fr })} -{" "}
+            {format(dateRange.end, "d MMM yyyy", { locale: fr })}
           </p>
         </div>
 
@@ -218,28 +224,28 @@ export function AnalyticsDashboard({
           value={`${Math.round(analytics.totalHours)}h`}
           icon={Clock}
           comparison={comparison}
-          description={`${Math.round(analytics.totalHours / (selectedPeriod === '7d' ? 7 : selectedPeriod === '14d' ? 14 : 30))}h/jour en moyenne`}
+          description={`${Math.round(analytics.totalHours / (selectedPeriod === "7d" ? 7 : selectedPeriod === "14d" ? 14 : 30))}h/jour en moyenne`}
         />
         <SummaryCard
           title="R\éunions"
-          value={`${Math.round(analytics.breakdown.find((b) => b.category === 'meetings')?.hours || 0)}h`}
+          value={`${Math.round(analytics.breakdown.find((b) => b.category === "meetings")?.hours || 0)}h`}
           icon={Users}
           color={CATEGORY_COLORS.meetings.text}
-          description={`${analytics.breakdown.find((b) => b.category === 'meetings')?.percent.toFixed(0) || 0}% du temps`}
+          description={`${analytics.breakdown.find((b) => b.category === "meetings")?.percent.toFixed(0) || 0}% du temps`}
         />
         <SummaryCard
           title="Temps de focus"
-          value={`${Math.round(analytics.breakdown.find((b) => b.category === 'focus')?.hours || 0)}h`}
+          value={`${Math.round(analytics.breakdown.find((b) => b.category === "focus")?.hours || 0)}h`}
           icon={Target}
           color={CATEGORY_COLORS.focus.text}
-          description={`${analytics.breakdown.find((b) => b.category === 'focus')?.percent.toFixed(0) || 0}% du temps`}
+          description={`${analytics.breakdown.find((b) => b.category === "focus")?.percent.toFixed(0) || 0}% du temps`}
         />
         <SummaryCard
           title="T\âches"
-          value={`${Math.round(analytics.breakdown.find((b) => b.category === 'tasks')?.hours || 0)}h`}
+          value={`${Math.round(analytics.breakdown.find((b) => b.category === "tasks")?.hours || 0)}h`}
           icon={Calendar}
           color={CATEGORY_COLORS.tasks.text}
-          description={`${analytics.breakdown.find((b) => b.category === 'tasks')?.percent.toFixed(0) || 0}% du temps`}
+          description={`${analytics.breakdown.find((b) => b.category === "tasks")?.percent.toFixed(0) || 0}% du temps`}
         />
       </div>
 
@@ -324,24 +330,24 @@ function SummaryCard({
       <CardContent className="p-4">
         <div className="flex items-center justify-between">
           <span className="text-sm text-muted-foreground">{title}</span>
-          <Icon className={cn('h-4 w-4', color || 'text-muted-foreground')} />
+          <Icon className={cn("h-4 w-4", color || "text-muted-foreground")} />
         </div>
         <div className="mt-2 flex items-end gap-2">
-          <span className={cn('text-2xl font-bold', color)}>{value}</span>
+          <span className={cn("text-2xl font-bold", color)}>{value}</span>
           {comparison && (
             <span
               className={cn(
-                'text-xs font-medium flex items-center',
-                comparison.trend === 'up'
-                  ? 'text-green-500'
-                  : comparison.trend === 'down'
-                    ? 'text-red-500'
-                    : 'text-muted-foreground'
+                "text-xs font-medium flex items-center",
+                comparison.trend === "up"
+                  ? "text-green-500"
+                  : comparison.trend === "down"
+                    ? "text-red-500"
+                    : "text-muted-foreground",
               )}
             >
-              {comparison.trend === 'up' ? (
+              {comparison.trend === "up" ? (
                 <TrendingUp className="h-3 w-3 mr-0.5" />
-              ) : comparison.trend === 'down' ? (
+              ) : comparison.trend === "down" ? (
                 <TrendingDown className="h-3 w-3 mr-0.5" />
               ) : (
                 <Minus className="h-3 w-3 mr-0.5" />
@@ -425,18 +431,22 @@ function BreakdownChart({ breakdown }: BreakdownChartProps) {
 
       {/* Legend */}
       <div className="space-y-2">
-        {breakdown.filter((b) => b.hours > 0).map((b) => (
-          <div key={b.category} className="flex items-center gap-2 text-sm">
-            <div
-              className="w-3 h-3 rounded-full"
-              style={{ backgroundColor: b.color }}
-            />
-            <span className="text-muted-foreground">
-              {CATEGORY_LABELS[b.category] || b.category}
-            </span>
-            <span className="font-medium ml-auto">{Math.round(b.hours)}h</span>
-          </div>
-        ))}
+        {breakdown
+          .filter((b) => b.hours > 0)
+          .map((b) => (
+            <div key={b.category} className="flex items-center gap-2 text-sm">
+              <div
+                className="w-3 h-3 rounded-full"
+                style={{ backgroundColor: b.color }}
+              />
+              <span className="text-muted-foreground">
+                {CATEGORY_LABELS[b.category] || b.category}
+              </span>
+              <span className="font-medium ml-auto">
+                {Math.round(b.hours)}h
+              </span>
+            </div>
+          ))}
       </div>
     </div>
   );
@@ -473,28 +483,31 @@ function DailyChart({ stats }: DailyChartProps) {
                       <div className="absolute inset-x-0 bottom-0 flex flex-col">
                         {day.meetings > 0 && (
                           <div
-                            className={cn('w-full', CATEGORY_COLORS.meetings.bg)}
+                            className={cn(
+                              "w-full",
+                              CATEGORY_COLORS.meetings.bg,
+                            )}
                             style={{
                               height: `${(day.meetings / day.hours) * 100}%`,
-                              minHeight: '2px',
+                              minHeight: "2px",
                             }}
                           />
                         )}
                         {day.focus > 0 && (
                           <div
-                            className={cn('w-full', CATEGORY_COLORS.focus.bg)}
+                            className={cn("w-full", CATEGORY_COLORS.focus.bg)}
                             style={{
                               height: `${(day.focus / day.hours) * 100}%`,
-                              minHeight: '2px',
+                              minHeight: "2px",
                             }}
                           />
                         )}
                         {day.tasks > 0 && (
                           <div
-                            className={cn('w-full', CATEGORY_COLORS.tasks.bg)}
+                            className={cn("w-full", CATEGORY_COLORS.tasks.bg)}
                             style={{
                               height: `${(day.tasks / day.hours) * 100}%`,
-                              minHeight: '2px',
+                              minHeight: "2px",
                             }}
                           />
                         )}
@@ -505,19 +518,25 @@ function DailyChart({ stats }: DailyChartProps) {
                     </div>
                     <span
                       className={cn(
-                        'text-xs mt-2',
-                        isWeekend ? 'text-muted-foreground/50' : 'text-muted-foreground'
+                        "text-xs mt-2",
+                        isWeekend
+                          ? "text-muted-foreground/50"
+                          : "text-muted-foreground",
                       )}
                     >
-                      {format(day.date, 'EEE', { locale: fr })}
+                      {format(day.date, "EEE", { locale: fr })}
                     </span>
                   </div>
                 </TooltipTrigger>
                 <TooltipContent>
                   <div className="text-sm">
-                    <div className="font-medium">{format(day.date, 'EEEE d MMMM', { locale: fr })}</div>
+                    <div className="font-medium">
+                      {format(day.date, "EEEE d MMMM", { locale: fr })}
+                    </div>
                     <div className="text-muted-foreground">
-                      {day.hours > 0 ? `${day.hours.toFixed(1)}h total` : 'Aucune activit\é'}
+                      {day.hours > 0
+                        ? `${day.hours.toFixed(1)}h total`
+                        : "Aucune activit\é"}
                     </div>
                   </div>
                 </TooltipContent>
@@ -540,45 +559,47 @@ interface InsightCardProps {
 
 function InsightCard({ insight }: InsightCardProps) {
   const IconComponent =
-    insight.type === 'warning'
+    insight.type === "warning"
       ? AlertTriangle
-      : insight.type === 'suggestion'
+      : insight.type === "suggestion"
         ? Lightbulb
         : Info;
 
   return (
     <div
       className={cn(
-        'flex items-start gap-3 p-3 rounded-lg',
-        insight.type === 'warning'
-          ? 'bg-destructive/10'
-          : insight.type === 'suggestion'
-            ? 'bg-yellow-500/10'
-            : 'bg-muted/50'
+        "flex items-start gap-3 p-3 rounded-lg",
+        insight.type === "warning"
+          ? "bg-destructive/10"
+          : insight.type === "suggestion"
+            ? "bg-yellow-500/10"
+            : "bg-muted/50",
       )}
     >
       <IconComponent
         className={cn(
-          'h-5 w-5 mt-0.5',
-          insight.type === 'warning'
-            ? 'text-destructive'
-            : insight.type === 'suggestion'
-              ? 'text-yellow-500'
-              : 'text-blue-500'
+          "h-5 w-5 mt-0.5",
+          insight.type === "warning"
+            ? "text-destructive"
+            : insight.type === "suggestion"
+              ? "text-yellow-500"
+              : "text-blue-500",
         )}
       />
       <div className="flex-1 min-w-0">
         <h4 className="font-medium text-sm">{insight.title}</h4>
-        <p className="text-sm text-muted-foreground mt-0.5">{insight.description}</p>
+        <p className="text-sm text-muted-foreground mt-0.5">
+          {insight.description}
+        </p>
         {insight.metric && (
           <div className="mt-2 flex items-center gap-2">
             <Badge variant="secondary" className="text-xs">
               {insight.metric.value} {insight.metric.unit}
               {insight.metric.trend && (
                 <>
-                  {insight.metric.trend === 'up' ? (
+                  {insight.metric.trend === "up" ? (
                     <TrendingUp className="h-3 w-3 ml-1 text-green-500" />
-                  ) : insight.metric.trend === 'down' ? (
+                  ) : insight.metric.trend === "down" ? (
                     <TrendingDown className="h-3 w-3 ml-1 text-red-500" />
                   ) : null}
                 </>
@@ -589,7 +610,7 @@ function InsightCard({ insight }: InsightCardProps) {
       </div>
       {insight.action && (
         <Button variant="ghost" size="sm" onClick={insight.action}>
-          {insight.actionLabel || 'Agir'}
+          {insight.actionLabel || "Agir"}
           <ChevronRight className="h-4 w-4 ml-1" />
         </Button>
       )}
@@ -613,19 +634,35 @@ function DayBreakdownTable({ stats }: DayBreakdownTableProps) {
           <tr className="border-b">
             <th className="text-left py-2 font-medium">Jour</th>
             <th className="text-right py-2 font-medium">Total</th>
-            <th className="text-right py-2 font-medium text-blue-500">R\éunions</th>
-            <th className="text-right py-2 font-medium text-green-500">Focus</th>
-            <th className="text-right py-2 font-medium text-purple-500">T\âches</th>
+            <th className="text-right py-2 font-medium text-blue-500">
+              R\éunions
+            </th>
+            <th className="text-right py-2 font-medium text-green-500">
+              Focus
+            </th>
+            <th className="text-right py-2 font-medium text-purple-500">
+              T\âches
+            </th>
           </tr>
         </thead>
         <tbody>
           {stats.map((day, i) => (
             <tr key={i} className="border-b last:border-0">
-              <td className="py-2">{format(day.date, 'EEEE d MMM', { locale: fr })}</td>
-              <td className="text-right py-2 font-medium">{day.hours.toFixed(1)}h</td>
-              <td className="text-right py-2 text-blue-500">{day.meetings.toFixed(1)}h</td>
-              <td className="text-right py-2 text-green-500">{day.focus.toFixed(1)}h</td>
-              <td className="text-right py-2 text-purple-500">{day.tasks.toFixed(1)}h</td>
+              <td className="py-2">
+                {format(day.date, "EEEE d MMM", { locale: fr })}
+              </td>
+              <td className="text-right py-2 font-medium">
+                {day.hours.toFixed(1)}h
+              </td>
+              <td className="text-right py-2 text-blue-500">
+                {day.meetings.toFixed(1)}h
+              </td>
+              <td className="text-right py-2 text-green-500">
+                {day.focus.toFixed(1)}h
+              </td>
+              <td className="text-right py-2 text-purple-500">
+                {day.tasks.toFixed(1)}h
+              </td>
             </tr>
           ))}
         </tbody>
@@ -638,9 +675,12 @@ function DayBreakdownTable({ stats }: DayBreakdownTableProps) {
 // Analysis Functions
 // ============================================================================
 
-function analyzeTimeUsage(events: ScheduleBlock[], range: DateRange): TimeAnalytics {
+function analyzeTimeUsage(
+  events: ScheduleBlock[],
+  range: DateRange,
+): TimeAnalytics {
   const periodEvents = events.filter(
-    (e) => e.start >= range.start && e.start <= range.end
+    (e) => e.start >= range.start && e.start <= range.end,
   );
 
   let meetingMinutes = 0;
@@ -653,9 +693,12 @@ function analyzeTimeUsage(events: ScheduleBlock[], range: DateRange): TimeAnalyt
       ? differenceInMinutes(event.end, event.start)
       : 60;
 
-    if (event.type === 'task') {
+    if (event.type === "task") {
       taskMinutes += duration;
-    } else if (event.title.toLowerCase().includes('focus') || event.color === '#22c55e') {
+    } else if (
+      event.title.toLowerCase().includes("focus") ||
+      event.color === "#22c55e"
+    ) {
       focusMinutes += duration;
     } else if (event.attendees && event.attendees.length > 0) {
       meetingMinutes += duration;
@@ -664,24 +707,25 @@ function analyzeTimeUsage(events: ScheduleBlock[], range: DateRange): TimeAnalyt
     }
   });
 
-  const totalMinutes = meetingMinutes + focusMinutes + taskMinutes + otherMinutes;
+  const totalMinutes =
+    meetingMinutes + focusMinutes + taskMinutes + otherMinutes;
   const totalHours = totalMinutes / 60;
 
   const breakdown: TimeBreakdown[] = [
     {
-      category: 'meetings',
+      category: "meetings",
       hours: meetingMinutes / 60,
       percent: totalMinutes > 0 ? (meetingMinutes / totalMinutes) * 100 : 0,
       color: CATEGORY_COLORS.meetings.hex,
     },
     {
-      category: 'focus',
+      category: "focus",
       hours: focusMinutes / 60,
       percent: totalMinutes > 0 ? (focusMinutes / totalMinutes) * 100 : 0,
       color: CATEGORY_COLORS.focus.hex,
     },
     {
-      category: 'tasks',
+      category: "tasks",
       hours: taskMinutes / 60,
       percent: totalMinutes > 0 ? (taskMinutes / totalMinutes) * 100 : 0,
       color: CATEGORY_COLORS.tasks.hex,
@@ -696,13 +740,15 @@ function analyzeTimeUsage(events: ScheduleBlock[], range: DateRange): TimeAnalyt
   };
 }
 
-function computeDailyStats(events: ScheduleBlock[], range: DateRange): DayStats[] {
+function computeDailyStats(
+  events: ScheduleBlock[],
+  range: DateRange,
+): DayStats[] {
   const days = eachDayOfInterval(range);
 
   return days.map((date) => {
     const dayEvents = events.filter(
-      (e) =>
-        format(e.start, 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd')
+      (e) => format(e.start, "yyyy-MM-dd") === format(date, "yyyy-MM-dd"),
     );
 
     let meetings = 0;
@@ -714,9 +760,9 @@ function computeDailyStats(events: ScheduleBlock[], range: DateRange): DayStats[
         ? differenceInMinutes(event.end, event.start) / 60
         : 1;
 
-      if (event.type === 'task') {
+      if (event.type === "task") {
         tasks += hours;
-      } else if (event.title.toLowerCase().includes('focus')) {
+      } else if (event.title.toLowerCase().includes("focus")) {
         focus += hours;
       } else {
         meetings += hours;
@@ -736,65 +782,69 @@ function computeDailyStats(events: ScheduleBlock[], range: DateRange): DayStats[
 function generateInsights(
   current: TimeAnalytics,
   previous: TimeAnalytics,
-  events: ScheduleBlock[]
+  events: ScheduleBlock[],
 ): AnalyticsInsight[] {
   const insights: AnalyticsInsight[] = [];
 
   // Check meeting ratio
-  const meetingPercent = current.breakdown.find((b) => b.category === 'meetings')?.percent || 0;
+  const meetingPercent =
+    current.breakdown.find((b) => b.category === "meetings")?.percent || 0;
   if (meetingPercent > 60) {
     insights.push({
-      id: 'high-meetings',
-      type: 'warning',
-      title: 'Beaucoup de r\éunions',
+      id: "high-meetings",
+      type: "warning",
+      title: "Beaucoup de r\éunions",
       description: `Les r\éunions repr\ésentent ${meetingPercent.toFixed(0)}% de votre temps. Envisagez de bloquer des cr\éneaux de focus.`,
       metric: {
         value: meetingPercent,
-        unit: '%',
+        unit: "%",
       },
     });
   }
 
   // Check focus time
-  const focusPercent = current.breakdown.find((b) => b.category === 'focus')?.percent || 0;
+  const focusPercent =
+    current.breakdown.find((b) => b.category === "focus")?.percent || 0;
   if (focusPercent < 20 && current.totalHours > 20) {
     insights.push({
-      id: 'low-focus',
-      type: 'suggestion',
-      title: 'Peu de temps de focus',
-      description: 'Vous pourriez b\én\éficier de plus de blocs de temps pour le travail concentr\é.',
+      id: "low-focus",
+      type: "suggestion",
+      title: "Peu de temps de focus",
+      description:
+        "Vous pourriez b\én\éficier de plus de blocs de temps pour le travail concentr\é.",
       metric: {
         value: focusPercent,
-        unit: '%',
+        unit: "%",
       },
     });
   }
 
   // Check trend
   if (previous.totalHours > 0) {
-    const change = ((current.totalHours - previous.totalHours) / previous.totalHours) * 100;
+    const change =
+      ((current.totalHours - previous.totalHours) / previous.totalHours) * 100;
     if (change > 20) {
       insights.push({
-        id: 'increasing-load',
-        type: 'warning',
-        title: 'Charge en hausse',
+        id: "increasing-load",
+        type: "warning",
+        title: "Charge en hausse",
         description: `Votre charge a augment\é de ${change.toFixed(0)}% par rapport \à la p\ériode pr\éc\édente.`,
         metric: {
           value: Math.round(change),
-          unit: '%',
-          trend: 'up',
+          unit: "%",
+          trend: "up",
         },
       });
     } else if (change < -20) {
       insights.push({
-        id: 'decreasing-load',
-        type: 'info',
-        title: 'Charge en baisse',
+        id: "decreasing-load",
+        type: "info",
+        title: "Charge en baisse",
         description: `Votre charge a diminu\é de ${Math.abs(change).toFixed(0)}% par rapport \à la p\ériode pr\éc\édente.`,
         metric: {
           value: Math.round(Math.abs(change)),
-          unit: '%',
-          trend: 'down',
+          unit: "%",
+          trend: "down",
         },
       });
     }

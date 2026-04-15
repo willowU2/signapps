@@ -99,7 +99,7 @@ function SortableColumnItem({
       style={style}
       className={cn(
         "flex items-center gap-2 rounded-md border bg-background px-2 py-1.5",
-        isDragging && "opacity-50 shadow-lg z-50"
+        isDragging && "opacity-50 shadow-lg z-50",
       )}
     >
       <button
@@ -123,7 +123,7 @@ function SortableColumnItem({
         htmlFor={`col-${column.id}`}
         className={cn(
           "flex-1 cursor-pointer text-sm",
-          !isVisible && "text-muted-foreground"
+          !isVisible && "text-muted-foreground",
         )}
       >
         {column.label}
@@ -159,7 +159,7 @@ export function ColumnSelector<TData>({
     }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
-    })
+    }),
   );
 
   // Sort columns by preference order
@@ -205,7 +205,7 @@ export function ColumnSelector<TData>({
   // Handle visibility change
   const handleVisibilityChange = (columnId: string, visible: boolean) => {
     const newPreferences = preferences.map((p) =>
-      p.id === columnId ? { ...p, visible } : p
+      p.id === columnId ? { ...p, visible } : p,
     );
 
     // If column not in preferences, add it
@@ -286,7 +286,8 @@ export function ColumnSelector<TData>({
               <div className="space-y-1.5 max-h-[300px] overflow-y-auto pr-1">
                 {sortedColumns.map((col) => {
                   const pref = preferences.find((p) => p.id === col.id);
-                  const isVisible = pref?.visible ?? (col.defaultVisible !== false);
+                  const isVisible =
+                    pref?.visible ?? col.defaultVisible !== false;
 
                   return (
                     <SortableColumnItem
@@ -314,7 +315,10 @@ export function ColumnSelector<TData>({
               size="sm"
               className="flex-1 text-xs"
               onClick={() => {
-                const allVisible = preferences.map((p) => ({ ...p, visible: true }));
+                const allVisible = preferences.map((p) => ({
+                  ...p,
+                  visible: true,
+                }));
                 onPreferencesChange(allVisible);
               }}
             >
@@ -326,7 +330,10 @@ export function ColumnSelector<TData>({
               size="sm"
               className="flex-1 text-xs"
               onClick={() => {
-                const allHidden = preferences.map((p) => ({ ...p, visible: false }));
+                const allHidden = preferences.map((p) => ({
+                  ...p,
+                  visible: false,
+                }));
                 onPreferencesChange(allHidden);
               }}
             >
@@ -351,29 +358,31 @@ const STORAGE_KEY_PREFIX = "datatable_columns_";
  */
 export function useColumnPreferences<TData>(
   entityType: string,
-  columns: ColumnConfig<TData>[]
+  columns: ColumnConfig<TData>[],
 ): [ColumnPreference[], (prefs: ColumnPreference[]) => void] {
   const storageKey = `${STORAGE_KEY_PREFIX}${entityType}`;
 
   // Initialize from localStorage or defaults
-  const [preferences, setPreferencesState] = React.useState<ColumnPreference[]>(() => {
-    if (typeof window === "undefined") {
-      return getDefaultPreferences(columns);
-    }
-
-    try {
-      const stored = localStorage.getItem(storageKey);
-      if (stored) {
-        const parsed = JSON.parse(stored) as ColumnPreference[];
-        // Validate and merge with current columns
-        return mergePreferencesWithColumns(parsed, columns);
+  const [preferences, setPreferencesState] = React.useState<ColumnPreference[]>(
+    () => {
+      if (typeof window === "undefined") {
+        return getDefaultPreferences(columns);
       }
-    } catch (e) {
-      console.warn("Failed to load column preferences:", e);
-    }
 
-    return getDefaultPreferences(columns);
-  });
+      try {
+        const stored = localStorage.getItem(storageKey);
+        if (stored) {
+          const parsed = JSON.parse(stored) as ColumnPreference[];
+          // Validate and merge with current columns
+          return mergePreferencesWithColumns(parsed, columns);
+        }
+      } catch (e) {
+        console.warn("Failed to load column preferences:", e);
+      }
+
+      return getDefaultPreferences(columns);
+    },
+  );
 
   // Save to localStorage when preferences change
   const setPreferences = React.useCallback(
@@ -388,7 +397,7 @@ export function useColumnPreferences<TData>(
         }
       }
     },
-    [storageKey]
+    [storageKey],
   );
 
   return [preferences, setPreferences];
@@ -398,7 +407,7 @@ export function useColumnPreferences<TData>(
  * Generate default preferences from column config.
  */
 function getDefaultPreferences<TData>(
-  columns: ColumnConfig<TData>[]
+  columns: ColumnConfig<TData>[],
 ): ColumnPreference[] {
   return columns
     .filter((col) => col.hideable !== false)
@@ -415,9 +424,11 @@ function getDefaultPreferences<TData>(
  */
 function mergePreferencesWithColumns<TData>(
   stored: ColumnPreference[],
-  columns: ColumnConfig<TData>[]
+  columns: ColumnConfig<TData>[],
 ): ColumnPreference[] {
-  const columnIds = new Set(columns.filter((c) => c.hideable !== false).map((c) => c.id));
+  const columnIds = new Set(
+    columns.filter((c) => c.hideable !== false).map((c) => c.id),
+  );
   const storedMap = new Map(stored.map((p) => [p.id, p]));
 
   // Keep only preferences for existing columns
@@ -445,7 +456,7 @@ function mergePreferencesWithColumns<TData>(
 // ============================================================================
 
 export function applyPreferencesToVisibility(
-  preferences: ColumnPreference[]
+  preferences: ColumnPreference[],
 ): Record<string, boolean> {
   const visibility: Record<string, boolean> = {};
 
@@ -456,10 +467,6 @@ export function applyPreferencesToVisibility(
   return visibility;
 }
 
-export function getOrderedColumnIds(
-  preferences: ColumnPreference[]
-): string[] {
-  return preferences
-    .sort((a, b) => a.order - b.order)
-    .map((p) => p.id);
+export function getOrderedColumnIds(preferences: ColumnPreference[]): string[] {
+  return preferences.sort((a, b) => a.order - b.order).map((p) => p.id);
 }

@@ -42,10 +42,7 @@ impl SmbListener {
     /// # Panics
     ///
     /// No panics — all errors are propagated via `Result`.
-    pub async fn run(
-        &self,
-        shutdown: tokio::sync::watch::Receiver<bool>,
-    ) -> anyhow::Result<()> {
+    pub async fn run(&self, shutdown: tokio::sync::watch::Receiver<bool>) -> anyhow::Result<()> {
         let listener = TcpListener::bind(self.config.addr).await?;
         tracing::info!(addr = %self.config.addr, "SMB listener started");
 
@@ -150,7 +147,7 @@ impl SmbListener {
                                                                                         path = %info.path,
                                                                                         "SMB Tree Connect"
                                                                                     );
-                                                                                    let share_name = info.path.split('\\').last().unwrap_or("");
+                                                                                    let share_name = info.path.split('\\').next_back().unwrap_or("");
                                                                                     let (tree_id, status) = if share_name.eq_ignore_ascii_case("SYSVOL") || share_name.eq_ignore_ascii_case("NETLOGON") {
                                                                                         (1u32, super::protocol::NtStatus::Success)
                                                                                     } else {

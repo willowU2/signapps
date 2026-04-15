@@ -23,7 +23,7 @@ export default function MaterialExchange() {
     },
     {
       id: "2",
-      name: "Monitor 27\"",
+      name: 'Monitor 27"',
       condition: "Fair",
       department: "IT",
       photo: "🖥️",
@@ -41,7 +41,7 @@ export default function MaterialExchange() {
 
   const handleRequest = (id: string) => {
     setRequested((prev) =>
-      prev.includes(id) ? prev.filter((r) => r !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((r) => r !== id) : [...prev, id],
     );
   };
 

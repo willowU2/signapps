@@ -1,7 +1,16 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { Globe, Plus, Trash2, ToggleLeft, ToggleRight, RefreshCw, Loader2, Save } from "lucide-react";
+import {
+  Globe,
+  Plus,
+  Trash2,
+  ToggleLeft,
+  ToggleRight,
+  RefreshCw,
+  Loader2,
+  Save,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -33,10 +42,18 @@ export function IpAllowlist() {
   const fetchEntries = useCallback(async () => {
     setIsLoading(true);
     try {
-      const res = await axios.get(`${IDENTITY_URL}/admin/security/ip-allowlist`, {
-        withCredentials: true,
-      });
-      setEntries((res.data as IpAllowlistEntry[]).map((e) => ({ ...e, _key: makeKey() })));
+      const res = await axios.get(
+        `${IDENTITY_URL}/admin/security/ip-allowlist`,
+        {
+          withCredentials: true,
+        },
+      );
+      setEntries(
+        (res.data as IpAllowlistEntry[]).map((e) => ({
+          ...e,
+          _key: makeKey(),
+        })),
+      );
     } catch {
       toast.error("Impossible de charger la liste d'autorisation IP");
     } finally {
@@ -74,7 +91,13 @@ export function IpAllowlist() {
     }
     setEntries((prev) => [
       ...prev,
-      { _key: makeKey(), address: ip, cidr: newCIDR, label: newLabel || null, enabled: true },
+      {
+        _key: makeKey(),
+        address: ip,
+        cidr: newCIDR,
+        label: newLabel || null,
+        enabled: true,
+      },
     ]);
     setNewIP("");
     setNewLabel("");
@@ -86,7 +109,7 @@ export function IpAllowlist() {
 
   const toggleEntry = (key: string) => {
     setEntries((prev) =>
-      prev.map((e) => (e._key === key ? { ...e, enabled: !e.enabled } : e))
+      prev.map((e) => (e._key === key ? { ...e, enabled: !e.enabled } : e)),
     );
   };
 
@@ -99,16 +122,35 @@ export function IpAllowlist() {
           <Globe className="h-6 w-6 text-blue-600" />
           <div>
             <h2 className="text-xl font-bold">IP Allowlist</h2>
-            <p className="text-sm text-muted-foreground">{activeCount} of {entries.length} rules active</p>
+            <p className="text-sm text-muted-foreground">
+              {activeCount} of {entries.length} rules active
+            </p>
           </div>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={fetchEntries} disabled={isLoading} className="gap-1">
-            <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? "animate-spin" : ""}`} />
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={fetchEntries}
+            disabled={isLoading}
+            className="gap-1"
+          >
+            <RefreshCw
+              className={`h-3.5 w-3.5 ${isLoading ? "animate-spin" : ""}`}
+            />
             Refresh
           </Button>
-          <Button size="sm" onClick={saveEntries} disabled={isSaving} className="gap-1">
-            {isSaving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+          <Button
+            size="sm"
+            onClick={saveEntries}
+            disabled={isSaving}
+            className="gap-1"
+          >
+            {isSaving ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Save className="h-3.5 w-3.5" />
+            )}
             Save
           </Button>
         </div>
@@ -164,7 +206,9 @@ export function IpAllowlist() {
             <div
               key={entry._key}
               className={`rounded-lg border p-3 shadow-sm transition-opacity ${
-                entry.enabled ? "border-border bg-card" : "border-gray-100 bg-muted opacity-60"
+                entry.enabled
+                  ? "border-border bg-card"
+                  : "border-gray-100 bg-muted opacity-60"
               }`}
             >
               <div className="flex items-center justify-between gap-3">
@@ -173,10 +217,14 @@ export function IpAllowlist() {
                   <div>
                     <p className="font-mono text-sm font-medium text-foreground">
                       {entry.address}
-                      <span className="ml-1 text-muted-foreground">{entry.cidr}</span>
+                      <span className="ml-1 text-muted-foreground">
+                        {entry.cidr}
+                      </span>
                     </p>
                     {entry.label && (
-                      <Badge variant="outline" className="mt-0.5 text-xs">{entry.label}</Badge>
+                      <Badge variant="outline" className="mt-0.5 text-xs">
+                        {entry.label}
+                      </Badge>
                     )}
                   </div>
                 </div>

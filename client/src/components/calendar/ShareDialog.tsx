@@ -190,7 +190,9 @@ export function ShareDialog({
                       <div className="flex items-center gap-2">
                         <Select
                           value={share.role}
-                          onValueChange={(v: any) => setEditRole({ id: share.user_id, role: v })}
+                          onValueChange={(v: any) =>
+                            setEditRole({ id: share.user_id, role: v })
+                          }
                         >
                           <SelectTrigger className="w-28 h-8">
                             <SelectValue />
@@ -232,13 +234,16 @@ export function ShareDialog({
       </Dialog>
 
       {/* Remove confirmation dialog */}
-      <AlertDialog open={!!removeId} onOpenChange={(open) => !open && setRemoveId(null)}>
+      <AlertDialog
+        open={!!removeId}
+        onOpenChange={(open) => !open && setRemoveId(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Remove Share</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to remove this person's access to the calendar?
-              This action cannot be undone.
+              Are you sure you want to remove this person's access to the
+              calendar? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="flex gap-3">

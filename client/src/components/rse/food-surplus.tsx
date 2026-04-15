@@ -41,7 +41,7 @@ export default function FoodSurplus() {
 
   const handleClaim = (id: string) => {
     setClaimed((prev) =>
-      prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id],
     );
   };
 

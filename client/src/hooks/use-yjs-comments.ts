@@ -5,9 +5,12 @@
  * Comments are stored in a Y.Map structure keyed by comment ID.
  */
 
-import { useEffect, useCallback, useState } from 'react';
-import * as Y from 'yjs';
-import type { CommentData, CommentReply } from '@/components/docs/extensions/comment';
+import { useEffect, useCallback, useState } from "react";
+import * as Y from "yjs";
+import type {
+  CommentData,
+  CommentReply,
+} from "@/components/docs/extensions/comment";
 
 interface UseYjsCommentsOptions {
   ydoc: Y.Doc | null;
@@ -17,12 +20,22 @@ interface UseYjsCommentsOptions {
 
 interface UseYjsCommentsReturn {
   comments: CommentData[];
-  addComment: (commentId: string, author: string, authorId: string, content: string) => void;
+  addComment: (
+    commentId: string,
+    author: string,
+    authorId: string,
+    content: string,
+  ) => void;
   updateComment: (commentId: string, content: string) => void;
   deleteComment: (commentId: string) => void;
   resolveComment: (commentId: string) => void;
   reopenComment: (commentId: string) => void;
-  addReply: (commentId: string, author: string, authorId: string, content: string) => void;
+  addReply: (
+    commentId: string,
+    author: string,
+    authorId: string,
+    content: string,
+  ) => void;
   deleteReply: (commentId: string, replyId: string) => void;
 }
 
@@ -48,8 +61,9 @@ export function useYjsComments({
 
     const commentsArray = Array.from(commentsMap.values());
     // Sort by creation date
-    commentsArray.sort((a, b) =>
-      new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+    commentsArray.sort(
+      (a, b) =>
+        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
     );
 
     setComments(commentsArray);
@@ -97,7 +111,7 @@ export function useYjsComments({
         commentsMap.set(commentId, newComment);
       });
     },
-    [ydoc, getCommentsMap]
+    [ydoc, getCommentsMap],
   );
 
   // Update comment content
@@ -113,7 +127,7 @@ export function useYjsComments({
         commentsMap.set(commentId, { ...existing, content });
       });
     },
-    [ydoc, getCommentsMap]
+    [ydoc, getCommentsMap],
   );
 
   // Delete a comment
@@ -126,7 +140,7 @@ export function useYjsComments({
         commentsMap.delete(commentId);
       });
     },
-    [ydoc, getCommentsMap]
+    [ydoc, getCommentsMap],
   );
 
   // Resolve a comment
@@ -142,7 +156,7 @@ export function useYjsComments({
         commentsMap.set(commentId, { ...existing, resolved: true });
       });
     },
-    [ydoc, getCommentsMap]
+    [ydoc, getCommentsMap],
   );
 
   // Reopen a comment
@@ -158,7 +172,7 @@ export function useYjsComments({
         commentsMap.set(commentId, { ...existing, resolved: false });
       });
     },
-    [ydoc, getCommentsMap]
+    [ydoc, getCommentsMap],
   );
 
   // Add a reply to a comment
@@ -185,7 +199,7 @@ export function useYjsComments({
         });
       });
     },
-    [ydoc, getCommentsMap]
+    [ydoc, getCommentsMap],
   );
 
   // Delete a reply
@@ -204,7 +218,7 @@ export function useYjsComments({
         });
       });
     },
-    [ydoc, getCommentsMap]
+    [ydoc, getCommentsMap],
   );
 
   return {

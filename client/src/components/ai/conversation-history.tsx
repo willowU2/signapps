@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -15,19 +15,13 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import {
-  MessageSquare,
-  Trash2,
-  Play,
-  Clock,
-  RefreshCw,
-} from 'lucide-react';
+} from "@/components/ui/alert-dialog";
+import { MessageSquare, Trash2, Play, Clock, RefreshCw } from "lucide-react";
 import {
   useAiConversations,
   type Conversation,
-} from '@/hooks/use-ai-conversations';
-import { SpinnerInfinity } from 'spinners-react';
+} from "@/hooks/use-ai-conversations";
+import { SpinnerInfinity } from "spinners-react";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // HELPERS
@@ -37,19 +31,19 @@ function formatRelativeDate(isoDate: string): string {
   try {
     const diff = Date.now() - new Date(isoDate).getTime();
     const seconds = Math.floor(diff / 1000);
-    if (seconds < 60) return 'A l\'instant';
+    if (seconds < 60) return "A l'instant";
     const minutes = Math.floor(seconds / 60);
     if (minutes < 60) return `Il y a ${minutes}min`;
     const hours = Math.floor(minutes / 60);
     if (hours < 24) return `Il y a ${hours}h`;
     const days = Math.floor(hours / 24);
     if (days < 7) return `Il y a ${days}j`;
-    return new Date(isoDate).toLocaleDateString('fr-FR', {
-      day: 'numeric',
-      month: 'short',
+    return new Date(isoDate).toLocaleDateString("fr-FR", {
+      day: "numeric",
+      month: "short",
     });
   } catch {
-    return '-';
+    return "-";
   }
 }
 
@@ -157,7 +151,9 @@ export function ConversationHistory() {
               onClick={fetchConversations}
               disabled={loading}
             >
-              <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+              <RefreshCw
+                className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`}
+              />
               Actualiser
             </Button>
           </div>
@@ -215,8 +211,8 @@ export function ConversationHistory() {
           <AlertDialogHeader>
             <AlertDialogTitle>Supprimer la conversation ?</AlertDialogTitle>
             <AlertDialogDescription>
-              Cette action est irreversible. La conversation et tous ses messages
-              seront definitivement supprimes.
+              Cette action est irreversible. La conversation et tous ses
+              messages seront definitivement supprimes.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

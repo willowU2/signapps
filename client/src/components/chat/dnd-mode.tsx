@@ -44,7 +44,9 @@ export function DNDMode() {
       {/* Header with toggle */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Bell className={cn("h-5 w-5", isEnabled ? "text-destructive" : "")} />
+          <Bell
+            className={cn("h-5 w-5", isEnabled ? "text-destructive" : "")}
+          />
           <span className="font-medium">Ne Pas Déranger</span>
         </div>
         <Button

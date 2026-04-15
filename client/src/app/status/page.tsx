@@ -1,21 +1,30 @@
-"use client"
+"use client";
 
-import { useEffect, useState, useCallback, useRef } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { CheckCircle, XCircle, RefreshCw, Activity, Clock, Wifi, WifiOff, TrendingUp } from "lucide-react"
-import { format } from "date-fns"
-import { fr } from "date-fns/locale"
-import { usePageTitle } from '@/hooks/use-page-title';
-import { toast } from "sonner"
+import { useEffect, useState, useCallback, useRef } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  CheckCircle,
+  XCircle,
+  RefreshCw,
+  Activity,
+  Clock,
+  Wifi,
+  WifiOff,
+  TrendingUp,
+} from "lucide-react";
+import { format } from "date-fns";
+import { fr } from "date-fns/locale";
+import { usePageTitle } from "@/hooks/use-page-title";
+import { toast } from "sonner";
 
 // ─── Service definitions ────────────────────────────────────────────────────
 
 interface ServiceDef {
-  name: string
-  port: number
-  path: string
+  name: string;
+  port: number;
+  path: string;
 }
 
 const SERVICES: ServiceDef[] = [
@@ -31,51 +40,56 @@ const SERVICES: ServiceDef[] = [
   { name: "Docs", port: 3010, path: "/health" },
   { name: "Calendar", port: 3011, path: "/health" },
   { name: "Chat", port: 3013, path: "/health" },
-]
+];
 
-const REFRESH_INTERVAL_MS = 10_000
-const MAX_HISTORY = 20
+const REFRESH_INTERVAL_MS = 10_000;
+const MAX_HISTORY = 20;
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
-type HealthStatus = "online" | "offline" | "checking"
+type HealthStatus = "online" | "offline" | "checking";
 
 interface ServiceHealth {
-  name: string
-  port: number
-  status: HealthStatus
-  responseTime: number | null
-  lastChecked: Date | null
+  name: string;
+  port: number;
+  status: HealthStatus;
+  responseTime: number | null;
+  lastChecked: Date | null;
 }
 
 interface HealthHistoryEntry {
-  status: HealthStatus
-  responseTime: number | null
-  timestamp: Date
+  status: HealthStatus;
+  responseTime: number | null;
+  timestamp: Date;
 }
 
 // ─── Status metadata ────────────────────────────────────────────────────────
 
-const STATUS_META: Record<HealthStatus, {
-  label: string
-  icon: typeof CheckCircle
-  color: string
-  bg: string
-  badgeClass: string
-}> = {
+const STATUS_META: Record<
+  HealthStatus,
+  {
+    label: string;
+    icon: typeof CheckCircle;
+    color: string;
+    bg: string;
+    badgeClass: string;
+  }
+> = {
   online: {
     label: "En ligne",
     icon: CheckCircle,
     color: "text-emerald-600 dark:text-emerald-400",
     bg: "bg-emerald-500/10",
-    badgeClass: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/20",
+    badgeClass:
+      "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/20",
   },
   offline: {
     label: "Hors ligne",
     icon: XCircle,
     color: "text-red-600 dark:text-red-400",
     bg: "bg-red-500/10",
-    badgeClass: "bg-red-500/10 text-red-700 dark:text-red-300 border-red-500/20",
+    badgeClass:
+      "bg-red-500/10 text-red-700 dark:text-red-300 border-red-500/20",
   },
   checking: {
     label: "Verification...",
@@ -84,34 +98,47 @@ const STATUS_META: Record<HealthStatus, {
     bg: "bg-muted/50",
     badgeClass: "bg-muted text-muted-foreground border-border",
   },
-}
+};
 
 // ─── Sparkline component ────────────────────────────────────────────────────
 
-function Sparkline({ data, className }: { data: (number | null)[]; className?: string }) {
-  const values = data.filter((v): v is number => v !== null)
-  if (values.length < 2) return null
+function Sparkline({
+  data,
+  className,
+}: {
+  data: (number | null)[];
+  className?: string;
+}) {
+  const values = data.filter((v): v is number => v !== null);
+  if (values.length < 2) return null;
 
-  const min = Math.min(...values)
-  const max = Math.max(...values)
-  const range = max - min || 1
-  const width = 120
-  const height = 28
-  const padding = 2
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const range = max - min || 1;
+  const width = 120;
+  const height = 28;
+  const padding = 2;
 
-  const points = values.map((v, i) => {
-    const x = padding + (i / (values.length - 1)) * (width - padding * 2)
-    const y = height - padding - ((v - min) / range) * (height - padding * 2)
-    return `${x},${y}`
-  }).join(" ")
+  const points = values
+    .map((v, i) => {
+      const x = padding + (i / (values.length - 1)) * (width - padding * 2);
+      const y = height - padding - ((v - min) / range) * (height - padding * 2);
+      return `${x},${y}`;
+    })
+    .join(" ");
 
-  const avg = Math.round(values.reduce((a, b) => a + b, 0) / values.length)
-  const latest = values[values.length - 1]
-  const trend = values.length >= 2 ? latest - values[values.length - 2] : 0
+  const avg = Math.round(values.reduce((a, b) => a + b, 0) / values.length);
+  const latest = values[values.length - 1];
+  const trend = values.length >= 2 ? latest - values[values.length - 2] : 0;
 
   return (
     <div className={`flex items-center gap-2 ${className ?? ""}`}>
-      <svg width={width} height={height} className="shrink-0" viewBox={`0 0 ${width} ${height}`}>
+      <svg
+        width={width}
+        height={height}
+        className="shrink-0"
+        viewBox={`0 0 ${width} ${height}`}
+      >
         <polyline
           points={points}
           fill="none"
@@ -124,8 +151,16 @@ function Sparkline({ data, className }: { data: (number | null)[]; className?: s
         {/* Latest point dot */}
         {values.length > 0 && (
           <circle
-            cx={padding + ((values.length - 1) / (values.length - 1)) * (width - padding * 2)}
-            cy={height - padding - ((latest - min) / range) * (height - padding * 2)}
+            cx={
+              padding +
+              ((values.length - 1) / (values.length - 1)) *
+                (width - padding * 2)
+            }
+            cy={
+              height -
+              padding -
+              ((latest - min) / range) * (height - padding * 2)
+            }
             r="2.5"
             className="fill-primary"
           />
@@ -135,67 +170,75 @@ function Sparkline({ data, className }: { data: (number | null)[]; className?: s
         <span className="text-muted-foreground">moy {avg}ms</span>
         {trend !== 0 && (
           <span className={trend > 0 ? "text-amber-500" : "text-emerald-500"}>
-            {trend > 0 ? "+" : ""}{trend}ms
+            {trend > 0 ? "+" : ""}
+            {trend}ms
           </span>
         )}
       </div>
     </div>
-  )
+  );
 }
 
 // ─── Uptime badge ───────────────────────────────────────────────────────────
 
 function UptimeBadge({ history }: { history: HealthHistoryEntry[] }) {
-  if (history.length === 0) return null
-  const onlineCount = history.filter(h => h.status === "online").length
-  const pct = Math.round((onlineCount / history.length) * 100)
-  const color = pct >= 99
-    ? "text-emerald-600 dark:text-emerald-400"
-    : pct >= 90
-      ? "text-amber-600 dark:text-amber-400"
-      : "text-red-600 dark:text-red-400"
+  if (history.length === 0) return null;
+  const onlineCount = history.filter((h) => h.status === "online").length;
+  const pct = Math.round((onlineCount / history.length) * 100);
+  const color =
+    pct >= 99
+      ? "text-emerald-600 dark:text-emerald-400"
+      : pct >= 90
+        ? "text-amber-600 dark:text-amber-400"
+        : "text-red-600 dark:text-red-400";
 
   return (
-    <span className={`text-xs font-medium tabular-nums ${color}`} title="Uptime depuis le chargement de la page">
+    <span
+      className={`text-xs font-medium tabular-nums ${color}`}
+      title="Uptime depuis le chargement de la page"
+    >
       {pct}%
     </span>
-  )
+  );
 }
 
 // ─── Health check helper ────────────────────────────────────────────────────
 
 async function checkServiceHealth(service: ServiceDef): Promise<ServiceHealth> {
-  const url = `http://localhost:${service.port}${service.path}`
-  const start = performance.now()
+  const url = `http://localhost:${service.port}${service.path}`;
+  const start = performance.now();
   try {
-    const controller = new AbortController()
-    const timeout = setTimeout(() => controller.abort(), 5000)
-    const res = await fetch(url, { signal: controller.signal, mode: "no-cors" })
-    clearTimeout(timeout)
-    const elapsed = Math.round(performance.now() - start)
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
+    const res = await fetch(url, {
+      signal: controller.signal,
+      mode: "no-cors",
+    });
+    clearTimeout(timeout);
+    const elapsed = Math.round(performance.now() - start);
     return {
       name: service.name,
       port: service.port,
       status: "online",
       responseTime: elapsed,
       lastChecked: new Date(),
-    }
+    };
   } catch {
-    const elapsed = Math.round(performance.now() - start)
+    const elapsed = Math.round(performance.now() - start);
     return {
       name: service.name,
       port: service.port,
       status: "offline",
       responseTime: elapsed > 4900 ? null : elapsed,
       lastChecked: new Date(),
-    }
+    };
   }
 }
 
 // ─── Component ──────────────────────────────────────────────────────────────
 
 export default function StatusPage() {
-  usePageTitle('Statut');
+  usePageTitle("Statut");
   const [services, setServices] = useState<ServiceHealth[]>(
     SERVICES.map((s) => ({
       name: s.name,
@@ -203,69 +246,73 @@ export default function StatusPage() {
       status: "checking" as HealthStatus,
       responseTime: null,
       lastChecked: null,
-    }))
-  )
-  const [lastRefresh, setLastRefresh] = useState<Date>(new Date())
-  const [isRefreshing, setIsRefreshing] = useState(false)
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+    })),
+  );
+  const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // History: map of service name -> array of last MAX_HISTORY entries
-  const [history, setHistory] = useState<Record<string, HealthHistoryEntry[]>>(() => {
-    const init: Record<string, HealthHistoryEntry[]> = {}
-    SERVICES.forEach(s => { init[s.name] = [] })
-    return init
-  })
+  const [history, setHistory] = useState<Record<string, HealthHistoryEntry[]>>(
+    () => {
+      const init: Record<string, HealthHistoryEntry[]> = {};
+      SERVICES.forEach((s) => {
+        init[s.name] = [];
+      });
+      return init;
+    },
+  );
 
   // Track previous statuses for down-detection alerts
-  const prevStatusRef = useRef<Record<string, HealthStatus>>({})
+  const prevStatusRef = useRef<Record<string, HealthStatus>>({});
 
   const checkAll = useCallback(async () => {
-    setIsRefreshing(true)
-    const results = await Promise.all(SERVICES.map(checkServiceHealth))
+    setIsRefreshing(true);
+    const results = await Promise.all(SERVICES.map(checkServiceHealth));
 
     // Detect services that just went offline
-    results.forEach(result => {
-      const prev = prevStatusRef.current[result.name]
+    results.forEach((result) => {
+      const prev = prevStatusRef.current[result.name];
       if (prev === "online" && result.status === "offline") {
         toast.error(`${result.name} est passe hors ligne`, {
           description: `Le service sur le port ${result.port} ne repond plus.`,
           duration: 8000,
-        })
+        });
       }
-      prevStatusRef.current[result.name] = result.status
-    })
+      prevStatusRef.current[result.name] = result.status;
+    });
 
     // Update history
-    setHistory(prev => {
-      const next = { ...prev }
-      results.forEach(r => {
+    setHistory((prev) => {
+      const next = { ...prev };
+      results.forEach((r) => {
         const entry: HealthHistoryEntry = {
           status: r.status,
           responseTime: r.responseTime,
           timestamp: r.lastChecked ?? new Date(),
-        }
-        const arr = [...(next[r.name] ?? []), entry]
-        next[r.name] = arr.slice(-MAX_HISTORY)
-      })
-      return next
-    })
+        };
+        const arr = [...(next[r.name] ?? []), entry];
+        next[r.name] = arr.slice(-MAX_HISTORY);
+      });
+      return next;
+    });
 
-    setServices(results)
-    setLastRefresh(new Date())
-    setIsRefreshing(false)
-  }, [])
+    setServices(results);
+    setLastRefresh(new Date());
+    setIsRefreshing(false);
+  }, []);
 
   useEffect(() => {
-    checkAll()
-    intervalRef.current = setInterval(checkAll, REFRESH_INTERVAL_MS)
+    checkAll();
+    intervalRef.current = setInterval(checkAll, REFRESH_INTERVAL_MS);
     return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current)
-    }
-  }, [checkAll])
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, [checkAll]);
 
-  const onlineCount = services.filter((s) => s.status === "online").length
-  const offlineCount = services.filter((s) => s.status === "offline").length
-  const totalCount = services.length
+  const onlineCount = services.filter((s) => s.status === "online").length;
+  const offlineCount = services.filter((s) => s.status === "offline").length;
+  const totalCount = services.length;
 
   const overallStatus: HealthStatus =
     offlineCount === 0 && services.every((s) => s.status !== "checking")
@@ -274,10 +321,10 @@ export default function StatusPage() {
         ? "offline"
         : services.some((s) => s.status === "checking")
           ? "checking"
-          : "offline"
+          : "offline";
 
-  const overallMeta = STATUS_META[overallStatus]
-  const OverallIcon = overallMeta.icon
+  const overallMeta = STATUS_META[overallStatus];
+  const OverallIcon = overallMeta.icon;
 
   const overallLabel =
     overallStatus === "online"
@@ -286,12 +333,19 @@ export default function StatusPage() {
         ? "Verification en cours..."
         : offlineCount === totalCount
           ? "Tous les services sont hors ligne"
-          : `${offlineCount} service${offlineCount > 1 ? "s" : ""} hors ligne`
+          : `${offlineCount} service${offlineCount > 1 ? "s" : ""} hors ligne`;
 
   // Overall uptime
-  const totalChecks = Object.values(history).reduce((sum, arr) => sum + arr.length, 0)
-  const totalOnline = Object.values(history).reduce((sum, arr) => sum + arr.filter(h => h.status === "online").length, 0)
-  const overallUptime = totalChecks > 0 ? Math.round((totalOnline / totalChecks) * 100) : null
+  const totalChecks = Object.values(history).reduce(
+    (sum, arr) => sum + arr.length,
+    0,
+  );
+  const totalOnline = Object.values(history).reduce(
+    (sum, arr) => sum + arr.filter((h) => h.status === "online").length,
+    0,
+  );
+  const overallUptime =
+    totalChecks > 0 ? Math.round((totalOnline / totalChecks) * 100) : null;
 
   return (
     <div className="min-h-screen bg-background">
@@ -311,7 +365,9 @@ export default function StatusPage() {
                 overallStatus === "checking" ? "animate-spin" : ""
               }`}
             />
-            <span className={`font-semibold ${overallMeta.color}`}>{overallLabel}</span>
+            <span className={`font-semibold ${overallMeta.color}`}>
+              {overallLabel}
+            </span>
           </div>
 
           <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground">
@@ -326,7 +382,9 @@ export default function StatusPage() {
               disabled={isRefreshing}
               className="gap-1.5 h-7 text-xs"
             >
-              <RefreshCw className={`h-3.5 w-3.5 ${isRefreshing ? "animate-spin" : ""}`} />
+              <RefreshCw
+                className={`h-3.5 w-3.5 ${isRefreshing ? "animate-spin" : ""}`}
+              />
               Rafraichir
             </Button>
           </div>
@@ -391,10 +449,10 @@ export default function StatusPage() {
           <CardContent>
             <div className="divide-y divide-border">
               {services.map((service) => {
-                const meta = STATUS_META[service.status]
-                const Icon = meta.icon
-                const svcHistory = history[service.name] ?? []
-                const responseTimeData = svcHistory.map(h => h.responseTime)
+                const meta = STATUS_META[service.status];
+                const Icon = meta.icon;
+                const svcHistory = history[service.name] ?? [];
+                const responseTimeData = svcHistory.map((h) => h.responseTime);
 
                 return (
                   <div
@@ -412,7 +470,9 @@ export default function StatusPage() {
                         }`}
                       />
                       <div className="min-w-0">
-                        <span className="font-medium text-sm">{service.name}</span>
+                        <span className="font-medium text-sm">
+                          {service.name}
+                        </span>
                         <span className="text-xs text-muted-foreground ml-2">
                           :{service.port}
                         </span>
@@ -421,7 +481,10 @@ export default function StatusPage() {
 
                     <div className="flex items-center gap-3 shrink-0">
                       {/* Sparkline */}
-                      <Sparkline data={responseTimeData} className="hidden md:flex" />
+                      <Sparkline
+                        data={responseTimeData}
+                        className="hidden md:flex"
+                      />
 
                       {/* Uptime badge */}
                       <UptimeBadge history={svcHistory} />
@@ -443,16 +506,17 @@ export default function StatusPage() {
                       </span>
                     </div>
                   </div>
-                )
+                );
               })}
             </div>
           </CardContent>
         </Card>
 
         <p className="text-center text-xs text-muted-foreground">
-          Cette page est accessible publiquement &middot; Powered by SignApps Platform
+          Cette page est accessible publiquement &middot; Powered by SignApps
+          Platform
         </p>
       </div>
     </div>
-  )
+  );
 }

@@ -53,19 +53,46 @@ mod tests {
     #[test]
     fn admin_can_do_everything() {
         let node = Some(Uuid::new_v4());
-        assert_eq!(check_access(2, AclOperation::Read, node), AclDecision::Allow);
-        assert_eq!(check_access(2, AclOperation::Write, node), AclDecision::Allow);
-        assert_eq!(check_access(2, AclOperation::Create, node), AclDecision::Allow);
-        assert_eq!(check_access(2, AclOperation::Delete, node), AclDecision::Allow);
-        assert_eq!(check_access(3, AclOperation::Delete, node), AclDecision::Allow);
+        assert_eq!(
+            check_access(2, AclOperation::Read, node),
+            AclDecision::Allow
+        );
+        assert_eq!(
+            check_access(2, AclOperation::Write, node),
+            AclDecision::Allow
+        );
+        assert_eq!(
+            check_access(2, AclOperation::Create, node),
+            AclDecision::Allow
+        );
+        assert_eq!(
+            check_access(2, AclOperation::Delete, node),
+            AclDecision::Allow
+        );
+        assert_eq!(
+            check_access(3, AclOperation::Delete, node),
+            AclDecision::Allow
+        );
     }
 
     #[test]
     fn regular_user_read_only() {
         let node = Some(Uuid::new_v4());
-        assert_eq!(check_access(1, AclOperation::Read, node), AclDecision::Allow);
-        assert_eq!(check_access(1, AclOperation::Write, node), AclDecision::Deny);
-        assert_eq!(check_access(1, AclOperation::Create, node), AclDecision::Deny);
-        assert_eq!(check_access(1, AclOperation::Delete, node), AclDecision::Deny);
+        assert_eq!(
+            check_access(1, AclOperation::Read, node),
+            AclDecision::Allow
+        );
+        assert_eq!(
+            check_access(1, AclOperation::Write, node),
+            AclDecision::Deny
+        );
+        assert_eq!(
+            check_access(1, AclOperation::Create, node),
+            AclDecision::Deny
+        );
+        assert_eq!(
+            check_access(1, AclOperation::Delete, node),
+            AclDecision::Deny
+        );
     }
 }

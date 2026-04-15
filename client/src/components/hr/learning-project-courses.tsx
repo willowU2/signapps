@@ -31,24 +31,86 @@ const LEVEL_CONFIG = {
 };
 
 const DEMO_COURSES: LearningCourse[] = [
-  { id: "c1", title: "Rust Programming Fundamentals", provider: "Rustlings", technology: "Rust", duration: "20h", level: "intermediate", projectsUsingTech: ["Refonte Backend Auth"], enrolledCount: 3, completionRate: 67, userProgress: 45 },
-  { id: "c2", title: "TypeScript Deep Dive", provider: "TypeScript.tv", technology: "TypeScript", duration: "12h", level: "intermediate", projectsUsingTech: ["Refonte Backend Auth", "Dashboard Analytics"], enrolledCount: 5, completionRate: 80, userProgress: 100 },
-  { id: "c3", title: "Docker for Developers", provider: "Docker Learn", technology: "Docker", duration: "8h", level: "beginner", projectsUsingTech: ["Refonte Backend Auth"], enrolledCount: 4, completionRate: 90 },
-  { id: "c4", title: "Figma Advanced Prototyping", provider: "Figma Academy", technology: "Figma", duration: "6h", level: "advanced", projectsUsingTech: ["Dashboard Analytics"], enrolledCount: 2, completionRate: 50 },
-  { id: "c5", title: "PostgreSQL Performance Tuning", provider: "Percona", technology: "PostgreSQL", duration: "15h", level: "advanced", projectsUsingTech: ["Refonte Backend Auth"], enrolledCount: 1, completionRate: 30 },
+  {
+    id: "c1",
+    title: "Rust Programming Fundamentals",
+    provider: "Rustlings",
+    technology: "Rust",
+    duration: "20h",
+    level: "intermediate",
+    projectsUsingTech: ["Refonte Backend Auth"],
+    enrolledCount: 3,
+    completionRate: 67,
+    userProgress: 45,
+  },
+  {
+    id: "c2",
+    title: "TypeScript Deep Dive",
+    provider: "TypeScript.tv",
+    technology: "TypeScript",
+    duration: "12h",
+    level: "intermediate",
+    projectsUsingTech: ["Refonte Backend Auth", "Dashboard Analytics"],
+    enrolledCount: 5,
+    completionRate: 80,
+    userProgress: 100,
+  },
+  {
+    id: "c3",
+    title: "Docker for Developers",
+    provider: "Docker Learn",
+    technology: "Docker",
+    duration: "8h",
+    level: "beginner",
+    projectsUsingTech: ["Refonte Backend Auth"],
+    enrolledCount: 4,
+    completionRate: 90,
+  },
+  {
+    id: "c4",
+    title: "Figma Advanced Prototyping",
+    provider: "Figma Academy",
+    technology: "Figma",
+    duration: "6h",
+    level: "advanced",
+    projectsUsingTech: ["Dashboard Analytics"],
+    enrolledCount: 2,
+    completionRate: 50,
+  },
+  {
+    id: "c5",
+    title: "PostgreSQL Performance Tuning",
+    provider: "Percona",
+    technology: "PostgreSQL",
+    duration: "15h",
+    level: "advanced",
+    projectsUsingTech: ["Refonte Backend Auth"],
+    enrolledCount: 1,
+    completionRate: 30,
+  },
 ];
 
 interface LearningProjectCoursesProps {
   projectFilter?: string;
 }
 
-export function LearningProjectCourses({ projectFilter }: LearningProjectCoursesProps) {
+export function LearningProjectCourses({
+  projectFilter,
+}: LearningProjectCoursesProps) {
   const [search, setSearch] = useState("");
-  const [enrolled, setEnrolled] = useState<Set<string>>(new Set(DEMO_COURSES.filter((c) => c.userProgress !== undefined).map((c) => c.id)));
+  const [enrolled, setEnrolled] = useState<Set<string>>(
+    new Set(
+      DEMO_COURSES.filter((c) => c.userProgress !== undefined).map((c) => c.id),
+    ),
+  );
 
   const filtered = DEMO_COURSES.filter((c) => {
-    const matchSearch = !search || c.title.toLowerCase().includes(search.toLowerCase()) || c.technology.toLowerCase().includes(search.toLowerCase());
-    const matchProject = !projectFilter || c.projectsUsingTech.includes(projectFilter);
+    const matchSearch =
+      !search ||
+      c.title.toLowerCase().includes(search.toLowerCase()) ||
+      c.technology.toLowerCase().includes(search.toLowerCase());
+    const matchProject =
+      !projectFilter || c.projectsUsingTech.includes(projectFilter);
     return matchSearch && matchProject;
   });
 
@@ -78,25 +140,44 @@ export function LearningProjectCourses({ projectFilter }: LearningProjectCourses
         <div className="space-y-2">
           {filtered.map((course) => {
             const isEnrolled = enrolled.has(course.id);
-            const prog = DEMO_COURSES.find((c) => c.id === course.id)?.userProgress;
+            const prog = DEMO_COURSES.find(
+              (c) => c.id === course.id,
+            )?.userProgress;
             const isDone = prog === 100;
             return (
-              <div key={course.id} className="rounded-lg border p-2.5 space-y-1.5">
+              <div
+                key={course.id}
+                className="rounded-lg border p-2.5 space-y-1.5"
+              >
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
                     <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className="text-xs font-medium">{course.title}</span>
-                      <span className={`text-[10px] rounded px-1 py-0.5 ${LEVEL_CONFIG[course.level].class}`}>{LEVEL_CONFIG[course.level].label}</span>
+                      <span className="text-xs font-medium">
+                        {course.title}
+                      </span>
+                      <span
+                        className={`text-[10px] rounded px-1 py-0.5 ${LEVEL_CONFIG[course.level].class}`}
+                      >
+                        {LEVEL_CONFIG[course.level].label}
+                      </span>
                     </div>
-                    <p className="text-[10px] text-muted-foreground mt-0.5">{course.provider} · {course.duration}</p>
+                    <p className="text-[10px] text-muted-foreground mt-0.5">
+                      {course.provider} · {course.duration}
+                    </p>
                   </div>
-                  <Badge variant="outline" className="text-[10px] shrink-0">{course.technology}</Badge>
+                  <Badge variant="outline" className="text-[10px] shrink-0">
+                    {course.technology}
+                  </Badge>
                 </div>
 
                 <div className="flex items-center gap-1.5 flex-wrap">
                   {course.projectsUsingTech.map((p) => (
-                    <span key={p} className="flex items-center gap-0.5 text-[10px] text-muted-foreground">
-                      <Briefcase className="size-2.5" />{p}
+                    <span
+                      key={p}
+                      className="flex items-center gap-0.5 text-[10px] text-muted-foreground"
+                    >
+                      <Briefcase className="size-2.5" />
+                      {p}
                     </span>
                   ))}
                 </div>
@@ -104,26 +185,44 @@ export function LearningProjectCourses({ projectFilter }: LearningProjectCourses
                 {isEnrolled && prog !== undefined && (
                   <div className="flex items-center gap-2">
                     <Progress value={prog} className="h-1.5 flex-1" />
-                    <span className="text-[10px] text-muted-foreground">{prog}%</span>
-                    {isDone && <CheckCircle2 className="size-3.5 text-green-600" />}
+                    <span className="text-[10px] text-muted-foreground">
+                      {prog}%
+                    </span>
+                    {isDone && (
+                      <CheckCircle2 className="size-3.5 text-green-600" />
+                    )}
                   </div>
                 )}
 
                 <Button
                   size="sm"
-                  variant={isDone ? "secondary" : isEnrolled ? "outline" : "default"}
+                  variant={
+                    isDone ? "secondary" : isEnrolled ? "outline" : "default"
+                  }
                   className="h-6 gap-1 text-[10px] w-full"
                   onClick={() => !isEnrolled && enroll(course.id)}
                   disabled={isDone}
                 >
-                  {isDone ? <><CheckCircle2 className="size-3" /> Terminé</> :
-                   isEnrolled ? <><Play className="size-3" /> Continuer</> :
-                   "S'inscrire"}
+                  {isDone ? (
+                    <>
+                      <CheckCircle2 className="size-3" /> Terminé
+                    </>
+                  ) : isEnrolled ? (
+                    <>
+                      <Play className="size-3" /> Continuer
+                    </>
+                  ) : (
+                    "S'inscrire"
+                  )}
                 </Button>
               </div>
             );
           })}
-          {filtered.length === 0 && <p className="text-xs text-muted-foreground text-center py-4">Aucune formation trouvée.</p>}
+          {filtered.length === 0 && (
+            <p className="text-xs text-muted-foreground text-center py-4">
+              Aucune formation trouvée.
+            </p>
+          )}
         </div>
       </CardContent>
     </Card>

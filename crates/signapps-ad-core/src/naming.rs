@@ -193,16 +193,14 @@ pub async fn pick_available_sam(
 ) -> signapps_common::Result<String> {
     let candidates = generate_sam_candidates(first_name, last_name, middle_name);
 
-    let existing: Vec<(String,)> = sqlx::query_as(
-        "SELECT sam_account_name FROM ad_user_accounts WHERE domain_id = $1",
-    )
-    .bind(domain_id)
-    .fetch_all(pool)
-    .await
-    .map_err(|e| signapps_common::Error::Database(e.to_string()))?;
+    let existing: Vec<(String,)> =
+        sqlx::query_as("SELECT sam_account_name FROM ad_user_accounts WHERE domain_id = $1")
+            .bind(domain_id)
+            .fetch_all(pool)
+            .await
+            .map_err(|e| signapps_common::Error::Database(e.to_string()))?;
 
-    let taken: std::collections::HashSet<String> =
-        existing.into_iter().map(|(s,)| s).collect();
+    let taken: std::collections::HashSet<String> = existing.into_iter().map(|(s,)| s).collect();
 
     for candidate in &candidates {
         if !taken.contains(candidate) {

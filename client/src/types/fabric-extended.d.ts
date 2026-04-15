@@ -1,6 +1,6 @@
-import type { FabricObject, FabricText } from 'fabric';
+import type { FabricObject, FabricText } from "fabric";
 
-declare module 'fabric' {
+declare module "fabric" {
   interface FabricObject {
     id?: string;
   }

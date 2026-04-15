@@ -25,10 +25,30 @@ export interface RevisionWorkflowProps {
 }
 
 const STEPS: RevisionStep[] = [
-  { id: "draft", label: "Brouillon", icon: <Clock className="w-4 h-4" />, completed: false },
-  { id: "review", label: "Relecture", icon: <AlertCircle className="w-4 h-4" />, completed: false },
-  { id: "approved", label: "Approuvé", icon: <CheckCircle2 className="w-4 h-4" />, completed: false },
-  { id: "published", label: "Publié", icon: <FileCheck className="w-4 h-4" />, completed: false },
+  {
+    id: "draft",
+    label: "Brouillon",
+    icon: <Clock className="w-4 h-4" />,
+    completed: false,
+  },
+  {
+    id: "review",
+    label: "Relecture",
+    icon: <AlertCircle className="w-4 h-4" />,
+    completed: false,
+  },
+  {
+    id: "approved",
+    label: "Approuvé",
+    icon: <CheckCircle2 className="w-4 h-4" />,
+    completed: false,
+  },
+  {
+    id: "published",
+    label: "Publié",
+    icon: <FileCheck className="w-4 h-4" />,
+    completed: false,
+  },
 ];
 
 export function RevisionWorkflow({
@@ -46,7 +66,10 @@ export function RevisionWorkflow({
   const [showRejectForm, setShowRejectForm] = useState(false);
 
   const stepIndex = STEPS.findIndex((s) => s.id === currentStep);
-  const completedSteps = STEPS.slice(0, stepIndex).map((s) => ({ ...s, completed: true }));
+  const completedSteps = STEPS.slice(0, stepIndex).map((s) => ({
+    ...s,
+    completed: true,
+  }));
   const currentStepObj = STEPS[stepIndex] || STEPS[0];
   const futureSteps = STEPS.slice(stepIndex + 1);
 
@@ -109,7 +132,9 @@ export function RevisionWorkflow({
             {currentStepObj.icon}
           </div>
           <div className="flex-1">
-            <p className="text-sm font-medium text-blue-700">{currentStepObj.label}</p>
+            <p className="text-sm font-medium text-blue-700">
+              {currentStepObj.label}
+            </p>
             <p className="text-xs text-blue-600">En cours</p>
           </div>
           <Badge className="bg-blue-600">Actif</Badge>
@@ -122,7 +147,9 @@ export function RevisionWorkflow({
               {step.icon}
             </div>
             <div className="flex-1">
-              <p className="text-sm font-medium text-muted-foreground">{step.label}</p>
+              <p className="text-sm font-medium text-muted-foreground">
+                {step.label}
+              </p>
               <p className="text-xs text-gray-400">À venir</p>
             </div>
           </div>
@@ -132,7 +159,9 @@ export function RevisionWorkflow({
       {/* Reviewer Info */}
       {(reviewerName || reviewerEmail) && (
         <div className="bg-muted p-4 rounded-lg border border-border">
-          <p className="text-sm font-medium text-muted-foreground">Responsable de la relecture:</p>
+          <p className="text-sm font-medium text-muted-foreground">
+            Responsable de la relecture:
+          </p>
           <p className="text-sm text-muted-foreground mt-1">
             {reviewerName}
             {reviewerEmail && ` (${reviewerEmail})`}

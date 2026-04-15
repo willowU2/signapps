@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { useEffect, useState, useCallback, useRef } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { RefreshCw, Server, Cpu, HardDrive } from 'lucide-react';
+import { useEffect, useState, useCallback, useRef } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { RefreshCw, Server, Cpu, HardDrive } from "lucide-react";
 import {
   BarChart,
   Bar,
@@ -16,8 +16,12 @@ import {
   Legend,
   LineChart,
   Line,
-} from 'recharts';
-import { containersApi, type ContainerInfo, type ContainerStats } from '@/lib/api/containers';
+} from "recharts";
+import {
+  containersApi,
+  type ContainerInfo,
+  type ContainerStats,
+} from "@/lib/api/containers";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -44,11 +48,11 @@ interface HistoryPoint {
 // ---------------------------------------------------------------------------
 
 function formatBytes(bytes: number): string {
-  if (bytes === 0) return '0 B';
+  if (bytes === 0) return "0 B";
   const k = 1024;
-  const sizes = ['B', 'KB', 'MB', 'GB'];
+  const sizes = ["B", "KB", "MB", "GB"];
   const i = Math.floor(Math.log(Math.abs(bytes)) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
 }
 
 // ---------------------------------------------------------------------------
@@ -60,13 +64,16 @@ export function ContainerResources() {
   const [cpuHistory, setCpuHistory] = useState<HistoryPoint[]>([]);
   const [memHistory, setMemHistory] = useState<HistoryPoint[]>([]);
   const [loading, setLoading] = useState(true);
-  const historyRef = useRef<{ cpu: HistoryPoint[]; mem: HistoryPoint[] }>({ cpu: [], mem: [] });
+  const historyRef = useRef<{ cpu: HistoryPoint[]; mem: HistoryPoint[] }>({
+    cpu: [],
+    mem: [],
+  });
 
   const fetchData = useCallback(async () => {
     try {
       const res = await containersApi.list(true);
       const containers: ContainerInfo[] = res.data || [];
-      const running = containers.filter((c) => c.state === 'running');
+      const running = containers.filter((c) => c.state === "running");
 
       const stats: ContainerResource[] = [];
       for (const c of running.slice(0, 20)) {
@@ -74,7 +81,7 @@ export function ContainerResources() {
           const sr = await containersApi.stats(c.id);
           const s: ContainerStats = sr.data;
           stats.push({
-            name: c.name.replace(/^\//, '').slice(0, 20),
+            name: c.name.replace(/^\//, "").slice(0, 20),
             cpu_percent: s.cpu_percent || 0,
             memory_usage: s.memory_usage || 0,
             memory_limit: s.memory_limit || 0,
@@ -91,7 +98,11 @@ export function ContainerResources() {
       setResources(stats);
 
       // Build history point
-      const time = new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      const time = new Date().toLocaleTimeString("fr-FR", {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+      });
       const cpuPoint: HistoryPoint = { time };
       const memPoint: HistoryPoint = { time };
       for (const s of stats) {
@@ -117,7 +128,16 @@ export function ContainerResources() {
   }, [fetchData]);
 
   const containerNames = resources.map((r) => r.name);
-  const COLORS = ['#3b82f6', '#22c55e', '#f59e0b', '#ef4444', '#a855f7', '#06b6d4', '#ec4899', '#f97316'];
+  const COLORS = [
+    "#3b82f6",
+    "#22c55e",
+    "#f59e0b",
+    "#ef4444",
+    "#a855f7",
+    "#06b6d4",
+    "#ec4899",
+    "#f97316",
+  ];
 
   return (
     <div className="space-y-6">
@@ -129,8 +149,13 @@ export function ContainerResources() {
         </div>
         <div className="flex items-center gap-2">
           <Badge variant="secondary">{resources.length} containers</Badge>
-          <Button variant="outline" size="sm" onClick={fetchData} disabled={loading}>
-            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={fetchData}
+            disabled={loading}
+          >
+            <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
           </Button>
         </div>
       </div>
@@ -148,16 +173,39 @@ export function ContainerResources() {
           <CardContent>
             {resources.length === 0 ? (
               <div className="flex items-center justify-center h-48 text-muted-foreground text-sm">
-                {loading ? 'Chargement...' : 'No running containers'}
+                {loading ? "Chargement..." : "No running containers"}
               </div>
             ) : (
               <ResponsiveContainer width="100%" height={250}>
                 <BarChart data={resources} layout="vertical">
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                  <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 10 }} />
-                  <YAxis type="category" dataKey="name" tick={{ fontSize: 10 }} width={100} />
-                  <Tooltip formatter={(v) => typeof v === 'number' ? `${v.toFixed(1)}%` : String(v ?? '')} />
-                  <Bar dataKey="cpu_percent" fill="#3b82f6" name="CPU %" radius={[0, 4, 4, 0]} />
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    className="stroke-muted"
+                  />
+                  <XAxis
+                    type="number"
+                    domain={[0, 100]}
+                    tick={{ fontSize: 10 }}
+                  />
+                  <YAxis
+                    type="category"
+                    dataKey="name"
+                    tick={{ fontSize: 10 }}
+                    width={100}
+                  />
+                  <Tooltip
+                    formatter={(v) =>
+                      typeof v === "number"
+                        ? `${v.toFixed(1)}%`
+                        : String(v ?? "")
+                    }
+                  />
+                  <Bar
+                    dataKey="cpu_percent"
+                    fill="#3b82f6"
+                    name="CPU %"
+                    radius={[0, 4, 4, 0]}
+                  />
                 </BarChart>
               </ResponsiveContainer>
             )}
@@ -175,22 +223,39 @@ export function ContainerResources() {
           <CardContent>
             {resources.length === 0 ? (
               <div className="flex items-center justify-center h-48 text-muted-foreground text-sm">
-                {loading ? 'Chargement...' : 'No running containers'}
+                {loading ? "Chargement..." : "No running containers"}
               </div>
             ) : (
               <ResponsiveContainer width="100%" height={250}>
                 <BarChart data={resources} layout="vertical">
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                  <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 10 }} />
-                  <YAxis type="category" dataKey="name" tick={{ fontSize: 10 }} width={100} />
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    className="stroke-muted"
+                  />
+                  <XAxis
+                    type="number"
+                    domain={[0, 100]}
+                    tick={{ fontSize: 10 }}
+                  />
+                  <YAxis
+                    type="category"
+                    dataKey="name"
+                    tick={{ fontSize: 10 }}
+                    width={100}
+                  />
                   <Tooltip
                     formatter={(v, _name, props: any) =>
-                      typeof v === 'number'
+                      typeof v === "number"
                         ? `${v.toFixed(1)}% (${formatBytes(props?.payload?.memory_usage)})`
-                        : String(v ?? '')
+                        : String(v ?? "")
                     }
                   />
-                  <Bar dataKey="memory_percent" fill="#22c55e" name="Memory %" radius={[0, 4, 4, 0]} />
+                  <Bar
+                    dataKey="memory_percent"
+                    fill="#22c55e"
+                    name="Memory %"
+                    radius={[0, 4, 4, 0]}
+                  />
                 </BarChart>
               </ResponsiveContainer>
             )}
@@ -280,13 +345,22 @@ export function ContainerResources() {
                 {resources.map((r) => (
                   <tr key={r.name} className="hover:bg-accent/40">
                     <td className="px-4 py-2 font-medium">{r.name}</td>
-                    <td className="px-4 py-2 text-right font-mono text-xs">{r.cpu_percent.toFixed(1)}%</td>
                     <td className="px-4 py-2 text-right font-mono text-xs">
-                      {formatBytes(r.memory_usage)} / {formatBytes(r.memory_limit)}
+                      {r.cpu_percent.toFixed(1)}%
                     </td>
-                    <td className="px-4 py-2 text-right font-mono text-xs">{r.memory_percent.toFixed(1)}%</td>
-                    <td className="px-4 py-2 text-right font-mono text-xs">{formatBytes(r.net_rx)}</td>
-                    <td className="px-4 py-2 text-right font-mono text-xs">{formatBytes(r.net_tx)}</td>
+                    <td className="px-4 py-2 text-right font-mono text-xs">
+                      {formatBytes(r.memory_usage)} /{" "}
+                      {formatBytes(r.memory_limit)}
+                    </td>
+                    <td className="px-4 py-2 text-right font-mono text-xs">
+                      {r.memory_percent.toFixed(1)}%
+                    </td>
+                    <td className="px-4 py-2 text-right font-mono text-xs">
+                      {formatBytes(r.net_rx)}
+                    </td>
+                    <td className="px-4 py-2 text-right font-mono text-xs">
+                      {formatBytes(r.net_tx)}
+                    </td>
                   </tr>
                 ))}
               </tbody>

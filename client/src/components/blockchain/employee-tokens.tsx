@@ -1,10 +1,16 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -12,18 +18,24 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog';
-import { Coins, Send, Download, ArrowUpRight, ArrowDownLeft } from 'lucide-react';
-import { cn } from '@/lib/utils';
+} from "@/components/ui/dialog";
+import {
+  Coins,
+  Send,
+  Download,
+  ArrowUpRight,
+  ArrowDownLeft,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface TokenTransaction {
   id: string;
-  type: 'send' | 'receive';
+  type: "send" | "receive";
   amount: number;
   from: string;
   to: string;
   timestamp: string;
-  status: 'completed' | 'pending';
+  status: "completed" | "pending";
 }
 
 interface EmployeeTokensProps {
@@ -36,14 +48,14 @@ interface EmployeeTokensProps {
 
 export function EmployeeTokens({
   balance = 0,
-  employeeId = 'emp-001',
+  employeeId = "emp-001",
   transactions = [],
   onSend,
   onReceive,
 }: EmployeeTokensProps) {
   const [sendOpen, setSendOpen] = useState(false);
-  const [recipientId, setRecipientId] = useState('');
-  const [amount, setAmount] = useState('');
+  const [recipientId, setRecipientId] = useState("");
+  const [amount, setAmount] = useState("");
   const [isSending, setIsSending] = useState(false);
 
   const handleSend = async () => {
@@ -52,8 +64,8 @@ export function EmployeeTokens({
     setIsSending(true);
     try {
       await onSend?.(recipientId, parseFloat(amount));
-      setRecipientId('');
-      setAmount('');
+      setRecipientId("");
+      setAmount("");
       setSendOpen(false);
     } finally {
       setIsSending(false);
@@ -61,10 +73,10 @@ export function EmployeeTokens({
   };
 
   const getTransactionColor = (transaction: TokenTransaction) => {
-    if (transaction.type === 'send') {
-      return 'text-red-600 bg-red-50';
+    if (transaction.type === "send") {
+      return "text-red-600 bg-red-50";
     }
-    return 'text-green-600 bg-green-50';
+    return "text-green-600 bg-green-50";
   };
 
   return (
@@ -73,21 +85,28 @@ export function EmployeeTokens({
       <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-sm text-blue-900">Token Balance</CardTitle>
+            <CardTitle className="text-sm text-blue-900">
+              Token Balance
+            </CardTitle>
             <Coins className="w-5 h-5 text-blue-600" />
           </div>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             <div>
-              <p className="text-4xl font-bold text-blue-900">{balance.toLocaleString()}</p>
+              <p className="text-4xl font-bold text-blue-900">
+                {balance.toLocaleString()}
+              </p>
               <p className="text-xs text-blue-700 mt-1">Tokens Available</p>
             </div>
 
             <div className="flex gap-2">
               <Dialog open={sendOpen} onOpenChange={setSendOpen}>
                 <DialogTrigger asChild>
-                  <Button className="flex-1 bg-blue-600 hover:bg-blue-700" size="sm">
+                  <Button
+                    className="flex-1 bg-blue-600 hover:bg-blue-700"
+                    size="sm"
+                  >
                     <Send className="w-4 h-4 mr-2" />
                     Send
                   </Button>
@@ -101,7 +120,9 @@ export function EmployeeTokens({
                   </DialogHeader>
                   <div className="space-y-4">
                     <div>
-                      <label className="text-sm font-medium">Recipient ID</label>
+                      <label className="text-sm font-medium">
+                        Recipient ID
+                      </label>
                       <Input
                         placeholder="emp-xxx"
                         value={recipientId}
@@ -125,7 +146,7 @@ export function EmployeeTokens({
                       disabled={isSending || !recipientId || !amount}
                       className="w-full"
                     >
-                      {isSending ? 'Sending...' : 'Send Tokens'}
+                      {isSending ? "Sending..." : "Send Tokens"}
                     </Button>
                   </div>
                 </DialogContent>
@@ -165,21 +186,21 @@ export function EmployeeTokens({
                 <div
                   key={transaction.id}
                   className={cn(
-                    'p-3 rounded-lg border flex items-center justify-between',
-                    getTransactionColor(transaction)
+                    "p-3 rounded-lg border flex items-center justify-between",
+                    getTransactionColor(transaction),
                   )}
                 >
                   <div className="flex items-center gap-3 flex-1">
-                    {transaction.type === 'send' ? (
+                    {transaction.type === "send" ? (
                       <ArrowUpRight className="w-5 h-5 flex-shrink-0" />
                     ) : (
                       <ArrowDownLeft className="w-5 h-5 flex-shrink-0" />
                     )}
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium">
-                        {transaction.type === 'send' ? 'To' : 'From'}{' '}
+                        {transaction.type === "send" ? "To" : "From"}{" "}
                         <span className="font-mono text-xs">
-                          {transaction.type === 'send'
+                          {transaction.type === "send"
                             ? transaction.to
                             : transaction.from}
                         </span>
@@ -191,7 +212,7 @@ export function EmployeeTokens({
                   </div>
                   <div className="flex items-center gap-2 ml-2 flex-shrink-0">
                     <span className="text-sm font-semibold">
-                      {transaction.type === 'send' ? '-' : '+'}
+                      {transaction.type === "send" ? "-" : "+"}
                       {transaction.amount}
                     </span>
                     <Badge

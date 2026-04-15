@@ -1,19 +1,27 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { Plus, Trash2, RefreshCw, Users, TrendingUp, MessageSquare, BarChart2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Label } from '@/components/ui/label';
+import { useState, useEffect } from "react";
+import {
+  Plus,
+  Trash2,
+  RefreshCw,
+  Users,
+  TrendingUp,
+  MessageSquare,
+  BarChart2,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from "@/components/ui/select";
 import {
   BarChart,
   Bar,
@@ -23,24 +31,31 @@ import {
   Tooltip,
   ResponsiveContainer,
   Legend,
-} from 'recharts';
-import { toast } from 'sonner';
-import { useSocialStore } from '@/stores/social-store';
+} from "recharts";
+import { toast } from "sonner";
+import { useSocialStore } from "@/stores/social-store";
 
-const STORAGE_KEY = 'signapps_competitors';
+const STORAGE_KEY = "signapps_competitors";
 
-const PLATFORMS = ['twitter', 'instagram', 'linkedin', 'facebook', 'mastodon', 'bluesky'];
+const PLATFORMS = [
+  "twitter",
+  "instagram",
+  "linkedin",
+  "facebook",
+  "mastodon",
+  "bluesky",
+];
 
 const PLATFORM_COLORS: Record<string, string> = {
-  twitter: '#1DA1F2',
-  instagram: '#E4405F',
-  linkedin: '#0A66C2',
-  facebook: '#1877F2',
-  mastodon: '#6364FF',
-  bluesky: '#0085FF',
-  youtube: '#FF0000',
-  tiktok: '#000000',
-  pinterest: '#E60023',
+  twitter: "#1DA1F2",
+  instagram: "#E4405F",
+  linkedin: "#0A66C2",
+  facebook: "#1877F2",
+  mastodon: "#6364FF",
+  bluesky: "#0085FF",
+  youtube: "#FF0000",
+  tiktok: "#000000",
+  pinterest: "#E60023",
 };
 
 interface Competitor {
@@ -56,7 +71,7 @@ interface Competitor {
 
 function loadCompetitors(): Competitor[] {
   try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '[]');
+    return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "[]");
   } catch {
     return [];
   }
@@ -69,16 +84,16 @@ function saveCompetitors(list: Competitor[]) {
 export function CompetitorTracker() {
   const { analytics } = useSocialStore();
   const [competitors, setCompetitors] = useState<Competitor[]>(loadCompetitors);
-  const [handle, setHandle] = useState('');
-  const [platform, setPlatform] = useState('twitter');
-  const [followers, setFollowers] = useState('');
-  const [postsPerWeek, setPostsPerWeek] = useState('');
-  const [avgEngagement, setAvgEngagement] = useState('');
-  const [topPostPreview, setTopPostPreview] = useState('');
+  const [handle, setHandle] = useState("");
+  const [platform, setPlatform] = useState("twitter");
+  const [followers, setFollowers] = useState("");
+  const [postsPerWeek, setPostsPerWeek] = useState("");
+  const [avgEngagement, setAvgEngagement] = useState("");
+  const [topPostPreview, setTopPostPreview] = useState("");
 
   const addCompetitor = () => {
     if (!handle.trim()) {
-      toast.error('Handle is required');
+      toast.error("Handle is required");
       return;
     }
     const c: Competitor = {
@@ -89,16 +104,16 @@ export function CompetitorTracker() {
       postsPerWeek: Number(postsPerWeek) || 0,
       avgEngagement: Number(avgEngagement) || 0,
       topPostPreview: topPostPreview.trim(),
-      lastUpdated: new Date().toISOString().split('T')[0],
+      lastUpdated: new Date().toISOString().split("T")[0],
     };
     const next = [...competitors, c];
     setCompetitors(next);
     saveCompetitors(next);
-    setHandle('');
-    setFollowers('');
-    setPostsPerWeek('');
-    setAvgEngagement('');
-    setTopPostPreview('');
+    setHandle("");
+    setFollowers("");
+    setPostsPerWeek("");
+    setAvgEngagement("");
+    setTopPostPreview("");
     toast.success(`Competitor ${c.handle} added`);
   };
 
@@ -106,13 +121,13 @@ export function CompetitorTracker() {
     const next = competitors.filter((c) => c.id !== id);
     setCompetitors(next);
     saveCompetitors(next);
-    toast.success('Competitor removed');
+    toast.success("Competitor removed");
   };
 
   // Build chart data comparing our metrics vs competitors
   const chartData = [
     {
-      name: 'You',
+      name: "You",
       followers: analytics?.totalFollowers ?? 0,
       engagement: analytics?.engagementRate ?? 0,
       postsPerWeek: analytics?.postsThisWeek ?? 0,
@@ -129,7 +144,9 @@ export function CompetitorTracker() {
     <div className="space-y-6">
       <div>
         <h2 className="text-xl font-semibold">Competitor Tracking</h2>
-        <p className="text-sm text-muted-foreground">Monitor competitor accounts and compare metrics side by side</p>
+        <p className="text-sm text-muted-foreground">
+          Monitor competitor accounts and compare metrics side by side
+        </p>
       </div>
 
       {/* Add competitor form */}
@@ -226,12 +243,17 @@ export function CompetitorTracker() {
                       <span className="font-semibold text-sm">{c.handle}</span>
                       <span
                         className="text-xs px-1.5 py-0.5 rounded-full text-white capitalize"
-                        style={{ backgroundColor: PLATFORM_COLORS[c.platform] ?? '#6b7280' }}
+                        style={{
+                          backgroundColor:
+                            PLATFORM_COLORS[c.platform] ?? "#6b7280",
+                        }}
                       >
                         {c.platform}
                       </span>
                     </div>
-                    <p className="text-xs text-muted-foreground mt-0.5">Updated {c.lastUpdated}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Updated {c.lastUpdated}
+                    </p>
                   </div>
                   <Button
                     variant="ghost"
@@ -246,7 +268,9 @@ export function CompetitorTracker() {
                 <div className="grid grid-cols-3 gap-2 text-center">
                   <div className="p-2 rounded-lg bg-muted/50">
                     <Users className="w-3.5 h-3.5 mx-auto mb-1 text-muted-foreground" />
-                    <p className="text-sm font-semibold">{c.followers.toLocaleString()}</p>
+                    <p className="text-sm font-semibold">
+                      {c.followers.toLocaleString()}
+                    </p>
                     <p className="text-xs text-muted-foreground">Followers</p>
                   </div>
                   <div className="p-2 rounded-lg bg-muted/50">
@@ -283,8 +307,14 @@ export function CompetitorTracker() {
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={chartData} margin={{ top: 4, right: 8, left: 0, bottom: 4 }}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+              <BarChart
+                data={chartData}
+                margin={{ top: 4, right: 8, left: 0, bottom: 4 }}
+              >
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  className="stroke-border"
+                />
                 <XAxis dataKey="name" tick={{ fontSize: 11 }} />
                 <YAxis tick={{ fontSize: 11 }} />
                 <Tooltip />
@@ -306,12 +336,22 @@ export function CompetitorTracker() {
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={chartData} margin={{ top: 4, right: 8, left: 0, bottom: 4 }}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+              <BarChart
+                data={chartData}
+                margin={{ top: 4, right: 8, left: 0, bottom: 4 }}
+              >
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  className="stroke-border"
+                />
                 <XAxis dataKey="name" tick={{ fontSize: 11 }} />
                 <YAxis tick={{ fontSize: 11 }} unit="%" />
                 <Tooltip formatter={(v: unknown) => `${v}%`} />
-                <Bar dataKey="engagement" fill="#10b981" radius={[3, 3, 0, 0]} />
+                <Bar
+                  dataKey="engagement"
+                  fill="#10b981"
+                  radius={[3, 3, 0, 0]}
+                />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -322,7 +362,9 @@ export function CompetitorTracker() {
         <div className="text-center py-10 text-muted-foreground">
           <Users className="w-10 h-10 mx-auto mb-3 opacity-40" />
           <p className="font-medium">No competitors tracked yet</p>
-          <p className="text-sm mt-1">Add competitor accounts above to start comparing</p>
+          <p className="text-sm mt-1">
+            Add competitor accounts above to start comparing
+          </p>
         </div>
       )}
     </div>

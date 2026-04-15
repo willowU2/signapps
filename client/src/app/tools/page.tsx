@@ -1,15 +1,27 @@
-'use client';
+"use client";
 
-import { useState, useRef, useCallback } from 'react';
-import { AppLayout } from '@/components/layout/app-layout';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useState, useRef, useCallback } from "react";
+import { AppLayout } from "@/components/layout/app-layout";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   FileText,
   Table2,
@@ -26,20 +38,17 @@ import {
   XCircle,
   File,
   X,
-} from 'lucide-react';
-import { toast } from 'sonner';
-import {
-  getPresentationInfo,
-  type ExportFormat,
-} from '@/lib/api/office';
-import { getServiceBaseUrl, ServiceName } from '@/lib/api/factory';
-import { usePageTitle } from '@/hooks/use-page-title';
+} from "lucide-react";
+import { toast } from "sonner";
+import { getPresentationInfo, type ExportFormat } from "@/lib/api/office";
+import { getServiceBaseUrl, ServiceName } from "@/lib/api/factory";
+import { usePageTitle } from "@/hooks/use-page-title";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
 function triggerDownload(blob: Blob, filename: string) {
   const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
+  const a = document.createElement("a");
   a.href = url;
   a.download = filename;
   document.body.appendChild(a);
@@ -48,12 +57,16 @@ function triggerDownload(blob: Blob, filename: string) {
   URL.revokeObjectURL(url);
 }
 
-async function officePost(path: string, body: FormData | object, asBlob = false): Promise<any> {
+async function officePost(
+  path: string,
+  body: FormData | object,
+  asBlob = false,
+): Promise<any> {
   const baseUrl = getServiceBaseUrl(ServiceName.OFFICE);
   const isFormData = body instanceof FormData;
   const res = await fetch(`${baseUrl}${path}`, {
-    method: 'POST',
-    headers: isFormData ? undefined : { 'Content-Type': 'application/json' },
+    method: "POST",
+    headers: isFormData ? undefined : { "Content-Type": "application/json" },
     body: isFormData ? body : JSON.stringify(body),
   });
   if (!res.ok) {
@@ -73,7 +86,13 @@ interface FileDropZoneProps {
   onClear?: () => void;
 }
 
-function FileDropZone({ onFile, accept, label = 'Drag & drop or click to select', file, onClear }: FileDropZoneProps) {
+function FileDropZone({
+  onFile,
+  accept,
+  label = "Drag & drop or click to select",
+  file,
+  onClear,
+}: FileDropZoneProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
 
@@ -84,14 +103,17 @@ function FileDropZone({ onFile, accept, label = 'Drag & drop or click to select'
       const f = e.dataTransfer.files[0];
       if (f) onFile(f);
     },
-    [onFile]
+    [onFile],
   );
 
   return (
     <div
       className={`relative border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center gap-2 transition-colors cursor-pointer
-        ${dragging ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50 hover:bg-muted/40'}`}
-      onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+        ${dragging ? "border-primary bg-primary/5" : "border-border hover:border-primary/50 hover:bg-muted/40"}`}
+      onDragOver={(e) => {
+        e.preventDefault();
+        setDragging(true);
+      }}
       onDragLeave={() => setDragging(false)}
       onDrop={handleDrop}
       onClick={() => inputRef.current?.click()}
@@ -101,16 +123,24 @@ function FileDropZone({ onFile, accept, label = 'Drag & drop or click to select'
         type="file"
         accept={accept}
         className="hidden"
-        onChange={(e) => { const f = e.target.files?.[0]; if (f) onFile(f); }}
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          if (f) onFile(f);
+        }}
       />
       {file ? (
         <div className="flex items-center gap-2 text-sm">
           <File className="h-4 w-4 text-primary" />
-          <span className="font-medium truncate max-w-[200px]">{file.name}</span>
+          <span className="font-medium truncate max-w-[200px]">
+            {file.name}
+          </span>
           <Badge variant="secondary">{(file.size / 1024).toFixed(1)} KB</Badge>
           {onClear && (
             <button
-              onClick={(e) => { e.stopPropagation(); onClear(); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                onClear();
+              }}
               className="ml-1 text-muted-foreground hover:text-destructive"
             >
               <X className="h-3.5 w-3.5" />
@@ -129,10 +159,17 @@ function FileDropZone({ onFile, accept, label = 'Drag & drop or click to select'
 
 // ─── StatusBadge ─────────────────────────────────────────────────────────────
 
-function StatusBadge({ status }: { status: 'idle' | 'loading' | 'success' | 'error' }) {
-  if (status === 'loading') return <Loader2 className="h-4 w-4 animate-spin text-primary" />;
-  if (status === 'success') return <CheckCircle2 className="h-4 w-4 text-green-500" />;
-  if (status === 'error') return <XCircle className="h-4 w-4 text-destructive" />;
+function StatusBadge({
+  status,
+}: {
+  status: "idle" | "loading" | "success" | "error";
+}) {
+  if (status === "loading")
+    return <Loader2 className="h-4 w-4 animate-spin text-primary" />;
+  if (status === "success")
+    return <CheckCircle2 className="h-4 w-4 text-green-500" />;
+  if (status === "error")
+    return <XCircle className="h-4 w-4 text-destructive" />;
   return null;
 }
 
@@ -140,44 +177,48 @@ function StatusBadge({ status }: { status: 'idle' | 'loading' | 'success' | 'err
 
 function SpreadsheetsTab() {
   const [importFile, setImportFile] = useState<File | null>(null);
-  const [importStatus, setImportStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [importStatus, setImportStatus] = useState<
+    "idle" | "loading" | "success" | "error"
+  >("idle");
   const [importedData, setImportedData] = useState<any | null>(null);
 
-  const [exportData, setExportData] = useState('');
-  const [exportFormat, setExportFormat] = useState<'csv' | 'ods'>('csv');
-  const [exportStatus, setExportStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [exportData, setExportData] = useState("");
+  const [exportFormat, setExportFormat] = useState<"csv" | "ods">("csv");
+  const [exportStatus, setExportStatus] = useState<
+    "idle" | "loading" | "success" | "error"
+  >("idle");
 
   const handleImport = async () => {
     if (!importFile) return;
-    setImportStatus('loading');
+    setImportStatus("loading");
     setImportedData(null);
     try {
       const formData = new FormData();
-      formData.append('file', importFile);
-      const result = await officePost('/spreadsheet/import', formData);
+      formData.append("file", importFile);
+      const result = await officePost("/spreadsheet/import", formData);
       setImportedData(result);
-      setImportStatus('success');
-      toast.success('Spreadsheet imported successfully');
+      setImportStatus("success");
+      toast.success("Spreadsheet imported successfully");
     } catch {
-      setImportStatus('error');
+      setImportStatus("error");
       toast.error("Une erreur est survenue. Réessayez.");
     }
   };
 
   const handleExport = async () => {
     if (!exportData.trim()) return;
-    setExportStatus('loading');
+    setExportStatus("loading");
     try {
       const blob = await officePost(
         `/spreadsheet/export?format=${exportFormat}`,
         { data: exportData, format: exportFormat },
-        true
+        true,
       );
       triggerDownload(blob as Blob, `export.${exportFormat}`);
-      setExportStatus('success');
+      setExportStatus("success");
       toast.success(`Exported as ${exportFormat.toUpperCase()}`);
     } catch {
-      setExportStatus('error');
+      setExportStatus("error");
       toast.error("Une erreur est survenue. Réessayez.");
     }
   };
@@ -189,7 +230,9 @@ function SpreadsheetsTab() {
           <CardTitle className="text-base flex items-center gap-2">
             <Upload className="h-4 w-4" /> Import Spreadsheet
           </CardTitle>
-          <CardDescription>Upload a CSV or ODS file to parse its data</CardDescription>
+          <CardDescription>
+            Upload a CSV or ODS file to parse its data
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <FileDropZone
@@ -197,19 +240,33 @@ function SpreadsheetsTab() {
             accept=".csv,.ods"
             label="Drop CSV or ODS file here"
             file={importFile}
-            onClear={() => { setImportFile(null); setImportStatus('idle'); setImportedData(null); }}
+            onClear={() => {
+              setImportFile(null);
+              setImportStatus("idle");
+              setImportedData(null);
+            }}
           />
-          <Button className="w-full" disabled={!importFile || importStatus === 'loading'} onClick={handleImport}>
-            {importStatus === 'loading' ? (
-              <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Importing…</>
+          <Button
+            className="w-full"
+            disabled={!importFile || importStatus === "loading"}
+            onClick={handleImport}
+          >
+            {importStatus === "loading" ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Importing…
+              </>
             ) : (
-              <><Table2 className="mr-2 h-4 w-4" /> Import</>
+              <>
+                <Table2 className="mr-2 h-4 w-4" /> Import
+              </>
             )}
           </Button>
           {importedData && (
             <div className="rounded-lg bg-muted/50 p-3 text-xs text-muted-foreground space-y-1">
               <p className="font-medium text-foreground">Import result</p>
-              <pre className="overflow-auto max-h-40 text-[11px]">{JSON.stringify(importedData, null, 2)}</pre>
+              <pre className="overflow-auto max-h-40 text-[11px]">
+                {JSON.stringify(importedData, null, 2)}
+              </pre>
             </div>
           )}
         </CardContent>
@@ -220,33 +277,48 @@ function SpreadsheetsTab() {
           <CardTitle className="text-base flex items-center gap-2">
             <Download className="h-4 w-4" /> Export Spreadsheet
           </CardTitle>
-          <CardDescription>Paste CSV data and download as CSV or ODS</CardDescription>
+          <CardDescription>
+            Paste CSV data and download as CSV or ODS
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label>CSV Data</Label>
             <textarea
               className="w-full min-h-[120px] rounded-md border border-input bg-background px-3 py-2 text-sm font-mono resize-y focus:outline-none focus:ring-2 focus:ring-ring"
-              placeholder={'name,value\nFoo,42\nBar,99'}
+              placeholder={"name,value\nFoo,42\nBar,99"}
               value={exportData}
               onChange={(e) => setExportData(e.target.value)}
             />
           </div>
           <div className="space-y-2">
             <Label>Export Format</Label>
-            <Select value={exportFormat} onValueChange={(v) => setExportFormat(v as 'csv' | 'ods')}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+            <Select
+              value={exportFormat}
+              onValueChange={(v) => setExportFormat(v as "csv" | "ods")}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="csv">CSV</SelectItem>
                 <SelectItem value="ods">ODS (OpenDocument)</SelectItem>
               </SelectContent>
             </Select>
           </div>
-          <Button className="w-full" disabled={!exportData.trim() || exportStatus === 'loading'} onClick={handleExport}>
-            {exportStatus === 'loading' ? (
-              <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Exporting…</>
+          <Button
+            className="w-full"
+            disabled={!exportData.trim() || exportStatus === "loading"}
+            onClick={handleExport}
+          >
+            {exportStatus === "loading" ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Exporting…
+              </>
             ) : (
-              <><Download className="mr-2 h-4 w-4" /> Export &amp; Download</>
+              <>
+                <Download className="mr-2 h-4 w-4" /> Export &amp; Download
+              </>
             )}
           </Button>
         </CardContent>
@@ -259,35 +331,43 @@ function SpreadsheetsTab() {
 
 function PdfToolsTab() {
   const [extractFile, setExtractFile] = useState<File | null>(null);
-  const [extractStatus, setExtractStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
-  const [extractedText, setExtractedText] = useState('');
+  const [extractStatus, setExtractStatus] = useState<
+    "idle" | "loading" | "success" | "error"
+  >("idle");
+  const [extractedText, setExtractedText] = useState("");
 
   const [mergeFiles, setMergeFiles] = useState<File[]>([]);
-  const [mergeStatus, setMergeStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [mergeStatus, setMergeStatus] = useState<
+    "idle" | "loading" | "success" | "error"
+  >("idle");
 
   const [splitFile, setSplitFile] = useState<File | null>(null);
-  const [splitPages, setSplitPages] = useState('1-3,4-6');
-  const [splitStatus, setSplitStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [splitPages, setSplitPages] = useState("1-3,4-6");
+  const [splitStatus, setSplitStatus] = useState<
+    "idle" | "loading" | "success" | "error"
+  >("idle");
 
   const [infoFile, setInfoFile] = useState<File | null>(null);
-  const [infoStatus, setInfoStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [infoStatus, setInfoStatus] = useState<
+    "idle" | "loading" | "success" | "error"
+  >("idle");
   const [pageInfo, setPageInfo] = useState<any | null>(null);
 
   const mergeInputRef = useRef<HTMLInputElement>(null);
 
   const handleExtract = async () => {
     if (!extractFile) return;
-    setExtractStatus('loading');
-    setExtractedText('');
+    setExtractStatus("loading");
+    setExtractedText("");
     try {
       const formData = new FormData();
-      formData.append('file', extractFile);
-      const result = await officePost('/pdf/extract-text', formData);
+      formData.append("file", extractFile);
+      const result = await officePost("/pdf/extract-text", formData);
       setExtractedText(result.text ?? JSON.stringify(result));
-      setExtractStatus('success');
-      toast.success('Text extracted');
+      setExtractStatus("success");
+      toast.success("Text extracted");
     } catch {
-      setExtractStatus('error');
+      setExtractStatus("error");
       toast.error("Une erreur est survenue. Réessayez.");
     }
   };
@@ -295,55 +375,55 @@ function PdfToolsTab() {
   const handleMergeAdd = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? []);
     setMergeFiles((prev) => [...prev, ...files]);
-    e.target.value = '';
+    e.target.value = "";
   };
 
   const handleMerge = async () => {
     if (mergeFiles.length < 2) return;
-    setMergeStatus('loading');
+    setMergeStatus("loading");
     try {
       const formData = new FormData();
-      mergeFiles.forEach((f) => formData.append('files', f));
-      const blob = await officePost('/pdf/merge', formData, true);
-      triggerDownload(blob as Blob, 'merged.pdf');
-      setMergeStatus('success');
-      toast.success('PDFs merged and downloaded');
+      mergeFiles.forEach((f) => formData.append("files", f));
+      const blob = await officePost("/pdf/merge", formData, true);
+      triggerDownload(blob as Blob, "merged.pdf");
+      setMergeStatus("success");
+      toast.success("PDFs merged and downloaded");
     } catch {
-      setMergeStatus('error');
+      setMergeStatus("error");
       toast.error("Une erreur est survenue. Réessayez.");
     }
   };
 
   const handleSplit = async () => {
     if (!splitFile) return;
-    setSplitStatus('loading');
+    setSplitStatus("loading");
     try {
       const formData = new FormData();
-      formData.append('file', splitFile);
-      formData.append('ranges', splitPages);
-      const blob = await officePost('/pdf/split', formData, true);
-      triggerDownload(blob as Blob, 'split.zip');
-      setSplitStatus('success');
-      toast.success('PDF split — ZIP downloaded');
+      formData.append("file", splitFile);
+      formData.append("ranges", splitPages);
+      const blob = await officePost("/pdf/split", formData, true);
+      triggerDownload(blob as Blob, "split.zip");
+      setSplitStatus("success");
+      toast.success("PDF split — ZIP downloaded");
     } catch {
-      setSplitStatus('error');
+      setSplitStatus("error");
       toast.error("Une erreur est survenue. Réessayez.");
     }
   };
 
   const handleInfo = async () => {
     if (!infoFile) return;
-    setInfoStatus('loading');
+    setInfoStatus("loading");
     setPageInfo(null);
     try {
       const formData = new FormData();
-      formData.append('file', infoFile);
-      const result = await officePost('/pdf/info', formData);
+      formData.append("file", infoFile);
+      const result = await officePost("/pdf/info", formData);
       setPageInfo(result);
-      setInfoStatus('success');
-      toast.success('Page info retrieved');
+      setInfoStatus("success");
+      toast.success("Page info retrieved");
     } catch {
-      setInfoStatus('error');
+      setInfoStatus("error");
       toast.error("Une erreur est survenue. Réessayez.");
     }
   };
@@ -364,10 +444,22 @@ function PdfToolsTab() {
             accept=".pdf"
             label="Drop a PDF here"
             file={extractFile}
-            onClear={() => { setExtractFile(null); setExtractStatus('idle'); setExtractedText(''); }}
+            onClear={() => {
+              setExtractFile(null);
+              setExtractStatus("idle");
+              setExtractedText("");
+            }}
           />
-          <Button className="w-full" disabled={!extractFile || extractStatus === 'loading'} onClick={handleExtract}>
-            {extractStatus === 'loading' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <AlignLeft className="mr-2 h-4 w-4" />}
+          <Button
+            className="w-full"
+            disabled={!extractFile || extractStatus === "loading"}
+            onClick={handleExtract}
+          >
+            {extractStatus === "loading" ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <AlignLeft className="mr-2 h-4 w-4" />
+            )}
             Extract Text
           </Button>
           {extractedText && (
@@ -389,16 +481,34 @@ function PdfToolsTab() {
           <CardDescription>Combine multiple PDFs into one file</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <input ref={mergeInputRef} type="file" accept=".pdf" multiple className="hidden" onChange={handleMergeAdd} />
-          <Button variant="outline" className="w-full" onClick={() => mergeInputRef.current?.click()}>
+          <input
+            ref={mergeInputRef}
+            type="file"
+            accept=".pdf"
+            multiple
+            className="hidden"
+            onChange={handleMergeAdd}
+          />
+          <Button
+            variant="outline"
+            className="w-full"
+            onClick={() => mergeInputRef.current?.click()}
+          >
             <Upload className="mr-2 h-4 w-4" /> Add PDFs
           </Button>
           {mergeFiles.length > 0 && (
             <ul className="space-y-1">
               {mergeFiles.map((f, i) => (
-                <li key={i} className="flex items-center justify-between text-sm rounded px-2 py-1 bg-muted/50">
+                <li
+                  key={i}
+                  className="flex items-center justify-between text-sm rounded px-2 py-1 bg-muted/50"
+                >
                   <span className="truncate max-w-[180px]">{f.name}</span>
-                  <button onClick={() => setMergeFiles((prev) => prev.filter((_, j) => j !== i))}>
+                  <button
+                    onClick={() =>
+                      setMergeFiles((prev) => prev.filter((_, j) => j !== i))
+                    }
+                  >
                     <X className="h-3.5 w-3.5 text-muted-foreground hover:text-destructive" />
                   </button>
                 </li>
@@ -407,10 +517,14 @@ function PdfToolsTab() {
           )}
           <Button
             className="w-full"
-            disabled={mergeFiles.length < 2 || mergeStatus === 'loading'}
+            disabled={mergeFiles.length < 2 || mergeStatus === "loading"}
             onClick={handleMerge}
           >
-            {mergeStatus === 'loading' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Merge className="mr-2 h-4 w-4" />}
+            {mergeStatus === "loading" ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <Merge className="mr-2 h-4 w-4" />
+            )}
             Merge {mergeFiles.length > 0 && `(${mergeFiles.length} files)`}
           </Button>
         </CardContent>
@@ -422,7 +536,9 @@ function PdfToolsTab() {
           <CardTitle className="text-base flex items-center gap-2">
             <Scissors className="h-4 w-4" /> Split PDF
           </CardTitle>
-          <CardDescription>Split a PDF into parts by page ranges</CardDescription>
+          <CardDescription>
+            Split a PDF into parts by page ranges
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <FileDropZone
@@ -430,7 +546,10 @@ function PdfToolsTab() {
             accept=".pdf"
             label="Drop a PDF here"
             file={splitFile}
-            onClear={() => { setSplitFile(null); setSplitStatus('idle'); }}
+            onClear={() => {
+              setSplitFile(null);
+              setSplitStatus("idle");
+            }}
           />
           <div className="space-y-2">
             <Label>Page Ranges</Label>
@@ -439,10 +558,20 @@ function PdfToolsTab() {
               onChange={(e) => setSplitPages(e.target.value)}
               placeholder="e.g. 1-3,4-6,7"
             />
-            <p className="text-xs text-muted-foreground">Comma-separated ranges. Result is a ZIP archive.</p>
+            <p className="text-xs text-muted-foreground">
+              Comma-separated ranges. Result is a ZIP archive.
+            </p>
           </div>
-          <Button className="w-full" disabled={!splitFile || splitStatus === 'loading'} onClick={handleSplit}>
-            {splitStatus === 'loading' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Scissors className="mr-2 h-4 w-4" />}
+          <Button
+            className="w-full"
+            disabled={!splitFile || splitStatus === "loading"}
+            onClick={handleSplit}
+          >
+            {splitStatus === "loading" ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <Scissors className="mr-2 h-4 w-4" />
+            )}
             Split &amp; Download ZIP
           </Button>
         </CardContent>
@@ -454,7 +583,9 @@ function PdfToolsTab() {
           <CardTitle className="text-base flex items-center gap-2">
             <Info className="h-4 w-4" /> Page Info
           </CardTitle>
-          <CardDescription>Get metadata and page dimensions for a PDF</CardDescription>
+          <CardDescription>
+            Get metadata and page dimensions for a PDF
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <FileDropZone
@@ -462,15 +593,29 @@ function PdfToolsTab() {
             accept=".pdf"
             label="Drop a PDF here"
             file={infoFile}
-            onClear={() => { setInfoFile(null); setInfoStatus('idle'); setPageInfo(null); }}
+            onClear={() => {
+              setInfoFile(null);
+              setInfoStatus("idle");
+              setPageInfo(null);
+            }}
           />
-          <Button className="w-full" disabled={!infoFile || infoStatus === 'loading'} onClick={handleInfo}>
-            {infoStatus === 'loading' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Info className="mr-2 h-4 w-4" />}
+          <Button
+            className="w-full"
+            disabled={!infoFile || infoStatus === "loading"}
+            onClick={handleInfo}
+          >
+            {infoStatus === "loading" ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <Info className="mr-2 h-4 w-4" />
+            )}
             Get Info
           </Button>
           {pageInfo && (
             <div className="rounded-lg bg-muted/50 p-3 text-xs">
-              <pre className="overflow-auto max-h-48 text-[11px]">{JSON.stringify(pageInfo, null, 2)}</pre>
+              <pre className="overflow-auto max-h-48 text-[11px]">
+                {JSON.stringify(pageInfo, null, 2)}
+              </pre>
             </div>
           )}
         </CardContent>
@@ -482,10 +627,12 @@ function PdfToolsTab() {
 // ─── Tab: Presentations ───────────────────────────────────────────────────────
 
 function PresentationsTab() {
-  const [title, setTitle] = useState('My Presentation');
-  const [slidesJson, setSlidesJson] = useState('');
-  const [format, setFormat] = useState<'pptx' | 'pdf' | 'png' | 'svg'>('pptx');
-  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [title, setTitle] = useState("My Presentation");
+  const [slidesJson, setSlidesJson] = useState("");
+  const [format, setFormat] = useState<"pptx" | "pdf" | "png" | "svg">("pptx");
+  const [status, setStatus] = useState<
+    "idle" | "loading" | "success" | "error"
+  >("idle");
   const [serviceInfo, setServiceInfo] = useState<any | null>(null);
 
   const handleLoadInfo = async () => {
@@ -493,7 +640,7 @@ function PresentationsTab() {
       const info = await getPresentationInfo();
       setServiceInfo(info);
     } catch {
-      toast.error('Could not load presentation service info');
+      toast.error("Could not load presentation service info");
     }
   };
 
@@ -503,16 +650,16 @@ function PresentationsTab() {
       try {
         slides = JSON.parse(slidesJson);
       } catch {
-        throw new Error('Invalid JSON in slides field');
+        throw new Error("Invalid JSON in slides field");
       }
     } else {
       // Default single slide
       slides = [
         {
-          id: 'slide-1',
+          id: "slide-1",
           elements: [
             {
-              type: 'text',
+              type: "text",
               x: 100,
               y: 200,
               width: 600,
@@ -521,7 +668,7 @@ function PresentationsTab() {
               style: { fontSize: 40, bold: true },
             },
           ],
-          background: '#ffffff',
+          background: "#ffffff",
         },
       ];
     }
@@ -529,21 +676,23 @@ function PresentationsTab() {
   };
 
   const handleExport = async () => {
-    setStatus('loading');
+    setStatus("loading");
     try {
       const payload = buildPayload();
       const baseUrl = getServiceBaseUrl(ServiceName.OFFICE);
 
-      let endpoint = '';
+      let endpoint = "";
       let isBlob = true;
-      if (format === 'pptx') endpoint = '/presentation/export/pptx';
-      else if (format === 'pdf') endpoint = '/presentation/export/pdf';
-      else if (format === 'png') endpoint = '/presentation/export/all/png';
-      else if (format === 'svg') { endpoint = '/presentation/export/all/svg'; }
+      if (format === "pptx") endpoint = "/presentation/export/pptx";
+      else if (format === "pdf") endpoint = "/presentation/export/pdf";
+      else if (format === "png") endpoint = "/presentation/export/all/png";
+      else if (format === "svg") {
+        endpoint = "/presentation/export/all/svg";
+      }
 
       const res = await fetch(`${baseUrl}${endpoint}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
 
@@ -552,13 +701,13 @@ function PresentationsTab() {
         throw new Error(text || `HTTP ${res.status}`);
       }
 
-      const ext = format === 'png' || format === 'svg' ? 'zip' : format;
+      const ext = format === "png" || format === "svg" ? "zip" : format;
       const blob = await res.blob();
-      triggerDownload(blob, `${title.replace(/\s+/g, '_')}.${ext}`);
-      setStatus('success');
+      triggerDownload(blob, `${title.replace(/\s+/g, "_")}.${ext}`);
+      setStatus("success");
       toast.success(`Exported as ${format.toUpperCase()}`);
     } catch {
-      setStatus('error');
+      setStatus("error");
       toast.error("Une erreur est survenue. Réessayez.");
     }
   };
@@ -585,12 +734,23 @@ function PresentationsTab() {
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label>Presentation Title</Label>
-              <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="My Presentation" />
+              <Input
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="My Presentation"
+              />
             </div>
             <div className="space-y-2">
               <Label>Export Format</Label>
-              <Select value={format} onValueChange={(v) => setFormat(v as 'pptx' | 'pdf' | 'png' | 'svg')}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+              <Select
+                value={format}
+                onValueChange={(v) =>
+                  setFormat(v as "pptx" | "pdf" | "png" | "svg")
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="pptx">PPTX (PowerPoint)</SelectItem>
                   <SelectItem value="pdf">PDF</SelectItem>
@@ -603,8 +763,10 @@ function PresentationsTab() {
 
           <div className="space-y-2">
             <Label>
-              Slides JSON{' '}
-              <span className="text-muted-foreground font-normal">(optional — leave blank for a single default slide)</span>
+              Slides JSON{" "}
+              <span className="text-muted-foreground font-normal">
+                (optional — leave blank for a single default slide)
+              </span>
             </Label>
             <textarea
               className="w-full min-h-[160px] rounded-md border border-input bg-background px-3 py-2 text-xs font-mono resize-y focus:outline-none focus:ring-2 focus:ring-ring"
@@ -622,20 +784,30 @@ function PresentationsTab() {
             />
           </div>
 
-          <Button className="w-full sm:w-auto" disabled={status === 'loading'} onClick={handleExport}>
-            {status === 'loading' ? (
-              <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Exporting…</>
+          <Button
+            className="w-full sm:w-auto"
+            disabled={status === "loading"}
+            onClick={handleExport}
+          >
+            {status === "loading" ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Exporting…
+              </>
             ) : (
-              <><Download className="mr-2 h-4 w-4" /> Export Presentation</>
+              <>
+                <Download className="mr-2 h-4 w-4" /> Export Presentation
+              </>
             )}
           </Button>
 
           {serviceInfo && (
             <div className="rounded-lg bg-muted/50 p-3 text-xs space-y-1">
-              <p className="font-medium text-foreground">Service v{serviceInfo.version}</p>
+              <p className="font-medium text-foreground">
+                Service v{serviceInfo.version}
+              </p>
               <p>
                 <span className="text-muted-foreground">Formats: </span>
-                {serviceInfo.supported_formats?.join(', ')}
+                {serviceInfo.supported_formats?.join(", ")}
               </p>
               <p>
                 <span className="text-muted-foreground">Max slides: </span>
@@ -652,19 +824,24 @@ function PresentationsTab() {
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function ToolsPage() {
-  usePageTitle('Outils');
+  usePageTitle("Outils");
   return (
     <AppLayout>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between pb-4 border-b border-border/50">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight text-foreground">Tools</h1>
+            <h1 className="text-3xl font-bold tracking-tight text-foreground">
+              Tools
+            </h1>
             <p className="text-sm text-muted-foreground mt-1">
               Spreadsheet import/export, PDF utilities, and presentation export
             </p>
           </div>
-          <Badge variant="outline" className="hidden sm:flex items-center gap-1.5">
+          <Badge
+            variant="outline"
+            className="hidden sm:flex items-center gap-1.5"
+          >
             <FileText className="h-3 w-3" /> signapps-tools
           </Badge>
         </div>
@@ -672,7 +849,10 @@ export default function ToolsPage() {
         {/* Tabs */}
         <Tabs defaultValue="spreadsheets" className="space-y-6">
           <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="spreadsheets" className="flex items-center gap-1.5">
+            <TabsTrigger
+              value="spreadsheets"
+              className="flex items-center gap-1.5"
+            >
               <Table2 className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Spreadsheets</span>
             </TabsTrigger>
@@ -680,7 +860,10 @@ export default function ToolsPage() {
               <FileText className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">PDF Tools</span>
             </TabsTrigger>
-            <TabsTrigger value="presentations" className="flex items-center gap-1.5">
+            <TabsTrigger
+              value="presentations"
+              className="flex items-center gap-1.5"
+            >
               <Presentation className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Presentations</span>
             </TabsTrigger>

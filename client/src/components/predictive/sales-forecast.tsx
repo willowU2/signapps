@@ -1,5 +1,5 @@
-import React from 'react';
-import { TrendingUp, BarChart3 } from 'lucide-react';
+import React from "react";
+import { TrendingUp, BarChart3 } from "lucide-react";
 
 interface MonthlySales {
   month: string;
@@ -9,39 +9,47 @@ interface MonthlySales {
 
 interface SeasonalTrend {
   quarter: string;
-  trend: 'up' | 'down' | 'stable';
+  trend: "up" | "down" | "stable";
   impact: string;
 }
 
 export const SalesForecast: React.FC = () => {
   const monthlySales: MonthlySales[] = [
-    { month: 'Apr', forecasted: 125000, confidence: 88 },
-    { month: 'May', forecasted: 132000, confidence: 85 },
-    { month: 'Jun', forecasted: 148000, confidence: 82 },
+    { month: "Apr", forecasted: 125000, confidence: 88 },
+    { month: "May", forecasted: 132000, confidence: 85 },
+    { month: "Jun", forecasted: 148000, confidence: 82 },
   ];
 
   const seasonalTrends: SeasonalTrend[] = [
-    { quarter: 'Q1', trend: 'up', impact: '+12% vs baseline' },
-    { quarter: 'Q2', trend: 'up', impact: '+18% vs baseline' },
-    { quarter: 'Q3', trend: 'stable', impact: '+5% vs baseline' },
+    { quarter: "Q1", trend: "up", impact: "+12% vs baseline" },
+    { quarter: "Q2", trend: "up", impact: "+18% vs baseline" },
+    { quarter: "Q3", trend: "stable", impact: "+5% vs baseline" },
   ];
 
   const maxSales = Math.max(...monthlySales.map((m) => m.forecasted));
-  const avgAccuracy = (monthlySales.reduce((sum, m) => sum + m.confidence, 0) / monthlySales.length).toFixed(0);
+  const avgAccuracy = (
+    monthlySales.reduce((sum, m) => sum + m.confidence, 0) / monthlySales.length
+  ).toFixed(0);
 
   const getTrendIcon = (trend: string): string => {
     switch (trend) {
-      case 'up': return '↑';
-      case 'down': return '↓';
-      default: return '→';
+      case "up":
+        return "↑";
+      case "down":
+        return "↓";
+      default:
+        return "→";
     }
   };
 
   const getTrendColor = (trend: string): string => {
     switch (trend) {
-      case 'up': return 'text-green-600';
-      case 'down': return 'text-red-600';
-      default: return 'text-muted-foreground';
+      case "up":
+        return "text-green-600";
+      case "down":
+        return "text-red-600";
+      default:
+        return "text-muted-foreground";
     }
   };
 
@@ -53,7 +61,9 @@ export const SalesForecast: React.FC = () => {
       </h2>
 
       <div className="mb-6">
-        <h3 className="text-sm font-semibold text-muted-foreground mb-3">Monthly Forecast</h3>
+        <h3 className="text-sm font-semibold text-muted-foreground mb-3">
+          Monthly Forecast
+        </h3>
         <div className="flex items-end justify-between gap-2 px-2 h-40">
           {monthlySales.map((month, idx) => {
             const barHeight = (month.forecasted / maxSales) * 140;
@@ -66,9 +76,15 @@ export const SalesForecast: React.FC = () => {
                   />
                 </div>
                 <div className="mt-2 text-center">
-                  <p className="text-xs font-semibold text-foreground">{month.month}</p>
-                  <p className="text-xs text-muted-foreground">${(month.forecasted / 1000).toFixed(0)}k</p>
-                  <p className="text-xs text-muted-foreground">{month.confidence}% confidence</p>
+                  <p className="text-xs font-semibold text-foreground">
+                    {month.month}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    ${(month.forecasted / 1000).toFixed(0)}k
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {month.confidence}% confidence
+                  </p>
                 </div>
               </div>
             );
@@ -77,16 +93,27 @@ export const SalesForecast: React.FC = () => {
       </div>
 
       <div className="border-t pt-4 mb-4">
-        <h3 className="text-sm font-semibold text-muted-foreground mb-3">Seasonal Trends</h3>
+        <h3 className="text-sm font-semibold text-muted-foreground mb-3">
+          Seasonal Trends
+        </h3>
         <div className="grid grid-cols-1 gap-2">
           {seasonalTrends.map((trend, idx) => (
-            <div key={idx} className="p-3 bg-muted border border-border rounded-lg">
+            <div
+              key={idx}
+              className="p-3 bg-muted border border-border rounded-lg"
+            >
               <div className="flex justify-between items-center">
                 <div>
-                  <p className="text-sm font-medium text-foreground">{trend.quarter}</p>
-                  <p className="text-xs text-muted-foreground">{trend.impact}</p>
+                  <p className="text-sm font-medium text-foreground">
+                    {trend.quarter}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {trend.impact}
+                  </p>
                 </div>
-                <span className={`text-lg font-bold ${getTrendColor(trend.trend)}`}>
+                <span
+                  className={`text-lg font-bold ${getTrendColor(trend.trend)}`}
+                >
                   {getTrendIcon(trend.trend)}
                 </span>
               </div>
@@ -98,13 +125,23 @@ export const SalesForecast: React.FC = () => {
       <div className="border-t pt-4">
         <div className="grid grid-cols-2 gap-4">
           <div className="p-3 bg-blue-50 rounded-lg">
-            <p className="text-xs text-muted-foreground mb-1">Forecast Accuracy</p>
+            <p className="text-xs text-muted-foreground mb-1">
+              Forecast Accuracy
+            </p>
             <p className="text-2xl font-bold text-blue-600">{avgAccuracy}%</p>
           </div>
           <div className="p-3 bg-purple-50 rounded-lg">
-            <p className="text-xs text-muted-foreground mb-1">Avg Monthly Forecast</p>
+            <p className="text-xs text-muted-foreground mb-1">
+              Avg Monthly Forecast
+            </p>
             <p className="text-2xl font-bold text-purple-600">
-              ${((monthlySales.reduce((sum, m) => sum + m.forecasted, 0) / monthlySales.length) / 1000).toFixed(0)}k
+              $
+              {(
+                monthlySales.reduce((sum, m) => sum + m.forecasted, 0) /
+                monthlySales.length /
+                1000
+              ).toFixed(0)}
+              k
             </p>
           </div>
         </div>

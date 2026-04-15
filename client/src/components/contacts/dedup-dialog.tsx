@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { useState, useCallback } from 'react';
-import { Button } from '@/components/ui/button';
+import { useState, useCallback } from "react";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -9,9 +9,9 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from '@/components/ui/dialog';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
+} from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Users,
   Loader2,
@@ -20,10 +20,10 @@ import {
   X,
   CheckCircle2,
   AlertTriangle,
-} from 'lucide-react';
-import { toast } from 'sonner';
-import { aiApi } from '@/lib/api/ai';
-import { cn } from '@/lib/utils';
+} from "lucide-react";
+import { toast } from "sonner";
+import { aiApi } from "@/lib/api/ai";
+import { cn } from "@/lib/utils";
 
 interface Contact {
   id: string;
@@ -47,7 +47,12 @@ interface DedupDialogProps {
   onMerge: (keepId: string, mergeIds: string[]) => Promise<void>;
 }
 
-export function DedupDialog({ open, onOpenChange, contacts, onMerge }: DedupDialogProps) {
+export function DedupDialog({
+  open,
+  onOpenChange,
+  contacts,
+  onMerge,
+}: DedupDialogProps) {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [duplicateGroups, setDuplicateGroups] = useState<DuplicateGroup[]>([]);
   const [mergedGroups, setMergedGroups] = useState<Set<number>>(new Set());
@@ -56,7 +61,7 @@ export function DedupDialog({ open, onOpenChange, contacts, onMerge }: DedupDial
 
   const analyzeContacts = useCallback(async () => {
     if (contacts.length < 2) {
-      toast.error('Need at least 2 contacts to detect duplicates');
+      toast.error("Need at least 2 contacts to detect duplicates");
       return;
     }
 
@@ -70,9 +75,9 @@ export function DedupDialog({ open, onOpenChange, contacts, onMerge }: DedupDial
       const contactSummary = contacts.map((c) => ({
         id: c.id,
         name: `${c.first_name} ${c.last_name}`.trim(),
-        email: c.email || '',
-        phone: c.phone || '',
-        company: c.company || '',
+        email: c.email || "",
+        phone: c.phone || "",
+        company: c.company || "",
       }));
 
       const prompt = `Analyze this contact list and find likely duplicates. Look for:
@@ -89,7 +94,8 @@ Return ONLY a valid JSON array of duplicate groups:
 If no duplicates found, return an empty array: []`;
 
       const res = await aiApi.chat(prompt, {
-        systemPrompt: 'You are a data deduplication expert. Return only valid JSON, no markdown, no explanation.',
+        systemPrompt:
+          "You are a data deduplication expert. Return only valid JSON, no markdown, no explanation.",
       });
 
       const jsonMatch = res.data.answer.match(/\[[\s\S]*\]/);
@@ -102,7 +108,7 @@ If no duplicates found, return an empty array: []`;
               .map((id: string) => contacts.find((c) => c.id === id))
               .filter(Boolean),
             confidence: Math.round((g.confidence || 0.5) * 100),
-            reason: g.reason || 'Similar contact information',
+            reason: g.reason || "Similar contact information",
           }))
           .filter((g: DuplicateGroup) => g.contacts.length >= 2);
 
@@ -110,17 +116,19 @@ If no duplicates found, return an empty array: []`;
         setHasAnalyzed(true);
 
         if (groups.length === 0) {
-          toast.info('No duplicates detected');
+          toast.info("No duplicates detected");
         } else {
-          toast.success(`Found ${groups.length} potential duplicate group${groups.length > 1 ? 's' : ''}`);
+          toast.success(
+            `Found ${groups.length} potential duplicate group${groups.length > 1 ? "s" : ""}`,
+          );
         }
       } else {
         setDuplicateGroups([]);
         setHasAnalyzed(true);
-        toast.info('No duplicates detected');
+        toast.info("No duplicates detected");
       }
     } catch {
-      toast.error('Failed to analyze contacts');
+      toast.error("Failed to analyze contacts");
     } finally {
       setIsAnalyzing(false);
     }
@@ -138,24 +146,26 @@ If no duplicates found, return an empty array: []`;
 
       await onMerge(keepContact.id, mergeIds);
       setMergedGroups((prev) => new Set([...prev, groupIndex]));
-      toast.success(`Merged ${mergeIds.length} contact${mergeIds.length > 1 ? 's' : ''} into ${keepContact.first_name} ${keepContact.last_name}`);
+      toast.success(
+        `Merged ${mergeIds.length} contact${mergeIds.length > 1 ? "s" : ""} into ${keepContact.first_name} ${keepContact.last_name}`,
+      );
     } catch {
-      toast.error('Impossible de fusionner les contacts');
+      toast.error("Impossible de fusionner les contacts");
     } finally {
       setMergingIndex(null);
     }
   };
 
   const getConfidenceColor = (confidence: number) => {
-    if (confidence >= 80) return 'text-red-600 dark:text-red-400';
-    if (confidence >= 60) return 'text-yellow-600 dark:text-yellow-400';
-    return 'text-blue-600 dark:text-blue-400';
+    if (confidence >= 80) return "text-red-600 dark:text-red-400";
+    if (confidence >= 60) return "text-yellow-600 dark:text-yellow-400";
+    return "text-blue-600 dark:text-blue-400";
   };
 
   const getConfidenceBg = (confidence: number) => {
-    if (confidence >= 80) return 'bg-red-500';
-    if (confidence >= 60) return 'bg-yellow-500';
-    return 'bg-blue-500';
+    if (confidence >= 80) return "bg-red-500";
+    if (confidence >= 60) return "bg-yellow-500";
+    return "bg-blue-500";
   };
 
   return (
@@ -167,7 +177,8 @@ If no duplicates found, return an empty array: []`;
             AI Contact Deduplication
           </DialogTitle>
           <DialogDescription>
-            AI analyzes your {contacts.length} contacts to find likely duplicates
+            AI analyzes your {contacts.length} contacts to find likely
+            duplicates
           </DialogDescription>
         </DialogHeader>
 
@@ -206,20 +217,35 @@ If no duplicates found, return an empty array: []`;
             <Card
               key={groupIdx}
               className={cn(
-                'transition-all',
-                mergedGroups.has(groupIdx) && 'opacity-50 pointer-events-none'
+                "transition-all",
+                mergedGroups.has(groupIdx) && "opacity-50 pointer-events-none",
               )}
             >
               <CardContent className="p-4 space-y-3">
                 {/* Group header */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <AlertTriangle className={cn('h-4 w-4', getConfidenceColor(group.confidence))} />
+                    <AlertTriangle
+                      className={cn(
+                        "h-4 w-4",
+                        getConfidenceColor(group.confidence),
+                      )}
+                    />
                     <span className="text-sm font-medium">{group.reason}</span>
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <div className={cn('h-2 w-2 rounded-full', getConfidenceBg(group.confidence))} />
-                    <span className={cn('text-xs font-semibold', getConfidenceColor(group.confidence))}>
+                    <div
+                      className={cn(
+                        "h-2 w-2 rounded-full",
+                        getConfidenceBg(group.confidence),
+                      )}
+                    />
+                    <span
+                      className={cn(
+                        "text-xs font-semibold",
+                        getConfidenceColor(group.confidence),
+                      )}
+                    >
                       {group.confidence}%
                     </span>
                   </div>
@@ -238,17 +264,24 @@ If no duplicates found, return an empty array: []`;
                             {contact.first_name} {contact.last_name}
                           </span>
                           {contact.company && (
-                            <Badge variant="outline" className="text-[10px] shrink-0">
+                            <Badge
+                              variant="outline"
+                              className="text-[10px] shrink-0"
+                            >
                               {contact.company}
                             </Badge>
                           )}
                         </div>
                         <div className="flex items-center gap-3 mt-0.5">
                           {contact.email && (
-                            <span className="text-xs text-muted-foreground truncate">{contact.email}</span>
+                            <span className="text-xs text-muted-foreground truncate">
+                              {contact.email}
+                            </span>
                           )}
                           {contact.phone && (
-                            <span className="text-xs text-muted-foreground">{contact.phone}</span>
+                            <span className="text-xs text-muted-foreground">
+                              {contact.phone}
+                            </span>
                           )}
                         </div>
                       </div>
@@ -285,7 +318,12 @@ If no duplicates found, return an empty array: []`;
 
           {/* Re-analyze button */}
           {hasAnalyzed && duplicateGroups.length > 0 && (
-            <Button variant="outline" onClick={analyzeContacts} disabled={isAnalyzing} className="w-full">
+            <Button
+              variant="outline"
+              onClick={analyzeContacts}
+              disabled={isAnalyzing}
+              className="w-full"
+            >
               {isAnalyzing ? (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
               ) : (

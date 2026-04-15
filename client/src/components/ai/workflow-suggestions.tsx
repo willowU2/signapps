@@ -1,4 +1,4 @@
-'use client'
+"use client";
 
 /**
  * AM3 — AI workflow suggestions
@@ -7,10 +7,10 @@
  * Suggestions are clickable to execute the action, dismissible to hide them.
  */
 
-import React, { useState, useEffect } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
+import React, { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Lightbulb,
   X,
@@ -22,87 +22,116 @@ import {
   Loader2,
   CheckCircle2,
   ChevronRight,
-} from 'lucide-react'
-import { toast } from 'sonner'
-import { aiApi } from '@/lib/api'
-import type { ChatResponse } from '@/lib/api/ai'
+} from "lucide-react";
+import { toast } from "sonner";
+import { aiApi } from "@/lib/api";
+import type { ChatResponse } from "@/lib/api/ai";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type SuggestionCategory = 'email' | 'calendar' | 'crm' | 'automation' | 'general'
+type SuggestionCategory =
+  | "email"
+  | "calendar"
+  | "crm"
+  | "automation"
+  | "general";
 
 interface WorkflowSuggestion {
-  id: string
-  category: SuggestionCategory
-  title: string
-  description: string
-  actionLabel: string
-  dismissed: boolean
-  executed: boolean
+  id: string;
+  category: SuggestionCategory;
+  title: string;
+  description: string;
+  actionLabel: string;
+  dismissed: boolean;
+  executed: boolean;
 }
 
 // ─── Static pattern-based suggestions ────────────────────────────────────────
 
-const STATIC_SUGGESTIONS: Omit<WorkflowSuggestion, 'dismissed' | 'executed'>[] = [
-  {
-    id: 'archive-newsletters',
-    category: 'email',
-    title: 'Archivage automatique',
-    description: 'Vous archivez systématiquement les emails de newsletters. Créer une règle automatique ?',
-    actionLabel: 'Créer la règle',
-  },
-  {
-    id: 'recurring-monday',
-    category: 'calendar',
-    title: 'Réunion récurrente',
-    description: 'Vous planifiez une réunion chaque lundi matin. Convertir en événement récurrent ?',
-    actionLabel: 'Créer récurrence',
-  },
-  {
-    id: 'stale-deals',
-    category: 'crm',
-    title: 'Deals en attente',
-    description: '3 opportunités CRM sont sans activité depuis 2 semaines. Relancer les contacts ?',
-    actionLabel: 'Envoyer relances',
-  },
-  {
-    id: 'team-digest',
-    category: 'automation',
-    title: 'Résumé hebdomadaire',
-    description: 'Vous générez un rapport chaque vendredi. Automatiser l\'envoi à l\'équipe ?',
-    actionLabel: 'Automatiser',
-  },
-  {
-    id: 'doc-sharing',
-    category: 'general',
-    title: 'Partage de documents',
-    description: 'Vous partagez souvent les mêmes documents lors des onboardings. Créer un pack ?',
-    actionLabel: 'Créer le pack',
-  },
-]
+const STATIC_SUGGESTIONS: Omit<WorkflowSuggestion, "dismissed" | "executed">[] =
+  [
+    {
+      id: "archive-newsletters",
+      category: "email",
+      title: "Archivage automatique",
+      description:
+        "Vous archivez systématiquement les emails de newsletters. Créer une règle automatique ?",
+      actionLabel: "Créer la règle",
+    },
+    {
+      id: "recurring-monday",
+      category: "calendar",
+      title: "Réunion récurrente",
+      description:
+        "Vous planifiez une réunion chaque lundi matin. Convertir en événement récurrent ?",
+      actionLabel: "Créer récurrence",
+    },
+    {
+      id: "stale-deals",
+      category: "crm",
+      title: "Deals en attente",
+      description:
+        "3 opportunités CRM sont sans activité depuis 2 semaines. Relancer les contacts ?",
+      actionLabel: "Envoyer relances",
+    },
+    {
+      id: "team-digest",
+      category: "automation",
+      title: "Résumé hebdomadaire",
+      description:
+        "Vous générez un rapport chaque vendredi. Automatiser l'envoi à l'équipe ?",
+      actionLabel: "Automatiser",
+    },
+    {
+      id: "doc-sharing",
+      category: "general",
+      title: "Partage de documents",
+      description:
+        "Vous partagez souvent les mêmes documents lors des onboardings. Créer un pack ?",
+      actionLabel: "Créer le pack",
+    },
+  ];
 
 // ─── Category config ──────────────────────────────────────────────────────────
 
-const CATEGORY_CONFIG: Record<SuggestionCategory, { icon: React.ReactNode; color: string }> = {
-  email: { icon: <Mail className="w-4 h-4" />, color: 'bg-blue-100 text-blue-700' },
-  calendar: { icon: <Calendar className="w-4 h-4" />, color: 'bg-green-100 text-green-700' },
-  crm: { icon: <Users className="w-4 h-4" />, color: 'bg-orange-100 text-orange-700' },
-  automation: { icon: <RefreshCw className="w-4 h-4" />, color: 'bg-purple-100 text-purple-700' },
-  general: { icon: <Lightbulb className="w-4 h-4" />, color: 'bg-muted text-muted-foreground' },
-}
+const CATEGORY_CONFIG: Record<
+  SuggestionCategory,
+  { icon: React.ReactNode; color: string }
+> = {
+  email: {
+    icon: <Mail className="w-4 h-4" />,
+    color: "bg-blue-100 text-blue-700",
+  },
+  calendar: {
+    icon: <Calendar className="w-4 h-4" />,
+    color: "bg-green-100 text-green-700",
+  },
+  crm: {
+    icon: <Users className="w-4 h-4" />,
+    color: "bg-orange-100 text-orange-700",
+  },
+  automation: {
+    icon: <RefreshCw className="w-4 h-4" />,
+    color: "bg-purple-100 text-purple-700",
+  },
+  general: {
+    icon: <Lightbulb className="w-4 h-4" />,
+    color: "bg-muted text-muted-foreground",
+  },
+};
 
-const LS_KEY = 'signapps_workflow_suggestions_dismissed'
+const LS_KEY = "signapps_workflow_suggestions_dismissed";
 
 function loadDismissed(): string[] {
   try {
-    return JSON.parse(localStorage.getItem(LS_KEY) ?? '[]')
+    return JSON.parse(localStorage.getItem(LS_KEY) ?? "[]");
   } catch {
-    return []
+    return [];
   }
 }
 
 function saveDismissed(ids: string[]) {
-  localStorage.setItem(LS_KEY, JSON.stringify(ids))
+  localStorage.setItem(LS_KEY, JSON.stringify(ids));
 }
 
 // ─── Suggestion card ──────────────────────────────────────────────────────────
@@ -112,18 +141,18 @@ function SuggestionCard({
   onDismiss,
   onExecute,
 }: {
-  suggestion: WorkflowSuggestion
-  onDismiss: (id: string) => void
-  onExecute: (id: string) => void
+  suggestion: WorkflowSuggestion;
+  onDismiss: (id: string) => void;
+  onExecute: (id: string) => void;
 }) {
-  const cfg = CATEGORY_CONFIG[suggestion.category]
+  const cfg = CATEGORY_CONFIG[suggestion.category];
 
-  if (suggestion.dismissed) return null
+  if (suggestion.dismissed) return null;
 
   return (
     <div
       className={`flex items-start gap-3 rounded-lg border p-3 transition-all ${
-        suggestion.executed ? 'opacity-60' : 'hover:bg-muted/30'
+        suggestion.executed ? "opacity-60" : "hover:bg-muted/30"
       }`}
     >
       <div className={`rounded-full p-1.5 shrink-0 ${cfg.color}`}>
@@ -167,95 +196,103 @@ function SuggestionCard({
         <X className="w-3.5 h-3.5" />
       </Button>
     </div>
-  )
+  );
 }
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
 interface WorkflowSuggestionsProps {
   /** If true, also generates AI-powered suggestions from user context */
-  aiEnhanced?: boolean
+  aiEnhanced?: boolean;
   /** Max suggestions to display */
-  maxVisible?: number
+  maxVisible?: number;
 }
 
 export function WorkflowSuggestions({
   aiEnhanced = false,
   maxVisible = 4,
 }: WorkflowSuggestionsProps) {
-  const [suggestions, setSuggestions] = useState<WorkflowSuggestion[]>([])
-  const [loadingAi, setLoadingAi] = useState(false)
+  const [suggestions, setSuggestions] = useState<WorkflowSuggestion[]>([]);
+  const [loadingAi, setLoadingAi] = useState(false);
 
   useEffect(() => {
-    const dismissed = loadDismissed()
+    const dismissed = loadDismissed();
     const initial: WorkflowSuggestion[] = STATIC_SUGGESTIONS.map((s) => ({
       ...s,
       dismissed: dismissed.includes(s.id),
       executed: false,
-    }))
-    setSuggestions(initial)
+    }));
+    setSuggestions(initial);
 
-    if (aiEnhanced) generateAiSuggestions(initial)
-  }, [aiEnhanced])
+    if (aiEnhanced) generateAiSuggestions(initial);
+  }, [aiEnhanced]);
 
   const generateAiSuggestions = async (existing: WorkflowSuggestion[]) => {
-    setLoadingAi(true)
+    setLoadingAi(true);
     try {
       const prompt = `Tu es un assistant de productivité. Génère 3 nouvelles suggestions d'automatisation pour un utilisateur professionnel qui utilise une suite bureautique (email, calendrier, CRM, documents).
 Retourne UNIQUEMENT un JSON array sans markdown:
-[{"id":"unique-id","category":"email|calendar|crm|automation|general","title":"Titre court","description":"Description actionnable en 1 phrase","actionLabel":"Libellé bouton court"}]`
+[{"id":"unique-id","category":"email|calendar|crm|automation|general","title":"Titre court","description":"Description actionnable en 1 phrase","actionLabel":"Libellé bouton court"}]`;
 
-      const res = await aiApi.chat(prompt, { enableTools: false, includesSources: false })
-      const answer: string = (res.data as ChatResponse)?.answer ?? ''
-      const match = answer.match(/\[[\s\S]*\]/)
-      if (!match) return
+      const res = await aiApi.chat(prompt, {
+        enableTools: false,
+        includesSources: false,
+      });
+      const answer: string = (res.data as ChatResponse)?.answer ?? "";
+      const match = answer.match(/\[[\s\S]*\]/);
+      if (!match) return;
 
-      const parsed: Array<Omit<WorkflowSuggestion, 'dismissed' | 'executed'>> = JSON.parse(match[0])
-      const dismissed = loadDismissed()
+      const parsed: Array<Omit<WorkflowSuggestion, "dismissed" | "executed">> =
+        JSON.parse(match[0]);
+      const dismissed = loadDismissed();
 
       const aiSuggestions: WorkflowSuggestion[] = parsed.map((s) => ({
         ...s,
         dismissed: dismissed.includes(s.id),
         executed: false,
-      }))
+      }));
 
       setSuggestions((prev) => {
         // Avoid duplicates
-        const existingIds = new Set(prev.map((p) => p.id))
-        return [...prev, ...aiSuggestions.filter((s) => !existingIds.has(s.id))]
-      })
+        const existingIds = new Set(prev.map((p) => p.id));
+        return [
+          ...prev,
+          ...aiSuggestions.filter((s) => !existingIds.has(s.id)),
+        ];
+      });
     } catch {
       // AI suggestions are optional — don't toast
     } finally {
-      setLoadingAi(false)
+      setLoadingAi(false);
     }
-  }
+  };
 
   const handleDismiss = (id: string) => {
-    setSuggestions((prev) => prev.map((s) => (s.id === id ? { ...s, dismissed: true } : s)))
-    const dismissed = loadDismissed()
-    saveDismissed([...dismissed, id])
-  }
+    setSuggestions((prev) =>
+      prev.map((s) => (s.id === id ? { ...s, dismissed: true } : s)),
+    );
+    const dismissed = loadDismissed();
+    saveDismissed([...dismissed, id]);
+  };
 
   const handleExecute = async (id: string) => {
-    const suggestion = suggestions.find((s) => s.id === id)
-    if (!suggestion) return
+    const suggestion = suggestions.find((s) => s.id === id);
+    if (!suggestion) return;
 
     // Simulate async action execution
-    toast.promise(
-      new Promise<void>((resolve) => setTimeout(resolve, 800)),
-      {
-        loading: `Exécution: ${suggestion.actionLabel}…`,
-        success: `Action exécutée: ${suggestion.title}`,
-        error: 'Échec de l\'action',
-      }
-    )
+    toast.promise(new Promise<void>((resolve) => setTimeout(resolve, 800)), {
+      loading: `Exécution: ${suggestion.actionLabel}…`,
+      success: `Action exécutée: ${suggestion.title}`,
+      error: "Échec de l'action",
+    });
 
-    setSuggestions((prev) => prev.map((s) => (s.id === id ? { ...s, executed: true } : s)))
-  }
+    setSuggestions((prev) =>
+      prev.map((s) => (s.id === id ? { ...s, executed: true } : s)),
+    );
+  };
 
-  const visible = suggestions.filter((s) => !s.dismissed).slice(0, maxVisible)
-  const dismissedCount = suggestions.filter((s) => s.dismissed).length
+  const visible = suggestions.filter((s) => !s.dismissed).slice(0, maxVisible);
+  const dismissedCount = suggestions.filter((s) => s.dismissed).length;
 
   if (visible.length === 0 && !loadingAi) {
     return (
@@ -265,7 +302,7 @@ Retourne UNIQUEMENT un JSON array sans markdown:
           <p className="text-sm">Aucune suggestion pour le moment</p>
         </CardContent>
       </Card>
-    )
+    );
   }
 
   return (
@@ -276,7 +313,9 @@ Retourne UNIQUEMENT un JSON array sans markdown:
             <Lightbulb className="w-5 h-5 text-primary" />
             Suggestions IA
             {visible.length > 0 && (
-              <Badge variant="secondary" className="text-xs">{visible.length}</Badge>
+              <Badge variant="secondary" className="text-xs">
+                {visible.length}
+              </Badge>
             )}
           </CardTitle>
           {loadingAi && (
@@ -300,10 +339,11 @@ Retourne UNIQUEMENT un JSON array sans markdown:
 
         {dismissedCount > 0 && (
           <p className="text-xs text-muted-foreground text-center pt-1">
-            {dismissedCount} suggestion{dismissedCount > 1 ? 's' : ''} ignorée{dismissedCount > 1 ? 's' : ''}
+            {dismissedCount} suggestion{dismissedCount > 1 ? "s" : ""} ignorée
+            {dismissedCount > 1 ? "s" : ""}
           </p>
         )}
       </CardContent>
     </Card>
-  )
+  );
 }

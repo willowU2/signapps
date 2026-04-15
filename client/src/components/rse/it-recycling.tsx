@@ -20,7 +20,10 @@ export default function ITRecycling() {
 
   const [disposal, setDisposal] = useState<Record<string, string>>({});
 
-  const handleDisposal = (id: string, type: "recycle" | "donate" | "destroy") => {
+  const handleDisposal = (
+    id: string,
+    type: "recycle" | "donate" | "destroy",
+  ) => {
     setDisposal((prev) => ({
       ...prev,
       [id]: type,
@@ -38,7 +41,7 @@ export default function ITRecycling() {
 
   const totalImpact = Object.values(disposal).reduce(
     (sum, action) => sum + getImpact(action),
-    0
+    0,
   );
 
   return (
@@ -51,7 +54,9 @@ export default function ITRecycling() {
       <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
         <div className="text-center">
           <p className="text-sm text-purple-600 mb-1">Environmental Impact</p>
-          <p className="text-3xl font-bold text-purple-900">{totalImpact.toFixed(1)}</p>
+          <p className="text-3xl font-bold text-purple-900">
+            {totalImpact.toFixed(1)}
+          </p>
           <p className="text-xs text-purple-600">kg CO₂ equivalent prevented</p>
         </div>
       </div>
@@ -84,7 +89,9 @@ export default function ITRecycling() {
                 <Button
                   key={option.type}
                   size="sm"
-                  variant={disposal[item.id] === option.type ? "default" : "outline"}
+                  variant={
+                    disposal[item.id] === option.type ? "default" : "outline"
+                  }
                   onClick={() => handleDisposal(item.id, option.type)}
                   className="text-xs"
                 >
@@ -99,8 +106,8 @@ export default function ITRecycling() {
       {Object.keys(disposal).length > 0 && (
         <div className="p-3 bg-purple-50 rounded-lg border border-purple-200 text-sm">
           <p className="text-purple-900">
-            <strong>{Object.keys(disposal).length}</strong> item(s) scheduled for
-            disposal
+            <strong>{Object.keys(disposal).length}</strong> item(s) scheduled
+            for disposal
           </p>
         </div>
       )}

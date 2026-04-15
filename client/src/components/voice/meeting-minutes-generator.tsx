@@ -1,14 +1,14 @@
-'use client';
+"use client";
 
-import { useState, useRef, useCallback } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { Mic, MicOff, FileText, Copy, Wand2, Loader2 } from 'lucide-react';
-import { toast } from 'sonner';
-import { aiApi } from '@/lib/api/ai';
+import { useState, useRef, useCallback } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Mic, MicOff, FileText, Copy, Wand2, Loader2 } from "lucide-react";
+import { toast } from "sonner";
+import { aiApi } from "@/lib/api/ai";
 
 interface MeetingMinutes {
   summary: string;
@@ -20,48 +20,62 @@ interface MeetingMinutes {
 
 function parseAiResponse(raw: string): MeetingMinutes {
   const extract = (tag: string): string[] => {
-    const match = raw.match(new RegExp(`${tag}[:\\s]*([\\s\\S]*?)(?=\\n(?:SUMMARY|DECISIONS|ACTIONS|PARTICIPANTS|TOPICS)|$)`, 'i'));
+    const match = raw.match(
+      new RegExp(
+        `${tag}[:\\s]*([\\s\\S]*?)(?=\\n(?:SUMMARY|DECISIONS|ACTIONS|PARTICIPANTS|TOPICS)|$)`,
+        "i",
+      ),
+    );
     if (!match) return [];
     return match[1]
       .split(/\n/)
-      .map(l => l.replace(/^[-*•\d.]\s*/, '').trim())
-      .filter(l => l.length > 3);
+      .map((l) => l.replace(/^[-*•\d.]\s*/, "").trim())
+      .filter((l) => l.length > 3);
   };
 
-  const summaryMatch = raw.match(/SUMMARY[:\s]*([\s\S]*?)(?=\n(?:DECISIONS|ACTIONS|PARTICIPANTS|TOPICS)|$)/i);
+  const summaryMatch = raw.match(
+    /SUMMARY[:\s]*([\s\S]*?)(?=\n(?:DECISIONS|ACTIONS|PARTICIPANTS|TOPICS)|$)/i,
+  );
   const summary = summaryMatch ? summaryMatch[1].trim() : raw.slice(0, 200);
 
   return {
     summary,
-    decisions: extract('DECISIONS'),
-    actions: extract('ACTIONS'),
-    participants: extract('PARTICIPANTS'),
-    topics: extract('TOPICS'),
+    decisions: extract("DECISIONS"),
+    actions: extract("ACTIONS"),
+    participants: extract("PARTICIPANTS"),
+    topics: extract("TOPICS"),
   };
 }
 
 export function MeetingMinutesGenerator() {
   const [recording, setRecording] = useState(false);
-  const [transcript, setTranscript] = useState('');
+  const [transcript, setTranscript] = useState("");
   const [minutes, setMinutes] = useState<MeetingMinutes | null>(null);
   const [generating, setGenerating] = useState(false);
   const recognitionRef = useRef<any>(null);
 
   const startRecording = useCallback(() => {
-    const SpeechRec = window.SpeechRecognition ?? window.webkitSpeechRecognition;
-    if (!SpeechRec) { toast.error('Speech recognition not supported'); return; }
+    const SpeechRec =
+      window.SpeechRecognition ?? window.webkitSpeechRecognition;
+    if (!SpeechRec) {
+      toast.error("Speech recognition not supported");
+      return;
+    }
 
     const rec = new SpeechRec();
     rec.continuous = true;
     rec.interimResults = true;
-    rec.lang = 'fr-FR';
-    let finalTranscript = '';
+    rec.lang = "fr-FR";
+    let finalTranscript = "";
 
     rec.onresult = (e: any) => {
-      let interim = '';
+      let interim = "";
       for (let i = e.resultIndex; i < e.results.length; i++) {
-        if (e.results[i].isFinal) { finalTranscript += e.results[i][0].transcript + ' '; }
-        else { interim += e.results[i][0].transcript; }
+        if (e.results[i].isFinal) {
+          finalTranscript += e.results[i][0].transcript + " ";
+        } else {
+          interim += e.results[i][0].transcript;
+        }
       }
       setTranscript(finalTranscript + interim);
     };
@@ -72,7 +86,7 @@ export function MeetingMinutesGenerator() {
     rec.start();
     setRecording(true);
     setMinutes(null);
-    toast.success('Recording started — speak your meeting notes');
+    toast.success("Recording started — speak your meeting notes");
   }, []);
 
   const stopRecording = useCallback(() => {
@@ -81,7 +95,10 @@ export function MeetingMinutesGenerator() {
   }, []);
 
   const generateMinutes = useCallback(async () => {
-    if (!transcript.trim()) { toast.error('Transcript is empty'); return; }
+    if (!transcript.trim()) {
+      toast.error("Transcript is empty");
+      return;
+    }
     setGenerating(true);
     try {
       const prompt = `Analyze this meeting transcript and extract structured information. Reply in this exact format:
@@ -105,23 +122,35 @@ Transcript:
 ${transcript}`;
 
       const res = await aiApi.chat(prompt, {
-        systemPrompt: 'You are a professional meeting minutes assistant. Extract structured information from meeting transcripts. Be concise and factual.',
+        systemPrompt:
+          "You are a professional meeting minutes assistant. Extract structured information from meeting transcripts. Be concise and factual.",
         includesSources: false,
         enableTools: false,
       });
       const parsed = parseAiResponse(res.data.answer);
       setMinutes(parsed);
-      toast.success('Meeting minutes generated by AI');
+      toast.success("Meeting minutes generated by AI");
     } catch {
-      toast.error('AI generation failed — using local parsing');
+      toast.error("AI generation failed — using local parsing");
       // Fallback: basic local parsing
-      const lines = transcript.split(/[.!?]\s+/).filter(l => l.trim().length > 5);
+      const lines = transcript
+        .split(/[.!?]\s+/)
+        .filter((l) => l.trim().length > 5);
       setMinutes({
-        summary: lines.slice(0, 3).join('. ') + '.',
-        decisions: lines.filter(l => /decid|agreed|approved|validé|décidé/i.test(l)).slice(0, 5).map(l => l.trim()),
-        actions: lines.filter(l => /will|should|must|need|doit|devra|action/i.test(l)).slice(0, 7).map(l => l.trim()),
+        summary: lines.slice(0, 3).join(". ") + ".",
+        decisions: lines
+          .filter((l) => /decid|agreed|approved|validé|décidé/i.test(l))
+          .slice(0, 5)
+          .map((l) => l.trim()),
+        actions: lines
+          .filter((l) => /will|should|must|need|doit|devra|action/i.test(l))
+          .slice(0, 7)
+          .map((l) => l.trim()),
         participants: [],
-        topics: lines.filter(l => l.trim().length > 20).slice(0, 5).map(l => l.trim()),
+        topics: lines
+          .filter((l) => l.trim().length > 20)
+          .slice(0, 5)
+          .map((l) => l.trim()),
       });
     } finally {
       setGenerating(false);
@@ -133,12 +162,12 @@ ${transcript}`;
     const md = [
       `# Meeting Minutes`,
       `## Summary\n${minutes.summary}`,
-      `## Topics Discussed\n${minutes.topics.map(t => `- ${t}`).join('\n')}`,
-      `## Decisions\n${minutes.decisions.map(d => `- ${d}`).join('\n')}`,
-      `## Action Items\n${minutes.actions.map(a => `- [ ] ${a}`).join('\n')}`,
-    ].join('\n\n');
+      `## Topics Discussed\n${minutes.topics.map((t) => `- ${t}`).join("\n")}`,
+      `## Decisions\n${minutes.decisions.map((d) => `- ${d}`).join("\n")}`,
+      `## Action Items\n${minutes.actions.map((a) => `- [ ] ${a}`).join("\n")}`,
+    ].join("\n\n");
     navigator.clipboard.writeText(md);
-    toast.success('Minutes copied as Markdown');
+    toast.success("Minutes copied as Markdown");
   };
 
   return (
@@ -152,34 +181,49 @@ ${transcript}`;
       <CardContent className="space-y-4">
         <div className="flex gap-2">
           <Button
-            variant={recording ? 'destructive' : 'default'}
+            variant={recording ? "destructive" : "default"}
             onClick={recording ? stopRecording : startRecording}
             className="gap-2"
           >
-            {recording ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
-            {recording ? 'Stop Recording' : 'Start Recording'}
+            {recording ? (
+              <MicOff className="h-4 w-4" />
+            ) : (
+              <Mic className="h-4 w-4" />
+            )}
+            {recording ? "Stop Recording" : "Start Recording"}
           </Button>
-          {recording && <Badge className="bg-red-500 animate-pulse">Recording</Badge>}
+          {recording && (
+            <Badge className="bg-red-500 animate-pulse">Recording</Badge>
+          )}
         </div>
 
         <div className="space-y-1">
           <Label className="text-xs">Transcript (editable)</Label>
           <Textarea
             value={transcript}
-            onChange={e => setTranscript(e.target.value)}
+            onChange={(e) => setTranscript(e.target.value)}
             rows={5}
             placeholder="Transcript will appear here as you speak, or paste manually..."
           />
         </div>
 
         <div className="flex gap-2">
-          <Button onClick={generateMinutes} disabled={!transcript.trim() || generating} className="gap-2">
-            {generating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
-            {generating ? 'Generating…' : 'Generate with AI'}
+          <Button
+            onClick={generateMinutes}
+            disabled={!transcript.trim() || generating}
+            className="gap-2"
+          >
+            {generating ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Wand2 className="h-4 w-4" />
+            )}
+            {generating ? "Generating…" : "Generate with AI"}
           </Button>
           {minutes && (
             <Button variant="outline" onClick={copyMinutes} className="gap-2">
-              <Copy className="h-4 w-4" />Copy Markdown
+              <Copy className="h-4 w-4" />
+              Copy Markdown
             </Button>
           )}
         </div>
@@ -187,38 +231,67 @@ ${transcript}`;
         {minutes && (
           <div className="space-y-3 p-4 border rounded-lg bg-muted/20">
             <section>
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Summary</h3>
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
+                Summary
+              </h3>
               <p className="text-sm">{minutes.summary}</p>
             </section>
             {minutes.participants.length > 0 && (
               <section>
-                <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Participants</h3>
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
+                  Participants
+                </h3>
                 <div className="flex flex-wrap gap-1">
-                  {minutes.participants.map((p, i) => <Badge key={i} variant="secondary" className="text-xs">{p}</Badge>)}
+                  {minutes.participants.map((p, i) => (
+                    <Badge key={i} variant="secondary" className="text-xs">
+                      {p}
+                    </Badge>
+                  ))}
                 </div>
               </section>
             )}
             {minutes.decisions.length > 0 && (
               <section>
-                <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Decisions</h3>
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
+                  Decisions
+                </h3>
                 <ul className="text-sm space-y-1">
-                  {minutes.decisions.map((d, i) => <li key={i} className="flex gap-1.5"><span className="text-green-500">✓</span>{d}</li>)}
+                  {minutes.decisions.map((d, i) => (
+                    <li key={i} className="flex gap-1.5">
+                      <span className="text-green-500">✓</span>
+                      {d}
+                    </li>
+                  ))}
                 </ul>
               </section>
             )}
             {minutes.actions.length > 0 && (
               <section>
-                <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Action Items</h3>
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
+                  Action Items
+                </h3>
                 <ul className="text-sm space-y-1">
-                  {minutes.actions.map((a, i) => <li key={i} className="flex gap-1.5"><span className="text-blue-500">→</span>{a}</li>)}
+                  {minutes.actions.map((a, i) => (
+                    <li key={i} className="flex gap-1.5">
+                      <span className="text-blue-500">→</span>
+                      {a}
+                    </li>
+                  ))}
                 </ul>
               </section>
             )}
             {minutes.topics.length > 0 && (
               <section>
-                <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Topics</h3>
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
+                  Topics
+                </h3>
                 <ul className="text-sm space-y-1">
-                  {minutes.topics.map((t, i) => <li key={i} className="flex gap-1.5"><span className="text-muted-foreground">•</span>{t}</li>)}
+                  {minutes.topics.map((t, i) => (
+                    <li key={i} className="flex gap-1.5">
+                      <span className="text-muted-foreground">•</span>
+                      {t}
+                    </li>
+                  ))}
                 </ul>
               </section>
             )}

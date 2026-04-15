@@ -3,9 +3,8 @@
 // Infrastructure repositories — now live in signapps-db-infrastructure (Phase 5 split).
 pub use signapps_db_infrastructure::repositories::{
     AdDnsRepository, AdDomainRepository, AdOuRepository, AdPrincipalKeysRepository,
-    AdSyncQueueRepository, AdUserAccountRepository, DeployProfileRepository,
-    DhcpLeaseRepository, DhcpScopeRepository, InfraCertificateRepository,
-    InfraDomainRepository,
+    AdSyncQueueRepository, AdUserAccountRepository, DeployProfileRepository, DhcpLeaseRepository,
+    DhcpScopeRepository, InfraCertificateRepository, InfraDomainRepository,
 };
 
 // Identity repositories — now live in signapps-db-identity (Phase 6 split).
@@ -21,7 +20,9 @@ pub mod job_repository;
 pub use job_repository::JobRepository;
 
 // Content repositories — now live in signapps-db-content (Phase 5 split).
-pub use signapps_db_content::repositories::{BackupRepository, DriveBackupRepository, SignatureRepository};
+pub use signapps_db_content::repositories::{
+    BackupRepository, DriveBackupRepository, SignatureRepository,
+};
 
 // Forms repositories — now live in signapps-db-forms (Phase 4 split).
 pub use signapps_db_forms::repositories::FormRepository;
@@ -39,10 +40,9 @@ pub mod vector_repository {
 // Calendar repositories — now live in signapps-db-calendar (Phase 3 split).
 // Re-exported here so that `use signapps_db::repositories::CalendarRepository` still works.
 pub use signapps_db_calendar::repositories::{
-    ApprovalWorkflowRepository, CalendarRepository, CategoryRepository,
-    EventAttendeeRepository, EventRepository, FloorPlanRepository,
-    LeaveBalanceRepository, PresenceRuleRepository, ResourceRepository,
-    TaskRepository, TimesheetRepository,
+    ApprovalWorkflowRepository, CalendarRepository, CategoryRepository, EventAttendeeRepository,
+    EventRepository, FloorPlanRepository, LeaveBalanceRepository, PresenceRuleRepository,
+    ResourceRepository, TaskRepository, TimesheetRepository,
 };
 
 // Notification repositories — now live in signapps-db-notifications (Phase 4 split).
@@ -52,9 +52,7 @@ pub use signapps_db_notifications::repositories::{
 };
 
 // Storage repositories — now live in signapps-db-storage (Phase 4 split).
-pub use signapps_db_storage::repositories::{
-    StorageTier2Repository, StorageTier3Repository,
-};
+pub use signapps_db_storage::repositories::{StorageTier2Repository, StorageTier3Repository};
 
 pub mod tenant_repository;
 pub use tenant_repository::{
@@ -127,11 +125,9 @@ pub use signapps_db_vault::repositories::{
     VaultKeysRepository, VaultOrgKeyRepository, VaultShareRepository,
 };
 
-
 // Mail repositories — now live in signapps-db-mail (Phase 4 split).
 pub use signapps_db_mail::repositories::{
     AccountRepository, DomainRepository, MailboxRepository, MessageRepository,
 };
-
 
 pub mod test_helpers;

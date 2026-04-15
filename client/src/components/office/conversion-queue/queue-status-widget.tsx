@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { SpinnerInfinity } from 'spinners-react';
+import { SpinnerInfinity } from "spinners-react";
 
 /**
  * QueueStatusWidget
@@ -8,12 +8,19 @@ import { SpinnerInfinity } from 'spinners-react';
  * Compact widget showing queue health and active jobs.
  */
 
-import React, { useEffect } from 'react';
-import { FileText, CheckCircle2, AlertCircle, Clock, TrendingUp, Activity } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { cn } from '@/lib/utils';
-import { useConversionQueueStore } from '@/stores/conversion-queue-store';
+import React, { useEffect } from "react";
+import {
+  FileText,
+  CheckCircle2,
+  AlertCircle,
+  Clock,
+  TrendingUp,
+  Activity,
+} from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { cn } from "@/lib/utils";
+import { useConversionQueueStore } from "@/stores/conversion-queue-store";
 
 // ============================================================================
 // Health Status Badge
@@ -21,27 +28,27 @@ import { useConversionQueueStore } from '@/stores/conversion-queue-store';
 
 function getHealthColor(status?: string) {
   switch (status) {
-    case 'healthy':
-      return 'bg-green-100 text-green-800 border-green-200';
-    case 'degraded':
-      return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-    case 'critical':
-      return 'bg-red-100 text-red-800 border-red-200';
+    case "healthy":
+      return "bg-green-100 text-green-800 border-green-200";
+    case "degraded":
+      return "bg-yellow-100 text-yellow-800 border-yellow-200";
+    case "critical":
+      return "bg-red-100 text-red-800 border-red-200";
     default:
-      return 'bg-muted text-gray-800 border-border';
+      return "bg-muted text-gray-800 border-border";
   }
 }
 
 function getHealthLabel(status?: string) {
   switch (status) {
-    case 'healthy':
-      return 'Opérationnel';
-    case 'degraded':
-      return 'Dégradé';
-    case 'critical':
-      return 'Critique';
+    case "healthy":
+      return "Opérationnel";
+    case "degraded":
+      return "Dégradé";
+    case "critical":
+      return "Critique";
     default:
-      return 'Inconnu';
+      return "Inconnu";
   }
 }
 
@@ -54,7 +61,7 @@ interface StatCardProps {
   label: string;
   value: string | number;
   subValue?: string;
-  trend?: 'up' | 'down' | 'neutral';
+  trend?: "up" | "down" | "neutral";
 }
 
 function StatCard({ icon, label, value, subValue, trend }: StatCardProps) {
@@ -70,11 +77,11 @@ function StatCard({ icon, label, value, subValue, trend }: StatCardProps) {
           )}
         </div>
       </div>
-      {trend && trend !== 'neutral' && (
+      {trend && trend !== "neutral" && (
         <TrendingUp
           className={cn(
-            'h-4 w-4',
-            trend === 'up' ? 'text-green-500' : 'text-red-500 rotate-180'
+            "h-4 w-4",
+            trend === "up" ? "text-green-500" : "text-red-500 rotate-180",
           )}
         />
       )}
@@ -95,7 +102,13 @@ interface ActiveJobPreviewProps {
 function ActiveJobPreview({ name, progress, type }: ActiveJobPreviewProps) {
   return (
     <div className="flex items-center gap-3 p-2 rounded-lg border bg-background">
-      <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-4 w-4  text-primary" />
+      <SpinnerInfinity
+        size={24}
+        secondaryColor="rgba(128,128,128,0.2)"
+        color="currentColor"
+        speed={120}
+        className="h-4 w-4  text-primary"
+      />
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium truncate">{name}</p>
         <div className="flex items-center gap-2 mt-1">
@@ -112,12 +125,12 @@ function ActiveJobPreview({ name, progress, type }: ActiveJobPreviewProps) {
 // ============================================================================
 
 interface QueueStatusWidgetProps {
-  variant?: 'compact' | 'full';
+  variant?: "compact" | "full";
   className?: string;
 }
 
 export function QueueStatusWidget({
-  variant = 'compact',
+  variant = "compact",
   className,
 }: QueueStatusWidgetProps) {
   const {
@@ -147,9 +160,14 @@ export function QueueStatusWidget({
     };
   }, [loadStats, loadHealth, subscribeToUpdates, unsubscribeFromUpdates]);
 
-  if (variant === 'compact') {
+  if (variant === "compact") {
     return (
-      <div className={cn('flex items-center gap-3 p-3 rounded-lg border', className)}>
+      <div
+        className={cn(
+          "flex items-center gap-3 p-3 rounded-lg border",
+          className,
+        )}
+      >
         <Activity className="h-5 w-5 text-muted-foreground" />
         <div className="flex-1">
           <div className="flex items-center gap-2">
@@ -166,7 +184,13 @@ export function QueueStatusWidget({
         </div>
         {activeJobs.length > 0 && (
           <div className="flex items-center gap-1 text-primary">
-            <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-4 w-4 " />
+            <SpinnerInfinity
+              size={24}
+              secondaryColor="rgba(128,128,128,0.2)"
+              color="currentColor"
+              speed={120}
+              className="h-4 w-4 "
+            />
             <span className="text-sm font-medium">{activeJobs.length}</span>
           </div>
         )}
@@ -176,7 +200,7 @@ export function QueueStatusWidget({
 
   // Full variant
   return (
-    <div className={cn('p-4 rounded-lg border space-y-4', className)}>
+    <div className={cn("p-4 rounded-lg border space-y-4", className)}>
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
@@ -197,7 +221,15 @@ export function QueueStatusWidget({
             value={stats.pendingJobs}
           />
           <StatCard
-            icon={<SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-4 w-4 text-yellow-500" />}
+            icon={
+              <SpinnerInfinity
+                size={24}
+                secondaryColor="rgba(128,128,128,0.2)"
+                color="currentColor"
+                speed={120}
+                className="h-4 w-4 text-yellow-500"
+              />
+            }
             label="En cours"
             value={stats.processingJobs}
           />
@@ -220,12 +252,8 @@ export function QueueStatusWidget({
           <span>
             Workers: {health.workersActive}/{health.workersTotal}
           </span>
-          <span>
-            Débit: {health.processingRate.toFixed(1)}/min
-          </span>
-          <span>
-            Erreurs: {health.errorRate.toFixed(1)}%
-          </span>
+          <span>Débit: {health.processingRate.toFixed(1)}/min</span>
+          <span>Erreurs: {health.errorRate.toFixed(1)}%</span>
         </div>
       )}
 
@@ -243,7 +271,9 @@ export function QueueStatusWidget({
           ))}
           {activeJobs.length > 3 && (
             <p className="text-xs text-muted-foreground text-center">
-              + {activeJobs.length - 3} autre{activeJobs.length - 3 > 1 ? 's' : ''} tâche{activeJobs.length - 3 > 1 ? 's' : ''}
+              + {activeJobs.length - 3} autre
+              {activeJobs.length - 3 > 1 ? "s" : ""} tâche
+              {activeJobs.length - 3 > 1 ? "s" : ""}
             </p>
           )}
         </div>
@@ -254,7 +284,8 @@ export function QueueStatusWidget({
         <div className="flex items-center justify-center gap-2 p-2 rounded bg-muted/50 text-sm text-muted-foreground">
           <Clock className="h-4 w-4" />
           <span>
-            Temps d'attente estimé: ~{Math.round(stats.estimatedWaitTime / 60)} min
+            Temps d'attente estimé: ~{Math.round(stats.estimatedWaitTime / 60)}{" "}
+            min
           </span>
         </div>
       )}

@@ -1,8 +1,8 @@
 //! Storage quota repository.
 
 use crate::models::{SetQuotaLimits, StorageQuota, UpdateQuotaUsage};
-use signapps_db_shared::pool::DatabasePool;
 use signapps_common::{Error, Result};
+use signapps_db_shared::pool::DatabasePool;
 use sqlx::Row;
 use uuid::Uuid;
 

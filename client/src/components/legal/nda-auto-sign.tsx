@@ -123,7 +123,9 @@ export function NDAAutoSign() {
 
         <div className="space-y-6">
           <div className="border rounded-lg p-4 bg-card">
-            <h3 className="font-semibold text-foreground mb-4">Add Signatory</h3>
+            <h3 className="font-semibold text-foreground mb-4">
+              Add Signatory
+            </h3>
             <div className="space-y-3">
               <input
                 type="text"
@@ -166,9 +168,15 @@ export function NDAAutoSign() {
                 <div key={idx} className="p-4 hover:bg-muted">
                   <div className="flex items-start justify-between mb-2">
                     <div>
-                      <p className="font-medium text-foreground">{sig.signatoryName}</p>
-                      <p className="text-xs text-muted-foreground">{sig.signatoryEmail}</p>
-                      <p className="text-xs text-muted-foreground mt-1">{sig.signatoryRole}</p>
+                      <p className="font-medium text-foreground">
+                        {sig.signatoryName}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {sig.signatoryEmail}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {sig.signatoryRole}
+                      </p>
                     </div>
                     {sig.isSigned ? (
                       <div className="text-right">
@@ -203,7 +211,8 @@ export function NDAAutoSign() {
           <p className="font-semibold text-green-900">Signed Documents</p>
         </div>
         <p className="text-sm text-green-800">
-          All signed documents are timestamped and legally binding. Downloads are watermarked.
+          All signed documents are timestamped and legally binding. Downloads
+          are watermarked.
         </p>
       </div>
     </div>

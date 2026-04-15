@@ -474,7 +474,7 @@ fn verify_token(token: &str, config: &JwtConfig) -> Result<Claims, Error> {
             let key = DecodingKey::from_secret(config.secret.as_bytes());
             let token_data = decode::<Claims>(token, &key, &validation)?;
             Ok(token_data.claims)
-        }
+        },
         JwtAlgorithm::Rs256 => {
             let pem = config.public_key_pem.as_deref().ok_or_else(|| {
                 tracing::error!("RS256 mode: JWT_PUBLIC_KEY_PEM not configured");
@@ -491,7 +491,7 @@ fn verify_token(token: &str, config: &JwtConfig) -> Result<Claims, Error> {
                 .map_err(|e| Error::Internal(format!("Invalid RSA public key: {e}")))?;
             let token_data = decode::<Claims>(token, &key, &validation)?;
             Ok(token_data.claims)
-        }
+        },
     }
 }
 

@@ -21,9 +21,15 @@ export default function TasksLoading() {
           {/* Task list */}
           <div className="flex-1 overflow-y-auto p-4 space-y-2">
             {Array.from({ length: 10 }).map((_, i) => (
-              <div key={i} className="flex items-center gap-3 p-3 rounded-xl border border-border/40">
+              <div
+                key={i}
+                className="flex items-center gap-3 p-3 rounded-xl border border-border/40"
+              >
                 <Skeleton className="h-4 w-4 rounded" />
-                <Skeleton className="h-4 flex-1" style={{ maxWidth: `${50 + (i % 5) * 10}%` }} />
+                <Skeleton
+                  className="h-4 flex-1"
+                  style={{ maxWidth: `${50 + (i % 5) * 10}%` }}
+                />
                 <Skeleton className="h-5 w-16 rounded-full" />
                 <Skeleton className="h-4 w-20" />
               </div>

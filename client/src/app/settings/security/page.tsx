@@ -1,16 +1,22 @@
-'use client';
+"use client";
 
 // SE1: Security settings page — real MFA/TOTP API integration
 // Replaces mock-only implementation with live backend calls.
 
-import { useState, useEffect } from 'react';
-import { AppLayout } from '@/components/layout/app-layout';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Switch } from '@/components/ui/switch';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { useState, useEffect } from "react";
+import { AppLayout } from "@/components/layout/app-layout";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,7 +26,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+} from "@/components/ui/alert-dialog";
 import {
   ShieldCheck,
   Smartphone,
@@ -31,15 +37,15 @@ import {
   QrCode,
   AlertTriangle,
   Loader2,
-} from 'lucide-react';
-import { ActiveSessions } from '@/components/settings/active-sessions';
-import { toast } from 'sonner';
-import { usePageTitle } from '@/hooks/use-page-title';
-import { PageHeader } from '@/components/ui/page-header';
-import { authApi } from '@/lib/api/identity';
+} from "lucide-react";
+import { ActiveSessions } from "@/components/settings/active-sessions";
+import { toast } from "sonner";
+import { usePageTitle } from "@/hooks/use-page-title";
+import { PageHeader } from "@/components/ui/page-header";
+import { authApi } from "@/lib/api/identity";
 
 export default function SecuritySettingsPage() {
-  usePageTitle('Securite');
+  usePageTitle("Securite");
 
   const [mfaEnabled, setMfaEnabled] = useState(false);
   const [mfaLoading, setMfaLoading] = useState(true);
@@ -48,13 +54,13 @@ export default function SecuritySettingsPage() {
   const [qrCode, setQrCode] = useState<string | null>(null);
   const [secret, setSecret] = useState<string | null>(null);
   const [backupCodes, setBackupCodes] = useState<string[]>([]);
-  const [verificationCode, setVerificationCode] = useState('');
+  const [verificationCode, setVerificationCode] = useState("");
   const [verifyLoading, setVerifyLoading] = useState(false);
   const [showRecoveryCodes, setShowRecoveryCodes] = useState(false);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
   const [disableConfirmOpen, setDisableConfirmOpen] = useState(false);
-  const [disablePassword, setDisablePassword] = useState('');
-  const [disableCode, setDisableCode] = useState('');
+  const [disablePassword, setDisablePassword] = useState("");
+  const [disableCode, setDisableCode] = useState("");
   const [disableLoading, setDisableLoading] = useState(false);
 
   useEffect(() => {
@@ -73,7 +79,7 @@ export default function SecuritySettingsPage() {
       setSetupLoading(true);
       try {
         const res = await authApi.mfaSetup();
-        setQrCode((res.data.qr_code ?? res.data.qr_code_url) ?? null);
+        setQrCode(res.data.qr_code ?? res.data.qr_code_url ?? null);
         setSecret(res.data.secret ?? null);
         setBackupCodes(res.data.backup_codes ?? []);
         setShowSetup(true);
@@ -89,24 +95,24 @@ export default function SecuritySettingsPage() {
 
   const handleVerify = async () => {
     if (verificationCode.length !== 6) {
-      toast.error('Le code doit contenir 6 chiffres');
+      toast.error("Le code doit contenir 6 chiffres");
       return;
     }
     setVerifyLoading(true);
     try {
-      const res = await authApi.mfaVerify('', verificationCode);
+      const res = await authApi.mfaVerify("", verificationCode);
       const data = res.data as { success?: boolean };
       if (data.success) {
         setMfaEnabled(true);
         setShowSetup(false);
-        setVerificationCode('');
+        setVerificationCode("");
         setShowRecoveryCodes(true);
-        toast.success('Authentification a deux facteurs activee');
+        toast.success("Authentification a deux facteurs activee");
       } else {
-        toast.error('Code invalide. Veuillez reessayer.');
+        toast.error("Code invalide. Veuillez reessayer.");
       }
     } catch {
-      toast.error('Code invalide ou expire');
+      toast.error("Code invalide ou expire");
     } finally {
       setVerifyLoading(false);
     }
@@ -114,12 +120,15 @@ export default function SecuritySettingsPage() {
 
   const handleDisable2FA = async () => {
     if (!disablePassword || !disableCode) {
-      toast.error('Mot de passe et code TOTP requis');
+      toast.error("Mot de passe et code TOTP requis");
       return;
     }
     setDisableLoading(true);
     try {
-      await authApi.mfaDisable({ password: disablePassword, code: disableCode });
+      await authApi.mfaDisable({
+        password: disablePassword,
+        code: disableCode,
+      });
       setMfaEnabled(false);
       setShowSetup(false);
       setShowRecoveryCodes(false);
@@ -127,11 +136,13 @@ export default function SecuritySettingsPage() {
       setQrCode(null);
       setSecret(null);
       setBackupCodes([]);
-      setDisablePassword('');
-      setDisableCode('');
-      toast.success('Authentification a deux facteurs desactivee');
+      setDisablePassword("");
+      setDisableCode("");
+      toast.success("Authentification a deux facteurs desactivee");
     } catch {
-      toast.error('Impossible de desactiver le MFA. Verifiez votre mot de passe et code.');
+      toast.error(
+        "Impossible de desactiver le MFA. Verifiez votre mot de passe et code.",
+      );
     } finally {
       setDisableLoading(false);
     }
@@ -139,7 +150,7 @@ export default function SecuritySettingsPage() {
 
   const handleCancelSetup = () => {
     setShowSetup(false);
-    setVerificationCode('');
+    setVerificationCode("");
     setQrCode(null);
     setSecret(null);
     setBackupCodes([]);
@@ -149,11 +160,11 @@ export default function SecuritySettingsPage() {
     navigator.clipboard.writeText(text);
     setCopiedCode(text);
     setTimeout(() => setCopiedCode(null), 2000);
-    toast.success('Copie dans le presse-papiers');
+    toast.success("Copie dans le presse-papiers");
   };
 
   const formattedSecret = secret
-    ? secret.match(/.{1,4}/g)?.join(' ') ?? secret
+    ? (secret.match(/.{1,4}/g)?.join(" ") ?? secret)
     : null;
 
   return (
@@ -176,14 +187,16 @@ export default function SecuritySettingsPage() {
                     Authentification a deux facteurs (TOTP)
                   </CardTitle>
                   <CardDescription>
-                    Protegez votre compte avec une application d&apos;authentification (Google
-                    Authenticator, Authy, etc.)
+                    Protegez votre compte avec une application
+                    d&apos;authentification (Google Authenticator, Authy, etc.)
                   </CardDescription>
                 </div>
               </div>
               <div className="flex items-center gap-3">
                 {mfaEnabled && (
-                  <Badge className="bg-green-500/10 text-green-600">Active</Badge>
+                  <Badge className="bg-green-500/10 text-green-600">
+                    Active
+                  </Badge>
                 )}
                 {mfaLoading ? (
                   <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
@@ -213,7 +226,11 @@ export default function SecuritySettingsPage() {
                     <div className="w-48 h-48 bg-white dark:bg-white rounded-lg flex items-center justify-center border overflow-hidden">
                       {qrCode ? (
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img src={qrCode} alt="QR Code TOTP" className="w-full h-full object-contain" />
+                        <img
+                          src={qrCode}
+                          alt="QR Code TOTP"
+                          className="w-full h-full object-contain"
+                        />
                       ) : (
                         <QrCode className="h-16 w-16 text-muted-foreground/40" />
                       )}
@@ -246,7 +263,8 @@ export default function SecuritySettingsPage() {
 
                   <div className="space-y-4">
                     <p className="text-sm font-medium">
-                      2. Entrez le code a 6 chiffres affiche par l&apos;application
+                      2. Entrez le code a 6 chiffres affiche par
+                      l&apos;application
                     </p>
                     <div className="space-y-2">
                       <Label htmlFor="totpCode">Code de verification</Label>
@@ -256,7 +274,7 @@ export default function SecuritySettingsPage() {
                         maxLength={6}
                         value={verificationCode}
                         onChange={(e) =>
-                          setVerificationCode(e.target.value.replace(/\D/g, ''))
+                          setVerificationCode(e.target.value.replace(/\D/g, ""))
                         }
                         className="font-mono text-lg tracking-widest text-center"
                       />
@@ -264,7 +282,9 @@ export default function SecuritySettingsPage() {
                     <div className="flex gap-2">
                       <Button
                         onClick={handleVerify}
-                        disabled={verificationCode.length !== 6 || verifyLoading}
+                        disabled={
+                          verificationCode.length !== 6 || verifyLoading
+                        }
                       >
                         {verifyLoading ? (
                           <>
@@ -272,7 +292,7 @@ export default function SecuritySettingsPage() {
                             Verification...
                           </>
                         ) : (
-                          'Verifier et activer'
+                          "Verifier et activer"
                         )}
                       </Button>
                       <Button variant="outline" onClick={handleCancelSetup}>
@@ -293,10 +313,12 @@ export default function SecuritySettingsPage() {
               <div className="flex items-center gap-3">
                 <Key className="h-5 w-5 text-muted-foreground" />
                 <div>
-                  <CardTitle className="text-base">Codes de recuperation</CardTitle>
+                  <CardTitle className="text-base">
+                    Codes de recuperation
+                  </CardTitle>
                   <CardDescription>
-                    Utilisez ces codes pour acceder a votre compte si vous perdez votre appareil
-                    d&apos;authentification
+                    Utilisez ces codes pour acceder a votre compte si vous
+                    perdez votre appareil d&apos;authentification
                   </CardDescription>
                 </div>
               </div>
@@ -306,7 +328,7 @@ export default function SecuritySettingsPage() {
                 onClick={() => setShowRecoveryCodes(!showRecoveryCodes)}
                 disabled={!mfaEnabled || backupCodes.length === 0}
               >
-                {showRecoveryCodes ? 'Masquer' : 'Afficher'}
+                {showRecoveryCodes ? "Masquer" : "Afficher"}
               </Button>
             </div>
           </CardHeader>
@@ -315,8 +337,8 @@ export default function SecuritySettingsPage() {
               <div className="bg-yellow-50 dark:bg-yellow-500/10 border border-yellow-200 dark:border-yellow-500/20 rounded-lg p-3 flex items-start gap-2">
                 <AlertTriangle className="h-5 w-5 text-yellow-600 shrink-0 mt-0.5" />
                 <p className="text-sm text-yellow-800 dark:text-yellow-200">
-                  Conservez ces codes dans un endroit sur. Chaque code ne peut etre utilise
-                  qu&apos;une seule fois.
+                  Conservez ces codes dans un endroit sur. Chaque code ne peut
+                  etre utilise qu&apos;une seule fois.
                 </p>
               </div>
               <div className="grid grid-cols-2 gap-2">
@@ -345,7 +367,11 @@ export default function SecuritySettingsPage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => navigator.clipboard.writeText(backupCodes.join('\n')).then(() => toast.success('Tous les codes copies'))}
+                  onClick={() =>
+                    navigator.clipboard
+                      .writeText(backupCodes.join("\n"))
+                      .then(() => toast.success("Tous les codes copies"))
+                  }
                 >
                   <Copy className="h-4 w-4 mr-2" />
                   Copier tous les codes
@@ -357,9 +383,9 @@ export default function SecuritySettingsPage() {
                     try {
                       const res = await authApi.mfaSetup();
                       setBackupCodes(res.data.backup_codes ?? []);
-                      toast.success('Nouveaux codes de recuperation generes');
+                      toast.success("Nouveaux codes de recuperation generes");
                     } catch {
-                      toast.error('Impossible de regenerer les codes');
+                      toast.error("Impossible de regenerer les codes");
                     }
                   }}
                 >
@@ -379,18 +405,25 @@ export default function SecuritySettingsPage() {
         </Card>
 
         {/* Disable 2FA dialog */}
-        <AlertDialog open={disableConfirmOpen} onOpenChange={setDisableConfirmOpen}>
+        <AlertDialog
+          open={disableConfirmOpen}
+          onOpenChange={setDisableConfirmOpen}
+        >
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Desactiver l&apos;authentification a deux facteurs ?</AlertDialogTitle>
+              <AlertDialogTitle>
+                Desactiver l&apos;authentification a deux facteurs ?
+              </AlertDialogTitle>
               <AlertDialogDescription>
-                Votre compte sera moins protege. Les codes de recuperation existants seront
-                invalides.
+                Votre compte sera moins protege. Les codes de recuperation
+                existants seront invalides.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <div className="space-y-3 px-6">
               <div className="space-y-1">
-                <Label htmlFor="disable-password" className="text-sm">Mot de passe actuel</Label>
+                <Label htmlFor="disable-password" className="text-sm">
+                  Mot de passe actuel
+                </Label>
                 <Input
                   id="disable-password"
                   type="password"
@@ -400,23 +433,31 @@ export default function SecuritySettingsPage() {
                 />
               </div>
               <div className="space-y-1">
-                <Label htmlFor="disable-code" className="text-sm">Code TOTP actuel</Label>
+                <Label htmlFor="disable-code" className="text-sm">
+                  Code TOTP actuel
+                </Label>
                 <Input
                   id="disable-code"
                   placeholder="000000"
                   maxLength={6}
                   value={disableCode}
-                  onChange={(e) => setDisableCode(e.target.value.replace(/\D/g, ''))}
+                  onChange={(e) =>
+                    setDisableCode(e.target.value.replace(/\D/g, ""))
+                  }
                   className="font-mono tracking-widest text-center"
                 />
               </div>
             </div>
             <AlertDialogFooter>
-              <AlertDialogCancel disabled={disableLoading}>Annuler</AlertDialogCancel>
+              <AlertDialogCancel disabled={disableLoading}>
+                Annuler
+              </AlertDialogCancel>
               <AlertDialogAction
                 onClick={handleDisable2FA}
                 className="bg-destructive text-destructive-foreground"
-                disabled={disableLoading || !disablePassword || disableCode.length !== 6}
+                disabled={
+                  disableLoading || !disablePassword || disableCode.length !== 6
+                }
               >
                 {disableLoading ? (
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />

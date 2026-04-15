@@ -1,8 +1,8 @@
 //! SchedulingResourceRepository — scheduling resource CRUD operations.
 
 use crate::models::{CreateSchedulingResource, SchedulingResource};
-use signapps_db_shared::DatabasePool;
 use signapps_common::Result;
+use signapps_db_shared::DatabasePool;
 use uuid::Uuid;
 
 /// Repository for scheduling resource CRUD operations.

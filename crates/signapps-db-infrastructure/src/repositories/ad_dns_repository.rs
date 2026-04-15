@@ -16,11 +16,7 @@ impl AdDnsRepository {
     /// # Errors
     ///
     /// Returns `Error::Database` if the INSERT fails (e.g., duplicate `domain_id` + `zone_name`).
-    pub async fn create_zone(
-        pool: &PgPool,
-        domain_id: Uuid,
-        zone_name: &str,
-    ) -> Result<AdDnsZone> {
+    pub async fn create_zone(pool: &PgPool, domain_id: Uuid, zone_name: &str) -> Result<AdDnsZone> {
         let zone = sqlx::query_as::<_, AdDnsZone>(
             r#"
             INSERT INTO ad_dns_zones (domain_id, zone_name)
@@ -111,30 +107,26 @@ impl AdDnsRepository {
         record_type: Option<&str>,
     ) -> Result<Vec<AdDnsRecord>> {
         let records = match record_type {
-            Some(rt) => {
-                sqlx::query_as::<_, AdDnsRecord>(
-                    r#"
+            Some(rt) => sqlx::query_as::<_, AdDnsRecord>(
+                r#"
                     SELECT * FROM ad_dns_records
                     WHERE zone_id = $1 AND name = $2 AND record_type = $3
                     "#,
-                )
-                .bind(zone_id)
-                .bind(name)
-                .bind(rt)
-                .fetch_all(pool)
-                .await
-                .map_err(|e| Error::Database(e.to_string()))?
-            }
-            None => {
-                sqlx::query_as::<_, AdDnsRecord>(
-                    "SELECT * FROM ad_dns_records WHERE zone_id = $1 AND name = $2",
-                )
-                .bind(zone_id)
-                .bind(name)
-                .fetch_all(pool)
-                .await
-                .map_err(|e| Error::Database(e.to_string()))?
-            }
+            )
+            .bind(zone_id)
+            .bind(name)
+            .bind(rt)
+            .fetch_all(pool)
+            .await
+            .map_err(|e| Error::Database(e.to_string()))?,
+            None => sqlx::query_as::<_, AdDnsRecord>(
+                "SELECT * FROM ad_dns_records WHERE zone_id = $1 AND name = $2",
+            )
+            .bind(zone_id)
+            .bind(name)
+            .fetch_all(pool)
+            .await
+            .map_err(|e| Error::Database(e.to_string()))?,
         };
 
         Ok(records)
@@ -148,11 +140,7 @@ impl AdDnsRepository {
     /// # Errors
     ///
     /// Returns `Error::Database` if the DELETE fails.
-    pub async fn scavenge(
-        pool: &PgPool,
-        zone_id: Uuid,
-        older_than: DateTime<Utc>,
-    ) -> Result<u64> {
+    pub async fn scavenge(pool: &PgPool, zone_id: Uuid, older_than: DateTime<Utc>) -> Result<u64> {
         let result = sqlx::query(
             r#"
             DELETE FROM ad_dns_records

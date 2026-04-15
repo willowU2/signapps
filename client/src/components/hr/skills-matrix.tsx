@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * Skills Matrix Component
@@ -6,9 +6,9 @@
  * Grid displaying employees vs skills with proficiency levels (1-5 dots).
  */
 
-import * as React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import * as React from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 export interface EmployeeSkill {
   employeeId: string;
@@ -30,7 +30,9 @@ function ProficiencyDots({ level }: { level: number }) {
         <div
           key={index}
           className={`h-2 w-2 rounded-full transition-colors ${
-            index < clampedLevel ? 'bg-blue-500' : 'bg-gray-200 dark:bg-gray-700'
+            index < clampedLevel
+              ? "bg-blue-500"
+              : "bg-gray-200 dark:bg-gray-700"
           }`}
           title={`Niveau ${clampedLevel}/5`}
         />
@@ -56,7 +58,9 @@ export function SkillsMatrix({ employees, className }: SkillsMatrixProps) {
           <CardTitle>Matrice de Compétences</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-muted-foreground">Aucune donnée disponible</p>
+          <p className="text-sm text-muted-foreground">
+            Aucune donnée disponible
+          </p>
         </CardContent>
       </Card>
     );
@@ -92,17 +96,27 @@ export function SkillsMatrix({ employees, className }: SkillsMatrixProps) {
             </thead>
             <tbody>
               {employees.map((employee) => (
-                <tr key={employee.employeeId} className="border-b hover:bg-muted/30 transition-colors">
-                  <td className="px-3 py-3 font-medium">{employee.employeeName}</td>
+                <tr
+                  key={employee.employeeId}
+                  className="border-b hover:bg-muted/30 transition-colors"
+                >
+                  <td className="px-3 py-3 font-medium">
+                    {employee.employeeName}
+                  </td>
                   {allSkills.map((skill) => {
                     const level = employee.skills[skill];
 
                     return (
-                      <td key={`${employee.employeeId}-${skill}`} className="px-3 py-3 text-center">
+                      <td
+                        key={`${employee.employeeId}-${skill}`}
+                        className="px-3 py-3 text-center"
+                      >
                         {level ? (
                           <ProficiencyDots level={level} />
                         ) : (
-                          <span className="text-xs text-muted-foreground">—</span>
+                          <span className="text-xs text-muted-foreground">
+                            —
+                          </span>
                         )}
                       </td>
                     );
@@ -115,7 +129,9 @@ export function SkillsMatrix({ employees, className }: SkillsMatrixProps) {
 
         {/* Legend */}
         <div className="mt-4 pt-4 border-t">
-          <p className="text-xs font-semibold text-muted-foreground mb-2">Légende</p>
+          <p className="text-xs font-semibold text-muted-foreground mb-2">
+            Légende
+          </p>
           <div className="flex flex-wrap gap-4">
             {Array.from({ length: 5 }).map((_, level) => (
               <div key={level} className="flex items-center gap-2">
@@ -124,12 +140,16 @@ export function SkillsMatrix({ employees, className }: SkillsMatrixProps) {
                     <div
                       key={index}
                       className={`h-2 w-2 rounded-full ${
-                        index < level + 1 ? 'bg-blue-500' : 'bg-gray-200 dark:bg-gray-700'
+                        index < level + 1
+                          ? "bg-blue-500"
+                          : "bg-gray-200 dark:bg-gray-700"
                       }`}
                     />
                   ))}
                 </div>
-                <span className="text-xs text-muted-foreground">Niveau {level + 1}</span>
+                <span className="text-xs text-muted-foreground">
+                  Niveau {level + 1}
+                </span>
               </div>
             ))}
           </div>

@@ -4,7 +4,7 @@
  * Migrated to use API Factory pattern.
  * @see factory.ts for client creation details
  */
-import { getClient, getServiceBaseUrl, ServiceName } from './factory';
+import { getClient, getServiceBaseUrl, ServiceName } from "./factory";
 
 // Get the docs service client (cached)
 const docsClient = getClient(ServiceName.DOCS);
@@ -14,13 +14,13 @@ const DOCS_URL = getServiceBaseUrl(ServiceName.DOCS);
 // Types - Base
 // ============================================================================
 
-export type DocType = 'text' | 'sheet' | 'slide' | 'board' | 'chat';
+export type DocType = "text" | "sheet" | "slide" | "board" | "chat";
 
 export interface BaseDocument {
-    id: string;
-    name: string;
-    doc_type: DocType;
-    created_at: string;
+  id: string;
+  name: string;
+  doc_type: DocType;
+  created_at: string;
 }
 
 // ============================================================================
@@ -28,11 +28,11 @@ export interface BaseDocument {
 // ============================================================================
 
 export interface TextDocument extends BaseDocument {
-    doc_type: 'text';
+  doc_type: "text";
 }
 
 export interface CreateTextDocumentRequest {
-    name: string;
+  name: string;
 }
 
 // ============================================================================
@@ -40,19 +40,19 @@ export interface CreateTextDocumentRequest {
 // ============================================================================
 
 export interface SpreadsheetDocument extends BaseDocument {
-    doc_type: 'sheet';
-    rows: number;
-    cols: number;
+  doc_type: "sheet";
+  rows: number;
+  cols: number;
 }
 
 export interface CreateSpreadsheetRequest {
-    name: string;
-    rows?: number;
-    cols?: number;
+  name: string;
+  rows?: number;
+  cols?: number;
 }
 
 export interface RowsResponse {
-    rows: string[][];
+  rows: string[][];
 }
 
 // ============================================================================
@@ -60,25 +60,25 @@ export interface RowsResponse {
 // ============================================================================
 
 export interface PresentationDocument extends BaseDocument {
-    doc_type: 'slide';
-    theme: string;
-    slide_count: number;
+  doc_type: "slide";
+  theme: string;
+  slide_count: number;
 }
 
 export interface CreatePresentationRequest {
-    name: string;
-    theme?: string;
+  name: string;
+  theme?: string;
 }
 
 export interface Slide {
-    id: string;
-    index: number;
-    title: string;
-    content: string;
+  id: string;
+  index: number;
+  title: string;
+  content: string;
 }
 
 export interface SlidesResponse {
-    slides: Slide[];
+  slides: Slide[];
 }
 
 // ============================================================================
@@ -86,29 +86,29 @@ export interface SlidesResponse {
 // ============================================================================
 
 export interface BoardDocument extends BaseDocument {
-    doc_type: 'board';
-    board_type: string;
+  doc_type: "board";
+  board_type: string;
 }
 
 export interface CreateBoardRequest {
-    name: string;
-    board_type?: string;
+  name: string;
+  board_type?: string;
 }
 
 export interface Card {
-    id: string;
-    title: string;
-    description: string;
+  id: string;
+  title: string;
+  description: string;
 }
 
 export interface Column {
-    id: string;
-    title: string;
-    cards: Card[];
+  id: string;
+  title: string;
+  cards: Card[];
 }
 
 export interface ColumnsResponse {
-    columns: Column[];
+  columns: Column[];
 }
 
 // ============================================================================
@@ -120,23 +120,23 @@ export interface ColumnsResponse {
 // ============================================================================
 
 export interface Design {
-    id: string;
-    user_id: string;
-    name: string;
-    format_width: number;
-    format_height: number;
-    pages: number;
-    metadata: Record<string, unknown>;
-    created_at: string;
-    updated_at: string;
+  id: string;
+  user_id: string;
+  name: string;
+  format_width: number;
+  format_height: number;
+  pages: number;
+  metadata: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface CreateDesignRequest {
-    name: string;
-    format_width?: number;
-    format_height?: number;
-    pages?: number;
-    metadata?: Record<string, unknown>;
+  name: string;
+  format_width?: number;
+  format_height?: number;
+  pages?: number;
+  metadata?: Record<string, unknown>;
 }
 
 // ============================================================================
@@ -144,17 +144,17 @@ export interface CreateDesignRequest {
 // ============================================================================
 
 export interface DocTemplate {
-    id: string;
-    name: string;
-    doc_type: DocType;
-    content: Record<string, unknown>;
-    created_at: string;
+  id: string;
+  name: string;
+  doc_type: DocType;
+  content: Record<string, unknown>;
+  created_at: string;
 }
 
 export interface CreateDocTemplateRequest {
-    name: string;
-    doc_type: DocType;
-    content: Record<string, unknown>;
+  name: string;
+  doc_type: DocType;
+  content: Record<string, unknown>;
 }
 
 // ============================================================================
@@ -162,18 +162,18 @@ export interface CreateDocTemplateRequest {
 // ============================================================================
 
 export interface DocMacro {
-    id: string;
-    document_id: string; // matches Rust backend field name
-    name: string;
-    code: string;
-    created_by: string;
-    created_at: string;
-    updated_at: string;
+  id: string;
+  document_id: string; // matches Rust backend field name
+  name: string;
+  code: string;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface CreateMacroRequest {
-    name: string;
-    code: string;
+  name: string;
+  code: string;
 }
 
 // ============================================================================
@@ -181,20 +181,20 @@ export interface CreateMacroRequest {
 // ============================================================================
 
 export interface KeepNote {
-    id: string;
-    title?: string;
-    content: string;
-    color?: string;
-    pinned?: boolean;
-    created_at: string;
-    updated_at: string;
+  id: string;
+  title?: string;
+  content: string;
+  color?: string;
+  pinned?: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface CreateKeepNoteRequest {
-    title?: string;
-    content: string;
-    color?: string;
-    pinned?: boolean;
+  title?: string;
+  content: string;
+  color?: string;
+  pinned?: boolean;
 }
 
 // ============================================================================
@@ -202,130 +202,130 @@ export interface CreateKeepNoteRequest {
 // ============================================================================
 
 export const docsApi = {
-    // ========================================================================
-    // Text Documents
-    // ========================================================================
+  // ========================================================================
+  // Text Documents
+  // ========================================================================
 
-    createTextDocument: (data: CreateTextDocumentRequest) =>
-        docsClient.post<TextDocument>('/docs/text', data),
+  createTextDocument: (data: CreateTextDocumentRequest) =>
+    docsClient.post<TextDocument>("/docs/text", data),
 
-    // ========================================================================
-    // Spreadsheets
-    // ========================================================================
+  // ========================================================================
+  // Spreadsheets
+  // ========================================================================
 
-    createSpreadsheet: (data: CreateSpreadsheetRequest) =>
-        docsClient.post<SpreadsheetDocument>('/docs/sheet', data),
+  createSpreadsheet: (data: CreateSpreadsheetRequest) =>
+    docsClient.post<SpreadsheetDocument>("/docs/sheet", data),
 
-    getSpreadsheetRows: (docId: string) =>
-        docsClient.get<RowsResponse>(`/docs/sheet/${docId}/rows`),
+  getSpreadsheetRows: (docId: string) =>
+    docsClient.get<RowsResponse>(`/docs/sheet/${docId}/rows`),
 
-    // ========================================================================
-    // Presentations
-    // ========================================================================
+  // ========================================================================
+  // Presentations
+  // ========================================================================
 
-    createPresentation: (data: CreatePresentationRequest) =>
-        docsClient.post<PresentationDocument>('/docs/slide', data),
+  createPresentation: (data: CreatePresentationRequest) =>
+    docsClient.post<PresentationDocument>("/docs/slide", data),
 
-    getPresentationSlides: (docId: string) =>
-        docsClient.get<SlidesResponse>(`/docs/slide/${docId}/slides`),
+  getPresentationSlides: (docId: string) =>
+    docsClient.get<SlidesResponse>(`/docs/slide/${docId}/slides`),
 
-    // ========================================================================
-    // Boards
-    // ========================================================================
+  // ========================================================================
+  // Boards
+  // ========================================================================
 
-    createBoard: (data: CreateBoardRequest) =>
-        docsClient.post<BoardDocument>('/docs/board', data),
+  createBoard: (data: CreateBoardRequest) =>
+    docsClient.post<BoardDocument>("/docs/board", data),
 
-    getBoardColumns: (docId: string) =>
-        docsClient.get<ColumnsResponse>(`/docs/board/${docId}/columns`),
+  getBoardColumns: (docId: string) =>
+    docsClient.get<ColumnsResponse>(`/docs/board/${docId}/columns`),
 
-    // ========================================================================
-    // Designs — GET/POST /api/v1/designs
-    // list returns { data: Design[] }, single ops return Design directly
-    // ========================================================================
+  // ========================================================================
+  // Designs — GET/POST /api/v1/designs
+  // list returns { data: Design[] }, single ops return Design directly
+  // ========================================================================
 
-    listDesigns: () =>
-        docsClient.get<{ data: Design[] }>('/designs'),
+  listDesigns: () => docsClient.get<{ data: Design[] }>("/designs"),
 
-    createDesign: (data: CreateDesignRequest) =>
-        docsClient.post<Design>('/designs', data),
+  createDesign: (data: CreateDesignRequest) =>
+    docsClient.post<Design>("/designs", data),
 
-    getDesign: (id: string) =>
-        docsClient.get<Design>(`/designs/${id}`),
+  getDesign: (id: string) => docsClient.get<Design>(`/designs/${id}`),
 
-    updateDesign: (id: string, data: Partial<CreateDesignRequest>) =>
-        docsClient.put<Design>(`/designs/${id}`, data),
+  updateDesign: (id: string, data: Partial<CreateDesignRequest>) =>
+    docsClient.put<Design>(`/designs/${id}`, data),
 
-    deleteDesign: (id: string) =>
-        docsClient.delete(`/designs/${id}`),
+  deleteDesign: (id: string) => docsClient.delete(`/designs/${id}`),
 
-    // ========================================================================
-    // Doc Templates — GET/POST /api/v1/docs/templates
-    // ========================================================================
+  // ========================================================================
+  // Doc Templates — GET/POST /api/v1/docs/templates
+  // ========================================================================
 
-    listTemplates: () =>
-        docsClient.get<DocTemplate[]>('/docs/templates'),
+  listTemplates: () => docsClient.get<DocTemplate[]>("/docs/templates"),
 
-    createTemplate: (data: CreateDocTemplateRequest) =>
-        docsClient.post<DocTemplate>('/docs/templates', data),
+  createTemplate: (data: CreateDocTemplateRequest) =>
+    docsClient.post<DocTemplate>("/docs/templates", data),
 
-    getTemplate: (id: string) =>
-        docsClient.get<DocTemplate>(`/docs/templates/${id}`),
+  getTemplate: (id: string) =>
+    docsClient.get<DocTemplate>(`/docs/templates/${id}`),
 
-    deleteTemplate: (id: string) =>
-        docsClient.delete(`/docs/templates/${id}`),
+  deleteTemplate: (id: string) => docsClient.delete(`/docs/templates/${id}`),
 
-    // ========================================================================
-    // Macros — GET/POST /api/v1/docs/:doc_id/macros
-    // ========================================================================
+  // ========================================================================
+  // Macros — GET/POST /api/v1/docs/:doc_id/macros
+  // ========================================================================
 
-    listMacros: (docId: string) =>
-        docsClient.get<DocMacro[]>(`/docs/${docId}/macros`),
+  listMacros: (docId: string) =>
+    docsClient.get<DocMacro[]>(`/docs/${docId}/macros`),
 
-    createMacro: (docId: string, data: CreateMacroRequest) =>
-        docsClient.post<DocMacro>(`/docs/${docId}/macros`, data),
+  createMacro: (docId: string, data: CreateMacroRequest) =>
+    docsClient.post<DocMacro>(`/docs/${docId}/macros`, data),
 
-    updateMacro: (docId: string, macroId: string, data: Partial<CreateMacroRequest>) =>
-        docsClient.put<DocMacro>(`/docs/${docId}/macros/${macroId}`, data),
+  updateMacro: (
+    docId: string,
+    macroId: string,
+    data: Partial<CreateMacroRequest>,
+  ) => docsClient.put<DocMacro>(`/docs/${docId}/macros/${macroId}`, data),
 
-    deleteMacro: (docId: string, macroId: string) =>
-        docsClient.delete(`/docs/${docId}/macros/${macroId}`),
+  deleteMacro: (docId: string, macroId: string) =>
+    docsClient.delete(`/docs/${docId}/macros/${macroId}`),
 
-    // ========================================================================
-    // Document Classification — POST /api/v1/docs/classify
-    // Backend expects: { title, document_id?, content_preview? }
-    // ========================================================================
+  // ========================================================================
+  // Document Classification — POST /api/v1/docs/classify
+  // Backend expects: { title, document_id?, content_preview? }
+  // ========================================================================
 
-    classifyDocument: (data: { title: string; document_id?: string; content_preview?: string }) =>
-        docsClient.post<{
-            document_id?: string;
-            category: string;
-            confidence: number;
-            method: string;
-        }>('/docs/classify', data),
+  classifyDocument: (data: {
+    title: string;
+    document_id?: string;
+    content_preview?: string;
+  }) =>
+    docsClient.post<{
+      document_id?: string;
+      category: string;
+      confidence: number;
+      method: string;
+    }>("/docs/classify", data),
 
-    // ========================================================================
-    // Keep Notes — GET/POST /api/v1/keep/notes
-    // ========================================================================
+  // ========================================================================
+  // Keep Notes — GET/POST /api/v1/keep/notes
+  // ========================================================================
 
-    listKeepNotes: () =>
-        docsClient.get<KeepNote[]>('/keep/notes'),
+  listKeepNotes: () => docsClient.get<KeepNote[]>("/keep/notes"),
 
-    createKeepNote: (data: CreateKeepNoteRequest) =>
-        docsClient.post<KeepNote>('/keep/notes', data),
+  createKeepNote: (data: CreateKeepNoteRequest) =>
+    docsClient.post<KeepNote>("/keep/notes", data),
 
-    updateKeepNote: (id: string, data: Partial<CreateKeepNoteRequest>) =>
-        docsClient.put<KeepNote>(`/keep/notes/${id}`, data),
+  updateKeepNote: (id: string, data: Partial<CreateKeepNoteRequest>) =>
+    docsClient.put<KeepNote>(`/keep/notes/${id}`, data),
 
-    deleteKeepNote: (id: string) =>
-        docsClient.delete(`/keep/notes/${id}`),
+  deleteKeepNote: (id: string) => docsClient.delete(`/keep/notes/${id}`),
 
-    // ========================================================================
-    // WebSocket URL for real-time collaboration (Yjs)
-    // ========================================================================
+  // ========================================================================
+  // WebSocket URL for real-time collaboration (Yjs)
+  // ========================================================================
 
-    getWebSocketUrl: (docType: DocType, docId: string): string => {
-        const wsBaseUrl = DOCS_URL.replace(/^http/, 'ws');
-        return `${wsBaseUrl}/docs/${docType}/${docId}/ws`;
-    },
+  getWebSocketUrl: (docType: DocType, docId: string): string => {
+    const wsBaseUrl = DOCS_URL.replace(/^http/, "ws");
+    return `${wsBaseUrl}/docs/${docType}/${docId}/ws`;
+  },
 };

@@ -20,8 +20,7 @@ use uuid::Uuid;
 #[test]
 fn dn_sid_guid_roundtrip() {
     // Create a user's identity.
-    let dn =
-        DistinguishedName::parse("CN=John Doe,OU=Users,DC=example,DC=com").unwrap();
+    let dn = DistinguishedName::parse("CN=John Doe,OU=Users,DC=example,DC=com").unwrap();
     let domain_sid = SecurityIdentifier::parse("S-1-5-21-100-200-300").unwrap();
     let user_sid = domain_sid.child(1001);
     let guid = ObjectGuid::new();
@@ -46,8 +45,7 @@ fn dn_sid_guid_roundtrip() {
 
 #[test]
 fn filter_compilation_produces_valid_sql() {
-    let filter =
-        LdapFilter::parse("(&(objectClass=user)(mail=*@example.com))").unwrap();
+    let filter = LdapFilter::parse("(&(objectClass=user)(mail=*@example.com))").unwrap();
     let (sql, params) = filter.to_sql(0);
 
     assert!(sql.contains("AND"));
@@ -91,13 +89,28 @@ fn schema_hierarchy_is_consistent() {
 #[test]
 fn acl_enforces_role_based_access() {
     // Admin can do everything.
-    assert_eq!(check_access(2, AclOperation::Write, None), AclDecision::Allow);
-    assert_eq!(check_access(3, AclOperation::Delete, None), AclDecision::Allow);
+    assert_eq!(
+        check_access(2, AclOperation::Write, None),
+        AclDecision::Allow
+    );
+    assert_eq!(
+        check_access(3, AclOperation::Delete, None),
+        AclDecision::Allow
+    );
 
     // Regular user is read-only.
-    assert_eq!(check_access(1, AclOperation::Read, None), AclDecision::Allow);
-    assert_eq!(check_access(1, AclOperation::Write, None), AclDecision::Deny);
-    assert_eq!(check_access(1, AclOperation::Create, None), AclDecision::Deny);
+    assert_eq!(
+        check_access(1, AclOperation::Read, None),
+        AclDecision::Allow
+    );
+    assert_eq!(
+        check_access(1, AclOperation::Write, None),
+        AclDecision::Deny
+    );
+    assert_eq!(
+        check_access(1, AclOperation::Create, None),
+        AclDecision::Deny
+    );
 }
 
 #[test]

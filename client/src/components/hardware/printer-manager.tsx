@@ -108,16 +108,22 @@ export default function PrinterManager() {
           Printer Manager
         </h2>
         <span className="text-sm text-muted-foreground">
-          {printers.filter((p) => p.status === "online").length}/{printers.length} Online
+          {printers.filter((p) => p.status === "online").length}/
+          {printers.length} Online
         </span>
       </div>
 
       <div className="space-y-2">
         {printers.map((printer) => (
-          <div key={printer.id} className={`p-3 rounded-lg border-2 ${getStatusColor(printer.status)}`}>
+          <div
+            key={printer.id}
+            className={`p-3 rounded-lg border-2 ${getStatusColor(printer.status)}`}
+          >
             <div className="flex items-start justify-between mb-2">
               <div className="flex items-start gap-3 flex-1">
-                <div className={`w-3 h-3 rounded-full mt-1.5 ${getStatusIcon(printer.status)}`} />
+                <div
+                  className={`w-3 h-3 rounded-full mt-1.5 ${getStatusIcon(printer.status)}`}
+                />
                 <div className="flex-1">
                   <h3 className="font-bold">{printer.name}</h3>
                   <p className="text-xs opacity-75">{printer.model}</p>
@@ -126,19 +132,25 @@ export default function PrinterManager() {
               </div>
               <div className="text-right">
                 <p className="text-sm font-bold capitalize">{printer.status}</p>
-                <p className="text-xs opacity-75">Queue: {printer.queueCount}</p>
+                <p className="text-xs opacity-75">
+                  Queue: {printer.queueCount}
+                </p>
               </div>
             </div>
 
             <div className="flex justify-between items-center text-xs mb-2">
-              <span className="opacity-75">Last used: {formatLastUsed(printer.lastUsed)}</span>
+              <span className="opacity-75">
+                Last used: {formatLastUsed(printer.lastUsed)}
+              </span>
             </div>
 
             <Button
               size="sm"
               variant="outline"
               onClick={() => testPrint(printer.id)}
-              disabled={printer.status !== "online" || testingPrinterId === printer.id}
+              disabled={
+                printer.status !== "online" || testingPrinterId === printer.id
+              }
               className="w-full"
             >
               {testingPrinterId === printer.id ? "Sending..." : "Test Print"}
@@ -152,7 +164,9 @@ export default function PrinterManager() {
           <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
           <div className="text-sm text-red-800">
             <p className="font-medium">Printer Issues Detected</p>
-            <p className="text-xs mt-1">Check configuration or contact IT support</p>
+            <p className="text-xs mt-1">
+              Check configuration or contact IT support
+            </p>
           </div>
         </div>
       )}

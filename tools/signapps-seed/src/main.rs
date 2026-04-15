@@ -104,7 +104,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             sqlx::query("UPDATE identity.users SET tenant_id = NULL WHERE username = 'admin'")
                 .execute(&pool)
                 .await?;
-        }
+        },
     }
 
     if cli.verify {
@@ -240,7 +240,7 @@ async fn reset_seed_data(pool: &sqlx::PgPool) -> Result<(), Box<dyn std::error::
             Err(e) => {
                 // Table may not exist in some DB versions — warn and continue.
                 tracing::warn!(table, error = %e, "skipping truncation");
-            }
+            },
         }
     }
 

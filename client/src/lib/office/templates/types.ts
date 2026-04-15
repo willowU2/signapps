@@ -9,19 +9,23 @@
 // ============================================================================
 
 export type TemplateCategory =
-  | 'business'
-  | 'education'
-  | 'personal'
-  | 'marketing'
-  | 'legal'
-  | 'hr'
-  | 'finance'
-  | 'creative'
-  | 'custom';
+  | "business"
+  | "education"
+  | "personal"
+  | "marketing"
+  | "legal"
+  | "hr"
+  | "finance"
+  | "creative"
+  | "custom";
 
-export type DocumentType = 'doc' | 'sheet' | 'slide';
+export type DocumentType = "doc" | "sheet" | "slide";
 
-export type TemplateVisibility = 'private' | 'workspace' | 'organization' | 'public';
+export type TemplateVisibility =
+  | "private"
+  | "workspace"
+  | "organization"
+  | "public";
 
 // ============================================================================
 // Template Definition
@@ -88,9 +92,9 @@ export interface Template extends TemplateMetadata {
 
 export interface DocumentSettings {
   /** Page size (A4, Letter, etc.) */
-  pageSize?: 'A4' | 'Letter' | 'Legal' | 'A3' | 'Custom';
+  pageSize?: "A4" | "Letter" | "Legal" | "A3" | "Custom";
   /** Page orientation */
-  orientation?: 'portrait' | 'landscape';
+  orientation?: "portrait" | "landscape";
   /** Margins in mm */
   margins?: {
     top: number;
@@ -120,7 +124,7 @@ export interface TemplatePlaceholder {
   /** Display label */
   label: string;
   /** Placeholder type */
-  type: 'text' | 'date' | 'number' | 'image' | 'signature';
+  type: "text" | "date" | "number" | "image" | "signature";
   /** Whether it's required */
   required: boolean;
   /** Default value */
@@ -139,7 +143,7 @@ export interface TemplateVariable {
   /** Display label */
   label: string;
   /** Variable type */
-  type: 'text' | 'date' | 'number' | 'select' | 'boolean';
+  type: "text" | "date" | "number" | "select" | "boolean";
   /** Required field */
   required: boolean;
   /** Default value */
@@ -158,19 +162,19 @@ export interface TemplateGalleryFilters {
   /** Search query */
   search?: string;
   /** Category filter */
-  category?: TemplateCategory | 'all';
+  category?: TemplateCategory | "all";
   /** Document type filter */
-  documentType?: DocumentType | 'all';
+  documentType?: DocumentType | "all";
   /** Visibility filter */
-  visibility?: TemplateVisibility | 'all';
+  visibility?: TemplateVisibility | "all";
   /** Tags filter */
   tags?: string[];
   /** Featured only */
   featuredOnly?: boolean;
   /** Sort field */
-  sortBy?: 'name' | 'createdAt' | 'updatedAt' | 'usageCount' | 'rating';
+  sortBy?: "name" | "createdAt" | "updatedAt" | "usageCount" | "rating";
   /** Sort direction */
-  sortOrder?: 'asc' | 'desc';
+  sortOrder?: "asc" | "desc";
 }
 
 export interface TemplateGalleryResponse {
@@ -230,56 +234,59 @@ export interface ApplyTemplateResponse {
 // Category Metadata
 // ============================================================================
 
-export const TEMPLATE_CATEGORIES: Record<TemplateCategory, { label: string; icon: string; description: string }> = {
+export const TEMPLATE_CATEGORIES: Record<
+  TemplateCategory,
+  { label: string; icon: string; description: string }
+> = {
   business: {
-    label: 'Entreprise',
-    icon: 'Briefcase',
-    description: 'Documents professionnels et d\'entreprise',
+    label: "Entreprise",
+    icon: "Briefcase",
+    description: "Documents professionnels et d'entreprise",
   },
   education: {
-    label: 'Éducation',
-    icon: 'GraduationCap',
-    description: 'Supports pédagogiques et académiques',
+    label: "Éducation",
+    icon: "GraduationCap",
+    description: "Supports pédagogiques et académiques",
   },
   personal: {
-    label: 'Personnel',
-    icon: 'User',
-    description: 'Documents personnels et CV',
+    label: "Personnel",
+    icon: "User",
+    description: "Documents personnels et CV",
   },
   marketing: {
-    label: 'Marketing',
-    icon: 'Megaphone',
-    description: 'Supports marketing et communication',
+    label: "Marketing",
+    icon: "Megaphone",
+    description: "Supports marketing et communication",
   },
   legal: {
-    label: 'Juridique',
-    icon: 'Scale',
-    description: 'Contrats et documents légaux',
+    label: "Juridique",
+    icon: "Scale",
+    description: "Contrats et documents légaux",
   },
   hr: {
-    label: 'Ressources Humaines',
-    icon: 'Users',
-    description: 'Formulaires RH et onboarding',
+    label: "Ressources Humaines",
+    icon: "Users",
+    description: "Formulaires RH et onboarding",
   },
   finance: {
-    label: 'Finance',
-    icon: 'Calculator',
-    description: 'Rapports financiers et factures',
+    label: "Finance",
+    icon: "Calculator",
+    description: "Rapports financiers et factures",
   },
   creative: {
-    label: 'Créatif',
-    icon: 'Palette',
-    description: 'Designs créatifs et artistiques',
+    label: "Créatif",
+    icon: "Palette",
+    description: "Designs créatifs et artistiques",
   },
   custom: {
-    label: 'Personnalisé',
-    icon: 'Folder',
-    description: 'Templates personnalisés',
+    label: "Personnalisé",
+    icon: "Folder",
+    description: "Templates personnalisés",
   },
 };
 
 export const DOCUMENT_TYPE_LABELS: Record<DocumentType, string> = {
-  doc: 'Document',
-  sheet: 'Feuille de calcul',
-  slide: 'Présentation',
+  doc: "Document",
+  sheet: "Feuille de calcul",
+  slide: "Présentation",
 };

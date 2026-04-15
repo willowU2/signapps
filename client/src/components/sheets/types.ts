@@ -1,84 +1,136 @@
 export interface CellStyle {
-    bold?: boolean
-    italic?: boolean
-    strikethrough?: boolean
-    underline?: boolean
-    align?: 'left' | 'center' | 'right'
-    verticalAlign?: 'top' | 'middle' | 'bottom'
-    wrap?: boolean
-    overflow?: 'visible' | 'hidden' | 'clip'
-    textColor?: string
-    fillColor?: string
-    fontFamily?: string
-    fontSize?: number
-    numberFormat?: 'auto' | 'currency' | 'percent' | 'number' | 'date' | 'time' | 'datetime' | 'duration' | 'text' | 'scientific' | 'accounting'
-    decimals?: number
-    borderTop?: boolean
-    borderRight?: boolean
-    borderBottom?: boolean
-    borderLeft?: boolean
-    mergeRows?: number
-    mergeCols?: number
-    mergedInto?: string
-    locked?: boolean
-    rotation?: number | 'vertical'
+  bold?: boolean;
+  italic?: boolean;
+  strikethrough?: boolean;
+  underline?: boolean;
+  align?: "left" | "center" | "right";
+  verticalAlign?: "top" | "middle" | "bottom";
+  wrap?: boolean;
+  overflow?: "visible" | "hidden" | "clip";
+  textColor?: string;
+  fillColor?: string;
+  fontFamily?: string;
+  fontSize?: number;
+  numberFormat?:
+    | "auto"
+    | "currency"
+    | "percent"
+    | "number"
+    | "date"
+    | "time"
+    | "datetime"
+    | "duration"
+    | "text"
+    | "scientific"
+    | "accounting";
+  decimals?: number;
+  borderTop?: boolean;
+  borderRight?: boolean;
+  borderBottom?: boolean;
+  borderLeft?: boolean;
+  mergeRows?: number;
+  mergeCols?: number;
+  mergedInto?: string;
+  locked?: boolean;
+  rotation?: number | "vertical";
 }
 
-export type CellValidation = 
-    | { type: 'list', values: string[] }
-    | { type: 'boolean' }
+export type CellValidation =
+  | { type: "list"; values: string[] }
+  | { type: "boolean" };
 
 export interface CellData {
-    value: string
-    formula?: string
-    style?: CellStyle
-    comment?: string
-    validation?: CellValidation
+  value: string;
+  formula?: string;
+  style?: CellStyle;
+  comment?: string;
+  validation?: CellValidation;
 }
 
 export interface SelectionBounds {
-    minR: number
-    maxR: number
-    minC: number
-    maxC: number
+  minR: number;
+  maxR: number;
+  minC: number;
+  maxC: number;
 }
 
 export interface SheetInfo {
-    id: string
-    name: string
-    color?: string
+  id: string;
+  name: string;
+  color?: string;
 }
 
 export const TAB_COLORS = [
-    '#ea4335', '#fbbc04', '#34a853', '#4a86e8', '#ff6d01',
-    '#46bdc6', '#9334e6', '#d81b60', '#795548', '#607d8b',
-]
+  "#ea4335",
+  "#fbbc04",
+  "#34a853",
+  "#4a86e8",
+  "#ff6d01",
+  "#46bdc6",
+  "#9334e6",
+  "#d81b60",
+  "#795548",
+  "#607d8b",
+];
 
-export const ROWS = 200 // Minimum visible rows for empty sheets
-export const MAX_ROW = 100000 // Absolute maximum
-export const COLS = 200
-export const DEFAULT_COL_WIDTH = 100
-export const DEFAULT_ROW_HEIGHT = 21
+export const ROWS = 200; // Minimum visible rows for empty sheets
+export const MAX_ROW = 100000; // Absolute maximum
+export const COLS = 200;
+export const DEFAULT_COL_WIDTH = 100;
+export const DEFAULT_ROW_HEIGHT = 21;
 
 /** Returns the effective row count: max(ROWS, highest_row_in_data + 50), capped at MAX_ROW */
 export function getEffectiveRows(data: Record<string, CellData>): number {
-    let maxRow = 0
-    for (const key of Object.keys(data)) {
-        const r = parseInt(key.split(',')[0], 10)
-        if (r > maxRow) maxRow = r
-    }
-    return Math.min(MAX_ROW, Math.max(ROWS, maxRow + 50))
+  let maxRow = 0;
+  for (const key of Object.keys(data)) {
+    const r = parseInt(key.split(",")[0], 10);
+    if (r > maxRow) maxRow = r;
+  }
+  return Math.min(MAX_ROW, Math.max(ROWS, maxRow + 50));
 }
-export const ROW_HEADER_WIDTH = 46
-export const COL_HEADER_HEIGHT = 25
+export const ROW_HEADER_WIDTH = 46;
+export const COL_HEADER_HEIGHT = 25;
 
 export const PRESET_COLORS = [
-    '#000000', '#434343', '#666666', '#999999', '#b7b7b7', '#cccccc', '#d9d9d9', '#efefef', '#f3f3f3', '#ffffff',
-    '#980000', '#ff0000', '#ff9900', '#ffff00', '#00ff00', '#00ffff', '#4a86e8', '#0000ff', '#9900ff', '#ff00ff',
-    '#e6b8af', '#f4cccc', '#fce5cd', '#fff2cc', '#d9ead3', '#d0e0e3', '#c9daf8', '#cfe2f3', '#d9d2e9', '#ead1dc',
-]
+  "#000000",
+  "#434343",
+  "#666666",
+  "#999999",
+  "#b7b7b7",
+  "#cccccc",
+  "#d9d9d9",
+  "#efefef",
+  "#f3f3f3",
+  "#ffffff",
+  "#980000",
+  "#ff0000",
+  "#ff9900",
+  "#ffff00",
+  "#00ff00",
+  "#00ffff",
+  "#4a86e8",
+  "#0000ff",
+  "#9900ff",
+  "#ff00ff",
+  "#e6b8af",
+  "#f4cccc",
+  "#fce5cd",
+  "#fff2cc",
+  "#d9ead3",
+  "#d0e0e3",
+  "#c9daf8",
+  "#cfe2f3",
+  "#d9d2e9",
+  "#ead1dc",
+];
 
 export const FONTS = [
-    'Arial', 'Courier New', 'Georgia', 'Times New Roman',
-    'Verdana', 'Trebuchet MS', 'Comic Sans MS', 'Impact'
-]
+  "Arial",
+  "Courier New",
+  "Georgia",
+  "Times New Roman",
+  "Verdana",
+  "Trebuchet MS",
+  "Comic Sans MS",
+  "Impact",
+];

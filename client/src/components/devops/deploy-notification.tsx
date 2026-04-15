@@ -25,7 +25,10 @@ function loadDeploysFromStorage(): Deploy[] {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return [];
     const parsed = JSON.parse(raw);
-    return parsed.map((d: Deploy) => ({ ...d, deployTime: new Date(d.deployTime) }));
+    return parsed.map((d: Deploy) => ({
+      ...d,
+      deployTime: new Date(d.deployTime),
+    }));
   } catch {
     return [];
   }
@@ -41,7 +44,9 @@ function mapDeployFromApi(d: any): Deploy {
     serviceName: d.service_name ?? d.service ?? "",
     version: d.version ?? "1.0.0",
     deployTime: new Date(d.deployed_at ?? d.created_at ?? Date.now()),
-    status: (["success","failed","rollback"].includes(d.status) ? d.status : "success") as Deploy["status"],
+    status: (["success", "failed", "rollback"].includes(d.status)
+      ? d.status
+      : "success") as Deploy["status"],
     commitMessage: d.commit_message ?? d.message ?? "",
     author: d.author ?? d.deployed_by ?? "Unknown",
   };
@@ -59,7 +64,7 @@ export function DeployNotification() {
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await schedulerClient.get<any[]>('/devops/deployments');
+        const res = await schedulerClient.get<any[]>("/devops/deployments");
         const loaded = (res.data ?? []).map(mapDeployFromApi);
         setDeploys(loaded);
         saveDeploysToStorage(loaded);
@@ -74,17 +79,23 @@ export function DeployNotification() {
 
   const getStatusIcon = (status: Deploy["status"]) => {
     switch (status) {
-      case "success": return <CheckCircle className="w-5 h-5 text-green-500" />;
-      case "failed": return <XCircle className="w-5 h-5 text-red-500" />;
-      case "rollback": return <RotateCcw className="w-5 h-5 text-orange-500" />;
+      case "success":
+        return <CheckCircle className="w-5 h-5 text-green-500" />;
+      case "failed":
+        return <XCircle className="w-5 h-5 text-red-500" />;
+      case "rollback":
+        return <RotateCcw className="w-5 h-5 text-orange-500" />;
     }
   };
 
   const getStatusBadgeClass = (status: Deploy["status"]) => {
     switch (status) {
-      case "success": return "bg-green-100 text-green-800";
-      case "failed": return "bg-red-100 text-red-800";
-      case "rollback": return "bg-orange-100 text-orange-800";
+      case "success":
+        return "bg-green-100 text-green-800";
+      case "failed":
+        return "bg-red-100 text-red-800";
+      case "rollback":
+        return "bg-orange-100 text-orange-800";
     }
   };
 
@@ -118,7 +129,7 @@ export function DeployNotification() {
     setFormService("");
     toast.success(`Deploy for ${formService} recorded`);
     try {
-      await schedulerClient.post('/devops/deployments', {
+      await schedulerClient.post("/devops/deployments", {
         service_name: newDeploy.serviceName,
         version: newDeploy.version,
         status: newDeploy.status,
@@ -142,14 +153,48 @@ export function DeployNotification() {
         </div>
         {showForm ? (
           <div className="flex gap-2 flex-wrap">
-            <Input value={formService} onChange={(e) => setFormService(e.target.value)} placeholder="Service name" className="h-8 text-sm w-36" autoFocus />
-            <Input value={formVersion} onChange={(e) => setFormVersion(e.target.value)} placeholder="1.0.0" className="h-8 text-sm w-20" />
-            <Input value={formMessage} onChange={(e) => setFormMessage(e.target.value)} placeholder="Commit message" className="h-8 text-sm w-40" />
-            <select value={formStatus} onChange={(e) => setFormStatus(e.target.value as Deploy["status"])} className="border rounded px-2 h-8 text-sm">
-              {(["success","failed","rollback"] as const).map(s => <option key={s} value={s}>{s}</option>)}
+            <Input
+              value={formService}
+              onChange={(e) => setFormService(e.target.value)}
+              placeholder="Service name"
+              className="h-8 text-sm w-36"
+              autoFocus
+            />
+            <Input
+              value={formVersion}
+              onChange={(e) => setFormVersion(e.target.value)}
+              placeholder="1.0.0"
+              className="h-8 text-sm w-20"
+            />
+            <Input
+              value={formMessage}
+              onChange={(e) => setFormMessage(e.target.value)}
+              placeholder="Commit message"
+              className="h-8 text-sm w-40"
+            />
+            <select
+              value={formStatus}
+              onChange={(e) =>
+                setFormStatus(e.target.value as Deploy["status"])
+              }
+              className="border rounded px-2 h-8 text-sm"
+            >
+              {(["success", "failed", "rollback"] as const).map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
             </select>
-            <Button size="sm" onClick={handleAddDeploy}>Enregistrer</Button>
-            <Button size="sm" variant="ghost" onClick={() => setShowForm(false)}>Annuler</Button>
+            <Button size="sm" onClick={handleAddDeploy}>
+              Enregistrer
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => setShowForm(false)}
+            >
+              Annuler
+            </Button>
           </div>
         ) : (
           <Button size="sm" onClick={() => setShowForm(true)}>
@@ -165,22 +210,34 @@ export function DeployNotification() {
         </div>
       ) : (
         deploys.map((deploy) => (
-          <div key={deploy.id} className="border rounded-lg p-4 bg-card hover:shadow-md transition-shadow">
+          <div
+            key={deploy.id}
+            className="border rounded-lg p-4 bg-card hover:shadow-md transition-shadow"
+          >
             <div className="flex items-start justify-between mb-3">
               <div className="flex-1">
-                <h3 className="font-semibold text-base">{deploy.serviceName}</h3>
-                <p className="text-sm text-muted-foreground">{deploy.version}</p>
+                <h3 className="font-semibold text-base">
+                  {deploy.serviceName}
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  {deploy.version}
+                </p>
               </div>
               <div className="flex items-center gap-2">
                 {getStatusIcon(deploy.status)}
-                <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${getStatusBadgeClass(deploy.status)}`}>
-                  {deploy.status.charAt(0).toUpperCase() + deploy.status.slice(1)}
+                <span
+                  className={`px-2.5 py-1 rounded-full text-xs font-medium ${getStatusBadgeClass(deploy.status)}`}
+                >
+                  {deploy.status.charAt(0).toUpperCase() +
+                    deploy.status.slice(1)}
                 </span>
               </div>
             </div>
 
             <div className="mb-3 pb-3 border-b border-border">
-              <p className="text-sm text-muted-foreground">{deploy.commitMessage}</p>
+              <p className="text-sm text-muted-foreground">
+                {deploy.commitMessage}
+              </p>
             </div>
 
             <div className="flex items-center justify-between text-xs text-muted-foreground">

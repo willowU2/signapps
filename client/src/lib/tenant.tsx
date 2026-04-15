@@ -1,6 +1,12 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect, type ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  type ReactNode,
+} from "react";
 
 export interface Tenant {
   id: string;
@@ -17,7 +23,9 @@ export function getCurrentTenant(): Tenant | null {
   try {
     const stored = localStorage.getItem(TENANT_KEY);
     return stored ? JSON.parse(stored) : null;
-  } catch { return null; }
+  } catch {
+    return null;
+  }
 }
 
 export function setCurrentTenant(tenant: Tenant) {
@@ -30,12 +38,18 @@ export function getTenantApiBase(tenant: Tenant): string {
 
 export function applyTenantBranding(tenant: Tenant) {
   if (tenant.primaryColor) {
-    document.documentElement.style.setProperty("--tenant-primary", tenant.primaryColor);
+    document.documentElement.style.setProperty(
+      "--tenant-primary",
+      tenant.primaryColor,
+    );
   }
 }
 
 // --- React Context & Provider ---
-const TenantContext = createContext<{ tenant: Tenant | null; setTenant: (t: Tenant) => void }>({
+const TenantContext = createContext<{
+  tenant: Tenant | null;
+  setTenant: (t: Tenant) => void;
+}>({
   tenant: null,
   setTenant: () => {},
 });
@@ -83,9 +97,14 @@ export function TenantSettingsPage() {
           </div>
           {tenant.primaryColor && (
             <div className="border rounded-lg p-4 space-y-2">
-              <p className="text-sm text-muted-foreground">Couleur principale</p>
+              <p className="text-sm text-muted-foreground">
+                Couleur principale
+              </p>
               <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded" style={{ background: tenant.primaryColor }} />
+                <div
+                  className="w-6 h-6 rounded"
+                  style={{ background: tenant.primaryColor }}
+                />
                 <span className="font-mono text-sm">{tenant.primaryColor}</span>
               </div>
             </div>

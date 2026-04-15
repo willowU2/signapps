@@ -43,13 +43,17 @@ export function BankReconciliation() {
     ) {
       setBankTxns(
         bankTxns.map((t) =>
-          t.id === selectedBank ? { ...t, matched: true, linkedId: selectedLedger } : t
-        )
+          t.id === selectedBank
+            ? { ...t, matched: true, linkedId: selectedLedger }
+            : t,
+        ),
       );
       setLedgerTxns(
         ledgerTxns.map((t) =>
-          t.id === selectedLedger ? { ...t, matched: true, linkedId: selectedBank } : t
-        )
+          t.id === selectedLedger
+            ? { ...t, matched: true, linkedId: selectedBank }
+            : t,
+        ),
       );
       setSelectedBank(null);
       setSelectedLedger(null);
@@ -62,35 +66,39 @@ export function BankReconciliation() {
       if (txn?.linkedId) {
         setLedgerTxns(
           ledgerTxns.map((t) =>
-            t.id === txn.linkedId ? { ...t, matched: false, linkedId: undefined } : t
-          )
+            t.id === txn.linkedId
+              ? { ...t, matched: false, linkedId: undefined }
+              : t,
+          ),
         );
       }
       setBankTxns(
         bankTxns.map((t) =>
-          t.id === id ? { ...t, matched: false, linkedId: undefined } : t
-        )
+          t.id === id ? { ...t, matched: false, linkedId: undefined } : t,
+        ),
       );
     } else {
       const txn = ledgerTxns.find((t) => t.id === id);
       if (txn?.linkedId) {
         setBankTxns(
           bankTxns.map((t) =>
-            t.id === txn.linkedId ? { ...t, matched: false, linkedId: undefined } : t
-          )
+            t.id === txn.linkedId
+              ? { ...t, matched: false, linkedId: undefined }
+              : t,
+          ),
         );
       }
       setLedgerTxns(
         ledgerTxns.map((t) =>
-          t.id === id ? { ...t, matched: false, linkedId: undefined } : t
-        )
+          t.id === id ? { ...t, matched: false, linkedId: undefined } : t,
+        ),
       );
     }
   };
 
   const bankBalance = bankTxns.reduce(
     (sum, t) => sum + (t.type === "credit" ? t.amount : -t.amount),
-    0
+    0,
   );
   const ledgerBalance = ledgerTxns.reduce((sum, t) => sum + t.amount, 0);
   const balanceDiff = Math.abs(bankBalance - ledgerBalance);
@@ -103,19 +111,25 @@ export function BankReconciliation() {
           <h2 className="text-2xl font-bold text-foreground">
             Rapprochement bancaire
           </h2>
-          <p className="text-muted-foreground">Match bank statements with ledger</p>
+          <p className="text-muted-foreground">
+            Match bank statements with ledger
+          </p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="rounded-lg border bg-primary/10 p-4">
-          <p className="text-sm text-muted-foreground font-medium">Bank Balance</p>
+          <p className="text-sm text-muted-foreground font-medium">
+            Bank Balance
+          </p>
           <p className="text-2xl font-bold text-primary">
             €{bankBalance.toFixed(2)}
           </p>
         </div>
         <div className="rounded-lg border bg-emerald-500/10 p-4">
-          <p className="text-sm text-muted-foreground font-medium">Ledger Balance</p>
+          <p className="text-sm text-muted-foreground font-medium">
+            Ledger Balance
+          </p>
           <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
             €{ledgerBalance.toFixed(2)}
           </p>
@@ -129,7 +143,9 @@ export function BankReconciliation() {
                 : "bg-amber-500/10"
           }`}
         >
-          <p className="text-sm text-muted-foreground font-medium">Difference</p>
+          <p className="text-sm text-muted-foreground font-medium">
+            Difference
+          </p>
           <p
             className={`text-2xl font-bold transition-colors ${
               isReconciled

@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { useState, useRef, useEffect } from 'react';
-import { Send, X } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { cn } from '@/lib/utils';
+import { useState, useRef, useEffect } from "react";
+import { Send, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
 
 // ============================================================================
 // Types
@@ -24,14 +24,14 @@ export interface CommentInputProps {
 // ============================================================================
 
 export function CommentInput({
-  placeholder = 'Ecrire un commentaire...',
+  placeholder = "Ecrire un commentaire...",
   onSubmit,
   onCancel,
   autoFocus = false,
   compact = false,
   className,
 }: CommentInputProps) {
-  const [content, setContent] = useState('');
+  const [content, setContent] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
@@ -44,22 +44,22 @@ export function CommentInput({
     const trimmed = content.trim();
     if (trimmed) {
       onSubmit(trimmed);
-      setContent('');
+      setContent("");
     }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+    if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
       e.preventDefault();
       handleSubmit();
     }
-    if (e.key === 'Escape') {
+    if (e.key === "Escape") {
       onCancel?.();
     }
   };
 
   return (
-    <div className={cn('space-y-2', className)}>
+    <div className={cn("space-y-2", className)}>
       <Textarea
         ref={textareaRef}
         placeholder={placeholder}
@@ -68,8 +68,8 @@ export function CommentInput({
         onKeyDown={handleKeyDown}
         onClick={(e) => e.stopPropagation()}
         className={cn(
-          'resize-none text-sm',
-          compact ? 'min-h-[60px]' : 'min-h-[100px]'
+          "resize-none text-sm",
+          compact ? "min-h-[60px]" : "min-h-[100px]",
         )}
       />
 
@@ -100,7 +100,7 @@ export function CommentInput({
             disabled={!content.trim()}
           >
             <Send className="h-4 w-4 mr-1" />
-            {compact ? 'Repondre' : 'Commenter'}
+            {compact ? "Repondre" : "Commenter"}
           </Button>
         </div>
       </div>

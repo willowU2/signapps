@@ -1,5 +1,5 @@
-import { create } from 'zustand';
-import { getClient, ServiceName } from '@/lib/api/factory';
+import { create } from "zustand";
+import { getClient, ServiceName } from "@/lib/api/factory";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -58,13 +58,13 @@ export const useAiAudioGen = create<AudioGenState>()((set) => ({
     set({ generating: true, error: null, result: null });
     try {
       const res = await aiClient.post<AudioResult>(
-        '/ai/audio/generate/music',
+        "/ai/audio/generate/music",
         params,
       );
       set({ result: res.data, generating: false });
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : 'Music generation failed';
+        err instanceof Error ? err.message : "Music generation failed";
       set({ error: message, generating: false });
     }
   },
@@ -73,13 +73,13 @@ export const useAiAudioGen = create<AudioGenState>()((set) => ({
     set({ generating: true, error: null, result: null });
     try {
       const res = await aiClient.post<AudioResult>(
-        '/ai/audio/generate/sfx',
+        "/ai/audio/generate/sfx",
         params,
       );
       set({ result: res.data, generating: false });
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : 'SFX generation failed';
+        err instanceof Error ? err.message : "SFX generation failed";
       set({ error: message, generating: false });
     }
   },
@@ -87,7 +87,7 @@ export const useAiAudioGen = create<AudioGenState>()((set) => ({
   fetchModels: async () => {
     try {
       const res = await aiClient.get<{ models: ModelInfo[] }>(
-        '/ai/audio/models',
+        "/ai/audio/models",
       );
       set({ models: res.data.models ?? [] });
     } catch {

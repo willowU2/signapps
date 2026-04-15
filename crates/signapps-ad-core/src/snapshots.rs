@@ -226,13 +226,12 @@ pub async fn create_snapshot(
 /// ```
 #[tracing::instrument(skip(pool))]
 pub async fn list_snapshots(pool: &PgPool, domain_id: Uuid) -> Result<Vec<AdSnapshot>> {
-    let snapshots: Vec<AdSnapshot> = sqlx::query_as(
-        "SELECT * FROM ad_snapshots WHERE domain_id = $1 ORDER BY created_at DESC",
-    )
-    .bind(domain_id)
-    .fetch_all(pool)
-    .await
-    .map_err(|e| Error::Database(e.to_string()))?;
+    let snapshots: Vec<AdSnapshot> =
+        sqlx::query_as("SELECT * FROM ad_snapshots WHERE domain_id = $1 ORDER BY created_at DESC")
+            .bind(domain_id)
+            .fetch_all(pool)
+            .await
+            .map_err(|e| Error::Database(e.to_string()))?;
 
     Ok(snapshots)
 }
@@ -368,8 +367,8 @@ pub async fn restore_execute(
 
     // 5. Upsert each object
     for item in &items {
-        let result = restore_single_object(pool, &item.table_name, item.row_id, &snapshot_data)
-            .await;
+        let result =
+            restore_single_object(pool, &item.table_name, item.row_id, &snapshot_data).await;
         match result {
             Ok(true) => objects_restored += 1,
             Ok(false) => objects_skipped += 1,
@@ -382,7 +381,7 @@ pub async fn restore_execute(
                     "Object restore failed — skipping"
                 );
                 objects_skipped += 1;
-            }
+            },
         }
     }
 
@@ -664,7 +663,7 @@ async fn restore_single_object(
         "ad_computer_accounts" => restore_computer_account(pool, row).await?,
         "ad_security_groups" => restore_security_group(pool, row).await?,
         "ad_group_members" => restore_group_member(pool, row).await?,
-        _ => {}
+        _ => {},
     }
 
     Ok(true)
@@ -735,7 +734,12 @@ async fn restore_user_account(pool: &PgPool, row: &serde_json::Value) -> Result<
     .bind(row["department"].as_str())
     .bind(row["mail"].as_str())
     .bind(parse_optional_uuid(row, "mail_domain_id"))
-    .bind(row["account_flags"].as_i64().map(|v| v as i32).unwrap_or(512))
+    .bind(
+        row["account_flags"]
+            .as_i64()
+            .map(|v| v as i32)
+            .unwrap_or(512),
+    )
     .bind(row["object_sid"].as_str())
     .bind(row["password_must_change"].as_bool().unwrap_or(true))
     .bind(row["is_enabled"].as_bool().unwrap_or(true))
@@ -846,12 +850,11 @@ async fn restore_group_member(pool: &PgPool, row: &serde_json::Value) -> Result<
 
 /// Load a snapshot record, returning an error if not found.
 async fn load_snapshot_record(pool: &PgPool, snapshot_id: Uuid) -> Result<AdSnapshot> {
-    let snapshot: Option<AdSnapshot> =
-        sqlx::query_as("SELECT * FROM ad_snapshots WHERE id = $1")
-            .bind(snapshot_id)
-            .fetch_optional(pool)
-            .await
-            .map_err(|e| Error::Database(e.to_string()))?;
+    let snapshot: Option<AdSnapshot> = sqlx::query_as("SELECT * FROM ad_snapshots WHERE id = $1")
+        .bind(snapshot_id)
+        .fetch_optional(pool)
+        .await
+        .map_err(|e| Error::Database(e.to_string()))?;
 
     snapshot.ok_or_else(|| Error::NotFound(format!("Snapshot {snapshot_id} not found")))
 }
@@ -862,14 +865,16 @@ async fn write_snapshot_file(storage_path: &str, data: &[u8]) -> Result<()> {
 
     // Create parent directories if needed
     if let Some(parent) = std::path::Path::new(storage_path).parent() {
-        tokio::fs::create_dir_all(parent).await.map_err(|e| {
-            Error::Internal(format!("Failed to create snapshot directory: {e}"))
-        })?;
+        tokio::fs::create_dir_all(parent)
+            .await
+            .map_err(|e| Error::Internal(format!("Failed to create snapshot directory: {e}")))?;
     }
 
-    let mut file = tokio::fs::File::create(storage_path)
-        .await
-        .map_err(|e| Error::Internal(format!("Failed to create snapshot file '{storage_path}': {e}")))?;
+    let mut file = tokio::fs::File::create(storage_path).await.map_err(|e| {
+        Error::Internal(format!(
+            "Failed to create snapshot file '{storage_path}': {e}"
+        ))
+    })?;
 
     file.write_all(data)
         .await
@@ -884,9 +889,11 @@ async fn write_snapshot_file(storage_path: &str, data: &[u8]) -> Result<()> {
 
 /// Read snapshot file from disk.
 async fn read_snapshot_file(storage_path: &str) -> Result<Vec<u8>> {
-    tokio::fs::read(storage_path)
-        .await
-        .map_err(|e| Error::Internal(format!("Failed to read snapshot file '{storage_path}': {e}")))
+    tokio::fs::read(storage_path).await.map_err(|e| {
+        Error::Internal(format!(
+            "Failed to read snapshot file '{storage_path}': {e}"
+        ))
+    })
 }
 
 /// Compute the SHA-256 hex digest of a byte slice.
@@ -917,9 +924,7 @@ fn parse_uuid(row: &serde_json::Value, field: &str) -> Result<Uuid> {
     row[field]
         .as_str()
         .and_then(|s| s.parse().ok())
-        .ok_or_else(|| {
-            Error::Internal(format!("Snapshot row missing or invalid field '{field}'"))
-        })
+        .ok_or_else(|| Error::Internal(format!("Snapshot row missing or invalid field '{field}'")))
 }
 
 fn parse_optional_uuid(row: &serde_json::Value, field: &str) -> Option<Uuid> {
@@ -1000,11 +1005,7 @@ mod tests {
         });
 
         // Exact match only — should return 1
-        let items = filter_manifest_items(
-            &manifest,
-            Some("OU=DRH,DC=corp,DC=local"),
-            false,
-        );
+        let items = filter_manifest_items(&manifest, Some("OU=DRH,DC=corp,DC=local"), false);
         assert_eq!(items.len(), 1);
         assert_eq!(items[0].object_type, "ou");
     }
@@ -1032,11 +1033,7 @@ mod tests {
         });
 
         // DRH + children
-        let items = filter_manifest_items(
-            &manifest,
-            Some("OU=DRH,DC=corp,DC=local"),
-            true,
-        );
+        let items = filter_manifest_items(&manifest, Some("OU=DRH,DC=corp,DC=local"), true);
         assert_eq!(items.len(), 2); // OU=DRH and CN=j.dupont under DRH
     }
 

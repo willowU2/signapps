@@ -153,9 +153,8 @@ impl RerankerWorker for NativeReranker {
                 let seq_len = input_ids.len();
 
                 // Build ONNX input tensors — shape [1, seq_len] for a single pair.
-                let input_ids_tensor =
-                    Tensor::from_array((vec![1i64, seq_len as i64], input_ids))
-                        .context("failed to create input_ids tensor")?;
+                let input_ids_tensor = Tensor::from_array((vec![1i64, seq_len as i64], input_ids))
+                    .context("failed to create input_ids tensor")?;
                 let attention_mask_tensor =
                     Tensor::from_array((vec![1i64, seq_len as i64], attention_mask))
                         .context("failed to create attention_mask tensor")?;

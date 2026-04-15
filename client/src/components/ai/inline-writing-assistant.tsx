@@ -38,12 +38,14 @@ const ACTION_LABELS: Record<Action, string> = {
 
 const ACTION_PROMPTS: Record<Action, string> = {
   summarize: "Summarize the following text concisely:",
-  expand: "Expand the following text with more detail while keeping the same tone:",
+  expand:
+    "Expand the following text with more detail while keeping the same tone:",
   formal: "Rewrite the following text in a professional, formal tone:",
   casual: "Rewrite the following text in a friendly, casual tone:",
   translate_fr: "Translate the following text to French:",
   translate_en: "Translate the following text to English:",
-  fix_grammar: "Fix grammar and spelling in the following text, keeping the same style:",
+  fix_grammar:
+    "Fix grammar and spelling in the following text, keeping the same style:",
 };
 
 interface InlineWritingAssistantProps {
@@ -159,7 +161,9 @@ export function InlineWritingAssistant({
       {/* Suggestion popover */}
       {suggestion !== null && open && (
         <div className="rounded-lg border bg-card p-3 shadow-md space-y-2">
-          <p className="text-xs font-medium text-muted-foreground">AI Suggestion</p>
+          <p className="text-xs font-medium text-muted-foreground">
+            AI Suggestion
+          </p>
           <p className="text-sm whitespace-pre-wrap">{suggestion}</p>
           <div className="flex items-center gap-2">
             <Button size="sm" onClick={applySuggestion}>
@@ -179,7 +183,10 @@ export function InlineWritingAssistant({
             <Button
               size="sm"
               variant="ghost"
-              onClick={() => { setSuggestion(null); setOpen(false); }}
+              onClick={() => {
+                setSuggestion(null);
+                setOpen(false);
+              }}
               className="ml-auto"
             >
               Dismiss

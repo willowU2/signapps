@@ -25,9 +25,33 @@ const STATUS_CONFIG = {
 };
 
 const DEMO_PROJECTS: AssignedProject[] = [
-  { id: "p1", name: "Refonte Backend Auth", role: "Lead Dev", allocation: 80, progress: 62, status: "active", dueDate: "2026-05-01" },
-  { id: "p2", name: "Dashboard Analytics", role: "Reviewer", allocation: 20, progress: 35, status: "active", dueDate: "2026-06-15" },
-  { id: "p3", name: "Migration PostgreSQL", role: "Dev", allocation: 0, progress: 100, status: "completed", dueDate: "2026-02-28" },
+  {
+    id: "p1",
+    name: "Refonte Backend Auth",
+    role: "Lead Dev",
+    allocation: 80,
+    progress: 62,
+    status: "active",
+    dueDate: "2026-05-01",
+  },
+  {
+    id: "p2",
+    name: "Dashboard Analytics",
+    role: "Reviewer",
+    allocation: 20,
+    progress: 35,
+    status: "active",
+    dueDate: "2026-06-15",
+  },
+  {
+    id: "p3",
+    name: "Migration PostgreSQL",
+    role: "Dev",
+    allocation: 0,
+    progress: 100,
+    status: "completed",
+    dueDate: "2026-02-28",
+  },
 ];
 
 interface EmployeeProjectsProps {
@@ -35,7 +59,9 @@ interface EmployeeProjectsProps {
   employeeName?: string;
 }
 
-export function EmployeeProjects({ employeeName = "Alice Martin" }: EmployeeProjectsProps) {
+export function EmployeeProjects({
+  employeeName = "Alice Martin",
+}: EmployeeProjectsProps) {
   const [projects] = useState<AssignedProject[]>(DEMO_PROJECTS);
   const active = projects.filter((p) => p.status === "active");
 
@@ -53,19 +79,32 @@ export function EmployeeProjects({ employeeName = "Alice Martin" }: EmployeeProj
           <div key={p.id} className="space-y-1.5 rounded-lg border p-2.5">
             <div className="flex items-center justify-between gap-2">
               <span className="text-sm font-medium">{p.name}</span>
-              <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${STATUS_CONFIG[p.status].class}`}>
+              <span
+                className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${STATUS_CONFIG[p.status].class}`}
+              >
                 {STATUS_CONFIG[p.status].label}
               </span>
             </div>
             <div className="flex items-center gap-3 text-xs text-muted-foreground">
               <span>{p.role}</span>
-              <span className="flex items-center gap-1"><Clock className="size-3" />{p.allocation}% alloué</span>
-              <span>Échéance: {new Date(p.dueDate).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}</span>
+              <span className="flex items-center gap-1">
+                <Clock className="size-3" />
+                {p.allocation}% alloué
+              </span>
+              <span>
+                Échéance:{" "}
+                {new Date(p.dueDate).toLocaleDateString("fr-FR", {
+                  day: "numeric",
+                  month: "short",
+                })}
+              </span>
             </div>
             {p.status !== "completed" && (
               <div className="flex items-center gap-2">
                 <Progress value={p.progress} className="h-1.5 flex-1" />
-                <span className="text-[10px] text-muted-foreground">{p.progress}%</span>
+                <span className="text-[10px] text-muted-foreground">
+                  {p.progress}%
+                </span>
               </div>
             )}
           </div>

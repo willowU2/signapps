@@ -54,8 +54,8 @@ export default function VisitorBadgeIoT() {
   const deactivateBadge = (id: string) => {
     setBadges((prevBadges) =>
       prevBadges.map((badge) =>
-        badge.id === id ? { ...badge, isActive: false, expiryTime: 0 } : badge
-      )
+        badge.id === id ? { ...badge, isActive: false, expiryTime: 0 } : badge,
+      ),
     );
   };
 
@@ -76,16 +76,23 @@ export default function VisitorBadgeIoT() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {badges.map((badge) => (
-          <Card key={badge.id} className={`p-4 ${!badge.isActive ? "opacity-60" : ""}`}>
+          <Card
+            key={badge.id}
+            className={`p-4 ${!badge.isActive ? "opacity-60" : ""}`}
+          >
             <div className="flex items-start justify-between mb-3">
               <div className="flex items-start gap-2">
                 <User className="w-5 h-5 mt-1 text-muted-foreground" />
                 <div>
                   <h3 className="font-semibold text-lg">{badge.visitorName}</h3>
-                  <p className="text-xs text-muted-foreground">{badge.issueDate}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {badge.issueDate}
+                  </p>
                 </div>
               </div>
-              <Badge className={badge.isActive ? "bg-green-500" : "bg-gray-500"}>
+              <Badge
+                className={badge.isActive ? "bg-green-500" : "bg-gray-500"}
+              >
                 {badge.isActive ? "Active" : "Inactive"}
               </Badge>
             </div>
@@ -98,7 +105,10 @@ export default function VisitorBadgeIoT() {
                 </p>
                 <div className="space-y-1">
                   {badge.accessZones.map((zone, idx) => (
-                    <div key={idx} className="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded">
+                    <div
+                      key={idx}
+                      className="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded"
+                    >
                       • {zone}
                     </div>
                   ))}
@@ -108,7 +118,9 @@ export default function VisitorBadgeIoT() {
               <div className="pt-2 border-t">
                 <div className="flex justify-between items-center text-sm">
                   <span className="text-muted-foreground">Expires in</span>
-                  <span className={`font-semibold ${!badge.isActive ? "text-red-600" : ""}`}>
+                  <span
+                    className={`font-semibold ${!badge.isActive ? "text-red-600" : ""}`}
+                  >
                     {formatExpiryTime(badge.expiryTime)}
                   </span>
                 </div>

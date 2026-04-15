@@ -177,9 +177,15 @@ fn create_router(state: AppState) -> Router {
 
     // Status page routes (auth required — read endpoints)
     let status_routes = Router::new()
-        .route("/api/v1/status/services", get(handlers::status::list_services))
+        .route(
+            "/api/v1/status/services",
+            get(handlers::status::list_services),
+        )
         .route("/api/v1/status/history", get(handlers::status::get_history))
-        .route("/api/v1/status/incidents", get(handlers::status::list_incidents));
+        .route(
+            "/api/v1/status/incidents",
+            get(handlers::status::list_incidents),
+        );
 
     // Protected routes (auth required)
     let protected_routes = Router::new()

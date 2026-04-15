@@ -2,7 +2,14 @@
 
 import { useState } from "react";
 import type { ReactNode } from "react";
-import { CheckCircle, Circle, User, Users, BookOpen, Calendar } from "lucide-react";
+import {
+  CheckCircle,
+  Circle,
+  User,
+  Users,
+  BookOpen,
+  Calendar,
+} from "lucide-react";
 
 interface MilestoneStep {
   id: string;
@@ -79,8 +86,8 @@ export function OnboardingWorkflow() {
   const handleToggleStep = (stepId: string) => {
     setSteps(
       steps.map((s) =>
-        s.id === stepId ? { ...s, completed: !s.completed } : s
-      )
+        s.id === stepId ? { ...s, completed: !s.completed } : s,
+      ),
     );
   };
 
@@ -98,8 +105,12 @@ export function OnboardingWorkflow() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-foreground">Onboarding Workflow</h2>
-          <p className="text-muted-foreground">Employee onboarding with milestone tracking</p>
+          <h2 className="text-2xl font-bold text-foreground">
+            Onboarding Workflow
+          </h2>
+          <p className="text-muted-foreground">
+            Employee onboarding with milestone tracking
+          </p>
         </div>
       </div>
 
@@ -167,7 +178,9 @@ export function OnboardingWorkflow() {
       <div className="border rounded-lg overflow-hidden bg-card">
         <div className="bg-muted border-b p-4 flex items-center gap-2">
           <Users className="w-5 h-5 text-muted-foreground" />
-          <h3 className="font-semibold text-foreground">Mentoring Assignment</h3>
+          <h3 className="font-semibold text-foreground">
+            Mentoring Assignment
+          </h3>
         </div>
 
         <div className="p-4 space-y-4">
@@ -204,7 +217,9 @@ export function OnboardingWorkflow() {
         <div className="rounded-lg border p-4">
           <div className="flex items-center gap-2 mb-2">
             <Calendar className="w-4 h-4 text-blue-600" />
-            <p className="text-sm font-medium text-muted-foreground">J1 Milestone</p>
+            <p className="text-sm font-medium text-muted-foreground">
+              J1 Milestone
+            </p>
           </div>
           <p className="text-sm text-muted-foreground font-medium">
             {steps[0]?.completed ? "✓ Completed" : "In progress"}
@@ -214,7 +229,9 @@ export function OnboardingWorkflow() {
         <div className="rounded-lg border p-4">
           <div className="flex items-center gap-2 mb-2">
             <Calendar className="w-4 h-4 text-orange-600" />
-            <p className="text-sm font-medium text-muted-foreground">J7 Milestone</p>
+            <p className="text-sm font-medium text-muted-foreground">
+              J7 Milestone
+            </p>
           </div>
           <p className="text-sm text-muted-foreground font-medium">
             {steps[1]?.completed ? "✓ Completed" : "In progress"}
@@ -224,7 +241,9 @@ export function OnboardingWorkflow() {
         <div className="rounded-lg border p-4">
           <div className="flex items-center gap-2 mb-2">
             <Calendar className="w-4 h-4 text-green-600" />
-            <p className="text-sm font-medium text-muted-foreground">J30 Milestone</p>
+            <p className="text-sm font-medium text-muted-foreground">
+              J30 Milestone
+            </p>
           </div>
           <p className="text-sm text-muted-foreground font-medium">
             {steps[2]?.completed ? "✓ Completed" : "Scheduled"}

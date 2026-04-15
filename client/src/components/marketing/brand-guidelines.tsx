@@ -24,7 +24,11 @@ interface GuidelineItem {
 
 const COLORS: ColorItem[] = [
   { name: "Primary Blue", hex: "#0066CC", usage: "Primary CTA, headers" },
-  { name: "Secondary Green", hex: "#00AA66", usage: "Success states, positive actions" },
+  {
+    name: "Secondary Green",
+    hex: "#00AA66",
+    usage: "Success states, positive actions",
+  },
   { name: "Accent Orange", hex: "#FF9900", usage: "Warnings, highlights" },
   { name: "Dark Gray", hex: "#333333", usage: "Body text, dark backgrounds" },
   { name: "Light Gray", hex: "#F5F5F5", usage: "Backgrounds, disabled states" },
@@ -88,9 +92,9 @@ const DO_DONTS: GuidelineItem[] = [
 ];
 
 export function BrandGuidelines() {
-  const [activeTab, setActiveTab] = useState<"colors" | "typography" | "tone" | "guidelines">(
-    "colors"
-  );
+  const [activeTab, setActiveTab] = useState<
+    "colors" | "typography" | "tone" | "guidelines"
+  >("colors");
 
   const dos = DO_DONTS.filter((item) => item.category === "do");
   const donts = DO_DONTS.filter((item) => item.category === "dont");
@@ -100,8 +104,12 @@ export function BrandGuidelines() {
       <div className="flex items-center gap-3">
         <Palette className="w-6 h-6 text-blue-600" />
         <div>
-          <h2 className="text-2xl font-bold text-foreground">Brand Guidelines</h2>
-          <p className="text-muted-foreground">Visual identity and communication standards</p>
+          <h2 className="text-2xl font-bold text-foreground">
+            Brand Guidelines
+          </h2>
+          <p className="text-muted-foreground">
+            Visual identity and communication standards
+          </p>
         </div>
       </div>
 
@@ -164,9 +172,15 @@ export function BrandGuidelines() {
                     style={{ backgroundColor: color.hex }}
                   />
                   <div>
-                    <p className="font-semibold text-foreground">{color.name}</p>
-                    <p className="font-mono text-sm text-muted-foreground">{color.hex}</p>
-                    <p className="text-xs text-muted-foreground mt-2">{color.usage}</p>
+                    <p className="font-semibold text-foreground">
+                      {color.name}
+                    </p>
+                    <p className="font-mono text-sm text-muted-foreground">
+                      {color.hex}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      {color.usage}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -184,11 +198,17 @@ export function BrandGuidelines() {
                 {typeface.name}
               </h3>
               <div className="mb-4">
-                <p className="text-sm text-muted-foreground font-medium mb-2">Family</p>
-                <p className="font-mono text-sm text-foreground">{typeface.family}</p>
+                <p className="text-sm text-muted-foreground font-medium mb-2">
+                  Family
+                </p>
+                <p className="font-mono text-sm text-foreground">
+                  {typeface.family}
+                </p>
               </div>
               <div className="mb-4">
-                <p className="text-sm text-muted-foreground font-medium mb-2">Available Weights</p>
+                <p className="text-sm text-muted-foreground font-medium mb-2">
+                  Available Weights
+                </p>
                 <div className="flex flex-wrap gap-3">
                   {typeface.weights.map((weight) => (
                     <div key={weight} className="bg-muted rounded p-3">
@@ -209,7 +229,9 @@ export function BrandGuidelines() {
                 </div>
               </div>
               <div>
-                <p className="text-sm text-muted-foreground font-medium">Usage</p>
+                <p className="text-sm text-muted-foreground font-medium">
+                  Usage
+                </p>
                 <p className="text-foreground">{typeface.usage}</p>
               </div>
             </div>
@@ -286,14 +308,18 @@ export function BrandGuidelines() {
             </h3>
             <div className="space-y-4">
               <div className="border-l-4 border-green-400 pl-4">
-                <p className="text-sm text-muted-foreground font-medium mb-1">Good</p>
+                <p className="text-sm text-muted-foreground font-medium mb-1">
+                  Good
+                </p>
                 <p className="text-foreground">
                   "Your account has been created successfully. You can now start
                   using SignApps."
                 </p>
               </div>
               <div className="border-l-4 border-red-400 pl-4">
-                <p className="text-sm text-muted-foreground font-medium mb-1">Avoid</p>
+                <p className="text-sm text-muted-foreground font-medium mb-1">
+                  Avoid
+                </p>
                 <p className="text-foreground">
                   "ERROR: Account initialization process completed with positive
                   status code 200."

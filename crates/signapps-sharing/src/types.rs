@@ -197,8 +197,7 @@ impl std::str::FromStr for Role {
 ///
 /// Use the constructor helpers ([`Action::read`], [`Action::write`], …) for
 /// standard actions; custom actions can be built via [`Action::new`].
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
-#[derive(utoipa::ToSchema)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize, utoipa::ToSchema)]
 #[schema(value_type = String, example = "read")]
 pub struct Action(String);
 

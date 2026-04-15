@@ -20,7 +20,10 @@ export default function MailLoading() {
         </div>
         <div className="flex-1 flex flex-col gap-2 p-3">
           {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} className="flex items-start gap-3 p-3 rounded-lg border border-border/40">
+            <div
+              key={i}
+              className="flex items-start gap-3 p-3 rounded-lg border border-border/40"
+            >
               <Skeleton className="h-8 w-8 rounded-full shrink-0" />
               <div className="flex-1 space-y-1.5">
                 <Skeleton className="h-3.5 w-1/3" />

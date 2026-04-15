@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tag, Loader2, CheckCircle2, X } from 'lucide-react';
-import { toast } from 'sonner';
-import { aiApi } from '@/lib/api';
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tag, Loader2, CheckCircle2, X } from "lucide-react";
+import { toast } from "sonner";
+import { aiApi } from "@/lib/api";
 
 interface SuggestedTag {
   name: string;
@@ -18,7 +18,10 @@ interface SmartTaggerProps {
   onTagsAccepted?: (tags: string[]) => void;
 }
 
-export function SmartTagger({ fileName = 'document.pdf', onTagsAccepted }: SmartTaggerProps) {
+export function SmartTagger({
+  fileName = "document.pdf",
+  onTagsAccepted,
+}: SmartTaggerProps) {
   const [suggestedTags, setSuggestedTags] = useState<SuggestedTag[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [hasGenerated, setHasGenerated] = useState(false);
@@ -38,16 +41,16 @@ Return JSON format: { tags: [{ name: string, confidence: number }] }`;
           parsed.tags.map((t: any) => ({
             name: t.name,
             confidence: Math.min(100, Math.max(0, t.confidence || 75)),
-            accepted: false
-          }))
+            accepted: false,
+          })),
         );
         setHasGenerated(true);
-        toast.success('Tags générés');
+        toast.success("Tags générés");
       } catch {
-        toast.error('Format des tags invalide');
+        toast.error("Format des tags invalide");
       }
     } catch (error) {
-      toast.error('Impossible de générer les tags');
+      toast.error("Impossible de générer les tags");
     } finally {
       setIsLoading(false);
     }
@@ -56,20 +59,20 @@ Return JSON format: { tags: [{ name: string, confidence: number }] }`;
   const toggleTag = (index: number) => {
     setSuggestedTags((prev) =>
       prev.map((tag, i) =>
-        i === index ? { ...tag, accepted: !tag.accepted } : tag
-      )
+        i === index ? { ...tag, accepted: !tag.accepted } : tag,
+      ),
     );
   };
 
   const acceptAll = () => {
     setSuggestedTags((prev) => prev.map((tag) => ({ ...tag, accepted: true })));
-    toast.success('All tags accepted');
+    toast.success("All tags accepted");
   };
 
   const handleConfirm = () => {
     const accepted = suggestedTags.filter((t) => t.accepted).map((t) => t.name);
     if (accepted.length === 0) {
-      toast.error('Please accept at least one tag');
+      toast.error("Please accept at least one tag");
       return;
     }
     onTagsAccepted?.(accepted);
@@ -93,14 +96,18 @@ Return JSON format: { tags: [{ name: string, confidence: number }] }`;
           </div>
 
           {!hasGenerated ? (
-            <Button onClick={generateTags} disabled={isLoading} className="w-full">
+            <Button
+              onClick={generateTags}
+              disabled={isLoading}
+              className="w-full"
+            >
               {isLoading ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                   Analyzing...
                 </>
               ) : (
-                'Generate Tags'
+                "Generate Tags"
               )}
             </Button>
           ) : (
@@ -119,7 +126,9 @@ Return JSON format: { tags: [{ name: string, confidence: number }] }`;
                     />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-2">
-                        <span className="text-sm font-medium text-foreground">{tag.name}</span>
+                        <span className="text-sm font-medium text-foreground">
+                          {tag.name}
+                        </span>
                         <span className="text-xs text-slate-600 whitespace-nowrap">
                           {tag.confidence}%
                         </span>
@@ -148,7 +157,11 @@ Return JSON format: { tags: [{ name: string, confidence: number }] }`;
               </div>
 
               <div className="flex gap-2 pt-2">
-                <Button onClick={acceptAll} variant="outline" className="flex-1">
+                <Button
+                  onClick={acceptAll}
+                  variant="outline"
+                  className="flex-1"
+                >
                   Accept All
                 </Button>
                 <Button onClick={handleConfirm} className="flex-1">

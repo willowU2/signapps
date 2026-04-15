@@ -15,7 +15,9 @@ export default function MeditationGuide() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [timeElapsed, setTimeElapsed] = useState(0);
   const [selectedSound, setSelectedSound] = useState("rain");
-  const [breathPhase, setBreathPhase] = useState<"inhale" | "exhale" | "hold">("inhale");
+  const [breathPhase, setBreathPhase] = useState<"inhale" | "exhale" | "hold">(
+    "inhale",
+  );
 
   const durations = [5, 10, 15];
   const ambientSounds: AmbientSound[] = [
@@ -54,7 +56,8 @@ export default function MeditationGuide() {
   };
 
   const progress = (timeElapsed / (duration * 60)) * 100;
-  const breathScale = breathPhase === "inhale" ? 1.3 : breathPhase === "exhale" ? 0.7 : 1;
+  const breathScale =
+    breathPhase === "inhale" ? 1.3 : breathPhase === "exhale" ? 0.7 : 1;
 
   return (
     <div className="space-y-6 p-4">
@@ -63,7 +66,9 @@ export default function MeditationGuide() {
       {/* Session Controls */}
       <div className="bg-gradient-to-br from-purple-50 to-pink-50 p-6 rounded-lg border border-purple-200">
         <div className="text-center mb-6">
-          <h3 className="text-sm text-muted-foreground mb-2">Session Duration</h3>
+          <h3 className="text-sm text-muted-foreground mb-2">
+            Session Duration
+          </h3>
           <div className="flex justify-center gap-2">
             {durations.map((d) => (
               <button
@@ -99,7 +104,11 @@ export default function MeditationGuide() {
           <Button
             size="lg"
             onClick={() => setIsPlaying(!isPlaying)}
-            className={isPlaying ? "bg-orange-500 hover:bg-orange-600" : "bg-purple-600 hover:bg-purple-700"}
+            className={
+              isPlaying
+                ? "bg-orange-500 hover:bg-orange-600"
+                : "bg-purple-600 hover:bg-purple-700"
+            }
           >
             {isPlaying ? (
               <>
@@ -129,7 +138,9 @@ export default function MeditationGuide() {
             />
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="text-center">
-                <p className="text-sm font-medium text-muted-foreground capitalize">{breathPhase}</p>
+                <p className="text-sm font-medium text-muted-foreground capitalize">
+                  {breathPhase}
+                </p>
               </div>
             </div>
           </div>

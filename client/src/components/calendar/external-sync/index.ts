@@ -4,8 +4,8 @@
  * Components for connecting and syncing with external calendar providers.
  */
 
-export { ProviderConnector } from './provider-connector';
-export { SyncConfigPanel } from './sync-config-panel';
+export { ProviderConnector } from "./provider-connector";
+export { SyncConfigPanel } from "./sync-config-panel";
 
 // Re-export types for convenience
 export type {
@@ -16,7 +16,7 @@ export type {
   SyncDirection,
   ConflictResolution,
   SyncStatus,
-} from '@/lib/calendar/external-sync/types';
+} from "@/lib/calendar/external-sync/types";
 
 export {
   PROVIDER_LABELS,
@@ -24,4 +24,4 @@ export {
   SYNC_DIRECTION_LABELS,
   SYNC_STATUS_LABELS,
   CONFLICT_RESOLUTION_LABELS,
-} from '@/lib/calendar/external-sync/types';
+} from "@/lib/calendar/external-sync/types";

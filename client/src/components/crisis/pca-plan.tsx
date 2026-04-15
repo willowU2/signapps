@@ -30,9 +30,27 @@ const SAMPLE_SCENARIOS: Scenario[] = [
     rpo: "15 minutes",
     status: "active",
     procedures: [
-      { id: "p1", step: 1, action: "Activate incident response team", owner: "CTO", estDuration: "5 min" },
-      { id: "p2", step: 2, action: "Trigger failover to secondary DC", owner: "Ops Manager", estDuration: "10 min" },
-      { id: "p3", step: 3, action: "Verify data integrity", owner: "DBA", estDuration: "20 min" },
+      {
+        id: "p1",
+        step: 1,
+        action: "Activate incident response team",
+        owner: "CTO",
+        estDuration: "5 min",
+      },
+      {
+        id: "p2",
+        step: 2,
+        action: "Trigger failover to secondary DC",
+        owner: "Ops Manager",
+        estDuration: "10 min",
+      },
+      {
+        id: "p3",
+        step: 3,
+        action: "Verify data integrity",
+        owner: "DBA",
+        estDuration: "20 min",
+      },
     ],
   },
   {
@@ -43,8 +61,20 @@ const SAMPLE_SCENARIOS: Scenario[] = [
     rpo: "2 hours",
     status: "active",
     procedures: [
-      { id: "p4", step: 1, action: "Isolate infected systems", owner: "Security Lead", estDuration: "10 min" },
-      { id: "p5", step: 2, action: "Restore from clean backup", owner: "DBA", estDuration: "2 hours" },
+      {
+        id: "p4",
+        step: 1,
+        action: "Isolate infected systems",
+        owner: "Security Lead",
+        estDuration: "10 min",
+      },
+      {
+        id: "p5",
+        step: 2,
+        action: "Restore from clean backup",
+        owner: "DBA",
+        estDuration: "2 hours",
+      },
     ],
   },
   {
@@ -55,7 +85,13 @@ const SAMPLE_SCENARIOS: Scenario[] = [
     rpo: "5 minutes",
     status: "draft",
     procedures: [
-      { id: "p6", step: 1, action: "Stop write operations", owner: "DBA", estDuration: "2 min" },
+      {
+        id: "p6",
+        step: 1,
+        action: "Stop write operations",
+        owner: "DBA",
+        estDuration: "2 min",
+      },
     ],
   },
 ];
@@ -88,7 +124,9 @@ function getStatusColor(status: string) {
 
 export function PcaPlan() {
   const [scenarios] = useState<Scenario[]>(SAMPLE_SCENARIOS);
-  const [expandedScenarios, setExpandedScenarios] = useState<Set<string>>(new Set(["s1"]));
+  const [expandedScenarios, setExpandedScenarios] = useState<Set<string>>(
+    new Set(["s1"]),
+  );
 
   const toggleScenario = (scenarioId: string) => {
     const newExpanded = new Set(expandedScenarios);
@@ -103,8 +141,12 @@ export function PcaPlan() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-foreground">Disaster Recovery Plan</h2>
-        <p className="text-muted-foreground">Manage crisis scenarios and recovery procedures</p>
+        <h2 className="text-2xl font-bold text-foreground">
+          Disaster Recovery Plan
+        </h2>
+        <p className="text-muted-foreground">
+          Manage crisis scenarios and recovery procedures
+        </p>
       </div>
 
       <div className="space-y-3">
@@ -126,11 +168,15 @@ export function PcaPlan() {
                   <AlertTriangle className="w-5 h-5 text-red-600" />
                 )}
                 <div className="text-left">
-                  <h3 className="font-semibold text-foreground">{scenario.name}</h3>
+                  <h3 className="font-semibold text-foreground">
+                    {scenario.name}
+                  </h3>
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <span className={`text-xs font-semibold px-2 py-1 rounded border ${getRiskColor(scenario.riskLevel)}`}>
+                <span
+                  className={`text-xs font-semibold px-2 py-1 rounded border ${getRiskColor(scenario.riskLevel)}`}
+                >
                   {scenario.riskLevel}
                 </span>
                 <span className={`text-sm ${getStatusColor(scenario.status)}`}>
@@ -143,25 +189,40 @@ export function PcaPlan() {
               <div className="p-4 space-y-4 bg-muted">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <p className="text-xs text-muted-foreground font-semibold">RTO (Recovery Time Objective)</p>
-                    <p className="text-lg font-bold text-blue-600">{scenario.rto}</p>
+                    <p className="text-xs text-muted-foreground font-semibold">
+                      RTO (Recovery Time Objective)
+                    </p>
+                    <p className="text-lg font-bold text-blue-600">
+                      {scenario.rto}
+                    </p>
                   </div>
                   <div>
-                    <p className="text-xs text-muted-foreground font-semibold">RPO (Recovery Point Objective)</p>
-                    <p className="text-lg font-bold text-green-600">{scenario.rpo}</p>
+                    <p className="text-xs text-muted-foreground font-semibold">
+                      RPO (Recovery Point Objective)
+                    </p>
+                    <p className="text-lg font-bold text-green-600">
+                      {scenario.rpo}
+                    </p>
                   </div>
                 </div>
 
                 <div className="border-t pt-4">
-                  <h4 className="font-semibold text-foreground mb-3">Recovery Procedures</h4>
+                  <h4 className="font-semibold text-foreground mb-3">
+                    Recovery Procedures
+                  </h4>
                   <div className="space-y-2">
                     {scenario.procedures.map((proc) => (
-                      <div key={proc.id} className="flex items-start gap-3 p-2 bg-background rounded border">
+                      <div
+                        key={proc.id}
+                        className="flex items-start gap-3 p-2 bg-background rounded border"
+                      >
                         <span className="flex items-center justify-center w-6 h-6 bg-blue-100 text-blue-700 rounded-full text-xs font-bold">
                           {proc.step}
                         </span>
                         <div className="flex-1">
-                          <p className="font-medium text-foreground">{proc.action}</p>
+                          <p className="font-medium text-foreground">
+                            {proc.action}
+                          </p>
                           <div className="flex gap-4 text-xs text-muted-foreground">
                             <span>Owner: {proc.owner}</span>
                             <span>~{proc.estDuration}</span>

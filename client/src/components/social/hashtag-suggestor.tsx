@@ -50,18 +50,24 @@ export function HashtagSuggestor({
     }
     setLoading(true);
     try {
-      const res = await fetch(`${getServiceUrl(ServiceName.SOCIAL)}/social/ai/hashtags`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: postContent }),
-      });
+      const res = await fetch(
+        `${getServiceUrl(ServiceName.SOCIAL)}/social/ai/hashtags`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ content: postContent }),
+        },
+      );
       if (!res.ok) throw new Error("Analysis failed");
       const data = await res.json();
       setResults(data.hashtags ?? []);
     } catch {
       // Fallback: derive hashtags from content words
       const words = postContent.match(/\b[a-zA-Z]{4,}\b/g) ?? [];
-      const unique = [...new Set(words.map((w) => w.toLowerCase()))].slice(0, 8);
+      const unique = [...new Set(words.map((w) => w.toLowerCase()))].slice(
+        0,
+        8,
+      );
       const fallback: HashtagResult[] = [
         ...unique.map((w, i) => ({
           tag: w,
@@ -139,7 +145,11 @@ export function HashtagSuggestor({
                 const count = results.filter((r) => r.category === cat).length;
                 const Icon = CATEGORY_ICONS[cat];
                 return (
-                  <TabsTrigger key={cat} value={cat} className="flex-1 text-xs capitalize gap-1">
+                  <TabsTrigger
+                    key={cat}
+                    value={cat}
+                    className="flex-1 text-xs capitalize gap-1"
+                  >
                     <Icon className="w-3 h-3" />
                     {cat} ({count})
                   </TabsTrigger>
@@ -171,7 +181,9 @@ export function HashtagSuggestor({
                             <Plus className="w-3 h-3" />
                           )}
                           #{r.tag}
-                          <span className={`text-xs ${isSelected ? "text-primary-foreground/70" : SCORE_COLOR(r.score)}`}>
+                          <span
+                            className={`text-xs ${isSelected ? "text-primary-foreground/70" : SCORE_COLOR(r.score)}`}
+                          >
                             {r.score}
                           </span>
                         </button>

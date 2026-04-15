@@ -1,13 +1,13 @@
-'use client';
+"use client";
 
-import { useEffect, useState, useCallback, useRef } from 'react';
-import { AlignJustify } from 'lucide-react';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
-import { cn } from '@/lib/utils';
-import { createPortal } from 'react-dom';
+import { useEffect, useState, useCallback, useRef } from "react";
+import { AlignJustify } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
+import { createPortal } from "react-dom";
 
-const STORAGE_KEY = 'signapps-reading-guide';
+const STORAGE_KEY = "signapps-reading-guide";
 
 export function ReadingGuideToggle() {
   const [enabled, setEnabled] = useState(false);
@@ -16,7 +16,7 @@ export function ReadingGuideToggle() {
 
   useEffect(() => {
     setMounted(true);
-    const stored = localStorage.getItem(STORAGE_KEY) === 'true';
+    const stored = localStorage.getItem(STORAGE_KEY) === "true";
     setEnabled(stored);
   }, []);
 
@@ -26,10 +26,10 @@ export function ReadingGuideToggle() {
 
   useEffect(() => {
     if (enabled) {
-      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener("mousemove", handleMouseMove);
     }
     return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener("mousemove", handleMouseMove);
     };
   }, [enabled, handleMouseMove]);
 
@@ -46,12 +46,16 @@ export function ReadingGuideToggle() {
         <div className="flex flex-col gap-1.5">
           <div className="flex items-center gap-2">
             <AlignJustify className="h-4 w-4 text-muted-foreground" />
-            <Label htmlFor="reading-guide-toggle" className="font-medium cursor-pointer">
+            <Label
+              htmlFor="reading-guide-toggle"
+              className="font-medium cursor-pointer"
+            >
               Focus Mask (Guide de Lecture)
             </Label>
           </div>
           <p className="text-xs text-muted-foreground ml-6">
-            Assombrit l'écran pour garder le focus sur un seul paragraphe de texte à la fois.
+            Assombrit l'écran pour garder le focus sur un seul paragraphe de
+            texte à la fois.
           </p>
         </div>
         <Switch
@@ -62,7 +66,7 @@ export function ReadingGuideToggle() {
         />
       </div>
 
-      {enabled && mounted && typeof window !== 'undefined'
+      {enabled && mounted && typeof window !== "undefined"
         ? createPortal(
             <div
               className="fixed inset-0 pointer-events-none z-[9999]"
@@ -80,7 +84,7 @@ export function ReadingGuideToggle() {
                 `,
               }}
             />,
-            document.body
+            document.body,
           )
         : null}
     </>

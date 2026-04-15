@@ -1,29 +1,24 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from "@/components/ui/dropdown-menu";
 import {
   Plus,
   Star,
@@ -32,9 +27,9 @@ import {
   Edit2,
   Folder,
   FileIcon,
-} from 'lucide-react';
-import { favoritesApi } from '@/lib/api';
-import { toast } from 'sonner';
+} from "lucide-react";
+import { favoritesApi } from "@/lib/api";
+import { toast } from "sonner";
 
 interface FavoriteItem {
   id: string;
@@ -65,15 +60,15 @@ export function FavoritesBar({ maxFavorites = 4 }: FavoritesBarProps) {
   const [loading, setLoading] = useState(true);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editName, setEditName] = useState('');
-  const [editColor, setEditColor] = useState('');
+  const [editName, setEditName] = useState("");
+  const [editColor, setEditColor] = useState("");
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
 
   // Fetch favorites on mount
   useEffect(() => {
     fetchFavorites();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchFavorites = async () => {
@@ -83,7 +78,7 @@ export function FavoritesBar({ maxFavorites = 4 }: FavoritesBarProps) {
       const items = response.data?.favorites || [];
       setFavorites(items.slice(0, maxFavorites));
     } catch {
-      toast.error('Impossible de charger les favoris');
+      toast.error("Impossible de charger les favoris");
     } finally {
       setLoading(false);
     }
@@ -93,14 +88,14 @@ export function FavoritesBar({ maxFavorites = 4 }: FavoritesBarProps) {
     if (favorite.is_folder) {
       // Navigate to folder in storage
       router.push(
-        `/storage?tab=files&bucket=${favorite.bucket}&path=${encodeURIComponent(favorite.key)}`
+        `/storage?tab=files&bucket=${favorite.bucket}&path=${encodeURIComponent(favorite.key)}`,
       );
     } else {
       // Navigate to bucket with file selected
       router.push(
         `/storage?tab=files&bucket=${favorite.bucket}&path=${encodeURIComponent(
-          favorite.key.substring(0, favorite.key.lastIndexOf('/'))
-        )}`
+          favorite.key.substring(0, favorite.key.lastIndexOf("/")),
+        )}`,
       );
     }
   };
@@ -109,9 +104,9 @@ export function FavoritesBar({ maxFavorites = 4 }: FavoritesBarProps) {
     try {
       await favoritesApi.remove(id);
       setFavorites((prev) => prev.filter((f) => f.id !== id));
-      toast.success('Favori supprime');
+      toast.success("Favori supprime");
     } catch {
-      toast.error('Impossible de supprimer le favori');
+      toast.error("Impossible de supprimer le favori");
     }
   };
 
@@ -129,13 +124,13 @@ export function FavoritesBar({ maxFavorites = 4 }: FavoritesBarProps) {
                 display_name: editName,
                 color: editColor,
               }
-            : f
-        )
+            : f,
+        ),
       );
       setEditingId(null);
-      toast.success('Favori mis a jour');
+      toast.success("Favori mis a jour");
     } catch {
-      toast.error('Impossible de mettre a jour le favori');
+      toast.error("Impossible de mettre a jour le favori");
     }
   };
 
@@ -171,9 +166,9 @@ export function FavoritesBar({ maxFavorites = 4 }: FavoritesBarProps) {
     try {
       const order = newFavorites.map((f) => f.id);
       await favoritesApi.reorder(order);
-      toast.success('Favoris reorganises');
+      toast.success("Favoris reorganises");
     } catch {
-      toast.error('Impossible de reorganiser les favoris');
+      toast.error("Impossible de reorganiser les favoris");
       // Restore original order on error
       fetchFavorites();
     }
@@ -183,14 +178,14 @@ export function FavoritesBar({ maxFavorites = 4 }: FavoritesBarProps) {
   };
 
   const colors = [
-    '#ef4444', // red
-    '#f97316', // orange
-    '#eab308', // yellow
-    '#22c55e', // green
-    '#06b6d4', // cyan
-    '#3b82f6', // blue
-    '#8b5cf6', // purple
-    '#ec4899', // pink
+    "#ef4444", // red
+    "#f97316", // orange
+    "#eab308", // yellow
+    "#22c55e", // green
+    "#06b6d4", // cyan
+    "#3b82f6", // blue
+    "#8b5cf6", // purple
+    "#ec4899", // pink
   ];
 
   return (
@@ -235,12 +230,12 @@ export function FavoritesBar({ maxFavorites = 4 }: FavoritesBarProps) {
                 onDragEnd={handleDragEnd}
                 className={`
                   relative group p-2 rounded-lg border transition-all cursor-move
-                  ${draggedId === favorite.id ? 'opacity-50 bg-muted' : ''}
-                  ${dragOverId === favorite.id && draggedId !== favorite.id ? 'bg-muted border-primary' : 'hover:bg-muted'}
+                  ${draggedId === favorite.id ? "opacity-50 bg-muted" : ""}
+                  ${dragOverId === favorite.id && draggedId !== favorite.id ? "bg-muted border-primary" : "hover:bg-muted"}
                 `}
                 style={{
                   borderLeftColor: favorite.color,
-                  borderLeftWidth: favorite.color ? '3px' : undefined,
+                  borderLeftWidth: favorite.color ? "3px" : undefined,
                 }}
               >
                 {/* Icon */}
@@ -277,7 +272,7 @@ export function FavoritesBar({ maxFavorites = 4 }: FavoritesBarProps) {
                       onClick={() => {
                         setEditingId(favorite.id);
                         setEditName(favorite.display_name || favorite.filename);
-                        setEditColor(favorite.color || '');
+                        setEditColor(favorite.color || "");
                       }}
                     >
                       <Edit2 className="mr-2 h-4 w-4" />
@@ -335,8 +330,8 @@ export function FavoritesBar({ maxFavorites = 4 }: FavoritesBarProps) {
                       key={color}
                       className={`w-8 h-8 rounded-lg border-2 transition-all ${
                         editColor === color
-                          ? 'border-gray-800'
-                          : 'border-transparent'
+                          ? "border-gray-800"
+                          : "border-transparent"
                       }`}
                       style={{ backgroundColor: color }}
                       onClick={() => setEditColor(color)}
@@ -350,9 +345,7 @@ export function FavoritesBar({ maxFavorites = 4 }: FavoritesBarProps) {
                 Annuler
               </Button>
               <Button
-                onClick={() =>
-                  editingId && handleUpdateFavorite(editingId)
-                }
+                onClick={() => editingId && handleUpdateFavorite(editingId)}
               >
                 Enregistrer
               </Button>
@@ -369,14 +362,12 @@ export function FavoritesBar({ maxFavorites = 4 }: FavoritesBarProps) {
           </DialogHeader>
           <div className="py-4 text-sm text-muted-foreground">
             <p>
-              Naviguez vers un fichier ou dossier dans l'onglet "Fichiers",
-              puis utilisez le menu contextuel pour l'ajouter aux favoris.
+              Naviguez vers un fichier ou dossier dans l'onglet "Fichiers", puis
+              utilisez le menu contextuel pour l'ajouter aux favoris.
             </p>
           </div>
           <DialogFooter>
-            <Button onClick={() => setAddDialogOpen(false)}>
-              Fermer
-            </Button>
+            <Button onClick={() => setAddDialogOpen(false)}>Fermer</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

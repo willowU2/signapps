@@ -66,33 +66,73 @@ interface ShapeDef {
 const SHAPES: ShapeDef[] = [
   // Basic
   {
-    id: "rect", name: "Rectangle", icon: Square, category: "Basic",
-    createFn: (fm) => new fm.Rect({ left: 100, top: 100, width: 200, height: 150, fill: "#4f46e5", rx: 8, ry: 8 }),
+    id: "rect",
+    name: "Rectangle",
+    icon: Square,
+    category: "Basic",
+    createFn: (fm) =>
+      new fm.Rect({
+        left: 100,
+        top: 100,
+        width: 200,
+        height: 150,
+        fill: "#4f46e5",
+        rx: 8,
+        ry: 8,
+      }),
   },
   {
-    id: "circle", name: "Circle", icon: Circle, category: "Basic",
-    createFn: (fm) => new fm.Circle({ left: 100, top: 100, radius: 80, fill: "#059669" }),
+    id: "circle",
+    name: "Circle",
+    icon: Circle,
+    category: "Basic",
+    createFn: (fm) =>
+      new fm.Circle({ left: 100, top: 100, radius: 80, fill: "#059669" }),
   },
   {
-    id: "triangle", name: "Triangle", icon: Triangle, category: "Basic",
-    createFn: (fm) => new fm.Triangle({ left: 100, top: 100, width: 160, height: 140, fill: "#d97706" }),
+    id: "triangle",
+    name: "Triangle",
+    icon: Triangle,
+    category: "Basic",
+    createFn: (fm) =>
+      new fm.Triangle({
+        left: 100,
+        top: 100,
+        width: 160,
+        height: 140,
+        fill: "#d97706",
+      }),
   },
   {
-    id: "star", name: "Star", icon: Star, category: "Basic",
+    id: "star",
+    name: "Star",
+    icon: Star,
+    category: "Basic",
     createFn: (fm) => {
       const pts = starPoints(5, 80, 40);
       return new fm.Polygon(pts, { left: 100, top: 100, fill: "#e11d48" });
     },
   },
   {
-    id: "diamond", name: "Diamond", icon: Diamond, category: "Basic",
+    id: "diamond",
+    name: "Diamond",
+    icon: Diamond,
+    category: "Basic",
     createFn: (fm) => {
-      const pts = [{ x: 80, y: 0 }, { x: 160, y: 100 }, { x: 80, y: 200 }, { x: 0, y: 100 }];
+      const pts = [
+        { x: 80, y: 0 },
+        { x: 160, y: 100 },
+        { x: 80, y: 200 },
+        { x: 0, y: 100 },
+      ];
       return new fm.Polygon(pts, { left: 100, top: 100, fill: "#7c3aed" });
     },
   },
   {
-    id: "hexagon", name: "Hexagon", icon: Hexagon, category: "Basic",
+    id: "hexagon",
+    name: "Hexagon",
+    icon: Hexagon,
+    category: "Basic",
     createFn: (fm) => {
       const pts = regularPolygonPoints(6, 80);
       return new fm.Polygon(pts, { left: 100, top: 100, fill: "#0891b2" });
@@ -100,39 +140,91 @@ const SHAPES: ShapeDef[] = [
   },
   // Lines
   {
-    id: "line", name: "Line", icon: Minus, category: "Lines",
-    createFn: (fm) => new fm.Line([100, 100, 400, 100], { stroke: "#000000", strokeWidth: 3 }),
+    id: "line",
+    name: "Line",
+    icon: Minus,
+    category: "Lines",
+    createFn: (fm) =>
+      new fm.Line([100, 100, 400, 100], { stroke: "#000000", strokeWidth: 3 }),
   },
   {
-    id: "arrow-line", name: "Arrow", icon: MoveRight, category: "Lines",
-    createFn: (fm) => new fm.Line([100, 100, 400, 100], { stroke: "#000000", strokeWidth: 3 }),
+    id: "arrow-line",
+    name: "Arrow",
+    icon: MoveRight,
+    category: "Lines",
+    createFn: (fm) =>
+      new fm.Line([100, 100, 400, 100], { stroke: "#000000", strokeWidth: 3 }),
   },
   // Arrows
   {
-    id: "arrow-right", name: "Arrow Right", icon: ArrowRight, category: "Arrows",
+    id: "arrow-right",
+    name: "Arrow Right",
+    icon: ArrowRight,
+    category: "Arrows",
     createFn: (fm) => {
-      const pts = [{ x: 0, y: 30 }, { x: 100, y: 30 }, { x: 100, y: 0 }, { x: 150, y: 50 }, { x: 100, y: 100 }, { x: 100, y: 70 }, { x: 0, y: 70 }];
+      const pts = [
+        { x: 0, y: 30 },
+        { x: 100, y: 30 },
+        { x: 100, y: 0 },
+        { x: 150, y: 50 },
+        { x: 100, y: 100 },
+        { x: 100, y: 70 },
+        { x: 0, y: 70 },
+      ];
       return new fm.Polygon(pts, { left: 100, top: 100, fill: "#4f46e5" });
     },
   },
   {
-    id: "arrow-left", name: "Arrow Left", icon: ArrowLeft, category: "Arrows",
+    id: "arrow-left",
+    name: "Arrow Left",
+    icon: ArrowLeft,
+    category: "Arrows",
     createFn: (fm) => {
-      const pts = [{ x: 150, y: 30 }, { x: 50, y: 30 }, { x: 50, y: 0 }, { x: 0, y: 50 }, { x: 50, y: 100 }, { x: 50, y: 70 }, { x: 150, y: 70 }];
+      const pts = [
+        { x: 150, y: 30 },
+        { x: 50, y: 30 },
+        { x: 50, y: 0 },
+        { x: 0, y: 50 },
+        { x: 50, y: 100 },
+        { x: 50, y: 70 },
+        { x: 150, y: 70 },
+      ];
       return new fm.Polygon(pts, { left: 100, top: 100, fill: "#059669" });
     },
   },
   {
-    id: "arrow-up", name: "Arrow Up", icon: ArrowUp, category: "Arrows",
+    id: "arrow-up",
+    name: "Arrow Up",
+    icon: ArrowUp,
+    category: "Arrows",
     createFn: (fm) => {
-      const pts = [{ x: 30, y: 150 }, { x: 30, y: 50 }, { x: 0, y: 50 }, { x: 50, y: 0 }, { x: 100, y: 50 }, { x: 70, y: 50 }, { x: 70, y: 150 }];
+      const pts = [
+        { x: 30, y: 150 },
+        { x: 30, y: 50 },
+        { x: 0, y: 50 },
+        { x: 50, y: 0 },
+        { x: 100, y: 50 },
+        { x: 70, y: 50 },
+        { x: 70, y: 150 },
+      ];
       return new fm.Polygon(pts, { left: 100, top: 100, fill: "#d97706" });
     },
   },
   {
-    id: "arrow-down", name: "Arrow Down", icon: ArrowDown, category: "Arrows",
+    id: "arrow-down",
+    name: "Arrow Down",
+    icon: ArrowDown,
+    category: "Arrows",
     createFn: (fm) => {
-      const pts = [{ x: 30, y: 0 }, { x: 30, y: 100 }, { x: 0, y: 100 }, { x: 50, y: 150 }, { x: 100, y: 100 }, { x: 70, y: 100 }, { x: 70, y: 0 }];
+      const pts = [
+        { x: 30, y: 0 },
+        { x: 30, y: 100 },
+        { x: 0, y: 100 },
+        { x: 50, y: 150 },
+        { x: 100, y: 100 },
+        { x: 70, y: 100 },
+        { x: 70, y: 0 },
+      ];
       return new fm.Polygon(pts, { left: 100, top: 100, fill: "#e11d48" });
     },
   },
@@ -164,7 +256,9 @@ const ICON_LIST: { name: string; icon: LucideIcon }[] = [
   { name: "Plus", icon: Plus },
 ];
 
-export default function DesignShapesLibrary({ fabricCanvasRef }: DesignShapesLibraryProps) {
+export default function DesignShapesLibrary({
+  fabricCanvasRef,
+}: DesignShapesLibraryProps) {
   const { addObject, pushUndo } = useDesignStore();
   const [search, setSearch] = useState("");
   const [tab, setTab] = useState<"shapes" | "icons">("shapes");
@@ -229,7 +323,9 @@ export default function DesignShapesLibrary({ fabricCanvasRef }: DesignShapesLib
     ? SHAPES.filter((s) => s.name.toLowerCase().includes(search.toLowerCase()))
     : SHAPES;
   const filteredIcons = search
-    ? ICON_LIST.filter((i) => i.name.toLowerCase().includes(search.toLowerCase()))
+    ? ICON_LIST.filter((i) =>
+        i.name.toLowerCase().includes(search.toLowerCase()),
+      )
     : ICON_LIST;
 
   return (
@@ -251,7 +347,9 @@ export default function DesignShapesLibrary({ fabricCanvasRef }: DesignShapesLib
           onClick={() => setTab("shapes")}
           className={cn(
             "flex-1 text-xs font-medium py-1.5 rounded-md transition-all",
-            tab === "shapes" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/80"
+            tab === "shapes"
+              ? "bg-primary text-primary-foreground"
+              : "bg-muted text-muted-foreground hover:bg-muted/80",
           )}
         >
           Shapes
@@ -260,7 +358,9 @@ export default function DesignShapesLibrary({ fabricCanvasRef }: DesignShapesLib
           onClick={() => setTab("icons")}
           className={cn(
             "flex-1 text-xs font-medium py-1.5 rounded-md transition-all",
-            tab === "icons" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/80"
+            tab === "icons"
+              ? "bg-primary text-primary-foreground"
+              : "bg-muted text-muted-foreground hover:bg-muted/80",
           )}
         >
           Icons
@@ -274,7 +374,9 @@ export default function DesignShapesLibrary({ fabricCanvasRef }: DesignShapesLib
             if (shapes.length === 0) return null;
             return (
               <div key={cat} className="space-y-1.5">
-                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">{cat}</p>
+                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                  {cat}
+                </p>
                 <div className="grid grid-cols-3 gap-1.5">
                   {shapes.map((shapeDef) => {
                     const Icon = shapeDef.icon;
@@ -286,7 +388,9 @@ export default function DesignShapesLibrary({ fabricCanvasRef }: DesignShapesLib
                         title={shapeDef.name}
                       >
                         <Icon className="h-5 w-5" />
-                        <span className="text-[10px] truncate w-full text-center">{shapeDef.name}</span>
+                        <span className="text-[10px] truncate w-full text-center">
+                          {shapeDef.name}
+                        </span>
                       </button>
                     );
                   })}
@@ -305,7 +409,9 @@ export default function DesignShapesLibrary({ fabricCanvasRef }: DesignShapesLib
               title={name}
             >
               <Icon className="h-4 w-4" />
-              <span className="text-[9px] truncate w-full text-center">{name}</span>
+              <span className="text-[9px] truncate w-full text-center">
+                {name}
+              </span>
             </button>
           ))}
         </div>
@@ -320,7 +426,10 @@ function starPoints(points: number, outerR: number, innerR: number) {
   for (let i = 0; i < 2 * points; i++) {
     const r = i % 2 === 0 ? outerR : innerR;
     const angle = i * step - Math.PI / 2;
-    result.push({ x: outerR + r * Math.cos(angle), y: outerR + r * Math.sin(angle) });
+    result.push({
+      x: outerR + r * Math.cos(angle),
+      y: outerR + r * Math.sin(angle),
+    });
   }
   return result;
 }
@@ -329,7 +438,10 @@ function regularPolygonPoints(sides: number, radius: number) {
   const result = [];
   for (let i = 0; i < sides; i++) {
     const angle = (2 * Math.PI * i) / sides - Math.PI / 2;
-    result.push({ x: radius + radius * Math.cos(angle), y: radius + radius * Math.sin(angle) });
+    result.push({
+      x: radius + radius * Math.cos(angle),
+      y: radius + radius * Math.sin(angle),
+    });
   }
   return result;
 }

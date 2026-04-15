@@ -19,21 +19,71 @@ interface DesignStockPhotosProps {
 
 // Curated placeholder images using picsum.photos (free, no API key needed)
 const PLACEHOLDER_IMAGES = [
-  { id: "1", url: "https://picsum.photos/seed/design1/400/300", author: "Picsum" },
-  { id: "2", url: "https://picsum.photos/seed/design2/400/300", author: "Picsum" },
-  { id: "3", url: "https://picsum.photos/seed/design3/400/300", author: "Picsum" },
-  { id: "4", url: "https://picsum.photos/seed/nature1/400/300", author: "Picsum" },
-  { id: "5", url: "https://picsum.photos/seed/nature2/400/300", author: "Picsum" },
-  { id: "6", url: "https://picsum.photos/seed/city1/400/300", author: "Picsum" },
-  { id: "7", url: "https://picsum.photos/seed/city2/400/300", author: "Picsum" },
-  { id: "8", url: "https://picsum.photos/seed/tech1/400/300", author: "Picsum" },
-  { id: "9", url: "https://picsum.photos/seed/food1/400/300", author: "Picsum" },
-  { id: "10", url: "https://picsum.photos/seed/abstract1/400/300", author: "Picsum" },
-  { id: "11", url: "https://picsum.photos/seed/abstract2/400/300", author: "Picsum" },
-  { id: "12", url: "https://picsum.photos/seed/people1/400/300", author: "Picsum" },
+  {
+    id: "1",
+    url: "https://picsum.photos/seed/design1/400/300",
+    author: "Picsum",
+  },
+  {
+    id: "2",
+    url: "https://picsum.photos/seed/design2/400/300",
+    author: "Picsum",
+  },
+  {
+    id: "3",
+    url: "https://picsum.photos/seed/design3/400/300",
+    author: "Picsum",
+  },
+  {
+    id: "4",
+    url: "https://picsum.photos/seed/nature1/400/300",
+    author: "Picsum",
+  },
+  {
+    id: "5",
+    url: "https://picsum.photos/seed/nature2/400/300",
+    author: "Picsum",
+  },
+  {
+    id: "6",
+    url: "https://picsum.photos/seed/city1/400/300",
+    author: "Picsum",
+  },
+  {
+    id: "7",
+    url: "https://picsum.photos/seed/city2/400/300",
+    author: "Picsum",
+  },
+  {
+    id: "8",
+    url: "https://picsum.photos/seed/tech1/400/300",
+    author: "Picsum",
+  },
+  {
+    id: "9",
+    url: "https://picsum.photos/seed/food1/400/300",
+    author: "Picsum",
+  },
+  {
+    id: "10",
+    url: "https://picsum.photos/seed/abstract1/400/300",
+    author: "Picsum",
+  },
+  {
+    id: "11",
+    url: "https://picsum.photos/seed/abstract2/400/300",
+    author: "Picsum",
+  },
+  {
+    id: "12",
+    url: "https://picsum.photos/seed/people1/400/300",
+    author: "Picsum",
+  },
 ];
 
-export default function DesignStockPhotos({ fabricCanvasRef }: DesignStockPhotosProps) {
+export default function DesignStockPhotos({
+  fabricCanvasRef,
+}: DesignStockPhotosProps) {
   const { addObject, pushUndo, currentDesign } = useDesignStore();
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState<string | null>(null);
@@ -45,54 +95,65 @@ export default function DesignStockPhotos({ fabricCanvasRef }: DesignStockPhotos
       }))
     : PLACEHOLDER_IMAGES;
 
-  const handleInsertImage = useCallback(async (imageUrl: string) => {
-    const canvas = fabricCanvasRef.current;
-    if (!canvas) return;
+  const handleInsertImage = useCallback(
+    async (imageUrl: string) => {
+      const canvas = fabricCanvasRef.current;
+      if (!canvas) return;
 
-    setLoading(imageUrl);
-    pushUndo();
+      setLoading(imageUrl);
+      pushUndo();
 
-    try {
-      const fabricModule = await import("fabric");
+      try {
+        const fabricModule = await import("fabric");
 
-      // Create a proxy image to avoid CORS issues
-      const img = await fabricModule.FabricImage.fromURL(imageUrl, { crossOrigin: "anonymous" });
+        // Create a proxy image to avoid CORS issues
+        const img = await fabricModule.FabricImage.fromURL(imageUrl, {
+          crossOrigin: "anonymous",
+        });
 
-      // Scale to fit canvas
-      const maxW = (currentDesign?.format.width || 1080) * 0.6;
-      const maxH = (currentDesign?.format.height || 1080) * 0.6;
-      const scale = Math.min(maxW / (img.width || 1), maxH / (img.height || 1), 1);
+        // Scale to fit canvas
+        const maxW = (currentDesign?.format.width || 1080) * 0.6;
+        const maxH = (currentDesign?.format.height || 1080) * 0.6;
+        const scale = Math.min(
+          maxW / (img.width || 1),
+          maxH / (img.height || 1),
+          1,
+        );
 
-      img.set({
-        scaleX: scale,
-        scaleY: scale,
-        left: 50,
-        top: 50,
-      });
-      (img as FabricImageWithId).id = crypto.randomUUID();
-      canvas.add(img);
-      canvas.setActiveObject(img);
-      canvas.requestRenderAll();
+        img.set({
+          scaleX: scale,
+          scaleY: scale,
+          left: 50,
+          top: 50,
+        });
+        (img as FabricImageWithId).id = crypto.randomUUID();
+        canvas.add(img);
+        canvas.setActiveObject(img);
+        canvas.requestRenderAll();
 
-      const newObj: DesignObject = {
-        id: (img as FabricImageWithId).id!,
-        type: "image",
-        name: "Stock Photo",
-        fabricData: img.toObject(["id"]),
-        locked: false,
-        visible: true,
-      };
-      addObject(newObj);
-    } catch (err) {
-      console.error("Failed to insert stock photo:", err);
-    } finally {
-      setLoading(null);
-    }
-  }, [fabricCanvasRef, addObject, pushUndo, currentDesign]);
+        const newObj: DesignObject = {
+          id: (img as FabricImageWithId).id!,
+          type: "image",
+          name: "Stock Photo",
+          fabricData: img.toObject(["id"]),
+          locked: false,
+          visible: true,
+        };
+        addObject(newObj);
+      } catch (err) {
+        console.error("Failed to insert stock photo:", err);
+      } finally {
+        setLoading(null);
+      }
+    },
+    [fabricCanvasRef, addObject, pushUndo, currentDesign],
+  );
 
   return (
     <div className="space-y-3">
-      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Stock Photos</p>
+      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+        Stock Photos
+      </p>
 
       {/* Search */}
       <div className="relative">

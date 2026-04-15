@@ -22,7 +22,7 @@ export default function WorkloadForecast() {
   ];
 
   const load = period === "J30" ? "loadJ30" : "loadJ90";
-  const maxLoad = Math.max(...teamMembers.map(m => m[load]));
+  const maxLoad = Math.max(...teamMembers.map((m) => m[load]));
 
   return (
     <div className="space-y-4 p-4">
@@ -56,7 +56,9 @@ export default function WorkloadForecast() {
             <div key={member.id} className="space-y-1">
               <div className="flex justify-between items-center">
                 <span className="text-sm font-medium">{member.name}</span>
-                <span className={`text-sm font-bold ${isOverloaded ? "text-red-600" : "text-green-600"}`}>
+                <span
+                  className={`text-sm font-bold ${isOverloaded ? "text-red-600" : "text-green-600"}`}
+                >
                   {loadValue}%
                 </span>
               </div>

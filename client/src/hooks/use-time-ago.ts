@@ -1,17 +1,17 @@
-import { useCallback } from 'react';
+import { useCallback } from "react";
 
-const RTFR = new Intl.RelativeTimeFormat('fr-FR', { numeric: 'auto' });
+const RTFR = new Intl.RelativeTimeFormat("fr-FR", { numeric: "auto" });
 
-type Unit = 'second' | 'minute' | 'hour' | 'day' | 'week' | 'month' | 'year';
+type Unit = "second" | "minute" | "hour" | "day" | "week" | "month" | "year";
 
 const THRESHOLDS: [Unit, number][] = [
-  ['second', 60],
-  ['minute', 3600],
-  ['hour', 86400],
-  ['day', 604800],
-  ['week', 2592000],
-  ['month', 31536000],
-  ['year', Infinity],
+  ["second", 60],
+  ["minute", 3600],
+  ["hour", 86400],
+  ["day", 604800],
+  ["week", 2592000],
+  ["month", 31536000],
+  ["year", Infinity],
 ];
 
 const DIVISORS: Record<Unit, number> = {
@@ -29,25 +29,30 @@ const DIVISORS: Record<Unit, number> = {
  * "il y a 2 heures", "hier", "il y a 3 jours", etc.
  */
 export function useTimeAgo() {
-  const timeAgo = useCallback((date: Date | string | number | null | undefined): string => {
-    if (!date) return '—';
-    try {
-      const d = new Date(date);
-      const diffSeconds = Math.round((d.getTime() - Date.now()) / 1000);
-      const abs = Math.abs(diffSeconds);
+  const timeAgo = useCallback(
+    (date: Date | string | number | null | undefined): string => {
+      if (!date) return "—";
+      try {
+        const d = new Date(date);
+        const diffSeconds = Math.round((d.getTime() - Date.now()) / 1000);
+        const abs = Math.abs(diffSeconds);
 
-      for (const [unit, threshold] of THRESHOLDS) {
-        if (abs < threshold) {
-          const value = Math.round(diffSeconds / DIVISORS[unit]);
-          return RTFR.format(value, unit);
+        for (const [unit, threshold] of THRESHOLDS) {
+          if (abs < threshold) {
+            const value = Math.round(diffSeconds / DIVISORS[unit]);
+            return RTFR.format(value, unit);
+          }
         }
+        // Fallback: full date
+        return new Intl.DateTimeFormat("fr-FR", { dateStyle: "medium" }).format(
+          d,
+        );
+      } catch {
+        return "—";
       }
-      // Fallback: full date
-      return new Intl.DateTimeFormat('fr-FR', { dateStyle: 'medium' }).format(d);
-    } catch {
-      return '—';
-    }
-  }, []);
+    },
+    [],
+  );
 
   return { timeAgo };
 }

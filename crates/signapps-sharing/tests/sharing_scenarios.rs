@@ -105,15 +105,13 @@ mod helpers {
         let suffix = Uuid::new_v4();
 
         // Tenant — only required columns: id, name, slug
-        sqlx::query(
-            r#"INSERT INTO identity.tenants (id, name, slug) VALUES ($1, $2, $3)"#,
-        )
-        .bind(tenant_id)
-        .bind(format!("Test Tenant {suffix}"))
-        .bind(format!("test-{suffix}"))
-        .execute(pool)
-        .await
-        .expect("failed to insert tenant");
+        sqlx::query(r#"INSERT INTO identity.tenants (id, name, slug) VALUES ($1, $2, $3)"#)
+            .bind(tenant_id)
+            .bind(format!("Test Tenant {suffix}"))
+            .bind(format!("test-{suffix}"))
+            .execute(pool)
+            .await
+            .expect("failed to insert tenant");
 
         // Users: admin, alice, bob
         for (uid, uname) in [
@@ -134,26 +132,28 @@ mod helpers {
         }
 
         // Group (unique name per test run)
-        sqlx::query(
-            r#"INSERT INTO identity.groups (id, name) VALUES ($1, $2)"#,
-        )
-        .bind(group_id)
-        .bind(format!("editors-group-{suffix}"))
-        .execute(pool)
-        .await
-        .expect("failed to insert group");
+        sqlx::query(r#"INSERT INTO identity.groups (id, name) VALUES ($1, $2)"#)
+            .bind(group_id)
+            .bind(format!("editors-group-{suffix}"))
+            .execute(pool)
+            .await
+            .expect("failed to insert group");
 
         // Alice is a member of the group
-        sqlx::query(
-            r#"INSERT INTO identity.group_members (group_id, user_id) VALUES ($1, $2)"#,
-        )
-        .bind(group_id)
-        .bind(alice_id)
-        .execute(pool)
-        .await
-        .expect("failed to insert group member");
+        sqlx::query(r#"INSERT INTO identity.group_members (group_id, user_id) VALUES ($1, $2)"#)
+            .bind(group_id)
+            .bind(alice_id)
+            .execute(pool)
+            .await
+            .expect("failed to insert group member");
 
-        TestCtx { tenant_id, admin_id, alice_id, bob_id, group_id }
+        TestCtx {
+            tenant_id,
+            admin_id,
+            alice_id,
+            bob_id,
+            group_id,
+        }
     }
 
     /// Build a [`signapps_sharing::UserContext`] for a test user.
@@ -249,8 +249,7 @@ async fn scenario_02_superadmin_gets_manager_on_any_resource(pool: PgPool) {
     let ctx = helpers::setup_tenant(&pool).await;
     let engine = SharingEngine::new(pool.clone(), CacheService::default_config());
 
-    let superadmin_ctx =
-        helpers::make_ctx(ctx.admin_id, ctx.tenant_id, vec![], vec![], 3);
+    let superadmin_ctx = helpers::make_ctx(ctx.admin_id, ctx.tenant_id, vec![], vec![], 3);
 
     let ep = engine
         .effective_role(
@@ -262,7 +261,11 @@ async fn scenario_02_superadmin_gets_manager_on_any_resource(pool: PgPool) {
         .expect("effective_role should not fail for superadmin")
         .expect("superadmin must always receive a non-None permission");
 
-    assert_eq!(ep.role, Role::Manager, "superadmin must receive Manager role");
+    assert_eq!(
+        ep.role,
+        Role::Manager,
+        "superadmin must receive Manager role"
+    );
     assert!(ep.can_reshare, "superadmin must have can_reshare = true");
     assert!(
         ep.sources.iter().any(|s| s.axis == "superadmin"),
@@ -371,8 +374,7 @@ async fn scenario_05_group_grant_applies_to_member(pool: PgPool) {
     .await;
 
     // alice_ctx includes group_id so the group axis resolves the grant
-    let alice_ctx =
-        helpers::make_ctx(ctx.alice_id, ctx.tenant_id, vec![ctx.group_id], vec![], 0);
+    let alice_ctx = helpers::make_ctx(ctx.alice_id, ctx.tenant_id, vec![ctx.group_id], vec![], 0);
 
     let ep = engine
         .effective_role(&alice_ctx, ResourceRef::document(doc_id), None)
@@ -469,8 +471,7 @@ async fn scenario_07_deny_overrides_positive_grant_on_any_axis(pool: PgPool) {
     .await;
 
     // alice is in the group (has a positive group grant) but also has a deny
-    let alice_ctx =
-        helpers::make_ctx(ctx.alice_id, ctx.tenant_id, vec![ctx.group_id], vec![], 0);
+    let alice_ctx = helpers::make_ctx(ctx.alice_id, ctx.tenant_id, vec![ctx.group_id], vec![], 0);
 
     let result = engine
         .effective_role(&alice_ctx, ResourceRef::file(file_id), None)
@@ -545,10 +546,7 @@ fn scenario_08_most_permissive_wins_across_axes() {
         Role::Manager
     );
     // Cross-check: deny + editor → editor (positive grant on another axis wins)
-    assert_eq!(
-        Role::max_permissive(Role::Deny, Role::Editor),
-        Role::Editor
-    );
+    assert_eq!(Role::max_permissive(Role::Deny, Role::Editor), Role::Editor);
 }
 
 // ─── Scenario 09 — Everyone grant ────────────────────────────────────────────
@@ -734,9 +732,7 @@ fn scenario_13_expired_grant_is_not_applied() {
     };
 
     // Helper replicating the SQL filter: `expires_at IS NULL OR expires_at > NOW()`
-    let is_active = |g: &Grant| -> bool {
-        g.expires_at.map_or(true, |exp| exp > now)
-    };
+    let is_active = |g: &Grant| -> bool { g.expires_at.map_or(true, |exp| exp > now) };
 
     assert!(
         !is_active(&expired_grant),
@@ -796,7 +792,12 @@ fn scenario_14_capabilities_match_role() {
         role: Role::Viewer,
         can_reshare: false,
         // Capabilities seeded for Role::Viewer on "file" by migration 232.
-        capabilities: vec!["read".into(), "preview".into(), "download".into(), "list".into()],
+        capabilities: vec![
+            "read".into(),
+            "preview".into(),
+            "download".into(),
+            "list".into(),
+        ],
         sources: vec![PermissionSource {
             axis: "user".into(),
             grantee_name: Some("kate".into()),
@@ -833,8 +834,12 @@ fn scenario_14_capabilities_match_role() {
 
     // engine.check() accepts an Action and verifies it is in ep.capabilities.
     // Replicate that check inline:
-    let can_read = viewer_ep.capabilities.contains(&Action::read().as_str().to_string());
-    let can_write = viewer_ep.capabilities.contains(&Action::write().as_str().to_string());
+    let can_read = viewer_ep
+        .capabilities
+        .contains(&Action::read().as_str().to_string());
+    let can_write = viewer_ep
+        .capabilities
+        .contains(&Action::write().as_str().to_string());
     assert!(can_read, "viewer can read");
     assert!(!can_write, "viewer cannot write");
 

@@ -5,9 +5,9 @@
  */
 
 // Components
-export { TemplateGallery } from './template-gallery';
-export { TemplatePreview } from './template-preview';
-export { CreateTemplateDialog } from './create-template-dialog';
+export { TemplateGallery } from "./template-gallery";
+export { TemplatePreview } from "./template-preview";
+export { CreateTemplateDialog } from "./create-template-dialog";
 
 // Types
 export type {
@@ -25,13 +25,16 @@ export type {
   UpdateTemplateRequest,
   ApplyTemplateRequest,
   ApplyTemplateResponse,
-} from '@/lib/office/templates/types';
+} from "@/lib/office/templates/types";
 
 // Constants
-export { TEMPLATE_CATEGORIES, DOCUMENT_TYPE_LABELS } from '@/lib/office/templates/types';
+export {
+  TEMPLATE_CATEGORIES,
+  DOCUMENT_TYPE_LABELS,
+} from "@/lib/office/templates/types";
 
 // API
-export { templatesApi } from '@/lib/office/templates/api';
+export { templatesApi } from "@/lib/office/templates/api";
 
 // Store
-export { useTemplatesStore } from '@/stores/templates-store';
+export { useTemplatesStore } from "@/stores/templates-store";

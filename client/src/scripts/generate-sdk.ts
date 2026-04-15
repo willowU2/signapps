@@ -18,8 +18,8 @@
  * This is a documentation/reference script — not imported by the runtime app.
  */
 
-import fs from 'fs';
-import path from 'path';
+import fs from "fs";
+import path from "path";
 
 // ── Service registry ──────────────────────────────────────────────────────────
 
@@ -31,26 +31,26 @@ interface ServiceConfig {
 }
 
 const SERVICES: ServiceConfig[] = [
-  { name: 'identity',      port: 3001, specPath: '/api/v1/openapi.json' },
-  { name: 'containers',    port: 3002, specPath: '/api/v1/openapi.json' },
-  { name: 'proxy',         port: 3003, specPath: '/api/v1/openapi.json' },
-  { name: 'storage',       port: 3004, specPath: '/api/v1/openapi.json' },
-  { name: 'ai',            port: 3005, specPath: '/api/v1/openapi.json' },
-  { name: 'scheduler',     port: 3007, specPath: '/api/v1/openapi.json' },
-  { name: 'metrics',       port: 3008, specPath: '/api/v1/openapi.json' },
-  { name: 'notifications', port: 3009, specPath: '/api/v1/openapi.json' },
-  { name: 'mail',          port: 3012, specPath: '/api/v1/openapi.json' },
-  { name: 'calendar',      port: 3011, specPath: '/api/v1/openapi.json' },
-  { name: 'contacts',      port: 3021, specPath: '/api/v1/openapi.json' },
-  { name: 'crm',           port: 3020, specPath: '/api/v1/openapi.json' },
-  { name: 'drive',         port: 3014, specPath: '/api/v1/openapi.json' },
-  { name: 'docs',          port: 3015, specPath: '/api/v1/openapi.json' },
-  { name: 'meet',          port: 3017, specPath: '/api/v1/openapi.json' },
-  { name: 'office',        port: 3018, specPath: '/api/v1/openapi.json' },
-  { name: 'billing',       port: 3019, specPath: '/api/v1/openapi.json' },
-  { name: 'hr',            port: 3024, specPath: '/api/v1/openapi.json' },
-  { name: 'forms',         port: 3025, specPath: '/api/v1/openapi.json' },
-  { name: 'chat',          port: 3026, specPath: '/api/v1/openapi.json' },
+  { name: "identity", port: 3001, specPath: "/api/v1/openapi.json" },
+  { name: "containers", port: 3002, specPath: "/api/v1/openapi.json" },
+  { name: "proxy", port: 3003, specPath: "/api/v1/openapi.json" },
+  { name: "storage", port: 3004, specPath: "/api/v1/openapi.json" },
+  { name: "ai", port: 3005, specPath: "/api/v1/openapi.json" },
+  { name: "scheduler", port: 3007, specPath: "/api/v1/openapi.json" },
+  { name: "metrics", port: 3008, specPath: "/api/v1/openapi.json" },
+  { name: "notifications", port: 3009, specPath: "/api/v1/openapi.json" },
+  { name: "mail", port: 3012, specPath: "/api/v1/openapi.json" },
+  { name: "calendar", port: 3011, specPath: "/api/v1/openapi.json" },
+  { name: "contacts", port: 3021, specPath: "/api/v1/openapi.json" },
+  { name: "crm", port: 3020, specPath: "/api/v1/openapi.json" },
+  { name: "drive", port: 3014, specPath: "/api/v1/openapi.json" },
+  { name: "docs", port: 3015, specPath: "/api/v1/openapi.json" },
+  { name: "meet", port: 3017, specPath: "/api/v1/openapi.json" },
+  { name: "office", port: 3018, specPath: "/api/v1/openapi.json" },
+  { name: "billing", port: 3019, specPath: "/api/v1/openapi.json" },
+  { name: "hr", port: 3024, specPath: "/api/v1/openapi.json" },
+  { name: "forms", port: 3025, specPath: "/api/v1/openapi.json" },
+  { name: "chat", port: 3026, specPath: "/api/v1/openapi.json" },
 ];
 
 // ── OpenAPI types (minimal subset we use) ────────────────────────────────────
@@ -70,20 +70,23 @@ interface OpenAPIOperation {
   parameters?: OpenAPIParameter[];
   requestBody?: {
     content?: {
-      'application/json'?: { schema?: OpenAPISchema };
+      "application/json"?: { schema?: OpenAPISchema };
     };
   };
-  responses?: Record<string, {
-    description?: string;
-    content?: {
-      'application/json'?: { schema?: OpenAPISchema };
-    };
-  }>;
+  responses?: Record<
+    string,
+    {
+      description?: string;
+      content?: {
+        "application/json"?: { schema?: OpenAPISchema };
+      };
+    }
+  >;
 }
 
 interface OpenAPIParameter {
   name: string;
-  in: 'path' | 'query' | 'header' | 'cookie';
+  in: "path" | "query" | "header" | "cookie";
   required?: boolean;
   schema?: OpenAPISchema;
 }
@@ -99,29 +102,34 @@ interface OpenAPISchema {
 // ── Type mapping ──────────────────────────────────────────────────────────────
 
 function schemaToTs(schema: OpenAPISchema | undefined, indent = 0): string {
-  if (!schema) return 'unknown';
+  if (!schema) return "unknown";
   if (schema.$ref) {
-    const name = schema.$ref.split('/').pop() ?? 'unknown';
+    const name = schema.$ref.split("/").pop() ?? "unknown";
     return name;
   }
   switch (schema.type) {
-    case 'string':  return 'string';
-    case 'integer':
-    case 'number':  return 'number';
-    case 'boolean': return 'boolean';
-    case 'array':   return `${schemaToTs(schema.items, indent)}[]`;
-    case 'object': {
-      if (!schema.properties) return 'Record<string, unknown>';
-      const pad = '  '.repeat(indent + 1);
+    case "string":
+      return "string";
+    case "integer":
+    case "number":
+      return "number";
+    case "boolean":
+      return "boolean";
+    case "array":
+      return `${schemaToTs(schema.items, indent)}[]`;
+    case "object": {
+      if (!schema.properties) return "Record<string, unknown>";
+      const pad = "  ".repeat(indent + 1);
       const fields = Object.entries(schema.properties)
         .map(([k, v]) => {
           const optional = !(schema.required ?? []).includes(k);
-          return `${pad}${k}${optional ? '?' : ''}: ${schemaToTs(v, indent + 1)};`;
+          return `${pad}${k}${optional ? "?" : ""}: ${schemaToTs(v, indent + 1)};`;
         })
-        .join('\n');
-      return `{\n${fields}\n${'  '.repeat(indent)}}`;
+        .join("\n");
+      return `{\n${fields}\n${"  ".repeat(indent)}}`;
     }
-    default:        return 'unknown';
+    default:
+      return "unknown";
   }
 }
 
@@ -129,17 +137,17 @@ function schemaToTs(schema: OpenAPISchema | undefined, indent = 0): string {
 
 function generateFunctionName(method: string, urlPath: string): string {
   const parts = urlPath
-    .replace(/\{[^}]+\}/g, 'ById')
-    .split('/')
+    .replace(/\{[^}]+\}/g, "ById")
+    .split("/")
     .filter(Boolean)
-    .map(p => p.charAt(0).toUpperCase() + p.slice(1));
-  return `${method.toLowerCase()}${parts.join('')}`;
+    .map((p) => p.charAt(0).toUpperCase() + p.slice(1));
+  return `${method.toLowerCase()}${parts.join("")}`;
 }
 
 function generateClient(service: ServiceConfig, spec: OpenAPISpec): string {
   const lines: string[] = [];
   const title = spec.info?.title ?? service.name;
-  const version = spec.info?.version ?? '?';
+  const version = spec.info?.version ?? "?";
 
   lines.push(`// AUTO-GENERATED — DO NOT EDIT MANUALLY`);
   lines.push(`// Source: ${service.name} service (port ${service.port})`);
@@ -148,12 +156,16 @@ function generateClient(service: ServiceConfig, spec: OpenAPISpec): string {
   lines.push(``);
   lines.push(`import { getClient, ServiceName } from '../factory';`);
   lines.push(``);
-  lines.push(`const client = () => getClient(ServiceName.${service.name.toUpperCase().replace(/-/g, '_')});`);
+  lines.push(
+    `const client = () => getClient(ServiceName.${service.name.toUpperCase().replace(/-/g, "_")});`,
+  );
   lines.push(``);
 
   // Generate schema interfaces from components
   if (spec.components?.schemas) {
-    lines.push(`// ── Generated types ───────────────────────────────────────────────────────────`);
+    lines.push(
+      `// ── Generated types ───────────────────────────────────────────────────────────`,
+    );
     lines.push(``);
     for (const [name, schema] of Object.entries(spec.components.schemas)) {
       lines.push(`export interface ${name} ${schemaToTs(schema)}`);
@@ -161,60 +173,75 @@ function generateClient(service: ServiceConfig, spec: OpenAPISpec): string {
     }
   }
 
-  lines.push(`// ── API functions ─────────────────────────────────────────────────────────────`);
+  lines.push(
+    `// ── API functions ─────────────────────────────────────────────────────────────`,
+  );
   lines.push(``);
-  lines.push(`export const ${service.name.replace(/-/g, '_')}GeneratedApi = {`);
+  lines.push(`export const ${service.name.replace(/-/g, "_")}GeneratedApi = {`);
 
   const paths = spec.paths ?? {};
   for (const [urlPath, methods] of Object.entries(paths)) {
     for (const [httpMethod, operation] of Object.entries(methods)) {
-      if (!['get', 'post', 'put', 'patch', 'delete'].includes(httpMethod)) continue;
+      if (!["get", "post", "put", "patch", "delete"].includes(httpMethod))
+        continue;
 
-      const funcName = operation.operationId ?? generateFunctionName(httpMethod, urlPath);
-      const summary = operation.summary ?? operation.description ?? '';
+      const funcName =
+        operation.operationId ?? generateFunctionName(httpMethod, urlPath);
+      const summary = operation.summary ?? operation.description ?? "";
 
       // Path params
       const pathParams = (operation.parameters ?? [])
-        .filter(p => p.in === 'path')
-        .map(p => `${p.name}: ${schemaToTs(p.schema)}`);
+        .filter((p) => p.in === "path")
+        .map((p) => `${p.name}: ${schemaToTs(p.schema)}`);
 
       // Query params
       const queryParams = (operation.parameters ?? [])
-        .filter(p => p.in === 'query')
-        .map(p => `${p.name}${p.required ? '' : '?'}: ${schemaToTs(p.schema)}`);
+        .filter((p) => p.in === "query")
+        .map(
+          (p) => `${p.name}${p.required ? "" : "?"}: ${schemaToTs(p.schema)}`,
+        );
 
       // Body
-      const bodySchema = operation.requestBody?.content?.['application/json']?.schema;
+      const bodySchema =
+        operation.requestBody?.content?.["application/json"]?.schema;
       const bodyParam = bodySchema ? [`body: ${schemaToTs(bodySchema)}`] : [];
 
       // Response type
-      const okResponse = operation.responses?.['200'] ?? operation.responses?.['201'];
-      const responseSchema = okResponse?.content?.['application/json']?.schema;
-      const returnType = responseSchema ? schemaToTs(responseSchema) : 'unknown';
+      const okResponse =
+        operation.responses?.["200"] ?? operation.responses?.["201"];
+      const responseSchema = okResponse?.content?.["application/json"]?.schema;
+      const returnType = responseSchema
+        ? schemaToTs(responseSchema)
+        : "unknown";
 
       // Build function signature
       const allParams = [...pathParams, ...bodyParam];
       if (queryParams.length > 0) {
-        allParams.push(`params?: { ${queryParams.join('; ')} }`);
+        allParams.push(`params?: { ${queryParams.join("; ")} }`);
       }
 
       // Build URL with path interpolation
-      const urlWithParams = urlPath.replace(/\{([^}]+)\}/g, (_, name) => `\${${name}}`);
+      const urlWithParams = urlPath.replace(
+        /\{([^}]+)\}/g,
+        (_, name) => `\${${name}}`,
+      );
 
       lines.push(`  /** ${summary} */`);
 
-      if (httpMethod === 'get') {
+      if (httpMethod === "get") {
         const hasQueryParams = queryParams.length > 0;
         lines.push(
-          `  ${funcName}: (${allParams.join(', ')}) =>` +
-          ` client().get<${returnType}>(\`${urlWithParams}\`${hasQueryParams ? ', { params }' : ''}),`
+          `  ${funcName}: (${allParams.join(", ")}) =>` +
+            ` client().get<${returnType}>(\`${urlWithParams}\`${hasQueryParams ? ", { params }" : ""}),`,
         );
-      } else if (httpMethod === 'delete') {
-        lines.push(`  ${funcName}: (${allParams.join(', ')}) => client().delete(\`${urlWithParams}\`),`);
+      } else if (httpMethod === "delete") {
+        lines.push(
+          `  ${funcName}: (${allParams.join(", ")}) => client().delete(\`${urlWithParams}\`),`,
+        );
       } else {
         lines.push(
-          `  ${funcName}: (${allParams.join(', ')}) =>` +
-          ` client().${httpMethod}<${returnType}>(\`${urlWithParams}\`${bodyParam.length > 0 ? ', body' : ''}),`
+          `  ${funcName}: (${allParams.join(", ")}) =>` +
+            ` client().${httpMethod}<${returnType}>(\`${urlWithParams}\`${bodyParam.length > 0 ? ", body" : ""}),`,
         );
       }
     }
@@ -223,7 +250,7 @@ function generateClient(service: ServiceConfig, spec: OpenAPISpec): string {
   lines.push(`};`);
   lines.push(``);
 
-  return lines.join('\n');
+  return lines.join("\n");
 }
 
 // ── Fetch spec ────────────────────────────────────────────────────────────────
@@ -247,7 +274,7 @@ async function fetchSpec(service: ServiceConfig): Promise<OpenAPISpec | null> {
 // ── Main ──────────────────────────────────────────────────────────────────────
 
 async function main() {
-  const outDir = path.resolve(__dirname, '../lib/api/generated');
+  const outDir = path.resolve(__dirname, "../lib/api/generated");
   fs.mkdirSync(outDir, { recursive: true });
 
   console.log(`Generating SDK into ${outDir}\n`);
@@ -266,22 +293,24 @@ async function main() {
 
     const code = generateClient(service, spec);
     const outFile = path.join(outDir, `${service.name}.generated.ts`);
-    fs.writeFileSync(outFile, code, 'utf8');
+    fs.writeFileSync(outFile, code, "utf8");
     console.log(`OK → ${path.basename(outFile)}`);
     generated++;
   }
 
   // Write index barrel
-  const barrel = SERVICES
-    .map(s => `export * from './${s.name}.generated';`)
-    .join('\n') + '\n';
-  fs.writeFileSync(path.join(outDir, 'index.ts'), barrel, 'utf8');
+  const barrel =
+    SERVICES.map((s) => `export * from './${s.name}.generated';`).join("\n") +
+    "\n";
+  fs.writeFileSync(path.join(outDir, "index.ts"), barrel, "utf8");
 
-  console.log(`\nDone. ${generated} services generated, ${skipped} skipped (unreachable).`);
+  console.log(
+    `\nDone. ${generated} services generated, ${skipped} skipped (unreachable).`,
+  );
   console.log(`Index barrel written to generated/index.ts`);
 }
 
-main().catch(err => {
-  console.error('Fatal error:', err);
+main().catch((err) => {
+  console.error("Fatal error:", err);
   process.exit(1);
 });

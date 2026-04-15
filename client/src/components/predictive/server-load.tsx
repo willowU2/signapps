@@ -1,5 +1,5 @@
-import React from 'react';
-import { AlertTriangle, Server } from 'lucide-react';
+import React from "react";
+import { AlertTriangle, Server } from "lucide-react";
 
 interface ServerMetrics {
   id: string;
@@ -13,45 +13,47 @@ interface ServerMetrics {
 export const ServerLoad: React.FC = () => {
   const servers: ServerMetrics[] = [
     {
-      id: '1',
-      name: 'API Server 1',
+      id: "1",
+      name: "API Server 1",
       currentLoad: 72,
       predictedLoad: 94,
       scaleThreshold: 85,
-      region: 'US-East',
+      region: "US-East",
     },
     {
-      id: '2',
-      name: 'API Server 2',
+      id: "2",
+      name: "API Server 2",
       currentLoad: 45,
       predictedLoad: 58,
       scaleThreshold: 85,
-      region: 'US-West',
+      region: "US-West",
     },
     {
-      id: '3',
-      name: 'Database Server',
+      id: "3",
+      name: "Database Server",
       currentLoad: 68,
       predictedLoad: 76,
       scaleThreshold: 80,
-      region: 'US-Central',
+      region: "US-Central",
     },
     {
-      id: '4',
-      name: 'Cache Server',
+      id: "4",
+      name: "Cache Server",
       currentLoad: 52,
       predictedLoad: 63,
       scaleThreshold: 80,
-      region: 'US-Central',
+      region: "US-Central",
     },
   ];
 
-  const needsScaling = servers.filter((s) => s.predictedLoad >= s.scaleThreshold);
+  const needsScaling = servers.filter(
+    (s) => s.predictedLoad >= s.scaleThreshold,
+  );
 
   const getLoadColor = (load: number, threshold: number): string => {
-    if (load >= threshold) return 'bg-red-500';
-    if (load >= threshold * 0.75) return 'bg-yellow-500';
-    return 'bg-green-500';
+    if (load >= threshold) return "bg-red-500";
+    if (load >= threshold * 0.75) return "bg-yellow-500";
+    return "bg-green-500";
   };
 
   return (
@@ -65,8 +67,12 @@ export const ServerLoad: React.FC = () => {
         <div className="mb-4 p-3 bg-orange-50 border border-orange-200 rounded-lg flex items-start gap-2">
           <AlertTriangle className="w-4 h-4 text-orange-600 mt-0.5 flex-shrink-0" />
           <div>
-            <p className="text-sm font-semibold text-orange-900">Scale-Up Alert</p>
-            <p className="text-xs text-orange-700">{needsScaling.length} server(s) may need scaling</p>
+            <p className="text-sm font-semibold text-orange-900">
+              Scale-Up Alert
+            </p>
+            <p className="text-xs text-orange-700">
+              {needsScaling.length} server(s) may need scaling
+            </p>
           </div>
         </div>
       )}
@@ -78,12 +84,16 @@ export const ServerLoad: React.FC = () => {
           return (
             <div
               key={server.id}
-              className={`p-4 border rounded-lg ${needsAction ? 'border-orange-200 bg-orange-50' : 'border-border'}`}
+              className={`p-4 border rounded-lg ${needsAction ? "border-orange-200 bg-orange-50" : "border-border"}`}
             >
               <div className="flex justify-between items-start mb-3">
                 <div>
-                  <h3 className="font-semibold text-foreground">{server.name}</h3>
-                  <p className="text-xs text-muted-foreground">{server.region}</p>
+                  <h3 className="font-semibold text-foreground">
+                    {server.name}
+                  </h3>
+                  <p className="text-xs text-muted-foreground">
+                    {server.region}
+                  </p>
                 </div>
                 {needsAction && (
                   <span className="px-2 py-1 bg-orange-500 text-white text-xs font-bold rounded">
@@ -95,8 +105,12 @@ export const ServerLoad: React.FC = () => {
               <div className="space-y-3">
                 <div>
                   <div className="flex justify-between items-center mb-1">
-                    <p className="text-xs font-medium text-muted-foreground">Current Load</p>
-                    <p className="text-sm font-bold text-foreground">{server.currentLoad}%</p>
+                    <p className="text-xs font-medium text-muted-foreground">
+                      Current Load
+                    </p>
+                    <p className="text-sm font-bold text-foreground">
+                      {server.currentLoad}%
+                    </p>
                   </div>
                   <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
                     <div
@@ -108,8 +122,12 @@ export const ServerLoad: React.FC = () => {
 
                 <div>
                   <div className="flex justify-between items-center mb-1">
-                    <p className="text-xs font-medium text-muted-foreground">Predicted Load</p>
-                    <p className="text-sm font-bold text-foreground">{server.predictedLoad}%</p>
+                    <p className="text-xs font-medium text-muted-foreground">
+                      Predicted Load
+                    </p>
+                    <p className="text-sm font-bold text-foreground">
+                      {server.predictedLoad}%
+                    </p>
                   </div>
                   <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
                     <div
@@ -120,9 +138,13 @@ export const ServerLoad: React.FC = () => {
                 </div>
 
                 <div className="flex items-center justify-between text-xs">
-                  <span className="text-muted-foreground">Scale Threshold: {server.scaleThreshold}%</span>
-                  <span className={`font-semibold ${needsAction ? 'text-orange-600' : 'text-green-600'}`}>
-                    {needsAction ? 'Critical' : 'Healthy'}
+                  <span className="text-muted-foreground">
+                    Scale Threshold: {server.scaleThreshold}%
+                  </span>
+                  <span
+                    className={`font-semibold ${needsAction ? "text-orange-600" : "text-green-600"}`}
+                  >
+                    {needsAction ? "Critical" : "Healthy"}
                   </span>
                 </div>
               </div>

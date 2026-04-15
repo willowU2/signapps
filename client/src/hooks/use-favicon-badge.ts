@@ -4,7 +4,9 @@ import { useEffect } from "react";
 
 export function useFaviconBadge(count: number) {
   useEffect(() => {
-    const link = document.querySelector("link[rel~='icon']") as HTMLLinkElement | null;
+    const link = document.querySelector(
+      "link[rel~='icon']",
+    ) as HTMLLinkElement | null;
     if (!link) return;
 
     if (count <= 0) {
@@ -39,6 +41,9 @@ export function useFaviconBadge(count: number) {
     };
     img.src = "/favicon.ico";
 
-    return () => { link.href = "/favicon.ico"; document.title = cleanTitle; };
+    return () => {
+      link.href = "/favicon.ico";
+      document.title = cleanTitle;
+    };
   }, [count]);
 }

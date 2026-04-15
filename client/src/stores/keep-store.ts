@@ -1,8 +1,8 @@
 "use client";
 
-import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
-import { useShallow } from 'zustand/react/shallow';
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
+import { useShallow } from "zustand/react/shallow";
 
 export interface ChecklistItem {
   id: string;
@@ -32,21 +32,21 @@ export interface KeepLabel {
 
 // Google Keep dark mode colors
 export const NOTE_COLORS = [
-  { id: 'default', value: '#202124', name: 'Par d\u00e9faut' },
-  { id: 'coral', value: '#77172e', name: 'Corail' },
-  { id: 'peach', value: '#692b17', name: 'P\u00eache' },
-  { id: 'sand', value: '#7c4a03', name: 'Sable' },
-  { id: 'mint', value: '#264d3b', name: 'Menthe' },
-  { id: 'sage', value: '#0d625d', name: 'Sauge' },
-  { id: 'fog', value: '#256377', name: 'Brume' },
-  { id: 'storm', value: '#284255', name: 'Orage' },
-  { id: 'dusk', value: '#472e5b', name: 'Cr\u00e9puscule' },
-  { id: 'blossom', value: '#6c394f', name: 'Fleur' },
-  { id: 'clay', value: '#4b443a', name: 'Argile' },
-  { id: 'chalk', value: '#232427', name: 'Craie' },
+  { id: "default", value: "#202124", name: "Par d\u00e9faut" },
+  { id: "coral", value: "#77172e", name: "Corail" },
+  { id: "peach", value: "#692b17", name: "P\u00eache" },
+  { id: "sand", value: "#7c4a03", name: "Sable" },
+  { id: "mint", value: "#264d3b", name: "Menthe" },
+  { id: "sage", value: "#0d625d", name: "Sauge" },
+  { id: "fog", value: "#256377", name: "Brume" },
+  { id: "storm", value: "#284255", name: "Orage" },
+  { id: "dusk", value: "#472e5b", name: "Cr\u00e9puscule" },
+  { id: "blossom", value: "#6c394f", name: "Fleur" },
+  { id: "clay", value: "#4b443a", name: "Argile" },
+  { id: "chalk", value: "#232427", name: "Craie" },
 ] as const;
 
-type SidebarView = 'notes' | 'reminders' | 'archive' | 'trash';
+type SidebarView = "notes" | "reminders" | "archive" | "trash";
 
 interface KeepState {
   notes: KeepNote[];
@@ -92,11 +92,11 @@ interface KeepState {
 
 const defaultNotes: KeepNote[] = [
   {
-    id: '1',
-    title: 'Claude',
-    content: 'Projet IA assistant - Anthropic',
-    color: '#202124',
-    labels: ['ANTHROPIC'],
+    id: "1",
+    title: "Claude",
+    content: "Projet IA assistant - Anthropic",
+    color: "#202124",
+    labels: ["ANTHROPIC"],
     isPinned: true,
     isArchived: false,
     isTrashed: false,
@@ -106,30 +106,31 @@ const defaultNotes: KeepNote[] = [
     updatedAt: new Date().toISOString(),
   },
   {
-    id: '2',
-    title: 'Liste de courses',
-    content: '',
-    color: '#264d3b',
-    labels: ['PERSONNEL'],
+    id: "2",
+    title: "Liste de courses",
+    content: "",
+    color: "#264d3b",
+    labels: ["PERSONNEL"],
     isPinned: false,
     isArchived: false,
     isTrashed: false,
     hasChecklist: true,
     checklistItems: [
-      { id: 'c1', text: 'Acheter du lait', checked: false },
-      { id: 'c2', text: 'R\u00e9pondre aux emails', checked: true },
-      { id: 'c3', text: 'Pr\u00e9parer la r\u00e9union', checked: false },
-      { id: 'c4', text: 'Appeler le m\u00e9decin', checked: true },
+      { id: "c1", text: "Acheter du lait", checked: false },
+      { id: "c2", text: "R\u00e9pondre aux emails", checked: true },
+      { id: "c3", text: "Pr\u00e9parer la r\u00e9union", checked: false },
+      { id: "c4", text: "Appeler le m\u00e9decin", checked: true },
     ],
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   },
   {
-    id: '3',
-    title: 'Id\u00e9es de projet',
-    content: '1. Application de gestion de temps\n2. Plugin VSCode pour AI\n3. Dashboard analytics\n4. Automatisation CI/CD',
-    color: '#256377',
-    labels: ['TRAVAIL', 'ID\u00c9ES'],
+    id: "3",
+    title: "Id\u00e9es de projet",
+    content:
+      "1. Application de gestion de temps\n2. Plugin VSCode pour AI\n3. Dashboard analytics\n4. Automatisation CI/CD",
+    color: "#256377",
+    labels: ["TRAVAIL", "ID\u00c9ES"],
     isPinned: false,
     isArchived: false,
     isTrashed: false,
@@ -139,11 +140,12 @@ const defaultNotes: KeepNote[] = [
     updatedAt: new Date().toISOString(),
   },
   {
-    id: '4',
-    title: 'Recette g\u00e2teau chocolat',
-    content: 'Ingr\u00e9dients:\n- 200g de chocolat noir\n- 100g de beurre\n- 150g de sucre\n- 3 oeufs\n- 80g de farine\n\nPr\u00e9chauffer le four \u00e0 180\u00b0C...',
-    color: '#7c4a03',
-    labels: ['CUISINE'],
+    id: "4",
+    title: "Recette g\u00e2teau chocolat",
+    content:
+      "Ingr\u00e9dients:\n- 200g de chocolat noir\n- 100g de beurre\n- 150g de sucre\n- 3 oeufs\n- 80g de farine\n\nPr\u00e9chauffer le four \u00e0 180\u00b0C...",
+    color: "#7c4a03",
+    labels: ["CUISINE"],
     isPinned: false,
     isArchived: false,
     isTrashed: false,
@@ -153,10 +155,11 @@ const defaultNotes: KeepNote[] = [
     updatedAt: new Date().toISOString(),
   },
   {
-    id: '5',
-    title: '',
-    content: "N'oublie pas d'appeler le m\u00e9decin demain matin pour le rendez-vous.",
-    color: '#202124',
+    id: "5",
+    title: "",
+    content:
+      "N'oublie pas d'appeler le m\u00e9decin demain matin pour le rendez-vous.",
+    color: "#202124",
     labels: [],
     isPinned: false,
     isArchived: false,
@@ -167,19 +170,19 @@ const defaultNotes: KeepNote[] = [
     updatedAt: new Date().toISOString(),
   },
   {
-    id: '6',
-    title: 'R\u00e9union \u00e9quipe',
-    content: '',
-    color: '#472e5b',
-    labels: ['TRAVAIL'],
+    id: "6",
+    title: "R\u00e9union \u00e9quipe",
+    content: "",
+    color: "#472e5b",
+    labels: ["TRAVAIL"],
     isPinned: true,
     isArchived: false,
     isTrashed: false,
     hasChecklist: true,
     checklistItems: [
-      { id: 'r1', text: 'Pr\u00e9parer la pr\u00e9sentation', checked: true },
-      { id: 'r2', text: 'Envoyer l\'ordre du jour', checked: true },
-      { id: 'r3', text: 'R\u00e9server la salle', checked: false },
+      { id: "r1", text: "Pr\u00e9parer la pr\u00e9sentation", checked: true },
+      { id: "r2", text: "Envoyer l'ordre du jour", checked: true },
+      { id: "r3", text: "R\u00e9server la salle", checked: false },
     ],
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
@@ -187,11 +190,11 @@ const defaultNotes: KeepNote[] = [
 ];
 
 const defaultLabels: KeepLabel[] = [
-  { id: 'l1', name: 'ANTHROPIC' },
-  { id: 'l2', name: 'TRAVAIL' },
-  { id: 'l3', name: 'PERSONNEL' },
-  { id: 'l4', name: 'ID\u00c9ES' },
-  { id: 'l5', name: 'CUISINE' },
+  { id: "l1", name: "ANTHROPIC" },
+  { id: "l2", name: "TRAVAIL" },
+  { id: "l3", name: "PERSONNEL" },
+  { id: "l4", name: "ID\u00c9ES" },
+  { id: "l5", name: "CUISINE" },
 ];
 
 export const useKeepStore = create<KeepState>()(
@@ -199,9 +202,9 @@ export const useKeepStore = create<KeepState>()(
     (set, get) => ({
       notes: defaultNotes,
       labels: defaultLabels,
-      searchQuery: '',
+      searchQuery: "",
       isGridView: true,
-      activeSidebarView: 'notes',
+      activeSidebarView: "notes",
       sidebarExpanded: false,
       selectedLabelFilter: null,
 
@@ -210,9 +213,9 @@ export const useKeepStore = create<KeepState>()(
         const now = new Date().toISOString();
         const newNote: KeepNote = {
           id,
-          title: noteData.title || '',
-          content: noteData.content || '',
-          color: noteData.color || '#202124',
+          title: noteData.title || "",
+          content: noteData.content || "",
+          color: noteData.color || "#202124",
           labels: noteData.labels || [],
           isPinned: noteData.isPinned || false,
           isArchived: false,
@@ -233,7 +236,7 @@ export const useKeepStore = create<KeepState>()(
           notes: state.notes.map((note) =>
             note.id === id
               ? { ...note, ...updates, updatedAt: new Date().toISOString() }
-              : note
+              : note,
           ),
         }));
       },
@@ -248,8 +251,12 @@ export const useKeepStore = create<KeepState>()(
         set((state) => ({
           notes: state.notes.map((note) =>
             note.id === id
-              ? { ...note, isPinned: !note.isPinned, updatedAt: new Date().toISOString() }
-              : note
+              ? {
+                  ...note,
+                  isPinned: !note.isPinned,
+                  updatedAt: new Date().toISOString(),
+                }
+              : note,
           ),
         }));
       },
@@ -258,8 +265,13 @@ export const useKeepStore = create<KeepState>()(
         set((state) => ({
           notes: state.notes.map((note) =>
             note.id === id
-              ? { ...note, isArchived: true, isPinned: false, updatedAt: new Date().toISOString() }
-              : note
+              ? {
+                  ...note,
+                  isArchived: true,
+                  isPinned: false,
+                  updatedAt: new Date().toISOString(),
+                }
+              : note,
           ),
         }));
       },
@@ -268,8 +280,13 @@ export const useKeepStore = create<KeepState>()(
         set((state) => ({
           notes: state.notes.map((note) =>
             note.id === id
-              ? { ...note, isArchived: false, isTrashed: false, updatedAt: new Date().toISOString() }
-              : note
+              ? {
+                  ...note,
+                  isArchived: false,
+                  isTrashed: false,
+                  updatedAt: new Date().toISOString(),
+                }
+              : note,
           ),
         }));
       },
@@ -278,8 +295,14 @@ export const useKeepStore = create<KeepState>()(
         set((state) => ({
           notes: state.notes.map((note) =>
             note.id === id
-              ? { ...note, isTrashed: true, isArchived: false, isPinned: false, updatedAt: new Date().toISOString() }
-              : note
+              ? {
+                  ...note,
+                  isTrashed: true,
+                  isArchived: false,
+                  isPinned: false,
+                  updatedAt: new Date().toISOString(),
+                }
+              : note,
           ),
         }));
       },
@@ -301,7 +324,7 @@ export const useKeepStore = create<KeepState>()(
           notes: state.notes.map((note) =>
             note.id === id
               ? { ...note, color, updatedAt: new Date().toISOString() }
-              : note
+              : note,
           ),
         }));
       },
@@ -313,11 +336,13 @@ export const useKeepStore = create<KeepState>()(
               ? {
                   ...note,
                   checklistItems: note.checklistItems.map((item) =>
-                    item.id === itemId ? { ...item, checked: !item.checked } : item
+                    item.id === itemId
+                      ? { ...item, checked: !item.checked }
+                      : item,
                   ),
                   updatedAt: new Date().toISOString(),
                 }
-              : note
+              : note,
           ),
         }));
       },
@@ -329,11 +354,14 @@ export const useKeepStore = create<KeepState>()(
             note.id === noteId
               ? {
                   ...note,
-                  checklistItems: [...note.checklistItems, { id: itemId, text, checked: false }],
+                  checklistItems: [
+                    ...note.checklistItems,
+                    { id: itemId, text, checked: false },
+                  ],
                   hasChecklist: true,
                   updatedAt: new Date().toISOString(),
                 }
-              : note
+              : note,
           ),
         }));
       },
@@ -345,11 +373,11 @@ export const useKeepStore = create<KeepState>()(
               ? {
                   ...note,
                   checklistItems: note.checklistItems.map((item) =>
-                    item.id === itemId ? { ...item, text } : item
+                    item.id === itemId ? { ...item, text } : item,
                   ),
                   updatedAt: new Date().toISOString(),
                 }
-              : note
+              : note,
           ),
         }));
       },
@@ -358,7 +386,9 @@ export const useKeepStore = create<KeepState>()(
         set((state) => ({
           notes: state.notes.map((note) => {
             if (note.id !== noteId) return note;
-            const newItems = note.checklistItems.filter((item) => item.id !== itemId);
+            const newItems = note.checklistItems.filter(
+              (item) => item.id !== itemId,
+            );
             return {
               ...note,
               checklistItems: newItems,
@@ -383,12 +413,14 @@ export const useKeepStore = create<KeepState>()(
           const newName = name.toUpperCase();
           return {
             labels: state.labels.map((label) =>
-              label.id === id ? { ...label, name: newName } : label
+              label.id === id ? { ...label, name: newName } : label,
             ),
             notes: oldLabel
               ? state.notes.map((note) => ({
                   ...note,
-                  labels: note.labels.map((l) => (l === oldLabel.name ? newName : l)),
+                  labels: note.labels.map((l) =>
+                    l === oldLabel.name ? newName : l,
+                  ),
                 }))
               : state.notes,
           };
@@ -414,8 +446,12 @@ export const useKeepStore = create<KeepState>()(
         set((state) => ({
           notes: state.notes.map((note) =>
             note.id === noteId && !note.labels.includes(labelName)
-              ? { ...note, labels: [...note.labels, labelName], updatedAt: new Date().toISOString() }
-              : note
+              ? {
+                  ...note,
+                  labels: [...note.labels, labelName],
+                  updatedAt: new Date().toISOString(),
+                }
+              : note,
           ),
         }));
       },
@@ -424,8 +460,12 @@ export const useKeepStore = create<KeepState>()(
         set((state) => ({
           notes: state.notes.map((note) =>
             note.id === noteId
-              ? { ...note, labels: note.labels.filter((l) => l !== labelName), updatedAt: new Date().toISOString() }
-              : note
+              ? {
+                  ...note,
+                  labels: note.labels.filter((l) => l !== labelName),
+                  updatedAt: new Date().toISOString(),
+                }
+              : note,
           ),
         }));
       },
@@ -434,25 +474,30 @@ export const useKeepStore = create<KeepState>()(
       setGridView: (isGrid) => set({ isGridView: isGrid }),
       setActiveSidebarView: (view) => set({ activeSidebarView: view }),
       setSidebarExpanded: (expanded) => set({ sidebarExpanded: expanded }),
-      setSelectedLabelFilter: (labelId) => set({ selectedLabelFilter: labelId }),
+      setSelectedLabelFilter: (labelId) =>
+        set({ selectedLabelFilter: labelId }),
     }),
     {
-      name: 'keep-storage',
+      name: "keep-storage",
       partialize: (state) => ({
         notes: state.notes,
         labels: state.labels,
         isGridView: state.isGridView,
         sidebarExpanded: state.sidebarExpanded,
       }),
-    }
-  )
+    },
+  ),
 );
 
 // Selectors - memoization keys for stable references
-const activeNotesCache = new WeakMap<KeepState['notes'], Map<string, KeepNote[]>>();
+const activeNotesCache = new WeakMap<
+  KeepState["notes"],
+  Map<string, KeepNote[]>
+>();
 
 export const selectActiveNotes = (state: KeepState): KeepNote[] => {
-  const { notes, activeSidebarView, searchQuery, selectedLabelFilter, labels } = state;
+  const { notes, activeSidebarView, searchQuery, selectedLabelFilter, labels } =
+    state;
 
   // Create a cache key from the filter parameters
   const cacheKey = `${activeSidebarView}|${searchQuery}|${selectedLabelFilter}`;
@@ -471,10 +516,10 @@ export const selectActiveNotes = (state: KeepState): KeepNote[] => {
 
   // Filter by view
   switch (activeSidebarView) {
-    case 'archive':
+    case "archive":
       filtered = filtered.filter((n) => n.isArchived && !n.isTrashed);
       break;
-    case 'trash':
+    case "trash":
       filtered = filtered.filter((n) => n.isTrashed);
       break;
     default:
@@ -489,7 +534,9 @@ export const selectActiveNotes = (state: KeepState): KeepNote[] => {
         n.title.toLowerCase().includes(query) ||
         n.content.toLowerCase().includes(query) ||
         n.labels.some((l) => l.toLowerCase().includes(query)) ||
-        n.checklistItems.some((item) => item.text.toLowerCase().includes(query))
+        n.checklistItems.some((item) =>
+          item.text.toLowerCase().includes(query),
+        ),
     );
   }
 
@@ -521,7 +568,7 @@ export const useKeepUIState = () =>
       isGridView: state.isGridView,
       activeSidebarView: state.activeSidebarView,
       sidebarExpanded: state.sidebarExpanded,
-    }))
+    })),
   );
 
 export const useKeepUIActions = () =>
@@ -531,7 +578,7 @@ export const useKeepUIActions = () =>
       setGridView: state.setGridView,
       setActiveSidebarView: state.setActiveSidebarView,
       setSidebarExpanded: state.setSidebarExpanded,
-    }))
+    })),
   );
 
 export const useKeepNoteActions = () =>
@@ -546,7 +593,7 @@ export const useKeepNoteActions = () =>
       emptyTrash: state.emptyTrash,
       setNoteColor: state.setNoteColor,
       toggleChecklistItem: state.toggleChecklistItem,
-    }))
+    })),
   );
 
 export const useKeepLabels = () => useKeepStore((state) => state.labels);

@@ -1,14 +1,14 @@
-'use client';
+"use client";
 
-import { useEffect } from 'react';
-import { usePresenceStore, type UserPresence } from '@/stores/presence-store';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useEffect } from "react";
+import { usePresenceStore, type UserPresence } from "@/stores/presence-store";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { cn } from '@/lib/utils';
+} from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
 
 // ============================================================================
 // Types
@@ -18,7 +18,7 @@ export interface PresenceAvatarsProps {
   /** Maximum number of avatars to display before showing "+N" */
   maxVisible?: number;
   /** Avatar size variant */
-  size?: 'sm' | 'md';
+  size?: "sm" | "md";
   /** Extra CSS classes */
   className?: string;
 }
@@ -33,7 +33,7 @@ export interface PresenceAvatarsProps {
  */
 export function PresenceAvatars({
   maxVisible = 4,
-  size = 'sm',
+  size = "sm",
   className,
 }: PresenceAvatarsProps) {
   const users = usePresenceStore((s) => s.users);
@@ -57,11 +57,11 @@ export function PresenceAvatars({
   const visible = onlineUsers.slice(0, maxVisible);
   const overflow = onlineUsers.length - maxVisible;
 
-  const avatarCls = size === 'sm' ? 'h-7 w-7 text-[10px]' : 'h-8 w-8 text-xs';
+  const avatarCls = size === "sm" ? "h-7 w-7 text-[10px]" : "h-8 w-8 text-xs";
 
   return (
     <div
-      className={cn('flex items-center -space-x-2', className)}
+      className={cn("flex items-center -space-x-2", className)}
       aria-label={`${onlineUsers.length} utilisateur(s) en ligne`}
     >
       {visible.map((user) => (
@@ -73,7 +73,7 @@ export function PresenceAvatars({
           <TooltipTrigger asChild>
             <div
               className={cn(
-                'flex items-center justify-center rounded-full bg-muted font-medium ring-2 ring-background cursor-default',
+                "flex items-center justify-center rounded-full bg-muted font-medium ring-2 ring-background cursor-default",
                 avatarCls,
               )}
             >
@@ -84,7 +84,7 @@ export function PresenceAvatars({
             {onlineUsers
               .slice(maxVisible)
               .map((u) => u.username)
-              .join(', ')}
+              .join(", ")}
           </TooltipContent>
         </Tooltip>
       )}
@@ -104,9 +104,9 @@ function PresenceAvatar({
   avatarCls: string;
 }) {
   const initials = user.username
-    .split(' ')
+    .split(" ")
     .map((n) => n[0])
-    .join('')
+    .join("")
     .toUpperCase()
     .slice(0, 2);
 
@@ -115,7 +115,7 @@ function PresenceAvatar({
       <TooltipTrigger asChild>
         <Avatar
           className={cn(
-            'ring-2 ring-background cursor-default transition-transform hover:scale-110 hover:z-10',
+            "ring-2 ring-background cursor-default transition-transform hover:scale-110 hover:z-10",
             avatarCls,
           )}
         >

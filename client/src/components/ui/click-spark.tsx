@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useEffect, useCallback } from 'react';
+import React, { useRef, useEffect, useCallback } from "react";
 
 interface ClickSparkProps {
   sparkColor?: string;
@@ -8,7 +8,7 @@ interface ClickSparkProps {
   sparkRadius?: number;
   sparkCount?: number;
   duration?: number;
-  easing?: 'linear' | 'ease-in' | 'ease-out' | 'ease-in-out';
+  easing?: "linear" | "ease-in" | "ease-out" | "ease-in-out";
   extraScale?: number;
   children?: React.ReactNode;
 }
@@ -21,14 +21,14 @@ interface Spark {
 }
 
 const ClickSpark: React.FC<ClickSparkProps> = ({
-  sparkColor = '#6366f1', // Indigo 500 - highly visible in dark and light modes
+  sparkColor = "#6366f1", // Indigo 500 - highly visible in dark and light modes
   sparkSize = 10,
   sparkRadius = 15,
   sparkCount = 8,
   duration = 400,
-  easing = 'ease-out',
+  easing = "ease-out",
   extraScale = 1.0,
-  children
+  children,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const sparksRef = useRef<Spark[]>([]);
@@ -42,7 +42,10 @@ const ClickSpark: React.FC<ClickSparkProps> = ({
     let resizeTimeout: ReturnType<typeof setTimeout>;
 
     const resizeCanvas = () => {
-      if (canvas.width !== window.innerWidth || canvas.height !== window.innerHeight) {
+      if (
+        canvas.width !== window.innerWidth ||
+        canvas.height !== window.innerHeight
+      ) {
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
       }
@@ -53,11 +56,11 @@ const ClickSpark: React.FC<ClickSparkProps> = ({
       resizeTimeout = setTimeout(resizeCanvas, 100);
     };
 
-    window.addEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
     resizeCanvas(); // initial setup
 
     return () => {
-      window.removeEventListener('resize', handleResize);
+      window.removeEventListener("resize", handleResize);
       clearTimeout(resizeTimeout);
     };
   }, []);
@@ -65,24 +68,24 @@ const ClickSpark: React.FC<ClickSparkProps> = ({
   const easeFunc = useCallback(
     (t: number) => {
       switch (easing) {
-        case 'linear':
+        case "linear":
           return t;
-        case 'ease-in':
+        case "ease-in":
           return t * t;
-        case 'ease-in-out':
+        case "ease-in-out":
           return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
         default:
           return t * (2 - t);
       }
     },
-    [easing]
+    [easing],
   );
 
   // Animation Loop
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
     let animationId: number;
@@ -128,7 +131,15 @@ const ClickSpark: React.FC<ClickSparkProps> = ({
     return () => {
       cancelAnimationFrame(animationId);
     };
-  }, [sparkColor, sparkSize, sparkRadius, sparkCount, duration, easeFunc, extraScale]);
+  }, [
+    sparkColor,
+    sparkSize,
+    sparkRadius,
+    sparkCount,
+    duration,
+    easeFunc,
+    extraScale,
+  ]);
 
   // Global Click Listener
   useEffect(() => {
@@ -139,23 +150,24 @@ const ClickSpark: React.FC<ClickSparkProps> = ({
         x: e.clientX,
         y: e.clientY,
         angle: (2 * Math.PI * i) / sparkCount,
-        startTime: now
+        startTime: now,
       }));
 
       sparksRef.current.push(...newSparks);
     };
 
     // Use a capturing listener so it triggers even if child elements swallow the event via stopPropagation
-    window.addEventListener('mousedown', handleGlobalClick, true);
-    return () => window.removeEventListener('mousedown', handleGlobalClick, true);
+    window.addEventListener("mousedown", handleGlobalClick, true);
+    return () =>
+      window.removeEventListener("mousedown", handleGlobalClick, true);
   }, [sparkCount]);
 
   return (
     <>
-      <canvas 
-        ref={canvasRef} 
-        className="fixed inset-0 pointer-events-none z-[9999]" 
-        style={{ width: '100vw', height: '100vh', display: 'block' }}
+      <canvas
+        ref={canvasRef}
+        className="fixed inset-0 pointer-events-none z-[9999]"
+        style={{ width: "100vw", height: "100vh", display: "block" }}
       />
       {children}
     </>

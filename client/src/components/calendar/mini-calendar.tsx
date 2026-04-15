@@ -1,15 +1,15 @@
-"use client"
+"use client";
 
-import { useState, useMemo } from "react"
-import { ChevronLeft, ChevronRight } from "lucide-react"
-import { cn } from "@/lib/utils"
-import { useDroppable } from "@dnd-kit/core"
+import { useState, useMemo } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { useDroppable } from "@dnd-kit/core";
 
 interface MiniCalendarProps {
-  selectedDate?: Date
-  onSelectDate?: (date: Date) => void
-  className?: string
-  calendarId?: string
+  selectedDate?: Date;
+  onSelectDate?: (date: Date) => void;
+  className?: string;
+  calendarId?: string;
 }
 
 // Droppable day cell component
@@ -22,13 +22,13 @@ function DroppableDay({
   onSelect,
   calendarId,
 }: {
-  day: number
-  isCurrentMonth: boolean
-  date: Date
-  isToday: boolean
-  isSelected: boolean
-  onSelect: () => void
-  calendarId?: string
+  day: number;
+  isCurrentMonth: boolean;
+  date: Date;
+  isToday: boolean;
+  isSelected: boolean;
+  onSelect: () => void;
+  calendarId?: string;
 }) {
   const { setNodeRef, isOver } = useDroppable({
     id: `calendar-slot-${date.toISOString()}`,
@@ -37,7 +37,7 @@ function DroppableDay({
       date: date.toISOString(),
       calendarId,
     },
-  })
+  });
 
   return (
     <button
@@ -50,48 +50,64 @@ function DroppableDay({
           : "text-[#b0b5b9] hover:bg-muted",
         isToday && "bg-[#1a73e8] text-white hover:bg-[#1557b0]",
         isSelected && !isToday && "bg-[#e8f0fe] text-[#1a73e8]",
-        isOver && "ring-2 ring-[#1a73e8] ring-offset-1 bg-[#e8f0fe]"
+        isOver && "ring-2 ring-[#1a73e8] ring-offset-1 bg-[#e8f0fe]",
       )}
     >
       {day}
     </button>
-  )
+  );
 }
 
-const DAYS = ["L", "M", "M", "J", "V", "S", "D"]
+const DAYS = ["L", "M", "M", "J", "V", "S", "D"];
 const MONTHS = [
-  "janvier", "février", "mars", "avril", "mai", "juin",
-  "juillet", "août", "septembre", "octobre", "novembre", "décembre"
-]
+  "janvier",
+  "février",
+  "mars",
+  "avril",
+  "mai",
+  "juin",
+  "juillet",
+  "août",
+  "septembre",
+  "octobre",
+  "novembre",
+  "décembre",
+];
 
-export function MiniCalendar({ selectedDate, onSelectDate, className, calendarId }: MiniCalendarProps) {
-  const [viewDate, setViewDate] = useState(() => selectedDate || new Date())
+export function MiniCalendar({
+  selectedDate,
+  onSelectDate,
+  className,
+  calendarId,
+}: MiniCalendarProps) {
+  const [viewDate, setViewDate] = useState(() => selectedDate || new Date());
 
   const { year, month, days } = useMemo(() => {
-    const y = viewDate.getFullYear()
-    const m = viewDate.getMonth()
+    const y = viewDate.getFullYear();
+    const m = viewDate.getMonth();
 
     // First day of month (0 = Sunday, we want Monday = 0)
-    const firstDay = new Date(y, m, 1)
-    let startDay = firstDay.getDay() - 1
-    if (startDay < 0) startDay = 6 // Sunday becomes 6
+    const firstDay = new Date(y, m, 1);
+    let startDay = firstDay.getDay() - 1;
+    if (startDay < 0) startDay = 6; // Sunday becomes 6
 
     // Days in month
-    const daysInMonth = new Date(y, m + 1, 0).getDate()
+    const daysInMonth = new Date(y, m + 1, 0).getDate();
 
     // Days from previous month
-    const prevMonthDays = new Date(y, m, 0).getDate()
+    const prevMonthDays = new Date(y, m, 0).getDate();
 
-    const calendarDays: { day: number; isCurrentMonth: boolean; date: Date }[] = []
+    const calendarDays: { day: number; isCurrentMonth: boolean; date: Date }[] =
+      [];
 
     // Previous month days
     for (let i = startDay - 1; i >= 0; i--) {
-      const day = prevMonthDays - i
+      const day = prevMonthDays - i;
       calendarDays.push({
         day,
         isCurrentMonth: false,
         date: new Date(y, m - 1, day),
-      })
+      });
     }
 
     // Current month days
@@ -100,44 +116,44 @@ export function MiniCalendar({ selectedDate, onSelectDate, className, calendarId
         day: d,
         isCurrentMonth: true,
         date: new Date(y, m, d),
-      })
+      });
     }
 
     // Next month days to fill the grid (6 rows x 7 days = 42)
-    const remaining = 42 - calendarDays.length
+    const remaining = 42 - calendarDays.length;
     for (let d = 1; d <= remaining; d++) {
       calendarDays.push({
         day: d,
         isCurrentMonth: false,
         date: new Date(y, m + 1, d),
-      })
+      });
     }
 
-    return { year: y, month: m, days: calendarDays }
-  }, [viewDate])
+    return { year: y, month: m, days: calendarDays };
+  }, [viewDate]);
 
-  const today = new Date()
+  const today = new Date();
   const isToday = (date: Date) =>
     date.getDate() === today.getDate() &&
     date.getMonth() === today.getMonth() &&
-    date.getFullYear() === today.getFullYear()
+    date.getFullYear() === today.getFullYear();
 
   const isSelected = (date: Date) =>
     selectedDate &&
     date.getDate() === selectedDate.getDate() &&
     date.getMonth() === selectedDate.getMonth() &&
-    date.getFullYear() === selectedDate.getFullYear()
+    date.getFullYear() === selectedDate.getFullYear();
 
-  const prevMonth = () => setViewDate(new Date(year, month - 1, 1))
-  const nextMonth = () => setViewDate(new Date(year, month + 1, 1))
+  const prevMonth = () => setViewDate(new Date(year, month - 1, 1));
+  const nextMonth = () => setViewDate(new Date(year, month + 1, 1));
 
   const handleDateClick = (date: Date) => {
-    onSelectDate?.(date)
+    onSelectDate?.(date);
     // If clicking on a day from another month, also navigate to that month
     if (date.getMonth() !== month) {
-      setViewDate(date)
+      setViewDate(date);
     }
-  }
+  };
 
   return (
     <div className={cn("select-none", className)}>
@@ -188,5 +204,5 @@ export function MiniCalendar({ selectedDate, onSelectDate, className, calendarId
         ))}
       </div>
     </div>
-  )
+  );
 }

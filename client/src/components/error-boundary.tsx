@@ -1,9 +1,17 @@
-'use client';
+"use client";
 
-import { Component, ReactNode, useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { AlertTriangle, Copy, Check, ChevronDown, ChevronUp, Home, RefreshCw } from 'lucide-react';
+import { Component, ReactNode, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  AlertTriangle,
+  Copy,
+  Check,
+  ChevronDown,
+  ChevronUp,
+  Home,
+  RefreshCw,
+} from "lucide-react";
 
 interface Props {
   children: ReactNode;
@@ -16,19 +24,27 @@ interface State {
   componentStack?: string | null;
 }
 
-function ErrorDetails({ error, componentStack }: { error?: Error; componentStack?: string | null }) {
+function ErrorDetails({
+  error,
+  componentStack,
+}: {
+  error?: Error;
+  componentStack?: string | null;
+}) {
   const [copied, setCopied] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
 
   const errorText = [
-    `Error: ${error?.message || 'Unknown error'}`,
-    '',
-    `URL: ${typeof window !== 'undefined' ? window.location.href : ''}`,
+    `Error: ${error?.message || "Unknown error"}`,
+    "",
+    `URL: ${typeof window !== "undefined" ? window.location.href : ""}`,
     `Time: ${new Date().toISOString()}`,
-    '',
-    error?.stack ? `Stack trace:\n${error.stack}` : '',
-    componentStack ? `Component stack:\n${componentStack}` : '',
-  ].filter(Boolean).join('\n');
+    "",
+    error?.stack ? `Stack trace:\n${error.stack}` : "",
+    componentStack ? `Component stack:\n${componentStack}` : "",
+  ]
+    .filter(Boolean)
+    .join("\n");
 
   const handleCopy = async () => {
     try {
@@ -37,11 +53,11 @@ function ErrorDetails({ error, componentStack }: { error?: Error; componentStack
       setTimeout(() => setCopied(false), 2000);
     } catch {
       // Fallback for older browsers
-      const textarea = document.createElement('textarea');
+      const textarea = document.createElement("textarea");
       textarea.value = errorText;
       document.body.appendChild(textarea);
       textarea.select();
-      document.execCommand('copy');
+      document.execCommand("copy");
       document.body.removeChild(textarea);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
@@ -51,11 +67,20 @@ function ErrorDetails({ error, componentStack }: { error?: Error; componentStack
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap gap-2">
-        <Button variant="outline" size="sm" onClick={handleCopy} className="gap-1.5">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleCopy}
+          className="gap-1.5"
+        >
           {copied ? (
-            <><Check className="h-3.5 w-3.5" /> Copie !</>
+            <>
+              <Check className="h-3.5 w-3.5" /> Copie !
+            </>
           ) : (
-            <><Copy className="h-3.5 w-3.5" /> Copier l&apos;erreur</>
+            <>
+              <Copy className="h-3.5 w-3.5" /> Copier l&apos;erreur
+            </>
           )}
         </Button>
         <Button
@@ -65,9 +90,13 @@ function ErrorDetails({ error, componentStack }: { error?: Error; componentStack
           className="gap-1.5 text-muted-foreground"
         >
           {showDetails ? (
-            <><ChevronUp className="h-3.5 w-3.5" /> Masquer les details</>
+            <>
+              <ChevronUp className="h-3.5 w-3.5" /> Masquer les details
+            </>
           ) : (
-            <><ChevronDown className="h-3.5 w-3.5" /> Afficher les details</>
+            <>
+              <ChevronDown className="h-3.5 w-3.5" /> Afficher les details
+            </>
           )}
         </Button>
       </div>
@@ -95,7 +124,7 @@ export class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     this.setState({ componentStack: errorInfo.componentStack });
-    console.error('[ErrorBoundary]', error, errorInfo);
+    console.error("[ErrorBoundary]", error, errorInfo);
   }
 
   render() {
@@ -111,15 +140,25 @@ export class ErrorBoundary extends Component<Props, State> {
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              {this.state.error?.message || 'Une erreur inattendue s\'est produite.'}
+              {this.state.error?.message ||
+                "Une erreur inattendue s'est produite."}
             </p>
 
-            <ErrorDetails error={this.state.error} componentStack={this.state.componentStack} />
+            <ErrorDetails
+              error={this.state.error}
+              componentStack={this.state.componentStack}
+            />
 
             <div className="flex flex-wrap gap-2 pt-2">
               <Button
                 variant="outline"
-                onClick={() => this.setState({ hasError: false, error: undefined, componentStack: null })}
+                onClick={() =>
+                  this.setState({
+                    hasError: false,
+                    error: undefined,
+                    componentStack: null,
+                  })
+                }
                 className="gap-1.5"
               >
                 <RefreshCw className="h-4 w-4" />

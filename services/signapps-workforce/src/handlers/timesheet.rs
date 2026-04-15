@@ -371,17 +371,15 @@ pub async fn delete_entry(
 ) -> Result<impl IntoResponse, StatusCode> {
     let owner_id = claims.sub;
 
-    let result = sqlx::query(
-        r#"DELETE FROM timesheet.entries WHERE id = $1 AND owner_id = $2"#,
-    )
-    .bind(id)
-    .bind(owner_id)
-    .execute(&*state.pool)
-    .await
-    .map_err(|e| {
-        tracing::error!("delete_entry failed: {e}");
-        StatusCode::INTERNAL_SERVER_ERROR
-    })?;
+    let result = sqlx::query(r#"DELETE FROM timesheet.entries WHERE id = $1 AND owner_id = $2"#)
+        .bind(id)
+        .bind(owner_id)
+        .execute(&*state.pool)
+        .await
+        .map_err(|e| {
+            tracing::error!("delete_entry failed: {e}");
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
 
     if result.rows_affected() == 0 {
         return Err(StatusCode::NOT_FOUND);

@@ -11,10 +11,7 @@ interface NPSSurveyProps {
   historicalScore?: number;
 }
 
-export function NPSSurvey({
-  onSubmit,
-  historicalScore = 72,
-}: NPSSurveyProps) {
+export function NPSSurvey({ onSubmit, historicalScore = 72 }: NPSSurveyProps) {
   const [score, setScore] = useState<number | null>(null);
   const [comment, setComment] = useState("");
   const [submitted, setSubmitted] = useState(false);

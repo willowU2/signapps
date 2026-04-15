@@ -133,7 +133,8 @@ async fn seed_channels(
     // Distribute messages across channels
     for msg_idx in 0..total_messages {
         let channel_id = *crate::helpers::pick(&channel_ids, msg_idx);
-        let (user_id, _, username) = crate::helpers::pick(user_ids, rng.gen_range(0..user_ids.len()));
+        let (user_id, _, username) =
+            crate::helpers::pick(user_ids, rng.gen_range(0..user_ids.len()));
         let content = crate::helpers::pick(MESSAGE_CONTENTS, msg_idx);
         let day_offset: i64 = rng.gen_range(-30i64..1);
 

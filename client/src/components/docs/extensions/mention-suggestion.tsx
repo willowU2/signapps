@@ -1,9 +1,16 @@
-'use client';
+"use client";
 
-import { ReactNode, useCallback, useEffect, useImperativeHandle, useState, forwardRef } from 'react';
-import { SuggestionProps, SuggestionKeyDownProps } from '@tiptap/suggestion';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { cn } from '@/lib/utils';
+import {
+  ReactNode,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useState,
+  forwardRef,
+} from "react";
+import { SuggestionProps, SuggestionKeyDownProps } from "@tiptap/suggestion";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { cn } from "@/lib/utils";
 
 export interface MentionUser {
   id: string;
@@ -32,7 +39,7 @@ export const MentionList = forwardRef<MentionListRef, MentionListProps>(
           command(item);
         }
       },
-      [items, command]
+      [items, command],
     );
 
     const upHandler = useCallback(() => {
@@ -53,17 +60,17 @@ export const MentionList = forwardRef<MentionListRef, MentionListProps>(
 
     useImperativeHandle(ref, () => ({
       onKeyDown: ({ event }: SuggestionKeyDownProps) => {
-        if (event.key === 'ArrowUp') {
+        if (event.key === "ArrowUp") {
           upHandler();
           return true;
         }
 
-        if (event.key === 'ArrowDown') {
+        if (event.key === "ArrowDown") {
           downHandler();
           return true;
         }
 
-        if (event.key === 'Enter') {
+        if (event.key === "Enter") {
           enterHandler();
           return true;
         }
@@ -87,10 +94,10 @@ export const MentionList = forwardRef<MentionListRef, MentionListProps>(
             key={item.id}
             onClick={() => selectItem(index)}
             className={cn(
-              'flex items-center gap-2 w-full px-3 py-2 text-sm text-left transition-colors',
+              "flex items-center gap-2 w-full px-3 py-2 text-sm text-left transition-colors",
               index === selectedIndex
-                ? 'bg-accent text-accent-foreground'
-                : 'hover:bg-muted'
+                ? "bg-accent text-accent-foreground"
+                : "hover:bg-muted",
             )}
           >
             <Avatar className="h-6 w-6">
@@ -109,9 +116,9 @@ export const MentionList = forwardRef<MentionListRef, MentionListProps>(
         ))}
       </div>
     );
-  }
+  },
 );
 
-MentionList.displayName = 'MentionList';
+MentionList.displayName = "MentionList";
 
 export default MentionList;

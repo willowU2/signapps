@@ -35,25 +35,33 @@ export function LogViewer() {
   const [autoScroll, setAutoScroll] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
   const services = Array.from(
-    new Set(logs.map((log) => log.service))
+    new Set(logs.map((log) => log.service)),
   ) as string[];
 
   useEffect(() => {
     import("@/lib/api").then(({ alertsApi }) => {
-      alertsApi.listHistory(100).then((res) => {
-        const events = res.data ?? [];
-        const mapped: LogEntry[] = events.map((e) => ({
-          timestamp: e.triggered_at,
-          level: e.severity === "critical" ? "ERROR" : e.severity === "warning" ? "WARN" : "INFO",
-          service: e.metric_type,
-          message: e.message,
-          traceId: e.id,
-        }));
-        setLogs(mapped);
-      }).catch(() => {
-        // No backend logs available — start with empty list
-        setLogs([]);
-      });
+      alertsApi
+        .listHistory(100)
+        .then((res) => {
+          const events = res.data ?? [];
+          const mapped: LogEntry[] = events.map((e) => ({
+            timestamp: e.triggered_at,
+            level:
+              e.severity === "critical"
+                ? "ERROR"
+                : e.severity === "warning"
+                  ? "WARN"
+                  : "INFO",
+            service: e.metric_type,
+            message: e.message,
+            traceId: e.id,
+          }));
+          setLogs(mapped);
+        })
+        .catch(() => {
+          // No backend logs available — start with empty list
+          setLogs([]);
+        });
     });
   }, []);
 
@@ -74,7 +82,7 @@ export function LogViewer() {
       filtered = filtered.filter(
         (log) =>
           log.message.toLowerCase().includes(searchLower) ||
-          log.traceId?.toLowerCase().includes(searchLower)
+          log.traceId?.toLowerCase().includes(searchLower),
       );
     }
 
@@ -196,7 +204,9 @@ export function LogViewer() {
                   </span>
                   <span className="text-gray-300 flex-1">{log.message}</span>
                   {log.traceId && (
-                    <span className="text-muted-foreground text-xs">{log.traceId}</span>
+                    <span className="text-muted-foreground text-xs">
+                      {log.traceId}
+                    </span>
                   )}
                 </div>
               ))}

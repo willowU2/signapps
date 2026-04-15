@@ -28,7 +28,12 @@ const REACTIONS = [
     label: "Insightful",
     color: "text-blue-500",
   },
-  { key: "curious", icon: HelpCircle, label: "Curious", color: "text-purple-500" },
+  {
+    key: "curious",
+    icon: HelpCircle,
+    label: "Curious",
+    color: "text-purple-500",
+  },
 ] as const;
 
 export function ReactionBar({

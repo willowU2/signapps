@@ -1,36 +1,39 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { Palette } from 'lucide-react';
+import { useEffect, useState } from "react";
+import { Palette } from "lucide-react";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Label } from '@/components/ui/label';
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 
-const STORAGE_KEY = 'signapps-color-blindness-filter';
+const STORAGE_KEY = "signapps-color-blindness-filter";
 
-type FilterType = 'none' | 'protanopia' | 'deuteranopia' | 'tritanopia';
+type FilterType = "none" | "protanopia" | "deuteranopia" | "tritanopia";
 
 export function ColorBlindnessFilters() {
-  const [filterType, setFilterType] = useState<FilterType>('none');
+  const [filterType, setFilterType] = useState<FilterType>("none");
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
     const stored = localStorage.getItem(STORAGE_KEY) as FilterType;
-    if (stored && ['none', 'protanopia', 'deuteranopia', 'tritanopia'].includes(stored)) {
+    if (
+      stored &&
+      ["none", "protanopia", "deuteranopia", "tritanopia"].includes(stored)
+    ) {
       setFilterType(stored);
       applyFilter(stored);
     }
   }, []);
 
   const applyFilter = (type: FilterType) => {
-    if (type === 'none') {
-      document.body.style.filter = 'none';
+    if (type === "none") {
+      document.body.style.filter = "none";
     } else {
       document.body.style.filter = `url(#${type})`;
     }
@@ -58,7 +61,10 @@ export function ColorBlindnessFilters() {
         </p>
       </div>
 
-      <Select value={filterType} onValueChange={(val: FilterType) => handleValueChange(val)}>
+      <Select
+        value={filterType}
+        onValueChange={(val: FilterType) => handleValueChange(val)}
+      >
         <SelectTrigger id="color-blindness-select" className="w-[180px]">
           <SelectValue placeholder="Aucun filtre" />
         </SelectTrigger>
@@ -71,16 +77,28 @@ export function ColorBlindnessFilters() {
       </Select>
 
       {/* SVG Filters definitions injected globally when component is active */}
-      <svg style={{ height: 0, width: 0, position: 'absolute' }} aria-hidden="true">
+      <svg
+        style={{ height: 0, width: 0, position: "absolute" }}
+        aria-hidden="true"
+      >
         <defs>
           <filter id="protanopia">
-            <feColorMatrix type="matrix" values="0.567, 0.433, 0, 0, 0   0.558, 0.442, 0, 0, 0   0, 0.242, 0.758, 0, 0   0, 0, 0, 1, 0" />
+            <feColorMatrix
+              type="matrix"
+              values="0.567, 0.433, 0, 0, 0   0.558, 0.442, 0, 0, 0   0, 0.242, 0.758, 0, 0   0, 0, 0, 1, 0"
+            />
           </filter>
           <filter id="deuteranopia">
-            <feColorMatrix type="matrix" values="0.625, 0.375, 0, 0, 0   0.7, 0.3, 0, 0, 0   0, 0.3, 0.7, 0, 0   0, 0, 0, 1, 0" />
+            <feColorMatrix
+              type="matrix"
+              values="0.625, 0.375, 0, 0, 0   0.7, 0.3, 0, 0, 0   0, 0.3, 0.7, 0, 0   0, 0, 0, 1, 0"
+            />
           </filter>
           <filter id="tritanopia">
-            <feColorMatrix type="matrix" values="0.95, 0.05,  0, 0, 0   0,  0.433, 0.567, 0, 0   0,  0.475, 0.525, 0, 0   0,  0, 0, 1, 0" />
+            <feColorMatrix
+              type="matrix"
+              values="0.95, 0.05,  0, 0, 0   0,  0.433, 0.567, 0, 0   0,  0.475, 0.525, 0, 0   0,  0, 0, 1, 0"
+            />
           </filter>
         </defs>
       </svg>

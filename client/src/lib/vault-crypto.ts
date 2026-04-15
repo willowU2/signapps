@@ -60,24 +60,24 @@ export async function deriveKey(
   iterations: number = 600_000,
 ): Promise<CryptoKey> {
   const passKey = await crypto.subtle.importKey(
-    'raw',
+    "raw",
     strToBytes(password),
-    'PBKDF2',
+    "PBKDF2",
     false,
-    ['deriveKey'],
+    ["deriveKey"],
   );
 
   return crypto.subtle.deriveKey(
     {
-      name: 'PBKDF2',
+      name: "PBKDF2",
       salt: strToBytes(salt),
       iterations,
-      hash: 'SHA-256',
+      hash: "SHA-256",
     },
     passKey,
-    { name: 'AES-GCM', length: 256 },
+    { name: "AES-GCM", length: 256 },
     true,
-    ['encrypt', 'decrypt'],
+    ["encrypt", "decrypt"],
   );
 }
 
@@ -89,10 +89,13 @@ export async function deriveKey(
  * Chiffre une chaîne en AES-256-GCM.
  * Retourne base64(IV_12B ‖ ciphertext ‖ tag_16B).
  */
-export async function encrypt(key: CryptoKey, plaintext: string): Promise<string> {
+export async function encrypt(
+  key: CryptoKey,
+  plaintext: string,
+): Promise<string> {
   const iv = randomBytes(12);
   const ciphertext = await crypto.subtle.encrypt(
-    { name: 'AES-GCM', iv },
+    { name: "AES-GCM", iv },
     key,
     strToBytes(plaintext),
   );
@@ -107,13 +110,16 @@ export async function encrypt(key: CryptoKey, plaintext: string): Promise<string
 /**
  * Déchiffre un message produit par `encrypt`.
  */
-export async function decrypt(key: CryptoKey, ciphertext: string): Promise<string> {
+export async function decrypt(
+  key: CryptoKey,
+  ciphertext: string,
+): Promise<string> {
   const data = fromBase64(ciphertext);
   const iv = data.slice(0, 12);
   const payload = data.slice(12);
 
   const plaintext = await crypto.subtle.decrypt(
-    { name: 'AES-GCM', iv },
+    { name: "AES-GCM", iv },
     key,
     payload,
   );
@@ -128,21 +134,24 @@ export async function decrypt(key: CryptoKey, ciphertext: string): Promise<strin
  * Génère une paire de clés RSA-OAEP 2048 bits.
  * Retourne les clés encodées en base64 (SPKI / PKCS#8).
  */
-export async function generateKeyPair(): Promise<{ publicKey: string; privateKey: string }> {
+export async function generateKeyPair(): Promise<{
+  publicKey: string;
+  privateKey: string;
+}> {
   const pair = await crypto.subtle.generateKey(
     {
-      name: 'RSA-OAEP',
+      name: "RSA-OAEP",
       modulusLength: 2048,
       publicExponent: new Uint8Array([1, 0, 1]),
-      hash: 'SHA-256',
+      hash: "SHA-256",
     },
     true,
-    ['encrypt', 'decrypt'],
+    ["encrypt", "decrypt"],
   );
 
   const [pubRaw, privRaw] = await Promise.all([
-    crypto.subtle.exportKey('spki', pair.publicKey),
-    crypto.subtle.exportKey('pkcs8', pair.privateKey),
+    crypto.subtle.exportKey("spki", pair.publicKey),
+    crypto.subtle.exportKey("pkcs8", pair.privateKey),
   ]);
 
   return {
@@ -154,17 +163,20 @@ export async function generateKeyPair(): Promise<{ publicKey: string; privateKey
 /**
  * Chiffre `data` avec une clé publique RSA-OAEP (base64 SPKI).
  */
-export async function encryptWithPublicKey(publicKeyB64: string, data: string): Promise<string> {
+export async function encryptWithPublicKey(
+  publicKeyB64: string,
+  data: string,
+): Promise<string> {
   const pub = await crypto.subtle.importKey(
-    'spki',
+    "spki",
     fromBase64(publicKeyB64),
-    { name: 'RSA-OAEP', hash: 'SHA-256' },
+    { name: "RSA-OAEP", hash: "SHA-256" },
     false,
-    ['encrypt'],
+    ["encrypt"],
   );
 
   const ciphertext = await crypto.subtle.encrypt(
-    { name: 'RSA-OAEP' },
+    { name: "RSA-OAEP" },
     pub,
     strToBytes(data),
   );
@@ -179,15 +191,15 @@ export async function decryptWithPrivateKey(
   encryptedB64: string,
 ): Promise<string> {
   const priv = await crypto.subtle.importKey(
-    'pkcs8',
+    "pkcs8",
     fromBase64(privateKeyB64),
-    { name: 'RSA-OAEP', hash: 'SHA-256' },
+    { name: "RSA-OAEP", hash: "SHA-256" },
     false,
-    ['decrypt'],
+    ["decrypt"],
   );
 
   const plaintext = await crypto.subtle.decrypt(
-    { name: 'RSA-OAEP' },
+    { name: "RSA-OAEP" },
     priv,
     fromBase64(encryptedB64),
   );
@@ -203,25 +215,28 @@ export async function decryptWithPrivateKey(
  * sans exposer la clé symétrique dérivée.
  * hash = HMAC-SHA256(masterKey, "auth:" + password) → hex
  */
-export async function hashForServer(masterKey: CryptoKey, password: string): Promise<string> {
-  const rawKey = await crypto.subtle.exportKey('raw', masterKey);
+export async function hashForServer(
+  masterKey: CryptoKey,
+  password: string,
+): Promise<string> {
+  const rawKey = await crypto.subtle.exportKey("raw", masterKey);
   const hmacKey = await crypto.subtle.importKey(
-    'raw',
+    "raw",
     rawKey,
-    { name: 'HMAC', hash: 'SHA-256' },
+    { name: "HMAC", hash: "SHA-256" },
     false,
-    ['sign'],
+    ["sign"],
   );
 
   const signature = await crypto.subtle.sign(
-    'HMAC',
+    "HMAC",
     hmacKey,
-    strToBytes('auth:' + password),
+    strToBytes("auth:" + password),
   );
 
   return Array.from(new Uint8Array(signature))
-    .map((b) => b.toString(16).padStart(2, '0'))
-    .join('');
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -229,8 +244,8 @@ export async function hashForServer(masterKey: CryptoKey, password: string): Pro
 // ─────────────────────────────────────────────────────────────────────────────
 
 function base32Decode(input: string): Uint8Array<ArrayBuffer> {
-  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
-  const cleaned = input.toUpperCase().replace(/=+$/, '');
+  const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+  const cleaned = input.toUpperCase().replace(/=+$/, "");
   let bits = 0;
   let value = 0;
   const output: number[] = [];
@@ -247,19 +262,24 @@ function base32Decode(input: string): Uint8Array<ArrayBuffer> {
   }
   const buf = new ArrayBuffer(output.length);
   const view = new Uint8Array(buf);
-  output.forEach((b, i) => { view[i] = b; });
+  output.forEach((b, i) => {
+    view[i] = b;
+  });
   return view;
 }
 
-async function hmacSha1(key: Uint8Array<ArrayBuffer>, data: Uint8Array<ArrayBuffer>): Promise<Uint8Array> {
+async function hmacSha1(
+  key: Uint8Array<ArrayBuffer>,
+  data: Uint8Array<ArrayBuffer>,
+): Promise<Uint8Array> {
   const cryptoKey = await crypto.subtle.importKey(
-    'raw',
+    "raw",
     key,
-    { name: 'HMAC', hash: 'SHA-1' },
+    { name: "HMAC", hash: "SHA-1" },
     false,
-    ['sign'],
+    ["sign"],
   );
-  const signature = await crypto.subtle.sign('HMAC', cryptoKey, data);
+  const signature = await crypto.subtle.sign("HMAC", cryptoKey, data);
   return new Uint8Array(signature);
 }
 
@@ -270,7 +290,9 @@ async function hmacSha1(key: Uint8Array<ArrayBuffer>, data: Uint8Array<ArrayBuff
 export function generateTotp(secretBase32: string): string {
   // Synchronous wrapper — returns a promise, callers must await
   // For use in components, use generateTotpAsync instead.
-  throw new Error('Use generateTotpAsync() — TOTP requires async SubtleCrypto.');
+  throw new Error(
+    "Use generateTotpAsync() — TOTP requires async SubtleCrypto.",
+  );
 }
 
 export async function generateTotpAsync(secretBase32: string): Promise<string> {
@@ -297,7 +319,7 @@ export async function generateTotpAsync(secretBase32: string): Promise<string> {
       (hmac[offset + 3] & 0xff)) %
     1_000_000;
 
-  return code.toString().padStart(6, '0');
+  return code.toString().padStart(6, "0");
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -312,13 +334,13 @@ export interface PasswordOptions {
   symbols: boolean;
 }
 
-const CHARS_UPPER = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-const CHARS_LOWER = 'abcdefghijklmnopqrstuvwxyz';
-const CHARS_DIGITS = '0123456789';
-const CHARS_SYMBOLS = '!@#$%^&*()-_=+[]{}|;:,.<>?';
+const CHARS_UPPER = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+const CHARS_LOWER = "abcdefghijklmnopqrstuvwxyz";
+const CHARS_DIGITS = "0123456789";
+const CHARS_SYMBOLS = "!@#$%^&*()-_=+[]{}|;:,.<>?";
 
 export function generatePassword(opts: PasswordOptions): string {
-  let charset = '';
+  let charset = "";
   const required: string[] = [];
 
   if (opts.upper) {
@@ -331,11 +353,15 @@ export function generatePassword(opts: PasswordOptions): string {
   }
   if (opts.digits) {
     charset += CHARS_DIGITS;
-    required.push(CHARS_DIGITS[Math.floor(Math.random() * CHARS_DIGITS.length)]);
+    required.push(
+      CHARS_DIGITS[Math.floor(Math.random() * CHARS_DIGITS.length)],
+    );
   }
   if (opts.symbols) {
     charset += CHARS_SYMBOLS;
-    required.push(CHARS_SYMBOLS[Math.floor(Math.random() * CHARS_SYMBOLS.length)]);
+    required.push(
+      CHARS_SYMBOLS[Math.floor(Math.random() * CHARS_SYMBOLS.length)],
+    );
   }
 
   if (!charset) charset = CHARS_LOWER + CHARS_DIGITS;
@@ -354,20 +380,20 @@ export function generatePassword(opts: PasswordOptions): string {
     [chars[i], chars[j]] = [chars[j], chars[i]];
   }
 
-  return chars.join('').slice(0, opts.length);
+  return chars.join("").slice(0, opts.length);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Password strength
 // ─────────────────────────────────────────────────────────────────────────────
 
-export type PasswordStrength = 'faible' | 'correct' | 'fort' | 'excellent';
+export type PasswordStrength = "faible" | "correct" | "fort" | "excellent";
 
 export function evaluatePasswordStrength(password: string): {
   score: number; // 0–4
   label: PasswordStrength;
 } {
-  if (!password) return { score: 0, label: 'faible' };
+  if (!password) return { score: 0, label: "faible" };
 
   let score = 0;
   if (password.length >= 8) score++;
@@ -378,7 +404,13 @@ export function evaluatePasswordStrength(password: string): {
   if (password.length >= 20) score++;
 
   const clamped = Math.min(score, 4);
-  const labels: PasswordStrength[] = ['faible', 'faible', 'correct', 'fort', 'excellent'];
+  const labels: PasswordStrength[] = [
+    "faible",
+    "faible",
+    "correct",
+    "fort",
+    "excellent",
+  ];
   return { score: clamped, label: labels[clamped] };
 }
 
@@ -410,18 +442,19 @@ export async function initializeVault(
 
   // Generate a random sym key and export it
   const symKey = await crypto.subtle.generateKey(
-    { name: 'AES-GCM', length: 256 },
+    { name: "AES-GCM", length: 256 },
     true,
-    ['encrypt', 'decrypt'],
+    ["encrypt", "decrypt"],
   );
-  const symKeyRaw = await crypto.subtle.exportKey('raw', symKey);
+  const symKeyRaw = await crypto.subtle.exportKey("raw", symKey);
   const symKeyB64 = toBase64(symKeyRaw);
 
-  const [encryptedSymKey, encryptedPrivateKey, passwordHash] = await Promise.all([
-    encrypt(masterKey, symKeyB64),
-    encrypt(masterKey, privateKey),
-    hashForServer(masterKey, password),
-  ]);
+  const [encryptedSymKey, encryptedPrivateKey, passwordHash] =
+    await Promise.all([
+      encrypt(masterKey, symKeyB64),
+      encrypt(masterKey, privateKey),
+      hashForServer(masterKey, password),
+    ]);
 
   return { encryptedSymKey, encryptedPrivateKey, publicKey, passwordHash };
 }
@@ -444,10 +477,10 @@ export async function unlockVault(
   const symKeyRaw = fromBase64(symKeyB64);
 
   return crypto.subtle.importKey(
-    'raw',
+    "raw",
     symKeyRaw,
-    { name: 'AES-GCM' },
+    { name: "AES-GCM" },
     false, // not extractable once unlocked
-    ['encrypt', 'decrypt'],
+    ["encrypt", "decrypt"],
   );
 }

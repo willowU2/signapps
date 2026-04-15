@@ -48,7 +48,7 @@ where
                 relations_created: 0,
                 source: "storage.files".to_string(),
             });
-        }
+        },
     };
 
     let mut count = 0usize;

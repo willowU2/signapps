@@ -37,16 +37,16 @@ export interface GoogleAuthConfig {
 // ============================================================================
 
 export type GoogleMimeType =
-  | 'application/vnd.google-apps.document'
-  | 'application/vnd.google-apps.spreadsheet'
-  | 'application/vnd.google-apps.presentation'
-  | 'application/vnd.google-apps.folder'
-  | 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-  | 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-  | 'application/vnd.openxmlformats-officedocument.presentationml.presentation'
-  | 'application/pdf'
-  | 'text/plain'
-  | 'text/html';
+  | "application/vnd.google-apps.document"
+  | "application/vnd.google-apps.spreadsheet"
+  | "application/vnd.google-apps.presentation"
+  | "application/vnd.google-apps.folder"
+  | "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+  | "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+  | "application/vnd.openxmlformats-officedocument.presentationml.presentation"
+  | "application/pdf"
+  | "text/plain"
+  | "text/html";
 
 export interface GoogleDriveFile {
   /** File ID */
@@ -91,7 +91,7 @@ export interface GoogleDriveUser {
 }
 
 export interface GoogleDriveFolder extends GoogleDriveFile {
-  mimeType: 'application/vnd.google-apps.folder';
+  mimeType: "application/vnd.google-apps.folder";
 }
 
 export interface GoogleDriveListResponse {
@@ -104,8 +104,8 @@ export interface GoogleDriveListResponse {
 // Import/Export Types
 // ============================================================================
 
-export type ExportFormat = 'docx' | 'xlsx' | 'pptx' | 'pdf' | 'html' | 'txt';
-export type ImportFormat = 'gdoc' | 'gsheet' | 'gslide';
+export type ExportFormat = "docx" | "xlsx" | "pptx" | "pdf" | "html" | "txt";
+export type ImportFormat = "gdoc" | "gsheet" | "gslide";
 
 export interface ImportFromGoogleRequest {
   /** Google Drive file ID */
@@ -124,7 +124,7 @@ export interface ImportFromGoogleResponse {
   /** Document name */
   name: string;
   /** Document type */
-  type: 'doc' | 'sheet' | 'slide';
+  type: "doc" | "sheet" | "slide";
   /** Whether sync is enabled */
   syncEnabled: boolean;
 }
@@ -155,9 +155,14 @@ export interface ExportToGoogleResponse {
 // Sync Types
 // ============================================================================
 
-export type SyncStatus = 'synced' | 'pending' | 'conflict' | 'error' | 'disabled';
+export type SyncStatus =
+  | "synced"
+  | "pending"
+  | "conflict"
+  | "error"
+  | "disabled";
 
-export type SyncDirection = 'bidirectional' | 'toGoogle' | 'fromGoogle';
+export type SyncDirection = "bidirectional" | "toGoogle" | "fromGoogle";
 
 export interface SyncedDocument {
   /** Our document ID */
@@ -199,7 +204,7 @@ export interface SyncConflict {
 
 export interface ResolveSyncConflictRequest {
   documentId: string;
-  resolution: 'keepLocal' | 'keepGoogle' | 'keepBoth';
+  resolution: "keepLocal" | "keepGoogle" | "keepBoth";
 }
 
 // ============================================================================
@@ -208,7 +213,12 @@ export interface ResolveSyncConflictRequest {
 
 export interface GooglePickerConfig {
   /** View type */
-  viewId: 'DOCS' | 'SPREADSHEETS' | 'PRESENTATIONS' | 'FOLDERS' | 'RECENTLY_MODIFIED';
+  viewId:
+    | "DOCS"
+    | "SPREADSHEETS"
+    | "PRESENTATIONS"
+    | "FOLDERS"
+    | "RECENTLY_MODIFIED";
   /** Allow multiple selection */
   multiSelect?: boolean;
   /** Filter by MIME types */
@@ -228,7 +238,7 @@ export interface GooglePickerResult {
     url: string;
   }>;
   /** Picker action (picked, cancel) */
-  action: 'picked' | 'cancel';
+  action: "picked" | "cancel";
 }
 
 // ============================================================================
@@ -243,7 +253,7 @@ export interface GoogleIntegrationSettings {
   /** Default sync direction */
   defaultSyncDirection: SyncDirection;
   /** Default export format */
-  defaultExportFormat: 'native' | 'office';
+  defaultExportFormat: "native" | "office";
   /** Show Google Drive in file picker */
   showInFilePicker: boolean;
   /** Notify on sync conflicts */
@@ -253,8 +263,8 @@ export interface GoogleIntegrationSettings {
 export const DEFAULT_GOOGLE_SETTINGS: GoogleIntegrationSettings = {
   autoSyncEnabled: true,
   autoSyncInterval: 5,
-  defaultSyncDirection: 'bidirectional',
-  defaultExportFormat: 'native',
+  defaultSyncDirection: "bidirectional",
+  defaultExportFormat: "native",
   showInFilePicker: true,
   notifyOnConflict: true,
 };
@@ -264,28 +274,33 @@ export const DEFAULT_GOOGLE_SETTINGS: GoogleIntegrationSettings = {
 // ============================================================================
 
 export const GOOGLE_MIME_TYPE_LABELS: Record<string, string> = {
-  'application/vnd.google-apps.document': 'Google Docs',
-  'application/vnd.google-apps.spreadsheet': 'Google Sheets',
-  'application/vnd.google-apps.presentation': 'Google Slides',
-  'application/vnd.google-apps.folder': 'Dossier',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'Document Word',
-  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'Feuille Excel',
-  'application/vnd.openxmlformats-officedocument.presentationml.presentation': 'Présentation PowerPoint',
-  'application/pdf': 'PDF',
+  "application/vnd.google-apps.document": "Google Docs",
+  "application/vnd.google-apps.spreadsheet": "Google Sheets",
+  "application/vnd.google-apps.presentation": "Google Slides",
+  "application/vnd.google-apps.folder": "Dossier",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+    "Document Word",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":
+    "Feuille Excel",
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation":
+    "Présentation PowerPoint",
+  "application/pdf": "PDF",
 };
 
 export const SYNC_STATUS_LABELS: Record<SyncStatus, string> = {
-  synced: 'Synchronisé',
-  pending: 'En attente',
-  conflict: 'Conflit',
-  error: 'Erreur',
-  disabled: 'Désactivé',
+  synced: "Synchronisé",
+  pending: "En attente",
+  conflict: "Conflit",
+  error: "Erreur",
+  disabled: "Désactivé",
 };
 
 export const SYNC_STATUS_COLORS: Record<SyncStatus, string> = {
-  synced: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
-  pending: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
-  conflict: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400',
-  error: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
-  disabled: 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400',
+  synced:
+    "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
+  pending: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400",
+  conflict:
+    "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400",
+  error: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
+  disabled: "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400",
 };

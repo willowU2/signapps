@@ -58,7 +58,15 @@ const categoryLabels: Record<string, string> = {
   agentiq: "AgentIQ",
 };
 
-function WidgetCard({ item, isActive, onAdd }: { item: any; isActive: boolean; onAdd: () => void }) {
+function WidgetCard({
+  item,
+  isActive,
+  onAdd,
+}: {
+  item: any;
+  isActive: boolean;
+  onAdd: () => void;
+}) {
   const [clicked, setClicked] = React.useState(false);
 
   const handleClick = () => {
@@ -74,7 +82,7 @@ function WidgetCard({ item, isActive, onAdd }: { item: any; isActive: boolean; o
       whileTap={{ scale: 0.98 }}
       className={cn(
         "flex flex-col gap-3 p-3 rounded-lg border bg-card transition-colors",
-        !isActive && "hover:border-primary/50"
+        !isActive && "hover:border-primary/50",
       )}
     >
       <div className="flex items-center gap-2">
@@ -90,20 +98,39 @@ function WidgetCard({ item, isActive, onAdd }: { item: any; isActive: boolean; o
         className={cn(
           "w-full mt-auto transition-all relative overflow-hidden",
           clicked && "bg-green-500/10 text-green-600 border-green-500/20",
-          isActive && "opacity-80 cursor-not-allowed bg-muted text-muted-foreground border-transparent hover:bg-muted"
+          isActive &&
+            "opacity-80 cursor-not-allowed bg-muted text-muted-foreground border-transparent hover:bg-muted",
         )}
       >
         <AnimatePresence mode="wait">
           {clicked ? (
-            <motion.div key="check" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="flex items-center absolute">
+            <motion.div
+              key="check"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="flex items-center absolute"
+            >
               <Check className="h-3.5 w-3.5 mr-2" /> Ajouté !
             </motion.div>
           ) : isActive ? (
-            <motion.div key="added" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="flex items-center absolute">
+            <motion.div
+              key="added"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="flex items-center absolute"
+            >
               <Check className="h-3.5 w-3.5 mr-2" /> Déjà ajouté
             </motion.div>
           ) : (
-            <motion.div key="add" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="flex items-center absolute">
+            <motion.div
+              key="add"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="flex items-center absolute"
+            >
               <Plus className="h-3.5 w-3.5 mr-2" /> Ajouter
             </motion.div>
           )}
@@ -147,8 +174,12 @@ function PresetCard({ preset, onApply }: { preset: any; onApply: () => void }) {
               </Badge>
             )}
           </div>
-          <p className="text-sm text-muted-foreground mt-1">{preset.description}</p>
-          <p className="text-xs text-muted-foreground mt-2">{preset.widgets.length} widgets</p>
+          <p className="text-sm text-muted-foreground mt-1">
+            {preset.description}
+          </p>
+          <p className="text-xs text-muted-foreground mt-2">
+            {preset.widgets.length} widgets
+          </p>
         </div>
       </div>
       <Button
@@ -157,23 +188,34 @@ function PresetCard({ preset, onApply }: { preset: any; onApply: () => void }) {
         onClick={handleApply}
         className={cn(
           "w-full transition-all relative overflow-hidden",
-          applying && "bg-green-500/10 text-green-600 hover:bg-green-500/20 border-green-500/20"
+          applying &&
+            "bg-green-500/10 text-green-600 hover:bg-green-500/20 border-green-500/20",
         )}
       >
         <AnimatePresence mode="wait">
           {applying ? (
-            <motion.div key="applying" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="flex items-center absolute">
+            <motion.div
+              key="applying"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="flex items-center absolute"
+            >
               <Check className="h-4 w-4 mr-2" /> Appliqué !
             </motion.div>
           ) : (
-            <motion.div key="apply" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="flex items-center absolute">
+            <motion.div
+              key="apply"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="flex items-center absolute"
+            >
               Appliquer ce preset
             </motion.div>
           )}
         </AnimatePresence>
-        <div className="invisible flex items-center">
-          Appliquer ce preset
-        </div>
+        <div className="invisible flex items-center">Appliquer ce preset</div>
       </Button>
     </motion.div>
   );
@@ -238,7 +280,7 @@ export function AddWidgetDialog({ open, onOpenChange }: AddWidgetDialogProps) {
               value="widgets"
               className={cn(
                 "relative gap-2 py-1.5 transition-colors",
-                "data-[state=active]:bg-transparent data-[state=active]:shadow-none dark:data-[state=active]:bg-transparent"
+                "data-[state=active]:bg-transparent data-[state=active]:shadow-none dark:data-[state=active]:bg-transparent",
               )}
             >
               <span className="relative z-10 flex items-center gap-2">
@@ -257,7 +299,7 @@ export function AddWidgetDialog({ open, onOpenChange }: AddWidgetDialogProps) {
               value="presets"
               className={cn(
                 "relative gap-2 py-1.5 transition-colors",
-                "data-[state=active]:bg-transparent data-[state=active]:shadow-none dark:data-[state=active]:bg-transparent"
+                "data-[state=active]:bg-transparent data-[state=active]:shadow-none dark:data-[state=active]:bg-transparent",
               )}
             >
               <span className="relative z-10 flex items-center gap-2">

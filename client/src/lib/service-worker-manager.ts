@@ -7,10 +7,8 @@
  * Convert base64 VAPID public key to Uint8Array for Web Push API
  */
 function urlBase64ToUint8Array(base64String: string): Uint8Array {
-  const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
-  const base64 = (base64String + padding)
-    .replace(/-/g, '+')
-    .replace(/_/g, '/');
+  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
 
   const rawData = window.atob(base64);
   const outputArray = new Uint8Array(rawData.length);
@@ -30,7 +28,7 @@ export class ServiceWorkerManager {
    * Check if Service Workers are supported
    */
   static isSupported(): boolean {
-    return 'serviceWorker' in navigator && 'PushManager' in window;
+    return "serviceWorker" in navigator && "PushManager" in window;
   }
 
   /**
@@ -38,11 +36,11 @@ export class ServiceWorkerManager {
    */
   static async register(): Promise<ServiceWorkerRegistration> {
     if (!ServiceWorkerManager.isSupported()) {
-      throw new Error('Service Workers not supported in this browser');
+      throw new Error("Service Workers not supported in this browser");
     }
 
-    const registration = await navigator.serviceWorker.register('/sw.js', {
-      scope: '/',
+    const registration = await navigator.serviceWorker.register("/sw.js", {
+      scope: "/",
     });
     return registration;
   }
@@ -68,7 +66,9 @@ export class ServiceWorkerManager {
 
     const subscription = await registration.pushManager.subscribe({
       userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(vapidPublicKey) as BufferSource,
+      applicationServerKey: urlBase64ToUint8Array(
+        vapidPublicKey,
+      ) as BufferSource,
     });
 
     return subscription;
@@ -95,7 +95,7 @@ export class ServiceWorkerManager {
    */
   static async requestPermission(): Promise<NotificationPermission> {
     if (!ServiceWorkerManager.isSupported()) {
-      throw new Error('Notifications not supported');
+      throw new Error("Notifications not supported");
     }
     return Notification.requestPermission();
   }

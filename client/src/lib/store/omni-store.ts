@@ -1,21 +1,21 @@
-import { create } from 'zustand'
+import { create } from "zustand";
 
 interface OmniState {
-  isOpen: boolean
-  searchQuery: string
+  isOpen: boolean;
+  searchQuery: string;
 
-  open: () => void
-  close: () => void
-  toggle: () => void
-  setQuery: (query: string) => void
+  open: () => void;
+  close: () => void;
+  toggle: () => void;
+  setQuery: (query: string) => void;
 }
 
 export const useOmniStore = create<OmniState>((set) => ({
   isOpen: false,
-  searchQuery: '',
+  searchQuery: "",
 
   open: () => set({ isOpen: true }),
   close: () => set({ isOpen: false }),
   toggle: () => set((state) => ({ isOpen: !state.isOpen })),
   setQuery: (query) => set({ searchQuery: query }),
-}))
+}));

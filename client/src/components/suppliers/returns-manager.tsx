@@ -95,20 +95,28 @@ export default function ReturnsManager() {
           <h3 className="mb-4 font-semibold">Create Return Request</h3>
           <div className="space-y-3">
             <div>
-              <label className="block text-sm font-medium">Reason for Return</label>
+              <label className="block text-sm font-medium">
+                Reason for Return
+              </label>
               <input
                 type="text"
                 value={formData.reason}
-                onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, reason: e.target.value })
+                }
                 placeholder="e.g., Defective unit"
                 className="w-full rounded border px-3 py-2 text-sm"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium">Items (one per line)</label>
+              <label className="block text-sm font-medium">
+                Items (one per line)
+              </label>
               <textarea
                 value={formData.items}
-                onChange={(e) => setFormData({ ...formData, items: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, items: e.target.value })
+                }
                 placeholder="e.g., 5x Component A&#10;2x Connector Kit"
                 rows={4}
                 className="w-full rounded border px-3 py-2 text-sm"
@@ -147,17 +155,23 @@ export default function ReturnsManager() {
                   <RotateCcw className="h-5 w-5 text-red-500 mt-1" />
                   <div>
                     <p className="font-semibold">{ret.rmaNumber}</p>
-                    <p className="text-sm text-muted-foreground">Reason: {ret.reason}</p>
+                    <p className="text-sm text-muted-foreground">
+                      Reason: {ret.reason}
+                    </p>
                     <p className="mt-2 text-sm font-medium">Items:</p>
                     <ul className="ml-4 list-disc text-sm text-muted-foreground">
                       {ret.items.map((item, idx) => (
                         <li key={idx}>{item}</li>
                       ))}
                     </ul>
-                    <p className="mt-2 text-xs text-muted-foreground">Submitted: {ret.date}</p>
+                    <p className="mt-2 text-xs text-muted-foreground">
+                      Submitted: {ret.date}
+                    </p>
                   </div>
                 </div>
-                <span className={`rounded px-3 py-1 text-xs font-semibold ${getStatusColor(ret.status)}`}>
+                <span
+                  className={`rounded px-3 py-1 text-xs font-semibold ${getStatusColor(ret.status)}`}
+                >
                   {ret.status.charAt(0).toUpperCase() + ret.status.slice(1)}
                 </span>
               </div>

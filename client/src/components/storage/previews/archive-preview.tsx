@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import { SpinnerInfinity } from 'spinners-react';
+import { SpinnerInfinity } from "spinners-react";
 
-import { useEffect, useState } from 'react';
-import { FileArchive, Download } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { toast } from 'sonner';
-import { previewApi } from '@/lib/api';
+import { useEffect, useState } from "react";
+import { FileArchive, Download } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import { previewApi } from "@/lib/api";
 
 interface ArchiveFile {
   name: string;
@@ -41,14 +41,18 @@ export function ArchivePreview({
       return;
     }
 
-    previewApi.getArchiveListing(bucket, fileKey)
-      .then(res => {
+    previewApi
+      .getArchiveListing(bucket, fileKey)
+      .then((res) => {
         const fileList = res.data;
         setFiles(fileList);
-        const total = fileList.reduce((acc: number, f: ArchiveFile) => acc + f.size, 0);
+        const total = fileList.reduce(
+          (acc: number, f: ArchiveFile) => acc + f.size,
+          0,
+        );
         setTotalSize(total);
       })
-      .catch(err => {
+      .catch((err) => {
         console.error("Failed to load archive listing", err);
         // Only show toast if it's explicitly requested by an action, or fail silently for preview pane
       })
@@ -60,18 +64,29 @@ export function ArchivePreview({
   const formatSize = (bytes: number) => {
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+    if (bytes < 1024 * 1024 * 1024)
+      return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
     return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
   };
 
-  const compressionRatio = totalSize > 0
-    ? Math.round((1 - files.reduce((a, f) => a + f.compressed_size, 0) / totalSize) * 100)
-    : 0;
+  const compressionRatio =
+    totalSize > 0
+      ? Math.round(
+          (1 - files.reduce((a, f) => a + f.compressed_size, 0) / totalSize) *
+            100,
+        )
+      : 0;
 
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-8 w-8  text-muted-foreground" />
+        <SpinnerInfinity
+          size={24}
+          secondaryColor="rgba(128,128,128,0.2)"
+          color="currentColor"
+          speed={120}
+          className="h-8 w-8  text-muted-foreground"
+        />
       </div>
     );
   }
@@ -132,7 +147,9 @@ export function ArchivePreview({
       ) : (
         <div className="text-center py-8 text-muted-foreground">
           <p className="text-sm">Extraction de contenu non disponible</p>
-          <p className="text-xs">Téléchargez l'archive pour l'explorer localement</p>
+          <p className="text-xs">
+            Téléchargez l'archive pour l'explorer localement
+          </p>
         </div>
       )}
 

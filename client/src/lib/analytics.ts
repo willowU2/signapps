@@ -19,8 +19,8 @@ export interface TrackEventPayload {
 // ── Config ───────────────────────────────────────────────────────────────────
 
 const METRICS_URL =
-  (typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_METRICS_URL) ||
-  'http://localhost:3008/api/v1';
+  (typeof process !== "undefined" && process.env?.NEXT_PUBLIC_METRICS_URL) ||
+  "http://localhost:3008/api/v1";
 
 const TRACK_ENDPOINT = `${METRICS_URL}/metrics/track`;
 
@@ -45,11 +45,11 @@ async function flushQueue() {
   const batch = queue.splice(0, BATCH_SIZE);
   try {
     await fetch(TRACK_ENDPOINT, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ events: batch }),
       // Credentials for session-based auth on the metrics service
-      credentials: 'include',
+      credentials: "include",
     });
   } catch {
     // Silently fail — analytics must never break the app
@@ -69,7 +69,7 @@ async function flushQueue() {
  * @param props   - Arbitrary key/value properties attached to the event
  */
 export function track(event: string, props?: Record<string, unknown>): void {
-  if (typeof window === 'undefined') return; // SSR guard
+  if (typeof window === "undefined") return; // SSR guard
 
   const payload: TrackEventPayload = {
     event,
@@ -81,7 +81,10 @@ export function track(event: string, props?: Record<string, unknown>): void {
 
   if (queue.length >= BATCH_SIZE) {
     // Flush immediately when batch is full
-    if (flushTimer) { clearTimeout(flushTimer); flushTimer = null; }
+    if (flushTimer) {
+      clearTimeout(flushTimer);
+      flushTimer = null;
+    }
     flushQueue();
   } else {
     scheduleFlush();
@@ -91,23 +94,29 @@ export function track(event: string, props?: Record<string, unknown>): void {
 /**
  * Track a page view — convenience wrapper.
  */
-export function trackPageView(page: string, props?: Record<string, unknown>): void {
-  track('page_view', { page, ...props });
+export function trackPageView(
+  page: string,
+  props?: Record<string, unknown>,
+): void {
+  track("page_view", { page, ...props });
 }
 
 /**
  * Force-flush the event queue immediately (e.g. before page unload).
  */
 export function flushAnalytics(): void {
-  if (flushTimer) { clearTimeout(flushTimer); flushTimer = null; }
+  if (flushTimer) {
+    clearTimeout(flushTimer);
+    flushTimer = null;
+  }
   flushQueue();
 }
 
 // Flush on page unload to avoid losing events
-if (typeof window !== 'undefined') {
-  window.addEventListener('beforeunload', flushAnalytics);
+if (typeof window !== "undefined") {
+  window.addEventListener("beforeunload", flushAnalytics);
   // Modern alternative (Chrome/Edge)
-  document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'hidden') flushAnalytics();
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden") flushAnalytics();
   });
 }

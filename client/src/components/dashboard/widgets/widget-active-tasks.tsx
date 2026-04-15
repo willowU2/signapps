@@ -48,7 +48,7 @@ export function WidgetActiveTasks({ widget }: WidgetRenderProps) {
         (t) =>
           t.status !== "done" &&
           t.due_date &&
-          new Date(t.due_date) < new Date()
+          new Date(t.due_date) < new Date(),
       );
 
       return {
@@ -106,7 +106,9 @@ export function WidgetActiveTasks({ widget }: WidgetRenderProps) {
 
           {/* Secondary info row */}
           <div className="flex items-center gap-3 text-xs text-muted-foreground">
-            <span>{total} tâche{total !== 1 ? "s" : ""} ouvertes</span>
+            <span>
+              {total} tâche{total !== 1 ? "s" : ""} ouvertes
+            </span>
             {overdueCount > 0 && (
               <Badge
                 variant="destructive"

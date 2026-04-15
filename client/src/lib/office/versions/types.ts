@@ -8,7 +8,7 @@
 // Version Types
 // ============================================================================
 
-export type VersionType = 'auto' | 'manual' | 'restore' | 'publish';
+export type VersionType = "auto" | "manual" | "restore" | "publish";
 
 export interface DocumentVersion {
   /** Version unique identifier */
@@ -51,14 +51,14 @@ export interface VersionCollaborator {
   userId: string;
   userName: string;
   userAvatar?: string;
-  contributionType: 'edit' | 'comment' | 'review';
+  contributionType: "edit" | "comment" | "review";
 }
 
 // ============================================================================
 // Version Diff Types
 // ============================================================================
 
-export type DiffChangeType = 'added' | 'removed' | 'modified' | 'unchanged';
+export type DiffChangeType = "added" | "removed" | "modified" | "unchanged";
 
 export interface DiffLine {
   /** Line number in the source version */
@@ -79,7 +79,7 @@ export interface InlineChange {
   /** End position in the line */
   end: number;
   /** Change type */
-  type: 'added' | 'removed';
+  type: "added" | "removed";
   /** Changed text */
   text: string;
 }
@@ -128,7 +128,7 @@ export interface GetVersionsParams {
   /** Items per page */
   pageSize?: number;
   /** Filter by version type */
-  type?: VersionType | 'all';
+  type?: VersionType | "all";
   /** Include only starred versions */
   starredOnly?: boolean;
   /** Start date filter */
@@ -167,7 +167,7 @@ export interface CompareVersionsRequest {
   /** Target (newer) version ID */
   targetVersionId: string;
   /** Diff format */
-  format?: 'unified' | 'sideBySide';
+  format?: "unified" | "sideBySide";
   /** Context lines around changes */
   contextLines?: number;
 }
@@ -202,15 +202,18 @@ export const DEFAULT_VERSION_SETTINGS: VersionHistorySettings = {
 // ============================================================================
 
 export const VERSION_TYPE_LABELS: Record<VersionType, string> = {
-  auto: 'Sauvegarde automatique',
-  manual: 'Version manuelle',
-  restore: 'Restauration',
-  publish: 'Publication',
+  auto: "Sauvegarde automatique",
+  manual: "Version manuelle",
+  restore: "Restauration",
+  publish: "Publication",
 };
 
 export const VERSION_TYPE_COLORS: Record<VersionType, string> = {
-  auto: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
-  manual: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
-  restore: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400',
-  publish: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400',
+  auto: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400",
+  manual:
+    "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
+  restore:
+    "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400",
+  publish:
+    "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400",
 };

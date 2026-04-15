@@ -51,7 +51,7 @@ function mapExperimentFromApi(e: any): Experiment {
       percentage: v.traffic_percentage ?? v.percentage ?? 50,
       conversions: v.conversions ?? 0,
     })),
-    status: e.status === "active" ? "running" : e.status ?? "running",
+    status: e.status === "active" ? "running" : (e.status ?? "running"),
     winner: e.winner_variant,
     startDate: new Date(e.created_at ?? e.start_date ?? Date.now()),
     endDate: e.ended_at ? new Date(e.ended_at) : undefined,
@@ -70,7 +70,7 @@ const getStatusText = (status: "running" | "completed"): string => {
 
 const getWinnerPercentage = (
   variants: Experiment["variants"],
-  winner?: string
+  winner?: string,
 ): { [key: string]: number } => {
   if (!winner) return {};
 
@@ -81,7 +81,10 @@ const getWinnerPercentage = (
   const winnerConversions = winnerVariant.conversions;
 
   return {
-    improvement: ((winnerConversions - totalConversions / variants.length) / (totalConversions / variants.length)) * 100,
+    improvement:
+      ((winnerConversions - totalConversions / variants.length) /
+        (totalConversions / variants.length)) *
+      100,
   };
 };
 
@@ -102,7 +105,7 @@ export function ABTesting() {
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await metricsClient.get<any[]>('/experiments');
+        const res = await metricsClient.get<any[]>("/experiments");
         const loaded = (res.data ?? []).map(mapExperimentFromApi);
         setExperiments(loaded);
         saveExperimentsToStorage(loaded);
@@ -134,9 +137,12 @@ export function ABTesting() {
     setShowForm(false);
     toast.success(`Experiment "${exp.name}" created`);
     try {
-      await metricsClient.post('/experiments', {
+      await metricsClient.post("/experiments", {
         name: exp.name,
-        variants: exp.variants.map(v => ({ name: v.name, traffic_percentage: v.percentage })),
+        variants: exp.variants.map((v) => ({
+          name: v.name,
+          traffic_percentage: v.percentage,
+        })),
       });
     } catch {
       // localStorage has it
@@ -144,12 +150,14 @@ export function ABTesting() {
   };
 
   if (isLoading) {
-    return <div className="text-center text-muted-foreground">Chargement...</div>;
+    return (
+      <div className="text-center text-muted-foreground">Chargement...</div>
+    );
   }
 
   const runningCount = experiments.filter((e) => e.status === "running").length;
   const completedCount = experiments.filter(
-    (e) => e.status === "completed"
+    (e) => e.status === "completed",
   ).length;
 
   return (
@@ -162,11 +170,15 @@ export function ABTesting() {
         </div>
         <div className="space-x-6 text-sm text-muted-foreground">
           <span>
-            <span className="font-semibold text-foreground">{runningCount}</span>{" "}
+            <span className="font-semibold text-foreground">
+              {runningCount}
+            </span>{" "}
             running
           </span>
           <span>
-            <span className="font-semibold text-foreground">{completedCount}</span>{" "}
+            <span className="font-semibold text-foreground">
+              {completedCount}
+            </span>{" "}
             completed
           </span>
         </div>
@@ -180,11 +192,29 @@ export function ABTesting() {
               onKeyDown={(e) => e.key === "Enter" && handleNewExperiment()}
               autoFocus
             />
-            <Button onClick={handleNewExperiment} size="sm" className="bg-blue-600 hover:bg-blue-700">Créer</Button>
-            <Button onClick={() => { setShowForm(false); setNewName(""); }} size="sm" variant="ghost">Annuler</Button>
+            <Button
+              onClick={handleNewExperiment}
+              size="sm"
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              Créer
+            </Button>
+            <Button
+              onClick={() => {
+                setShowForm(false);
+                setNewName("");
+              }}
+              size="sm"
+              variant="ghost"
+            >
+              Annuler
+            </Button>
           </div>
         ) : (
-          <Button onClick={() => setShowForm(true)} className="bg-blue-600 hover:bg-blue-700">
+          <Button
+            onClick={() => setShowForm(true)}
+            className="bg-blue-600 hover:bg-blue-700"
+          >
             <Plus className="h-4 w-4 mr-2" />
             New Experiment
           </Button>
@@ -208,7 +238,8 @@ export function ABTesting() {
                   <div className="flex items-center gap-1">
                     <Clock className="h-4 w-4" />
                     {formatDate(experiment.startDate)}
-                    {experiment.endDate && ` - ${formatDate(experiment.endDate)}`}
+                    {experiment.endDate &&
+                      ` - ${formatDate(experiment.endDate)}`}
                   </div>
                 </div>
               </div>
@@ -216,7 +247,7 @@ export function ABTesting() {
               <div className="flex items-center gap-3">
                 <span
                   className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusBadge(
-                    experiment.status
+                    experiment.status,
                   )}`}
                 >
                   {getStatusText(experiment.status)}
@@ -235,10 +266,12 @@ export function ABTesting() {
               {experiment.variants.map((variant, idx) => {
                 const totalConversions = experiment.variants.reduce(
                   (sum, v) => sum + v.conversions,
-                  0
+                  0,
                 );
-                const conversionRate =
-                  ((variant.conversions / totalConversions) * 100).toFixed(1);
+                const conversionRate = (
+                  (variant.conversions / totalConversions) *
+                  100
+                ).toFixed(1);
 
                 return (
                   <div key={idx} className="space-y-1">

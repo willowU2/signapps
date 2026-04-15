@@ -4,7 +4,7 @@
  * Zustand store for Office Suite monitoring state.
  */
 
-import { create } from 'zustand';
+import { create } from "zustand";
 import type {
   OfficeMetricsSummary,
   MetricSeries,
@@ -17,8 +17,8 @@ import type {
   TimeRange,
   EventSeverity,
   EventType,
-} from '@/lib/office/monitoring/types';
-import { monitoringApi } from '@/lib/office/monitoring/api';
+} from "@/lib/office/monitoring/types";
+import { monitoringApi } from "@/lib/office/monitoring/api";
 
 // ============================================================================
 // Types
@@ -80,8 +80,13 @@ interface MonitoringState {
   loadAlertRules: () => Promise<void>;
   loadActiveAlerts: () => Promise<void>;
   loadAlertHistory: () => Promise<void>;
-  createAlertRule: (rule: Omit<AlertRule, 'id' | 'status' | 'lastTriggered' | 'triggeredCount'>) => Promise<boolean>;
-  updateAlertRule: (ruleId: string, updates: Partial<AlertRule>) => Promise<boolean>;
+  createAlertRule: (
+    rule: Omit<AlertRule, "id" | "status" | "lastTriggered" | "triggeredCount">,
+  ) => Promise<boolean>;
+  updateAlertRule: (
+    ruleId: string,
+    updates: Partial<AlertRule>,
+  ) => Promise<boolean>;
   deleteAlertRule: (ruleId: string) => Promise<boolean>;
   silenceAlert: (alertId: string, duration: number) => Promise<boolean>;
   acknowledgeAlert: (alertId: string) => Promise<boolean>;
@@ -127,7 +132,7 @@ export const useMonitoringStore = create<MonitoringState>()((set, get) => ({
 
   health: null,
 
-  timeRange: '24h',
+  timeRange: "24h",
   severityFilter: [],
   typeFilter: [],
 
@@ -152,7 +157,7 @@ export const useMonitoringStore = create<MonitoringState>()((set, get) => ({
     } catch (error) {
       set({
         isLoadingSummary: false,
-        error: error instanceof Error ? error.message : 'Erreur de chargement',
+        error: error instanceof Error ? error.message : "Erreur de chargement",
       });
     }
   },
@@ -164,7 +169,8 @@ export const useMonitoringStore = create<MonitoringState>()((set, get) => ({
       const series = await monitoringApi.getMetricSeries({
         names,
         timeRange,
-        granularity: timeRange === '1h' ? 'minute' : timeRange === '24h' ? 'hour' : 'day',
+        granularity:
+          timeRange === "1h" ? "minute" : timeRange === "24h" ? "hour" : "day",
       });
       set({ metricSeries: series });
     } catch (error) {
@@ -207,7 +213,7 @@ export const useMonitoringStore = create<MonitoringState>()((set, get) => ({
           startTime: getStartTimeForRange(timeRange),
         },
         limit: 50,
-        sortOrder: 'desc',
+        sortOrder: "desc",
       });
 
       set({
@@ -219,13 +225,20 @@ export const useMonitoringStore = create<MonitoringState>()((set, get) => ({
     } catch (error) {
       set({
         isLoadingEvents: false,
-        error: error instanceof Error ? error.message : 'Erreur de chargement',
+        error: error instanceof Error ? error.message : "Erreur de chargement",
       });
     }
   },
 
   loadMoreEvents: async () => {
-    const { events, hasMoreEvents, isLoadingEvents, severityFilter, typeFilter, timeRange } = get();
+    const {
+      events,
+      hasMoreEvents,
+      isLoadingEvents,
+      severityFilter,
+      typeFilter,
+      timeRange,
+    } = get();
     if (!hasMoreEvents || isLoadingEvents) return;
 
     set({ isLoadingEvents: true });
@@ -239,7 +252,7 @@ export const useMonitoringStore = create<MonitoringState>()((set, get) => ({
         },
         limit: 50,
         offset: events.length,
-        sortOrder: 'desc',
+        sortOrder: "desc",
       });
 
       set({
@@ -250,7 +263,7 @@ export const useMonitoringStore = create<MonitoringState>()((set, get) => ({
     } catch (error) {
       set({
         isLoadingEvents: false,
-        error: error instanceof Error ? error.message : 'Erreur de chargement',
+        error: error instanceof Error ? error.message : "Erreur de chargement",
       });
     }
   },
@@ -270,13 +283,15 @@ export const useMonitoringStore = create<MonitoringState>()((set, get) => ({
 
       set((state) => ({
         events: state.events.map((e) => (e.id === eventId ? updated : e)),
-        recentEvents: state.recentEvents.map((e) => (e.id === eventId ? updated : e)),
+        recentEvents: state.recentEvents.map((e) =>
+          e.id === eventId ? updated : e,
+        ),
       }));
 
       return true;
     } catch (error) {
       set({
-        error: error instanceof Error ? error.message : 'Erreur',
+        error: error instanceof Error ? error.message : "Erreur",
       });
       return false;
     }
@@ -284,7 +299,9 @@ export const useMonitoringStore = create<MonitoringState>()((set, get) => ({
 
   acknowledgeAllEvents: async () => {
     const { events } = get();
-    const unacknowledged = events.filter((e) => !e.acknowledged).map((e) => e.id);
+    const unacknowledged = events
+      .filter((e) => !e.acknowledged)
+      .map((e) => e.id);
 
     if (unacknowledged.length === 0) return 0;
 
@@ -293,14 +310,14 @@ export const useMonitoringStore = create<MonitoringState>()((set, get) => ({
 
       set((state) => ({
         events: state.events.map((e) =>
-          unacknowledged.includes(e.id) ? { ...e, acknowledged: true } : e
+          unacknowledged.includes(e.id) ? { ...e, acknowledged: true } : e,
         ),
       }));
 
       return result.count;
     } catch (error) {
       set({
-        error: error instanceof Error ? error.message : 'Erreur',
+        error: error instanceof Error ? error.message : "Erreur",
       });
       return 0;
     }
@@ -343,7 +360,7 @@ export const useMonitoringStore = create<MonitoringState>()((set, get) => ({
       return true;
     } catch (error) {
       set({
-        error: error instanceof Error ? error.message : 'Erreur de création',
+        error: error instanceof Error ? error.message : "Erreur de création",
       });
       return false;
     }
@@ -353,12 +370,14 @@ export const useMonitoringStore = create<MonitoringState>()((set, get) => ({
     try {
       const updated = await monitoringApi.updateAlertRule(ruleId, updates);
       set((state) => ({
-        alertRules: state.alertRules.map((r) => (r.id === ruleId ? updated : r)),
+        alertRules: state.alertRules.map((r) =>
+          r.id === ruleId ? updated : r,
+        ),
       }));
       return true;
     } catch (error) {
       set({
-        error: error instanceof Error ? error.message : 'Erreur de mise à jour',
+        error: error instanceof Error ? error.message : "Erreur de mise à jour",
       });
       return false;
     }
@@ -373,7 +392,7 @@ export const useMonitoringStore = create<MonitoringState>()((set, get) => ({
       return true;
     } catch (error) {
       set({
-        error: error instanceof Error ? error.message : 'Erreur de suppression',
+        error: error instanceof Error ? error.message : "Erreur de suppression",
       });
       return false;
     }
@@ -383,12 +402,14 @@ export const useMonitoringStore = create<MonitoringState>()((set, get) => ({
     try {
       const updated = await monitoringApi.silenceAlert(alertId, duration);
       set((state) => ({
-        activeAlerts: state.activeAlerts.map((a) => (a.id === alertId ? updated : a)),
+        activeAlerts: state.activeAlerts.map((a) =>
+          a.id === alertId ? updated : a,
+        ),
       }));
       return true;
     } catch (error) {
       set({
-        error: error instanceof Error ? error.message : 'Erreur',
+        error: error instanceof Error ? error.message : "Erreur",
       });
       return false;
     }
@@ -398,12 +419,14 @@ export const useMonitoringStore = create<MonitoringState>()((set, get) => ({
     try {
       const updated = await monitoringApi.acknowledgeAlert(alertId);
       set((state) => ({
-        activeAlerts: state.activeAlerts.map((a) => (a.id === alertId ? updated : a)),
+        activeAlerts: state.activeAlerts.map((a) =>
+          a.id === alertId ? updated : a,
+        ),
       }));
       return true;
     } catch (error) {
       set({
-        error: error instanceof Error ? error.message : 'Erreur',
+        error: error instanceof Error ? error.message : "Erreur",
       });
       return false;
     }
@@ -437,7 +460,7 @@ export const useMonitoringStore = create<MonitoringState>()((set, get) => ({
           get().unsubscribeAll();
           get().subscribeToMetrics();
         }, 5000);
-      }
+      },
     );
 
     set({ metricsSubscription: unsubscribe });
@@ -465,7 +488,7 @@ export const useMonitoringStore = create<MonitoringState>()((set, get) => ({
           }
           get().subscribeToEvents();
         }, 5000);
-      }
+      },
     );
 
     set({ eventsSubscription: unsubscribe });
@@ -545,15 +568,15 @@ export const useMonitoringStore = create<MonitoringState>()((set, get) => ({
 function getStartTimeForRange(timeRange: TimeRange): string {
   const now = new Date();
   switch (timeRange) {
-    case '1h':
+    case "1h":
       return new Date(now.getTime() - 60 * 60 * 1000).toISOString();
-    case '6h':
+    case "6h":
       return new Date(now.getTime() - 6 * 60 * 60 * 1000).toISOString();
-    case '24h':
+    case "24h":
       return new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString();
-    case '7d':
+    case "7d":
       return new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
-    case '30d':
+    case "30d":
       return new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
   }
 }
@@ -563,8 +586,10 @@ function getStartTimeForRange(timeRange: TimeRange): string {
 // ============================================================================
 
 export const selectMetricsSummary = (state: MonitoringState) => state.summary;
-export const selectActiveAlerts = (state: MonitoringState) => state.activeAlerts;
-export const selectRecentEvents = (state: MonitoringState) => state.recentEvents;
+export const selectActiveAlerts = (state: MonitoringState) =>
+  state.activeAlerts;
+export const selectRecentEvents = (state: MonitoringState) =>
+  state.recentEvents;
 export const selectSystemHealth = (state: MonitoringState) => state.health;
 
 export default useMonitoringStore;

@@ -32,7 +32,11 @@ const SAMPLE_TASKS: TaskDependency[] = [
 
 // ── Utilities ──────────────────────────────────────────────────────────────
 
-function detectCycle(tasks: TaskDependency[], startId: string, targetId: string): boolean {
+function detectCycle(
+  tasks: TaskDependency[],
+  startId: string,
+  targetId: string,
+): boolean {
   if (startId === targetId) return true;
 
   const visited = new Set<string>();
@@ -53,7 +57,10 @@ function detectCycle(tasks: TaskDependency[], startId: string, targetId: string)
   return false;
 }
 
-function buildDependencyPath(tasks: TaskDependency[], taskId: string): string[] {
+function buildDependencyPath(
+  tasks: TaskDependency[],
+  taskId: string,
+): string[] {
   const path: string[] = [taskId];
   let current = taskId;
 
@@ -75,13 +82,19 @@ interface DependencySelectorProps {
   onSelect: (blockedBy?: string) => void;
 }
 
-function DependencySelector({ task, allTasks, onSelect }: DependencySelectorProps) {
+function DependencySelector({
+  task,
+  allTasks,
+  onSelect,
+}: DependencySelectorProps) {
   const [open, setOpen] = useState(false);
   const availableTasks = allTasks.filter((t) => t.id !== task.id);
 
   const handleSelect = (taskId?: string) => {
     if (taskId && detectCycle(allTasks, task.id, taskId)) {
-      toast.error("Impossible de définir la dépendance : créerait une dépendance circulaire");
+      toast.error(
+        "Impossible de définir la dépendance : créerait une dépendance circulaire",
+      );
       return;
     }
     onSelect(taskId);
@@ -98,7 +111,8 @@ function DependencySelector({ task, allTasks, onSelect }: DependencySelectorProp
       >
         <span className="text-muted-foreground text-xs truncate">
           {task.blockedBy
-            ? availableTasks.find((t) => t.id === task.blockedBy)?.title || "Unknown"
+            ? availableTasks.find((t) => t.id === task.blockedBy)?.title ||
+              "Unknown"
             : "No dependency"}
         </span>
         <ChevronDown className="size-3 shrink-0" />
@@ -122,14 +136,16 @@ function DependencySelector({ task, allTasks, onSelect }: DependencySelectorProp
                 onClick={() => handleSelect(t.id)}
                 className={cn(
                   "w-full text-left px-3 py-2 hover:bg-muted text-sm border-b last:border-b-0",
-                  task.blockedBy === t.id && "bg-blue-50 font-semibold"
+                  task.blockedBy === t.id && "bg-blue-50 font-semibold",
                 )}
               >
                 {t.title}
               </button>
             ))
           ) : (
-            <div className="px-3 py-2 text-xs text-muted-foreground">No other tasks</div>
+            <div className="px-3 py-2 text-xs text-muted-foreground">
+              No other tasks
+            </div>
           )}
         </div>
       )}
@@ -180,20 +196,25 @@ function TaskRow({
   onDelete,
   hasCycle,
 }: TaskRowProps) {
-  const dependencyPath = task.blockedBy ? buildDependencyPath(allTasks, task.id) : [];
+  const dependencyPath = task.blockedBy
+    ? buildDependencyPath(allTasks, task.id)
+    : [];
 
   return (
     <div
       className={cn(
         "flex items-center justify-between p-4 border-b hover:bg-muted/30 transition-colors",
-        hasCycle && "bg-red-50"
+        hasCycle && "bg-red-50",
       )}
     >
       <div className="flex-1">
         <p className="font-medium text-sm">{task.title}</p>
         {dependencyPath.length > 1 && (
           <p className="text-xs text-muted-foreground mt-1">
-            Path: {dependencyPath.map((id) => allTasks.find((t) => t.id === id)?.title).join(" ← ")}
+            Path:{" "}
+            {dependencyPath
+              .map((id) => allTasks.find((t) => t.id === id)?.title)
+              .join(" ← ")}
           </p>
         )}
       </div>
@@ -239,7 +260,7 @@ export function TaskDependencies({
 
   const handleDependencyChange = (taskId: string, blockedBy?: string) => {
     setTasks((prev) =>
-      prev.map((t) => (t.id === taskId ? { ...t, blockedBy } : t))
+      prev.map((t) => (t.id === taskId ? { ...t, blockedBy } : t)),
     );
     onDependencyChange?.(taskId, blockedBy);
   };
@@ -255,7 +276,8 @@ export function TaskDependencies({
       <div className="p-4 border-b bg-muted/30">
         <h3 className="font-semibold">Task Dependencies</h3>
         <p className="text-xs text-muted-foreground mt-1">
-          Manage task blocking relationships. Circular dependencies are detected automatically.
+          Manage task blocking relationships. Circular dependencies are detected
+          automatically.
         </p>
       </div>
 
@@ -273,7 +295,9 @@ export function TaskDependencies({
             key={task.id}
             task={task}
             allTasks={tasks}
-            onDependencyChange={(blockedBy) => handleDependencyChange(task.id, blockedBy)}
+            onDependencyChange={(blockedBy) =>
+              handleDependencyChange(task.id, blockedBy)
+            }
             onDelete={() => handleTaskDelete(task.id)}
             hasCycle={cycleTaskIds.includes(task.id)}
           />

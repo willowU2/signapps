@@ -1,13 +1,13 @@
-'use client';
+"use client";
 
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
+} from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
   TableBody,
@@ -15,9 +15,9 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import { useQuery } from '@tanstack/react-query';
-import { backupsApi, BackupRun } from '@/lib/api';
+} from "@/components/ui/table";
+import { useQuery } from "@tanstack/react-query";
+import { backupsApi, BackupRun } from "@/lib/api";
 
 interface RunsDialogProps {
   open: boolean;
@@ -26,7 +26,7 @@ interface RunsDialogProps {
 }
 
 function formatDuration(seconds?: number) {
-  if (!seconds) return '-';
+  if (!seconds) return "-";
   if (seconds < 60) return `${seconds}s`;
   const mins = Math.floor(seconds / 60);
   const secs = seconds % 60;
@@ -34,20 +34,20 @@ function formatDuration(seconds?: number) {
 }
 
 function formatBytes(bytes?: number) {
-  if (!bytes) return '-';
+  if (!bytes) return "-";
   const k = 1024;
-  const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+  const sizes = ["B", "KB", "MB", "GB", "TB"];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
 }
 
 function statusBadge(status: string) {
   switch (status) {
-    case 'success':
+    case "success":
       return <Badge className="bg-green-500/10 text-green-600">Success</Badge>;
-    case 'failed':
+    case "failed":
       return <Badge variant="destructive">Failed</Badge>;
-    case 'running':
+    case "running":
       return <Badge className="bg-blue-500/10 text-blue-600">Running</Badge>;
     default:
       return <Badge variant="outline">{status}</Badge>;
@@ -56,7 +56,7 @@ function statusBadge(status: string) {
 
 export function RunsDialog({ open, onOpenChange, profileId }: RunsDialogProps) {
   const { data: runsData, isLoading } = useQuery({
-    queryKey: ['backup-runs', profileId],
+    queryKey: ["backup-runs", profileId],
     queryFn: async () => {
       const res = await backupsApi.runs(profileId);
       return res.data.runs;
@@ -98,12 +98,12 @@ export function RunsDialog({ open, onOpenChange, profileId }: RunsDialogProps) {
                   <TableRow key={run.id}>
                     <TableCell>{statusBadge(run.status)}</TableCell>
                     <TableCell className="font-mono text-xs">
-                      {run.snapshot_id?.substring(0, 8) || '-'}
+                      {run.snapshot_id?.substring(0, 8) || "-"}
                     </TableCell>
                     <TableCell className="text-sm">
                       {run.files_new != null
                         ? `+${run.files_new} / ~${run.files_changed}`
-                        : '-'}
+                        : "-"}
                     </TableCell>
                     <TableCell className="text-sm">
                       {formatBytes(run.size_bytes ?? undefined)}

@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * AgentIQ Agents Widget
@@ -6,18 +6,18 @@
  * Shows the 3 principal agents: Antigravity, Claude, OpenClaw.
  */
 
-import { useQuery } from '@tanstack/react-query';
-import { Bot, WifiOff } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Progress } from '@/components/ui/progress';
-import { agentiqApi } from '@/lib/api/agentiq';
-import type { WidgetRenderProps } from '@/lib/dashboard/types';
+import { useQuery } from "@tanstack/react-query";
+import { Bot, WifiOff } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Progress } from "@/components/ui/progress";
+import { agentiqApi } from "@/lib/api/agentiq";
+import type { WidgetRenderProps } from "@/lib/dashboard/types";
 
 interface AgentData {
   name: string;
-  status: 'active' | 'idle' | 'waiting';
+  status: "active" | "idle" | "waiting";
   currentTask?: string;
   progress?: number;
   model?: string;
@@ -25,20 +25,24 @@ interface AgentData {
 }
 
 const AGENT_COLORS: Record<string, string> = {
-  Antigravity: 'bg-purple-500/10 border-purple-200 dark:border-purple-800',
-  Claude: 'bg-blue-500/10 border-blue-200 dark:border-blue-800',
-  OpenClaw: 'bg-green-500/10 border-green-200 dark:border-green-800',
+  Antigravity: "bg-purple-500/10 border-purple-200 dark:border-purple-800",
+  Claude: "bg-blue-500/10 border-blue-200 dark:border-blue-800",
+  OpenClaw: "bg-green-500/10 border-green-200 dark:border-green-800",
 };
 
 const STATUS_BADGE: Record<string, string> = {
-  active: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300',
-  idle: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400',
-  waiting: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300',
+  active:
+    "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300",
+  idle: "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400",
+  waiting:
+    "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300",
 };
 
-export function AgentiqAgentsWidget({ widget }: Partial<WidgetRenderProps> = {}) {
+export function AgentiqAgentsWidget({
+  widget,
+}: Partial<WidgetRenderProps> = {}) {
   const { data, isLoading, isError } = useQuery({
-    queryKey: ['agentiq-agents'],
+    queryKey: ["agentiq-agents"],
     queryFn: () => agentiqApi.dashboard(),
     refetchInterval: 5000,
     retry: false,
@@ -73,7 +77,7 @@ export function AgentiqAgentsWidget({ widget }: Partial<WidgetRenderProps> = {})
           agents.map((agent) => (
             <div
               key={agent.name}
-              className={`rounded-lg border p-3 ${AGENT_COLORS[agent.name] ?? 'bg-muted/30'}`}
+              className={`rounded-lg border p-3 ${AGENT_COLORS[agent.name] ?? "bg-muted/30"}`}
             >
               <div className="flex items-center justify-between mb-1.5">
                 <span className="font-semibold text-sm">{agent.name}</span>
@@ -83,7 +87,9 @@ export function AgentiqAgentsWidget({ widget }: Partial<WidgetRenderProps> = {})
                       {agent.model}
                     </Badge>
                   )}
-                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${STATUS_BADGE[agent.status] ?? ''}`}>
+                  <span
+                    className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${STATUS_BADGE[agent.status] ?? ""}`}
+                  >
                     {agent.status}
                   </span>
                 </div>
@@ -97,7 +103,9 @@ export function AgentiqAgentsWidget({ widget }: Partial<WidgetRenderProps> = {})
                 <Progress value={agent.progress} className="h-1.5" />
               )}
               {agent.framework && (
-                <p className="text-[10px] text-muted-foreground mt-1">{agent.framework}</p>
+                <p className="text-[10px] text-muted-foreground mt-1">
+                  {agent.framework}
+                </p>
               )}
             </div>
           ))

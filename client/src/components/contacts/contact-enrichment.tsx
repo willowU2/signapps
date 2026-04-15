@@ -1,16 +1,31 @@
-'use client';
+"use client";
 
 // CT1: Contact enrichment via AI inference from email address
 
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import { aiApi } from '@/lib/api/ai';
-import { contactsApi, type Contact } from '@/lib/api/contacts';
-import { toast } from 'sonner';
-import { Sparkles, User, Building2, Briefcase, Link, Check, X, Loader2 } from 'lucide-react';
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { aiApi } from "@/lib/api/ai";
+import { contactsApi, type Contact } from "@/lib/api/contacts";
+import { toast } from "sonner";
+import {
+  Sparkles,
+  User,
+  Building2,
+  Briefcase,
+  Link,
+  Check,
+  X,
+  Loader2,
+} from "lucide-react";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -60,19 +75,23 @@ function parseEnrichmentResponse(answer: string): EnrichedData {
 
   // Heuristic line parsing
   const result: EnrichedData = {};
-  const lines = answer.split('\n');
+  const lines = answer.split("\n");
   for (const line of lines) {
     const lower = line.toLowerCase();
-    if (lower.includes('full name') || lower.includes('nom complet')) {
+    if (lower.includes("full name") || lower.includes("nom complet")) {
       const m = line.match(/:\s*(.+)/);
       if (m) result.full_name = m[1].trim();
-    } else if (lower.includes('company') || lower.includes('entreprise')) {
+    } else if (lower.includes("company") || lower.includes("entreprise")) {
       const m = line.match(/:\s*(.+)/);
       if (m) result.company = m[1].trim();
-    } else if (lower.includes('job title') || lower.includes('poste') || lower.includes('titre')) {
+    } else if (
+      lower.includes("job title") ||
+      lower.includes("poste") ||
+      lower.includes("titre")
+    ) {
       const m = line.match(/:\s*(.+)/);
       if (m) result.job_title = m[1].trim();
-    } else if (lower.includes('linkedin')) {
+    } else if (lower.includes("linkedin")) {
       const m = line.match(/(https?:\/\/[^\s]+)/);
       if (m) result.linkedin_url = m[1].trim();
     }
@@ -82,12 +101,15 @@ function parseEnrichmentResponse(answer: string): EnrichedData {
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export function ContactEnrichment({ contact, onUpdated }: ContactEnrichmentProps) {
+export function ContactEnrichment({
+  contact,
+  onUpdated,
+}: ContactEnrichmentProps) {
   const [loading, setLoading] = useState(false);
   const [suggestions, setSuggestions] = useState<SuggestedField[]>([]);
   const [applying, setApplying] = useState<string | null>(null);
 
-  const email = contact.email ?? '';
+  const email = contact.email ?? "";
 
   const handleEnrich = async () => {
     if (!email) {
@@ -112,8 +134,8 @@ export function ContactEnrichment({ contact, onUpdated }: ContactEnrichmentProps
 
       if (enriched.full_name) {
         fields.push({
-          key: 'full_name',
-          label: 'Nom complet',
+          key: "full_name",
+          label: "Nom complet",
           value: enriched.full_name,
           icon: <User className="h-4 w-4" />,
           applied: false,
@@ -121,8 +143,8 @@ export function ContactEnrichment({ contact, onUpdated }: ContactEnrichmentProps
       }
       if (enriched.company) {
         fields.push({
-          key: 'company',
-          label: 'Entreprise',
+          key: "company",
+          label: "Entreprise",
           value: enriched.company,
           icon: <Building2 className="h-4 w-4" />,
           applied: false,
@@ -130,8 +152,8 @@ export function ContactEnrichment({ contact, onUpdated }: ContactEnrichmentProps
       }
       if (enriched.job_title) {
         fields.push({
-          key: 'job_title',
-          label: 'Poste',
+          key: "job_title",
+          label: "Poste",
           value: enriched.job_title,
           icon: <Briefcase className="h-4 w-4" />,
           applied: false,
@@ -139,8 +161,8 @@ export function ContactEnrichment({ contact, onUpdated }: ContactEnrichmentProps
       }
       if (enriched.linkedin_url) {
         fields.push({
-          key: 'linkedin_url',
-          label: 'LinkedIn',
+          key: "linkedin_url",
+          label: "LinkedIn",
           value: enriched.linkedin_url,
           icon: <Link className="h-4 w-4" />,
           applied: false,
@@ -151,10 +173,12 @@ export function ContactEnrichment({ contact, onUpdated }: ContactEnrichmentProps
         toast.info("L'IA n'a pas pu inférer de données supplémentaires.");
       } else {
         setSuggestions(fields);
-        toast.success(`${fields.length} suggestion${fields.length > 1 ? 's' : ''} générée${fields.length > 1 ? 's' : ''}`);
+        toast.success(
+          `${fields.length} suggestion${fields.length > 1 ? "s" : ""} générée${fields.length > 1 ? "s" : ""}`,
+        );
       }
     } catch (err) {
-      console.error('[ContactEnrichment] AI call failed', err);
+      console.error("[ContactEnrichment] AI call failed", err);
       toast.error("Erreur lors de l'enrichissement IA.");
     } finally {
       setLoading(false);
@@ -166,13 +190,13 @@ export function ContactEnrichment({ contact, onUpdated }: ContactEnrichmentProps
     try {
       // Map enrichment keys to Contact API fields
       const patch: Partial<Contact> = {};
-      if (field.key === 'full_name') {
-        const parts = field.value.split(' ');
-        patch.first_name = parts[0] ?? '';
-        patch.last_name = parts.slice(1).join(' ') || '';
-      } else if (field.key === 'company') {
+      if (field.key === "full_name") {
+        const parts = field.value.split(" ");
+        patch.first_name = parts[0] ?? "";
+        patch.last_name = parts.slice(1).join(" ") || "";
+      } else if (field.key === "company") {
         patch.organization = field.value;
-      } else if (field.key === 'job_title') {
+      } else if (field.key === "job_title") {
         patch.job_title = field.value;
       }
       // linkedin_url is a custom field — stored as a note for now since Contact
@@ -184,8 +208,8 @@ export function ContactEnrichment({ contact, onUpdated }: ContactEnrichmentProps
         onUpdated?.(res.data);
       }
 
-      setSuggestions(prev =>
-        prev.map(s => (s.key === field.key ? { ...s, applied: true } : s))
+      setSuggestions((prev) =>
+        prev.map((s) => (s.key === field.key ? { ...s, applied: true } : s)),
       );
       toast.success(`${field.label} appliqué.`);
     } catch {
@@ -196,7 +220,7 @@ export function ContactEnrichment({ contact, onUpdated }: ContactEnrichmentProps
   };
 
   const dismissField = (key: keyof EnrichedData) => {
-    setSuggestions(prev => prev.filter(s => s.key !== key));
+    setSuggestions((prev) => prev.filter((s) => s.key !== key));
   };
 
   if (!email) return null;
@@ -215,7 +239,7 @@ export function ContactEnrichment({ contact, onUpdated }: ContactEnrichmentProps
         ) : (
           <Sparkles className="h-4 w-4 text-purple-500" />
         )}
-        {loading ? 'Enrichissement…' : 'Enrichir'}
+        {loading ? "Enrichissement…" : "Enrichir"}
       </Button>
 
       {suggestions.length > 0 && (
@@ -226,7 +250,9 @@ export function ContactEnrichment({ contact, onUpdated }: ContactEnrichmentProps
               Suggestions IA
             </CardTitle>
             <CardDescription className="text-xs">
-              Données inférées à partir de <span className="font-mono">{email}</span>. Vérifiez avant d&apos;appliquer.
+              Données inférées à partir de{" "}
+              <span className="font-mono">{email}</span>. Vérifiez avant
+              d&apos;appliquer.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-2 pt-0">
@@ -235,10 +261,16 @@ export function ContactEnrichment({ contact, onUpdated }: ContactEnrichmentProps
                 {idx > 0 && <Separator className="my-2" />}
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2 min-w-0">
-                    <span className="text-muted-foreground shrink-0">{field.icon}</span>
+                    <span className="text-muted-foreground shrink-0">
+                      {field.icon}
+                    </span>
                     <div className="min-w-0">
-                      <p className="text-xs text-muted-foreground">{field.label}</p>
-                      <p className="text-sm font-medium truncate">{field.value}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {field.label}
+                      </p>
+                      <p className="text-sm font-medium truncate">
+                        {field.value}
+                      </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-1 shrink-0">
@@ -258,7 +290,7 @@ export function ContactEnrichment({ contact, onUpdated }: ContactEnrichmentProps
                           {applying === field.key ? (
                             <Loader2 className="h-3 w-3 animate-spin" />
                           ) : (
-                            'Appliquer'
+                            "Appliquer"
                           )}
                         </Button>
                         <Button

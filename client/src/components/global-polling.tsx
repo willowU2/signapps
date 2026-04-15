@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { useCallback } from 'react';
-import { usePolling } from '@/hooks/use-polling';
-import { useNotificationStore } from '@/stores/notification-store';
-import { playNotificationSound } from '@/components/notifications/notification-sounds';
+import { useCallback } from "react";
+import { usePolling } from "@/hooks/use-polling";
+import { useNotificationStore } from "@/stores/notification-store";
+import { playNotificationSound } from "@/components/notifications/notification-sounds";
 
 /**
  * GlobalPolling
@@ -21,13 +21,17 @@ export function GlobalPolling() {
 
   // Poll notifications every 30 seconds
   const pollNotifications = useCallback(async () => {
-    const prevCount = useNotificationStore.getState().notifications.filter(n => !n.read).length;
+    const prevCount = useNotificationStore
+      .getState()
+      .notifications.filter((n) => !n.read).length;
     await fetchNotifications();
-    const newCount = useNotificationStore.getState().notifications.filter(n => !n.read).length;
+    const newCount = useNotificationStore
+      .getState()
+      .notifications.filter((n) => !n.read).length;
 
     // Play sound if new unread notifications arrived
     if (newCount > prevCount && prevCount >= 0) {
-      playNotificationSound('alert');
+      playNotificationSound("alert");
     }
   }, [fetchNotifications]);
 

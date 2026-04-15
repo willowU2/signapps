@@ -66,8 +66,9 @@ export default function RoomOccupancy() {
       setRooms((prevRooms) =>
         prevRooms.map((room) => ({
           ...room,
-          releaseTimer: room.occupied && room.releaseTimer > 0 ? room.releaseTimer - 1 : 0,
-        }))
+          releaseTimer:
+            room.occupied && room.releaseTimer > 0 ? room.releaseTimer - 1 : 0,
+        })),
       );
     }, 1000);
     return () => clearInterval(interval);
@@ -76,8 +77,10 @@ export default function RoomOccupancy() {
   const handleRelease = (id: string) => {
     setRooms((prevRooms) =>
       prevRooms.map((room) =>
-        room.id === id ? { ...room, occupied: false, occupants: 0, releaseTimer: 0 } : room
-      )
+        room.id === id
+          ? { ...room, occupied: false, occupants: 0, releaseTimer: 0 }
+          : room,
+      ),
     );
   };
 
@@ -99,7 +102,9 @@ export default function RoomOccupancy() {
             <div className="flex items-start justify-between mb-3">
               <div>
                 <h3 className="font-semibold text-lg">{room.name}</h3>
-                <Badge className={room.occupied ? "bg-blue-500" : "bg-gray-500"}>
+                <Badge
+                  className={room.occupied ? "bg-blue-500" : "bg-gray-500"}
+                >
                   {room.occupied ? "Occupied" : "Free"}
                 </Badge>
               </div>
@@ -123,7 +128,9 @@ export default function RoomOccupancy() {
                 <div className="w-full bg-gray-200 rounded-full h-2">
                   <div
                     className="bg-blue-500 h-2 rounded-full"
-                    style={{ width: `${(room.occupants / room.maxCapacity) * 100}%` }}
+                    style={{
+                      width: `${(room.occupants / room.maxCapacity) * 100}%`,
+                    }}
                   />
                 </div>
               </div>

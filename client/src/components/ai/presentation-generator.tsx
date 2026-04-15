@@ -1,4 +1,4 @@
-'use client'
+"use client";
 
 /**
  * AM4 — AI presentation auto-generation
@@ -7,21 +7,21 @@
  * Preview as card grid → "Exporter vers Slides" creates a doc in the slides editor.
  */
 
-import React, { useState } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
-import { Label } from '@/components/ui/label'
-import { Badge } from '@/components/ui/badge'
+import React, { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
-import { Slider } from '@/components/ui/slider'
+} from "@/components/ui/select";
+import { Slider } from "@/components/ui/slider";
 import {
   Presentation,
   Sparkles,
@@ -31,33 +31,33 @@ import {
   RefreshCw,
   Layout,
   ChevronRight,
-} from 'lucide-react'
-import { toast } from 'sonner'
-import { aiApi } from '@/lib/api'
-import type { ChatResponse } from '@/lib/api/ai'
+} from "lucide-react";
+import { toast } from "sonner";
+import { aiApi } from "@/lib/api";
+import type { ChatResponse } from "@/lib/api/ai";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface SlideContent {
-  index: number
-  title: string
-  bullets: string[]
-  notes?: string
-  layout?: 'title' | 'content' | 'two-column' | 'image' | 'quote'
+  index: number;
+  title: string;
+  bullets: string[];
+  notes?: string;
+  layout?: "title" | "content" | "two-column" | "image" | "quote";
 }
 
 // ─── Style options ────────────────────────────────────────────────────────────
 
 const STYLES = [
-  { id: 'professional', label: 'Professionnel' },
-  { id: 'minimal', label: 'Minimaliste' },
-  { id: 'creative', label: 'Créatif' },
-  { id: 'corporate', label: 'Corporate' },
-  { id: 'educational', label: 'Éducatif' },
-  { id: 'pitch', label: 'Pitch / Investisseur' },
-] as const
+  { id: "professional", label: "Professionnel" },
+  { id: "minimal", label: "Minimaliste" },
+  { id: "creative", label: "Créatif" },
+  { id: "corporate", label: "Corporate" },
+  { id: "educational", label: "Éducatif" },
+  { id: "pitch", label: "Pitch / Investisseur" },
+] as const;
 
-type StyleId = (typeof STYLES)[number]['id']
+type StyleId = (typeof STYLES)[number]["id"];
 
 // ─── Slide card preview ───────────────────────────────────────────────────────
 
@@ -68,7 +68,7 @@ function SlideCard({ slide, total }: { slide: SlideContent; total: number }) {
       <div className="h-1.5 bg-primary/20">
         <div
           className="h-full bg-primary"
-          style={{ width: `${((slide.index) / total) * 100}%` }}
+          style={{ width: `${(slide.index / total) * 100}%` }}
         />
       </div>
 
@@ -84,12 +84,17 @@ function SlideCard({ slide, total }: { slide: SlideContent; total: number }) {
           )}
         </div>
 
-        <h3 className="font-semibold text-sm leading-snug line-clamp-2">{slide.title}</h3>
+        <h3 className="font-semibold text-sm leading-snug line-clamp-2">
+          {slide.title}
+        </h3>
 
         {slide.bullets.length > 0 && (
           <ul className="space-y-1">
             {slide.bullets.slice(0, 4).map((b, i) => (
-              <li key={i} className="text-xs text-muted-foreground flex items-start gap-1.5">
+              <li
+                key={i}
+                className="text-xs text-muted-foreground flex items-start gap-1.5"
+              >
                 <span className="text-primary shrink-0 mt-0.5">•</span>
                 <span className="line-clamp-2">{b}</span>
               </li>
@@ -109,36 +114,38 @@ function SlideCard({ slide, total }: { slide: SlideContent; total: number }) {
         )}
       </div>
     </div>
-  )
+  );
 }
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
 interface PresentationGeneratorProps {
   /** Called with slide data when "Export to Slides" is clicked */
-  onExportToSlides?: (slides: SlideContent[], title: string) => void
+  onExportToSlides?: (slides: SlideContent[], title: string) => void;
 }
 
-export function PresentationGenerator({ onExportToSlides }: PresentationGeneratorProps) {
-  const [topic, setTopic] = useState('')
-  const [brief, setBrief] = useState('')
-  const [slideCount, setSlideCount] = useState(8)
-  const [style, setStyle] = useState<StyleId>('professional')
-  const [slides, setSlides] = useState<SlideContent[]>([])
-  const [loading, setLoading] = useState(false)
-  const [presentationTitle, setPresentationTitle] = useState('')
+export function PresentationGenerator({
+  onExportToSlides,
+}: PresentationGeneratorProps) {
+  const [topic, setTopic] = useState("");
+  const [brief, setBrief] = useState("");
+  const [slideCount, setSlideCount] = useState(8);
+  const [style, setStyle] = useState<StyleId>("professional");
+  const [slides, setSlides] = useState<SlideContent[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [presentationTitle, setPresentationTitle] = useState("");
 
   const handleGenerate = async () => {
     if (!topic.trim()) {
-      toast.error('Veuillez saisir un sujet')
-      return
+      toast.error("Veuillez saisir un sujet");
+      return;
     }
-    setLoading(true)
-    setSlides([])
+    setLoading(true);
+    setSlides([]);
     try {
       const prompt = `Tu es un expert en présentations professionnelles.
 Génère une présentation de ${slideCount} diapositives sur: "${topic.trim()}"
-${brief.trim() ? `Contexte: ${brief.trim()}` : ''}
+${brief.trim() ? `Contexte: ${brief.trim()}` : ""}
 Style: ${style}
 
 Retourne UNIQUEMENT un JSON array valide sans markdown:
@@ -153,32 +160,36 @@ Retourne UNIQUEMENT un JSON array valide sans markdown:
 ]
 
 La première diapositive doit être un titre, la dernière un appel à l'action ou une conclusion.
-Chaque diapositive doit avoir 2-5 bullets concis.`
+Chaque diapositive doit avoir 2-5 bullets concis.`;
 
-      const res = await aiApi.chat(prompt, { enableTools: false, includesSources: false })
-      const answer: string = (res.data as ChatResponse)?.answer ?? ''
-      const match = answer.match(/\[[\s\S]*\]/)
-      if (!match) throw new Error('Format IA invalide')
+      const res = await aiApi.chat(prompt, {
+        enableTools: false,
+        includesSources: false,
+      });
+      const answer: string = (res.data as ChatResponse)?.answer ?? "";
+      const match = answer.match(/\[[\s\S]*\]/);
+      if (!match) throw new Error("Format IA invalide");
 
-      const parsed: SlideContent[] = JSON.parse(match[0])
-      if (!Array.isArray(parsed) || parsed.length === 0) throw new Error('Aucune diapositive générée')
+      const parsed: SlideContent[] = JSON.parse(match[0]);
+      if (!Array.isArray(parsed) || parsed.length === 0)
+        throw new Error("Aucune diapositive générée");
 
-      setSlides(parsed)
-      setPresentationTitle(topic.trim())
-      toast.success(`${parsed.length} diapositives générées`)
+      setSlides(parsed);
+      setPresentationTitle(topic.trim());
+      toast.success(`${parsed.length} diapositives générées`);
     } catch (err) {
-      toast.error('Échec de la génération. Réessayez.')
+      toast.error("Échec de la génération. Réessayez.");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleExport = async () => {
-    if (!slides.length) return
+    if (!slides.length) return;
     if (onExportToSlides) {
-      onExportToSlides(slides, presentationTitle)
-      toast.success('Présentation exportée vers Slides')
-      return
+      onExportToSlides(slides, presentationTitle);
+      toast.success("Présentation exportée vers Slides");
+      return;
     }
 
     // Fallback: create a JSON download
@@ -187,16 +198,18 @@ Chaque diapositive doit avoir 2-5 bullets concis.`
       style,
       slides,
       generated_at: new Date().toISOString(),
-    }
-    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `presentation-${Date.now()}.json`
-    a.click()
-    URL.revokeObjectURL(url)
-    toast.success('Présentation téléchargée (JSON)')
-  }
+    };
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], {
+      type: "application/json",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `presentation-${Date.now()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success("Présentation téléchargée (JSON)");
+  };
 
   return (
     <div className="space-y-6">
@@ -234,17 +247,27 @@ Chaque diapositive doit avoir 2-5 bullets concis.`
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label>Style</Label>
-              <Select value={style} onValueChange={(v) => setStyle(v as StyleId)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+              <Select
+                value={style}
+                onValueChange={(v) => setStyle(v as StyleId)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
                   {STYLES.map((s) => (
-                    <SelectItem key={s.id} value={s.id}>{s.label}</SelectItem>
+                    <SelectItem key={s.id} value={s.id}>
+                      {s.label}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label>Nombre de diapositives: <span className="font-bold">{slideCount}</span></Label>
+              <Label>
+                Nombre de diapositives:{" "}
+                <span className="font-bold">{slideCount}</span>
+              </Label>
               <Slider
                 min={4}
                 max={20}
@@ -262,9 +285,14 @@ Chaque diapositive doit avoir 2-5 bullets concis.`
             disabled={loading || !topic.trim()}
           >
             {loading ? (
-              <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Génération en cours…</>
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Génération en
+                cours…
+              </>
             ) : (
-              <><Sparkles className="w-4 h-4 mr-2" /> Générer la présentation</>
+              <>
+                <Sparkles className="w-4 h-4 mr-2" /> Générer la présentation
+              </>
             )}
           </Button>
         </CardContent>
@@ -277,11 +305,17 @@ Chaque diapositive doit avoir 2-5 bullets concis.`
             <div>
               <h3 className="font-semibold">{presentationTitle}</h3>
               <p className="text-sm text-muted-foreground">
-                {slides.length} diapositive{slides.length > 1 ? 's' : ''} — style {style}
+                {slides.length} diapositive{slides.length > 1 ? "s" : ""} —
+                style {style}
               </p>
             </div>
             <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={handleGenerate} disabled={loading}>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleGenerate}
+                disabled={loading}
+              >
                 <RefreshCw className="w-4 h-4 mr-1" />
                 Régénérer
               </Button>
@@ -294,11 +328,15 @@ Chaque diapositive doit avoir 2-5 bullets concis.`
 
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
             {slides.map((slide) => (
-              <SlideCard key={slide.index} slide={slide} total={slides.length} />
+              <SlideCard
+                key={slide.index}
+                slide={slide}
+                total={slides.length}
+              />
             ))}
           </div>
         </div>
       )}
     </div>
-  )
+  );
 }

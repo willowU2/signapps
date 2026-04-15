@@ -176,23 +176,25 @@ pub async fn acl_check_middleware(
     };
 
     // Determine resource type from DB
-    let rtype: ResourceType =
-        sqlx::query_scalar("SELECT node_type FROM drive.nodes WHERE id = $1")
-            .bind(node_id)
-            .fetch_optional(state.pool.inner())
-            .await
-            .ok()
-            .flatten()
-            .map(|t: String| {
-                if t == "folder" {
-                    ResourceType::Folder
-                } else {
-                    ResourceType::File
-                }
-            })
-            .unwrap_or(ResourceType::File);
+    let rtype: ResourceType = sqlx::query_scalar("SELECT node_type FROM drive.nodes WHERE id = $1")
+        .bind(node_id)
+        .fetch_optional(state.pool.inner())
+        .await
+        .ok()
+        .flatten()
+        .map(|t: String| {
+            if t == "folder" {
+                ResourceType::Folder
+            } else {
+                ResourceType::File
+            }
+        })
+        .unwrap_or(ResourceType::File);
 
-    let resource = ResourceRef { resource_type: rtype, resource_id: node_id };
+    let resource = ResourceRef {
+        resource_type: rtype,
+        resource_id: node_id,
+    };
     let action = role_to_action(role);
 
     let allowed = state

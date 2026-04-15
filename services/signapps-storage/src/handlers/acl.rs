@@ -154,7 +154,10 @@ pub async fn list_acl(
 ) -> Result<Json<Vec<Grant>>> {
     let user_ctx = state.sharing.build_user_context(&claims).await?;
     let rtype = node_resource_type(state.pool.inner(), id).await?;
-    let resource = ResourceRef { resource_type: rtype, resource_id: id };
+    let resource = ResourceRef {
+        resource_type: rtype,
+        resource_id: id,
+    };
 
     let grants = state.sharing.list_grants(&user_ctx, resource).await?;
 
@@ -202,16 +205,18 @@ pub async fn create_acl(
 ) -> Result<(StatusCode, Json<Grant>)> {
     let actor_ctx = state.sharing.build_user_context(&claims).await?;
     let rtype = node_resource_type(state.pool.inner(), id).await?;
-    let resource = ResourceRef { resource_type: rtype, resource_id: id };
+    let resource = ResourceRef {
+        resource_type: rtype,
+        resource_id: id,
+    };
 
     // Map legacy grantee_type string to typed GranteeType
-    let grantee_type: GranteeType = payload
-        .grantee_type
-        .parse()
-        .map_err(|_| signapps_common::Error::BadRequest(format!(
+    let grantee_type: GranteeType = payload.grantee_type.parse().map_err(|_| {
+        signapps_common::Error::BadRequest(format!(
             "invalid grantee_type: {}",
             payload.grantee_type
-        )))?;
+        ))
+    })?;
     let role = map_legacy_role(&payload.role);
 
     let grant_req = CreateGrant {
@@ -222,7 +227,10 @@ pub async fn create_acl(
         expires_at: payload.expires_at,
     };
 
-    let grant = state.sharing.grant(&actor_ctx, resource, None, grant_req).await?;
+    let grant = state
+        .sharing
+        .grant(&actor_ctx, resource, None, grant_req)
+        .await?;
 
     let _ = audit_chain::log_audit(
         state.pool.inner(),
@@ -232,7 +240,9 @@ pub async fn create_acl(
         claims.sub,
         None,
         None,
-        Some(json!({ "grant_id": grant.id, "role": grant.role, "grantee_type": grant.grantee_type })),
+        Some(
+            json!({ "grant_id": grant.id, "role": grant.role, "grantee_type": grant.grantee_type }),
+        ),
     )
     .await;
 
@@ -273,11 +283,17 @@ pub async fn update_acl(
 ) -> Result<Json<Grant>> {
     let actor_ctx = state.sharing.build_user_context(&claims).await?;
     let rtype = node_resource_type(state.pool.inner(), id).await?;
-    let resource = ResourceRef { resource_type: rtype, resource_id: id };
+    let resource = ResourceRef {
+        resource_type: rtype,
+        resource_id: id,
+    };
 
     // Fetch the existing grant so we can verify it exists and derive unchanged
     // fields (grantee_type, grantee_id, role fallback, etc.)
-    let grants = state.sharing.list_grants(&actor_ctx, resource.clone()).await?;
+    let grants = state
+        .sharing
+        .list_grants(&actor_ctx, resource.clone())
+        .await?;
     let existing = grants
         .iter()
         .find(|g| g.id == acl_id)
@@ -353,9 +369,15 @@ pub async fn delete_acl(
 ) -> Result<Json<serde_json::Value>> {
     let actor_ctx = state.sharing.build_user_context(&claims).await?;
     let rtype = node_resource_type(state.pool.inner(), id).await?;
-    let resource = ResourceRef { resource_type: rtype, resource_id: id };
+    let resource = ResourceRef {
+        resource_type: rtype,
+        resource_id: id,
+    };
 
-    state.sharing.revoke(&actor_ctx, resource, None, acl_id).await?;
+    state
+        .sharing
+        .revoke(&actor_ctx, resource, None, acl_id)
+        .await?;
 
     let _ = audit_chain::log_audit(
         state.pool.inner(),
@@ -490,9 +512,15 @@ pub async fn effective_acl(
 ) -> Result<Json<EffectiveAclResponse>> {
     let user_ctx = state.sharing.build_user_context(&claims).await?;
     let rtype = node_resource_type(state.pool.inner(), id).await?;
-    let resource = ResourceRef { resource_type: rtype, resource_id: id };
+    let resource = ResourceRef {
+        resource_type: rtype,
+        resource_id: id,
+    };
 
-    let permission = state.sharing.effective_role(&user_ctx, resource, None).await?;
+    let permission = state
+        .sharing
+        .effective_role(&user_ctx, resource, None)
+        .await?;
 
     let role_str = permission.as_ref().map(|p| p.role.as_str().to_owned());
 

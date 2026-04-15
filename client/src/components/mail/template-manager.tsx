@@ -61,8 +61,12 @@ function extractVariables(text: string): string[] {
 
 function substitutePreview(body: string, vars: string[]): string {
   return vars.reduce(
-    (s, v) => s.replaceAll(`{{${v}}}`, `<span class="text-primary font-semibold">[${v}]</span>`),
-    body
+    (s, v) =>
+      s.replaceAll(
+        `{{${v}}}`,
+        `<span class="text-primary font-semibold">[${v}]</span>`,
+      ),
+    body,
   );
 }
 
@@ -97,15 +101,23 @@ export function TemplateManager({ accountId, onUse }: TemplateManagerProps) {
 
   const save = async () => {
     if (!editing) return;
-    if (!editing.name.trim()) { toast.error("Nom requis"); return; }
+    if (!editing.name.trim()) {
+      toast.error("Nom requis");
+      return;
+    }
 
     setSaving(true);
     try {
       const detected = extractVariables(editing.body_html + editing.subject);
-      const manual = editing.variables.split(",").map((v) => v.trim()).filter(Boolean);
+      const manual = editing.variables
+        .split(",")
+        .map((v) => v.trim())
+        .filter(Boolean);
       const allVars = [...new Set([...detected, ...manual])];
 
-      const url = editing.id ? `/api/mail/templates/${editing.id}` : "/api/mail/templates";
+      const url = editing.id
+        ? `/api/mail/templates/${editing.id}`
+        : "/api/mail/templates";
       const method = editing.id ? "PUT" : "POST";
 
       const res = await fetch(url, {
@@ -126,12 +138,14 @@ export function TemplateManager({ accountId, onUse }: TemplateManagerProps) {
       setTemplates((prev) =>
         editing.id
           ? prev.map((t) => (t.id === editing.id ? saved : t))
-          : [...prev, saved]
+          : [...prev, saved],
       );
       setEditing(null);
       toast.success(editing.id ? "Modèle mis à jour" : "Modèle créé");
     } catch (err) {
-      toast.error(`Erreur: ${err instanceof Error ? err.message : String(err)}`);
+      toast.error(
+        `Erreur: ${err instanceof Error ? err.message : String(err)}`,
+      );
     } finally {
       setSaving(false);
     }
@@ -169,7 +183,8 @@ export function TemplateManager({ accountId, onUse }: TemplateManagerProps) {
     }
   };
 
-  if (loading) return <div className="p-4 text-sm text-muted-foreground">Chargement…</div>;
+  if (loading)
+    return <div className="p-4 text-sm text-muted-foreground">Chargement…</div>;
 
   return (
     <div className="space-y-4">
@@ -181,7 +196,9 @@ export function TemplateManager({ accountId, onUse }: TemplateManagerProps) {
       </div>
 
       {templates.length === 0 && !editing ? (
-        <p className="text-sm text-muted-foreground text-center py-6">Aucun modèle</p>
+        <p className="text-sm text-muted-foreground text-center py-6">
+          Aucun modèle
+        </p>
       ) : (
         <Table>
           <TableHeader>
@@ -203,31 +220,65 @@ export function TemplateManager({ accountId, onUse }: TemplateManagerProps) {
                   <div className="flex gap-1 flex-wrap">
                     {(t.variables ?? []).slice(0, 3).map((v) => (
                       <Badge key={v} variant="secondary" className="text-xs">
-                        {"{{"}{v}{"}}"}
+                        {"{{"}
+                        {v}
+                        {"}}"}
                       </Badge>
                     ))}
                     {(t.variables ?? []).length > 3 && (
-                      <Badge variant="outline" className="text-xs">+{(t.variables ?? []).length - 3}</Badge>
+                      <Badge variant="outline" className="text-xs">
+                        +{(t.variables ?? []).length - 3}
+                      </Badge>
                     )}
                   </div>
                 </TableCell>
                 <TableCell>
                   <div className="flex gap-1">
                     {onUse && (
-                      <Button variant="ghost" size="icon" className="h-7 w-7" title="Utiliser" onClick={() => onUse(t)}>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7"
+                        title="Utiliser"
+                        onClick={() => onUse(t)}
+                      >
                         <Copy className="h-4 w-4" />
                       </Button>
                     )}
-                    <Button variant="ghost" size="icon" className="h-7 w-7" title="Aperçu" onClick={() => setPreviewing(t)}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      title="Aperçu"
+                      onClick={() => setPreviewing(t)}
+                    >
                       <Eye className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-7 w-7" title="Dupliquer" onClick={() => duplicate(t)}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      title="Dupliquer"
+                      onClick={() => duplicate(t)}
+                    >
                       <Copy className="h-4 w-4 text-muted-foreground" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-7 w-7" title="Modifier" onClick={() => openEdit(t)}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      title="Modifier"
+                      onClick={() => openEdit(t)}
+                    >
                       <Edit3 className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" title="Supprimer" onClick={() => deleteTemplate(t.id)}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-destructive"
+                      title="Supprimer"
+                      onClick={() => deleteTemplate(t.id)}
+                    >
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
@@ -242,25 +293,44 @@ export function TemplateManager({ accountId, onUse }: TemplateManagerProps) {
       <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
         <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
-            <DialogTitle>{editing?.id ? "Modifier le modèle" : "Nouveau modèle"}</DialogTitle>
+            <DialogTitle>
+              {editing?.id ? "Modifier le modèle" : "Nouveau modèle"}
+            </DialogTitle>
           </DialogHeader>
           {editing && (
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <Label>Nom</Label>
-                  <Input value={editing.name} onChange={(e) => setEditing({ ...editing, name: e.target.value })} placeholder="Modèle de bienvenue" />
+                  <Input
+                    value={editing.name}
+                    onChange={(e) =>
+                      setEditing({ ...editing, name: e.target.value })
+                    }
+                    placeholder="Modèle de bienvenue"
+                  />
                 </div>
                 <div className="space-y-1.5">
                   <Label>Sujet</Label>
-                  <Input value={editing.subject} onChange={(e) => setEditing({ ...editing, subject: e.target.value })} placeholder="Bonjour {{prenom}}" />
+                  <Input
+                    value={editing.subject}
+                    onChange={(e) =>
+                      setEditing({ ...editing, subject: e.target.value })
+                    }
+                    placeholder="Bonjour {{prenom}}"
+                  />
                 </div>
               </div>
               <div className="space-y-1.5">
-                <Label>Corps (HTML ou texte — utilisez {"{{variable}}"} pour les champs dynamiques)</Label>
+                <Label>
+                  Corps (HTML ou texte — utilisez {"{{variable}}"} pour les
+                  champs dynamiques)
+                </Label>
                 <Textarea
                   value={editing.body_html}
-                  onChange={(e) => setEditing({ ...editing, body_html: e.target.value })}
+                  onChange={(e) =>
+                    setEditing({ ...editing, body_html: e.target.value })
+                  }
                   rows={8}
                   placeholder="Bonjour {{prenom}},&#10;&#10;Bienvenue chez {{entreprise}}…"
                   className="font-mono text-sm"
@@ -268,11 +338,14 @@ export function TemplateManager({ accountId, onUse }: TemplateManagerProps) {
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs text-muted-foreground">
-                  Variables additionnelles (séparées par virgule — celles dans le texte sont détectées automatiquement)
+                  Variables additionnelles (séparées par virgule — celles dans
+                  le texte sont détectées automatiquement)
                 </Label>
                 <Input
                   value={editing.variables}
-                  onChange={(e) => setEditing({ ...editing, variables: e.target.value })}
+                  onChange={(e) =>
+                    setEditing({ ...editing, variables: e.target.value })
+                  }
                   placeholder="prenom, entreprise, date"
                 />
               </div>
@@ -291,16 +364,25 @@ export function TemplateManager({ accountId, onUse }: TemplateManagerProps) {
       </Dialog>
 
       {/* Preview dialog */}
-      <Dialog open={!!previewing} onOpenChange={(o) => !o && setPreviewing(null)}>
+      <Dialog
+        open={!!previewing}
+        onOpenChange={(o) => !o && setPreviewing(null)}
+      >
         <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle>Aperçu : {previewing?.name}</DialogTitle>
           </DialogHeader>
           {previewing && (
             <div className="space-y-3">
-              <p className="text-sm font-medium">Sujet : <span className="font-normal">{previewing.subject}</span></p>
+              <p className="text-sm font-medium">
+                Sujet :{" "}
+                <span className="font-normal">{previewing.subject}</span>
+              </p>
               <iframe
-                srcDoc={substitutePreview(previewing.body_html, previewing.variables ?? [])}
+                srcDoc={substitutePreview(
+                  previewing.body_html,
+                  previewing.variables ?? [],
+                )}
                 sandbox=""
                 className="border rounded w-full min-h-[100px] bg-muted/30"
                 style={{ height: "200px" }}

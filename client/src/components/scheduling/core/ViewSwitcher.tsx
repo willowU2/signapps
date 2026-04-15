@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * ViewSwitcher Component
@@ -8,8 +8,8 @@
  * Supporte: Jour, Semaine, Mois, Agenda, Timeline, Kanban, Heatmap, Focus, Roster
  */
 
-import * as React from 'react';
-import { motion } from 'framer-motion';
+import * as React from "react";
+import { motion } from "framer-motion";
 import {
   List,
   Calendar as CalendarIcon,
@@ -20,10 +20,10 @@ import {
   Activity,
   Target,
   Users,
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { useCalendarStore } from '@/stores/scheduling/calendar-store';
-import type { ViewType } from '@/lib/scheduling/types';
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { useCalendarStore } from "@/stores/scheduling/calendar-store";
+import type { ViewType } from "@/lib/scheduling/types";
 
 // ============================================================================
 // Types
@@ -50,19 +50,82 @@ interface ViewSwitcherProps {
 // ============================================================================
 
 const allViewOptions: ViewOption[] = [
-  { id: 'day', label: 'Jour', shortLabel: 'Jour', icon: CalendarIcon, shortcut: 'd', description: 'Vue journée' },
-  { id: 'week', label: 'Semaine', shortLabel: 'Sem', icon: CalendarRange, shortcut: 'w', description: 'Vue semaine' },
-  { id: 'month', label: 'Mois', shortLabel: 'Mois', icon: Grid3X3, shortcut: 'm', description: 'Vue mois' },
-  { id: 'agenda', label: 'Agenda', shortLabel: 'Agenda', icon: List, shortcut: 'a', description: 'Liste chronologique' },
-  { id: 'timeline', label: 'Timeline', shortLabel: 'TL', icon: Clock, shortcut: 't', description: 'Frise temporelle' },
-  { id: 'kanban', label: 'Kanban', shortLabel: 'Kanban', icon: Columns3, shortcut: 'k', description: 'Vue Kanban' },
-  { id: 'heatmap', label: 'Disponibilités', shortLabel: 'Dispo', icon: Activity, shortcut: 'h', description: 'Carte de chaleur' },
-  { id: 'focus', label: 'Focus', shortLabel: 'Focus', icon: Target, shortcut: 'f', description: 'Mode concentration' },
-  { id: 'roster', label: 'Planning', shortLabel: 'Planning', icon: Users, shortcut: 'r', description: 'Planning équipe' },
+  {
+    id: "day",
+    label: "Jour",
+    shortLabel: "Jour",
+    icon: CalendarIcon,
+    shortcut: "d",
+    description: "Vue journée",
+  },
+  {
+    id: "week",
+    label: "Semaine",
+    shortLabel: "Sem",
+    icon: CalendarRange,
+    shortcut: "w",
+    description: "Vue semaine",
+  },
+  {
+    id: "month",
+    label: "Mois",
+    shortLabel: "Mois",
+    icon: Grid3X3,
+    shortcut: "m",
+    description: "Vue mois",
+  },
+  {
+    id: "agenda",
+    label: "Agenda",
+    shortLabel: "Agenda",
+    icon: List,
+    shortcut: "a",
+    description: "Liste chronologique",
+  },
+  {
+    id: "timeline",
+    label: "Timeline",
+    shortLabel: "TL",
+    icon: Clock,
+    shortcut: "t",
+    description: "Frise temporelle",
+  },
+  {
+    id: "kanban",
+    label: "Kanban",
+    shortLabel: "Kanban",
+    icon: Columns3,
+    shortcut: "k",
+    description: "Vue Kanban",
+  },
+  {
+    id: "heatmap",
+    label: "Disponibilités",
+    shortLabel: "Dispo",
+    icon: Activity,
+    shortcut: "h",
+    description: "Carte de chaleur",
+  },
+  {
+    id: "focus",
+    label: "Focus",
+    shortLabel: "Focus",
+    icon: Target,
+    shortcut: "f",
+    description: "Mode concentration",
+  },
+  {
+    id: "roster",
+    label: "Planning",
+    shortLabel: "Planning",
+    icon: Users,
+    shortcut: "r",
+    description: "Planning équipe",
+  },
 ];
 
 // Default views shown in the switcher
-const defaultViews: ViewType[] = ['day', 'week', 'month', 'agenda'];
+const defaultViews: ViewType[] = ["day", "week", "month", "agenda"];
 
 // ============================================================================
 // Component
@@ -81,8 +144,8 @@ export function ViewSwitcher({
   const viewsToShow = showAll
     ? allViewOptions
     : views
-    ? allViewOptions.filter((opt) => views.includes(opt.id))
-    : allViewOptions.filter((opt) => defaultViews.includes(opt.id));
+      ? allViewOptions.filter((opt) => views.includes(opt.id))
+      : allViewOptions.filter((opt) => defaultViews.includes(opt.id));
 
   // Keyboard shortcuts
   React.useEffect(() => {
@@ -98,22 +161,24 @@ export function ViewSwitcher({
         return;
       }
 
-      const option = viewsToShow.find((opt) => opt.shortcut === e.key.toLowerCase());
+      const option = viewsToShow.find(
+        (opt) => opt.shortcut === e.key.toLowerCase(),
+      );
       if (option) {
         e.preventDefault();
         setView(option.id);
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [viewsToShow, setView]);
 
   return (
     <div
       className={cn(
-        'inline-flex items-center rounded-lg bg-muted p-1',
-        className
+        "inline-flex items-center rounded-lg bg-muted p-1",
+        className,
       )}
       role="tablist"
       aria-label="Sélection de vue"
@@ -130,12 +195,12 @@ export function ViewSwitcher({
             aria-controls={`view-panel-${option.id}`}
             onClick={() => setView(option.id)}
             className={cn(
-              'relative inline-flex items-center justify-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
-              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
-              'disabled:pointer-events-none disabled:opacity-50',
+              "relative inline-flex items-center justify-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+              "disabled:pointer-events-none disabled:opacity-50",
               isActive
-                ? 'text-foreground'
-                : 'text-muted-foreground hover:text-foreground'
+                ? "text-foreground"
+                : "text-muted-foreground hover:text-foreground",
             )}
             title={`${option.description || option.label} (${option.shortcut.toUpperCase()})`}
           >
@@ -144,7 +209,7 @@ export function ViewSwitcher({
                 layoutId="view-switcher-indicator"
                 className="absolute inset-0 rounded-md bg-background shadow-sm"
                 transition={{
-                  type: 'spring',
+                  type: "spring",
                   stiffness: 500,
                   damping: 35,
                 }}
@@ -174,8 +239,15 @@ export function ViewSwitcherCompact({
   className,
   views,
   showAll = false,
-}: Omit<ViewSwitcherProps, 'compact'>) {
-  return <ViewSwitcher className={className} compact views={views} showAll={showAll} />;
+}: Omit<ViewSwitcherProps, "compact">) {
+  return (
+    <ViewSwitcher
+      className={className}
+      compact
+      views={views}
+      showAll={showAll}
+    />
+  );
 }
 
 // ============================================================================
@@ -186,21 +258,21 @@ export function ViewSwitcherIcons({
   className,
   views,
   showAll = false,
-}: Omit<ViewSwitcherProps, 'compact'>) {
+}: Omit<ViewSwitcherProps, "compact">) {
   const view = useCalendarStore((state) => state.view);
   const setView = useCalendarStore((state) => state.setView);
 
   const viewsToShow = showAll
     ? allViewOptions
     : views
-    ? allViewOptions.filter((opt) => views.includes(opt.id))
-    : allViewOptions.filter((opt) => defaultViews.includes(opt.id));
+      ? allViewOptions.filter((opt) => views.includes(opt.id))
+      : allViewOptions.filter((opt) => defaultViews.includes(opt.id));
 
   return (
     <div
       className={cn(
-        'inline-flex items-center rounded-lg bg-muted p-1',
-        className
+        "inline-flex items-center rounded-lg bg-muted p-1",
+        className,
       )}
       role="tablist"
       aria-label="Sélection de vue"
@@ -216,11 +288,11 @@ export function ViewSwitcherIcons({
             aria-selected={isActive}
             onClick={() => setView(option.id)}
             className={cn(
-              'relative inline-flex items-center justify-center rounded-md p-2 transition-colors',
-              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+              "relative inline-flex items-center justify-center rounded-md p-2 transition-colors",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
               isActive
-                ? 'text-foreground'
-                : 'text-muted-foreground hover:text-foreground'
+                ? "text-foreground"
+                : "text-muted-foreground hover:text-foreground",
             )}
             title={option.description || option.label}
           >
@@ -229,7 +301,7 @@ export function ViewSwitcherIcons({
                 layoutId="view-switcher-icons-indicator"
                 className="absolute inset-0 rounded-md bg-background shadow-sm"
                 transition={{
-                  type: 'spring',
+                  type: "spring",
                   stiffness: 500,
                   damping: 35,
                 }}
@@ -253,25 +325,25 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from "@/components/ui/select";
 
 export function ViewSwitcherDropdown({
   className,
   views,
   showAll = false,
-}: Omit<ViewSwitcherProps, 'compact'>) {
+}: Omit<ViewSwitcherProps, "compact">) {
   const view = useCalendarStore((state) => state.view);
   const setView = useCalendarStore((state) => state.setView);
 
   const viewsToShow = showAll
     ? allViewOptions
     : views
-    ? allViewOptions.filter((opt) => views.includes(opt.id))
-    : allViewOptions.filter((opt) => defaultViews.includes(opt.id));
+      ? allViewOptions.filter((opt) => views.includes(opt.id))
+      : allViewOptions.filter((opt) => defaultViews.includes(opt.id));
 
   return (
     <Select value={view} onValueChange={(value) => setView(value as ViewType)}>
-      <SelectTrigger className={cn('w-[140px]', className)}>
+      <SelectTrigger className={cn("w-[140px]", className)}>
         <SelectValue placeholder="Vue" />
       </SelectTrigger>
       <SelectContent>

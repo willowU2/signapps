@@ -56,7 +56,9 @@ export function PayslipTemplate() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-foreground">Payslip Preview</h2>
+          <h2 className="text-2xl font-bold text-foreground">
+            Payslip Preview
+          </h2>
           <p className="text-muted-foreground">Monthly salary statement</p>
         </div>
         <div className="flex items-center gap-2">
@@ -146,19 +148,25 @@ export function PayslipTemplate() {
                   </td>
                 </tr>
                 <tr>
-                  <td className="text-muted-foreground py-2">Social Security</td>
+                  <td className="text-muted-foreground py-2">
+                    Social Security
+                  </td>
                   <td className="text-right text-foreground font-medium">
                     €{payslip.deductions.socialSecurity.toFixed(2)}
                   </td>
                 </tr>
                 <tr>
-                  <td className="text-muted-foreground py-2">Health Insurance</td>
+                  <td className="text-muted-foreground py-2">
+                    Health Insurance
+                  </td>
                   <td className="text-right text-foreground font-medium">
                     €{payslip.deductions.healthInsurance.toFixed(2)}
                   </td>
                 </tr>
                 <tr>
-                  <td className="text-muted-foreground py-2">Other Deductions</td>
+                  <td className="text-muted-foreground py-2">
+                    Other Deductions
+                  </td>
                   <td className="text-right text-foreground font-medium">
                     €{payslip.deductions.other.toFixed(2)}
                   </td>
@@ -169,7 +177,9 @@ export function PayslipTemplate() {
 
           <div className="border-t-2 border-border pt-4">
             <div className="flex justify-between items-center">
-              <p className="font-bold text-lg text-foreground">TOTAL DEDUCTIONS</p>
+              <p className="font-bold text-lg text-foreground">
+                TOTAL DEDUCTIONS
+              </p>
               <p className="font-semibold text-lg text-foreground">
                 €{totalDeductions.toFixed(2)}
               </p>

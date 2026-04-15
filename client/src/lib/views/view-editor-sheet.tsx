@@ -39,10 +39,19 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
-import type { ViewDefinition, ViewType, FieldDefinition, ColumnConfig } from "./types";
+import type {
+  ViewDefinition,
+  ViewType,
+  FieldDefinition,
+  ColumnConfig,
+} from "./types";
 import { FilterBuilder, FilterSummary } from "./filter-builder";
 import { createEmptyFilterGroup } from "./registry";
-import { useActiveView, useViewActions, useDraftChanges } from "@/stores/views-store";
+import {
+  useActiveView,
+  useViewActions,
+  useDraftChanges,
+} from "@/stores/views-store";
 
 // ============================================================================
 // Types
@@ -71,14 +80,11 @@ function ColumnEditor({ columns, fields, onChange }: ColumnEditorProps) {
     if (existing) {
       onChange(
         columns.map((c) =>
-          c.field === field ? { ...c, visible: !c.visible } : c
-        )
+          c.field === field ? { ...c, visible: !c.visible } : c,
+        ),
       );
     } else {
-      onChange([
-        ...columns,
-        { field, visible: true, order: columns.length },
-      ]);
+      onChange([...columns, { field, visible: true, order: columns.length }]);
     }
   };
 
@@ -94,15 +100,15 @@ function ColumnEditor({ columns, fields, onChange }: ColumnEditorProps) {
       newColumns[newIndex],
       newColumns[index],
     ];
-    onChange(
-      newColumns.map((c, i) => ({ ...c, order: i }))
-    );
+    onChange(newColumns.map((c, i) => ({ ...c, order: i })));
   };
 
   // Ensure all fields have a column entry
   const allColumns = fields.map((f) => {
     const existing = columns.find((c) => c.field === f.field);
-    return existing || { field: f.field, visible: false, order: columns.length };
+    return (
+      existing || { field: f.field, visible: false, order: columns.length }
+    );
   });
 
   const sortedColumns = [...allColumns].sort((a, b) => {
@@ -120,7 +126,7 @@ function ColumnEditor({ columns, fields, onChange }: ColumnEditorProps) {
             key={col.field}
             className={cn(
               "flex items-center gap-3 p-2 rounded-lg border",
-              col.visible ? "bg-background" : "bg-muted/50"
+              col.visible ? "bg-background" : "bg-muted/50",
             )}
           >
             <Switch
@@ -130,7 +136,7 @@ function ColumnEditor({ columns, fields, onChange }: ColumnEditorProps) {
             <span
               className={cn(
                 "flex-1 text-sm",
-                !col.visible && "text-muted-foreground"
+                !col.visible && "text-muted-foreground",
               )}
             >
               {field?.label || col.field}
@@ -192,11 +198,9 @@ function SortEditor({ sort, fields, onChange }: SortEditorProps) {
   const updateSort = (
     index: number,
     field: string,
-    direction: "asc" | "desc"
+    direction: "asc" | "desc",
   ) => {
-    onChange(
-      sort.map((s, i) => (i === index ? { field, direction } : s))
-    );
+    onChange(sort.map((s, i) => (i === index ? { field, direction } : s)));
   };
 
   return (
@@ -266,8 +270,12 @@ export function ViewEditorSheet({
 }: ViewEditorSheetProps) {
   const activeView = useActiveView(entityType);
   const { draft, hasDraft } = useDraftChanges(entityType);
-  const { setDraftChanges, applyDraftChanges, discardDraftChanges, updateView } =
-    useViewActions();
+  const {
+    setDraftChanges,
+    applyDraftChanges,
+    discardDraftChanges,
+    updateView,
+  } = useViewActions();
 
   const [activeTab, setActiveTab] = React.useState("columns");
 
@@ -279,7 +287,7 @@ export function ViewEditorSheet({
 
   const handleChange = <K extends keyof ViewDefinition>(
     key: K,
-    value: ViewDefinition[K]
+    value: ViewDefinition[K],
   ) => {
     setDraftChanges(entityType, { ...draft, [key]: value });
   };

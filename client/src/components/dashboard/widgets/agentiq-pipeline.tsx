@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * AgentIQ Pipeline Widget
@@ -6,12 +6,12 @@
  * Horizontal funnel showing the idea lifecycle stages.
  */
 
-import { useQuery } from '@tanstack/react-query';
-import { GitPullRequest, WifiOff } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
-import { agentiqApi } from '@/lib/api/agentiq';
-import type { WidgetRenderProps } from '@/lib/dashboard/types';
+import { useQuery } from "@tanstack/react-query";
+import { GitPullRequest, WifiOff } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { agentiqApi } from "@/lib/api/agentiq";
+import type { WidgetRenderProps } from "@/lib/dashboard/types";
 
 interface Idea {
   id: string;
@@ -19,16 +19,18 @@ interface Idea {
 }
 
 const STAGES = [
-  { key: 'proposed', label: 'Proposées', color: 'bg-gray-400' },
-  { key: 'validated', label: 'Validées', color: 'bg-blue-500' },
-  { key: 'brainstorming', label: 'Brainstorm', color: 'bg-purple-500' },
-  { key: 'implementing', label: 'En cours', color: 'bg-orange-500' },
-  { key: 'deployed', label: 'Déployées', color: 'bg-green-500' },
+  { key: "proposed", label: "Proposées", color: "bg-gray-400" },
+  { key: "validated", label: "Validées", color: "bg-blue-500" },
+  { key: "brainstorming", label: "Brainstorm", color: "bg-purple-500" },
+  { key: "implementing", label: "En cours", color: "bg-orange-500" },
+  { key: "deployed", label: "Déployées", color: "bg-green-500" },
 ];
 
-export function AgentiqPipelineWidget({ widget }: Partial<WidgetRenderProps> = {}) {
+export function AgentiqPipelineWidget({
+  widget,
+}: Partial<WidgetRenderProps> = {}) {
   const { data, isLoading, isError } = useQuery({
-    queryKey: ['agentiq-pipeline'],
+    queryKey: ["agentiq-pipeline"],
     queryFn: () => agentiqApi.ideas(),
     refetchInterval: 5000,
     retry: false,
@@ -63,7 +65,10 @@ export function AgentiqPipelineWidget({ widget }: Partial<WidgetRenderProps> = {
         ) : (
           <div className="flex items-end gap-1 h-full">
             {counts.map((stage, idx) => (
-              <div key={stage.key} className="flex-1 flex flex-col items-center gap-1 min-w-0">
+              <div
+                key={stage.key}
+                className="flex-1 flex flex-col items-center gap-1 min-w-0"
+              >
                 <span className="text-xs font-bold">{stage.count}</span>
                 <div
                   className={`w-full rounded-sm transition-all ${stage.color}`}
@@ -72,9 +77,7 @@ export function AgentiqPipelineWidget({ widget }: Partial<WidgetRenderProps> = {
                     opacity: stage.count === 0 ? 0.3 : 1,
                   }}
                 />
-                {idx < counts.length - 1 && (
-                  <div className="absolute" />
-                )}
+                {idx < counts.length - 1 && <div className="absolute" />}
                 <span className="text-[9px] text-muted-foreground text-center leading-tight truncate w-full px-0.5">
                   {stage.label}
                 </span>

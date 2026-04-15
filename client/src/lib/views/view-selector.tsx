@@ -109,11 +109,7 @@ export function ViewSelector({
   };
 
   const handleDuplicate = (viewId: string, viewName: string) => {
-    const duplicated = duplicateView(
-      entityType,
-      viewId,
-      `${viewName} (copie)`
-    );
+    const duplicated = duplicateView(entityType, viewId, `${viewName} (copie)`);
     if (duplicated) {
       setActiveView(entityType, duplicated.id);
     }
@@ -157,9 +153,7 @@ export function ViewSelector({
     input.click();
   };
 
-  const ViewIcon = activeView
-    ? viewTypeIcons[activeView.viewType]
-    : Table2;
+  const ViewIcon = activeView ? viewTypeIcons[activeView.viewType] : Table2;
 
   return (
     <DropdownMenu>
@@ -221,7 +215,7 @@ export function ViewSelector({
           <DropdownMenuSubContent className="w-[220px]">
             {Object.entries(groupedTemplates).map(([category, items]) => {
               const categoryInfo = templateCategories.find(
-                (c) => c.id === category
+                (c) => c.id === category,
               );
               return (
                 <React.Fragment key={category}>
@@ -263,9 +257,7 @@ export function ViewSelector({
                 </DropdownMenuItem>
               )}
               <DropdownMenuItem
-                onSelect={() =>
-                  handleDuplicate(activeView.id, activeView.name)
-                }
+                onSelect={() => handleDuplicate(activeView.id, activeView.name)}
               >
                 <Copy className="h-4 w-4 mr-2" />
                 Dupliquer

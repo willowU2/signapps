@@ -4,7 +4,7 @@
  * API client for Google Drive, Docs, Sheets, and Slides integration.
  */
 
-import { getClient, ServiceName } from '@/lib/api/factory';
+import { getClient, ServiceName } from "@/lib/api/factory";
 
 const api = getClient(ServiceName.OFFICE);
 import type {
@@ -19,9 +19,9 @@ import type {
   SyncConflict,
   ResolveSyncConflictRequest,
   GoogleIntegrationSettings,
-} from './types';
+} from "./types";
 
-const GOOGLE_BASE = '/api/v1/integrations/google';
+const GOOGLE_BASE = "/api/v1/integrations/google";
 
 // ============================================================================
 // Authentication
@@ -40,11 +40,11 @@ export async function getAuthState(): Promise<GoogleAuthState> {
  * Returns the authorization URL to redirect the user to
  */
 export async function initiateAuth(
-  scopes?: string[]
+  scopes?: string[],
 ): Promise<{ authUrl: string }> {
   const response = await api.post<{ authUrl: string }>(
     `${GOOGLE_BASE}/auth/initiate`,
-    { scopes }
+    { scopes },
   );
   return response.data;
 }
@@ -54,11 +54,11 @@ export async function initiateAuth(
  */
 export async function handleAuthCallback(
   code: string,
-  state: string
+  state: string,
 ): Promise<GoogleAuthState> {
   const response = await api.post<GoogleAuthState>(
     `${GOOGLE_BASE}/auth/callback`,
-    { code, state }
+    { code, state },
   );
   return response.data;
 }
@@ -74,7 +74,9 @@ export async function disconnectGoogle(): Promise<void> {
  * Refresh Google access token
  */
 export async function refreshToken(): Promise<GoogleAuthState> {
-  const response = await api.post<GoogleAuthState>(`${GOOGLE_BASE}/auth/refresh`);
+  const response = await api.post<GoogleAuthState>(
+    `${GOOGLE_BASE}/auth/refresh`,
+  );
   return response.data;
 }
 
@@ -91,21 +93,22 @@ export async function listDriveFiles(params?: {
   mimeTypes?: string[];
   pageToken?: string;
   pageSize?: number;
-  orderBy?: 'name' | 'modifiedTime' | 'createdTime';
+  orderBy?: "name" | "modifiedTime" | "createdTime";
   includeTrash?: boolean;
 }): Promise<GoogleDriveListResponse> {
   const queryParams = new URLSearchParams();
 
-  if (params?.folderId) queryParams.append('folderId', params.folderId);
-  if (params?.query) queryParams.append('query', params.query);
-  if (params?.mimeTypes?.length) queryParams.append('mimeTypes', params.mimeTypes.join(','));
-  if (params?.pageToken) queryParams.append('pageToken', params.pageToken);
-  if (params?.pageSize) queryParams.append('pageSize', String(params.pageSize));
-  if (params?.orderBy) queryParams.append('orderBy', params.orderBy);
-  if (params?.includeTrash) queryParams.append('includeTrash', 'true');
+  if (params?.folderId) queryParams.append("folderId", params.folderId);
+  if (params?.query) queryParams.append("query", params.query);
+  if (params?.mimeTypes?.length)
+    queryParams.append("mimeTypes", params.mimeTypes.join(","));
+  if (params?.pageToken) queryParams.append("pageToken", params.pageToken);
+  if (params?.pageSize) queryParams.append("pageSize", String(params.pageSize));
+  if (params?.orderBy) queryParams.append("orderBy", params.orderBy);
+  if (params?.includeTrash) queryParams.append("includeTrash", "true");
 
   const response = await api.get<GoogleDriveListResponse>(
-    `${GOOGLE_BASE}/drive/files?${queryParams.toString()}`
+    `${GOOGLE_BASE}/drive/files?${queryParams.toString()}`,
   );
   return response.data;
 }
@@ -115,7 +118,7 @@ export async function listDriveFiles(params?: {
  */
 export async function getDriveFile(fileId: string): Promise<GoogleDriveFile> {
   const response = await api.get<GoogleDriveFile>(
-    `${GOOGLE_BASE}/drive/files/${fileId}`
+    `${GOOGLE_BASE}/drive/files/${fileId}`,
   );
   return response.data;
 }
@@ -128,7 +131,7 @@ export async function searchDriveFiles(
   options?: {
     mimeTypes?: string[];
     pageSize?: number;
-  }
+  },
 ): Promise<GoogleDriveListResponse> {
   return listDriveFiles({
     query,
@@ -141,11 +144,11 @@ export async function searchDriveFiles(
  * Get recent files from Google Drive
  */
 export async function getRecentDriveFiles(
-  limit = 20
+  limit = 20,
 ): Promise<GoogleDriveFile[]> {
   const response = await listDriveFiles({
     pageSize: limit,
-    orderBy: 'modifiedTime',
+    orderBy: "modifiedTime",
   });
   return response.files;
 }
@@ -155,7 +158,7 @@ export async function getRecentDriveFiles(
  */
 export async function getStarredDriveFiles(): Promise<GoogleDriveFile[]> {
   const response = await api.get<GoogleDriveListResponse>(
-    `${GOOGLE_BASE}/drive/files/starred`
+    `${GOOGLE_BASE}/drive/files/starred`,
   );
   return response.data.files;
 }
@@ -168,11 +171,11 @@ export async function getStarredDriveFiles(): Promise<GoogleDriveFile[]> {
  * Import a file from Google Drive
  */
 export async function importFromGoogle(
-  request: ImportFromGoogleRequest
+  request: ImportFromGoogleRequest,
 ): Promise<ImportFromGoogleResponse> {
   const response = await api.post<ImportFromGoogleResponse>(
     `${GOOGLE_BASE}/import`,
-    request
+    request,
   );
   return response.data;
 }
@@ -181,11 +184,11 @@ export async function importFromGoogle(
  * Export a document to Google Drive
  */
 export async function exportToGoogle(
-  request: ExportToGoogleRequest
+  request: ExportToGoogleRequest,
 ): Promise<ExportToGoogleResponse> {
   const response = await api.post<ExportToGoogleResponse>(
     `${GOOGLE_BASE}/export`,
-    request
+    request,
   );
   return response.data;
 }
@@ -194,11 +197,11 @@ export async function exportToGoogle(
  * Import multiple files from Google Drive
  */
 export async function importMultipleFromGoogle(
-  requests: ImportFromGoogleRequest[]
+  requests: ImportFromGoogleRequest[],
 ): Promise<ImportFromGoogleResponse[]> {
   const response = await api.post<ImportFromGoogleResponse[]>(
     `${GOOGLE_BASE}/import/batch`,
-    { files: requests }
+    { files: requests },
   );
   return response.data;
 }
@@ -218,10 +221,12 @@ export async function getSyncedDocuments(): Promise<SyncedDocument[]> {
 /**
  * Get sync status for a specific document
  */
-export async function getSyncStatus(documentId: string): Promise<SyncedDocument | null> {
+export async function getSyncStatus(
+  documentId: string,
+): Promise<SyncedDocument | null> {
   try {
     const response = await api.get<SyncedDocument>(
-      `${GOOGLE_BASE}/sync/${documentId}`
+      `${GOOGLE_BASE}/sync/${documentId}`,
     );
     return response.data;
   } catch {
@@ -235,7 +240,7 @@ export async function getSyncStatus(documentId: string): Promise<SyncedDocument 
 export async function enableSync(
   documentId: string,
   googleFileId: string,
-  direction?: 'bidirectional' | 'toGoogle' | 'fromGoogle'
+  direction?: "bidirectional" | "toGoogle" | "fromGoogle",
 ): Promise<SyncedDocument> {
   const response = await api.post<SyncedDocument>(`${GOOGLE_BASE}/sync`, {
     documentId,
@@ -257,7 +262,7 @@ export async function disableSync(documentId: string): Promise<void> {
  */
 export async function triggerSync(documentId: string): Promise<SyncedDocument> {
   const response = await api.post<SyncedDocument>(
-    `${GOOGLE_BASE}/sync/${documentId}/trigger`
+    `${GOOGLE_BASE}/sync/${documentId}/trigger`,
   );
   return response.data;
 }
@@ -266,7 +271,9 @@ export async function triggerSync(documentId: string): Promise<SyncedDocument> {
  * Get all sync conflicts
  */
 export async function getSyncConflicts(): Promise<SyncConflict[]> {
-  const response = await api.get<SyncConflict[]>(`${GOOGLE_BASE}/sync/conflicts`);
+  const response = await api.get<SyncConflict[]>(
+    `${GOOGLE_BASE}/sync/conflicts`,
+  );
   return response.data;
 }
 
@@ -274,11 +281,11 @@ export async function getSyncConflicts(): Promise<SyncConflict[]> {
  * Resolve a sync conflict
  */
 export async function resolveSyncConflict(
-  request: ResolveSyncConflictRequest
+  request: ResolveSyncConflictRequest,
 ): Promise<SyncedDocument> {
   const response = await api.post<SyncedDocument>(
     `${GOOGLE_BASE}/sync/conflicts/resolve`,
-    request
+    request,
   );
   return response.data;
 }
@@ -292,7 +299,7 @@ export async function resolveSyncConflict(
  */
 export async function getSettings(): Promise<GoogleIntegrationSettings> {
   const response = await api.get<GoogleIntegrationSettings>(
-    `${GOOGLE_BASE}/settings`
+    `${GOOGLE_BASE}/settings`,
   );
   return response.data;
 }
@@ -301,11 +308,11 @@ export async function getSettings(): Promise<GoogleIntegrationSettings> {
  * Update Google integration settings
  */
 export async function updateSettings(
-  settings: Partial<GoogleIntegrationSettings>
+  settings: Partial<GoogleIntegrationSettings>,
 ): Promise<GoogleIntegrationSettings> {
   const response = await api.patch<GoogleIntegrationSettings>(
     `${GOOGLE_BASE}/settings`,
-    settings
+    settings,
   );
   return response.data;
 }

@@ -1,5 +1,5 @@
-import { create } from 'zustand';
-import { getClient, ServiceName } from '@/lib/api/factory';
+import { create } from "zustand";
+import { getClient, ServiceName } from "@/lib/api/factory";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -15,7 +15,7 @@ export interface Conversation {
 
 export interface ConversationMessage {
   id: string;
-  role: 'user' | 'assistant' | 'system';
+  role: "user" | "assistant" | "system";
   content: string;
   tokens_used?: number;
   created_at: string;
@@ -57,16 +57,17 @@ export const useAiConversations = create<ConversationsState>()((set, get) => ({
     set({ loading: true, error: null });
     try {
       const res = await aiClient.get<{ conversations: Conversation[] }>(
-        '/ai/conversations',
+        "/ai/conversations",
       );
-      const conversations = res.data.conversations ?? (res.data as unknown as Conversation[]);
+      const conversations =
+        res.data.conversations ?? (res.data as unknown as Conversation[]);
       set({
         conversations: Array.isArray(conversations) ? conversations : [],
         loading: false,
       });
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : 'Failed to fetch conversations';
+        err instanceof Error ? err.message : "Failed to fetch conversations";
       set({ error: message, loading: false });
     }
   },
@@ -80,7 +81,7 @@ export const useAiConversations = create<ConversationsState>()((set, get) => ({
       set({ currentConversation: res.data, loading: false });
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : 'Failed to fetch conversation';
+        err instanceof Error ? err.message : "Failed to fetch conversation";
       set({ error: message, loading: false });
     }
   },
@@ -97,7 +98,9 @@ export const useAiConversations = create<ConversationsState>()((set, get) => ({
       }));
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : 'Impossible de supprimer la conversation';
+        err instanceof Error
+          ? err.message
+          : "Impossible de supprimer la conversation";
       set({ error: message });
     }
   },

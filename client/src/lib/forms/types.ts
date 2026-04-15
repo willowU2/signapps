@@ -50,10 +50,22 @@ export interface SelectOption {
 }
 
 export interface ValidationRule {
-  type: "required" | "min" | "max" | "minLength" | "maxLength" | "pattern" | "email" | "url" | "custom";
+  type:
+    | "required"
+    | "min"
+    | "max"
+    | "minLength"
+    | "maxLength"
+    | "pattern"
+    | "email"
+    | "url"
+    | "custom";
   value?: unknown;
   message?: string;
-  validator?: (value: unknown, formData: Record<string, unknown>) => boolean | string;
+  validator?: (
+    value: unknown,
+    formData: Record<string, unknown>,
+  ) => boolean | string;
 }
 
 export interface FieldConfig {
@@ -211,7 +223,9 @@ export interface DynamicFormProps {
 // Zod Schema Builder Helper
 // ============================================================================
 
-export function buildZodSchema(fields: FieldConfig[]): z.ZodObject<Record<string, z.ZodTypeAny>> {
+export function buildZodSchema(
+  fields: FieldConfig[],
+): z.ZodObject<Record<string, z.ZodTypeAny>> {
   const shape: Record<string, z.ZodTypeAny> = {};
 
   for (const field of fields) {
@@ -222,8 +236,10 @@ export function buildZodSchema(fields: FieldConfig[]): z.ZodObject<Record<string
       case "slider":
       case "rating":
         schema = z.coerce.number();
-        if (field.min !== undefined) schema = (schema as z.ZodNumber).min(field.min);
-        if (field.max !== undefined) schema = (schema as z.ZodNumber).max(field.max);
+        if (field.min !== undefined)
+          schema = (schema as z.ZodNumber).min(field.min);
+        if (field.max !== undefined)
+          schema = (schema as z.ZodNumber).max(field.max);
         break;
 
       case "checkbox":
@@ -246,11 +262,15 @@ export function buildZodSchema(fields: FieldConfig[]): z.ZodObject<Record<string
         break;
 
       case "email":
-        schema = z.string().email(field.validation?.find((v) => v.type === "email")?.message);
+        schema = z
+          .string()
+          .email(field.validation?.find((v) => v.type === "email")?.message);
         break;
 
       case "url":
-        schema = z.string().url(field.validation?.find((v) => v.type === "url")?.message);
+        schema = z
+          .string()
+          .url(field.validation?.find((v) => v.type === "url")?.message);
         break;
 
       case "entity-picker":
@@ -259,8 +279,10 @@ export function buildZodSchema(fields: FieldConfig[]): z.ZodObject<Record<string
 
       default:
         schema = z.string();
-        if (field.minLength) schema = (schema as z.ZodString).min(field.minLength);
-        if (field.maxLength) schema = (schema as z.ZodString).max(field.maxLength);
+        if (field.minLength)
+          schema = (schema as z.ZodString).min(field.minLength);
+        if (field.maxLength)
+          schema = (schema as z.ZodString).max(field.maxLength);
     }
 
     // Make optional if not required

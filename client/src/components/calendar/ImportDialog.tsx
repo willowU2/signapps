@@ -1,4 +1,4 @@
-import { SpinnerInfinity } from 'spinners-react';
+import { SpinnerInfinity } from "spinners-react";
 import React, { useState } from "react";
 import {
   Dialog,
@@ -8,9 +8,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Check, AlertCircle } from 'lucide-react';
+import { Check, AlertCircle } from "lucide-react";
 import { calendarApi } from "@/lib/api";
-import { FileUploadProgressBar } from '@/components/application/file-upload/file-upload-progress-bar';
+import { FileUploadProgressBar } from "@/components/application/file-upload/file-upload-progress-bar";
 
 interface ImportDialogProps {
   calendarId: string | null;
@@ -39,11 +39,11 @@ export function ImportDialog({
     file: File,
     onProgress: (progress: number) => void,
     onSuccess: () => void,
-    onError: (error: string) => void
+    onError: (error: string) => void,
   ) => {
     if (!calendarId) {
-        onError("Calendar ID is missing");
-        return;
+      onError("Calendar ID is missing");
+      return;
     }
 
     try {
@@ -53,11 +53,13 @@ export function ImportDialog({
 
       if (file.name.endsWith(".ics")) {
         // Validate iCalendar format first
-        const validationResult = await calendarApi.post(
-          "/icalendar/validate",
-          { ics_content: fileContent }
-        );
-        const validationData = validationResult.data as { valid: boolean; errors: string[] };
+        const validationResult = await calendarApi.post("/icalendar/validate", {
+          ics_content: fileContent,
+        });
+        const validationData = validationResult.data as {
+          valid: boolean;
+          errors: string[];
+        };
 
         if (!validationData.valid) {
           const errors = validationData.errors;
@@ -67,18 +69,22 @@ export function ImportDialog({
             skippedCount: 0,
             errors,
           });
-          onError(errors.join(', '));
+          onError(errors.join(", "));
           return;
         }
-        
+
         onProgress(60);
 
         // Call actual import endpoint
         const importResult = await calendarApi.post(
           `/calendars/${calendarId}/import`,
-          { ics_content: fileContent }
+          { ics_content: fileContent },
         );
-        const importData = importResult.data as { imported: number; skipped: number; errors: string[] };
+        const importData = importResult.data as {
+          imported: number;
+          skipped: number;
+          errors: string[];
+        };
 
         const importedCount = importData.imported;
         setResult({
@@ -111,7 +117,7 @@ export function ImportDialog({
           if (onImportComplete) {
             onImportComplete(eventCount);
           }
-          
+
           onProgress(100);
           onSuccess();
         } catch (err) {
@@ -124,10 +130,11 @@ export function ImportDialog({
           onError("Invalid JSON format");
         }
       } else {
-          onError("Please select a valid .ics or .json file");
+        onError("Please select a valid .ics or .json file");
       }
     } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : "Failed to import calendar";
+      const errorMsg =
+        err instanceof Error ? err.message : "Failed to import calendar";
       setResult({
         success: false,
         importedCount: 0,
@@ -180,9 +187,7 @@ export function ImportDialog({
                   <div className="flex items-start gap-3 p-4 bg-red-50 rounded">
                     <AlertCircle className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" />
                     <div>
-                      <p className="font-medium text-red-900">
-                        Import failed
-                      </p>
+                      <p className="font-medium text-red-900">Import failed</p>
                       {result.errors.length > 0 && (
                         <ul className="text-sm text-red-700 mt-2 space-y-1">
                           {result.errors.map((error, i) => (
@@ -216,29 +221,29 @@ export function ImportDialog({
           ) : (
             /* File upload */
             <div className="space-y-4">
-               <FileUploadProgressBar 
-                  customUploadStrategy={customUploadStrategy}
-                  acceptedTypes=".ics,.json"
-               />
-               <div className="p-3 bg-muted rounded text-sm">
-                 <p className="font-medium mb-2">What gets imported?</p>
-                 <ul className="text-xs space-y-1 list-disc list-inside">
-                   <li>Event title, description, and location</li>
-                   <li>Start and end times</li>
-                   <li>Recurrence rules (RFC 5545)</li>
-                   <li>Timezones</li>
-                 </ul>
-               </div>
+              <FileUploadProgressBar
+                customUploadStrategy={customUploadStrategy}
+                acceptedTypes=".ics,.json"
+              />
+              <div className="p-3 bg-muted rounded text-sm">
+                <p className="font-medium mb-2">What gets imported?</p>
+                <ul className="text-xs space-y-1 list-disc list-inside">
+                  <li>Event title, description, and location</li>
+                  <li>Start and end times</li>
+                  <li>Recurrence rules (RFC 5545)</li>
+                  <li>Timezones</li>
+                </ul>
+              </div>
 
-               <div className="flex gap-3">
-                 <Button
-                   variant="outline"
-                   onClick={handleClose}
-                   className="flex-1"
-                 >
-                   Cancel
-                 </Button>
-               </div>
+              <div className="flex gap-3">
+                <Button
+                  variant="outline"
+                  onClick={handleClose}
+                  className="flex-1"
+                >
+                  Cancel
+                </Button>
+              </div>
             </div>
           )}
         </div>

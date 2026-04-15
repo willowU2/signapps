@@ -1,9 +1,17 @@
-export function SkeletonLoader({ lines = 3, className = "" }: { lines?: number; className?: string }) {
+export function SkeletonLoader({
+  lines = 3,
+  className = "",
+}: {
+  lines?: number;
+  className?: string;
+}) {
   return (
     <div className={`space-y-3 ${className}`}>
       {Array.from({ length: lines }).map((_, i) => (
         <div key={i} className="animate-pulse">
-          <div className={`h-4 bg-muted rounded ${i === 0 ? "w-3/4" : i === lines - 1 ? "w-1/2" : "w-full"}`} />
+          <div
+            className={`h-4 bg-muted rounded ${i === 0 ? "w-3/4" : i === lines - 1 ? "w-1/2" : "w-full"}`}
+          />
         </div>
       ))}
     </div>

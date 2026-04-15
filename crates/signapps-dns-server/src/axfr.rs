@@ -39,10 +39,7 @@ pub struct AxfrResult {
 /// println!("Transferring {} records for {}", result.record_count, result.zone.zone_name);
 /// ```
 #[tracing::instrument(skip(pool))]
-pub async fn full_transfer(
-    pool: &PgPool,
-    zone_id: Uuid,
-) -> signapps_common::Result<AxfrResult> {
+pub async fn full_transfer(pool: &PgPool, zone_id: Uuid) -> signapps_common::Result<AxfrResult> {
     // Get zone info
     let zone: AdDnsZone = sqlx::query_as("SELECT * FROM ad_dns_zones WHERE id = $1")
         .bind(zone_id)
@@ -68,7 +65,11 @@ pub async fn full_transfer(
         "AXFR: full zone transfer"
     );
 
-    Ok(AxfrResult { zone, records, record_count: count })
+    Ok(AxfrResult {
+        zone,
+        records,
+        record_count: count,
+    })
 }
 
 /// Perform an incremental zone transfer (IXFR).
@@ -110,7 +111,11 @@ pub async fn incremental_transfer(
     // If client is already up-to-date, return empty transfer
     if client_serial >= zone.soa_serial {
         tracing::info!(zone = %zone.zone_name, "IXFR: client is up-to-date");
-        return Ok(AxfrResult { zone, records: vec![], record_count: 0 });
+        return Ok(AxfrResult {
+            zone,
+            records: vec![],
+            record_count: 0,
+        });
     }
 
     // Fall back to full transfer (proper IXFR needs a per-record change log)

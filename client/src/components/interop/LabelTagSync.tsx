@@ -27,18 +27,29 @@ export function useLabelTagSync() {
     return JSON.parse(localStorage.getItem(MAPPING_KEY) || "[]");
   };
 
-  const syncLabelToTag = useCallback((labelId: string, labelName: string, taskId: string) => {
-    const mappings = getMappings();
-    const mapping = mappings.find(m => m.labelId === labelId);
-    const tag = mapping?.taskTag ?? labelName;
+  const syncLabelToTag = useCallback(
+    (labelId: string, labelName: string, taskId: string) => {
+      const mappings = getMappings();
+      const mapping = mappings.find((m) => m.labelId === labelId);
+      const tag = mapping?.taskTag ?? labelName;
 
-    interopStore.addLink({ sourceType: "mail", sourceId: labelId, sourceTitle: labelName, targetType: "task", targetId: taskId, targetTitle: `tag:${tag}`, relation: "label_tag" });
-    return tag;
-  }, []);
+      interopStore.addLink({
+        sourceType: "mail",
+        sourceId: labelId,
+        sourceTitle: labelName,
+        targetType: "task",
+        targetId: taskId,
+        targetTitle: `tag:${tag}`,
+        relation: "label_tag",
+      });
+      return tag;
+    },
+    [],
+  );
 
   const addMapping = useCallback((mapping: LabelTagMapping) => {
     const mappings = getMappings();
-    const existing = mappings.findIndex(m => m.labelId === mapping.labelId);
+    const existing = mappings.findIndex((m) => m.labelId === mapping.labelId);
     if (existing >= 0) mappings[existing] = mapping;
     else mappings.push(mapping);
     localStorage.setItem(MAPPING_KEY, JSON.stringify(mappings));
@@ -59,16 +70,16 @@ export function LabelTagSyncBadges({ emailId, labels, className }: Props) {
   const [mappings, setMappings] = useState<LabelTagMapping[]>([]);
 
   useEffect(() => {
-    setMappings(getMappings().filter(m => labels.includes(m.labelName)));
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    setMappings(getMappings().filter((m) => labels.includes(m.labelName)));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [labels]);
 
   if (labels.length === 0) return null;
 
   return (
     <div className={`flex items-center gap-1.5 flex-wrap ${className}`}>
-      {labels.map(label => {
-        const mapped = mappings.find(m => m.labelName === label);
+      {labels.map((label) => {
+        const mapped = mappings.find((m) => m.labelName === label);
         return (
           <div key={label} className="flex items-center gap-1">
             <Badge variant="secondary" className="text-[11px] gap-1">

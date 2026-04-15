@@ -1,22 +1,24 @@
-'use client';
+"use client";
 
 /**
  * Feature 14: Drive → share file via email
  */
 
-import { useState } from 'react';
-import { Mail, Send, Loader2, X, Plus } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+import { useState } from "react";
+import { Mail, Send, Loader2, X, Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
-  Popover, PopoverContent, PopoverTrigger,
-} from '@/components/ui/popover';
-import { Badge } from '@/components/ui/badge';
-import { toast } from 'sonner';
-import { DriveNode } from '@/lib/api/drive';
-import { driveNodeUrl } from '@/hooks/use-cross-module';
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
+import { DriveNode } from "@/lib/api/drive";
+import { driveNodeUrl } from "@/hooks/use-cross-module";
 
 interface DriveShareEmailProps {
   node: DriveNode;
@@ -24,9 +26,9 @@ interface DriveShareEmailProps {
 
 export function DriveShareEmail({ node }: DriveShareEmailProps) {
   const [open, setOpen] = useState(false);
-  const [emailInput, setEmailInput] = useState('');
+  const [emailInput, setEmailInput] = useState("");
   const [recipients, setRecipients] = useState<string[]>([]);
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
   const fileUrl = driveNodeUrl(node.id);
@@ -35,42 +37,51 @@ export function DriveShareEmail({ node }: DriveShareEmailProps) {
     const email = emailInput.trim();
     if (!email) return;
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      toast.error('Email invalide');
+      toast.error("Email invalide");
       return;
     }
     if (recipients.includes(email)) {
-      toast.error('Email déjà ajouté');
+      toast.error("Email déjà ajouté");
       return;
     }
     setRecipients((r) => [...r, email]);
-    setEmailInput('');
+    setEmailInput("");
   };
 
   const handleSend = async () => {
-    if (recipients.length === 0) { toast.error('Ajoutez au moins un destinataire'); return; }
+    if (recipients.length === 0) {
+      toast.error("Ajoutez au moins un destinataire");
+      return;
+    }
     setLoading(true);
     try {
       // Use the mail API if available
-      const { mailApi } = await import('@/lib/api/mail').catch(() => ({ mailApi: null }));
+      const { mailApi } = await import("@/lib/api/mail").catch(() => ({
+        mailApi: null,
+      }));
       if (mailApi && mailApi.sendEmail) {
         await mailApi.sendEmail({
-          account_id: '',
-          recipient: recipients.join(','),
+          account_id: "",
+          recipient: recipients.join(","),
           subject: `Partage de fichier : ${node.name}`,
           body_html: `${message || `Bonjour,\n\nJe partage avec vous le fichier "${node.name}".\n`}\n\nLien d'accès : <a href="${fileUrl}">${fileUrl}</a>\n\nCordialement`,
         });
       } else {
         // Fallback: mailto link
         const subject = encodeURIComponent(`Partage : ${node.name}`);
-        const body = encodeURIComponent(`${message || `Bonjour,\n\nFichier partagé : ${node.name}`}\n\n${fileUrl}`);
-        window.open(`mailto:${recipients.join(',')}?subject=${subject}&body=${body}`);
+        const body = encodeURIComponent(
+          `${message || `Bonjour,\n\nFichier partagé : ${node.name}`}\n\n${fileUrl}`,
+        );
+        window.open(
+          `mailto:${recipients.join(",")}?subject=${subject}&body=${body}`,
+        );
       }
-      toast.success('Email envoyé');
+      toast.success("Email envoyé");
       setOpen(false);
       setRecipients([]);
-      setMessage('');
+      setMessage("");
     } catch {
-      toast.error('Erreur lors de l\'envoi');
+      toast.error("Erreur lors de l'envoi");
     } finally {
       setLoading(false);
     }
@@ -102,10 +113,20 @@ export function DriveShareEmail({ node }: DriveShareEmailProps) {
               placeholder="email@exemple.com"
               value={emailInput}
               onChange={(e) => setEmailInput(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addEmail(); } }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  addEmail();
+                }
+              }}
               className="h-8 text-xs flex-1"
             />
-            <Button size="sm" variant="outline" onClick={addEmail} className="h-8 px-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={addEmail}
+              className="h-8 px-2"
+            >
               <Plus className="h-3.5 w-3.5" />
             </Button>
           </div>
@@ -114,7 +135,11 @@ export function DriveShareEmail({ node }: DriveShareEmailProps) {
               {recipients.map((r) => (
                 <Badge key={r} variant="secondary" className="gap-1 text-xs">
                   {r}
-                  <button onClick={() => setRecipients((prev) => prev.filter((e) => e !== r))}>
+                  <button
+                    onClick={() =>
+                      setRecipients((prev) => prev.filter((e) => e !== r))
+                    }
+                  >
                     <X className="h-3 w-3" />
                   </button>
                 </Badge>
@@ -134,8 +159,17 @@ export function DriveShareEmail({ node }: DriveShareEmailProps) {
           />
         </div>
 
-        <Button size="sm" className="w-full gap-1.5" onClick={handleSend} disabled={loading || recipients.length === 0}>
-          {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
+        <Button
+          size="sm"
+          className="w-full gap-1.5"
+          onClick={handleSend}
+          disabled={loading || recipients.length === 0}
+        >
+          {loading ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <Send className="h-3.5 w-3.5" />
+          )}
           Envoyer
         </Button>
       </PopoverContent>

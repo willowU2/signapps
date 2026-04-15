@@ -64,7 +64,9 @@ export default function SupplierPortal() {
         <div className="rounded-lg border p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-muted-foreground">Invoices Submitted</p>
+              <p className="text-sm text-muted-foreground">
+                Invoices Submitted
+              </p>
               <p className="text-2xl font-bold">{invoices.length}</p>
             </div>
             <DollarSign className="h-8 w-8 text-blue-500" />
@@ -75,7 +77,10 @@ export default function SupplierPortal() {
             <div>
               <p className="text-sm text-muted-foreground">Total Amount</p>
               <p className="text-2xl font-bold">
-                ${invoices.reduce((sum, i) => sum + i.amount, 0).toLocaleString()}
+                $
+                {invoices
+                  .reduce((sum, i) => sum + i.amount, 0)
+                  .toLocaleString()}
               </p>
             </div>
             <DollarSign className="h-8 w-8 text-emerald-500" />
@@ -98,7 +103,10 @@ export default function SupplierPortal() {
         </div>
         <div className="divide-y">
           {invoices.map((invoice) => (
-            <div key={invoice.id} className="flex items-center justify-between p-4">
+            <div
+              key={invoice.id}
+              className="flex items-center justify-between p-4"
+            >
               <div>
                 <p className="font-medium">{invoice.invoiceNumber}</p>
                 <p className="text-sm text-muted-foreground">
@@ -106,8 +114,12 @@ export default function SupplierPortal() {
                 </p>
               </div>
               <div className="text-right">
-                <p className="font-semibold">${invoice.amount.toLocaleString()}</p>
-                <p className={`text-sm font-medium ${getStatusColor(invoice.paymentStatus)}`}>
+                <p className="font-semibold">
+                  ${invoice.amount.toLocaleString()}
+                </p>
+                <p
+                  className={`text-sm font-medium ${getStatusColor(invoice.paymentStatus)}`}
+                >
                   {invoice.paymentStatus.charAt(0).toUpperCase() +
                     invoice.paymentStatus.slice(1)}
                 </p>

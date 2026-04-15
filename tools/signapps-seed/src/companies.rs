@@ -191,8 +191,18 @@ pub async fn seed_acme(
 
     // ── 4. Create 2 client contacts linked to ClientCo ────────────────────────
     let client_contacts: &[(&str, &str, &str, &str)] = &[
-        ("client_contact_1", "contact1@clientco.fr", "Sophie", "Client"),
-        ("client_contact_2", "contact2@clientco.fr", "Pierre", "Acheteur"),
+        (
+            "client_contact_1",
+            "contact1@clientco.fr",
+            "Sophie",
+            "Client",
+        ),
+        (
+            "client_contact_2",
+            "contact2@clientco.fr",
+            "Pierre",
+            "Acheteur",
+        ),
     ];
 
     for &(username, email, first, last) in client_contacts {
@@ -449,12 +459,10 @@ pub async fn seed_chaos(
     info!(company_id = %company_id, "seeded Chaos Industries company");
 
     // Affiliate all persons in this tenant as employees.
-    let persons: Vec<(Uuid,)> = sqlx::query_as(
-        "SELECT id FROM core.persons WHERE tenant_id = $1",
-    )
-    .bind(tenant_id)
-    .fetch_all(pool)
-    .await?;
+    let persons: Vec<(Uuid,)> = sqlx::query_as("SELECT id FROM core.persons WHERE tenant_id = $1")
+        .bind(tenant_id)
+        .fetch_all(pool)
+        .await?;
 
     for (person_id,) in &persons {
         sqlx::query(

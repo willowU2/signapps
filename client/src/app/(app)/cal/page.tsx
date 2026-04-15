@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { usePageTitle } from '@/hooks/use-page-title';
-import { CalendarHub } from '@/components/calendar/CalendarHub';
+import { usePageTitle } from "@/hooks/use-page-title";
+import { CalendarHub } from "@/components/calendar/CalendarHub";
 
 export default function CalendarPage() {
-  usePageTitle('Calendrier');
+  usePageTitle("Calendrier");
   return <CalendarHub />;
 }

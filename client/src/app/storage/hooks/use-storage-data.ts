@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from "react";
 import {
   raidApi,
   storageStatsApi,
@@ -15,8 +15,8 @@ import {
   type ShareLink,
   type MountPoint,
   type ExternalStorage,
-} from '@/lib/api';
-import { toast } from 'sonner';
+} from "@/lib/api";
+import { toast } from "sonner";
 
 export function useStorageStats() {
   const [stats, setStats] = useState<StorageStats | null>(null);
@@ -30,7 +30,7 @@ export function useStorageStats() {
       setStats(response.data);
       setError(null);
     } catch {
-      setError('Impossible de charger les statistiques');
+      setError("Impossible de charger les statistiques");
     } finally {
       setLoading(false);
     }
@@ -54,33 +54,38 @@ export function useRaidData() {
   const fetchAll = useCallback(async () => {
     try {
       setLoading(true);
-      const [arraysRes, healthRes, eventsRes, disksRes] = await Promise.allSettled([
-        raidApi.listArrays(),
-        raidApi.getHealth(),
-        raidApi.listEvents(10),
-        raidApi.listDisks(),
-      ]);
+      const [arraysRes, healthRes, eventsRes, disksRes] =
+        await Promise.allSettled([
+          raidApi.listArrays(),
+          raidApi.getHealth(),
+          raidApi.listEvents(10),
+          raidApi.listDisks(),
+        ]);
 
-      if (arraysRes.status === 'fulfilled') setArrays(arraysRes.value.data);
-      if (healthRes.status === 'fulfilled') setHealth(healthRes.value.data);
-      if (eventsRes.status === 'fulfilled') setEvents(eventsRes.value.data);
-      if (disksRes.status === 'fulfilled') setDisks(disksRes.value.data);
+      if (arraysRes.status === "fulfilled") setArrays(arraysRes.value.data);
+      if (healthRes.status === "fulfilled") setHealth(healthRes.value.data);
+      if (eventsRes.status === "fulfilled") setEvents(eventsRes.value.data);
+      if (disksRes.status === "fulfilled") setDisks(disksRes.value.data);
 
       setError(null);
     } catch {
-      setError('Impossible de charger les données RAID');
+      setError("Impossible de charger les données RAID");
     } finally {
       setLoading(false);
     }
   }, []);
 
-  const createArray = async (data: { name: string; raid_level: string; disk_ids: string[] }) => {
+  const createArray = async (data: {
+    name: string;
+    raid_level: string;
+    disk_ids: string[];
+  }) => {
     try {
       await raidApi.createArray(data);
-      toast.success('Array créé avec succès');
+      toast.success("Array créé avec succès");
       await fetchAll();
     } catch (err) {
-      toast.error('Erreur lors de la création de l\'array');
+      toast.error("Erreur lors de la création de l'array");
       throw err;
     }
   };
@@ -88,10 +93,10 @@ export function useRaidData() {
   const deleteArray = async (id: string) => {
     try {
       await raidApi.deleteArray(id);
-      toast.success('Array supprimé');
+      toast.success("Array supprimé");
       await fetchAll();
     } catch (err) {
-      toast.error('Erreur lors de la suppression');
+      toast.error("Erreur lors de la suppression");
       throw err;
     }
   };
@@ -99,10 +104,10 @@ export function useRaidData() {
   const rebuildArray = async (id: string) => {
     try {
       await raidApi.rebuildArray(id);
-      toast.success('Reconstruction lancée');
+      toast.success("Reconstruction lancée");
       await fetchAll();
     } catch (err) {
-      toast.error('Erreur lors de la reconstruction');
+      toast.error("Erreur lors de la reconstruction");
       throw err;
     }
   };
@@ -111,9 +116,9 @@ export function useRaidData() {
     try {
       const response = await raidApi.scanDisks();
       setDisks(response.data);
-      toast.success('Scan terminé');
+      toast.success("Scan terminé");
     } catch {
-      toast.error('Erreur lors du scan');
+      toast.error("Erreur lors du scan");
     }
   };
 
@@ -148,7 +153,7 @@ export function useShares() {
       setShares(response.data.shares || []);
       setError(null);
     } catch {
-      setError('Impossible de charger les partages');
+      setError("Impossible de charger les partages");
       setShares([]);
     } finally {
       setLoading(false);
@@ -161,15 +166,15 @@ export function useShares() {
     expires_in_hours?: number;
     password?: string;
     max_downloads?: number;
-    access_type?: 'view' | 'download';
+    access_type?: "view" | "download";
   }) => {
     try {
       const response = await sharesApi.create(data);
-      toast.success('Lien de partage créé');
+      toast.success("Lien de partage créé");
       await fetchShares();
       return response.data;
     } catch (err) {
-      toast.error('Erreur lors de la création du partage');
+      toast.error("Erreur lors de la création du partage");
       throw err;
     }
   };
@@ -177,10 +182,10 @@ export function useShares() {
   const deleteShare = async (id: string) => {
     try {
       await sharesApi.delete(id);
-      toast.success('Partage supprimé');
+      toast.success("Partage supprimé");
       await fetchShares();
     } catch (err) {
-      toast.error('Erreur lors de la suppression');
+      toast.error("Erreur lors de la suppression");
       throw err;
     }
   };
@@ -189,7 +194,14 @@ export function useShares() {
     fetchShares();
   }, [fetchShares]);
 
-  return { shares, loading, error, refresh: fetchShares, createShare, deleteShare };
+  return {
+    shares,
+    loading,
+    error,
+    refresh: fetchShares,
+    createShare,
+    deleteShare,
+  };
 }
 
 export function useMounts() {
@@ -204,7 +216,7 @@ export function useMounts() {
       setMounts(response.data);
       setError(null);
     } catch {
-      setError('Impossible de charger les montages');
+      setError("Impossible de charger les montages");
     } finally {
       setLoading(false);
     }
@@ -229,7 +241,7 @@ export function useExternalStorage() {
       setStorages(response.data);
       setError(null);
     } catch {
-      setError('Impossible de charger les stockages externes');
+      setError("Impossible de charger les stockages externes");
       setStorages([]);
     } finally {
       setLoading(false);
@@ -240,29 +252,29 @@ export function useExternalStorage() {
     try {
       const response = await externalStorageApi.detect();
       setStorages(response.data);
-      toast.success('Détection terminée');
+      toast.success("Détection terminée");
     } catch {
-      toast.error('Erreur lors de la détection');
+      toast.error("Erreur lors de la détection");
     }
   };
 
   const disconnect = async (id: string) => {
     try {
       await externalStorageApi.disconnect(id);
-      toast.success('Déconnecté');
+      toast.success("Déconnecté");
       await fetchStorages();
     } catch {
-      toast.error('Erreur lors de la déconnexion');
+      toast.error("Erreur lors de la déconnexion");
     }
   };
 
   const eject = async (id: string) => {
     try {
       await externalStorageApi.eject(id);
-      toast.success('Éjecté');
+      toast.success("Éjecté");
       await fetchStorages();
     } catch {
-      toast.error('Erreur lors de l\'éjection');
+      toast.error("Erreur lors de l'éjection");
     }
   };
 

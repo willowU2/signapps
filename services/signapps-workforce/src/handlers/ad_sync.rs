@@ -111,16 +111,15 @@ pub async fn list_ad_ous(
 ) -> Result<impl IntoResponse, StatusCode> {
     verify_domain_tenant(&state.pool, domain_id, ctx.tenant_id).await?;
 
-    let ous: Vec<AdOu> = sqlx::query_as(
-        "SELECT * FROM ad_ous WHERE domain_id = $1 ORDER BY distinguished_name",
-    )
-    .bind(domain_id)
-    .fetch_all(&*state.pool)
-    .await
-    .map_err(|e| {
-        tracing::error!("Failed to list OUs: {}", e);
-        StatusCode::INTERNAL_SERVER_ERROR
-    })?;
+    let ous: Vec<AdOu> =
+        sqlx::query_as("SELECT * FROM ad_ous WHERE domain_id = $1 ORDER BY distinguished_name")
+            .bind(domain_id)
+            .fetch_all(&*state.pool)
+            .await
+            .map_err(|e| {
+                tracing::error!("Failed to list OUs: {}", e);
+                StatusCode::INTERNAL_SERVER_ERROR
+            })?;
     Ok(Json(json!(ous)))
 }
 
@@ -138,16 +137,15 @@ pub async fn list_ad_users(
 ) -> Result<impl IntoResponse, StatusCode> {
     verify_domain_tenant(&state.pool, domain_id, ctx.tenant_id).await?;
 
-    let users: Vec<AdUserAccount> = sqlx::query_as(
-        "SELECT * FROM ad_user_accounts WHERE domain_id = $1 ORDER BY display_name",
-    )
-    .bind(domain_id)
-    .fetch_all(&*state.pool)
-    .await
-    .map_err(|e| {
-        tracing::error!("Failed to list AD users: {}", e);
-        StatusCode::INTERNAL_SERVER_ERROR
-    })?;
+    let users: Vec<AdUserAccount> =
+        sqlx::query_as("SELECT * FROM ad_user_accounts WHERE domain_id = $1 ORDER BY display_name")
+            .bind(domain_id)
+            .fetch_all(&*state.pool)
+            .await
+            .map_err(|e| {
+                tracing::error!("Failed to list AD users: {}", e);
+                StatusCode::INTERNAL_SERVER_ERROR
+            })?;
     Ok(Json(json!(users)))
 }
 
@@ -167,8 +165,8 @@ pub async fn set_node_mail_domain(
     Path(node_id): Path<Uuid>,
     Json(body): Json<serde_json::Value>,
 ) -> Result<impl IntoResponse, StatusCode> {
-    let domain_id: Uuid = serde_json::from_value(body["domain_id"].clone())
-        .map_err(|_| StatusCode::BAD_REQUEST)?;
+    let domain_id: Uuid =
+        serde_json::from_value(body["domain_id"].clone()).map_err(|_| StatusCode::BAD_REQUEST)?;
 
     // Verify the domain belongs to the current tenant
     verify_domain_tenant(&state.pool, domain_id, ctx.tenant_id).await?;
@@ -234,7 +232,7 @@ pub async fn trigger_reconciliation(
         Err(e) => {
             tracing::error!("Manual reconciliation failed: {}", e);
             Err(StatusCode::INTERNAL_SERVER_ERROR)
-        }
+        },
     }
 }
 
@@ -252,16 +250,15 @@ pub async fn list_dc_sites(
 ) -> Result<impl IntoResponse, StatusCode> {
     verify_domain_tenant(&state.pool, domain_id, ctx.tenant_id).await?;
 
-    let dcs: Vec<AdDcSite> = sqlx::query_as(
-        "SELECT * FROM ad_dc_sites WHERE domain_id = $1 ORDER BY dc_hostname",
-    )
-    .bind(domain_id)
-    .fetch_all(&*state.pool)
-    .await
-    .map_err(|e| {
-        tracing::error!("Failed to list DC sites: {}", e);
-        StatusCode::INTERNAL_SERVER_ERROR
-    })?;
+    let dcs: Vec<AdDcSite> =
+        sqlx::query_as("SELECT * FROM ad_dc_sites WHERE domain_id = $1 ORDER BY dc_hostname")
+            .bind(domain_id)
+            .fetch_all(&*state.pool)
+            .await
+            .map_err(|e| {
+                tracing::error!("Failed to list DC sites: {}", e);
+                StatusCode::INTERNAL_SERVER_ERROR
+            })?;
     Ok(Json(json!(dcs)))
 }
 
@@ -492,11 +489,11 @@ pub async fn promote_dc(
         Err(signapps_common::Error::Conflict(msg)) => {
             tracing::warn!(domain_id = %domain_id, error = %msg, "DC promotion conflict");
             Err(StatusCode::CONFLICT)
-        }
+        },
         Err(e) => {
             tracing::error!(domain_id = %domain_id, error = %e, "DC promotion failed");
             Err(StatusCode::INTERNAL_SERVER_ERROR)
-        }
+        },
     }
 }
 
@@ -527,12 +524,12 @@ pub async fn demote_dc(
         Err(signapps_common::Error::Conflict(msg)) => {
             tracing::warn!(dc_id = %dc_id, error = %msg, "DC demotion blocked by FSMO roles");
             Err(StatusCode::CONFLICT)
-        }
+        },
         Err(signapps_common::Error::NotFound(_)) => Err(StatusCode::NOT_FOUND),
         Err(e) => {
             tracing::error!(dc_id = %dc_id, error = %e, "DC demotion failed");
             Err(StatusCode::INTERNAL_SERVER_ERROR)
-        }
+        },
     }
 }
 
@@ -598,11 +595,11 @@ pub async fn transfer_fsmo(
         Err(signapps_common::Error::BadRequest(msg)) => {
             tracing::warn!(domain_id = %domain_id, error = %msg, "FSMO transfer rejected");
             Err(StatusCode::BAD_REQUEST)
-        }
+        },
         Err(e) => {
             tracing::error!(domain_id = %domain_id, error = %e, "FSMO transfer failed");
             Err(StatusCode::INTERNAL_SERVER_ERROR)
-        }
+        },
     }
 }
 
@@ -639,18 +636,14 @@ pub async fn create_snapshot(
 ) -> Result<impl IntoResponse, StatusCode> {
     verify_domain_tenant(&state.pool, domain_id, ctx.tenant_id).await?;
 
-    match signapps_ad_core::snapshots::create_snapshot(
-        &state.pool,
-        domain_id,
-        &body.snapshot_type,
-    )
-    .await
+    match signapps_ad_core::snapshots::create_snapshot(&state.pool, domain_id, &body.snapshot_type)
+        .await
     {
         Ok(snapshot) => Ok((StatusCode::CREATED, Json(json!(snapshot))).into_response()),
         Err(e) => {
             tracing::error!(domain_id = %domain_id, error = %e, "Snapshot creation failed");
             Err(StatusCode::INTERNAL_SERVER_ERROR)
-        }
+        },
     }
 }
 
@@ -677,7 +670,7 @@ pub async fn list_snapshots(
         Err(e) => {
             tracing::error!(domain_id = %domain_id, error = %e, "Failed to list snapshots");
             Err(StatusCode::INTERNAL_SERVER_ERROR)
-        }
+        },
     }
 }
 
@@ -729,7 +722,7 @@ pub async fn restore_preview(
         Err(e) => {
             tracing::error!(snapshot_id = %snapshot_id, error = %e, "Restore preview failed");
             Err(StatusCode::INTERNAL_SERVER_ERROR)
-        }
+        },
     }
 }
 
@@ -770,6 +763,6 @@ pub async fn restore_execute(
         Err(e) => {
             tracing::error!(snapshot_id = %snapshot_id, error = %e, "Restore execution failed");
             Err(StatusCode::INTERNAL_SERVER_ERROR)
-        }
+        },
     }
 }

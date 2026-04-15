@@ -31,21 +31,24 @@ export function SLADashboard() {
   const [metrics, setMetrics] = useState<SLAMetrics | null>(null);
 
   useEffect(() => {
-    metricsApi.summary().then((res) => {
-      const data = res.data;
-      const uptimePct = data?.uptime_seconds
-        ? Math.min(100, (data.uptime_seconds / (30 * 24 * 3600)) * 100)
-        : 99.9;
-      setMetrics({
-        p99Latency: 0,
-        uptime: parseFloat(uptimePct.toFixed(2)),
-        incidentsCount: 0,
-        errorRate: 0,
-        trend: { p99Latency: 0, uptime: 0, incidentsCount: 0, errorRate: 0 },
+    metricsApi
+      .summary()
+      .then((res) => {
+        const data = res.data;
+        const uptimePct = data?.uptime_seconds
+          ? Math.min(100, (data.uptime_seconds / (30 * 24 * 3600)) * 100)
+          : 99.9;
+        setMetrics({
+          p99Latency: 0,
+          uptime: parseFloat(uptimePct.toFixed(2)),
+          incidentsCount: 0,
+          errorRate: 0,
+          trend: { p99Latency: 0, uptime: 0, incidentsCount: 0, errorRate: 0 },
+        });
+      })
+      .catch(() => {
+        // Fallback: keep null, show nothing
       });
-    }).catch(() => {
-      // Fallback: keep null, show nothing
-    });
   }, [period]);
 
   if (!metrics) return null;
@@ -92,7 +95,9 @@ export function SLADashboard() {
         </div>
 
         <div className="flex items-center gap-1">
-          <div className={`flex items-center gap-1 ${getTrendColor(trend, isNegativeBetter)}`}>
+          <div
+            className={`flex items-center gap-1 ${getTrendColor(trend, isNegativeBetter)}`}
+          >
             {getTrendIcon(trend)}
             <span className="text-sm font-medium">
               {Math.abs(trend).toFixed(2)}% {trend >= 0 ? "↑" : "↓"}
@@ -158,7 +163,9 @@ export function SLADashboard() {
       </div>
 
       <Card className="p-6 border border-border">
-        <h3 className="text-lg font-semibold text-foreground mb-4">SLA Compliance</h3>
+        <h3 className="text-lg font-semibold text-foreground mb-4">
+          SLA Compliance
+        </h3>
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-muted-foreground">Target Uptime (99.9%)</span>
@@ -169,7 +176,9 @@ export function SLADashboard() {
                   style={{ width: `${Math.min(100, metrics.uptime)}%` }}
                 />
               </div>
-              <span className="text-sm font-medium text-foreground">{metrics.uptime.toFixed(2)}%</span>
+              <span className="text-sm font-medium text-foreground">
+                {metrics.uptime.toFixed(2)}%
+              </span>
             </div>
           </div>
         </div>

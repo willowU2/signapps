@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import {
   AlertDialog,
@@ -9,9 +9,9 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import { Loader2 } from 'lucide-react';
-import { useState } from 'react';
+} from "@/components/ui/alert-dialog";
+import { Loader2 } from "lucide-react";
+import { useState } from "react";
 
 interface ConfirmDeleteDialogProps {
   open: boolean;
@@ -29,7 +29,7 @@ interface ConfirmDeleteDialogProps {
 export function ConfirmDeleteDialog({
   open,
   onOpenChange,
-  title = 'Confirmer la suppression',
+  title = "Confirmer la suppression",
   description,
   itemName,
   onConfirm,
@@ -55,19 +55,20 @@ export function ConfirmDeleteDialog({
             {description ??
               (itemName
                 ? `Voulez-vous vraiment supprimer "${itemName}" ? Cette action est irréversible.`
-                : 'Cette action est irréversible. Êtes-vous sûr de vouloir continuer ?')}
+                : "Cette action est irréversible. Êtes-vous sûr de vouloir continuer ?")}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel disabled={loading}>Annuler</AlertDialogCancel>
           <AlertDialogAction
-            onClick={(e) => { e.preventDefault(); handleConfirm(); }}
+            onClick={(e) => {
+              e.preventDefault();
+              handleConfirm();
+            }}
             disabled={loading}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
-            {loading ? (
-              <Loader2 className="h-4 w-4 animate-spin mr-2" />
-            ) : null}
+            {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
             Supprimer
           </AlertDialogAction>
         </AlertDialogFooter>

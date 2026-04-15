@@ -5,7 +5,6 @@
 //! so the caller (main) can surface a non-zero exit code.
 
 use uuid::Uuid;
-use tracing;
 
 /// Runs integrity checks against seeded data.
 ///
@@ -23,10 +22,7 @@ use tracing;
 /// # Panics
 ///
 /// No panics — all errors are propagated via `Result`.
-pub async fn run(
-    pool: &sqlx::PgPool,
-    mode: &str,
-) -> Result<(), Box<dyn std::error::Error>> {
+pub async fn run(pool: &sqlx::PgPool, mode: &str) -> Result<(), Box<dyn std::error::Error>> {
     let mut errors: Vec<String> = Vec::new();
 
     // ── Baseline assertions (all modes) ──────────────────────────────────────
@@ -62,18 +58,17 @@ pub async fn run(
         check_table_count(pool, "sharing.grants", 30, &mut errors).await;
 
         // Admin must be platform-level (tenant_id = NULL) in full mode
-        let admin_tenant: Option<(Option<Uuid>,)> = sqlx::query_as(
-            "SELECT tenant_id FROM identity.users WHERE username = 'admin'",
-        )
-        .fetch_optional(pool)
-        .await
-        .unwrap_or(None);
+        let admin_tenant: Option<(Option<Uuid>,)> =
+            sqlx::query_as("SELECT tenant_id FROM identity.users WHERE username = 'admin'")
+                .fetch_optional(pool)
+                .await
+                .unwrap_or(None);
 
         match admin_tenant {
             Some((None,)) => tracing::info!("  OK  admin.tenant_id = NULL (platform-level)"),
             Some((Some(tid),)) => {
                 errors.push(format!("admin.tenant_id = {tid}, expected NULL"));
-            }
+            },
             None => errors.push("admin user not found".to_string()),
         }
     }
@@ -95,26 +90,21 @@ pub async fn run(
 /// Appends a descriptive message to `errors` on failure. Table-not-found
 /// errors are logged at WARN and treated as hard failures (the table is
 /// expected to exist).
-async fn assert_min(
-    pool: &sqlx::PgPool,
-    table: &str,
-    min: i64,
-    errors: &mut Vec<String>,
-) {
+async fn assert_min(pool: &sqlx::PgPool, table: &str, min: i64, errors: &mut Vec<String>) {
     match sqlx::query_scalar::<_, i64>(&format!("SELECT COUNT(*) FROM {table}"))
         .fetch_one(pool)
         .await
     {
         Ok(n) if n >= min => {
             tracing::info!("  OK  {} = {} (>= {})", table, n, min);
-        }
+        },
         Ok(n) => {
             errors.push(format!("{table}: got {n}, expected >= {min}"));
-        }
+        },
         Err(e) => {
             // Table is expected to exist — count as failure.
             errors.push(format!("{table}: query error — {e}"));
-        }
+        },
     }
 }
 
@@ -123,24 +113,19 @@ async fn assert_min(
 ///
 /// Logs a WARN when row count is below `min` but does **not** push to
 /// `errors`, so the caller is informed without blocking the seed.
-async fn check_table_count(
-    pool: &sqlx::PgPool,
-    table: &str,
-    min: i64,
-    _errors: &mut Vec<String>,
-) {
+async fn check_table_count(pool: &sqlx::PgPool, table: &str, min: i64, _errors: &mut Vec<String>) {
     match sqlx::query_scalar::<_, i64>(&format!("SELECT COUNT(*) FROM {table}"))
         .fetch_one(pool)
         .await
     {
         Ok(n) if n >= min => {
             tracing::info!("  OK  {} = {} (>= {})", table, n, min);
-        }
+        },
         Ok(n) => {
             tracing::warn!("  LOW {} = {} (expected >= {})", table, n, min);
-        }
+        },
         Err(_) => {
             tracing::warn!("  SKIP {} (table may not exist)", table);
-        }
+        },
     }
 }

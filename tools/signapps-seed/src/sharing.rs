@@ -7,13 +7,7 @@ use tracing::info;
 use uuid::Uuid;
 
 const RESOURCE_TYPES: &[&str] = &[
-    "file",
-    "folder",
-    "calendar",
-    "event",
-    "document",
-    "form",
-    "channel",
+    "file", "folder", "calendar", "event", "document", "form", "channel",
 ];
 
 const GRANTEE_TYPES: &[&str] = &["user", "group", "org_node"];
@@ -182,7 +176,11 @@ async fn seed_policies(
         let (created_by, _, _) = crate::helpers::pick(user_ids, 0);
 
         // Only 'user' grantee_type avoids FK issues with groups/org_nodes in seed
-        let effective_grantee_type = if grantee_type == "user" { "user" } else { "user" };
+        let effective_grantee_type = if grantee_type == "user" {
+            "user"
+        } else {
+            "user"
+        };
 
         let result = sqlx::query(
             r#"

@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * TemplateList Component
@@ -6,21 +6,21 @@
  * Displays a list of event templates with search and category filtering.
  */
 
-import * as React from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Plus, FileText, Clock, MapPin, Palette } from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import * as React from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Search, Plus, FileText, Clock, MapPin, Palette } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { cn } from '@/lib/utils';
-import type { EventTemplate } from '@/lib/scheduling/types/scheduling';
+} from "@/components/ui/select";
+import { cn } from "@/lib/utils";
+import type { EventTemplate } from "@/lib/scheduling/types/scheduling";
 
 // ============================================================================
 // Props
@@ -40,12 +40,12 @@ interface TemplateListProps {
 // ============================================================================
 
 const CATEGORY_LABELS: Record<string, string> = {
-  meeting: 'Réunion',
-  call: 'Appel',
-  work: 'Travail',
-  personal: 'Personnel',
-  focus: 'Focus',
-  other: 'Autre',
+  meeting: "Réunion",
+  call: "Appel",
+  work: "Travail",
+  personal: "Personnel",
+  focus: "Focus",
+  other: "Autre",
 };
 
 function formatDuration(minutes: number): string {
@@ -76,8 +76,8 @@ function TemplateCard({ template, onSelect, onEdit }: TemplateCardProps) {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -10 }}
       className={cn(
-        'group relative rounded-lg border p-4 transition-all',
-        'hover:border-primary/50 hover:bg-accent/50 cursor-pointer'
+        "group relative rounded-lg border p-4 transition-all",
+        "hover:border-primary/50 hover:bg-accent/50 cursor-pointer",
       )}
       onClick={() => onSelect?.(template)}
     >
@@ -117,7 +117,9 @@ function TemplateCard({ template, onSelect, onEdit }: TemplateCardProps) {
           )}
           <span className="flex items-center gap-1">
             <Clock className="h-3 w-3" />
-            {defaults.allDay ? 'Journée entière' : formatDuration(defaults.duration)}
+            {defaults.allDay
+              ? "Journée entière"
+              : formatDuration(defaults.duration)}
           </span>
           {defaults.location && (
             <span className="flex items-center gap-1">
@@ -158,8 +160,8 @@ export function TemplateList({
   onCreate,
   className,
 }: TemplateListProps) {
-  const [search, setSearch] = React.useState('');
-  const [categoryFilter, setCategoryFilter] = React.useState<string>('all');
+  const [search, setSearch] = React.useState("");
+  const [categoryFilter, setCategoryFilter] = React.useState<string>("all");
 
   // Get unique categories
   const categories = React.useMemo(() => {
@@ -177,15 +179,19 @@ export function TemplateList({
       if (search) {
         const searchLower = search.toLowerCase();
         const matchesName = template.name.toLowerCase().includes(searchLower);
-        const matchesDescription = template.description?.toLowerCase().includes(searchLower);
-        const matchesTitle = template.eventDefaults.title?.toLowerCase().includes(searchLower);
+        const matchesDescription = template.description
+          ?.toLowerCase()
+          .includes(searchLower);
+        const matchesTitle = template.eventDefaults.title
+          ?.toLowerCase()
+          .includes(searchLower);
         if (!matchesName && !matchesDescription && !matchesTitle) {
           return false;
         }
       }
 
       // Category filter
-      if (categoryFilter !== 'all' && template.category !== categoryFilter) {
+      if (categoryFilter !== "all" && template.category !== categoryFilter) {
         return false;
       }
 
@@ -195,7 +201,7 @@ export function TemplateList({
 
   if (isLoading) {
     return (
-      <div className={cn('flex flex-col gap-4', className)}>
+      <div className={cn("flex flex-col gap-4", className)}>
         <div className="flex gap-2">
           <div className="h-10 flex-1 bg-muted animate-pulse rounded-md" />
           <div className="h-10 w-32 bg-muted animate-pulse rounded-md" />
@@ -208,7 +214,7 @@ export function TemplateList({
   }
 
   return (
-    <div className={cn('flex flex-col gap-4', className)}>
+    <div className={cn("flex flex-col gap-4", className)}>
       {/* Header with search and filters */}
       <div className="flex flex-col sm:flex-row gap-2">
         <div className="relative flex-1">
@@ -262,7 +268,9 @@ export function TemplateList({
               )}
             </>
           ) : (
-            <p className="text-muted-foreground">Aucun modèle ne correspond à votre recherche</p>
+            <p className="text-muted-foreground">
+              Aucun modèle ne correspond à votre recherche
+            </p>
           )}
         </div>
       ) : (
@@ -283,8 +291,11 @@ export function TemplateList({
       {/* Footer with count */}
       {filteredTemplates.length > 0 && (
         <p className="text-xs text-muted-foreground text-center">
-          {filteredTemplates.length} modèle{filteredTemplates.length !== 1 ? 's' : ''}
-          {search || categoryFilter !== 'all' ? ` (sur ${templates.length})` : ''}
+          {filteredTemplates.length} modèle
+          {filteredTemplates.length !== 1 ? "s" : ""}
+          {search || categoryFilter !== "all"
+            ? ` (sur ${templates.length})`
+            : ""}
         </p>
       )}
     </div>

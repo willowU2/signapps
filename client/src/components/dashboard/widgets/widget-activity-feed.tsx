@@ -1,16 +1,18 @@
-'use client';
+"use client";
 
 /**
  * Activity Feed widget — self-contained.
  * Wraps GlobalActivityFeed as a grid widget.
  */
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Activity } from 'lucide-react';
-import { GlobalActivityFeed } from '@/components/crosslinks/GlobalActivityFeed';
-import type { WidgetRenderProps } from '@/lib/dashboard/types';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Activity } from "lucide-react";
+import { GlobalActivityFeed } from "@/components/crosslinks/GlobalActivityFeed";
+import type { WidgetRenderProps } from "@/lib/dashboard/types";
 
-export function WidgetActivityFeed({ widget }: Partial<WidgetRenderProps> = {}) {
+export function WidgetActivityFeed({
+  widget,
+}: Partial<WidgetRenderProps> = {}) {
   return (
     <Card className="h-full flex flex-col">
       <CardHeader className="pb-2 shrink-0">

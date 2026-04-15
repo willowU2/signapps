@@ -4,7 +4,7 @@
  * API client for document template operations.
  */
 
-import { getClient, ServiceName } from '@/lib/api/factory';
+import { getClient, ServiceName } from "@/lib/api/factory";
 
 const api = getClient(ServiceName.OFFICE);
 import type {
@@ -18,9 +18,9 @@ import type {
   ApplyTemplateResponse,
   TemplateCategory,
   DocumentType,
-} from './types';
+} from "./types";
 
-const TEMPLATES_BASE = '/api/v1/templates';
+const TEMPLATES_BASE = "/api/v1/templates";
 
 // ============================================================================
 // Gallery & Search
@@ -32,23 +32,26 @@ const TEMPLATES_BASE = '/api/v1/templates';
 export async function getTemplates(
   filters: TemplateGalleryFilters = {},
   page = 1,
-  pageSize = 20
+  pageSize = 20,
 ): Promise<TemplateGalleryResponse> {
   const params = new URLSearchParams();
 
-  if (filters.search) params.append('search', filters.search);
-  if (filters.category && filters.category !== 'all') params.append('category', filters.category);
-  if (filters.documentType && filters.documentType !== 'all') params.append('documentType', filters.documentType);
-  if (filters.visibility && filters.visibility !== 'all') params.append('visibility', filters.visibility);
-  if (filters.tags?.length) params.append('tags', filters.tags.join(','));
-  if (filters.featuredOnly) params.append('featured', 'true');
-  if (filters.sortBy) params.append('sortBy', filters.sortBy);
-  if (filters.sortOrder) params.append('sortOrder', filters.sortOrder);
-  params.append('page', String(page));
-  params.append('pageSize', String(pageSize));
+  if (filters.search) params.append("search", filters.search);
+  if (filters.category && filters.category !== "all")
+    params.append("category", filters.category);
+  if (filters.documentType && filters.documentType !== "all")
+    params.append("documentType", filters.documentType);
+  if (filters.visibility && filters.visibility !== "all")
+    params.append("visibility", filters.visibility);
+  if (filters.tags?.length) params.append("tags", filters.tags.join(","));
+  if (filters.featuredOnly) params.append("featured", "true");
+  if (filters.sortBy) params.append("sortBy", filters.sortBy);
+  if (filters.sortOrder) params.append("sortOrder", filters.sortOrder);
+  params.append("page", String(page));
+  params.append("pageSize", String(pageSize));
 
   const response = await api.get<TemplateGalleryResponse>(
-    `${TEMPLATES_BASE}?${params.toString()}`
+    `${TEMPLATES_BASE}?${params.toString()}`,
   );
   return response.data;
 }
@@ -58,15 +61,15 @@ export async function getTemplates(
  */
 export async function getFeaturedTemplates(
   documentType?: DocumentType,
-  limit = 10
+  limit = 10,
 ): Promise<TemplateMetadata[]> {
   const params = new URLSearchParams();
-  params.append('featured', 'true');
-  params.append('pageSize', String(limit));
-  if (documentType) params.append('documentType', documentType);
+  params.append("featured", "true");
+  params.append("pageSize", String(limit));
+  if (documentType) params.append("documentType", documentType);
 
   const response = await api.get<TemplateGalleryResponse>(
-    `${TEMPLATES_BASE}?${params.toString()}`
+    `${TEMPLATES_BASE}?${params.toString()}`,
   );
   return response.data.templates;
 }
@@ -74,9 +77,11 @@ export async function getFeaturedTemplates(
 /**
  * Get recently used templates
  */
-export async function getRecentTemplates(limit = 10): Promise<TemplateMetadata[]> {
+export async function getRecentTemplates(
+  limit = 10,
+): Promise<TemplateMetadata[]> {
   const response = await api.get<TemplateMetadata[]>(
-    `${TEMPLATES_BASE}/recent?limit=${limit}`
+    `${TEMPLATES_BASE}/recent?limit=${limit}`,
   );
   return response.data;
 }
@@ -87,7 +92,7 @@ export async function getRecentTemplates(limit = 10): Promise<TemplateMetadata[]
 export async function getTemplatesByCategory(
   category: TemplateCategory,
   page = 1,
-  pageSize = 20
+  pageSize = 20,
 ): Promise<TemplateGalleryResponse> {
   return getTemplates({ category }, page, pageSize);
 }
@@ -97,7 +102,7 @@ export async function getTemplatesByCategory(
  */
 export async function searchTemplates(
   query: string,
-  filters: Omit<TemplateGalleryFilters, 'search'> = {}
+  filters: Omit<TemplateGalleryFilters, "search"> = {},
 ): Promise<TemplateGalleryResponse> {
   return getTemplates({ ...filters, search: query });
 }
@@ -117,9 +122,11 @@ export async function getTemplate(templateId: string): Promise<Template> {
 /**
  * Get template metadata only (without content)
  */
-export async function getTemplateMetadata(templateId: string): Promise<TemplateMetadata> {
+export async function getTemplateMetadata(
+  templateId: string,
+): Promise<TemplateMetadata> {
   const response = await api.get<TemplateMetadata>(
-    `${TEMPLATES_BASE}/${templateId}/metadata`
+    `${TEMPLATES_BASE}/${templateId}/metadata`,
   );
   return response.data;
 }
@@ -127,7 +134,9 @@ export async function getTemplateMetadata(templateId: string): Promise<TemplateM
 /**
  * Create a new template
  */
-export async function createTemplate(data: CreateTemplateRequest): Promise<Template> {
+export async function createTemplate(
+  data: CreateTemplateRequest,
+): Promise<Template> {
   const response = await api.post<Template>(TEMPLATES_BASE, data);
   return response.data;
 }
@@ -137,11 +146,11 @@ export async function createTemplate(data: CreateTemplateRequest): Promise<Templ
  */
 export async function updateTemplate(
   templateId: string,
-  data: UpdateTemplateRequest
+  data: UpdateTemplateRequest,
 ): Promise<Template> {
   const response = await api.patch<Template>(
     `${TEMPLATES_BASE}/${templateId}`,
-    data
+    data,
   );
   return response.data;
 }
@@ -158,11 +167,11 @@ export async function deleteTemplate(templateId: string): Promise<void> {
  */
 export async function duplicateTemplate(
   templateId: string,
-  newName?: string
+  newName?: string,
 ): Promise<Template> {
   const response = await api.post<Template>(
     `${TEMPLATES_BASE}/${templateId}/duplicate`,
-    { name: newName }
+    { name: newName },
   );
   return response.data;
 }
@@ -175,7 +184,7 @@ export async function duplicateTemplate(
  * Apply a template to create a new document
  */
 export async function applyTemplate(
-  request: ApplyTemplateRequest
+  request: ApplyTemplateRequest,
 ): Promise<ApplyTemplateResponse> {
   const response = await api.post<ApplyTemplateResponse>(
     `${TEMPLATES_BASE}/${request.templateId}/apply`,
@@ -183,7 +192,7 @@ export async function applyTemplate(
       variableValues: request.variableValues,
       folderId: request.folderId,
       documentName: request.documentName,
-    }
+    },
   );
   return response.data;
 }
@@ -193,11 +202,11 @@ export async function applyTemplate(
  */
 export async function previewTemplate(
   templateId: string,
-  variableValues?: Record<string, string | number | boolean>
+  variableValues?: Record<string, string | number | boolean>,
 ): Promise<{ content: Record<string, unknown> }> {
   const response = await api.post<{ content: Record<string, unknown> }>(
     `${TEMPLATES_BASE}/${templateId}/preview`,
-    { variableValues }
+    { variableValues },
   );
   return response.data;
 }
@@ -211,11 +220,11 @@ export async function previewTemplate(
  */
 export async function createTemplateFromDocument(
   documentId: string,
-  data: Omit<CreateTemplateRequest, 'content'>
+  data: Omit<CreateTemplateRequest, "content">,
 ): Promise<Template> {
   const response = await api.post<Template>(
     `${TEMPLATES_BASE}/from-document/${documentId}`,
-    data
+    data,
   );
   return response.data;
 }
@@ -228,10 +237,10 @@ export async function createTemplateFromDocument(
  * Generate thumbnail for a template
  */
 export async function generateThumbnail(
-  templateId: string
+  templateId: string,
 ): Promise<{ thumbnailUrl: string }> {
   const response = await api.post<{ thumbnailUrl: string }>(
-    `${TEMPLATES_BASE}/${templateId}/thumbnail`
+    `${TEMPLATES_BASE}/${templateId}/thumbnail`,
   );
   return response.data;
 }
@@ -241,19 +250,19 @@ export async function generateThumbnail(
  */
 export async function uploadThumbnail(
   templateId: string,
-  file: File
+  file: File,
 ): Promise<{ thumbnailUrl: string }> {
   const formData = new FormData();
-  formData.append('file', file);
+  formData.append("file", file);
 
   const response = await api.post<{ thumbnailUrl: string }>(
     `${TEMPLATES_BASE}/${templateId}/thumbnail/upload`,
     formData,
     {
       headers: {
-        'Content-Type': 'multipart/form-data',
+        "Content-Type": "multipart/form-data",
       },
-    }
+    },
   );
   return response.data;
 }
@@ -267,11 +276,11 @@ export async function uploadThumbnail(
  */
 export async function rateTemplate(
   templateId: string,
-  rating: number
+  rating: number,
 ): Promise<{ rating: number; ratingCount: number }> {
   const response = await api.post<{ rating: number; ratingCount: number }>(
     `${TEMPLATES_BASE}/${templateId}/rate`,
-    { rating }
+    { rating },
   );
   return response.data;
 }
@@ -294,7 +303,9 @@ export async function removeFromFavorites(templateId: string): Promise<void> {
  * Get user's favorite templates
  */
 export async function getFavoriteTemplates(): Promise<TemplateMetadata[]> {
-  const response = await api.get<TemplateMetadata[]>(`${TEMPLATES_BASE}/favorites`);
+  const response = await api.get<TemplateMetadata[]>(
+    `${TEMPLATES_BASE}/favorites`,
+  );
   return response.data;
 }
 
@@ -307,10 +318,10 @@ export async function getFavoriteTemplates(): Promise<TemplateMetadata[]> {
  */
 export async function getMyTemplates(
   page = 1,
-  pageSize = 20
+  pageSize = 20,
 ): Promise<TemplateGalleryResponse> {
   const response = await api.get<TemplateGalleryResponse>(
-    `${TEMPLATES_BASE}/my?page=${page}&pageSize=${pageSize}`
+    `${TEMPLATES_BASE}/my?page=${page}&pageSize=${pageSize}`,
   );
   return response.data;
 }

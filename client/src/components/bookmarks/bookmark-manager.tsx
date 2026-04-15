@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Trash2, Plus, ExternalLink } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { toast } from 'sonner';
+import { useState } from "react";
+import { Trash2, Plus, ExternalLink } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
 
 interface Bookmark {
   id: string;
@@ -15,16 +15,16 @@ interface Bookmark {
 
 export function BookmarkManager() {
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
-  const [searchFilter, setSearchFilter] = useState('');
+  const [searchFilter, setSearchFilter] = useState("");
   const [formData, setFormData] = useState({
-    title: '',
-    url: '',
-    tags: '',
+    title: "",
+    url: "",
+    tags: "",
   });
 
   const addBookmark = () => {
     if (!formData.title.trim() || !formData.url.trim()) {
-      toast.error('Title and URL are required');
+      toast.error("Title and URL are required");
       return;
     }
 
@@ -33,19 +33,19 @@ export function BookmarkManager() {
       title: formData.title.trim(),
       url: formData.url.trim(),
       tags: formData.tags
-        .split(',')
+        .split(",")
         .map((tag) => tag.trim())
         .filter((tag) => tag.length > 0),
     };
 
     setBookmarks([...bookmarks, newBookmark]);
-    setFormData({ title: '', url: '', tags: '' });
-    toast.success('Bookmark added');
+    setFormData({ title: "", url: "", tags: "" });
+    toast.success("Bookmark added");
   };
 
   const deleteBookmark = (id: string) => {
     setBookmarks(bookmarks.filter((b) => b.id !== id));
-    toast.success('Bookmark deleted');
+    toast.success("Bookmark deleted");
   };
 
   const filteredBookmarks = bookmarks.filter((b) => {
@@ -66,7 +66,9 @@ export function BookmarkManager() {
           <Input
             placeholder="Title"
             value={formData.title}
-            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+            onChange={(e) =>
+              setFormData({ ...formData, title: e.target.value })
+            }
           />
           <Input
             placeholder="URL"
@@ -79,10 +81,7 @@ export function BookmarkManager() {
             value={formData.tags}
             onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
           />
-          <Button
-            onClick={addBookmark}
-            className="w-full gap-2"
-          >
+          <Button onClick={addBookmark} className="w-full gap-2">
             <Plus size={18} />
             Add Bookmark
           </Button>
@@ -99,7 +98,9 @@ export function BookmarkManager() {
       <div className="space-y-2">
         {filteredBookmarks.length === 0 ? (
           <p className="text-center text-muted-foreground py-8">
-            {bookmarks.length === 0 ? 'No bookmarks yet' : 'No matching bookmarks'}
+            {bookmarks.length === 0
+              ? "No bookmarks yet"
+              : "No matching bookmarks"}
           </p>
         ) : (
           filteredBookmarks.map((bookmark) => (
@@ -117,7 +118,9 @@ export function BookmarkManager() {
                   {bookmark.title}
                   <ExternalLink size={16} />
                 </a>
-                <p className="text-sm text-muted-foreground break-all">{bookmark.url}</p>
+                <p className="text-sm text-muted-foreground break-all">
+                  {bookmark.url}
+                </p>
                 {bookmark.tags.length > 0 && (
                   <div className="flex gap-2 mt-2 flex-wrap">
                     {bookmark.tags.map((tag, idx) => (

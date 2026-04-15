@@ -111,7 +111,10 @@ export function DeviceManager() {
                       </Badge>
                     )}
                     {!device.trusted && (
-                      <Badge variant="outline" className="text-amber-600 border-amber-300">
+                      <Badge
+                        variant="outline"
+                        className="text-amber-600 border-amber-300"
+                      >
                         Unverified
                       </Badge>
                     )}
@@ -121,7 +124,9 @@ export function DeviceManager() {
                   <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 text-sm">
                     <div>
                       <p className="text-muted-foreground">Browser</p>
-                      <p className="font-mono text-foreground">{device.browser}</p>
+                      <p className="font-mono text-foreground">
+                        {device.browser}
+                      </p>
                     </div>
                     <div>
                       <p className="text-muted-foreground">IP Address</p>
@@ -158,8 +163,8 @@ export function DeviceManager() {
       {/* Information Note */}
       <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
         <p className="text-sm text-blue-900">
-          <strong>Tip:</strong> Revoked devices will be logged out immediately and
-          will need to re-authenticate at next login.
+          <strong>Tip:</strong> Revoked devices will be logged out immediately
+          and will need to re-authenticate at next login.
         </p>
       </div>
     </div>

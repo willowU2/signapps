@@ -51,7 +51,9 @@ export function PurchaseOrder() {
   });
 
   const addItem = () => {
-    const newId = (Math.max(...items.map((i) => parseInt(i.id))) + 1).toString();
+    const newId = (
+      Math.max(...items.map((i) => parseInt(i.id))) + 1
+    ).toString();
     setItems([
       ...items,
       { id: newId, description: "", quantity: 1, unitPrice: 0 },
@@ -63,12 +65,13 @@ export function PurchaseOrder() {
   };
 
   const updateItem = (id: string, field: keyof POItem, value: any) => {
-    setItems(
-      items.map((i) => (i.id === id ? { ...i, [field]: value } : i))
-    );
+    setItems(items.map((i) => (i.id === id ? { ...i, [field]: value } : i)));
   };
 
-  const total = items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
+  const total = items.reduce(
+    (sum, item) => sum + item.quantity * item.unitPrice,
+    0,
+  );
 
   const handleGeneratePDF = () => {
     toast.success("PDF généré successfully");
@@ -149,7 +152,11 @@ export function PurchaseOrder() {
                     type="number"
                     value={item.quantity}
                     onChange={(e) =>
-                      updateItem(item.id, "quantity", parseInt(e.target.value) || 0)
+                      updateItem(
+                        item.id,
+                        "quantity",
+                        parseInt(e.target.value) || 0,
+                      )
                     }
                     min="1"
                   />
@@ -159,13 +166,19 @@ export function PurchaseOrder() {
                     type="number"
                     value={item.unitPrice}
                     onChange={(e) =>
-                      updateItem(item.id, "unitPrice", parseFloat(e.target.value) || 0)
+                      updateItem(
+                        item.id,
+                        "unitPrice",
+                        parseFloat(e.target.value) || 0,
+                      )
                     }
                     step="0.01"
                     min="0"
                   />
                 </TableCell>
-                <TableCell>${(item.quantity * item.unitPrice).toFixed(2)}</TableCell>
+                <TableCell>
+                  ${(item.quantity * item.unitPrice).toFixed(2)}
+                </TableCell>
                 <TableCell>
                   <Button
                     onClick={() => removeItem(item.id)}

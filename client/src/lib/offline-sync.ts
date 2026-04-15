@@ -6,7 +6,7 @@
  * Automatically drains the queue when the browser comes back online.
  */
 
-const STORAGE_KEY = 'signapps_offline_queue';
+const STORAGE_KEY = "signapps_offline_queue";
 
 export interface QueuedAction {
   /** Unique identifier for deduplication */
@@ -15,7 +15,7 @@ export interface QueuedAction {
   queuedAt: string;
   /** Fetch-compatible URL (may be relative) */
   url: string;
-  method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
+  method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   /** JSON-serialisable request body */
   body?: unknown;
   /** Extra headers to forward (e.g. Content-Type, X-Workspace-ID) */
@@ -34,10 +34,10 @@ export class OfflineSyncQueue {
   }
 
   private constructor() {
-    if (typeof window !== 'undefined') {
-      window.addEventListener('online', () => {
+    if (typeof window !== "undefined") {
+      window.addEventListener("online", () => {
         this.processQueue().catch((err) => {
-          console.warn('[OfflineSyncQueue] Auto-process failed:', err);
+          console.warn("[OfflineSyncQueue] Auto-process failed:", err);
         });
       });
     }
@@ -60,7 +60,7 @@ export class OfflineSyncQueue {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(queue));
     } catch (err) {
-      console.warn('[OfflineSyncQueue] localStorage write failed:', err);
+      console.warn("[OfflineSyncQueue] localStorage write failed:", err);
     }
   }
 
@@ -72,7 +72,9 @@ export class OfflineSyncQueue {
    * Append a mutation to the persistent queue.
    * An `id` is auto-generated when not provided.
    */
-  addToQueue(action: Omit<QueuedAction, 'id' | 'queuedAt'> & { id?: string }): void {
+  addToQueue(
+    action: Omit<QueuedAction, "id" | "queuedAt"> & { id?: string },
+  ): void {
     const queue = this.load();
     const entry: QueuedAction = {
       id: action.id ?? crypto.randomUUID(),
@@ -101,12 +103,13 @@ export class OfflineSyncQueue {
       try {
         const response = await fetch(action.url, {
           method: action.method,
-          credentials: 'include',
+          credentials: "include",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
             ...action.headers,
           },
-          body: action.body !== undefined ? JSON.stringify(action.body) : undefined,
+          body:
+            action.body !== undefined ? JSON.stringify(action.body) : undefined,
         });
 
         if (!response.ok) {
@@ -117,7 +120,7 @@ export class OfflineSyncQueue {
         }
       } catch (err) {
         // Network still unavailable or transient error — keep in queue
-        console.warn('[OfflineSyncQueue] Replay error, retaining action:', err);
+        console.warn("[OfflineSyncQueue] Replay error, retaining action:", err);
         remaining.push(action);
       }
     }

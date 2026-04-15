@@ -124,8 +124,8 @@ fn storage_client() -> &'static reqwest::Client {
 /// to avoid SSRF via env-var injection in shared-host setups.
 /// Trailing slashes are trimmed for clean URL concatenation.
 fn validated_storage_base() -> String {
-    let raw = std::env::var("STORAGE_INTERNAL_URL")
-        .unwrap_or_else(|_| DEFAULT_STORAGE_URL.to_string());
+    let raw =
+        std::env::var("STORAGE_INTERNAL_URL").unwrap_or_else(|_| DEFAULT_STORAGE_URL.to_string());
     let trimmed = raw.trim_end_matches('/').to_string();
     match Url::parse(&trimmed) {
         Ok(u) if matches!(u.scheme(), "http" | "https") => trimmed,
@@ -203,22 +203,22 @@ async fn fetch_from_storage(key: &str) -> Result<Bytes, (StatusCode, String)> {
     tag = "fonts"
 )]
 #[tracing::instrument(skip(state))]
-pub async fn get_manifest(
-    State(state): State<AppState>,
-) -> Result<Response, (StatusCode, String)> {
+pub async fn get_manifest(State(state): State<AppState>) -> Result<Response, (StatusCode, String)> {
     let _ = state; // State kept for future caching / DB-backed lookups.
 
     // For the manifest, any failure — missing file or storage down — is
     // reported as 503. We refine the body text based on the upstream status
     // so operators get a useful hint without leaking internal details.
-    let bytes = fetch_from_storage(MANIFEST_KEY).await.map_err(|(upstream, _)| {
-        let msg = if upstream == StatusCode::NOT_FOUND {
-            "Fonts catalog not yet synced — run scripts/sync-fonts".to_string()
-        } else {
-            "Fonts catalog temporarily unavailable".to_string()
-        };
-        (StatusCode::SERVICE_UNAVAILABLE, msg)
-    })?;
+    let bytes = fetch_from_storage(MANIFEST_KEY)
+        .await
+        .map_err(|(upstream, _)| {
+            let msg = if upstream == StatusCode::NOT_FOUND {
+                "Fonts catalog not yet synced — run scripts/sync-fonts".to_string()
+            } else {
+                "Fonts catalog temporarily unavailable".to_string()
+            };
+            (StatusCode::SERVICE_UNAVAILABLE, msg)
+        })?;
 
     Response::builder()
         .status(StatusCode::OK)

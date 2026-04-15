@@ -1,15 +1,15 @@
-'use client';
+"use client";
 
-import { SpinnerInfinity } from 'spinners-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { SpinnerInfinity } from "spinners-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from "@/components/ui/dropdown-menu";
 import {
   Database,
   FileText,
@@ -19,16 +19,16 @@ import {
   MoreVertical,
   Trash2,
   Upload,
-} from 'lucide-react';
-import { KnowledgeBase } from '@/lib/api';
-import { cn } from '@/lib/utils';
+} from "lucide-react";
+import { KnowledgeBase } from "@/lib/api";
+import { cn } from "@/lib/utils";
 
 function formatBytes(bytes: number): string {
-  if (bytes === 0) return '0 B';
+  if (bytes === 0) return "0 B";
   const k = 1024;
-  const sizes = ['B', 'KB', 'MB', 'GB'];
+  const sizes = ["B", "KB", "MB", "GB"];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
 }
 
 interface KnowledgeBasesTabProps {
@@ -95,8 +95,9 @@ export function KnowledgeBasesTab({
             <Card
               key={kb.name}
               className={cn(
-                'cursor-pointer transition-colors hover:bg-muted/50',
-                selectedKnowledgeBases.includes(kb.name) && 'ring-2 ring-primary',
+                "cursor-pointer transition-colors hover:bg-muted/50",
+                selectedKnowledgeBases.includes(kb.name) &&
+                  "ring-2 ring-primary",
               )}
             >
               <CardHeader className="pb-2">
@@ -112,7 +113,9 @@ export function KnowledgeBasesTab({
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => onSelectForChat(kb.name)}>
+                      <DropdownMenuItem
+                        onClick={() => onSelectForChat(kb.name)}
+                      >
                         <MessageSquare className="h-4 w-4 mr-2" />
                         Utiliser pour le chat
                       </DropdownMenuItem>
@@ -132,7 +135,9 @@ export function KnowledgeBasesTab({
                   </DropdownMenu>
                 </div>
                 {kb.description && (
-                  <p className="text-sm text-muted-foreground">{kb.description}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {kb.description}
+                  </p>
                 )}
               </CardHeader>
               <CardContent>
@@ -154,7 +159,9 @@ export function KnowledgeBasesTab({
                   <div className="flex items-center gap-2">
                     <Database className="h-4 w-4 text-muted-foreground" />
                     <div>
-                      <p className="font-medium">{formatBytes(kb.size_bytes)}</p>
+                      <p className="font-medium">
+                        {formatBytes(kb.size_bytes)}
+                      </p>
                       <p className="text-xs text-muted-foreground">Taille</p>
                     </div>
                   </div>

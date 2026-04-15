@@ -1,6 +1,6 @@
-import type { Meta, StoryObj } from '@storybook/react';
-import { MailList } from './mail-list';
-import type { Mail } from '@/lib/data/mail';
+import type { Meta, StoryObj } from "@storybook/react";
+import { MailList } from "./mail-list";
+import type { Mail } from "@/lib/data/mail";
 
 // ---------------------------------------------------------------------------
 // Mock data
@@ -11,53 +11,53 @@ const dayAgo = new Date(Date.now() - 86400_000).toISOString();
 
 const mockMails: Mail[] = [
   {
-    id: '1',
-    name: 'Alice Martin',
-    email: 'alice@example.com',
-    subject: 'Q1 Budget review — action required',
-    text: 'Hi team, please review the attached Q1 budget report and provide your feedback by Friday.',
+    id: "1",
+    name: "Alice Martin",
+    email: "alice@example.com",
+    subject: "Q1 Budget review — action required",
+    text: "Hi team, please review the attached Q1 budget report and provide your feedback by Friday.",
     date: hourAgo,
     read: false,
-    labels: ['work', 'finance'],
-    folder: 'inbox',
+    labels: ["work", "finance"],
+    folder: "inbox",
     priority: 5,
   },
   {
-    id: '2',
-    name: 'Bob Dupont',
-    email: 'bob@example.com',
-    subject: 'Weekly standup notes',
-    text: 'Please find below the notes from today\'s standup meeting.',
+    id: "2",
+    name: "Bob Dupont",
+    email: "bob@example.com",
+    subject: "Weekly standup notes",
+    text: "Please find below the notes from today's standup meeting.",
     date: dayAgo,
     read: true,
-    labels: ['work'],
-    folder: 'inbox',
+    labels: ["work"],
+    folder: "inbox",
     priority: 2,
   },
   {
-    id: '3',
-    name: 'Carol Smith',
-    email: 'carol@example.com',
-    subject: 'Invitation: Team lunch on Friday',
-    text: 'You are invited to the team lunch next Friday at noon.',
+    id: "3",
+    name: "Carol Smith",
+    email: "carol@example.com",
+    subject: "Invitation: Team lunch on Friday",
+    text: "You are invited to the team lunch next Friday at noon.",
     date: dayAgo,
     read: true,
     labels: [],
-    folder: 'inbox',
+    folder: "inbox",
     priority: 1,
   },
 ];
 
 const meta: Meta<typeof MailList> = {
-  title: 'Mail/MailList',
+  title: "Mail/MailList",
   component: MailList,
-  tags: ['autodocs'],
+  tags: ["autodocs"],
   parameters: {
-    layout: 'fullscreen',
+    layout: "fullscreen",
     docs: {
       description: {
         component:
-          'Virtualized mail list with priority indicators, sentiment badges, and context-menu actions.',
+          "Virtualized mail list with priority indicators, sentiment badges, and context-menu actions.",
       },
     },
   },

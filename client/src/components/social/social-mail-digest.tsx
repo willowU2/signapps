@@ -14,8 +14,20 @@ import { mailApi } from "@/lib/api/mail";
  * Builds an HTML email summarising social performance.
  */
 function buildDigestHtml(params: {
-  topPosts: { id: string; content: string; likesCount?: number; sharesCount?: number; commentsCount?: number; platform?: string }[];
-  analytics: { totalFollowers?: number; followersGrowth?: number; totalReach?: number; engagementRate?: number } | null;
+  topPosts: {
+    id: string;
+    content: string;
+    likesCount?: number;
+    sharesCount?: number;
+    commentsCount?: number;
+    platform?: string;
+  }[];
+  analytics: {
+    totalFollowers?: number;
+    followersGrowth?: number;
+    totalReach?: number;
+    engagementRate?: number;
+  } | null;
   period: string;
 }): string {
   const { topPosts, analytics, period } = params;
@@ -23,9 +35,11 @@ function buildDigestHtml(params: {
   const postRows = topPosts
     .slice(0, 3)
     .map((p, i) => {
-      const engagement = (p.likesCount ?? 0) + (p.sharesCount ?? 0) + (p.commentsCount ?? 0);
+      const engagement =
+        (p.likesCount ?? 0) + (p.sharesCount ?? 0) + (p.commentsCount ?? 0);
       const platform = p.platform ?? "—";
-      const content = p.content.slice(0, 120) + (p.content.length > 120 ? "…" : "");
+      const content =
+        p.content.slice(0, 120) + (p.content.length > 120 ? "…" : "");
       return `
         <tr style="background:${i % 2 === 0 ? "#f9fafb" : "#ffffff"}">
           <td style="padding:8px 12px;font-size:13px;color:#374151;">${i + 1}. ${content}</td>
@@ -92,57 +106,73 @@ interface SocialMailDigestProps {
 }
 
 export function SocialMailDigest({ className }: SocialMailDigestProps) {
-  const { analytics, topPosts, fetchAnalytics, isLoadingAnalytics } = useSocialStore();
+  const { analytics, topPosts, fetchAnalytics, isLoadingAnalytics } =
+    useSocialStore();
   const { user } = useAuthStore();
   const [sending, setSending] = useState(false);
 
   const handleSendDigest = useCallback(async () => {
     if (!user?.email) {
-      toast.error("Aucune adresse email trouvée pour votre compte.")
-      return
+      toast.error("Aucune adresse email trouvée pour votre compte.");
+      return;
     }
 
     // Fetch fresh data if not loaded yet
     if (!analytics) {
-      await fetchAnalytics()
+      await fetchAnalytics();
     }
 
-    setSending(true)
+    setSending(true);
     try {
       // Retrieve a mail account to send from
-      const accountsRes = await mailApi.listAccounts()
-      const accounts = accountsRes.data ?? []
-      const accountId: string | undefined = Array.isArray(accounts) && accounts.length > 0
-        ? accounts[0].id
-        : undefined
+      const accountsRes = await mailApi.listAccounts();
+      const accounts = accountsRes.data ?? [];
+      const accountId: string | undefined =
+        Array.isArray(accounts) && accounts.length > 0
+          ? accounts[0].id
+          : undefined;
 
       if (!accountId) {
-        toast.error("Aucun compte mail configuré. Configurez un compte dans Paramètres → Mail.")
-        return
+        toast.error(
+          "Aucun compte mail configuré. Configurez un compte dans Paramètres → Mail.",
+        );
+        return;
       }
 
-      const period = new Date().toLocaleDateString("fr-FR", { month: "long", year: "numeric" })
-      const bodyHtml = buildDigestHtml({ topPosts, analytics, period })
+      const period = new Date().toLocaleDateString("fr-FR", {
+        month: "long",
+        year: "numeric",
+      });
+      const bodyHtml = buildDigestHtml({ topPosts, analytics, period });
 
       await mailApi.sendEmail({
         account_id: accountId,
         recipient: user.email,
         subject: `Digest Social SignApps — ${period}`,
         body_html: bodyHtml,
-      })
+      });
 
-      toast.success("Digest envoyé à " + user.email)
+      toast.success("Digest envoyé à " + user.email);
     } catch (err) {
-      console.error("Social digest send error:", err)
-      toast.error("Impossible d'envoyer le digest. Vérifiez votre configuration mail.")
+      console.error("Social digest send error:", err);
+      toast.error(
+        "Impossible d'envoyer le digest. Vérifiez votre configuration mail.",
+      );
     } finally {
-      setSending(false)
+      setSending(false);
     }
-  }, [analytics, topPosts, user, fetchAnalytics])
+  }, [analytics, topPosts, user, fetchAnalytics]);
 
   const totalEngagement = topPosts
     .slice(0, 3)
-    .reduce((acc, p) => acc + (p.likesCount ?? 0) + (p.sharesCount ?? 0) + (p.commentsCount ?? 0), 0)
+    .reduce(
+      (acc, p) =>
+        acc +
+        (p.likesCount ?? 0) +
+        (p.sharesCount ?? 0) +
+        (p.commentsCount ?? 0),
+      0,
+    );
 
   return (
     <div className={className}>
@@ -152,8 +182,12 @@ export function SocialMailDigest({ className }: SocialMailDigestProps) {
             <TrendingUp className="h-4 w-4 text-violet-600 dark:text-violet-400" />
           </div>
           <div>
-            <h3 className="text-sm font-semibold text-foreground">Digest Social</h3>
-            <p className="text-xs text-muted-foreground">Résumé de performance par email</p>
+            <h3 className="text-sm font-semibold text-foreground">
+              Digest Social
+            </h3>
+            <p className="text-xs text-muted-foreground">
+              Résumé de performance par email
+            </p>
           </div>
         </div>
 
@@ -183,7 +217,9 @@ export function SocialMailDigest({ className }: SocialMailDigestProps) {
               <div className="text-sm font-semibold">
                 {totalEngagement.toLocaleString("fr-FR")}
               </div>
-              <div className="text-[10px] text-muted-foreground">Engagement top3</div>
+              <div className="text-[10px] text-muted-foreground">
+                Engagement top3
+              </div>
             </div>
           </div>
         )}
@@ -203,5 +239,5 @@ export function SocialMailDigest({ className }: SocialMailDigestProps) {
         </Button>
       </div>
     </div>
-  )
+  );
 }

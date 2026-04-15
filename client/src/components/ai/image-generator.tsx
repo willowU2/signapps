@@ -1,4 +1,4 @@
-'use client'
+"use client";
 
 /**
  * AM1 — AI image generation for social/slides
@@ -7,19 +7,19 @@
  * with download/insert actions. Integrates as a panel in social compose and slides editor.
  */
 
-import React, { useState, useEffect } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Textarea } from '@/components/ui/textarea'
-import { Label } from '@/components/ui/label'
-import { Badge } from '@/components/ui/badge'
+import React, { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
+} from "@/components/ui/select";
 import {
   ImageIcon,
   Sparkles,
@@ -29,43 +29,43 @@ import {
   Loader2,
   Presentation,
   Share2,
-} from 'lucide-react'
-import { toast } from 'sonner'
-import { useAiImageGen } from '@/hooks/use-ai-image-gen'
+} from "lucide-react";
+import { toast } from "sonner";
+import { useAiImageGen } from "@/hooks/use-ai-image-gen";
 
 // ─── Style options ────────────────────────────────────────────────────────────
 
 const STYLES = [
-  { id: 'photorealistic', label: 'Photo-réaliste' },
-  { id: 'illustration', label: 'Illustration' },
-  { id: 'abstract', label: 'Abstrait' },
-  { id: 'logo', label: 'Logo / Icône' },
-  { id: 'watercolor', label: 'Aquarelle' },
-  { id: 'sketch', label: 'Croquis' },
-  { id: 'digital-art', label: 'Art numérique' },
-  { id: '3d-render', label: 'Rendu 3D' },
-] as const
+  { id: "photorealistic", label: "Photo-réaliste" },
+  { id: "illustration", label: "Illustration" },
+  { id: "abstract", label: "Abstrait" },
+  { id: "logo", label: "Logo / Icône" },
+  { id: "watercolor", label: "Aquarelle" },
+  { id: "sketch", label: "Croquis" },
+  { id: "digital-art", label: "Art numérique" },
+  { id: "3d-render", label: "Rendu 3D" },
+] as const;
 
-type StyleId = (typeof STYLES)[number]['id']
+type StyleId = (typeof STYLES)[number]["id"];
 
 // ─── Sizes ────────────────────────────────────────────────────────────────────
 
 const SIZES: { label: string; w: number; h: number }[] = [
-  { label: 'Carré (1:1)', w: 1024, h: 1024 },
-  { label: 'Paysage (16:9)', w: 1792, h: 1024 },
-  { label: 'Portrait (9:16)', w: 1024, h: 1792 },
-  { label: 'Social (4:5)', w: 1024, h: 1280 },
-]
+  { label: "Carré (1:1)", w: 1024, h: 1024 },
+  { label: "Paysage (16:9)", w: 1792, h: 1024 },
+  { label: "Portrait (9:16)", w: 1024, h: 1792 },
+  { label: "Social (4:5)", w: 1024, h: 1280 },
+];
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
 interface ImageGeneratorProps {
   /** Called when "Insert into slide" is clicked */
-  onInsertToSlide?: (imageUrl: string) => void
+  onInsertToSlide?: (imageUrl: string) => void;
   /** Called when "Attach to post" is clicked */
-  onAttachToPost?: (imageUrl: string) => void
+  onAttachToPost?: (imageUrl: string) => void;
   /** Compact mode for panel embedding */
-  compact?: boolean
+  compact?: boolean;
 }
 
 // ─── Component ───────────────────────────────────────────────────────────────
@@ -75,68 +75,70 @@ export function ImageGenerator({
   onAttachToPost,
   compact = false,
 }: ImageGeneratorProps) {
-  const { generating, result, error, generate, reset } = useAiImageGen()
+  const { generating, result, error, generate, reset } = useAiImageGen();
 
-  const [prompt, setPrompt] = useState('')
-  const [style, setStyle] = useState<StyleId>('photorealistic')
-  const [size, setSize] = useState(SIZES[0])
+  const [prompt, setPrompt] = useState("");
+  const [style, setStyle] = useState<StyleId>("photorealistic");
+  const [size, setSize] = useState(SIZES[0]);
 
   // Surface API errors
   useEffect(() => {
-    if (error) toast.error(`Erreur: ${error}`)
-  }, [error])
+    if (error) toast.error(`Erreur: ${error}`);
+  }, [error]);
 
   const handleGenerate = async () => {
     if (!prompt.trim()) {
-      toast.error('Veuillez saisir une description')
-      return
+      toast.error("Veuillez saisir une description");
+      return;
     }
-    reset()
+    reset();
     await generate({
       prompt: `${prompt.trim()}, style: ${style}`,
       style,
       width: size.w,
       height: size.h,
-    })
-  }
+    });
+  };
 
   const handleDownload = () => {
-    if (!result?.image_url) return
-    const a = document.createElement('a')
-    a.href = result.image_url
-    a.download = `signapps-image-${Date.now()}.png`
-    a.click()
-    toast.success('Image téléchargée')
-  }
+    if (!result?.image_url) return;
+    const a = document.createElement("a");
+    a.href = result.image_url;
+    a.download = `signapps-image-${Date.now()}.png`;
+    a.click();
+    toast.success("Image téléchargée");
+  };
 
   const handleCopyUrl = () => {
-    if (!result?.image_url) return
-    navigator.clipboard.writeText(result.image_url)
-    toast.success('URL copiée')
-  }
+    if (!result?.image_url) return;
+    navigator.clipboard.writeText(result.image_url);
+    toast.success("URL copiée");
+  };
 
   const handleInsertSlide = () => {
-    if (!result?.image_url) return
+    if (!result?.image_url) return;
     if (onInsertToSlide) {
-      onInsertToSlide(result.image_url)
-      toast.success('Image insérée dans la présentation')
+      onInsertToSlide(result.image_url);
+      toast.success("Image insérée dans la présentation");
     } else {
-      toast.info('Insérer dans la diapositive active (intégrez ce composant dans l\'éditeur Slides)')
+      toast.info(
+        "Insérer dans la diapositive active (intégrez ce composant dans l'éditeur Slides)",
+      );
     }
-  }
+  };
 
   const handleAttachPost = () => {
-    if (!result?.image_url) return
+    if (!result?.image_url) return;
     if (onAttachToPost) {
-      onAttachToPost(result.image_url)
-      toast.success('Image attachée au post')
+      onAttachToPost(result.image_url);
+      toast.success("Image attachée au post");
     } else {
-      toast.info('Attachez ce composant dans l\'éditeur Social')
+      toast.info("Attachez ce composant dans l'éditeur Social");
     }
-  }
+  };
 
   return (
-    <Card className={compact ? 'shadow-none border-0' : ''}>
+    <Card className={compact ? "shadow-none border-0" : ""}>
       {!compact && (
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -161,7 +163,9 @@ export function ImageGenerator({
         </div>
 
         {/* Style + Size */}
-        <div className={`grid gap-3 ${compact ? 'grid-cols-2' : 'grid-cols-2'}`}>
+        <div
+          className={`grid gap-3 ${compact ? "grid-cols-2" : "grid-cols-2"}`}
+        >
           <div className="space-y-1.5">
             <Label>Style</Label>
             <Select value={style} onValueChange={(v) => setStyle(v as StyleId)}>
@@ -170,7 +174,9 @@ export function ImageGenerator({
               </SelectTrigger>
               <SelectContent>
                 {STYLES.map((s) => (
-                  <SelectItem key={s.id} value={s.id}>{s.label}</SelectItem>
+                  <SelectItem key={s.id} value={s.id}>
+                    {s.label}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -180,8 +186,8 @@ export function ImageGenerator({
             <Select
               value={`${size.w}x${size.h}`}
               onValueChange={(v) => {
-                const found = SIZES.find((s) => `${s.w}x${s.h}` === v)
-                if (found) setSize(found)
+                const found = SIZES.find((s) => `${s.w}x${s.h}` === v);
+                if (found) setSize(found);
               }}
             >
               <SelectTrigger>
@@ -205,9 +211,14 @@ export function ImageGenerator({
           disabled={generating || !prompt.trim()}
         >
           {generating ? (
-            <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Génération en cours…</>
+            <>
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Génération en
+              cours…
+            </>
           ) : (
-            <><Sparkles className="w-4 h-4 mr-2" /> Générer</>
+            <>
+              <Sparkles className="w-4 h-4 mr-2" /> Générer
+            </>
           )}
         </Button>
 
@@ -257,5 +268,5 @@ export function ImageGenerator({
         )}
       </CardContent>
     </Card>
-  )
+  );
 }

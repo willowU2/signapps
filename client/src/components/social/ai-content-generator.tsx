@@ -1,7 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { Wand2, RefreshCw, Check, Copy, ChevronDown, Loader2 } from "lucide-react";
+import {
+  Wand2,
+  RefreshCw,
+  Check,
+  Copy,
+  ChevronDown,
+  Loader2,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -67,7 +74,7 @@ export function AiContentGenerator({ onAccept }: AiContentGeneratorProps) {
 
   const togglePlatform = (p: string) => {
     setPlatforms((prev) =>
-      prev.includes(p) ? prev.filter((x) => x !== p) : [...prev, p]
+      prev.includes(p) ? prev.filter((x) => x !== p) : [...prev, p],
     );
   };
 
@@ -79,11 +86,14 @@ export function AiContentGenerator({ onAccept }: AiContentGeneratorProps) {
     setLoading(true);
     setVariationMode(variations);
     try {
-      const res = await fetch(`${getServiceUrl(ServiceName.SOCIAL)}/social/ai/generate`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ topic, tone, platforms, variations }),
-      });
+      const res = await fetch(
+        `${getServiceUrl(ServiceName.SOCIAL)}/social/ai/generate`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ topic, tone, platforms, variations }),
+        },
+      );
       if (!res.ok) throw new Error("Génération échouée");
       const data = await res.json();
       setResults(data.results ?? []);
@@ -183,7 +193,11 @@ export function AiContentGenerator({ onAccept }: AiContentGeneratorProps) {
                     className="cursor-pointer capitalize text-xs"
                     style={
                       platforms.includes(p)
-                        ? { backgroundColor: PLATFORM_COLORS[p], color: "#fff", border: "none" }
+                        ? {
+                            backgroundColor: PLATFORM_COLORS[p],
+                            color: "#fff",
+                            border: "none",
+                          }
                         : {}
                     }
                     onClick={() => togglePlatform(p)}
@@ -196,7 +210,11 @@ export function AiContentGenerator({ onAccept }: AiContentGeneratorProps) {
           </div>
 
           <div className="flex gap-2">
-            <Button onClick={() => generate(false)} disabled={loading} className="flex-1">
+            <Button
+              onClick={() => generate(false)}
+              disabled={loading}
+              className="flex-1"
+            >
               {loading && !variationMode ? (
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
               ) : (
@@ -232,7 +250,9 @@ export function AiContentGenerator({ onAccept }: AiContentGeneratorProps) {
                         <span className="flex items-center gap-2">
                           <span
                             className="w-2 h-2 rounded-full"
-                            style={{ backgroundColor: PLATFORM_COLORS[r.platform] }}
+                            style={{
+                              backgroundColor: PLATFORM_COLORS[r.platform],
+                            }}
                           />
                           <span className="capitalize">{r.platform}</span>
                           {r.variation && (
@@ -241,7 +261,9 @@ export function AiContentGenerator({ onAccept }: AiContentGeneratorProps) {
                             </Badge>
                           )}
                         </span>
-                        <span className={`text-xs font-normal ${over ? "text-red-500" : "text-muted-foreground"}`}>
+                        <span
+                          className={`text-xs font-normal ${over ? "text-red-500" : "text-muted-foreground"}`}
+                        >
                           {text.length}/{limit}
                         </span>
                       </CardTitle>
@@ -254,10 +276,18 @@ export function AiContentGenerator({ onAccept }: AiContentGeneratorProps) {
                         className={over ? "border-red-400" : ""}
                       />
                       <div className="flex gap-2 justify-end">
-                        <Button size="sm" variant="ghost" onClick={() => handleCopy(r)}>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleCopy(r)}
+                        >
                           <Copy className="w-3 h-3 mr-1" /> Copy
                         </Button>
-                        <Button size="sm" onClick={() => handleAccept(r)} disabled={over}>
+                        <Button
+                          size="sm"
+                          onClick={() => handleAccept(r)}
+                          disabled={over}
+                        >
                           <Check className="w-3 h-3 mr-1" /> Accept
                         </Button>
                       </div>

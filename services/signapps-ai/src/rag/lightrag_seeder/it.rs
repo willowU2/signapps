@@ -51,7 +51,7 @@ where
                 relations_created: 0,
                 source: "it.hardware".to_string(),
             });
-        }
+        },
     };
 
     let mut count = 0usize;
@@ -144,7 +144,7 @@ where
                 relations_created: 0,
                 source: "it.tickets".to_string(),
             });
-        }
+        },
     };
 
     let mut count = 0usize;

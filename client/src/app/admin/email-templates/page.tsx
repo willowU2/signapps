@@ -1,20 +1,26 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { AppLayout } from '@/components/layout/app-layout';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useState } from "react";
+import { AppLayout } from "@/components/layout/app-layout";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogDescription,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 import {
   Mail,
   Edit2,
@@ -28,10 +34,10 @@ import {
   BarChart3,
   CheckCircle2,
   X,
-} from 'lucide-react';
-import { toast } from 'sonner';
-import { usePageTitle } from '@/hooks/use-page-title';
-import { PageHeader } from '@/components/ui/page-header';
+} from "lucide-react";
+import { toast } from "sonner";
+import { usePageTitle } from "@/hooks/use-page-title";
+import { PageHeader } from "@/components/ui/page-header";
 
 // ─── Template types ─────────────────────────────────────────────────────────
 
@@ -51,10 +57,10 @@ interface EmailTemplate {
 
 const DEFAULT_TEMPLATES: EmailTemplate[] = [
   {
-    id: 'welcome',
-    name: 'Email de bienvenue',
-    slug: 'welcome',
-    subject: 'Bienvenue sur SignApps, {{prenom}} !',
+    id: "welcome",
+    name: "Email de bienvenue",
+    slug: "welcome",
+    subject: "Bienvenue sur SignApps, {{prenom}} !",
     body: `<!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"></head>
@@ -98,15 +104,16 @@ const DEFAULT_TEMPLATES: EmailTemplate[] = [
 </body>
 </html>`,
     icon: UserPlus,
-    description: 'Envoye automatiquement lors de la creation d\'un nouveau compte utilisateur.',
-    variables: ['prenom', 'email', 'organisation', 'lien_connexion'],
-    lastModified: '2026-03-15',
+    description:
+      "Envoye automatiquement lors de la creation d'un nouveau compte utilisateur.",
+    variables: ["prenom", "email", "organisation", "lien_connexion"],
+    lastModified: "2026-03-15",
   },
   {
-    id: 'password-reset',
-    name: 'Reinitialisation du mot de passe',
-    slug: 'password-reset',
-    subject: 'Reinitialisation de votre mot de passe SignApps',
+    id: "password-reset",
+    name: "Reinitialisation du mot de passe",
+    slug: "password-reset",
+    subject: "Reinitialisation de votre mot de passe SignApps",
     body: `<!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"></head>
@@ -150,15 +157,23 @@ const DEFAULT_TEMPLATES: EmailTemplate[] = [
 </body>
 </html>`,
     icon: KeyRound,
-    description: 'Envoye lorsqu\'un utilisateur demande la reinitialisation de son mot de passe.',
-    variables: ['prenom', 'lien_reinitialisation', 'duree_expiration', 'date_demande', 'ip_demande'],
-    lastModified: '2026-03-10',
+    description:
+      "Envoye lorsqu'un utilisateur demande la reinitialisation de son mot de passe.",
+    variables: [
+      "prenom",
+      "lien_reinitialisation",
+      "duree_expiration",
+      "date_demande",
+      "ip_demande",
+    ],
+    lastModified: "2026-03-10",
   },
   {
-    id: 'invitation',
-    name: 'Invitation a rejoindre',
-    slug: 'invitation',
-    subject: '{{inviteur}} vous invite a rejoindre {{organisation}} sur SignApps',
+    id: "invitation",
+    name: "Invitation a rejoindre",
+    slug: "invitation",
+    subject:
+      "{{inviteur}} vous invite a rejoindre {{organisation}} sur SignApps",
     body: `<!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"></head>
@@ -204,15 +219,22 @@ const DEFAULT_TEMPLATES: EmailTemplate[] = [
 </body>
 </html>`,
     icon: Users,
-    description: 'Envoye lorsqu\'un administrateur invite un nouvel utilisateur a rejoindre l\'organisation.',
-    variables: ['inviteur', 'organisation', 'role', 'date_expiration', 'lien_invitation'],
-    lastModified: '2026-03-12',
+    description:
+      "Envoye lorsqu'un administrateur invite un nouvel utilisateur a rejoindre l'organisation.",
+    variables: [
+      "inviteur",
+      "organisation",
+      "role",
+      "date_expiration",
+      "lien_invitation",
+    ],
+    lastModified: "2026-03-12",
   },
   {
-    id: 'activity-digest',
-    name: 'Resume d\'activite',
-    slug: 'activity-digest',
-    subject: 'Votre resume d\'activite SignApps - Semaine du {{date_debut}}',
+    id: "activity-digest",
+    name: "Resume d'activite",
+    slug: "activity-digest",
+    subject: "Votre resume d'activite SignApps - Semaine du {{date_debut}}",
     body: `<!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"></head>
@@ -265,9 +287,22 @@ const DEFAULT_TEMPLATES: EmailTemplate[] = [
 </body>
 </html>`,
     icon: BarChart3,
-    description: 'Envoye chaque semaine avec un resume de l\'activite de l\'utilisateur.',
-    variables: ['prenom', 'date_debut', 'date_fin', 'nb_fichiers', 'nb_taches', 'nb_collaborations', 'liste_activites', 'taches_a_venir', 'lien_dashboard', 'lien_parametres', 'organisation'],
-    lastModified: '2026-03-20',
+    description:
+      "Envoye chaque semaine avec un resume de l'activite de l'utilisateur.",
+    variables: [
+      "prenom",
+      "date_debut",
+      "date_fin",
+      "nb_fichiers",
+      "nb_taches",
+      "nb_collaborations",
+      "liste_activites",
+      "taches_a_venir",
+      "lien_dashboard",
+      "lien_parametres",
+      "organisation",
+    ],
+    lastModified: "2026-03-20",
   },
 ];
 
@@ -287,15 +322,20 @@ function HtmlPreview({ html }: { html: string }) {
 // ─── Main Page ──────────────────────────────────────────────────────────────
 
 export default function EmailTemplatesPage() {
-  usePageTitle('Modeles email');
-  const [templates, setTemplates] = useState<EmailTemplate[]>(DEFAULT_TEMPLATES);
-  const [editingTemplate, setEditingTemplate] = useState<EmailTemplate | null>(null);
-  const [previewTemplate, setPreviewTemplate] = useState<EmailTemplate | null>(null);
-  const [editSubject, setEditSubject] = useState('');
-  const [editBody, setEditBody] = useState('');
+  usePageTitle("Modeles email");
+  const [templates, setTemplates] =
+    useState<EmailTemplate[]>(DEFAULT_TEMPLATES);
+  const [editingTemplate, setEditingTemplate] = useState<EmailTemplate | null>(
+    null,
+  );
+  const [previewTemplate, setPreviewTemplate] = useState<EmailTemplate | null>(
+    null,
+  );
+  const [editSubject, setEditSubject] = useState("");
+  const [editBody, setEditBody] = useState("");
   const [saving, setSaving] = useState(false);
   const [testSending, setTestSending] = useState<string | null>(null);
-  const [testEmail, setTestEmail] = useState('');
+  const [testEmail, setTestEmail] = useState("");
   const [testDialogOpen, setTestDialogOpen] = useState(false);
   const [testTemplateId, setTestTemplateId] = useState<string | null>(null);
 
@@ -307,8 +347,8 @@ export default function EmailTemplatesPage() {
 
   const closeEdit = () => {
     setEditingTemplate(null);
-    setEditSubject('');
-    setEditBody('');
+    setEditSubject("");
+    setEditBody("");
   };
 
   const handleSave = () => {
@@ -318,9 +358,14 @@ export default function EmailTemplatesPage() {
       setTemplates((prev) =>
         prev.map((t) =>
           t.id === editingTemplate.id
-            ? { ...t, subject: editSubject, body: editBody, lastModified: new Date().toISOString().split('T')[0] }
-            : t
-        )
+            ? {
+                ...t,
+                subject: editSubject,
+                body: editBody,
+                lastModified: new Date().toISOString().split("T")[0],
+              }
+            : t,
+        ),
       );
       setSaving(false);
       closeEdit();
@@ -330,7 +375,7 @@ export default function EmailTemplatesPage() {
 
   const openTestDialog = (templateId: string) => {
     setTestTemplateId(templateId);
-    setTestEmail('');
+    setTestEmail("");
     setTestDialogOpen(true);
   };
 
@@ -347,32 +392,34 @@ export default function EmailTemplatesPage() {
   // Replace variables with sample values for preview
   const getPreviewHtml = (template: EmailTemplate) => {
     const sampleValues: Record<string, string> = {
-      prenom: 'Jean-Pierre',
-      email: 'jean-pierre.dupont@corp.fr',
-      organisation: 'SignApps Corp',
-      lien_connexion: 'https://app.signapps.io/login',
-      lien_reinitialisation: 'https://app.signapps.io/reset?token=abc123def456',
-      duree_expiration: '24 heures',
-      date_demande: '28 mars 2026 a 14:32',
-      ip_demande: '192.168.1.42',
-      inviteur: 'Marie Martin',
-      role: 'Editeur',
-      date_expiration: '4 avril 2026',
-      lien_invitation: 'https://app.signapps.io/invite?token=xyz789',
-      date_debut: '24 mars 2026',
-      date_fin: '28 mars 2026',
-      nb_fichiers: '23',
-      nb_taches: '8',
-      nb_collaborations: '12',
-      liste_activites: '<p style="margin: 4px 0; font-size: 13px;">&#8226; Document "Rapport Q1" modifie</p><p style="margin: 4px 0; font-size: 13px;">&#8226; 3 nouveaux fichiers uploades dans "Marketing"</p><p style="margin: 4px 0; font-size: 13px;">&#8226; Tache "Revue budget" terminee</p>',
-      taches_a_venir: '<p style="margin: 4px 0; font-size: 13px;">&#8226; Reunion equipe - Lundi 31 mars a 10:00</p><p style="margin: 4px 0; font-size: 13px;">&#8226; Date limite : Rapport mensuel - 2 avril</p>',
-      lien_dashboard: 'https://app.signapps.io/dashboard',
-      lien_parametres: 'https://app.signapps.io/settings/notifications',
+      prenom: "Jean-Pierre",
+      email: "jean-pierre.dupont@corp.fr",
+      organisation: "SignApps Corp",
+      lien_connexion: "https://app.signapps.io/login",
+      lien_reinitialisation: "https://app.signapps.io/reset?token=abc123def456",
+      duree_expiration: "24 heures",
+      date_demande: "28 mars 2026 a 14:32",
+      ip_demande: "192.168.1.42",
+      inviteur: "Marie Martin",
+      role: "Editeur",
+      date_expiration: "4 avril 2026",
+      lien_invitation: "https://app.signapps.io/invite?token=xyz789",
+      date_debut: "24 mars 2026",
+      date_fin: "28 mars 2026",
+      nb_fichiers: "23",
+      nb_taches: "8",
+      nb_collaborations: "12",
+      liste_activites:
+        '<p style="margin: 4px 0; font-size: 13px;">&#8226; Document "Rapport Q1" modifie</p><p style="margin: 4px 0; font-size: 13px;">&#8226; 3 nouveaux fichiers uploades dans "Marketing"</p><p style="margin: 4px 0; font-size: 13px;">&#8226; Tache "Revue budget" terminee</p>',
+      taches_a_venir:
+        '<p style="margin: 4px 0; font-size: 13px;">&#8226; Reunion equipe - Lundi 31 mars a 10:00</p><p style="margin: 4px 0; font-size: 13px;">&#8226; Date limite : Rapport mensuel - 2 avril</p>',
+      lien_dashboard: "https://app.signapps.io/dashboard",
+      lien_parametres: "https://app.signapps.io/settings/notifications",
     };
 
     let html = template.body;
     for (const [key, value] of Object.entries(sampleValues)) {
-      html = html.replace(new RegExp(`\\{\\{${key}\\}\\}`, 'g'), value);
+      html = html.replace(new RegExp(`\\{\\{${key}\\}\\}`, "g"), value);
     }
     return html;
   };
@@ -399,33 +446,58 @@ export default function EmailTemplatesPage() {
                         <Icon className="h-5 w-5 text-primary" />
                       </div>
                       <div>
-                        <CardTitle className="text-base">{template.name}</CardTitle>
-                        <CardDescription className="text-xs mt-0.5">{template.description}</CardDescription>
+                        <CardTitle className="text-base">
+                          {template.name}
+                        </CardTitle>
+                        <CardDescription className="text-xs mt-0.5">
+                          {template.description}
+                        </CardDescription>
                       </div>
                     </div>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div>
-                    <Label className="text-xs text-muted-foreground">Sujet</Label>
-                    <p className="text-sm font-mono bg-muted/50 rounded px-2 py-1 mt-1 truncate">{template.subject}</p>
+                    <Label className="text-xs text-muted-foreground">
+                      Sujet
+                    </Label>
+                    <p className="text-sm font-mono bg-muted/50 rounded px-2 py-1 mt-1 truncate">
+                      {template.subject}
+                    </p>
                   </div>
                   <div className="flex flex-wrap gap-1">
                     {template.variables.map((v) => (
-                      <Badge key={v} variant="outline" className="text-[10px] font-mono">
+                      <Badge
+                        key={v}
+                        variant="outline"
+                        className="text-[10px] font-mono"
+                      >
                         {`{{${v}}}`}
                       </Badge>
                     ))}
                   </div>
                   <div className="flex items-center justify-between pt-2">
                     <span className="text-xs text-muted-foreground">
-                      Modifie le {new Date(template.lastModified).toLocaleDateString('fr-FR')}
+                      Modifie le{" "}
+                      {new Date(template.lastModified).toLocaleDateString(
+                        "fr-FR",
+                      )}
                     </span>
                     <div className="flex gap-1">
-                      <Button variant="ghost" size="sm" onClick={() => setPreviewTemplate(template)} title="Apercu">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setPreviewTemplate(template)}
+                        title="Apercu"
+                      >
                         <Eye className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="sm" onClick={() => openEdit(template)} title="Modifier">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => openEdit(template)}
+                        title="Modifier"
+                      >
                         <Edit2 className="h-4 w-4" />
                       </Button>
                       <Button
@@ -450,7 +522,12 @@ export default function EmailTemplatesPage() {
         </div>
 
         {/* Edit Dialog */}
-        <Dialog open={!!editingTemplate} onOpenChange={(open) => { if (!open) closeEdit(); }}>
+        <Dialog
+          open={!!editingTemplate}
+          onOpenChange={(open) => {
+            if (!open) closeEdit();
+          }}
+        >
           <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
@@ -458,7 +535,8 @@ export default function EmailTemplatesPage() {
                 Modifier : {editingTemplate?.name}
               </DialogTitle>
               <DialogDescription>
-                Editez le sujet et le corps HTML du template. Utilisez les variables entre doubles accolades.
+                Editez le sujet et le corps HTML du template. Utilisez les
+                variables entre doubles accolades.
               </DialogDescription>
             </DialogHeader>
 
@@ -472,7 +550,10 @@ export default function EmailTemplatesPage() {
                 <TabsContent value="editor" className="space-y-4 mt-4">
                   <div className="space-y-1.5">
                     <Label>Sujet de l&apos;email</Label>
-                    <Input value={editSubject} onChange={(e) => setEditSubject(e.target.value)} />
+                    <Input
+                      value={editSubject}
+                      onChange={(e) => setEditSubject(e.target.value)}
+                    />
                   </div>
                   <div className="space-y-1.5">
                     <div className="flex items-center justify-between">
@@ -483,7 +564,9 @@ export default function EmailTemplatesPage() {
                             key={v}
                             variant="outline"
                             className="text-[10px] font-mono cursor-pointer hover:bg-primary/10"
-                            onClick={() => setEditBody((prev) => prev + `{{${v}}}`)}
+                            onClick={() =>
+                              setEditBody((prev) => prev + `{{${v}}}`)
+                            }
                           >
                             {`{{${v}}}`}
                           </Badge>
@@ -497,9 +580,15 @@ export default function EmailTemplatesPage() {
                     />
                   </div>
                   <div className="flex justify-end gap-2">
-                    <Button variant="outline" onClick={closeEdit}>Annuler</Button>
+                    <Button variant="outline" onClick={closeEdit}>
+                      Annuler
+                    </Button>
                     <Button onClick={handleSave} disabled={saving}>
-                      {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
+                      {saving ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <Save className="h-4 w-4 mr-2" />
+                      )}
                       Sauvegarder
                     </Button>
                   </div>
@@ -511,7 +600,12 @@ export default function EmailTemplatesPage() {
                       <p className="text-xs text-muted-foreground">Sujet :</p>
                       <p className="text-sm font-medium">{editSubject}</p>
                     </div>
-                    <HtmlPreview html={getPreviewHtml({ ...editingTemplate, body: editBody })} />
+                    <HtmlPreview
+                      html={getPreviewHtml({
+                        ...editingTemplate,
+                        body: editBody,
+                      })}
+                    />
                   </div>
                 </TabsContent>
               </Tabs>
@@ -520,7 +614,12 @@ export default function EmailTemplatesPage() {
         </Dialog>
 
         {/* Preview Dialog */}
-        <Dialog open={!!previewTemplate} onOpenChange={(open) => { if (!open) setPreviewTemplate(null); }}>
+        <Dialog
+          open={!!previewTemplate}
+          onOpenChange={(open) => {
+            if (!open) setPreviewTemplate(null);
+          }}
+        >
           <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
@@ -535,7 +634,9 @@ export default function EmailTemplatesPage() {
               <div className="mt-4 space-y-2">
                 <div className="bg-muted/50 rounded-lg p-3">
                   <p className="text-xs text-muted-foreground">Sujet :</p>
-                  <p className="text-sm font-medium">{previewTemplate.subject}</p>
+                  <p className="text-sm font-medium">
+                    {previewTemplate.subject}
+                  </p>
                 </div>
                 <HtmlPreview html={getPreviewHtml(previewTemplate)} />
               </div>
@@ -566,7 +667,12 @@ export default function EmailTemplatesPage() {
                 />
               </div>
               <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={() => setTestDialogOpen(false)}>Annuler</Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setTestDialogOpen(false)}
+                >
+                  Annuler
+                </Button>
                 <Button onClick={handleTestSend} disabled={!testEmail.trim()}>
                   <Send className="h-4 w-4 mr-2" />
                   Envoyer le test

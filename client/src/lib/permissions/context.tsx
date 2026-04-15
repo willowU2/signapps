@@ -6,7 +6,13 @@
 
 "use client";
 
-import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useCallback,
+} from "react";
 import { useAuthStore } from "@/lib/store";
 import { rolesApi, type Role } from "@/lib/api/identity";
 import { FEATURES } from "@/lib/features";
@@ -78,7 +84,7 @@ export function PermissionsProvider({ children }: PermissionsProviderProps) {
 
     try {
       // Determine role level — UserRole and RoleLevel are incompatible enums, cast via number
-      const roleLevel = (user.role as number) as RoleLevel;
+      const roleLevel = user.role as number as RoleLevel;
       const isAdmin = roleLevel >= 2;
       const isSuperAdmin = roleLevel >= 3;
 
@@ -112,7 +118,7 @@ export function PermissionsProvider({ children }: PermissionsProviderProps) {
       // Fallback to basic user permissions
       setPermissions({
         userId: user.id,
-        roleLevel: (user.role as number) as RoleLevel,
+        roleLevel: user.role as number as RoleLevel,
         roleName: getRoleName(user.role),
         isAdmin: user.role >= 2,
         isSuperAdmin: user.role >= 3,
@@ -134,7 +140,7 @@ export function PermissionsProvider({ children }: PermissionsProviderProps) {
     (
       resource: Resource,
       action: ResourceAction | ResourceAction[],
-      options?: PermissionCheckOptions
+      options?: PermissionCheckOptions,
     ): boolean => {
       if (!permissions) return false;
 
@@ -154,7 +160,7 @@ export function PermissionsProvider({ children }: PermissionsProviderProps) {
         return actions.every((a) => resourcePermissions.includes(a));
       }
     },
-    [permissions]
+    [permissions],
   );
 
   // Is admin check
@@ -173,7 +179,7 @@ export function PermissionsProvider({ children }: PermissionsProviderProps) {
       if (!permissions) return false;
       return permissions.roleLevel >= minLevel;
     },
-    [permissions]
+    [permissions],
   );
 
   // Has feature check
@@ -184,7 +190,7 @@ export function PermissionsProvider({ children }: PermissionsProviderProps) {
       if (permissions.isSuperAdmin) return true;
       return permissions.features.includes(feature);
     },
-    [permissions]
+    [permissions],
   );
 
   // Refresh permissions
@@ -257,7 +263,13 @@ interface CanProps {
 /**
  * Renders children only if user has the specified permission.
  */
-export function Can({ resource, action, any, children, fallback = null }: CanProps) {
+export function Can({
+  resource,
+  action,
+  any,
+  children,
+  fallback = null,
+}: CanProps) {
   const { can } = usePermissions();
   return can(resource, action, { any }) ? <>{children}</> : <>{fallback}</>;
 }

@@ -20,14 +20,14 @@ import {
   format,
   max,
   min,
-} from 'date-fns';
+} from "date-fns";
 import type {
   ScheduleBlock,
   TeamMember,
   AvailabilitySlot,
   WorkingHours,
   DaySchedule,
-} from '../types/scheduling';
+} from "../types/scheduling";
 
 // ============================================================================
 // Types
@@ -53,7 +53,7 @@ export interface AvailabilityQuery {
   /** Minimum gap between meetings in minutes */
   bufferMinutes?: number;
   /** Preferred times of day */
-  preferredTimes?: ('morning' | 'afternoon' | 'evening')[];
+  preferredTimes?: ("morning" | "afternoon" | "evening")[];
   /** Timezone for calculations */
   timezone?: string;
 }
@@ -153,7 +153,7 @@ const TIME_PREFERENCE_HOURS: Record<string, { start: number; end: number }> = {
 export function findAvailability(
   query: AvailabilityQuery,
   events: ScheduleBlock[],
-  members: TeamMember[]
+  members: TeamMember[],
 ): AvailabilityResult {
   const {
     participantIds,
@@ -173,7 +173,7 @@ export function findAvailability(
     dateRange,
     workingHours,
     includeWeekends,
-    bufferMinutes
+    bufferMinutes,
   );
 
   // Find common available slots
@@ -182,7 +182,7 @@ export function findAvailability(
     duration,
     dateRange,
     workingHours,
-    includeWeekends
+    includeWeekends,
   );
 
   // Score and sort slots
@@ -193,7 +193,7 @@ export function findAvailability(
     scoredSlots,
     participantAvailability,
     dateRange,
-    participantIds
+    participantIds,
   );
 
   return {
@@ -210,7 +210,7 @@ export function suggestBestMeetingTime(
   query: AvailabilityQuery,
   events: ScheduleBlock[],
   members: TeamMember[],
-  limit: number = 5
+  limit: number = 5,
 ): CommonSlot[] {
   const result = findAvailability(query, events, members);
 
@@ -232,8 +232,11 @@ export function checkTimeSlot(
   start: Date,
   end: Date,
   participantIds: string[],
-  events: ScheduleBlock[]
-): { available: boolean; conflicts: Array<{ participantId: string; event: ScheduleBlock }> } {
+  events: ScheduleBlock[],
+): {
+  available: boolean;
+  conflicts: Array<{ participantId: string; event: ScheduleBlock }>;
+} {
   const conflicts: Array<{ participantId: string; event: ScheduleBlock }> = [];
 
   for (const participantId of participantIds) {
@@ -241,7 +244,7 @@ export function checkTimeSlot(
     const participantEvents = events.filter(
       (e) =>
         e.attendees?.some((a) => a.id === participantId) ||
-        (e.metadata?.organizerId === participantId)
+        e.metadata?.organizerId === participantId,
     );
 
     for (const event of participantEvents) {
@@ -250,7 +253,7 @@ export function checkTimeSlot(
       if (
         areIntervalsOverlapping(
           { start, end },
-          { start: event.start, end: event.end }
+          { start: event.start, end: event.end },
         )
       ) {
         conflicts.push({ participantId, event });
@@ -275,7 +278,7 @@ function buildParticipantAvailability(
   dateRange: { start: Date; end: Date },
   workingHours: { start: number; end: number },
   includeWeekends: boolean,
-  bufferMinutes: number
+  bufferMinutes: number,
 ): ParticipantAvailability[] {
   return participantIds.map((participantId) => {
     const member = members.find((m) => m.id === participantId);
@@ -285,7 +288,7 @@ function buildParticipantAvailability(
     const participantEvents = events.filter(
       (e) =>
         e.attendees?.some((a) => a.id === participantId) ||
-        (e.metadata?.organizerId === participantId)
+        e.metadata?.organizerId === participantId,
     );
 
     // Build busy slots from events
@@ -303,10 +306,10 @@ function buildParticipantAvailability(
       busySlots,
       dateRange,
       memberWorkingHours || {
-        timezone: 'Europe/Paris',
+        timezone: "Europe/Paris",
         schedule: buildDefaultSchedule(workingHours, includeWeekends),
       },
-      includeWeekends
+      includeWeekends,
     );
 
     return {
@@ -321,11 +324,11 @@ function buildParticipantAvailability(
 
 function buildDefaultSchedule(
   workingHours: { start: number; end: number },
-  includeWeekends: boolean
+  includeWeekends: boolean,
 ): Record<string, DaySchedule | undefined> {
   const daySchedule: DaySchedule = {
-    start: `${workingHours.start.toString().padStart(2, '0')}:00`,
-    end: `${workingHours.end.toString().padStart(2, '0')}:00`,
+    start: `${workingHours.start.toString().padStart(2, "0")}:00`,
+    end: `${workingHours.end.toString().padStart(2, "0")}:00`,
   };
 
   return {
@@ -343,7 +346,7 @@ function buildFreeSlots(
   busySlots: BusySlot[],
   dateRange: { start: Date; end: Date },
   workingHours: WorkingHours,
-  includeWeekends: boolean
+  includeWeekends: boolean,
 ): FreeSlot[] {
   const freeSlots: FreeSlot[] = [];
   let current = startOfDay(dateRange.start);
@@ -357,7 +360,10 @@ function buildFreeSlots(
     }
 
     // Get working hours for this day
-    const dayName = format(current, 'EEEE').toLowerCase() as keyof typeof workingHours.schedule;
+    const dayName = format(
+      current,
+      "EEEE",
+    ).toLowerCase() as keyof typeof workingHours.schedule;
     const daySchedule = workingHours.schedule[dayName];
 
     if (!daySchedule) {
@@ -366,8 +372,8 @@ function buildFreeSlots(
     }
 
     // Parse working hours
-    const [startHour, startMin] = daySchedule.start.split(':').map(Number);
-    const [endHour, endMin] = daySchedule.end.split(':').map(Number);
+    const [startHour, startMin] = daySchedule.start.split(":").map(Number);
+    const [endHour, endMin] = daySchedule.end.split(":").map(Number);
 
     let dayStart = setMinutes(setHours(current, startHour), startMin);
     const dayEnd = setMinutes(setHours(current, endHour), endMin);
@@ -377,12 +383,11 @@ function buildFreeSlots(
 
     // Find free periods within this day
     const dayBusySlots = busySlots
-      .filter(
-        (b) =>
-          areIntervalsOverlapping(
-            { start: dayStart, end: dayEnd },
-            { start: b.start, end: b.end }
-          )
+      .filter((b) =>
+        areIntervalsOverlapping(
+          { start: dayStart, end: dayEnd },
+          { start: b.start, end: b.end },
+        ),
       )
       .sort((a, b) => a.start.getTime() - b.start.getTime());
 
@@ -418,7 +423,7 @@ function findCommonSlots(
   duration: number,
   dateRange: { start: Date; end: Date },
   workingHours: { start: number; end: number },
-  includeWeekends: boolean
+  includeWeekends: boolean,
 ): CommonSlot[] {
   const commonSlots: CommonSlot[] = [];
 
@@ -435,7 +440,10 @@ function findCommonSlots(
     let slotStart = freeSlot.start;
     const slotEndLimit = addMinutes(freeSlot.end, -duration);
 
-    while (isBefore(slotStart, slotEndLimit) || slotStart.getTime() === slotEndLimit.getTime()) {
+    while (
+      isBefore(slotStart, slotEndLimit) ||
+      slotStart.getTime() === slotEndLimit.getTime()
+    ) {
       const slotEnd = addMinutes(slotStart, duration);
 
       // Check if this slot works for other participants
@@ -444,7 +452,7 @@ function findCommonSlots(
       for (let i = 1; i < participantAvailability.length; i++) {
         const participant = participantAvailability[i];
         const isAvailable = participant.freeSlots.some((fs) =>
-          isSlotContained({ start: slotStart, end: slotEnd }, fs)
+          isSlotContained({ start: slotStart, end: slotEnd }, fs),
         );
         if (isAvailable) {
           availableParticipants.push(participant.participantId);
@@ -457,7 +465,8 @@ function findCommonSlots(
         score: 0,
         scoreReasons: [],
         availableParticipants,
-        allAvailable: availableParticipants.length === participantAvailability.length,
+        allAvailable:
+          availableParticipants.length === participantAvailability.length,
       });
 
       slotStart = addMinutes(slotStart, SLOT_INCREMENT_MINUTES);
@@ -469,18 +478,20 @@ function findCommonSlots(
 
 function isSlotContained(
   slot: { start: Date; end: Date },
-  freeSlot: FreeSlot
+  freeSlot: FreeSlot,
 ): boolean {
   return (
-    (isAfter(slot.start, freeSlot.start) || slot.start.getTime() === freeSlot.start.getTime()) &&
-    (isBefore(slot.end, freeSlot.end) || slot.end.getTime() === freeSlot.end.getTime())
+    (isAfter(slot.start, freeSlot.start) ||
+      slot.start.getTime() === freeSlot.start.getTime()) &&
+    (isBefore(slot.end, freeSlot.end) ||
+      slot.end.getTime() === freeSlot.end.getTime())
   );
 }
 
 function scoreSlots(
   slots: CommonSlot[],
-  preferredTimes: ('morning' | 'afternoon' | 'evening')[],
-  participantIds: string[]
+  preferredTimes: ("morning" | "afternoon" | "evening")[],
+  participantIds: string[],
 ): CommonSlot[] {
   return slots
     .map((slot) => {
@@ -488,13 +499,14 @@ function scoreSlots(
       const scoreReasons: string[] = [];
 
       // Score based on number of available participants
-      const availabilityScore = (slot.availableParticipants.length / participantIds.length) * 50;
+      const availabilityScore =
+        (slot.availableParticipants.length / participantIds.length) * 50;
       score += availabilityScore;
       if (slot.allAvailable) {
-        scoreReasons.push('Tous les participants sont disponibles');
+        scoreReasons.push("Tous les participants sont disponibles");
       } else {
         scoreReasons.push(
-          `${slot.availableParticipants.length}/${participantIds.length} participants disponibles`
+          `${slot.availableParticipants.length}/${participantIds.length} participants disponibles`,
         );
       }
 
@@ -504,7 +516,9 @@ function scoreSlots(
         const range = TIME_PREFERENCE_HOURS[pref];
         if (hour >= range.start && hour < range.end) {
           score += 20;
-          scoreReasons.push(`Créneau ${pref === 'morning' ? 'matinée' : pref === 'afternoon' ? 'après-midi' : 'soirée'} préféré`);
+          scoreReasons.push(
+            `Créneau ${pref === "morning" ? "matinée" : pref === "afternoon" ? "après-midi" : "soirée"} préféré`,
+          );
           break;
         }
       }
@@ -512,7 +526,7 @@ function scoreSlots(
       // Prefer earlier in the day (within working hours)
       if (hour >= 9 && hour <= 11) {
         score += 10;
-        scoreReasons.push('Début de journée');
+        scoreReasons.push("Début de journée");
       }
 
       // Prefer slots not too close to lunch
@@ -542,7 +556,7 @@ function calculateStats(
   slots: CommonSlot[],
   participantAvailability: ParticipantAvailability[],
   dateRange: { start: Date; end: Date },
-  participantIds: string[]
+  participantIds: string[],
 ): AvailabilityStats {
   const totalMinutes = differenceInMinutes(dateRange.end, dateRange.start);
 
@@ -563,28 +577,39 @@ function calculateStats(
 
   const busiest = busyPercentages.reduce(
     (max, p) => (p.busyPercentage > max.busyPercentage ? p : max),
-    busyPercentages[0]
+    busyPercentages[0],
   );
 
   const mostAvailable = busyPercentages.reduce(
     (max, p) => (p.freePercentage > max.freePercentage ? p : max),
-    busyPercentages[0]
+    busyPercentages[0],
   );
 
   return {
     totalSlots: slots.length,
     slotsWithAllAvailable: slots.filter((s) => s.allAvailable).length,
     busiestParticipant: busiest
-      ? { id: busiest.id, name: busiest.name, busyPercentage: busiest.busyPercentage }
+      ? {
+          id: busiest.id,
+          name: busiest.name,
+          busyPercentage: busiest.busyPercentage,
+        }
       : undefined,
     mostAvailableParticipant: mostAvailable
-      ? { id: mostAvailable.id, name: mostAvailable.name, freePercentage: mostAvailable.freePercentage }
+      ? {
+          id: mostAvailable.id,
+          name: mostAvailable.name,
+          freePercentage: mostAvailable.freePercentage,
+        }
       : undefined,
     dateRange,
   };
 }
 
-function isWithinDateRange(date: Date, range: { start: Date; end: Date }): boolean {
+function isWithinDateRange(
+  date: Date,
+  range: { start: Date; end: Date },
+): boolean {
   return (
     (isAfter(date, range.start) || date.getTime() === range.start.getTime()) &&
     (isBefore(date, range.end) || date.getTime() === range.end.getTime())
@@ -599,19 +624,21 @@ function isWithinDateRange(date: Date, range: { start: Date; end: Date }): boole
  * Format a slot for display
  */
 export function formatSlotTime(slot: CommonSlot): string {
-  const startStr = format(slot.start, 'EEEE d MMMM HH:mm');
-  const endStr = format(slot.end, 'HH:mm');
+  const startStr = format(slot.start, "EEEE d MMMM HH:mm");
+  const endStr = format(slot.end, "HH:mm");
   return `${startStr} - ${endStr}`;
 }
 
 /**
  * Group slots by day for display
  */
-export function groupSlotsByDay(slots: CommonSlot[]): Map<string, CommonSlot[]> {
+export function groupSlotsByDay(
+  slots: CommonSlot[],
+): Map<string, CommonSlot[]> {
   const groups = new Map<string, CommonSlot[]>();
 
   for (const slot of slots) {
-    const dayKey = format(slot.start, 'yyyy-MM-dd');
+    const dayKey = format(slot.start, "yyyy-MM-dd");
     const existing = groups.get(dayKey) || [];
     existing.push(slot);
     groups.set(dayKey, existing);
@@ -627,12 +654,12 @@ export function getAvailabilitySummary(result: AvailabilityResult): string {
   const { stats } = result;
 
   if (stats.totalSlots === 0) {
-    return 'Aucun créneau disponible trouvé dans la période sélectionnée.';
+    return "Aucun créneau disponible trouvé dans la période sélectionnée.";
   }
 
   if (stats.slotsWithAllAvailable > 0) {
-    return `${stats.slotsWithAllAvailable} créneau${stats.slotsWithAllAvailable > 1 ? 'x' : ''} où tous les participants sont disponibles.`;
+    return `${stats.slotsWithAllAvailable} créneau${stats.slotsWithAllAvailable > 1 ? "x" : ""} où tous les participants sont disponibles.`;
   }
 
-  return `${stats.totalSlots} créneau${stats.totalSlots > 1 ? 'x' : ''} trouvé${stats.totalSlots > 1 ? 's' : ''}, mais aucun ne convient à tous les participants.`;
+  return `${stats.totalSlots} créneau${stats.totalSlots > 1 ? "x" : ""} trouvé${stats.totalSlots > 1 ? "s" : ""}, mais aucun ne convient à tous les participants.`;
 }

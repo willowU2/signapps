@@ -36,9 +36,9 @@ export function UploadSheet({
         </DialogHeader>
 
         <div className="py-4">
-          <FileUploadProgressBar 
-            bucket={bucket} 
-            onUploadComplete={onUploadComplete} 
+          <FileUploadProgressBar
+            bucket={bucket}
+            onUploadComplete={onUploadComplete}
           />
         </div>
       </DialogContent>

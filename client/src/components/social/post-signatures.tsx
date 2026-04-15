@@ -1,24 +1,31 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useCallback } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
+import { useState, useEffect, useCallback } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from '@/components/ui/dialog';
-import { FileSignature, Plus, Trash2, Edit, Check, Loader2 } from 'lucide-react';
-import { toast } from 'sonner';
-import { socialApi, Signature } from '@/lib/api/social';
+} from "@/components/ui/dialog";
+import {
+  FileSignature,
+  Plus,
+  Trash2,
+  Edit,
+  Check,
+  Loader2,
+} from "lucide-react";
+import { toast } from "sonner";
+import { socialApi, Signature } from "@/lib/api/social";
 
 // ── Signature Settings Page Section ──────────────────────────────────
 
@@ -29,8 +36,8 @@ export function PostSignatures() {
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [name, setName] = useState('');
-  const [content, setContent] = useState('');
+  const [name, setName] = useState("");
+  const [content, setContent] = useState("");
   const [autoAdd, setAutoAdd] = useState(false);
 
   const fetchSignatures = useCallback(async () => {
@@ -39,7 +46,7 @@ export function PostSignatures() {
       const res = await socialApi.signatures.list();
       setSignatures(res.data);
     } catch {
-      toast.error('Failed to load signatures');
+      toast.error("Failed to load signatures");
     } finally {
       setLoading(false);
     }
@@ -50,8 +57,8 @@ export function PostSignatures() {
   }, [fetchSignatures]);
 
   const resetForm = () => {
-    setName('');
-    setContent('');
+    setName("");
+    setContent("");
     setAutoAdd(false);
     setEditingId(null);
   };
@@ -83,7 +90,7 @@ export function PostSignatures() {
         setSignatures((prev) =>
           prev.map((s) => (s.id === editingId ? res.data : s)),
         );
-        toast.success('Signature updated');
+        toast.success("Signature updated");
       } else {
         const res = await socialApi.signatures.create({
           name: name.trim(),
@@ -91,12 +98,16 @@ export function PostSignatures() {
           autoAdd,
         });
         setSignatures((prev) => [...prev, res.data]);
-        toast.success('Signature created');
+        toast.success("Signature created");
       }
       setDialogOpen(false);
       resetForm();
     } catch {
-      toast.error(editingId ? 'Impossible de mettre à jour signature' : 'Impossible de créer signature');
+      toast.error(
+        editingId
+          ? "Impossible de mettre à jour signature"
+          : "Impossible de créer signature",
+      );
     } finally {
       setSaving(false);
     }
@@ -106,9 +117,9 @@ export function PostSignatures() {
     try {
       await socialApi.signatures.delete(id);
       setSignatures((prev) => prev.filter((s) => s.id !== id));
-      toast.success('Signature deleted');
+      toast.success("Signature deleted");
     } catch {
-      toast.error('Impossible de supprimer signature');
+      toast.error("Impossible de supprimer signature");
     }
   };
 
@@ -154,7 +165,9 @@ export function PostSignatures() {
               <CardContent className="pt-4 space-y-2">
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex items-center gap-2 min-w-0">
-                    <span className="font-medium text-sm truncate">{sig.name}</span>
+                    <span className="font-medium text-sm truncate">
+                      {sig.name}
+                    </span>
                     {sig.autoAdd && (
                       <Badge variant="secondary" className="text-xs shrink-0">
                         <Check className="h-3 w-3 mr-0.5" />
@@ -202,7 +215,7 @@ export function PostSignatures() {
             {signatures
               .filter((s) => s.autoAdd)
               .map((s) => s.content)
-              .join('\n')}
+              .join("\n")}
           </div>
         </div>
       )}
@@ -212,7 +225,7 @@ export function PostSignatures() {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>
-              {editingId ? 'Edit Signature' : 'New Signature'}
+              {editingId ? "Edit Signature" : "New Signature"}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
@@ -252,7 +265,9 @@ export function PostSignatures() {
             {/* Live preview */}
             {content.trim() && (
               <div className="rounded-lg border bg-muted/30 p-3 space-y-1.5">
-                <p className="text-xs font-medium text-muted-foreground">Preview</p>
+                <p className="text-xs font-medium text-muted-foreground">
+                  Preview
+                </p>
                 <div className="text-sm text-muted-foreground">
                   Your post content here...
                 </div>
@@ -265,9 +280,12 @@ export function PostSignatures() {
             <Button variant="outline" onClick={() => setDialogOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handleSave} disabled={!name.trim() || !content.trim() || saving}>
+            <Button
+              onClick={handleSave}
+              disabled={!name.trim() || !content.trim() || saving}
+            >
               {saving && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}
-              {editingId ? 'Save Changes' : 'Create Signature'}
+              {editingId ? "Save Changes" : "Create Signature"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -299,7 +317,9 @@ export function SignatureSelector({ onSelect }: SignatureSelectorProps) {
         if (!cancelled) setLoading(false);
       }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   if (loading || signatures.length === 0) return null;

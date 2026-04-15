@@ -93,7 +93,9 @@ export default function RFQManager() {
               <input
                 type="text"
                 value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, title: e.target.value })
+                }
                 placeholder="e.g., Electronic Components"
                 className="w-full rounded border px-3 py-2 text-sm"
               />
@@ -103,7 +105,9 @@ export default function RFQManager() {
               <input
                 type="date"
                 value={formData.deadline}
-                onChange={(e) => setFormData({ ...formData, deadline: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, deadline: e.target.value })
+                }
                 className="w-full rounded border px-3 py-2 text-sm"
               />
             </div>
@@ -137,12 +141,16 @@ export default function RFQManager() {
             <div key={rfq.id} className="flex items-center justify-between p-4">
               <div>
                 <p className="font-medium">{rfq.title}</p>
-                <p className="text-sm text-muted-foreground">Deadline: {rfq.deadline}</p>
+                <p className="text-sm text-muted-foreground">
+                  Deadline: {rfq.deadline}
+                </p>
               </div>
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
                   <MessageSquare className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm font-semibold">{rfq.responsesCount} responses</span>
+                  <span className="text-sm font-semibold">
+                    {rfq.responsesCount} responses
+                  </span>
                 </div>
                 <span className={getStatusBadge(rfq.status)}>{rfq.status}</span>
               </div>

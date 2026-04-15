@@ -4,5 +4,5 @@
  * Components for searching and filtering scheduling blocks.
  */
 
-export { SearchPanel } from './SearchPanel';
-export { QuickSearch, QuickSearchInput, SearchTrigger } from './QuickSearch';
+export { SearchPanel } from "./SearchPanel";
+export { QuickSearch, QuickSearchInput, SearchTrigger } from "./QuickSearch";

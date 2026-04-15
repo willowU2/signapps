@@ -110,20 +110,29 @@ export default function RiskScoring() {
         </div>
         <div className="grid grid-cols-1 gap-4 p-4">
           {suppliers.map((supplier) => (
-            <div key={supplier.id} className={`rounded-lg border-2 p-4 ${getRiskColor(supplier.level)}`}>
+            <div
+              key={supplier.id}
+              className={`rounded-lg border-2 p-4 ${getRiskColor(supplier.level)}`}
+            >
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3">
-                  <div className={`rounded-full p-2 ${getRiskBadgeColor(supplier.level)}`}>
+                  <div
+                    className={`rounded-full p-2 ${getRiskBadgeColor(supplier.level)}`}
+                  >
                     {getRiskIcon(supplier.level)}
                   </div>
                   <div>
                     <h3 className="font-semibold">{supplier.name}</h3>
-                    <p className="text-xs text-muted-foreground">Risk Assessment</p>
+                    <p className="text-xs text-muted-foreground">
+                      Risk Assessment
+                    </p>
                   </div>
                 </div>
                 <div className="text-right">
                   <div className="text-3xl font-bold">{supplier.riskScore}</div>
-                  <span className={`inline-block rounded px-2 py-1 text-xs font-semibold ${getRiskBadgeColor(supplier.level)}`}>
+                  <span
+                    className={`inline-block rounded px-2 py-1 text-xs font-semibold ${getRiskBadgeColor(supplier.level)}`}
+                  >
                     {supplier.level.toUpperCase()}
                   </span>
                 </div>
@@ -132,8 +141,12 @@ export default function RiskScoring() {
               <div className="space-y-3">
                 <div>
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs font-medium">Concentration Risk</span>
-                    <span className="text-xs font-semibold">{supplier.factors.concentration}</span>
+                    <span className="text-xs font-medium">
+                      Concentration Risk
+                    </span>
+                    <span className="text-xs font-semibold">
+                      {supplier.factors.concentration}
+                    </span>
                   </div>
                   <div className="h-2 w-full rounded-full bg-gray-300 overflow-hidden">
                     <div
@@ -146,7 +159,9 @@ export default function RiskScoring() {
                 <div>
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-xs font-medium">Geographic Risk</span>
-                    <span className="text-xs font-semibold">{supplier.factors.geographic}</span>
+                    <span className="text-xs font-semibold">
+                      {supplier.factors.geographic}
+                    </span>
                   </div>
                   <div className="h-2 w-full rounded-full bg-gray-300 overflow-hidden">
                     <div
@@ -159,7 +174,9 @@ export default function RiskScoring() {
                 <div>
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-xs font-medium">Dependency Risk</span>
-                    <span className="text-xs font-semibold">{supplier.factors.dependency}</span>
+                    <span className="text-xs font-semibold">
+                      {supplier.factors.dependency}
+                    </span>
                   </div>
                   <div className="h-2 w-full rounded-full bg-gray-300 overflow-hidden">
                     <div

@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { HardDrive } from 'lucide-react';
-import { storageApi } from '@/lib/api/storage';
+import { useEffect, useState } from "react";
+import { HardDrive } from "lucide-react";
+import { storageApi } from "@/lib/api/storage";
 
 interface QuotaInfo {
   used: number;
@@ -11,35 +11,42 @@ interface QuotaInfo {
 }
 
 function formatBytes(bytes: number): string {
-  if (bytes === 0) return '0 o';
+  if (bytes === 0) return "0 o";
   const k = 1024;
-  const sizes = ['o', 'Ko', 'Mo', 'Go', 'To'];
+  const sizes = ["o", "Ko", "Mo", "Go", "To"];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
 }
 
 const TYPE_COLORS: Record<string, string> = {
-  document: 'bg-blue-500',
-  image: 'bg-green-500',
-  video: 'bg-purple-500',
-  audio: 'bg-yellow-500',
-  archive: 'bg-orange-500',
-  other: 'bg-gray-400',
+  document: "bg-blue-500",
+  image: "bg-green-500",
+  video: "bg-purple-500",
+  audio: "bg-yellow-500",
+  archive: "bg-orange-500",
+  other: "bg-gray-400",
 };
 
 export function StorageQuota() {
-  const [quota, setQuota] = useState<QuotaInfo>({ used: 0, total: 5 * 1024 * 1024 * 1024, byType: [] });
+  const [quota, setQuota] = useState<QuotaInfo>({
+    used: 0,
+    total: 5 * 1024 * 1024 * 1024,
+    byType: [],
+  });
 
   useEffect(() => {
-    storageApi.getQuota?.()
+    storageApi
+      .getQuota?.()
       .then((res: { data: QuotaInfo }) => setQuota(res.data))
       .catch(() => {
         // Fallback: estimate from files
       });
   }, []);
 
-  const pct = quota.total > 0 ? Math.min(100, (quota.used / quota.total) * 100) : 0;
-  const pctColor = pct > 90 ? 'bg-red-500' : pct > 70 ? 'bg-yellow-500' : 'bg-primary';
+  const pct =
+    quota.total > 0 ? Math.min(100, (quota.used / quota.total) * 100) : 0;
+  const pctColor =
+    pct > 90 ? "bg-red-500" : pct > 70 ? "bg-yellow-500" : "bg-primary";
 
   return (
     <div className="space-y-3">
@@ -68,9 +75,13 @@ export function StorageQuota() {
         <div className="space-y-1 pt-1">
           {quota.byType.map((t) => (
             <div key={t.type} className="flex items-center gap-2 text-xs">
-              <div className={`h-2 w-2 rounded-full ${TYPE_COLORS[t.type] || TYPE_COLORS.other}`} />
+              <div
+                className={`h-2 w-2 rounded-full ${TYPE_COLORS[t.type] || TYPE_COLORS.other}`}
+              />
               <span className="flex-1 capitalize">{t.type}</span>
-              <span className="text-muted-foreground">{formatBytes(t.size)}</span>
+              <span className="text-muted-foreground">
+                {formatBytes(t.size)}
+              </span>
               <span className="text-muted-foreground">({t.count})</span>
             </div>
           ))}

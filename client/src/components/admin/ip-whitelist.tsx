@@ -62,7 +62,7 @@ export function IPWhitelist() {
 
   const toggleEntry = (id: string) => {
     setEntries((prev) =>
-      prev.map((e) => (e.id === id ? { ...e, enabled: !e.enabled } : e))
+      prev.map((e) => (e.id === id ? { ...e, enabled: !e.enabled } : e)),
     );
   };
 
@@ -141,7 +141,9 @@ export function IPWhitelist() {
                   <div className="flex-1">
                     <p className="font-mono text-sm font-medium text-foreground">
                       {entry.address}
-                      <span className="ml-1 text-muted-foreground">{entry.cidr}</span>
+                      <span className="ml-1 text-muted-foreground">
+                        {entry.cidr}
+                      </span>
                     </p>
                     <Badge variant="outline" className="mt-1">
                       {entry.country}

@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 /**
  * SecureRemoteViewer — Canvas-based remote screen viewer for SignApps RM5.
@@ -15,60 +15,69 @@
  *   control  — full input forwarding, banner shown to remote user
  */
 
-import { useEffect, useRef, useState, useCallback } from "react"
-import { Monitor, MousePointer, Eye, EyeOff, Loader2, AlertCircle, StopCircle, Columns2 } from "lucide-react"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
+import { useEffect, useRef, useState, useCallback } from "react";
+import {
+  Monitor,
+  MousePointer,
+  Eye,
+  EyeOff,
+  Loader2,
+  AlertCircle,
+  StopCircle,
+  Columns2,
+} from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from "@/components/ui/select";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type RemoteMode = "observe" | "share" | "control"
+type RemoteMode = "observe" | "share" | "control";
 
-type ConnectionState = "idle" | "connecting" | "connected" | "error" | "ended"
+type ConnectionState = "idle" | "connecting" | "connected" | "error" | "ended";
 
 /** 0 = all monitors combined; 1, 2, … = specific monitor index */
-type MonitorIndex = number
+type MonitorIndex = number;
 
 interface RemoteFrame {
-  type: "frame"
-  session_id: string
-  width: number
-  height: number
-  data: string        // base64 WebP
-  frame_type: string  // "full" | "delta"
-  monitor_index?: number
+  type: "frame";
+  session_id: string;
+  width: number;
+  height: number;
+  data: string; // base64 WebP
+  frame_type: string; // "full" | "delta"
+  monitor_index?: number;
 }
 
 interface SessionStarted {
-  type: "session_started"
-  session_id: string
-  screen_width: number
-  screen_height: number
-  monitor_count?: number
+  type: "session_started";
+  session_id: string;
+  screen_width: number;
+  screen_height: number;
+  monitor_count?: number;
 }
 
-type AgentMessage = RemoteFrame | SessionStarted
+type AgentMessage = RemoteFrame | SessionStarted;
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
 interface SecureRemoteViewerProps {
   /** Hardware ID (UUID) of the target machine */
-  hardwareId: string
+  hardwareId: string;
   /** Display name of the remote machine */
-  machineName?: string
+  machineName?: string;
   /** Admin display name shown to remote user in share/control mode */
-  adminName?: string
+  adminName?: string;
   /** Base URL of the IT assets API (defaults to /api/v1/it-assets) */
-  apiBase?: string
+  apiBase?: string;
   /** Called when the session ends */
-  onSessionEnd?: () => void
+  onSessionEnd?: () => void;
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -80,177 +89,198 @@ export function SecureRemoteViewer({
   apiBase = "/api/v1/it-assets",
   onSessionEnd,
 }: SecureRemoteViewerProps) {
-  const canvasRef = useRef<HTMLCanvasElement>(null)
-  const wsRef = useRef<WebSocket | null>(null)
-  const sessionIdRef = useRef<string | null>(null)
-  const containerRef = useRef<HTMLDivElement>(null)
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const wsRef = useRef<WebSocket | null>(null);
+  const sessionIdRef = useRef<string | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  const [mode, setMode] = useState<RemoteMode>("observe")
-  const [connState, setConnState] = useState<ConnectionState>("idle")
-  const [error, setError] = useState<string | null>(null)
-  const [sessionDuration, setSessionDuration] = useState(0)
-  const [screenSize, setScreenSize] = useState<{ w: number; h: number } | null>(null)
-  const [frameCount, setFrameCount] = useState(0)
-  const [monitorCount, setMonitorCount] = useState(1)
-  const [selectedMonitor, setSelectedMonitor] = useState<MonitorIndex>(1)
+  const [mode, setMode] = useState<RemoteMode>("observe");
+  const [connState, setConnState] = useState<ConnectionState>("idle");
+  const [error, setError] = useState<string | null>(null);
+  const [sessionDuration, setSessionDuration] = useState(0);
+  const [screenSize, setScreenSize] = useState<{ w: number; h: number } | null>(
+    null,
+  );
+  const [frameCount, setFrameCount] = useState(0);
+  const [monitorCount, setMonitorCount] = useState(1);
+  const [selectedMonitor, setSelectedMonitor] = useState<MonitorIndex>(1);
   // Per-monitor canvas refs (for "All" layout)
-  const canvasRefs = useRef<Record<number, HTMLCanvasElement | null>>({})
+  const canvasRefs = useRef<Record<number, HTMLCanvasElement | null>>({});
 
   // ─── Session timer ──────────────────────────────────────────────────────────
 
   useEffect(() => {
-    if (connState !== "connected") return
-    const t = setInterval(() => setSessionDuration((d) => d + 1), 1000)
-    return () => clearInterval(t)
-  }, [connState])
+    if (connState !== "connected") return;
+    const t = setInterval(() => setSessionDuration((d) => d + 1), 1000);
+    return () => clearInterval(t);
+  }, [connState]);
 
   // ─── Start session ──────────────────────────────────────────────────────────
 
   const startSession = useCallback(async () => {
-    setError(null)
-    setConnState("connecting")
-    setSessionDuration(0)
-    setFrameCount(0)
+    setError(null);
+    setConnState("connecting");
+    setSessionDuration(0);
+    setFrameCount(0);
 
     try {
       // 1. Create session on server
-      const resp = await fetch(`${apiBase}/${hardwareId}/remote-session/start`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ mode, admin_name: adminName, monitor_index: selectedMonitor }),
-      })
+      const resp = await fetch(
+        `${apiBase}/${hardwareId}/remote-session/start`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            mode,
+            admin_name: adminName,
+            monitor_index: selectedMonitor,
+          }),
+        },
+      );
       if (!resp.ok) {
-        const msg = await resp.text()
-        throw new Error(`Failed to start session: ${msg}`)
+        const msg = await resp.text();
+        throw new Error(`Failed to start session: ${msg}`);
       }
-      const session = await resp.json()
-      sessionIdRef.current = session.session_id
+      const session = await resp.json();
+      sessionIdRef.current = session.session_id;
 
       // 2. Open WebSocket to receive frames
-      const wsProtocol = window.location.protocol === "https:" ? "wss:" : "ws:"
-      const wsHost = window.location.host
-      const wsUrl = `${wsProtocol}//${wsHost}${apiBase}/${hardwareId}/remote-session`
-      const ws = new WebSocket(wsUrl)
-      wsRef.current = ws
+      const wsProtocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+      const wsHost = window.location.host;
+      const wsUrl = `${wsProtocol}//${wsHost}${apiBase}/${hardwareId}/remote-session`;
+      const ws = new WebSocket(wsUrl);
+      wsRef.current = ws;
 
       ws.onopen = () => {
-        setConnState("connected")
-      }
+        setConnState("connected");
+      };
 
       ws.onmessage = (event) => {
         try {
-          const msg: AgentMessage = JSON.parse(event.data)
-          handleAgentMessage(msg)
+          const msg: AgentMessage = JSON.parse(event.data);
+          handleAgentMessage(msg);
         } catch {
           // ignore parse errors
         }
-      }
+      };
 
       ws.onerror = () => {
-        setError("WebSocket error — check network or server")
-        setConnState("error")
-      }
+        setError("WebSocket error — check network or server");
+        setConnState("error");
+      };
 
       ws.onclose = () => {
         if (connState !== "ended") {
-          setConnState("ended")
+          setConnState("ended");
         }
-        onSessionEnd?.()
-      }
+        onSessionEnd?.();
+      };
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e))
-      setConnState("error")
+      setError(e instanceof Error ? e.message : String(e));
+      setConnState("error");
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hardwareId, mode, adminName, apiBase, selectedMonitor])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hardwareId, mode, adminName, apiBase, selectedMonitor]);
 
   // ─── Handle incoming agent messages ─────────────────────────────────────────
 
-  const renderFrame = useCallback((frame: RemoteFrame) => {
-    // Determine target canvas: per-monitor canvas (for "All" view) or main canvas
-    const monIdx = frame.monitor_index ?? 1
-    const canvas = selectedMonitor === 0
-      ? (canvasRefs.current[monIdx] ?? canvasRef.current)
-      : canvasRef.current
-    if (!canvas) return
-    const ctx = canvas.getContext("2d")
-    if (!ctx) return
+  const renderFrame = useCallback(
+    (frame: RemoteFrame) => {
+      // Determine target canvas: per-monitor canvas (for "All" view) or main canvas
+      const monIdx = frame.monitor_index ?? 1;
+      const canvas =
+        selectedMonitor === 0
+          ? (canvasRefs.current[monIdx] ?? canvasRef.current)
+          : canvasRef.current;
+      if (!canvas) return;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
 
-    // Decode base64 WebP and draw on canvas
-    const img = new Image()
-    img.onload = () => {
-      if (frame.frame_type === "full") {
-        canvas.width = frame.width
-        canvas.height = frame.height
-        ctx.clearRect(0, 0, canvas.width, canvas.height)
-      }
-      ctx.drawImage(img, 0, 0)
-      setFrameCount((c) => c + 1)
-    }
-    img.src = `data:image/webp;base64,${frame.data}`
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedMonitor])
+      // Decode base64 WebP and draw on canvas
+      const img = new Image();
+      img.onload = () => {
+        if (frame.frame_type === "full") {
+          canvas.width = frame.width;
+          canvas.height = frame.height;
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+        ctx.drawImage(img, 0, 0);
+        setFrameCount((c) => c + 1);
+      };
+      img.src = `data:image/webp;base64,${frame.data}`;
+    },
+    [selectedMonitor],
+  );
 
-  const handleAgentMessage = useCallback((msg: AgentMessage) => {
-    if (msg.type === "session_started") {
-      setScreenSize({ w: msg.screen_width, h: msg.screen_height })
-      if (msg.monitor_count && msg.monitor_count > 1) {
-        setMonitorCount(msg.monitor_count)
+  const handleAgentMessage = useCallback(
+    (msg: AgentMessage) => {
+      if (msg.type === "session_started") {
+        setScreenSize({ w: msg.screen_width, h: msg.screen_height });
+        if (msg.monitor_count && msg.monitor_count > 1) {
+          setMonitorCount(msg.monitor_count);
+        }
+      } else if (msg.type === "frame") {
+        renderFrame(msg);
       }
-    } else if (msg.type === "frame") {
-      renderFrame(msg)
-    }
-  }, [renderFrame])
+    },
+    [renderFrame],
+  );
 
   // ─── Stop session ────────────────────────────────────────────────────────────
 
   const stopSession = useCallback(async () => {
-    setConnState("ended")
-    wsRef.current?.close()
-    wsRef.current = null
+    setConnState("ended");
+    wsRef.current?.close();
+    wsRef.current = null;
 
     try {
       await fetch(`${apiBase}/${hardwareId}/remote-session/stop`, {
         method: "POST",
         credentials: "include",
-      })
+      });
     } catch {
       // best effort
     }
 
-    onSessionEnd?.()
-  }, [hardwareId, apiBase, onSessionEnd])
+    onSessionEnd?.();
+  }, [hardwareId, apiBase, onSessionEnd]);
 
   // ─── Mouse events ─────────────────────────────────────────────────────────
 
   const handleMouseMove = useCallback(
     (e: React.MouseEvent<HTMLCanvasElement>) => {
-      if (mode !== "control" || connState !== "connected") return
-      const canvas = canvasRef.current
-      if (!canvas) return
-      const rect = canvas.getBoundingClientRect()
-      const scaleX = (screenSize?.w ?? canvas.width) / rect.width
-      const scaleY = (screenSize?.h ?? canvas.height) / rect.height
-      const x = Math.round((e.clientX - rect.left) * scaleX)
-      const y = Math.round((e.clientY - rect.top) * scaleY)
+      if (mode !== "control" || connState !== "connected") return;
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = (screenSize?.w ?? canvas.width) / rect.width;
+      const scaleY = (screenSize?.h ?? canvas.height) / rect.height;
+      const x = Math.round((e.clientX - rect.left) * scaleX);
+      const y = Math.round((e.clientY - rect.top) * scaleY);
       wsRef.current?.send(
-        JSON.stringify({ type: "mouse_event", x, y, button: 0, action: "move" })
-      )
+        JSON.stringify({
+          type: "mouse_event",
+          x,
+          y,
+          button: 0,
+          action: "move",
+        }),
+      );
     },
-    [mode, connState, screenSize]
-  )
+    [mode, connState, screenSize],
+  );
 
   const handleMouseDown = useCallback(
     (e: React.MouseEvent<HTMLCanvasElement>) => {
-      if (mode !== "control" || connState !== "connected") return
-      const canvas = canvasRef.current
-      if (!canvas) return
-      const rect = canvas.getBoundingClientRect()
-      const scaleX = (screenSize?.w ?? canvas.width) / rect.width
-      const scaleY = (screenSize?.h ?? canvas.height) / rect.height
-      const x = Math.round((e.clientX - rect.left) * scaleX)
-      const y = Math.round((e.clientY - rect.top) * scaleY)
+      if (mode !== "control" || connState !== "connected") return;
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = (screenSize?.w ?? canvas.width) / rect.width;
+      const scaleY = (screenSize?.h ?? canvas.height) / rect.height;
+      const x = Math.round((e.clientX - rect.left) * scaleX);
+      const y = Math.round((e.clientY - rect.top) * scaleY);
       wsRef.current?.send(
         JSON.stringify({
           type: "mouse_event",
@@ -258,22 +288,22 @@ export function SecureRemoteViewer({
           y,
           button: e.button,
           action: "down",
-        })
-      )
+        }),
+      );
     },
-    [mode, connState, screenSize]
-  )
+    [mode, connState, screenSize],
+  );
 
   const handleMouseUp = useCallback(
     (e: React.MouseEvent<HTMLCanvasElement>) => {
-      if (mode !== "control" || connState !== "connected") return
-      const canvas = canvasRef.current
-      if (!canvas) return
-      const rect = canvas.getBoundingClientRect()
-      const scaleX = (screenSize?.w ?? canvas.width) / rect.width
-      const scaleY = (screenSize?.h ?? canvas.height) / rect.height
-      const x = Math.round((e.clientX - rect.left) * scaleX)
-      const y = Math.round((e.clientY - rect.top) * scaleY)
+      if (mode !== "control" || connState !== "connected") return;
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = (screenSize?.w ?? canvas.width) / rect.width;
+      const scaleY = (screenSize?.h ?? canvas.height) / rect.height;
+      const x = Math.round((e.clientX - rect.left) * scaleX);
+      const y = Math.round((e.clientY - rect.top) * scaleY);
       wsRef.current?.send(
         JSON.stringify({
           type: "mouse_event",
@@ -281,73 +311,81 @@ export function SecureRemoteViewer({
           y,
           button: e.button,
           action: "up",
-        })
-      )
+        }),
+      );
     },
-    [mode, connState, screenSize]
-  )
+    [mode, connState, screenSize],
+  );
 
   // ─── Keyboard events ──────────────────────────────────────────────────────
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLDivElement>) => {
-      if (mode !== "control" || connState !== "connected") return
-      e.preventDefault()
-      const modifiers: string[] = []
-      if (e.ctrlKey) modifiers.push("ctrl")
-      if (e.altKey) modifiers.push("alt")
-      if (e.shiftKey) modifiers.push("shift")
-      if (e.metaKey) modifiers.push("meta")
+      if (mode !== "control" || connState !== "connected") return;
+      e.preventDefault();
+      const modifiers: string[] = [];
+      if (e.ctrlKey) modifiers.push("ctrl");
+      if (e.altKey) modifiers.push("alt");
+      if (e.shiftKey) modifiers.push("shift");
+      if (e.metaKey) modifiers.push("meta");
       wsRef.current?.send(
         JSON.stringify({
           type: "keyboard_event",
           key: e.key,
           action: "down",
           modifiers,
-        })
-      )
+        }),
+      );
     },
-    [mode, connState]
-  )
+    [mode, connState],
+  );
 
   const handleKeyUp = useCallback(
     (e: React.KeyboardEvent<HTMLDivElement>) => {
-      if (mode !== "control" || connState !== "connected") return
-      e.preventDefault()
+      if (mode !== "control" || connState !== "connected") return;
+      e.preventDefault();
       wsRef.current?.send(
-        JSON.stringify({ type: "keyboard_event", key: e.key, action: "up", modifiers: [] })
-      )
+        JSON.stringify({
+          type: "keyboard_event",
+          key: e.key,
+          action: "up",
+          modifiers: [],
+        }),
+      );
     },
-    [mode, connState]
-  )
+    [mode, connState],
+  );
 
   // ─── Cleanup ──────────────────────────────────────────────────────────────
 
   useEffect(() => {
     return () => {
-      wsRef.current?.close()
-    }
-  }, [])
+      wsRef.current?.close();
+    };
+  }, []);
 
   // ─── Helpers ──────────────────────────────────────────────────────────────
 
   function formatDuration(secs: number) {
-    const m = Math.floor(secs / 60)
-    const s = secs % 60
-    return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`
+    const m = Math.floor(secs / 60);
+    const s = secs % 60;
+    return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
   }
 
   const modeLabel: Record<RemoteMode, string> = {
     observe: "Observe",
     share: "Share",
     control: "Control",
-  }
+  };
 
-  const modeBadgeVariant: Record<RemoteMode, "secondary" | "default" | "destructive"> = {
+  const modeBadgeVariant: Record<
+    RemoteMode,
+    "secondary" | "default" | "destructive"
+  > = {
     observe: "secondary",
     share: "default",
     control: "destructive",
-  }
+  };
 
   // ─── Render ────────────────────────────────────────────────────────────────
 
@@ -379,7 +417,9 @@ export function SecureRemoteViewer({
               <span className="font-mono text-xs text-muted-foreground">
                 {formatDuration(sessionDuration)}
               </span>
-              <span className="text-xs text-muted-foreground">{frameCount} frames</span>
+              <span className="text-xs text-muted-foreground">
+                {frameCount} frames
+              </span>
             </>
           )}
 
@@ -400,12 +440,11 @@ export function SecureRemoteViewer({
       </div>
 
       {/* ── Controls ── */}
-      {connState === "idle" || connState === "error" || connState === "ended" ? (
+      {connState === "idle" ||
+      connState === "error" ||
+      connState === "ended" ? (
         <div className="flex items-center gap-3 flex-wrap">
-          <Select
-            value={mode}
-            onValueChange={(v) => setMode(v as RemoteMode)}
-          >
+          <Select value={mode} onValueChange={(v) => setMode(v as RemoteMode)}>
             <SelectTrigger className="w-36">
               <SelectValue />
             </SelectTrigger>
@@ -443,23 +482,22 @@ export function SecureRemoteViewer({
             <SelectContent>
               <SelectItem value="1">Monitor 1</SelectItem>
               {Array.from({ length: Math.max(0, monitorCount - 1) }, (_, i) => (
-                <SelectItem key={i + 2} value={String(i + 2)}>Monitor {i + 2}</SelectItem>
+                <SelectItem key={i + 2} value={String(i + 2)}>
+                  Monitor {i + 2}
+                </SelectItem>
               ))}
               <SelectItem value="0">
                 <span className="flex items-center gap-2">
-                  <Columns2 className="h-3.5 w-3.5" />All monitors
+                  <Columns2 className="h-3.5 w-3.5" />
+                  All monitors
                 </span>
               </SelectItem>
             </SelectContent>
           </Select>
 
-          <Button onClick={startSession}>
-            Start Session
-          </Button>
+          <Button onClick={startSession}>Start Session</Button>
 
-          {error && (
-            <p className="text-sm text-destructive">{error}</p>
-          )}
+          {error && <p className="text-sm text-destructive">{error}</p>}
         </div>
       ) : (
         <div className="flex items-center gap-3">
@@ -473,7 +511,12 @@ export function SecureRemoteViewer({
             </span>
           )}
 
-          <Button variant="destructive" size="sm" onClick={stopSession} className="ml-auto">
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={stopSession}
+            className="ml-auto"
+          >
             <StopCircle className="mr-2 h-4 w-4" />
             End Session
           </Button>
@@ -481,7 +524,10 @@ export function SecureRemoteViewer({
       )}
 
       {/* ── Canvas ── */}
-      <div className="relative rounded-lg border bg-black overflow-hidden" style={{ minHeight: 400 }}>
+      <div
+        className="relative rounded-lg border bg-black overflow-hidden"
+        style={{ minHeight: 400 }}
+      >
         {(connState === "idle" || connState === "ended") && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-muted-foreground">
             <Monitor className="h-12 w-12 opacity-30" />
@@ -524,15 +570,23 @@ export function SecureRemoteViewer({
           <div className="flex gap-1 p-1" style={{ display: "flex" }}>
             {Array.from({ length: monitorCount }, (_, i) => (
               <div key={i + 1} className="flex-1 min-w-0">
-                <p className="text-xs text-muted-foreground text-center mb-0.5">Monitor {i + 1}</p>
+                <p className="text-xs text-muted-foreground text-center mb-0.5">
+                  Monitor {i + 1}
+                </p>
                 <canvas
-                  ref={el => { canvasRefs.current[i + 1] = el }}
+                  ref={(el) => {
+                    canvasRefs.current[i + 1] = el;
+                  }}
                   className="w-full h-auto border border-muted/30 rounded"
-                  style={{ cursor: mode === "control" ? "crosshair" : "default" }}
+                  style={{
+                    cursor: mode === "control" ? "crosshair" : "default",
+                  }}
                   onMouseMove={handleMouseMove}
                   onMouseDown={handleMouseDown}
                   onMouseUp={handleMouseUp}
-                  onContextMenu={(e) => mode === "control" && e.preventDefault()}
+                  onContextMenu={(e) =>
+                    mode === "control" && e.preventDefault()
+                  }
                 />
               </div>
             ))}
@@ -543,13 +597,16 @@ export function SecureRemoteViewer({
       {/* ── Mode description ── */}
       {connState === "connected" && (
         <p className="text-xs text-muted-foreground">
-          {mode === "observe" && "Silent observation — the remote user is not notified."}
+          {mode === "observe" &&
+            "Silent observation — the remote user is not notified."}
           {mode === "share" &&
-            "The remote user sees a banner: \u00ab" + adminName + " is viewing your screen\u00bb"}
+            "The remote user sees a banner: \u00ab" +
+              adminName +
+              " is viewing your screen\u00bb"}
           {mode === "control" &&
             "Full control — the remote user sees a banner and you can type and click."}
         </p>
       )}
     </div>
-  )
+  );
 }

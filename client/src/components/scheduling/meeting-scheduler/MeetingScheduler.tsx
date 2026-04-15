@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { SpinnerInfinity } from 'spinners-react';
+import { SpinnerInfinity } from "spinners-react";
 
 /**
  * Meeting Scheduler Component
@@ -9,15 +9,22 @@ import { SpinnerInfinity } from 'spinners-react';
  * availability calendar, and slot selection.
  */
 
-import * as React from 'react';
-import { format, addDays } from 'date-fns';
-import { fr } from 'date-fns/locale';
-import { Calendar, Users, Clock, Settings2, CalendarRange, Check } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
+import * as React from "react";
+import { format, addDays } from "date-fns";
+import { fr } from "date-fns/locale";
+import {
+  Calendar,
+  Users,
+  Clock,
+  Settings2,
+  CalendarRange,
+  Check,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import {
   Sheet,
   SheetContent,
@@ -25,23 +32,23 @@ import {
   SheetFooter,
   SheetHeader,
   SheetTitle,
-} from '@/components/ui/sheet';
+} from "@/components/ui/sheet";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from '@/components/ui/popover';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Slider } from '@/components/ui/slider';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AvailabilityCalendar } from './AvailabilityCalendar';
-import { SlotSelector, SlotSelectorCompact } from './SlotSelector';
+} from "@/components/ui/popover";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Slider } from "@/components/ui/slider";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AvailabilityCalendar } from "./AvailabilityCalendar";
+import { SlotSelector, SlotSelectorCompact } from "./SlotSelector";
 import {
   useAvailabilityFinder,
   type UseAvailabilityFinderOptions,
-} from '@/lib/scheduling/hooks/use-availability-finder';
-import type { CommonSlot } from '@/lib/scheduling/utils/availability-finder';
-import type { TeamMember } from '@/lib/scheduling/types/scheduling';
+} from "@/lib/scheduling/hooks/use-availability-finder";
+import type { CommonSlot } from "@/lib/scheduling/utils/availability-finder";
+import type { TeamMember } from "@/lib/scheduling/types/scheduling";
 
 // ============================================================================
 // Types
@@ -70,7 +77,7 @@ interface SchedulerSettings {
   includeWeekends: boolean;
   workingHoursStart: number;
   workingHoursEnd: number;
-  preferredTimes: ('morning' | 'afternoon' | 'evening')[];
+  preferredTimes: ("morning" | "afternoon" | "evening")[];
   bufferMinutes: number;
 }
 
@@ -90,9 +97,9 @@ const DEFAULT_SETTINGS: SchedulerSettings = {
 
 const DURATION_OPTIONS = [15, 30, 45, 60, 90, 120];
 const TIME_PREFERENCES = [
-  { id: 'morning', label: 'Matinée (9h-12h)' },
-  { id: 'afternoon', label: 'Après-midi (13h-17h)' },
-  { id: 'evening', label: 'Soirée (17h-20h)' },
+  { id: "morning", label: "Matinée (9h-12h)" },
+  { id: "afternoon", label: "Après-midi (13h-17h)" },
+  { id: "evening", label: "Soirée (17h-20h)" },
 ] as const;
 
 // ============================================================================
@@ -111,18 +118,20 @@ export function MeetingScheduler({
   // State
   const [selectedParticipants, setSelectedParticipants] =
     React.useState<string[]>(initialParticipants);
-  const [selectedSlot, setSelectedSlot] = React.useState<CommonSlot | undefined>();
+  const [selectedSlot, setSelectedSlot] = React.useState<
+    CommonSlot | undefined
+  >();
   const [settings, setSettings] = React.useState<SchedulerSettings>({
     ...DEFAULT_SETTINGS,
     duration: defaultDuration,
   });
-  const [activeTab, setActiveTab] = React.useState<'list' | 'calendar'>('list');
+  const [activeTab, setActiveTab] = React.useState<"list" | "calendar">("list");
 
   // Reset when closing
   React.useEffect(() => {
     if (!open) {
       setSelectedSlot(undefined);
-      setActiveTab('list');
+      setActiveTab("list");
     }
   }, [open]);
 
@@ -147,7 +156,7 @@ export function MeetingScheduler({
     setSelectedParticipants((prev) =>
       prev.includes(memberId)
         ? prev.filter((id) => id !== memberId)
-        : [...prev, memberId]
+        : [...prev, memberId],
     );
     setSelectedSlot(undefined);
   };
@@ -161,7 +170,7 @@ export function MeetingScheduler({
 
   const updateSetting = <K extends keyof SchedulerSettings>(
     key: K,
-    value: SchedulerSettings[K]
+    value: SchedulerSettings[K],
   ) => {
     setSettings((prev) => ({ ...prev, [key]: value }));
     setSelectedSlot(undefined);
@@ -169,7 +178,10 @@ export function MeetingScheduler({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full sm:max-w-2xl overflow-y-auto">
+      <SheetContent
+        side="right"
+        className="w-full sm:max-w-2xl overflow-y-auto"
+      >
         <SheetHeader>
           <SheetTitle className="flex items-center gap-2">
             <Calendar className="h-5 w-5" />
@@ -178,7 +190,7 @@ export function MeetingScheduler({
           <SheetDescription>
             {meetingTitle
               ? `Trouver un créneau pour "${meetingTitle}"`
-              : 'Sélectionnez les participants et trouvez un créneau disponible'}
+              : "Sélectionnez les participants et trouvez un créneau disponible"}
           </SheetDescription>
         </SheetHeader>
 
@@ -195,7 +207,7 @@ export function MeetingScheduler({
                 return (
                   <Badge
                     key={member.id}
-                    variant={isSelected ? 'default' : 'outline'}
+                    variant={isSelected ? "default" : "outline"}
                     className="cursor-pointer select-none"
                     onClick={() => toggleParticipant(member.id)}
                   >
@@ -218,10 +230,10 @@ export function MeetingScheduler({
                 {DURATION_OPTIONS.map((d) => (
                   <Button
                     key={d}
-                    variant={settings.duration === d ? 'default' : 'outline'}
+                    variant={settings.duration === d ? "default" : "outline"}
                     size="sm"
                     className="w-12"
-                    onClick={() => updateSetting('duration', d)}
+                    onClick={() => updateSetting("duration", d)}
                   >
                     {d}
                   </Button>
@@ -240,10 +252,12 @@ export function MeetingScheduler({
               <PopoverContent className="w-80 space-y-4">
                 {/* Date range */}
                 <div className="space-y-2">
-                  <Label className="text-sm">Rechercher sur {settings.daysToSearch} jours</Label>
+                  <Label className="text-sm">
+                    Rechercher sur {settings.daysToSearch} jours
+                  </Label>
                   <Slider
                     value={[settings.daysToSearch]}
-                    onValueChange={([v]) => updateSetting('daysToSearch', v)}
+                    onValueChange={([v]) => updateSetting("daysToSearch", v)}
                     min={7}
                     max={30}
                     step={1}
@@ -253,14 +267,18 @@ export function MeetingScheduler({
                 {/* Working hours */}
                 <div className="space-y-2">
                   <Label className="text-sm">
-                    Heures de travail: {settings.workingHoursStart}h - {settings.workingHoursEnd}h
+                    Heures de travail: {settings.workingHoursStart}h -{" "}
+                    {settings.workingHoursEnd}h
                   </Label>
                   <div className="flex gap-2">
                     <Input
                       type="number"
                       value={settings.workingHoursStart}
                       onChange={(e) =>
-                        updateSetting('workingHoursStart', parseInt(e.target.value) || 9)
+                        updateSetting(
+                          "workingHoursStart",
+                          parseInt(e.target.value) || 9,
+                        )
                       }
                       min={0}
                       max={23}
@@ -271,7 +289,10 @@ export function MeetingScheduler({
                       type="number"
                       value={settings.workingHoursEnd}
                       onChange={(e) =>
-                        updateSetting('workingHoursEnd', parseInt(e.target.value) || 18)
+                        updateSetting(
+                          "workingHoursEnd",
+                          parseInt(e.target.value) || 18,
+                        )
                       }
                       min={0}
                       max={23}
@@ -286,7 +307,7 @@ export function MeetingScheduler({
                     id="include-weekends"
                     checked={settings.includeWeekends}
                     onCheckedChange={(checked) =>
-                      updateSetting('includeWeekends', checked === true)
+                      updateSetting("includeWeekends", checked === true)
                     }
                   />
                   <Label htmlFor="include-weekends" className="text-sm">
@@ -296,10 +317,12 @@ export function MeetingScheduler({
 
                 {/* Buffer time */}
                 <div className="space-y-2">
-                  <Label className="text-sm">Temps entre réunions: {settings.bufferMinutes} min</Label>
+                  <Label className="text-sm">
+                    Temps entre réunions: {settings.bufferMinutes} min
+                  </Label>
                   <Slider
                     value={[settings.bufferMinutes]}
-                    onValueChange={([v]) => updateSetting('bufferMinutes', v)}
+                    onValueChange={([v]) => updateSetting("bufferMinutes", v)}
                     min={0}
                     max={30}
                     step={5}
@@ -316,10 +339,12 @@ export function MeetingScheduler({
                         checked={settings.preferredTimes.includes(pref.id)}
                         onCheckedChange={(checked) => {
                           updateSetting(
-                            'preferredTimes',
+                            "preferredTimes",
                             checked
                               ? [...settings.preferredTimes, pref.id]
-                              : settings.preferredTimes.filter((p) => p !== pref.id)
+                              : settings.preferredTimes.filter(
+                                  (p) => p !== pref.id,
+                                ),
                           );
                         }}
                       />
@@ -341,7 +366,10 @@ export function MeetingScheduler({
                   <CalendarRange className="h-4 w-4" />
                   Créneaux disponibles
                 </Label>
-                <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'list' | 'calendar')}>
+                <Tabs
+                  value={activeTab}
+                  onValueChange={(v) => setActiveTab(v as "list" | "calendar")}
+                >
                   <TabsList className="h-8">
                     <TabsTrigger value="list" className="text-xs px-2 h-6">
                       Liste
@@ -355,7 +383,13 @@ export function MeetingScheduler({
 
               {isLoading ? (
                 <div className="flex items-center justify-center py-8">
-                  <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-6 w-6  text-muted-foreground" />
+                  <SpinnerInfinity
+                    size={24}
+                    secondaryColor="rgba(128,128,128,0.2)"
+                    color="currentColor"
+                    speed={120}
+                    className="h-6 w-6  text-muted-foreground"
+                  />
                   <span className="ml-2 text-sm text-muted-foreground">
                     Recherche des disponibilités...
                   </span>
@@ -397,12 +431,17 @@ export function MeetingScheduler({
                 <div>
                   <p className="font-medium">Créneau sélectionné</p>
                   <p className="text-sm text-muted-foreground">
-                    {format(selectedSlot.start, "EEEE d MMMM 'à' HH:mm", { locale: fr })} -{' '}
-                    {format(selectedSlot.end, 'HH:mm')}
+                    {format(selectedSlot.start, "EEEE d MMMM 'à' HH:mm", {
+                      locale: fr,
+                    })}{" "}
+                    - {format(selectedSlot.end, "HH:mm")}
                   </p>
                 </div>
                 {selectedSlot.allAvailable && (
-                  <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                  <Badge
+                    variant="outline"
+                    className="bg-green-50 text-green-700 border-green-200"
+                  >
                     <Check className="h-3 w-3 mr-1" />
                     Tous disponibles
                   </Badge>

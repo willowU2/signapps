@@ -1,9 +1,15 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { ArrowRight, Map, Users } from 'lucide-react';
+import { useState } from "react";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { ArrowRight, Map, Users } from "lucide-react";
 
 interface JourneyStep {
   page: string;
@@ -21,9 +27,9 @@ interface JourneyPath {
 const PATHS: JourneyPath[] = [];
 
 export function UserJourneyMap() {
-  const [selected, setSelected] = useState('1');
-  const path = PATHS.find(p => p.id === selected);
-  
+  const [selected, setSelected] = useState("1");
+  const path = PATHS.find((p) => p.id === selected);
+
   if (!path || path.steps.length === 0) {
     return (
       <div className="space-y-4">
@@ -48,9 +54,12 @@ export function UserJourneyMap() {
         <Map className="h-5 w-5" />
         <h2 className="text-xl font-semibold">User Journey Map</h2>
         <div className="flex gap-2 ml-4">
-          {PATHS.map(p => (
-            <button key={p.id} onClick={() => setSelected(p.id)}
-              className={`text-sm px-3 py-1 rounded-full border transition-colors ${selected === p.id ? 'bg-primary text-primary-foreground border-primary' : 'border-border hover:bg-accent'}`}>
+          {PATHS.map((p) => (
+            <button
+              key={p.id}
+              onClick={() => setSelected(p.id)}
+              className={`text-sm px-3 py-1 rounded-full border transition-colors ${selected === p.id ? "bg-primary text-primary-foreground border-primary" : "border-border hover:bg-accent"}`}
+            >
               {p.label}
             </button>
           ))}
@@ -61,9 +70,13 @@ export function UserJourneyMap() {
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
             <Users className="h-4 w-4" /> {path.label}
-            <Badge variant="secondary">{path.users.toLocaleString()} users</Badge>
+            <Badge variant="secondary">
+              {path.users.toLocaleString()} users
+            </Badge>
           </CardTitle>
-          <CardDescription>Most common navigation sequence for this user segment</CardDescription>
+          <CardDescription>
+            Most common navigation sequence for this user segment
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex items-stretch gap-0 overflow-x-auto pb-4">
@@ -71,17 +84,32 @@ export function UserJourneyMap() {
               const pct = (step.visits / maxVisits) * 100;
               const isLast = i === path.steps.length - 1;
               return (
-                <div key={step.page} className="flex items-center gap-0 shrink-0">
+                <div
+                  key={step.page}
+                  className="flex items-center gap-0 shrink-0"
+                >
                   <div className="flex flex-col items-center gap-2 w-36">
                     <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
-                      <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${pct}%` }} />
+                      <div
+                        className="h-full bg-primary rounded-full transition-all"
+                        style={{ width: `${pct}%` }}
+                      />
                     </div>
                     <div className="border rounded-lg p-3 w-full text-center bg-card hover:bg-accent/50 transition-colors">
-                      <p className="text-xs font-mono text-muted-foreground truncate" title={step.page}>{step.page}</p>
-                      <p className="text-lg font-bold mt-1">{step.visits.toLocaleString()}</p>
+                      <p
+                        className="text-xs font-mono text-muted-foreground truncate"
+                        title={step.page}
+                      >
+                        {step.page}
+                      </p>
+                      <p className="text-lg font-bold mt-1">
+                        {step.visits.toLocaleString()}
+                      </p>
                       <p className="text-xs text-muted-foreground">visits</p>
                       {!isLast && step.dropoff > 0 && (
-                        <Badge variant="destructive" className="text-xs mt-1">-{step.dropoff}%</Badge>
+                        <Badge variant="destructive" className="text-xs mt-1">
+                          -{step.dropoff}%
+                        </Badge>
                       )}
                     </div>
                   </div>
@@ -96,16 +124,25 @@ export function UserJourneyMap() {
           <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 border-t">
             <div>
               <p className="text-xs text-muted-foreground">Entry Users</p>
-              <p className="text-2xl font-bold">{path.steps[0].visits.toLocaleString()}</p>
+              <p className="text-2xl font-bold">
+                {path.steps[0].visits.toLocaleString()}
+              </p>
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Completed Journey</p>
-              <p className="text-2xl font-bold">{path.steps[path.steps.length - 1].visits.toLocaleString()}</p>
+              <p className="text-2xl font-bold">
+                {path.steps[path.steps.length - 1].visits.toLocaleString()}
+              </p>
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Overall Retention</p>
               <p className="text-2xl font-bold">
-                {((path.steps[path.steps.length - 1].visits / path.steps[0].visits) * 100).toFixed(0)}%
+                {(
+                  (path.steps[path.steps.length - 1].visits /
+                    path.steps[0].visits) *
+                  100
+                ).toFixed(0)}
+                %
               </p>
             </div>
           </div>

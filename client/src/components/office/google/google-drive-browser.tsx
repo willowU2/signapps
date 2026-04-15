@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
-'use client';
+"use client";
 
-import { SpinnerInfinity } from 'spinners-react';
+import { SpinnerInfinity } from "spinners-react";
 
 /**
  * GoogleDriveBrowser
@@ -9,58 +9,77 @@ import { SpinnerInfinity } from 'spinners-react';
  * Component for browsing and selecting files from Google Drive.
  */
 
-import React, { useEffect, useState, useCallback } from 'react';
-import { formatDistanceToNow } from 'date-fns';
-import { fr } from 'date-fns/locale';
-import { Cloud, Folder, FileText, Table, Presentation, ArrowLeft, Search, Star, Clock, Upload, Download, RefreshCw, MoreHorizontal, ChevronRight, Link2, LogOut, Settings, X } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Checkbox } from '@/components/ui/checkbox';
+import React, { useEffect, useState, useCallback } from "react";
+import { formatDistanceToNow } from "date-fns";
+import { fr } from "date-fns/locale";
+import {
+  Cloud,
+  Folder,
+  FileText,
+  Table,
+  Presentation,
+  ArrowLeft,
+  Search,
+  Star,
+  Clock,
+  Upload,
+  Download,
+  RefreshCw,
+  MoreHorizontal,
+  ChevronRight,
+  Link2,
+  LogOut,
+  Settings,
+  X,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
+} from "@/components/ui/dropdown-menu";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
 import {
   Breadcrumb,
   BreadcrumbItem,
   BreadcrumbLink,
   BreadcrumbList,
   BreadcrumbSeparator,
-} from '@/components/ui/breadcrumb';
-import { cn } from '@/lib/utils';
-import { useGoogleStore } from '@/stores/google-store';
-import type { GoogleDriveFile } from '@/lib/office/google/types';
-import { GOOGLE_MIME_TYPE_LABELS } from '@/lib/office/google/types';
+} from "@/components/ui/breadcrumb";
+import { cn } from "@/lib/utils";
+import { useGoogleStore } from "@/stores/google-store";
+import type { GoogleDriveFile } from "@/lib/office/google/types";
+import { GOOGLE_MIME_TYPE_LABELS } from "@/lib/office/google/types";
 
 // ============================================================================
 // Icons for file types
 // ============================================================================
 
 function getFileIcon(mimeType: string) {
-  if (mimeType.includes('folder')) {
+  if (mimeType.includes("folder")) {
     return <Folder className="h-5 w-5 text-amber-500" />;
   }
-  if (mimeType.includes('document') || mimeType.includes('word')) {
+  if (mimeType.includes("document") || mimeType.includes("word")) {
     return <FileText className="h-5 w-5 text-blue-500" />;
   }
-  if (mimeType.includes('spreadsheet') || mimeType.includes('sheet')) {
+  if (mimeType.includes("spreadsheet") || mimeType.includes("sheet")) {
     return <Table className="h-5 w-5 text-green-500" />;
   }
-  if (mimeType.includes('presentation') || mimeType.includes('slide')) {
+  if (mimeType.includes("presentation") || mimeType.includes("slide")) {
     return <Presentation className="h-5 w-5 text-orange-500" />;
   }
   return <FileText className="h-5 w-5 text-muted-foreground" />;
 }
 
 function formatFileSize(bytes?: number): string {
-  if (!bytes) return '-';
+  if (!bytes) return "-";
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
@@ -78,18 +97,24 @@ interface FileItemProps {
   onImport?: () => void;
 }
 
-function FileItem({ file, isSelected, onSelect, onOpen, onImport }: FileItemProps) {
-  const isFolder = file.mimeType === 'application/vnd.google-apps.folder';
+function FileItem({
+  file,
+  isSelected,
+  onSelect,
+  onOpen,
+  onImport,
+}: FileItemProps) {
+  const isFolder = file.mimeType === "application/vnd.google-apps.folder";
   const isGoogleDoc =
-    file.mimeType.startsWith('application/vnd.google-apps.') && !isFolder;
+    file.mimeType.startsWith("application/vnd.google-apps.") && !isFolder;
 
   return (
     <div
       className={cn(
-        'flex items-center gap-3 p-3 rounded-lg border transition-all cursor-pointer',
+        "flex items-center gap-3 p-3 rounded-lg border transition-all cursor-pointer",
         isSelected
-          ? 'border-primary bg-primary/5'
-          : 'border-transparent hover:bg-muted/50'
+          ? "border-primary bg-primary/5"
+          : "border-transparent hover:bg-muted/50",
       )}
       onClick={() => (isFolder ? onOpen() : onSelect())}
       onDoubleClick={isFolder ? onOpen : onImport}
@@ -122,7 +147,9 @@ function FileItem({ file, isSelected, onSelect, onOpen, onImport }: FileItemProp
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
           <span className="font-medium truncate">{file.name}</span>
-          {file.starred && <Star className="h-4 w-4 fill-amber-400 text-amber-400" />}
+          {file.starred && (
+            <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
+          )}
           {isGoogleDoc && (
             <Badge variant="secondary" className="text-xs">
               Google
@@ -130,7 +157,7 @@ function FileItem({ file, isSelected, onSelect, onOpen, onImport }: FileItemProp
           )}
         </div>
         <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
-          <span>{GOOGLE_MIME_TYPE_LABELS[file.mimeType] || 'Fichier'}</span>
+          <span>{GOOGLE_MIME_TYPE_LABELS[file.mimeType] || "Fichier"}</span>
           <span>·</span>
           <span>{formatFileSize(file.size)}</span>
           <span>·</span>
@@ -159,7 +186,7 @@ function FileItem({ file, isSelected, onSelect, onOpen, onImport }: FileItemProp
               Importer
             </DropdownMenuItem>
             <DropdownMenuItem
-              onClick={() => window.open(file.webViewLink, '_blank')}
+              onClick={() => window.open(file.webViewLink, "_blank")}
             >
               <Link2 className="mr-2 h-4 w-4" />
               Ouvrir dans Google
@@ -181,22 +208,33 @@ interface ConnectionPromptProps {
   error?: string | null;
 }
 
-function ConnectionPrompt({ onConnect, isLoading, error }: ConnectionPromptProps) {
+function ConnectionPrompt({
+  onConnect,
+  isLoading,
+  error,
+}: ConnectionPromptProps) {
   return (
     <div className="flex flex-col items-center justify-center h-full py-12 px-6 text-center">
       <div className="w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center mb-4">
         <Cloud className="h-8 w-8 text-blue-600 dark:text-blue-400" />
       </div>
-      <h3 className="font-semibold text-lg mb-2">Connectez-vous à Google Drive</h3>
+      <h3 className="font-semibold text-lg mb-2">
+        Connectez-vous à Google Drive
+      </h3>
       <p className="text-sm text-muted-foreground mb-6 max-w-sm">
-        Importez vos documents depuis Google Drive ou exportez vos fichiers vers votre espace Google.
+        Importez vos documents depuis Google Drive ou exportez vos fichiers vers
+        votre espace Google.
       </p>
-      {error && (
-        <p className="text-sm text-destructive mb-4">{error}</p>
-      )}
+      {error && <p className="text-sm text-destructive mb-4">{error}</p>}
       <Button onClick={onConnect} disabled={isLoading}>
         {isLoading ? (
-          <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />
+          <SpinnerInfinity
+            size={24}
+            secondaryColor="rgba(128,128,128,0.2)"
+            color="currentColor"
+            speed={120}
+            className="mr-2 h-4 w-4 "
+          />
         ) : (
           <Cloud className="mr-2 h-4 w-4" />
         )}
@@ -245,10 +283,10 @@ export function GoogleDriveBrowser({
   } = useGoogleStore();
 
   const [selectedFiles, setSelectedFiles] = useState<GoogleDriveFile[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [folderPath, setFolderPath] = useState<Array<{ id: string | null; name: string }>>([
-    { id: null, name: 'Mon Drive' },
-  ]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [folderPath, setFolderPath] = useState<
+    Array<{ id: string | null; name: string }>
+  >([{ id: null, name: "Mon Drive" }]);
 
   // Initialize
   useEffect(() => {
@@ -266,7 +304,7 @@ export function GoogleDriveBrowser({
   const handleConnect = async () => {
     const authUrl = await initiateAuth();
     if (authUrl) {
-      window.open(authUrl, '_blank', 'width=600,height=700');
+      window.open(authUrl, "_blank", "width=600,height=700");
     }
   };
 
@@ -321,7 +359,7 @@ export function GoogleDriveBrowser({
   }
 
   return (
-    <div className={cn('flex flex-col h-full', className)}>
+    <div className={cn("flex flex-col h-full", className)}>
       {/* Header */}
       <div className="flex items-center justify-between border-b p-4">
         <div className="flex items-center gap-3">
@@ -331,7 +369,9 @@ export function GoogleDriveBrowser({
         <div className="flex items-center gap-2">
           <Avatar className="h-8 w-8">
             <AvatarImage src={auth.picture} />
-            <AvatarFallback>{auth.name?.slice(0, 2).toUpperCase()}</AvatarFallback>
+            <AvatarFallback>
+              {auth.name?.slice(0, 2).toUpperCase()}
+            </AvatarFallback>
           </Avatar>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -342,10 +382,15 @@ export function GoogleDriveBrowser({
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem disabled>
-                <span className="text-xs text-muted-foreground">{auth.email}</span>
+                <span className="text-xs text-muted-foreground">
+                  {auth.email}
+                </span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={disconnect} className="text-destructive">
+              <DropdownMenuItem
+                onClick={disconnect}
+                className="text-destructive"
+              >
                 <LogOut className="mr-2 h-4 w-4" />
                 Déconnecter
               </DropdownMenuItem>
@@ -362,11 +407,16 @@ export function GoogleDriveBrowser({
             placeholder="Rechercher dans Drive..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+            onKeyDown={(e) => e.key === "Enter" && handleSearch()}
             className="pl-9 h-9"
           />
         </div>
-        <Button variant="outline" size="icon" className="h-9 w-9" onClick={() => listFiles(currentFolderId ?? undefined, true)}>
+        <Button
+          variant="outline"
+          size="icon"
+          className="h-9 w-9"
+          onClick={() => listFiles(currentFolderId ?? undefined, true)}
+        >
           <RefreshCw className="h-4 w-4" />
         </Button>
       </div>
@@ -376,7 +426,7 @@ export function GoogleDriveBrowser({
         <Breadcrumb>
           <BreadcrumbList>
             {folderPath.map((folder, index) => (
-              <React.Fragment key={folder.id ?? 'root'}>
+              <React.Fragment key={folder.id ?? "root"}>
                 {index > 0 && <BreadcrumbSeparator />}
                 <BreadcrumbItem>
                   <BreadcrumbLink
@@ -398,7 +448,13 @@ export function GoogleDriveBrowser({
         <div className="p-3 space-y-1">
           {isLoadingFiles && driveFiles.length === 0 ? (
             <div className="flex items-center justify-center py-12">
-              <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-8 w-8  text-muted-foreground" />
+              <SpinnerInfinity
+                size={24}
+                secondaryColor="rgba(128,128,128,0.2)"
+                color="currentColor"
+                speed={120}
+                className="h-8 w-8  text-muted-foreground"
+              />
             </div>
           ) : driveFiles.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
@@ -430,7 +486,13 @@ export function GoogleDriveBrowser({
                     disabled={isLoadingFiles}
                   >
                     {isLoadingFiles ? (
-                      <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-4 w-4  mr-2" />
+                      <SpinnerInfinity
+                        size={24}
+                        secondaryColor="rgba(128,128,128,0.2)"
+                        color="currentColor"
+                        speed={120}
+                        className="h-4 w-4  mr-2"
+                      />
                     ) : null}
                     Charger plus
                   </Button>
@@ -445,8 +507,8 @@ export function GoogleDriveBrowser({
       <div className="flex items-center justify-between border-t p-4">
         <span className="text-sm text-muted-foreground">
           {selectedFiles.length > 0
-            ? `${selectedFiles.length} fichier${selectedFiles.length > 1 ? 's' : ''} sélectionné${selectedFiles.length > 1 ? 's' : ''}`
-            : 'Sélectionnez des fichiers à importer'}
+            ? `${selectedFiles.length} fichier${selectedFiles.length > 1 ? "s" : ""} sélectionné${selectedFiles.length > 1 ? "s" : ""}`
+            : "Sélectionnez des fichiers à importer"}
         </span>
         <div className="flex gap-2">
           {onCancel && (

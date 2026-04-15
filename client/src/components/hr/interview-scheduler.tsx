@@ -1,7 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { Calendar, Clock, MapPin, User, CheckCircle, Clock as ClockIcon } from "lucide-react";
+import {
+  Calendar,
+  Clock,
+  MapPin,
+  User,
+  CheckCircle,
+  Clock as ClockIcon,
+} from "lucide-react";
 
 interface InterviewSlot {
   id: string;
@@ -97,25 +104,25 @@ export function InterviewScheduler() {
 
   const handleMarkCompleted = (id: string) => {
     setSlots(
-      slots.map((s) =>
-        s.id === id ? { ...s, status: "completed" } : s
-      )
+      slots.map((s) => (s.id === id ? { ...s, status: "completed" } : s)),
     );
   };
 
   const handleCancel = (id: string) => {
     setSlots(
-      slots.map((s) =>
-        s.id === id ? { ...s, status: "cancelled" } : s
-      )
+      slots.map((s) => (s.id === id ? { ...s, status: "cancelled" } : s)),
     );
   };
 
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-foreground">Interview Scheduler</h2>
-        <p className="text-muted-foreground">Manage candidate interview schedule</p>
+        <h2 className="text-2xl font-bold text-foreground">
+          Interview Scheduler
+        </h2>
+        <p className="text-muted-foreground">
+          Manage candidate interview schedule
+        </p>
       </div>
 
       <div className="grid grid-cols-3 gap-4">
@@ -142,12 +149,24 @@ export function InterviewScheduler() {
           <table className="w-full text-sm bg-card">
             <thead className="bg-muted border-b sticky top-0">
               <tr>
-                <th className="px-4 py-3 text-left font-semibold text-foreground">Candidate</th>
-                <th className="px-4 py-3 text-left font-semibold text-foreground">Interviewer</th>
-                <th className="px-4 py-3 text-left font-semibold text-foreground">Date & Time</th>
-                <th className="px-4 py-3 text-left font-semibold text-foreground">Room</th>
-                <th className="px-4 py-3 text-center font-semibold text-foreground">Status</th>
-                <th className="px-4 py-3 text-right font-semibold text-foreground">Actions</th>
+                <th className="px-4 py-3 text-left font-semibold text-foreground">
+                  Candidate
+                </th>
+                <th className="px-4 py-3 text-left font-semibold text-foreground">
+                  Interviewer
+                </th>
+                <th className="px-4 py-3 text-left font-semibold text-foreground">
+                  Date & Time
+                </th>
+                <th className="px-4 py-3 text-left font-semibold text-foreground">
+                  Room
+                </th>
+                <th className="px-4 py-3 text-center font-semibold text-foreground">
+                  Status
+                </th>
+                <th className="px-4 py-3 text-right font-semibold text-foreground">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y">
@@ -156,7 +175,9 @@ export function InterviewScheduler() {
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
                       <User className="w-4 h-4 text-gray-400" />
-                      <p className="font-medium text-foreground">{slot.candidateName}</p>
+                      <p className="font-medium text-foreground">
+                        {slot.candidateName}
+                      </p>
                     </div>
                   </td>
                   <td className="px-4 py-3">
@@ -166,7 +187,9 @@ export function InterviewScheduler() {
                     <div className="flex items-center gap-2">
                       <Calendar className="w-4 h-4 text-gray-400" />
                       <div>
-                        <p className="font-medium text-foreground">{slot.date}</p>
+                        <p className="font-medium text-foreground">
+                          {slot.date}
+                        </p>
                         <p className="text-xs text-muted-foreground flex items-center gap-1">
                           <Clock className="w-3 h-3" />
                           {slot.time}

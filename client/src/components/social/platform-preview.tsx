@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * PlatformPreview — Shows how a post will look on each selected platform.
@@ -6,9 +6,9 @@
  * For other platforms, falls back to the generic PostPreview.
  */
 
-import { useState } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
+import { useState } from "react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 import {
   Heart,
   MessageCircle,
@@ -20,9 +20,13 @@ import {
   Globe,
   Eye,
   Send,
-} from 'lucide-react';
-import { PLATFORM_COLORS, PLATFORM_LABELS, PLATFORM_CHAR_LIMITS } from './platform-utils';
-import type { SocialAccount } from '@/lib/api/social';
+} from "lucide-react";
+import {
+  PLATFORM_COLORS,
+  PLATFORM_LABELS,
+  PLATFORM_CHAR_LIMITS,
+} from "./platform-utils";
+import type { SocialAccount } from "@/lib/api/social";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -30,7 +34,7 @@ import type { SocialAccount } from '@/lib/api/social';
 
 export interface PlatformPreviewProps {
   /** List of platform keys to preview */
-  platforms: SocialAccount['platform'][];
+  platforms: SocialAccount["platform"][];
   content: string;
   mediaUrls?: string[];
   accountName?: string;
@@ -54,25 +58,40 @@ function Avatar({
   size?: number;
   square?: boolean;
 }) {
-  const cls = square ? 'rounded-md' : 'rounded-full';
+  const cls = square ? "rounded-md" : "rounded-full";
   if (src) {
-    // eslint-disable-next-line @next/next/no-img-element
-    return <img src={src} alt={name} className={`${cls} shrink-0 object-cover`} style={{ width: size, height: size }} />;
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={src}
+        alt={name}
+        className={`${cls} shrink-0 object-cover`}
+        style={{ width: size, height: size }}
+      />
+    );
   }
   return (
     <div
       className={`${cls} flex items-center justify-center text-white font-bold shrink-0`}
-      style={{ width: size, height: size, backgroundColor: color, fontSize: size * 0.4 }}
+      style={{
+        width: size,
+        height: size,
+        backgroundColor: color,
+        fontSize: size * 0.4,
+      }}
     >
       {name.charAt(0).toUpperCase()}
     </div>
   );
 }
 
-function truncateContent(content: string, platform: SocialAccount['platform']): string {
+function truncateContent(
+  content: string,
+  platform: SocialAccount["platform"],
+): string {
   const limit = PLATFORM_CHAR_LIMITS[platform] ?? 280;
   if (content.length <= limit) return content;
-  return content.slice(0, limit - 3) + '…';
+  return content.slice(0, limit - 3) + "…";
 }
 
 // ---------------------------------------------------------------------------
@@ -90,9 +109,9 @@ function TwitterCard({
   accountName?: string;
   accountAvatar?: string;
 }) {
-  const name = accountName ?? 'Your Name';
-  const handle = name.toLowerCase().replace(/\s+/g, '');
-  const text = truncateContent(content, 'twitter');
+  const name = accountName ?? "Your Name";
+  const handle = name.toLowerCase().replace(/\s+/g, "");
+  const text = truncateContent(content, "twitter");
 
   return (
     <div className="rounded-2xl border bg-white dark:bg-zinc-900 p-4 max-w-[500px] font-sans text-sm shadow-sm">
@@ -100,9 +119,11 @@ function TwitterCard({
         <Avatar src={accountAvatar} name={name} color="#000" size={42} />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5">
-            <span className="font-bold text-[15px] text-zinc-900 dark:text-zinc-100">{name}</span>
+            <span className="font-bold text-[15px] text-zinc-900 dark:text-zinc-100">
+              {name}
+            </span>
             <span className="text-zinc-500 text-[13px]">@{handle}</span>
-            <span className="text-zinc-400 text-xs ml-auto">·  now</span>
+            <span className="text-zinc-400 text-xs ml-auto">· now</span>
           </div>
           <p className="mt-1.5 text-[15px] leading-relaxed text-zinc-900 dark:text-zinc-100 whitespace-pre-line">
             {text}
@@ -153,12 +174,13 @@ function LinkedInCard({
   accountName?: string;
   accountAvatar?: string;
 }) {
-  const name = accountName ?? 'Your Name';
-  const text = truncateContent(content, 'linkedin');
+  const name = accountName ?? "Your Name";
+  const text = truncateContent(content, "linkedin");
   const [expanded, setExpanded] = useState(false);
   const PREVIEW_LEN = 200;
   const shouldTruncate = text.length > PREVIEW_LEN;
-  const displayed = !expanded && shouldTruncate ? text.slice(0, PREVIEW_LEN) + '…' : text;
+  const displayed =
+    !expanded && shouldTruncate ? text.slice(0, PREVIEW_LEN) + "…" : text;
 
   return (
     <div className="rounded-lg border bg-white dark:bg-zinc-900 p-4 max-w-[560px] shadow-sm font-sans">
@@ -166,7 +188,9 @@ function LinkedInCard({
       <div className="flex gap-3 mb-3">
         <Avatar src={accountAvatar} name={name} color="#0A66C2" size={48} />
         <div>
-          <p className="font-semibold text-[15px] text-zinc-900 dark:text-zinc-100">{name}</p>
+          <p className="font-semibold text-[15px] text-zinc-900 dark:text-zinc-100">
+            {name}
+          </p>
           <p className="text-xs text-zinc-500">Social Media Manager</p>
           <p className="text-xs text-zinc-400 flex items-center gap-1 mt-0.5">
             now · <Globe className="h-3 w-3" />
@@ -186,7 +210,7 @@ function LinkedInCard({
           className="text-[13px] text-zinc-500 hover:text-zinc-700 mt-1"
           onClick={() => setExpanded((e) => !e)}
         >
-          {expanded ? 'see less' : '…see more'}
+          {expanded ? "see less" : "…see more"}
         </button>
       )}
 
@@ -210,10 +234,10 @@ function LinkedInCard({
       {/* Actions */}
       <div className="flex items-center gap-1 mt-2 border-t pt-2">
         {[
-          { icon: ThumbsUp, label: 'Like' },
-          { icon: MessageCircle, label: 'Comment' },
-          { icon: Repeat2, label: 'Repost' },
-          { icon: Send, label: 'Send' },
+          { icon: ThumbsUp, label: "Like" },
+          { icon: MessageCircle, label: "Comment" },
+          { icon: Repeat2, label: "Repost" },
+          { icon: Send, label: "Send" },
         ].map(({ icon: Icon, label }) => (
           <button
             key={label}
@@ -243,9 +267,9 @@ function InstagramCard({
   accountName?: string;
   accountAvatar?: string;
 }) {
-  const name = accountName ?? 'your_account';
-  const handle = name.toLowerCase().replace(/\s+/g, '_');
-  const caption = truncateContent(content, 'instagram');
+  const name = accountName ?? "your_account";
+  const handle = name.toLowerCase().replace(/\s+/g, "_");
+  const caption = truncateContent(content, "instagram");
 
   return (
     <div className="rounded-xl border bg-white dark:bg-zinc-900 max-w-[400px] shadow-sm font-sans overflow-hidden">
@@ -256,7 +280,9 @@ function InstagramCard({
             <Avatar src={accountAvatar} name={name} color="#E4405F" size={32} />
           </div>
         </div>
-        <span className="font-semibold text-[13px] text-zinc-900 dark:text-zinc-100">{handle}</span>
+        <span className="font-semibold text-[13px] text-zinc-900 dark:text-zinc-100">
+          {handle}
+        </span>
         <button className="ml-auto">
           <MoreHorizontal className="h-5 w-5 text-zinc-500" />
         </button>
@@ -284,7 +310,9 @@ function InstagramCard({
           <Send className="h-6 w-6 text-zinc-700 dark:text-zinc-300" />
           <Bookmark className="h-6 w-6 ml-auto text-zinc-700 dark:text-zinc-300" />
         </div>
-        <p className="text-[13px] font-semibold text-zinc-900 dark:text-zinc-100">0 likes</p>
+        <p className="text-[13px] font-semibold text-zinc-900 dark:text-zinc-100">
+          0 likes
+        </p>
         <p className="text-[13px] text-zinc-900 dark:text-zinc-100">
           <span className="font-semibold mr-1">{handle}</span>
           {caption}
@@ -310,8 +338,8 @@ function FacebookCard({
   accountName?: string;
   accountAvatar?: string;
 }) {
-  const name = accountName ?? 'Your Page';
-  const text = truncateContent(content, 'facebook');
+  const name = accountName ?? "Your Page";
+  const text = truncateContent(content, "facebook");
 
   return (
     <div className="rounded-lg border bg-white dark:bg-zinc-900 max-w-[520px] shadow-sm font-sans overflow-hidden">
@@ -319,7 +347,9 @@ function FacebookCard({
       <div className="flex items-start gap-3 p-4 pb-2">
         <Avatar src={accountAvatar} name={name} color="#1877F2" size={40} />
         <div>
-          <p className="font-semibold text-[14px] text-zinc-900 dark:text-zinc-100">{name}</p>
+          <p className="font-semibold text-[14px] text-zinc-900 dark:text-zinc-100">
+            {name}
+          </p>
           <p className="text-xs text-zinc-500 flex items-center gap-1">
             just now · <Globe className="h-3 w-3" />
           </p>
@@ -346,16 +376,16 @@ function FacebookCard({
 
       {/* Reaction summary */}
       <div className="px-4 py-2 flex items-center justify-between text-xs text-zinc-500 border-b">
-        <span>👍 ❤️  0</span>
+        <span>👍 ❤️ 0</span>
         <span>0 comments · 0 shares</span>
       </div>
 
       {/* Action buttons */}
       <div className="flex">
         {[
-          { icon: ThumbsUp, label: 'Like' },
-          { icon: MessageCircle, label: 'Comment' },
-          { icon: Share2, label: 'Share' },
+          { icon: ThumbsUp, label: "Like" },
+          { icon: MessageCircle, label: "Comment" },
+          { icon: Share2, label: "Share" },
         ].map(({ icon: Icon, label }) => (
           <button
             key={label}
@@ -381,14 +411,14 @@ function GenericCard({
   accountName,
   accountAvatar,
 }: {
-  platform: SocialAccount['platform'];
+  platform: SocialAccount["platform"];
   content: string;
   mediaUrls?: string[];
   accountName?: string;
   accountAvatar?: string;
 }) {
-  const color = PLATFORM_COLORS[platform] ?? '#6b7280';
-  const name = accountName ?? 'Your Account';
+  const color = PLATFORM_COLORS[platform] ?? "#6b7280";
+  const name = accountName ?? "Your Account";
   const text = truncateContent(content, platform);
 
   return (
@@ -398,8 +428,14 @@ function GenericCard({
         <div className="flex items-center gap-2">
           <Avatar src={accountAvatar} name={name} color={color} size={36} />
           <div>
-            <p className="font-semibold text-[14px] text-zinc-900 dark:text-zinc-100">{name}</p>
-            <Badge variant="outline" className="text-[11px] capitalize" style={{ borderColor: color }}>
+            <p className="font-semibold text-[14px] text-zinc-900 dark:text-zinc-100">
+              {name}
+            </p>
+            <Badge
+              variant="outline"
+              className="text-[11px] capitalize"
+              style={{ borderColor: color }}
+            >
               {PLATFORM_LABELS[platform] ?? platform}
             </Badge>
           </div>
@@ -416,9 +452,15 @@ function GenericCard({
           />
         )}
         <div className="flex items-center gap-4 text-xs text-zinc-500 pt-1">
-          <span className="flex items-center gap-1"><Heart className="h-3.5 w-3.5" /> 0</span>
-          <span className="flex items-center gap-1"><MessageCircle className="h-3.5 w-3.5" /> 0</span>
-          <span className="flex items-center gap-1"><Eye className="h-3.5 w-3.5" /> 0</span>
+          <span className="flex items-center gap-1">
+            <Heart className="h-3.5 w-3.5" /> 0
+          </span>
+          <span className="flex items-center gap-1">
+            <MessageCircle className="h-3.5 w-3.5" /> 0
+          </span>
+          <span className="flex items-center gap-1">
+            <Eye className="h-3.5 w-3.5" /> 0
+          </span>
         </div>
       </div>
     </div>
@@ -436,7 +478,7 @@ function PlatformCard({
   accountName,
   accountAvatar,
 }: {
-  platform: SocialAccount['platform'];
+  platform: SocialAccount["platform"];
   content: string;
   mediaUrls?: string[];
   accountName?: string;
@@ -444,11 +486,16 @@ function PlatformCard({
 }) {
   const props = { content, mediaUrls, accountName, accountAvatar };
   switch (platform) {
-    case 'twitter': return <TwitterCard {...props} />;
-    case 'linkedin': return <LinkedInCard {...props} />;
-    case 'instagram': return <InstagramCard {...props} />;
-    case 'facebook': return <FacebookCard {...props} />;
-    default: return <GenericCard platform={platform} {...props} />;
+    case "twitter":
+      return <TwitterCard {...props} />;
+    case "linkedin":
+      return <LinkedInCard {...props} />;
+    case "instagram":
+      return <InstagramCard {...props} />;
+    case "facebook":
+      return <FacebookCard {...props} />;
+    default:
+      return <GenericCard platform={platform} {...props} />;
   }
 }
 

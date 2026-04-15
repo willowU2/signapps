@@ -268,10 +268,10 @@ async fn main() -> std::io::Result<()> {
                         tokio::signal::ctrl_c().await.ok();
                         let _ = shutdown_tx.send(true);
                     });
-                }
+                },
                 Err(e) => {
                     tracing::error!("DHCP: failed to connect to database: {} — DHCP disabled", e);
-                }
+                },
             }
         }
     }

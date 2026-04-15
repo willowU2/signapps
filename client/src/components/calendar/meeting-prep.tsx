@@ -1,4 +1,4 @@
-'use client'
+"use client";
 
 /**
  * MR2 — Auto meeting preparation
@@ -7,12 +7,12 @@
  * notes from last meeting with same participants, and AI-generated talking points.
  */
 
-import React, { useState, useEffect, useCallback } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Separator } from '@/components/ui/separator'
-import { Skeleton } from '@/components/ui/skeleton'
+import React, { useState, useEffect, useCallback } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Calendar,
   Clock,
@@ -23,45 +23,59 @@ import {
   ChevronDown,
   ChevronUp,
   Loader2,
-} from 'lucide-react'
-import { toast } from 'sonner'
-import { calendarApi, aiApi } from '@/lib/api'
-import { linksApi } from '@/lib/api/crosslinks'
-import type { Event } from '@/types/calendar'
+} from "lucide-react";
+import { toast } from "sonner";
+import { calendarApi, aiApi } from "@/lib/api";
+import { linksApi } from "@/lib/api/crosslinks";
+import type { Event } from "@/types/calendar";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface AttachedDoc {
-  id: string
-  name: string
-  url?: string
+  id: string;
+  name: string;
+  url?: string;
 }
 
 interface MeetingPrepData {
-  event: Event
-  attachedDocs: AttachedDoc[]
-  lastMeetingNotes: string | null
-  talkingPoints: string[]
-  loadingAi: boolean
+  event: Event;
+  attachedDocs: AttachedDoc[];
+  lastMeetingNotes: string | null;
+  talkingPoints: string[];
+  loadingAi: boolean;
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function formatTime(iso: string) {
-  return new Date(iso).toLocaleTimeString('fr', { hour: '2-digit', minute: '2-digit' })
+  return new Date(iso).toLocaleTimeString("fr", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
 function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString('fr', { weekday: 'long', day: 'numeric', month: 'long' })
+  return new Date(iso).toLocaleDateString("fr", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  });
 }
 
 // ─── Sub-component: meeting card ─────────────────────────────────────────────
 
-function MeetingPrepCard({ prep, onGenerateAi }: { prep: MeetingPrepData; onGenerateAi: (id: string) => void }) {
-  const [expanded, setExpanded] = useState(false)
-  const { event } = prep
+function MeetingPrepCard({
+  prep,
+  onGenerateAi,
+}: {
+  prep: MeetingPrepData;
+  onGenerateAi: (id: string) => void;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const { event } = prep;
 
-  const attendees: string[] = event.attendees?.map((a) => a.email ?? a.name ?? '') ?? []
+  const attendees: string[] =
+    event.attendees?.map((a) => a.email ?? a.name ?? "") ?? [];
 
   return (
     <Card>
@@ -81,7 +95,8 @@ function MeetingPrepCard({ prep, onGenerateAi }: { prep: MeetingPrepData; onGene
               {attendees.length > 0 && (
                 <span className="flex items-center gap-1">
                   <Users className="w-3 h-3" />
-                  {attendees.length} participant{attendees.length > 1 ? 's' : ''}
+                  {attendees.length} participant
+                  {attendees.length > 1 ? "s" : ""}
                 </span>
               )}
             </div>
@@ -90,9 +105,13 @@ function MeetingPrepCard({ prep, onGenerateAi }: { prep: MeetingPrepData; onGene
             variant="ghost"
             size="sm"
             onClick={() => setExpanded((v) => !v)}
-            aria-label={expanded ? 'Réduire' : 'Développer'}
+            aria-label={expanded ? "Réduire" : "Développer"}
           >
-            {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+            {expanded ? (
+              <ChevronUp className="w-4 h-4" />
+            ) : (
+              <ChevronDown className="w-4 h-4" />
+            )}
           </Button>
         </div>
       </CardHeader>
@@ -106,7 +125,9 @@ function MeetingPrepCard({ prep, onGenerateAi }: { prep: MeetingPrepData; onGene
                 <FileText className="w-4 h-4" />
                 Ordre du jour
               </p>
-              <p className="text-sm text-muted-foreground whitespace-pre-line">{event.description}</p>
+              <p className="text-sm text-muted-foreground whitespace-pre-line">
+                {event.description}
+              </p>
             </div>
           )}
 
@@ -119,7 +140,11 @@ function MeetingPrepCard({ prep, onGenerateAi }: { prep: MeetingPrepData; onGene
               </p>
               <div className="flex flex-wrap gap-2">
                 {prep.attachedDocs.map((doc) => (
-                  <Badge key={doc.id} variant="outline" className="cursor-pointer">
+                  <Badge
+                    key={doc.id}
+                    variant="outline"
+                    className="cursor-pointer"
+                  >
                     {doc.name}
                   </Badge>
                 ))}
@@ -130,7 +155,9 @@ function MeetingPrepCard({ prep, onGenerateAi }: { prep: MeetingPrepData; onGene
           {/* Last meeting notes */}
           {prep.lastMeetingNotes && (
             <div>
-              <p className="text-sm font-semibold mb-1">Notes de la dernière réunion</p>
+              <p className="text-sm font-semibold mb-1">
+                Notes de la dernière réunion
+              </p>
               <p className="text-sm text-muted-foreground bg-muted/40 rounded p-2 whitespace-pre-line">
                 {prep.lastMeetingNotes}
               </p>
@@ -178,49 +205,61 @@ function MeetingPrepCard({ prep, onGenerateAi }: { prep: MeetingPrepData; onGene
               </ul>
             ) : (
               <p className="text-xs text-muted-foreground">
-                Cliquez sur &ldquo;Générer&rdquo; pour obtenir des suggestions IA.
+                Cliquez sur &ldquo;Générer&rdquo; pour obtenir des suggestions
+                IA.
               </p>
             )}
           </div>
         </CardContent>
       )}
     </Card>
-  )
+  );
 }
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export function MeetingPrep() {
-  const [preps, setPreps] = useState<MeetingPrepData[]>([])
-  const [loading, setLoading] = useState(true)
+  const [preps, setPreps] = useState<MeetingPrepData[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchMeetings = async () => {
       try {
-        const cals = await calendarApi.listCalendars()
-        const allCals: any[] = cals.data ?? []
-        if (!allCals.length) return
+        const cals = await calendarApi.listCalendars();
+        const allCals: any[] = cals.data ?? [];
+        if (!allCals.length) return;
 
-        const now = new Date()
-        const in24h = new Date(now.getTime() + 24 * 60 * 60 * 1000)
+        const now = new Date();
+        const in24h = new Date(now.getTime() + 24 * 60 * 60 * 1000);
 
         const eventArrays = await Promise.all(
-          allCals.map((cal) => calendarApi.listEvents(cal.id, now, in24h).then((r) => r.data ?? []))
-        )
+          allCals.map((cal) =>
+            calendarApi
+              .listEvents(cal.id, now, in24h)
+              .then((r) => r.data ?? []),
+          ),
+        );
         const events: Event[] = (eventArrays.flat() as Event[]).filter(
-          (e) => new Date(e.start_time) >= now
-        )
+          (e) => new Date(e.start_time) >= now,
+        );
 
         const prepList: MeetingPrepData[] = await Promise.all(
           events.map(async (event) => {
             // Fetch linked documents
-            let attachedDocs: AttachedDoc[] = []
+            let attachedDocs: AttachedDoc[] = [];
             try {
-              const links = await linksApi.find('event', event.id)
-              attachedDocs = ((links.data as Array<{ id: string; url?: string; title?: string; target_id?: string }>) ?? []).map((l) => ({
+              const links = await linksApi.find("event", event.id);
+              attachedDocs = (
+                (links.data as Array<{
+                  id: string;
+                  url?: string;
+                  title?: string;
+                  target_id?: string;
+                }>) ?? []
+              ).map((l) => ({
                 id: l.id,
                 name: l.target_id ?? l.id,
-              }))
+              }));
             } catch {}
 
             return {
@@ -229,64 +268,78 @@ export function MeetingPrep() {
               lastMeetingNotes: null,
               talkingPoints: [],
               loadingAi: false,
-            }
-          })
-        )
+            };
+          }),
+        );
 
-        setPreps(prepList)
+        setPreps(prepList);
       } catch {
-        toast.error('Impossible de charger les réunions')
+        toast.error("Impossible de charger les réunions");
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
+    };
 
-    fetchMeetings()
-  }, [])
+    fetchMeetings();
+  }, []);
 
-  const handleGenerateAi = useCallback(async (eventId: string) => {
-    setPreps((prev) =>
-      prev.map((p) => (p.event.id === eventId ? { ...p, loadingAi: true, talkingPoints: [] } : p))
-    )
+  const handleGenerateAi = useCallback(
+    async (eventId: string) => {
+      setPreps((prev) =>
+        prev.map((p) =>
+          p.event.id === eventId
+            ? { ...p, loadingAi: true, talkingPoints: [] }
+            : p,
+        ),
+      );
 
-    try {
-      const prep = preps.find((p) => p.event.id === eventId)
-      if (!prep) return
+      try {
+        const prep = preps.find((p) => p.event.id === eventId);
+        if (!prep) return;
 
-      const attendees: string[] = prep.event.attendees?.map((a) => a.email ?? a.name ?? '') ?? []
-      const prompt = `Tu es un assistant de préparation de réunion.
+        const attendees: string[] =
+          prep.event.attendees?.map((a) => a.email ?? a.name ?? "") ?? [];
+        const prompt = `Tu es un assistant de préparation de réunion.
 Réunion: "${prep.event.title}"
 Date: ${formatDate(prep.event.start_time)} à ${formatTime(prep.event.start_time)}
-Participants: ${attendees.join(', ') || 'inconnus'}
-Ordre du jour: ${prep.event.description ?? 'non précisé'}
+Participants: ${attendees.join(", ") || "inconnus"}
+Ordre du jour: ${prep.event.description ?? "non précisé"}
 
-Génère 5 points concis à aborder lors de cette réunion. Réponds uniquement avec une liste JSON de strings.`
+Génère 5 points concis à aborder lors de cette réunion. Réponds uniquement avec une liste JSON de strings.`;
 
-      const res = await aiApi.chat(prompt)
-      const answer: string = (res.data as { answer?: string })?.answer ?? ''
+        const res = await aiApi.chat(prompt);
+        const answer: string = (res.data as { answer?: string })?.answer ?? "";
 
-      let points: string[] = []
-      try {
-        const match = answer.match(/\[[\s\S]*\]/)
-        if (match) points = JSON.parse(match[0])
+        let points: string[] = [];
+        try {
+          const match = answer.match(/\[[\s\S]*\]/);
+          if (match) points = JSON.parse(match[0]);
+        } catch {
+          points = answer
+            .split("\n")
+            .filter((l) => l.trim().match(/^[-•*\d]/))
+            .map((l) => l.replace(/^[-•*\d.]+\s*/, "").trim())
+            .filter(Boolean);
+        }
+
+        setPreps((prev) =>
+          prev.map((p) =>
+            p.event.id === eventId
+              ? { ...p, talkingPoints: points, loadingAi: false }
+              : p,
+          ),
+        );
       } catch {
-        points = answer
-          .split('\n')
-          .filter((l) => l.trim().match(/^[-•*\d]/))
-          .map((l) => l.replace(/^[-•*\d.]+\s*/, '').trim())
-          .filter(Boolean)
+        toast.error("Erreur IA");
+        setPreps((prev) =>
+          prev.map((p) =>
+            p.event.id === eventId ? { ...p, loadingAi: false } : p,
+          ),
+        );
       }
-
-      setPreps((prev) =>
-        prev.map((p) => (p.event.id === eventId ? { ...p, talkingPoints: points, loadingAi: false } : p))
-      )
-    } catch {
-      toast.error('Erreur IA')
-      setPreps((prev) =>
-        prev.map((p) => (p.event.id === eventId ? { ...p, loadingAi: false } : p))
-      )
-    }
-  }, [preps])
+    },
+    [preps],
+  );
 
   if (loading) {
     return (
@@ -300,7 +353,7 @@ Génère 5 points concis à aborder lors de cette réunion. Réponds uniquement 
           </Card>
         ))}
       </div>
-    )
+    );
   }
 
   if (!preps.length) {
@@ -311,17 +364,22 @@ Génère 5 points concis à aborder lors de cette réunion. Réponds uniquement 
           <p>Aucune réunion dans les prochaines 24h</p>
         </CardContent>
       </Card>
-    )
+    );
   }
 
   return (
     <div className="space-y-3">
       <p className="text-sm text-muted-foreground">
-        {preps.length} réunion{preps.length > 1 ? 's' : ''} dans les prochaines 24h
+        {preps.length} réunion{preps.length > 1 ? "s" : ""} dans les prochaines
+        24h
       </p>
       {preps.map((prep) => (
-        <MeetingPrepCard key={prep.event.id} prep={prep} onGenerateAi={handleGenerateAi} />
+        <MeetingPrepCard
+          key={prep.event.id}
+          prep={prep}
+          onGenerateAi={handleGenerateAi}
+        />
       ))}
     </div>
-  )
+  );
 }

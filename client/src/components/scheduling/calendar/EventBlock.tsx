@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * EventBlock Component
@@ -7,9 +7,9 @@
  * Supports different display modes, colors, and interactions.
  */
 
-import * as React from 'react';
-import { format, differenceInMinutes } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import * as React from "react";
+import { format, differenceInMinutes } from "date-fns";
+import { fr } from "date-fns/locale";
 import {
   MapPin,
   Users,
@@ -18,11 +18,14 @@ import {
   CheckCircle2,
   AlertCircle,
   Repeat,
-} from 'lucide-react';
-import { motion } from 'framer-motion';
-import { cn } from '@/lib/utils';
-import { useSchedulingSelection } from '@/stores/scheduling-store';
-import type { ScheduleBlock, EventLayout } from '@/lib/scheduling/types/scheduling';
+} from "lucide-react";
+import { motion } from "framer-motion";
+import { cn } from "@/lib/utils";
+import { useSchedulingSelection } from "@/stores/scheduling-store";
+import type {
+  ScheduleBlock,
+  EventLayout,
+} from "@/lib/scheduling/types/scheduling";
 
 // ============================================================================
 // Types
@@ -37,21 +40,25 @@ interface EventBlockProps {
   onContextMenu?: (event: ScheduleBlock, e: React.MouseEvent) => void;
 }
 
-type EventDisplayMode = 'full' | 'compact' | 'minimal' | 'dot';
+type EventDisplayMode = "full" | "compact" | "minimal" | "dot";
 
 // ============================================================================
 // Helpers
 // ============================================================================
 
 function getDisplayMode(height: number): EventDisplayMode {
-  if (height < 20) return 'dot';
-  if (height < 32) return 'minimal';
-  if (height < 56) return 'compact';
-  return 'full';
+  if (height < 20) return "dot";
+  if (height < 32) return "minimal";
+  if (height < 56) return "compact";
+  return "full";
 }
 
-function getEventColor(event: ScheduleBlock): { bg: string; border: string; text: string } {
-  const color = event.color || '#3b82f6'; // Default blue
+function getEventColor(event: ScheduleBlock): {
+  bg: string;
+  border: string;
+  text: string;
+} {
+  const color = event.color || "#3b82f6"; // Default blue
 
   return {
     bg: `${color}15`, // 15% opacity
@@ -60,13 +67,13 @@ function getEventColor(event: ScheduleBlock): { bg: string; border: string; text
   };
 }
 
-function getStatusIcon(status: ScheduleBlock['status']) {
+function getStatusIcon(status: ScheduleBlock["status"]) {
   switch (status) {
-    case 'confirmed':
+    case "confirmed":
       return <CheckCircle2 className="h-3 w-3 text-green-500" />;
-    case 'tentative':
+    case "tentative":
       return <AlertCircle className="h-3 w-3 text-yellow-500" />;
-    case 'cancelled':
+    case "cancelled":
       return <AlertCircle className="h-3 w-3 text-red-500 line-through" />;
     default:
       return null;
@@ -84,11 +91,7 @@ function EventTitle({
   title: string;
   className?: string;
 }) {
-  return (
-    <span className={cn('font-medium truncate', className)}>
-      {title}
-    </span>
-  );
+  return <span className={cn("font-medium truncate", className)}>{title}</span>;
 }
 
 function EventTime({
@@ -100,11 +103,11 @@ function EventTime({
   end?: Date;
   className?: string;
 }) {
-  const startStr = format(start, 'HH:mm', { locale: fr });
-  const endStr = end ? format(end, 'HH:mm', { locale: fr }) : null;
+  const startStr = format(start, "HH:mm", { locale: fr });
+  const endStr = end ? format(end, "HH:mm", { locale: fr }) : null;
 
   return (
-    <span className={cn('text-muted-foreground', className)}>
+    <span className={cn("text-muted-foreground", className)}>
       {startStr}
       {endStr && ` - ${endStr}`}
     </span>
@@ -124,7 +127,7 @@ function EventIndicators({
   const isRecurring = event.recurrence;
 
   return (
-    <div className={cn('flex items-center gap-1', className)}>
+    <div className={cn("flex items-center gap-1", className)}>
       {isRecurring && <Repeat className="h-3 w-3" />}
       {hasLocation && <MapPin className="h-3 w-3" />}
       {hasVideo && <Video className="h-3 w-3" />}
@@ -168,9 +171,7 @@ function CompactDisplay({ event }: { event: ScheduleBlock }) {
 }
 
 function FullDisplay({ event }: { event: ScheduleBlock }) {
-  const duration = event.end
-    ? differenceInMinutes(event.end, event.start)
-    : 60;
+  const duration = event.end ? differenceInMinutes(event.end, event.start) : 60;
 
   return (
     <div className="flex flex-col gap-0.5 overflow-hidden">
@@ -189,7 +190,8 @@ function FullDisplay({ event }: { event: ScheduleBlock }) {
         <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
           <Users className="h-2.5 w-2.5 shrink-0" />
           <span>
-            {event.attendees.length} participant{event.attendees.length > 1 ? 's' : ''}
+            {event.attendees.length} participant
+            {event.attendees.length > 1 ? "s" : ""}
           </span>
         </div>
       )}
@@ -213,9 +215,9 @@ export function EventBlock({
   const { block: event, top, height, left, width } = layout;
 
   const colors = getEventColor(event);
-  const displayMode = compact ? 'compact' : getDisplayMode(height);
+  const displayMode = compact ? "compact" : getDisplayMode(height);
   const isSelected = selectedBlockId === event.id;
-  const isCancelled = event.status === 'cancelled';
+  const isCancelled = event.status === "cancelled";
 
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -235,7 +237,7 @@ export function EventBlock({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' || e.key === ' ') {
+    if (e.key === "Enter" || e.key === " ") {
       e.preventDefault();
       handleClick(e as unknown as React.MouseEvent);
     }
@@ -248,13 +250,13 @@ export function EventBlock({
       exit={{ opacity: 0, scale: 0.95 }}
       transition={{ duration: 0.15 }}
       className={cn(
-        'absolute cursor-pointer overflow-hidden rounded-md',
-        'transition-shadow duration-150',
-        'hover:shadow-md hover:z-10',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
-        isSelected && 'ring-2 ring-primary ring-offset-1 z-20',
-        isCancelled && 'opacity-50',
-        className
+        "absolute cursor-pointer overflow-hidden rounded-md",
+        "transition-shadow duration-150",
+        "hover:shadow-md hover:z-10",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
+        isSelected && "ring-2 ring-primary ring-offset-1 z-20",
+        isCancelled && "opacity-50",
+        className,
       )}
       style={{
         top,
@@ -270,21 +272,21 @@ export function EventBlock({
       onKeyDown={handleKeyDown}
       tabIndex={0}
       role="button"
-      aria-label={`${event.title} - ${format(event.start, 'EEEE d MMMM à HH:mm', { locale: fr })}`}
+      aria-label={`${event.title} - ${format(event.start, "EEEE d MMMM à HH:mm", { locale: fr })}`}
       aria-selected={isSelected}
     >
       <div
         className={cn(
-          'h-full p-1.5',
-          displayMode === 'dot' && 'flex items-center justify-center p-0',
-          isCancelled && 'line-through'
+          "h-full p-1.5",
+          displayMode === "dot" && "flex items-center justify-center p-0",
+          isCancelled && "line-through",
         )}
         style={{ color: colors.text }}
       >
-        {displayMode === 'dot' && <DotDisplay event={event} />}
-        {displayMode === 'minimal' && <MinimalDisplay event={event} />}
-        {displayMode === 'compact' && <CompactDisplay event={event} />}
-        {displayMode === 'full' && <FullDisplay event={event} />}
+        {displayMode === "dot" && <DotDisplay event={event} />}
+        {displayMode === "minimal" && <MinimalDisplay event={event} />}
+        {displayMode === "compact" && <CompactDisplay event={event} />}
+        {displayMode === "full" && <FullDisplay event={event} />}
       </div>
     </motion.div>
   );
@@ -316,16 +318,16 @@ export function AllDayEventBlock({
   return (
     <button
       className={cn(
-        'w-full text-left text-xs px-2 py-1 rounded truncate',
-        'transition-all duration-150',
-        'hover:opacity-90 hover:shadow-sm',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-        isSelected && 'ring-2 ring-primary ring-offset-1',
-        className
+        "w-full text-left text-xs px-2 py-1 rounded truncate",
+        "transition-all duration-150",
+        "hover:opacity-90 hover:shadow-sm",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+        isSelected && "ring-2 ring-primary ring-offset-1",
+        className,
       )}
       style={{
         backgroundColor: colors.border,
-        color: 'white',
+        color: "white",
       }}
       onClick={handleClick}
     >
@@ -349,16 +351,14 @@ export function EventPreview({
   className?: string;
 }) {
   const colors = getEventColor(event);
-  const duration = event.end
-    ? differenceInMinutes(event.end, event.start)
-    : 60;
+  const duration = event.end ? differenceInMinutes(event.end, event.start) : 60;
 
   return (
     <div
       className={cn(
-        'rounded-lg border bg-card p-4 shadow-lg',
-        'max-w-xs',
-        className
+        "rounded-lg border bg-card p-4 shadow-lg",
+        "max-w-xs",
+        className,
       )}
     >
       <div
@@ -372,12 +372,13 @@ export function EventPreview({
         <div className="flex items-center gap-2">
           <Clock className="h-3.5 w-3.5" />
           <span>
-            {format(event.start, 'EEEE d MMMM', { locale: fr })}
+            {format(event.start, "EEEE d MMMM", { locale: fr })}
             {!event.allDay && (
               <>
                 <br />
-                {format(event.start, 'HH:mm', { locale: fr })}
-                {event.end && ` - ${format(event.end, 'HH:mm', { locale: fr })}`}
+                {format(event.start, "HH:mm", { locale: fr })}
+                {event.end &&
+                  ` - ${format(event.end, "HH:mm", { locale: fr })}`}
                 <span className="ml-1">({duration} min)</span>
               </>
             )}
@@ -394,16 +395,12 @@ export function EventPreview({
         {event.attendees && event.attendees.length > 0 && (
           <div className="flex items-center gap-2">
             <Users className="h-3.5 w-3.5" />
-            <span>
-              {event.attendees.map((a) => a.name).join(', ')}
-            </span>
+            <span>{event.attendees.map((a) => a.name).join(", ")}</span>
           </div>
         )}
 
         {event.description && (
-          <p className="mt-2 text-xs border-t pt-2">
-            {event.description}
-          </p>
+          <p className="mt-2 text-xs border-t pt-2">{event.description}</p>
         )}
       </div>
     </div>

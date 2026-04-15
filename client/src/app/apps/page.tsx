@@ -1,25 +1,32 @@
-'use client';
+"use client";
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { AppLayout } from '@/components/layout/app-layout';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Search, RefreshCw, Settings2, ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
-import { storeApi, containersApi } from '@/lib/api';
-import type { StoreApp } from '@/lib/api';
-import type { ContainerInfo, InstallResponse } from '@/lib/api/containers';
-import type { ContainerPortMapping } from '@/hooks/use-containers';
-import { getContainerUrl } from '@/lib/utils';
-import { CardGridSkeleton } from '@/components/ui/skeleton-loader';
-import { AppCard } from '@/components/apps/app-card';
-import { InstallDialog } from '@/components/apps/install-dialog';
-import { AppDetailDialog } from '@/components/apps/app-detail-dialog';
-import { SourceManager } from '@/components/apps/source-manager';
-import { CustomAppDialog } from '@/components/apps/custom-app-dialog';
-import { Plus } from 'lucide-react';
-import { usePageTitle } from '@/hooks/use-page-title';
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { AppLayout } from "@/components/layout/app-layout";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Search,
+  RefreshCw,
+  Settings2,
+  ChevronLeft,
+  ChevronRight,
+  ArrowRight,
+} from "lucide-react";
+import { storeApi, containersApi } from "@/lib/api";
+import type { StoreApp } from "@/lib/api";
+import type { ContainerInfo, InstallResponse } from "@/lib/api/containers";
+import type { ContainerPortMapping } from "@/hooks/use-containers";
+import { getContainerUrl } from "@/lib/utils";
+import { CardGridSkeleton } from "@/components/ui/skeleton-loader";
+import { AppCard } from "@/components/apps/app-card";
+import { InstallDialog } from "@/components/apps/install-dialog";
+import { AppDetailDialog } from "@/components/apps/app-detail-dialog";
+import { SourceManager } from "@/components/apps/source-manager";
+import { CustomAppDialog } from "@/components/apps/custom-app-dialog";
+import { Plus } from "lucide-react";
+import { usePageTitle } from "@/hooks/use-page-title";
 
 const PAGE_SIZE = 24;
 
@@ -32,13 +39,15 @@ interface InstalledContainer {
 }
 
 export default function AppsPage() {
-  usePageTitle('Applications');
+  usePageTitle("Applications");
   const [apps, setApps] = useState<StoreApp[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [search, setSearch] = useState('');
-  const [activeCategory, setActiveCategory] = useState('all');
-  const [installedMap, setInstalledMap] = useState<Map<string, InstalledContainer>>(new Map());
+  const [search, setSearch] = useState("");
+  const [activeCategory, setActiveCategory] = useState("all");
+  const [installedMap, setInstalledMap] = useState<
+    Map<string, InstalledContainer>
+  >(new Map());
   const [page, setPage] = useState(1);
 
   // Dialogs
@@ -60,19 +69,34 @@ export default function AppsPage() {
     try {
       const res = await containersApi.list();
       const map = new Map<string, InstalledContainer>();
-      for (const c of (res.data || []) as (ContainerInfo & { docker_info?: InstallResponse['docker_info'] })[]) {
-        const appId = c.labels?.['signapps.app.id'];
-        const imgBase = (c.image as string).split(':')[0].toLowerCase();
-        const portMappings: ContainerPortMapping[] = (c.docker_info?.ports || [])
+      for (const c of (res.data || []) as (ContainerInfo & {
+        docker_info?: InstallResponse["docker_info"];
+      })[]) {
+        const appId = c.labels?.["signapps.app.id"];
+        const imgBase = (c.image as string).split(":")[0].toLowerCase();
+        const portMappings: ContainerPortMapping[] = (
+          c.docker_info?.ports || []
+        )
           .filter((p: { host_port?: number }) => p.host_port)
-          .map((p: { host_port: number; container_port: number; protocol?: string }) => ({
-            host: p.host_port,
-            container: p.container_port,
-            protocol: p.protocol || 'tcp',
-          }));
-        const state: string = c.docker_info?.state || 'unknown';
+          .map(
+            (p: {
+              host_port: number;
+              container_port: number;
+              protocol?: string;
+            }) => ({
+              host: p.host_port,
+              container: p.container_port,
+              protocol: p.protocol || "tcp",
+            }),
+          );
+        const state: string = c.docker_info?.state || "unknown";
 
-        map.set(appId || imgBase, { id: c.id, image: c.image, portMappings, state });
+        map.set(appId || imgBase, {
+          id: c.id,
+          image: c.image,
+          portMappings,
+          state,
+        });
       }
       setInstalledMap(map);
     } catch {
@@ -81,30 +105,36 @@ export default function AppsPage() {
   }, []);
 
   // Find installed container id for a store app by matching app.id or image
-  const getInstalledId = useCallback((app: StoreApp): string | undefined => {
-    let id = installedMap.get(app.id)?.id;
-    if (!id && app.image) {
-      const imgBase = app.image.split(':')[0].toLowerCase();
-      id = installedMap.get(imgBase)?.id;
-    }
-    return id;
-  }, [installedMap]);
+  const getInstalledId = useCallback(
+    (app: StoreApp): string | undefined => {
+      let id = installedMap.get(app.id)?.id;
+      if (!id && app.image) {
+        const imgBase = app.image.split(":")[0].toLowerCase();
+        id = installedMap.get(imgBase)?.id;
+      }
+      return id;
+    },
+    [installedMap],
+  );
 
   // Get URL for an installed app
-  const getInstalledUrl = useCallback((app: StoreApp): string | null => {
-    let container = installedMap.get(app.id);
-    if (!container && app.image) {
-      const imgBase = app.image.split(':')[0].toLowerCase();
-      container = installedMap.get(imgBase);
-    }
-    if (!container || container.state !== 'running') return null;
-    return getContainerUrl(container.portMappings);
-  }, [installedMap]);
+  const getInstalledUrl = useCallback(
+    (app: StoreApp): string | null => {
+      let container = installedMap.get(app.id);
+      if (!container && app.image) {
+        const imgBase = app.image.split(":")[0].toLowerCase();
+        container = installedMap.get(imgBase);
+      }
+      if (!container || container.state !== "running") return null;
+      return getContainerUrl(container.portMappings);
+    },
+    [installedMap],
+  );
 
   useEffect(() => {
     setLoading(true);
     Promise.all([fetchApps(), fetchInstalledContainers()]).finally(() =>
-      setLoading(false)
+      setLoading(false),
     );
   }, [fetchInstalledContainers]);
 
@@ -148,14 +178,14 @@ export default function AppsPage() {
         (app) =>
           app.name.toLowerCase().includes(q) ||
           app.description.toLowerCase().includes(q) ||
-          app.tags.some((t) => t.toLowerCase().includes(q))
+          app.tags.some((t) => t.toLowerCase().includes(q)),
       );
     }
 
-    if (activeCategory !== 'all') {
+    if (activeCategory !== "all") {
       const cat = activeCategory.toLowerCase();
       result = result.filter((app) =>
-        app.tags.some((t) => t.toLowerCase() === cat)
+        app.tags.some((t) => t.toLowerCase() === cat),
       );
     }
 
@@ -163,20 +193,20 @@ export default function AppsPage() {
   }, [deduplicatedApps, search, activeCategory]);
 
   // Determine if we should show grouped view (no search, no category filter)
-  const isGroupedView = !search && activeCategory === 'all';
+  const isGroupedView = !search && activeCategory === "all";
 
   // Group apps by their first tag (category) for the grouped view
   const groupedByCategory = useMemo(() => {
     if (!isGroupedView) return new Map<string, StoreApp[]>();
     const groups = new Map<string, StoreApp[]>();
     for (const app of deduplicatedApps) {
-      const cat = app.tags[0] || 'Other';
+      const cat = app.tags[0] || "Other";
       if (!groups.has(cat)) groups.set(cat, []);
       groups.get(cat)!.push(app);
     }
     // Sort categories by count (descending) to show most populated first
     return new Map(
-      Array.from(groups.entries()).sort((a, b) => b[1].length - a[1].length)
+      Array.from(groups.entries()).sort((a, b) => b[1].length - a[1].length),
     );
   }, [deduplicatedApps, isGroupedView]);
 
@@ -208,7 +238,10 @@ export default function AppsPage() {
           <div className="flex items-center justify-between">
             <h1 className="text-3xl font-bold">App Store</h1>
           </div>
-          <CardGridSkeleton count={8} className="grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" />
+          <CardGridSkeleton
+            count={8}
+            className="grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+          />
         </div>
       </AppLayout>
     );
@@ -222,7 +255,8 @@ export default function AppsPage() {
           <div>
             <h1 className="text-3xl font-bold">App Store</h1>
             <p className="text-sm text-muted-foreground">
-              {filteredApps.length} application{filteredApps.length !== 1 ? 's' : ''}
+              {filteredApps.length} application
+              {filteredApps.length !== 1 ? "s" : ""}
               {totalPages > 1 && ` (page ${page}/${totalPages})`}
             </p>
           </div>
@@ -235,8 +269,14 @@ export default function AppsPage() {
               <Settings2 className="mr-2 h-4 w-4" />
               Sources
             </Button>
-            <Button variant="outline" onClick={handleRefreshAll} disabled={refreshing}>
-              <RefreshCw className={`mr-2 h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+            <Button
+              variant="outline"
+              onClick={handleRefreshAll}
+              disabled={refreshing}
+            >
+              <RefreshCw
+                className={`mr-2 h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
+              />
               Actualiser
             </Button>
           </div>
@@ -256,16 +296,16 @@ export default function AppsPage() {
         {/* Categories */}
         <div className="flex flex-wrap gap-2">
           <Button
-            variant={activeCategory === 'all' ? 'default' : 'outline'}
+            variant={activeCategory === "all" ? "default" : "outline"}
             size="sm"
-            onClick={() => setActiveCategory('all')}
+            onClick={() => setActiveCategory("all")}
           >
             All
           </Button>
           {categories.map((cat) => (
             <Button
               key={cat}
-              variant={activeCategory === cat ? 'default' : 'outline'}
+              variant={activeCategory === cat ? "default" : "outline"}
               size="sm"
               onClick={() => setActiveCategory(cat)}
             >
@@ -277,41 +317,45 @@ export default function AppsPage() {
         {/* Grouped view: show apps by category with preview rows */}
         {isGroupedView ? (
           <div className="space-y-8">
-            {Array.from(groupedByCategory.entries()).map(([category, categoryApps]) => (
-              <div key={category} className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-lg font-semibold">
-                    {category}
-                    <span className="ml-2 text-sm font-normal text-muted-foreground">
-                      ({categoryApps.length})
-                    </span>
-                  </h2>
-                  {categoryApps.length > GROUPED_PREVIEW_SIZE && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setActiveCategory(category)}
-                    >
-                      View all
-                      <ArrowRight className="ml-1 h-4 w-4" />
-                    </Button>
-                  )}
+            {Array.from(groupedByCategory.entries()).map(
+              ([category, categoryApps]) => (
+                <div key={category} className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-lg font-semibold">
+                      {category}
+                      <span className="ml-2 text-sm font-normal text-muted-foreground">
+                        ({categoryApps.length})
+                      </span>
+                    </h2>
+                    {categoryApps.length > GROUPED_PREVIEW_SIZE && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setActiveCategory(category)}
+                      >
+                        View all
+                        <ArrowRight className="ml-1 h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                    {categoryApps
+                      .slice(0, GROUPED_PREVIEW_SIZE)
+                      .map((app, idx) => (
+                        <AppCard
+                          key={`grouped-${category}-${app.source_id}-${app.id}-${idx}`}
+                          app={app}
+                          onInstall={setInstallApp}
+                          onDetail={setDetailApp}
+                          installedContainerId={getInstalledId(app)}
+                          containerUrl={getInstalledUrl(app)}
+                          onUpdated={fetchInstalledContainers}
+                        />
+                      ))}
+                  </div>
                 </div>
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                  {categoryApps.slice(0, GROUPED_PREVIEW_SIZE).map((app, idx) => (
-                    <AppCard
-                      key={`grouped-${category}-${app.source_id}-${app.id}-${idx}`}
-                      app={app}
-                      onInstall={setInstallApp}
-                      onDetail={setDetailApp}
-                      installedContainerId={getInstalledId(app)}
-                      containerUrl={getInstalledUrl(app)}
-                      onUpdated={fetchInstalledContainers}
-                    />
-                  ))}
-                </div>
-              </div>
-            ))}
+              ),
+            )}
 
             {apps.length === 0 && (
               <div className="py-12 text-center text-muted-foreground">

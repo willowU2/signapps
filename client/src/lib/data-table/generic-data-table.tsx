@@ -7,7 +7,7 @@
  * Utilise EntityConfig pour la configuration automatique.
  */
 
-import { SpinnerInfinity } from 'spinners-react';
+import { SpinnerInfinity } from "spinners-react";
 
 import * as React from "react";
 import {
@@ -24,7 +24,17 @@ import {
   Row,
 } from "@tanstack/react-table";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, ChevronDown, ChevronLeft, ChevronRight, Inbox, MoreHorizontal, LayoutGrid, Table as TableIcon, Kanban } from 'lucide-react';
+import {
+  Search,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  Inbox,
+  MoreHorizontal,
+  LayoutGrid,
+  Table as TableIcon,
+  Kanban,
+} from "lucide-react";
 
 import {
   Table,
@@ -55,7 +65,11 @@ import {
 import { EmptyState } from "@/components/ui/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import { usePermissions, type Resource, type ResourceAction } from "@/lib/permissions";
+import {
+  usePermissions,
+  type Resource,
+  type ResourceAction,
+} from "@/lib/permissions";
 
 import type {
   EntityConfig,
@@ -82,13 +96,18 @@ import {
  */
 function checkPermission(
   requiredPermission: string | undefined,
-  can: (resource: Resource, action: ResourceAction | ResourceAction[]) => boolean
+  can: (
+    resource: Resource,
+    action: ResourceAction | ResourceAction[],
+  ) => boolean,
 ): boolean {
   if (!requiredPermission) return true; // Pas de permission requise = visible
 
   const parts = requiredPermission.split(":");
   if (parts.length !== 2) {
-    console.warn(`Invalid permission format: ${requiredPermission}. Expected "resource:action"`);
+    console.warn(
+      `Invalid permission format: ${requiredPermission}. Expected "resource:action"`,
+    );
     return true;
   }
 
@@ -103,8 +122,11 @@ function checkPermission(
 function buildColumnDefs<TData>(
   config: EntityConfig<TData>,
   actions: ActionConfig<TData>[] | undefined,
-  can: (resource: Resource, action: ResourceAction | ResourceAction[]) => boolean,
-  columnOrder?: string[]
+  can: (
+    resource: Resource,
+    action: ResourceAction | ResourceAction[],
+  ) => boolean,
+  columnOrder?: string[],
 ): ColumnDef<TData>[] {
   const columns: ColumnDef<TData>[] = [];
 
@@ -139,7 +161,7 @@ function buildColumnDefs<TData>(
 
   // Data columns - filter by permission
   let visibleColumns = config.columns.filter((col) =>
-    checkPermission(col.requiredPermission, can)
+    checkPermission(col.requiredPermission, can),
   );
 
   // Sort columns by custom order if provided
@@ -193,7 +215,7 @@ function buildColumnDefs<TData>(
   // Actions column - filter actions by permission
   const rowActions = actions ?? config.actions;
   const permittedActions = rowActions?.filter((action) =>
-    checkPermission(action.requiredPermission, can)
+    checkPermission(action.requiredPermission, can),
   );
 
   if (permittedActions && permittedActions.length > 0) {
@@ -222,7 +244,7 @@ function ActionsCell<TData>({
   actions: ActionConfig<TData>[];
 }) {
   const visibleActions = actions.filter(
-    (action) => !action.visible || action.visible(row.original)
+    (action) => !action.visible || action.visible(row.original),
   );
 
   if (visibleActions.length === 0) return null;
@@ -256,7 +278,7 @@ function ActionsCell<TData>({
                 disabled={isDisabled}
                 className={cn(
                   action.variant === "destructive" &&
-                    "text-destructive focus:text-destructive"
+                    "text-destructive focus:text-destructive",
                 )}
               >
                 {Icon && <Icon className="mr-2 h-4 w-4" />}
@@ -300,7 +322,13 @@ function ViewModeSwitcher({
           size="sm"
           className="h-7 w-7 p-0"
           onClick={() => onChange(mode)}
-          title={mode === "table" ? "Vue tableau" : mode === "cards" ? "Vue cartes" : "Vue Kanban"}
+          title={
+            mode === "table"
+              ? "Vue tableau"
+              : mode === "cards"
+                ? "Vue cartes"
+                : "Vue Kanban"
+          }
         >
           {icons[mode]}
         </Button>
@@ -348,10 +376,12 @@ function CardsView<TData>({
         {data.map((row, index) => {
           const id = config.getRowId?.(row) ?? String(index);
           const primaryCol = config.columns.find(
-            (c) => c.id === config.primarySearchColumn
+            (c) => c.id === config.primarySearchColumn,
           );
           const title = primaryCol?.accessorKey
-            ? String((row as Record<string, unknown>)[primaryCol.accessorKey] ?? "")
+            ? String(
+                (row as Record<string, unknown>)[primaryCol.accessorKey] ?? "",
+              )
             : "";
 
           return (
@@ -363,7 +393,7 @@ function CardsView<TData>({
               transition={{ duration: 0.2, delay: index * 0.02 }}
               className={cn(
                 "rounded-lg border bg-card p-4 shadow-sm transition-all hover:shadow-md",
-                onRowClick && "cursor-pointer hover:border-primary/50"
+                onRowClick && "cursor-pointer hover:border-primary/50",
               )}
               onClick={() => onRowClick?.(row)}
             >
@@ -422,29 +452,35 @@ export function GenericDataTable<TData>({
   // Column preferences (persisted to localStorage)
   const [columnPreferences, setColumnPreferences] = useColumnPreferences(
     config.entityType,
-    config.columns
+    config.columns,
   );
 
   // State
   const [internalViewMode, setInternalViewMode] = React.useState<ViewMode>(
-    config.defaultViewMode ?? "table"
+    config.defaultViewMode ?? "table",
   );
   const [internalSearchValue, setInternalSearchValue] = React.useState("");
   const [sorting, setSorting] = React.useState<SortingState>(
-    config.defaultSort ? [config.defaultSort] : []
+    config.defaultSort ? [config.defaultSort] : [],
   );
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
+    [],
+  );
   const [rowSelection, setRowSelection] = React.useState({});
 
   // Derive visibility from preferences
   const columnVisibility = React.useMemo<VisibilityState>(
     () => applyPreferencesToVisibility(columnPreferences),
-    [columnPreferences]
+    [columnPreferences],
   );
 
   // Handle visibility change from table
   const handleColumnVisibilityChange = React.useCallback(
-    (updaterOrValue: VisibilityState | ((old: VisibilityState) => VisibilityState)) => {
+    (
+      updaterOrValue:
+        | VisibilityState
+        | ((old: VisibilityState) => VisibilityState),
+    ) => {
       const newVisibility =
         typeof updaterOrValue === "function"
           ? updaterOrValue(columnVisibility)
@@ -458,7 +494,7 @@ export function GenericDataTable<TData>({
 
       setColumnPreferences(newPreferences);
     },
-    [columnVisibility, columnPreferences, setColumnPreferences]
+    [columnVisibility, columnPreferences, setColumnPreferences],
   );
 
   // Controlled vs uncontrolled
@@ -481,13 +517,13 @@ export function GenericDataTable<TData>({
   // Get column order from preferences
   const columnOrder = React.useMemo(
     () => columnPreferences.sort((a, b) => a.order - b.order).map((p) => p.id),
-    [columnPreferences]
+    [columnPreferences],
   );
 
   // Build columns with permission filtering and custom order
   const columns = React.useMemo(
     () => buildColumnDefs(config, actions, can, columnOrder),
-    [config, actions, can, columnOrder]
+    [config, actions, can, columnOrder],
   );
 
   // Table instance
@@ -576,7 +612,13 @@ export function GenericDataTable<TData>({
       {isLoading ? (
         <div className="rounded-lg border bg-card/40 p-6">
           <div className="flex items-center justify-center gap-2 text-muted-foreground">
-            <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-5 w-5 " />
+            <SpinnerInfinity
+              size={24}
+              secondaryColor="rgba(128,128,128,0.2)"
+              color="currentColor"
+              speed={120}
+              className="h-5 w-5 "
+            />
             <span>Chargement...</span>
           </div>
         </div>
@@ -585,7 +627,9 @@ export function GenericDataTable<TData>({
         data.length === 0 ? (
           <EmptyState
             icon={emptyState?.icon ?? config.icon ?? Inbox}
-            title={emptyState?.title ?? `Aucun ${config.singularName.toLowerCase()}`}
+            title={
+              emptyState?.title ?? `Aucun ${config.singularName.toLowerCase()}`
+            }
             description={
               emptyState?.description ??
               `Il n'y a pas encore de ${config.pluralName.toLowerCase()}.`
@@ -619,13 +663,18 @@ export function GenericDataTable<TData>({
                     <TableHead
                       key={header.id}
                       className="text-muted-foreground font-medium"
-                      style={{ width: header.getSize() !== 150 ? header.getSize() : undefined }}
+                      style={{
+                        width:
+                          header.getSize() !== 150
+                            ? header.getSize()
+                            : undefined,
+                      }}
                     >
                       {header.isPlaceholder
                         ? null
                         : flexRender(
                             header.column.columnDef.header,
-                            header.getContext()
+                            header.getContext(),
                           )}
                     </TableHead>
                   ))}
@@ -644,7 +693,7 @@ export function GenericDataTable<TData>({
                       transition={{ duration: 0.2 }}
                       className={cn(
                         "border-b transition-colors hover:bg-muted/40 data-[state=selected]:bg-muted/50 group",
-                        config.onRowClick && "cursor-pointer"
+                        config.onRowClick && "cursor-pointer",
                       )}
                       onClick={() => config.onRowClick?.(row.original)}
                     >
@@ -652,7 +701,7 @@ export function GenericDataTable<TData>({
                         <TableCell key={cell.id} className="py-3">
                           {flexRender(
                             cell.column.columnDef.cell,
-                            cell.getContext()
+                            cell.getContext(),
                           )}
                         </TableCell>
                       ))}
@@ -663,7 +712,10 @@ export function GenericDataTable<TData>({
                     <TableCell colSpan={columns.length} className="h-64 p-0">
                       <EmptyState
                         icon={emptyState?.icon ?? config.icon ?? Inbox}
-                        title={emptyState?.title ?? `Aucun ${config.singularName.toLowerCase()}`}
+                        title={
+                          emptyState?.title ??
+                          `Aucun ${config.singularName.toLowerCase()}`
+                        }
                         description={
                           emptyState?.description ??
                           `Il n'y a pas encore de ${config.pluralName.toLowerCase()}.`

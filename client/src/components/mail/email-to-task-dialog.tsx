@@ -1,13 +1,17 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { CheckSquare, Calendar as CalendarIcon, AlertCircle } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { toast } from "sonner"
-import { calendarApi, tasksApi } from "@/lib/api/calendar"
+import { useState, useEffect } from "react";
+import {
+  CheckSquare,
+  Calendar as CalendarIcon,
+  AlertCircle,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "sonner";
+import { calendarApi, tasksApi } from "@/lib/api/calendar";
 import {
   Dialog,
   DialogContent,
@@ -15,15 +19,15 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
+} from "@/components/ui/dialog";
 
 interface EmailToTaskDialogProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  emailSubject: string
-  emailBody: string
-  emailFrom: string
-  emailId: string
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  emailSubject: string;
+  emailBody: string;
+  emailFrom: string;
+  emailId: string;
 }
 
 export function EmailToTaskDialog({
@@ -34,38 +38,38 @@ export function EmailToTaskDialog({
   emailFrom,
   emailId,
 }: EmailToTaskDialogProps) {
-  const [title, setTitle] = useState("")
-  const [description, setDescription] = useState("")
-  const [dueDate, setDueDate] = useState("")
-  const [priority, setPriority] = useState(2)
-  const [saving, setSaving] = useState(false)
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [dueDate, setDueDate] = useState("");
+  const [priority, setPriority] = useState(2);
+  const [saving, setSaving] = useState(false);
 
   // Pre-fill when dialog opens
   useEffect(() => {
     if (open) {
-      setTitle(emailSubject || "")
+      setTitle(emailSubject || "");
       // Take first 500 chars of body as description snippet
       const snippet = emailBody
         ? `[Email de ${emailFrom}]\n\n${emailBody.slice(0, 500)}${emailBody.length > 500 ? "..." : ""}`
-        : `[Email de ${emailFrom}]`
-      setDescription(snippet)
-      setDueDate("")
-      setPriority(2)
+        : `[Email de ${emailFrom}]`;
+      setDescription(snippet);
+      setDueDate("");
+      setPriority(2);
     }
-  }, [open, emailSubject, emailBody, emailFrom])
+  }, [open, emailSubject, emailBody, emailFrom]);
 
   const handleSave = async () => {
     if (!title.trim()) {
-      toast.error("Le titre est requis")
-      return
+      toast.error("Le titre est requis");
+      return;
     }
 
-    setSaving(true)
+    setSaving(true);
 
     try {
       // Try to create task via API
-      const calendarsResponse = await calendarApi.listCalendars()
-      const calendars = calendarsResponse.data || []
+      const calendarsResponse = await calendarApi.listCalendars();
+      const calendars = calendarsResponse.data || [];
 
       if (calendars.length > 0) {
         await tasksApi.createTask(calendars[0].id, {
@@ -73,25 +77,25 @@ export function EmailToTaskDialog({
           description: description.trim(),
           priority,
           due_date: dueDate || undefined,
-        })
-        toast.success("Tâche créée avec succès")
+        });
+        toast.success("Tâche créée avec succès");
       } else {
         // Fallback: store in localStorage
-        saveToLocalStorage()
-        toast.success("Tâche enregistrée localement")
+        saveToLocalStorage();
+        toast.success("Tâche enregistrée localement");
       }
     } catch {
       // Fallback: store in localStorage
-      saveToLocalStorage()
-      toast.success("Tâche enregistrée localement (service indisponible)")
+      saveToLocalStorage();
+      toast.success("Tâche enregistrée localement (service indisponible)");
     } finally {
-      setSaving(false)
-      onOpenChange(false)
+      setSaving(false);
+      onOpenChange(false);
     }
-  }
+  };
 
   const saveToLocalStorage = () => {
-    const tasks = JSON.parse(localStorage.getItem("email-tasks") || "[]")
+    const tasks = JSON.parse(localStorage.getItem("email-tasks") || "[]");
     tasks.push({
       id: `task-${Date.now()}`,
       title: title.trim(),
@@ -101,9 +105,9 @@ export function EmailToTaskDialog({
       source_email_id: emailId,
       status: "open",
       created_at: new Date().toISOString(),
-    })
-    localStorage.setItem("email-tasks", JSON.stringify(tasks))
-  }
+    });
+    localStorage.setItem("email-tasks", JSON.stringify(tasks));
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -170,12 +174,19 @@ export function EmailToTaskDialog({
 
           <div className="flex items-start gap-2 text-xs text-muted-foreground bg-muted/50 rounded-lg p-2.5">
             <AlertCircle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
-            <span>La tache sera liee a l&apos;email de <strong>{emailFrom}</strong>. Vous pourrez la retrouver dans le module Taches.</span>
+            <span>
+              La tache sera liee a l&apos;email de <strong>{emailFrom}</strong>.
+              Vous pourrez la retrouver dans le module Taches.
+            </span>
           </div>
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
+          <Button
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={saving}
+          >
             Annuler
           </Button>
           <Button onClick={handleSave} disabled={saving || !title.trim()}>
@@ -184,5 +195,5 @@ export function EmailToTaskDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

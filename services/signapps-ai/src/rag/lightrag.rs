@@ -297,8 +297,7 @@ where
             continue; // Skip trivially short chunks
         }
 
-        let extraction =
-            extract_entities_and_relations(chunk, llm_fn.clone()).await?;
+        let extraction = extract_entities_and_relations(chunk, llm_fn.clone()).await?;
 
         // Store entities and collect their assigned IDs for relation wiring
         let mut entity_map: HashMap<String, Uuid> = HashMap::new();
@@ -428,9 +427,7 @@ where
         });
 
         // Get neighbors for richer local context (best-effort, non-fatal)
-        if let Ok(neighbors) =
-            KgRepository::get_entity_with_neighbors(pool, entity.id).await
-        {
+        if let Ok(neighbors) = KgRepository::get_entity_with_neighbors(pool, entity.id).await {
             // Neighbor info already available via relation_contexts below;
             // log only so callers can trace the expansion depth.
             tracing::debug!(
@@ -520,13 +517,13 @@ where
     let answer = llm_fn(prompt, config.generation_temperature).await?;
 
     // Collect graph stats (non-fatal: default to zeros on failure)
-    let stats = KgRepository::get_stats(pool, collection)
-        .await
-        .unwrap_or(signapps_db::models::kg::KgStats {
+    let stats = KgRepository::get_stats(pool, collection).await.unwrap_or(
+        signapps_db::models::kg::KgStats {
             entities: 0,
             relations: 0,
             communities: 0,
-        });
+        },
+    );
 
     Ok(LightRagResult {
         answer,
@@ -574,13 +571,12 @@ where
     EFut: std::future::Future<Output = signapps_common::Result<Vec<f32>>>,
 {
     // Load all entities (id, name, entity_type)
-    let entities: Vec<(uuid::Uuid, String, String)> = sqlx::query_as(
-        "SELECT id, name, entity_type FROM ai.kg_entities WHERE collection = $1",
-    )
-    .bind(collection)
-    .fetch_all(pool.inner())
-    .await
-    .map_err(|e| signapps_common::Error::Database(e.to_string()))?;
+    let entities: Vec<(uuid::Uuid, String, String)> =
+        sqlx::query_as("SELECT id, name, entity_type FROM ai.kg_entities WHERE collection = $1")
+            .bind(collection)
+            .fetch_all(pool.inner())
+            .await
+            .map_err(|e| signapps_common::Error::Database(e.to_string()))?;
 
     // Load all relations (source_entity_id, target_entity_id)
     let relations: Vec<(uuid::Uuid, uuid::Uuid)> = sqlx::query_as(
@@ -592,7 +588,10 @@ where
     .map_err(|e| signapps_common::Error::Database(e.to_string()))?;
 
     if entities.is_empty() {
-        tracing::info!(collection = collection, "No entities found, skipping community detection");
+        tracing::info!(
+            collection = collection,
+            "No entities found, skipping community detection"
+        );
         return Ok(0);
     }
 
@@ -658,7 +657,12 @@ where
         let title = if names.len() <= 3 {
             names.join(", ")
         } else {
-            format!("{}, {} et {} autres", names[0], names[1], component.len() - 2)
+            format!(
+                "{}, {} et {} autres",
+                names[0],
+                names[1],
+                component.len() - 2
+            )
         };
 
         let mut type_list: Vec<&str> = types.into_iter().collect();
@@ -724,8 +728,14 @@ where
 /// No panics possible — this function only performs in-place filtering.
 fn filter_sensitive_entities(result: &mut ExtractionResult) {
     let sensitive_patterns = [
-        "password", "secret", "token", "api_key", "mfa",
-        "credential", "certificate", "private_key",
+        "password",
+        "secret",
+        "token",
+        "api_key",
+        "mfa",
+        "credential",
+        "certificate",
+        "private_key",
     ];
 
     result.entities.retain(|e| {
@@ -739,9 +749,9 @@ fn filter_sensitive_entities(result: &mut ExtractionResult) {
     // Remove relations whose source or target was filtered out
     let entity_names: std::collections::HashSet<String> =
         result.entities.iter().map(|e| e.name.clone()).collect();
-    result.relations.retain(|r| {
-        entity_names.contains(&r.source) && entity_names.contains(&r.target)
-    });
+    result
+        .relations
+        .retain(|r| entity_names.contains(&r.source) && entity_names.contains(&r.target));
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -760,11 +770,7 @@ fn strip_markdown_fences(s: &str) -> &str {
         return s;
     };
     // Strip trailing fence, then trim whitespace
-    inner
-        .trim_end()
-        .strip_suffix("```")
-        .unwrap_or(inner)
-        .trim()
+    inner.trim_end().strip_suffix("```").unwrap_or(inner).trim()
 }
 
 /// Split text into chunks of approximately `max_chars` characters,
@@ -831,7 +837,11 @@ mod tests {
         filter_sensitive_entities(&mut result);
         assert_eq!(result.entities.len(), 1, "Only 'Admin User' should remain");
         assert_eq!(result.entities[0].name, "Admin User");
-        assert_eq!(result.relations.len(), 0, "Relation should be removed (target filtered)");
+        assert_eq!(
+            result.relations.len(),
+            0,
+            "Relation should be removed (target filtered)"
+        );
     }
 
     #[test]

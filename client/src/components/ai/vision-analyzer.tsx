@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   Eye,
   Loader2,
@@ -11,22 +11,17 @@ import {
   ImageIcon,
   Layers,
   Plus,
-} from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from '@/components/ui/tabs';
-import { toast } from 'sonner';
-import { useAiVision } from '@/hooks/use-ai-vision';
+} from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { toast } from "sonner";
+import { useAiVision } from "@/hooks/use-ai-vision";
 
 // ─── File drop helper ────────────────────────────────────────────────────────
 
@@ -49,7 +44,7 @@ function ImageDropZone({
       e.preventDefault();
       setDragOver(false);
       const f = e.dataTransfer.files[0];
-      if (f && f.type.startsWith('image/')) onFile(f);
+      if (f && f.type.startsWith("image/")) onFile(f);
     },
     [onFile],
   );
@@ -65,8 +60,8 @@ function ImageDropZone({
       onClick={() => inputRef.current?.click()}
       className={`
         border-2 border-dashed rounded-lg text-center cursor-pointer transition-colors overflow-hidden
-        ${dragOver ? 'border-primary bg-primary/5' : 'border-muted-foreground/25 hover:border-primary/50'}
-        ${previewUrl ? 'p-0' : 'p-8'}
+        ${dragOver ? "border-primary bg-primary/5" : "border-muted-foreground/25 hover:border-primary/50"}
+        ${previewUrl ? "p-0" : "p-8"}
       `}
     >
       <input
@@ -126,25 +121,18 @@ function ImageDropZone({
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export function VisionAnalyzer() {
-  const {
-    analyzing,
-    result,
-    vqaResult,
-    error,
-    describe,
-    vqa,
-    reset,
-  } = useAiVision();
+  const { analyzing, result, vqaResult, error, describe, vqa, reset } =
+    useAiVision();
 
   // --- Describe mode ---
   const [describeFile, setDescribeFile] = useState<File | null>(null);
   const [describePreview, setDescribePreview] = useState<string | null>(null);
-  const [describePrompt, setDescribePrompt] = useState('');
+  const [describePrompt, setDescribePrompt] = useState("");
 
   // --- VQA mode ---
   const [vqaFile, setVqaFile] = useState<File | null>(null);
   const [vqaPreview, setVqaPreview] = useState<string | null>(null);
-  const [vqaQuestion, setVqaQuestion] = useState('');
+  const [vqaQuestion, setVqaQuestion] = useState("");
 
   // --- Batch mode ---
   const [batchFiles, setBatchFiles] = useState<File[]>([]);
@@ -161,10 +149,7 @@ export function VisionAnalyzer() {
 
   // Generate preview URLs for file changes
   const updatePreview = useCallback(
-    (
-      file: File | null,
-      setter: (url: string | null) => void,
-    ) => {
+    (file: File | null, setter: (url: string | null) => void) => {
       if (file) {
         const url = URL.createObjectURL(file);
         setter(url);
@@ -189,7 +174,7 @@ export function VisionAnalyzer() {
 
   const handleDescribe = useCallback(() => {
     if (!describeFile) {
-      toast.error('Veuillez fournir une image');
+      toast.error("Veuillez fournir une image");
       return;
     }
     describe(describeFile, describePrompt.trim() || undefined);
@@ -197,28 +182,31 @@ export function VisionAnalyzer() {
 
   const handleVqa = useCallback(() => {
     if (!vqaFile) {
-      toast.error('Veuillez fournir une image');
+      toast.error("Veuillez fournir une image");
       return;
     }
     if (!vqaQuestion.trim()) {
-      toast.error('Veuillez poser une question');
+      toast.error("Veuillez poser une question");
       return;
     }
     vqa(vqaFile, vqaQuestion.trim());
   }, [vqaFile, vqaQuestion, vqa]);
 
-  const handleBatchAdd = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files ?? []);
-    const imageFiles = files.filter((f) => f.type.startsWith('image/'));
-    if (imageFiles.length === 0) return;
+  const handleBatchAdd = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const files = Array.from(e.target.files ?? []);
+      const imageFiles = files.filter((f) => f.type.startsWith("image/"));
+      if (imageFiles.length === 0) return;
 
-    setBatchFiles((prev) => [...prev, ...imageFiles]);
-    const previews = imageFiles.map((f) => URL.createObjectURL(f));
-    setBatchPreviews((prev) => [...prev, ...previews]);
+      setBatchFiles((prev) => [...prev, ...imageFiles]);
+      const previews = imageFiles.map((f) => URL.createObjectURL(f));
+      setBatchPreviews((prev) => [...prev, ...previews]);
 
-    // Reset input so same files can be re-selected
-    if (batchInputRef.current) batchInputRef.current.value = '';
-  }, []);
+      // Reset input so same files can be re-selected
+      if (batchInputRef.current) batchInputRef.current.value = "";
+    },
+    [],
+  );
 
   const handleBatchRemove = useCallback((index: number) => {
     setBatchFiles((prev) => prev.filter((_, i) => i !== index));
@@ -231,14 +219,15 @@ export function VisionAnalyzer() {
 
   const handleBatchDescribe = useCallback(async () => {
     if (batchFiles.length === 0) {
-      toast.error('Veuillez ajouter au moins une image');
+      toast.error("Veuillez ajouter au moins une image");
       return;
     }
 
     setBatchProcessing(true);
     setBatchResults([]);
 
-    const results: { file: string; description: string; tags?: string[] }[] = [];
+    const results: { file: string; description: string; tags?: string[] }[] =
+      [];
 
     for (const file of batchFiles) {
       try {
@@ -255,7 +244,7 @@ export function VisionAnalyzer() {
       } catch {
         results.push({
           file: file.name,
-          description: 'Erreur lors de l\'analyse',
+          description: "Erreur lors de l'analyse",
         });
       }
     }
@@ -351,12 +340,18 @@ export function VisionAnalyzer() {
                       </Badge>
                     )}
                   </div>
-                  <p className="text-sm leading-relaxed">{result.description}</p>
+                  <p className="text-sm leading-relaxed">
+                    {result.description}
+                  </p>
 
                   {result.tags && result.tags.length > 0 && (
                     <div className="flex flex-wrap gap-1">
                       {result.tags.map((tag) => (
-                        <Badge key={tag} variant="secondary" className="text-xs">
+                        <Badge
+                          key={tag}
+                          variant="secondary"
+                          className="text-xs"
+                        >
                           {tag}
                         </Badge>
                       ))}
@@ -416,7 +411,7 @@ export function VisionAnalyzer() {
                 onChange={(e) => setVqaQuestion(e.target.value)}
                 disabled={analyzing}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
+                  if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault();
                     handleVqa();
                   }
@@ -456,7 +451,9 @@ export function VisionAnalyzer() {
                     )}
                   </div>
                   <div className="rounded-lg border bg-muted/30 p-4">
-                    <p className="text-sm leading-relaxed">{vqaResult.answer}</p>
+                    <p className="text-sm leading-relaxed">
+                      {vqaResult.answer}
+                    </p>
                   </div>
                   <div className="flex justify-end">
                     <Button variant="outline" size="sm" onClick={() => reset()}>
@@ -490,11 +487,14 @@ export function VisionAnalyzer() {
               {batchPreviews.length > 0 && (
                 <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                   {batchPreviews.map((url, i) => (
-                    <div key={i} className="relative rounded-lg border overflow-hidden group">
+                    <div
+                      key={i}
+                      className="relative rounded-lg border overflow-hidden group"
+                    >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={url}
-                        alt={batchFiles[i]?.name ?? ''}
+                        alt={batchFiles[i]?.name ?? ""}
                         className="w-full h-20 object-cover"
                       />
                       <Button
@@ -534,7 +534,8 @@ export function VisionAnalyzer() {
               ) : (
                 <>
                   <Layers className="h-4 w-4 mr-2" />
-                  Analyser {batchFiles.length} image{batchFiles.length !== 1 ? 's' : ''}
+                  Analyser {batchFiles.length} image
+                  {batchFiles.length !== 1 ? "s" : ""}
                 </>
               )}
             </Button>
@@ -545,20 +546,30 @@ export function VisionAnalyzer() {
                 <Separator />
                 <div className="space-y-3">
                   <h3 className="text-sm font-semibold">
-                    Résultats ({batchResults.length} image{batchResults.length !== 1 ? 's' : ''})
+                    Résultats ({batchResults.length} image
+                    {batchResults.length !== 1 ? "s" : ""})
                   </h3>
                   <div className="space-y-2 max-h-96 overflow-y-auto">
                     {batchResults.map((r, i) => (
-                      <div key={i} className="p-3 rounded-lg border bg-muted/30 space-y-1">
+                      <div
+                        key={i}
+                        className="p-3 rounded-lg border bg-muted/30 space-y-1"
+                      >
                         <div className="flex items-center gap-2">
                           <ImageIcon className="h-3 w-3 text-muted-foreground" />
-                          <span className="text-xs font-medium truncate">{r.file}</span>
+                          <span className="text-xs font-medium truncate">
+                            {r.file}
+                          </span>
                         </div>
                         <p className="text-sm">{r.description}</p>
                         {r.tags && r.tags.length > 0 && (
                           <div className="flex flex-wrap gap-1 pt-1">
                             {r.tags.map((tag) => (
-                              <Badge key={tag} variant="secondary" className="text-[10px]">
+                              <Badge
+                                key={tag}
+                                variant="secondary"
+                                className="text-[10px]"
+                              >
                                 {tag}
                               </Badge>
                             ))}

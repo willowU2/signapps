@@ -1,35 +1,40 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
   SheetDescription,
-} from '@/components/ui/sheet';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+} from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Separator } from '@/components/ui/separator';
-import { orgApi } from '@/lib/api/org';
-import type { Person, PersonRole, Assignment, AssignmentHistory } from '@/types/org';
+} from "@/components/ui/select";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Separator } from "@/components/ui/separator";
+import { orgApi } from "@/lib/api/org";
+import type {
+  Person,
+  PersonRole,
+  Assignment,
+  AssignmentHistory,
+} from "@/types/org";
 import {
   Plus,
   Link2,
@@ -37,9 +42,9 @@ import {
   Clock,
   Briefcase,
   Activity,
-} from 'lucide-react';
-import { toast } from 'sonner';
-import { cn } from '@/lib/utils';
+} from "lucide-react";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 interface AssignmentPanelProps {
   person: Person | null;
@@ -49,18 +54,30 @@ interface AssignmentPanelProps {
 }
 
 const ASSIGNMENT_TYPE_LABELS: Record<string, string> = {
-  holder: 'Titulaire',
-  interim: 'Intérimaire',
-  deputy: 'Adjoint',
-  intern: 'Stagiaire',
-  contractor: 'Prestataire',
+  holder: "Titulaire",
+  interim: "Intérimaire",
+  deputy: "Adjoint",
+  intern: "Stagiaire",
+  contractor: "Prestataire",
 };
 
-const RESPONSIBILITY_LABELS: Record<string, { label: string; color: string }> = {
-  hierarchical: { label: 'Hiérarchique', color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' },
-  functional: { label: 'Fonctionnel', color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' },
-  matrix: { label: 'Matriciel', color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400' },
-};
+const RESPONSIBILITY_LABELS: Record<string, { label: string; color: string }> =
+  {
+    hierarchical: {
+      label: "Hiérarchique",
+      color: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+    },
+    functional: {
+      label: "Fonctionnel",
+      color:
+        "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+    },
+    matrix: {
+      label: "Matriciel",
+      color:
+        "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
+    },
+  };
 
 export function AssignmentPanel({
   person,
@@ -74,16 +91,19 @@ export function AssignmentPanel({
   const [loading, setLoading] = useState(false);
   const [addAssignOpen, setAddAssignOpen] = useState(false);
   const [linkUserOpen, setLinkUserOpen] = useState(false);
-  const [linkUserId, setLinkUserId] = useState('');
+  const [linkUserId, setLinkUserId] = useState("");
   const [linking, setLinking] = useState(false);
 
   // New assignment form
-  const [nodeId, setNodeId] = useState('');
-  const [assignmentType, setAssignmentType] = useState<string>('holder');
-  const [responsibilityType, setResponsibilityType] = useState<string>('hierarchical');
-  const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
-  const [endDate, setEndDate] = useState('');
-  const [fteRatio, setFteRatio] = useState('1.0');
+  const [nodeId, setNodeId] = useState("");
+  const [assignmentType, setAssignmentType] = useState<string>("holder");
+  const [responsibilityType, setResponsibilityType] =
+    useState<string>("hierarchical");
+  const [startDate, setStartDate] = useState(
+    new Date().toISOString().split("T")[0],
+  );
+  const [endDate, setEndDate] = useState("");
+  const [fteRatio, setFteRatio] = useState("1.0");
   const [submitting, setSubmitting] = useState(false);
 
   const loadData = useCallback(async () => {
@@ -95,9 +115,11 @@ export function AssignmentPanel({
         orgApi.persons.history(person.id),
         orgApi.persons.get(person.id),
       ]);
-      if (assignRes.status === 'fulfilled') setAssignments(assignRes.value.data ?? []);
-      if (histRes.status === 'fulfilled') setHistory(histRes.value.data ?? []);
-      if (detailRes.status === 'fulfilled') setRoles(detailRes.value.data?.roles ?? []);
+      if (assignRes.status === "fulfilled")
+        setAssignments(assignRes.value.data ?? []);
+      if (histRes.status === "fulfilled") setHistory(histRes.value.data ?? []);
+      if (detailRes.status === "fulfilled")
+        setRoles(detailRes.value.data?.roles ?? []);
     } finally {
       setLoading(false);
     }
@@ -114,16 +136,17 @@ export function AssignmentPanel({
       await orgApi.assignments.create({
         person_id: person.id,
         node_id: nodeId.trim(),
-        assignment_type: assignmentType as Assignment['assignment_type'],
-        responsibility_type: responsibilityType as Assignment['responsibility_type'],
+        assignment_type: assignmentType as Assignment["assignment_type"],
+        responsibility_type:
+          responsibilityType as Assignment["responsibility_type"],
         start_date: startDate,
         end_date: endDate || undefined,
         fte_ratio: parseFloat(fteRatio) || 1.0,
         is_primary: assignments.length === 0,
       });
-      toast.success('Affectation créée');
+      toast.success("Affectation créée");
       setAddAssignOpen(false);
-      setNodeId('');
+      setNodeId("");
       loadData();
       onPersonUpdated?.();
     } catch {
@@ -136,7 +159,7 @@ export function AssignmentPanel({
   const handleEndAssignment = async (assignmentId: string) => {
     try {
       await orgApi.assignments.end(assignmentId);
-      toast.success('Affectation terminée');
+      toast.success("Affectation terminée");
       loadData();
       onPersonUpdated?.();
     } catch {
@@ -149,12 +172,12 @@ export function AssignmentPanel({
     setLinking(true);
     try {
       await orgApi.persons.linkUser(person.id, linkUserId.trim());
-      toast.success('Compte utilisateur lié');
+      toast.success("Compte utilisateur lié");
       setLinkUserOpen(false);
-      setLinkUserId('');
+      setLinkUserId("");
       onPersonUpdated?.();
     } catch {
-      toast.error('Erreur lors du lien');
+      toast.error("Erreur lors du lien");
     } finally {
       setLinking(false);
     }
@@ -164,17 +187,20 @@ export function AssignmentPanel({
     if (!person) return;
     try {
       await orgApi.persons.unlinkUser(person.id);
-      toast.success('Compte utilisateur délié');
+      toast.success("Compte utilisateur délié");
       onPersonUpdated?.();
     } catch {
-      toast.error('Erreur lors du délien');
+      toast.error("Erreur lors du délien");
     }
   };
 
   if (!person) return null;
 
-  const initials = `${person.first_name[0] ?? ''}${person.last_name[0] ?? ''}`.toUpperCase();
-  const activeAssignments = assignments.filter((a) => !a.end_date || new Date(a.end_date) > new Date());
+  const initials =
+    `${person.first_name[0] ?? ""}${person.last_name[0] ?? ""}`.toUpperCase();
+  const activeAssignments = assignments.filter(
+    (a) => !a.end_date || new Date(a.end_date) > new Date(),
+  );
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -182,11 +208,17 @@ export function AssignmentPanel({
         <SheetHeader className="pb-4">
           <div className="flex items-center gap-3">
             <Avatar className="h-12 w-12">
-              <AvatarFallback className="font-semibold">{initials}</AvatarFallback>
+              <AvatarFallback className="font-semibold">
+                {initials}
+              </AvatarFallback>
             </Avatar>
             <div>
-              <SheetTitle>{person.first_name} {person.last_name}</SheetTitle>
-              <SheetDescription>{person.email ?? 'Pas d\'email'}</SheetDescription>
+              <SheetTitle>
+                {person.first_name} {person.last_name}
+              </SheetTitle>
+              <SheetDescription>
+                {person.email ?? "Pas d'email"}
+              </SheetDescription>
             </div>
           </div>
 
@@ -198,7 +230,11 @@ export function AssignmentPanel({
                 Délier le compte
               </Button>
             ) : (
-              <Button size="sm" variant="outline" onClick={() => setLinkUserOpen(true)}>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setLinkUserOpen(true)}
+              >
                 <Link2 className="h-4 w-4 mr-1" />
                 Lier un compte
               </Button>
@@ -226,7 +262,11 @@ export function AssignmentPanel({
                     Affectations actives ({activeAssignments.length})
                   </h4>
                 </div>
-                <Button size="sm" variant="outline" onClick={() => setAddAssignOpen(true)}>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setAddAssignOpen(true)}
+                >
                   <Plus className="h-4 w-4 mr-1" />
                   Affecter
                 </Button>
@@ -239,38 +279,61 @@ export function AssignmentPanel({
               ) : (
                 <div className="space-y-2">
                   {activeAssignments.map((a) => {
-                    const respCfg = RESPONSIBILITY_LABELS[a.responsibility_type];
+                    const respCfg =
+                      RESPONSIBILITY_LABELS[a.responsibility_type];
                     return (
-                      <div key={a.id} className="p-3 rounded-lg border border-border bg-card">
+                      <div
+                        key={a.id}
+                        className="p-3 rounded-lg border border-border bg-card"
+                      >
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
-                              <p className="text-sm font-medium truncate">{a.node_id}</p>
+                              <p className="text-sm font-medium truncate">
+                                {a.node_id}
+                              </p>
                               {a.is_primary && (
-                                <Badge variant="secondary" className="text-[10px] px-1 py-0">
+                                <Badge
+                                  variant="secondary"
+                                  className="text-[10px] px-1 py-0"
+                                >
                                   Principal
                                 </Badge>
                               )}
                             </div>
                             <div className="flex items-center gap-2 mt-1 flex-wrap">
-                              <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-                                {ASSIGNMENT_TYPE_LABELS[a.assignment_type] ?? a.assignment_type}
+                              <Badge
+                                variant="outline"
+                                className="text-[10px] px-1.5 py-0"
+                              >
+                                {ASSIGNMENT_TYPE_LABELS[a.assignment_type] ??
+                                  a.assignment_type}
                               </Badge>
                               {respCfg && (
-                                <span className={cn('text-[10px] px-1.5 py-0.5 rounded-full font-medium', respCfg.color)}>
+                                <span
+                                  className={cn(
+                                    "text-[10px] px-1.5 py-0.5 rounded-full font-medium",
+                                    respCfg.color,
+                                  )}
+                                >
                                   {respCfg.label}
                                 </span>
                               )}
                             </div>
                             <p className="text-xs text-muted-foreground mt-1">
-                              Depuis {new Date(a.start_date).toLocaleDateString('fr-FR')}
+                              Depuis{" "}
+                              {new Date(a.start_date).toLocaleDateString(
+                                "fr-FR",
+                              )}
                             </p>
                             {/* FTE bar */}
                             <div className="mt-2 flex items-center gap-2">
                               <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
                                 <div
                                   className="h-full bg-primary rounded-full"
-                                  style={{ width: `${Math.min(a.fte_ratio * 100, 100)}%` }}
+                                  style={{
+                                    width: `${Math.min(a.fte_ratio * 100, 100)}%`,
+                                  }}
                                 />
                               </div>
                               <span className="text-[10px] text-muted-foreground shrink-0">
@@ -300,7 +363,9 @@ export function AssignmentPanel({
             <div>
               <div className="flex items-center gap-2 mb-3">
                 <Clock className="h-4 w-4 text-muted-foreground" />
-                <h4 className="text-sm font-semibold">Historique ({history.length})</h4>
+                <h4 className="text-sm font-semibold">
+                  Historique ({history.length})
+                </h4>
               </div>
               {history.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-4">
@@ -313,18 +378,27 @@ export function AssignmentPanel({
                       <div className="absolute -left-4 mt-1 h-3 w-3 rounded-full border-2 border-primary bg-background shrink-0" />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                          <Badge
+                            variant="outline"
+                            className="text-[10px] px-1.5 py-0"
+                          >
                             {h.action}
                           </Badge>
                           <span className="text-xs text-muted-foreground">
-                            {new Date(h.effective_date).toLocaleDateString('fr-FR')}
+                            {new Date(h.effective_date).toLocaleDateString(
+                              "fr-FR",
+                            )}
                           </span>
                         </div>
                         {h.reason && (
-                          <p className="text-xs text-muted-foreground mt-0.5 truncate">{h.reason}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                            {h.reason}
+                          </p>
                         )}
                         {h.changed_by && (
-                          <p className="text-[10px] text-muted-foreground">par {h.changed_by}</p>
+                          <p className="text-[10px] text-muted-foreground">
+                            par {h.changed_by}
+                          </p>
                         )}
                       </div>
                     </div>
@@ -355,26 +429,36 @@ export function AssignmentPanel({
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
                 <Label>Type d'affectation</Label>
-                <Select value={assignmentType} onValueChange={setAssignmentType}>
+                <Select
+                  value={assignmentType}
+                  onValueChange={setAssignmentType}
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     {Object.entries(ASSIGNMENT_TYPE_LABELS).map(([k, v]) => (
-                      <SelectItem key={k} value={k}>{v}</SelectItem>
+                      <SelectItem key={k} value={k}>
+                        {v}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
                 <Label>Responsabilité</Label>
-                <Select value={responsibilityType} onValueChange={setResponsibilityType}>
+                <Select
+                  value={responsibilityType}
+                  onValueChange={setResponsibilityType}
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     {Object.entries(RESPONSIBILITY_LABELS).map(([k, v]) => (
-                      <SelectItem key={k} value={k}>{v.label}</SelectItem>
+                      <SelectItem key={k} value={k}>
+                        {v.label}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -417,8 +501,11 @@ export function AssignmentPanel({
             <Button variant="outline" onClick={() => setAddAssignOpen(false)}>
               Annuler
             </Button>
-            <Button onClick={handleAddAssignment} disabled={submitting || !nodeId.trim()}>
-              {submitting ? 'Création...' : 'Créer'}
+            <Button
+              onClick={handleAddAssignment}
+              disabled={submitting || !nodeId.trim()}
+            >
+              {submitting ? "Création..." : "Créer"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -448,8 +535,11 @@ export function AssignmentPanel({
             <Button variant="outline" onClick={() => setLinkUserOpen(false)}>
               Annuler
             </Button>
-            <Button onClick={handleLinkUser} disabled={linking || !linkUserId.trim()}>
-              {linking ? 'Liaison...' : 'Lier'}
+            <Button
+              onClick={handleLinkUser}
+              disabled={linking || !linkUserId.trim()}
+            >
+              {linking ? "Liaison..." : "Lier"}
             </Button>
           </DialogFooter>
         </DialogContent>

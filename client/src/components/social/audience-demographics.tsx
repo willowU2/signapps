@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Users, MapPin, User2 } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Users, MapPin, User2 } from "lucide-react";
 import {
   PieChart,
   Pie,
@@ -15,7 +15,7 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
-} from 'recharts';
+} from "recharts";
 
 // ---------------------------------------------------------------------------
 // Demographics waiting for backend API support
@@ -35,7 +35,12 @@ function CustomTooltip({ active, payload }: any) {
   const { name, value } = payload[0];
   return (
     <div className="rounded-lg border bg-popover px-3 py-2 text-sm shadow-md">
-      <span className="font-medium">{name ?? payload[0].payload.label ?? payload[0].payload.country ?? payload[0].payload.city}</span>
+      <span className="font-medium">
+        {name ??
+          payload[0].payload.label ??
+          payload[0].payload.country ??
+          payload[0].payload.city}
+      </span>
       <span className="ml-2 text-muted-foreground">{value}%</span>
     </div>
   );
@@ -45,14 +50,30 @@ function CustomTooltip({ active, payload }: any) {
 // Pie label renderer
 // ---------------------------------------------------------------------------
 
-function renderLabel({ cx, cy, midAngle, innerRadius, outerRadius, percent, label }: any) {
+function renderLabel({
+  cx,
+  cy,
+  midAngle,
+  innerRadius,
+  outerRadius,
+  percent,
+  label,
+}: any) {
   const RADIAN = Math.PI / 180;
   const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
   const x = cx + radius * Math.cos(-midAngle * RADIAN);
   const y = cy + radius * Math.sin(-midAngle * RADIAN);
   if (percent < 0.05) return null;
   return (
-    <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central" fontSize={11} fontWeight={600}>
+    <text
+      x={x}
+      y={y}
+      fill="white"
+      textAnchor="middle"
+      dominantBaseline="central"
+      fontSize={11}
+      fontWeight={600}
+    >
       {`${(percent * 100).toFixed(0)}%`}
     </text>
   );
@@ -99,7 +120,9 @@ export function AudienceDemographics() {
                 </Pie>
                 <Tooltip content={<CustomTooltip />} />
                 <Legend
-                  formatter={(value) => <span className="text-xs">{value}</span>}
+                  formatter={(value) => (
+                    <span className="text-xs">{value}</span>
+                  )}
                 />
               </PieChart>
             </ResponsiveContainer>
@@ -134,7 +157,9 @@ export function AudienceDemographics() {
                 </Pie>
                 <Tooltip content={<CustomTooltip />} />
                 <Legend
-                  formatter={(value) => <span className="text-xs">{value}</span>}
+                  formatter={(value) => (
+                    <span className="text-xs">{value}</span>
+                  )}
                 />
               </PieChart>
             </ResponsiveContainer>
@@ -157,11 +182,30 @@ export function AudienceDemographics() {
               layout="vertical"
               margin={{ top: 0, right: 20, bottom: 0, left: 60 }}
             >
-              <CartesianGrid strokeDasharray="3 3" horizontal={false} className="opacity-30" />
-              <XAxis type="number" tick={{ fontSize: 11 }} unit="%" domain={[0, 'auto']} />
-              <YAxis type="category" dataKey="country" tick={{ fontSize: 11 }} width={60} />
-              <Tooltip formatter={(v) => [`${v}%`, 'Share']} />
-              <Bar dataKey="value" fill="#3b82f6" radius={[0, 4, 4, 0]} name="Share" />
+              <CartesianGrid
+                strokeDasharray="3 3"
+                horizontal={false}
+                className="opacity-30"
+              />
+              <XAxis
+                type="number"
+                tick={{ fontSize: 11 }}
+                unit="%"
+                domain={[0, "auto"]}
+              />
+              <YAxis
+                type="category"
+                dataKey="country"
+                tick={{ fontSize: 11 }}
+                width={60}
+              />
+              <Tooltip formatter={(v) => [`${v}%`, "Share"]} />
+              <Bar
+                dataKey="value"
+                fill="#3b82f6"
+                radius={[0, 4, 4, 0]}
+                name="Share"
+              />
             </BarChart>
           </ResponsiveContainer>
         </CardContent>
@@ -177,12 +221,20 @@ export function AudienceDemographics() {
         </CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={160}>
-            <BarChart data={TOP_CITIES} margin={{ top: 0, right: 20, bottom: 0, left: 60 }}>
+            <BarChart
+              data={TOP_CITIES}
+              margin={{ top: 0, right: 20, bottom: 0, left: 60 }}
+            >
               <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
               <XAxis dataKey="city" tick={{ fontSize: 11 }} />
               <YAxis tick={{ fontSize: 11 }} unit="%" />
-              <Tooltip formatter={(v) => [`${v}%`, 'Share']} />
-              <Bar dataKey="value" fill="#8b5cf6" radius={[4, 4, 0, 0]} name="Share" />
+              <Tooltip formatter={(v) => [`${v}%`, "Share"]} />
+              <Bar
+                dataKey="value"
+                fill="#8b5cf6"
+                radius={[4, 4, 0, 0]}
+                name="Share"
+              />
             </BarChart>
           </ResponsiveContainer>
         </CardContent>

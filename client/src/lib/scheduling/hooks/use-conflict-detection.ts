@@ -4,16 +4,16 @@
  * React hook for detecting scheduling conflicts and suggesting alternatives.
  */
 
-import * as React from 'react';
-import { useEvents } from '../api/calendar';
+import * as React from "react";
+import { useEvents } from "../api/calendar";
 import {
   checkConflicts,
   suggestAlternativeTimes,
   type ConflictResult,
   type AvailableSlot,
   type ConflictCheckOptions,
-} from '../utils/conflict-detection';
-import { addDays, startOfDay, endOfDay } from 'date-fns';
+} from "../utils/conflict-detection";
+import { addDays, startOfDay, endOfDay } from "date-fns";
 
 // ============================================================================
 // Types
@@ -42,7 +42,7 @@ interface ConflictDetectionResult extends ConflictResult {
 // ============================================================================
 
 export function useConflictDetection(
-  options: UseConflictDetectionOptions = {}
+  options: UseConflictDetectionOptions = {},
 ): ConflictDetectionResult {
   const {
     bufferMinutes = 0,
@@ -59,12 +59,18 @@ export function useConflictDetection(
     totalOverlapMinutes: 0,
   });
   const [suggestions, setSuggestions] = React.useState<AvailableSlot[]>([]);
-  const [proposedTime, setProposedTime] = React.useState<{ start: Date; end: Date } | null>(null);
+  const [proposedTime, setProposedTime] = React.useState<{
+    start: Date;
+    end: Date;
+  } | null>(null);
 
   // Fetch events for a broad range to check conflicts
   const dateRange = React.useMemo(() => {
     if (!proposedTime) {
-      return { start: startOfDay(new Date()), end: endOfDay(addDays(new Date(), 30)) };
+      return {
+        start: startOfDay(new Date()),
+        end: endOfDay(addDays(new Date(), 30)),
+      };
     }
     return {
       start: startOfDay(proposedTime.start),
@@ -78,10 +84,15 @@ export function useConflictDetection(
   React.useEffect(() => {
     if (!proposedTime || isLoading) return;
 
-    const conflictResult = checkConflicts(proposedTime.start, proposedTime.end, events, {
-      bufferMinutes,
-      excludeIds,
-    });
+    const conflictResult = checkConflicts(
+      proposedTime.start,
+      proposedTime.end,
+      events,
+      {
+        bufferMinutes,
+        excludeIds,
+      },
+    );
 
     setResult(conflictResult);
 
@@ -95,7 +106,7 @@ export function useConflictDetection(
           maxSuggestions,
           workingHoursStart,
           workingHoursEnd,
-        }
+        },
       );
       setSuggestions(alternativeSlots);
     } else {
@@ -141,7 +152,7 @@ export function useConflictDetection(
 // ============================================================================
 
 export function useConflictDetectionDebounced(
-  options: UseConflictDetectionOptions & { debounceMs?: number } = {}
+  options: UseConflictDetectionOptions & { debounceMs?: number } = {},
 ): ConflictDetectionResult {
   const { debounceMs = 300, ...restOptions } = options;
   const detection = useConflictDetection(restOptions);
@@ -157,7 +168,7 @@ export function useConflictDetectionDebounced(
         detection.checkForConflicts(start, end);
       }, debounceMs);
     },
-    [detection, debounceMs]
+    [detection, debounceMs],
   );
 
   // Cleanup on unmount

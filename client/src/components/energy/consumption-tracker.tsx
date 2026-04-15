@@ -28,7 +28,10 @@ interface ConsumptionTrackerProps {
 }
 
 // Generate a plausible 30-day trend from previousMonth to currentMonth
-function buildChartData(prev: number, curr: number): { day: string; kWh: number }[] {
+function buildChartData(
+  prev: number,
+  curr: number,
+): { day: string; kWh: number }[] {
   const points: { day: string; kWh: number }[] = [];
   const dailyPrev = prev / 30;
   const dailyCurr = curr / 30;
@@ -37,7 +40,10 @@ function buildChartData(prev: number, curr: number): { day: string; kWh: number 
     const base = dailyPrev + (dailyCurr - dailyPrev) * t;
     // Add slight variance (±8%)
     const variance = base * 0.08 * (Math.sin(i * 2.3) * 0.5 + 0.5 - 0.25);
-    points.push({ day: `D${i}`, kWh: parseFloat((base + variance).toFixed(1)) });
+    points.push({
+      day: `D${i}`,
+      kWh: parseFloat((base + variance).toFixed(1)),
+    });
   }
   return points;
 }
@@ -46,16 +52,19 @@ export function ConsumptionTracker({ data }: ConsumptionTrackerProps) {
   const kWhDifference = data.currentMonth.kWh - data.previousMonth.kWh;
   const costDifference = data.currentMonth.cost - data.previousMonth.cost;
   const kWhChangePercent = Math.round(
-    ((kWhDifference / data.previousMonth.kWh) * 100)
+    (kWhDifference / data.previousMonth.kWh) * 100,
   );
   const costChangePercent = Math.round(
-    ((costDifference / data.previousMonth.cost) * 100)
+    (costDifference / data.previousMonth.cost) * 100,
   );
 
   const isConsumptionUp = kWhDifference > 0;
   const isCostUp = costDifference > 0;
 
-  const chartData = buildChartData(data.previousMonth.kWh, data.currentMonth.kWh);
+  const chartData = buildChartData(
+    data.previousMonth.kWh,
+    data.currentMonth.kWh,
+  );
 
   return (
     <div className="space-y-4 w-full max-w-2xl">
@@ -65,7 +74,10 @@ export function ConsumptionTracker({ data }: ConsumptionTrackerProps) {
         {/* Real recharts LineChart */}
         <div className="w-full h-48">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={chartData} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
+            <LineChart
+              data={chartData}
+              margin={{ top: 4, right: 8, left: 0, bottom: 0 }}
+            >
               <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
               <XAxis
                 dataKey="day"
@@ -81,7 +93,9 @@ export function ConsumptionTracker({ data }: ConsumptionTrackerProps) {
                 width={60}
               />
               <Tooltip
-                formatter={(v: unknown) => [`${v ?? 0} kWh`, "Consumption"] as [string, string]}
+                formatter={(v: unknown) =>
+                  [`${v ?? 0} kWh`, "Consumption"] as [string, string]
+                }
                 contentStyle={{ fontSize: 12 }}
               />
               <Line
@@ -133,11 +147,15 @@ export function ConsumptionTracker({ data }: ConsumptionTrackerProps) {
               ) : (
                 <TrendingDown className="w-5 h-5 text-green-500" />
               )}
-              <p className={`text-lg font-semibold ${isConsumptionUp ? "text-red-500" : "text-green-500"}`}>
-                {isConsumptionUp ? "+" : ""}{kWhDifference} kWh
+              <p
+                className={`text-lg font-semibold ${isConsumptionUp ? "text-red-500" : "text-green-500"}`}
+              >
+                {isConsumptionUp ? "+" : ""}
+                {kWhDifference} kWh
               </p>
               <p className="text-sm text-muted-foreground">
-                ({isConsumptionUp ? "+" : ""}{kWhChangePercent}%)
+                ({isConsumptionUp ? "+" : ""}
+                {kWhChangePercent}%)
               </p>
             </div>
           </div>
@@ -150,11 +168,14 @@ export function ConsumptionTracker({ data }: ConsumptionTrackerProps) {
               ) : (
                 <TrendingDown className="w-5 h-5 text-green-500" />
               )}
-              <p className={`text-lg font-semibold ${isCostUp ? "text-red-500" : "text-green-500"}`}>
+              <p
+                className={`text-lg font-semibold ${isCostUp ? "text-red-500" : "text-green-500"}`}
+              >
                 {isCostUp ? "+" : ""}${costDifference.toFixed(2)}
               </p>
               <p className="text-sm text-muted-foreground">
-                ({isCostUp ? "+" : ""}{costChangePercent}%)
+                ({isCostUp ? "+" : ""}
+                {costChangePercent}%)
               </p>
             </div>
           </div>

@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import * as React from 'react';
-import { TooltipProvider } from '@/components/ui/tooltip';
-import { AppLayout } from '@/components/layout/app-layout';
+import * as React from "react";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { AppLayout } from "@/components/layout/app-layout";
 
 export default function SchedulingLayout({
   children,
@@ -11,9 +11,7 @@ export default function SchedulingLayout({
 }) {
   return (
     <AppLayout>
-      <TooltipProvider>
-        {children}
-      </TooltipProvider>
+      <TooltipProvider>{children}</TooltipProvider>
     </AppLayout>
   );
 }

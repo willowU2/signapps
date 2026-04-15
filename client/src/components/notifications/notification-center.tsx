@@ -1,11 +1,15 @@
-'use client';
+"use client";
 
-import { useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/button';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
+import { useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
 import {
   Bell,
   Container,
@@ -19,9 +23,9 @@ import {
   BellOff,
   Trash2,
   Check,
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { playNotificationSound } from '@/components/notifications/notification-sounds';
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { playNotificationSound } from "@/components/notifications/notification-sounds";
 import {
   useNotificationStore,
   useNotifications,
@@ -30,21 +34,21 @@ import {
   type AppNotification,
   type NotificationType,
   type NotificationStatus,
-} from '@/stores/notification-store';
+} from "@/stores/notification-store";
 
 // ─── Navigation map ──────────────────────────────────────────────────────────
 
 /** Map notification types to their target page */
 function getNotificationHref(notification: AppNotification): string | null {
   switch (notification.type) {
-    case 'container':
-      return '/containers';
-    case 'security':
-      return '/security';
-    case 'storage':
-      return '/storage';
-    case 'user':
-      return '/identity';
+    case "container":
+      return "/containers";
+    case "security":
+      return "/security";
+    case "storage":
+      return "/storage";
+    case "user":
+      return "/identity";
     default:
       return null;
   }
@@ -54,13 +58,13 @@ function getNotificationHref(notification: AppNotification): string | null {
 
 function getTypeIcon(type: NotificationType) {
   switch (type) {
-    case 'container':
+    case "container":
       return Container;
-    case 'security':
+    case "security":
       return Shield;
-    case 'storage':
+    case "storage":
       return HardDrive;
-    case 'user':
+    case "user":
       return User;
     default:
       return Info;
@@ -69,12 +73,14 @@ function getTypeIcon(type: NotificationType) {
 
 function StatusIcon({ status }: { status: NotificationStatus }) {
   switch (status) {
-    case 'success':
+    case "success":
       return <CheckCircle className="h-3.5 w-3.5 text-emerald-500 shrink-0" />;
-    case 'warning':
+    case "warning":
       return <AlertTriangle className="h-3.5 w-3.5 text-amber-500 shrink-0" />;
-    case 'error':
-      return <AlertTriangle className="h-3.5 w-3.5 text-destructive shrink-0" />;
+    case "error":
+      return (
+        <AlertTriangle className="h-3.5 w-3.5 text-destructive shrink-0" />
+      );
     default:
       return <Info className="h-3.5 w-3.5 text-blue-500 shrink-0" />;
   }
@@ -102,7 +108,12 @@ interface NotificationItemProps {
   onNavigate: (notification: AppNotification) => void;
 }
 
-function NotificationItem({ notification, onRead, onRemove, onNavigate }: NotificationItemProps) {
+function NotificationItem({
+  notification,
+  onRead,
+  onRemove,
+  onNavigate,
+}: NotificationItemProps) {
   const TypeIcon = getTypeIcon(notification.type);
   const href = getNotificationHref(notification);
 
@@ -118,11 +129,11 @@ function NotificationItem({ notification, onRead, onRemove, onNavigate }: Notifi
       role="button"
       tabIndex={0}
       onClick={handleClick}
-      onKeyDown={(e) => e.key === 'Enter' && handleClick()}
+      onKeyDown={(e) => e.key === "Enter" && handleClick()}
       className={cn(
-        'relative flex gap-3 px-4 py-3 cursor-pointer transition-colors outline-none group/item',
-        'hover:bg-muted/50 focus-visible:bg-muted/50',
-        !notification.read && 'bg-primary/5'
+        "relative flex gap-3 px-4 py-3 cursor-pointer transition-colors outline-none group/item",
+        "hover:bg-muted/50 focus-visible:bg-muted/50",
+        !notification.read && "bg-primary/5",
       )}
     >
       {/* Unread dot */}
@@ -195,7 +206,9 @@ function EmptyState() {
       <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
         <BellOff className="h-6 w-6 text-muted-foreground" />
       </div>
-      <p className="text-sm font-medium text-muted-foreground">Aucune notification</p>
+      <p className="text-sm font-medium text-muted-foreground">
+        Aucune notification
+      </p>
       <p className="text-xs text-muted-foreground/70">
         Vous serez notifie ici lors d&apos;evenements importants.
       </p>
@@ -248,8 +261,15 @@ export function NotificationCenter() {
   const isLoading = useNotificationStore((s) => s.isLoading);
   const notifications = useNotifications();
   const unreadCount = useUnreadNotificationCount();
-  const { setOpen, markAsRead, markAllAsRead, remove, clearAll, fetchNotifications, pushSSENotification } =
-    useNotificationActions();
+  const {
+    setOpen,
+    markAsRead,
+    markAllAsRead,
+    remove,
+    clearAll,
+    fetchNotifications,
+    pushSSENotification,
+  } = useNotificationActions();
 
   // Initial load
   useEffect(() => {
@@ -259,23 +279,30 @@ export function NotificationCenter() {
   // Listen for real-time SSE events dispatched by useNotificationsSSE
   useEffect(() => {
     const handleNewNotification = (e: Event) => {
-      const detail = (e as CustomEvent<{ title?: string; message?: string; user_id?: string }>)
-        .detail ?? {};
+      const detail =
+        (
+          e as CustomEvent<{
+            title?: string;
+            message?: string;
+            user_id?: string;
+          }>
+        ).detail ?? {};
       pushSSENotification({
         id: `sse-${Date.now()}`,
-        title: detail.title ?? 'Nouvelle notification',
-        description: detail.message ?? '',
-        type: 'system',
-        status: 'info',
+        title: detail.title ?? "Nouvelle notification",
+        description: detail.message ?? "",
+        type: "system",
+        status: "info",
         timestamp: new Date(),
         read: false,
       });
       // Play notification sound for new SSE notification
-      playNotificationSound('alert');
+      playNotificationSound("alert");
     };
 
-    window.addEventListener('new-notification', handleNewNotification);
-    return () => window.removeEventListener('new-notification', handleNewNotification);
+    window.addEventListener("new-notification", handleNewNotification);
+    return () =>
+      window.removeEventListener("new-notification", handleNewNotification);
   }, [pushSSENotification]);
 
   // Navigate to the notification's target page and close the popover
@@ -287,7 +314,7 @@ export function NotificationCenter() {
         router.push(href);
       }
     },
-    [router, setOpen]
+    [router, setOpen],
   );
 
   return (
@@ -296,7 +323,7 @@ export function NotificationCenter() {
         <Button
           variant="ghost"
           size="icon"
-          aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} non lues)` : ''}`}
+          aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} non lues)` : ""}`}
           className="relative"
         >
           <Bell className="h-5 w-5" />
@@ -304,14 +331,14 @@ export function NotificationCenter() {
             <span
               aria-hidden
               className={cn(
-                'absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center',
-                'rounded-full bg-primary text-[10px] font-semibold text-primary-foreground',
-                'ring-2 ring-background',
+                "absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center",
+                "rounded-full bg-primary text-[10px] font-semibold text-primary-foreground",
+                "ring-2 ring-background",
                 // Pulse animation for new notifications
-                'animate-pulse'
+                "animate-pulse",
               )}
             >
-              {unreadCount > 9 ? '9+' : unreadCount}
+              {unreadCount > 9 ? "9+" : unreadCount}
             </span>
           )}
         </Button>

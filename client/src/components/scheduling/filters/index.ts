@@ -4,4 +4,4 @@
  * Filter components for the scheduling module.
  */
 
-export { QuickFilters } from './QuickFilters';
+export { QuickFilters } from "./QuickFilters";

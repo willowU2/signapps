@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { useMemo } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Flame } from 'lucide-react';
+import { useMemo } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Flame } from "lucide-react";
 
 interface WidgetProps {
   widget: { config: Record<string, unknown> };
@@ -28,18 +28,21 @@ function generateHeatmapData(): number[][] {
 }
 
 function getColor(count: number): string {
-  if (count === 0) return 'bg-muted';
-  if (count <= 2) return 'bg-green-200 dark:bg-green-900';
-  if (count <= 4) return 'bg-green-400 dark:bg-green-700';
-  if (count <= 7) return 'bg-green-600 dark:bg-green-500';
-  return 'bg-green-800 dark:bg-green-400';
+  if (count === 0) return "bg-muted";
+  if (count <= 2) return "bg-green-200 dark:bg-green-900";
+  if (count <= 4) return "bg-green-400 dark:bg-green-700";
+  if (count <= 7) return "bg-green-600 dark:bg-green-500";
+  return "bg-green-800 dark:bg-green-400";
 }
 
-const DAY_LABELS = ['D', 'L', 'M', 'M', 'J', 'V', 'S'];
+const DAY_LABELS = ["D", "L", "M", "M", "J", "V", "S"];
 
 export function WidgetActivityHeatmap({ widget, isEditing }: WidgetProps) {
   const data = useMemo(() => generateHeatmapData(), []);
-  const totalActivity = useMemo(() => data.flat().reduce((a, b) => a + b, 0), [data]);
+  const totalActivity = useMemo(
+    () => data.flat().reduce((a, b) => a + b, 0),
+    [data],
+  );
 
   return (
     <Card className="h-full">
@@ -49,7 +52,9 @@ export function WidgetActivityHeatmap({ widget, isEditing }: WidgetProps) {
             <Flame className="h-4 w-4 text-orange-500" />
             Heatmap d&apos;activite
           </CardTitle>
-          <Badge variant="secondary" className="text-xs">{totalActivity} actions</Badge>
+          <Badge variant="secondary" className="text-xs">
+            {totalActivity} actions
+          </Badge>
         </div>
       </CardHeader>
       <CardContent>
@@ -61,7 +66,7 @@ export function WidgetActivityHeatmap({ widget, isEditing }: WidgetProps) {
                 key={i}
                 className="h-3 w-4 flex items-center justify-end text-[9px] text-muted-foreground"
               >
-                {i % 2 === 1 ? label : ''}
+                {i % 2 === 1 ? label : ""}
               </div>
             ))}
           </div>

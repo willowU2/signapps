@@ -1,6 +1,5 @@
-'use client';
-import { SpinnerInfinity } from 'spinners-react';
-
+"use client";
+import { SpinnerInfinity } from "spinners-react";
 
 /**
  * HeatmapView Component
@@ -10,7 +9,7 @@ import { SpinnerInfinity } from 'spinners-react';
  * Shows team members vs time slots with intensity indicating load.
  */
 
-import * as React from 'react';
+import * as React from "react";
 import {
   format,
   startOfWeek,
@@ -24,30 +23,34 @@ import {
   startOfDay,
   endOfDay,
   isWithinInterval,
-} from 'date-fns';
-import { fr } from 'date-fns/locale';
-import { cn } from '@/lib/utils';
-import { useCalendarStore } from '@/stores/scheduling/calendar-store';
-import { useSchedulingStore } from '@/stores/scheduling/scheduling-store';
-import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+} from "date-fns";
+import { fr } from "date-fns/locale";
+import { cn } from "@/lib/utils";
+import { useCalendarStore } from "@/stores/scheduling/calendar-store";
+import { useSchedulingStore } from "@/stores/scheduling/scheduling-store";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
-import type { TimeItem } from '@/lib/scheduling/types';
+} from "@/components/ui/select";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import type { TimeItem } from "@/lib/scheduling/types";
 
 // ============================================================================
 // Types
 // ============================================================================
 
-type ViewMode = 'week' | 'month';
-type SlotMode = 'hours' | 'days';
+type ViewMode = "week" | "month";
+type SlotMode = "hours" | "days";
 
 interface HeatmapViewProps {
   className?: string;
@@ -70,11 +73,11 @@ interface HeatmapCell {
 // ============================================================================
 
 const INTENSITY_COLORS = [
-  'bg-green-100 dark:bg-green-900/20', // 0 - free
-  'bg-yellow-200 dark:bg-yellow-900/30', // 1 - light
-  'bg-orange-300 dark:bg-orange-900/40', // 2 - moderate
-  'bg-red-400 dark:bg-red-900/50', // 3 - busy
-  'bg-red-600 dark:bg-red-900/70', // 4 - overloaded
+  "bg-green-100 dark:bg-green-900/20", // 0 - free
+  "bg-yellow-200 dark:bg-yellow-900/30", // 1 - light
+  "bg-orange-300 dark:bg-orange-900/40", // 2 - moderate
+  "bg-red-400 dark:bg-red-900/50", // 3 - busy
+  "bg-red-600 dark:bg-red-900/70", // 4 - overloaded
 ];
 
 const CELL_SIZE = 32;
@@ -99,7 +102,7 @@ function getItemsInSlot(
   items: TimeItem[],
   userId: string,
   date: Date,
-  hour?: number
+  hour?: number,
 ): TimeItem[] {
   return items.filter((item) => {
     // Check if item belongs to user
@@ -109,9 +112,11 @@ function getItemsInSlot(
     // Get item time
     if (!item.startTime) return false;
     const itemStart =
-      typeof item.startTime === 'string' ? parseISO(item.startTime) : item.startTime;
+      typeof item.startTime === "string"
+        ? parseISO(item.startTime)
+        : item.startTime;
     const itemEnd = item.endTime
-      ? typeof item.endTime === 'string'
+      ? typeof item.endTime === "string"
         ? parseISO(item.endTime)
         : item.endTime
       : itemStart;
@@ -167,8 +172,8 @@ export function HeatmapView({
 
   const items = propItems || storeItems;
 
-  const [viewMode, setViewMode] = React.useState<ViewMode>('week');
-  const [slotMode, setSlotMode] = React.useState<SlotMode>('hours');
+  const [viewMode, setViewMode] = React.useState<ViewMode>("week");
+  const [slotMode, setSlotMode] = React.useState<SlotMode>("hours");
 
   // Get unique users from items
   const userIds = React.useMemo(() => {
@@ -183,7 +188,7 @@ export function HeatmapView({
 
   // Calculate date range
   const dateRange = React.useMemo(() => {
-    if (viewMode === 'week') {
+    if (viewMode === "week") {
       return {
         start: startOfWeek(currentDate, { weekStartsOn }),
         end: endOfWeek(currentDate, { weekStartsOn }),
@@ -203,7 +208,7 @@ export function HeatmapView({
     if (!propItems) {
       fetchTimeItems(dateRange);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [propItems, rangeStartISO, rangeEndISO]);
 
   // Generate days
@@ -213,14 +218,17 @@ export function HeatmapView({
 
   // Generate hours
   const hours = React.useMemo(() => {
-    if (slotMode === 'days') return [];
-    return Array.from({ length: HOUR_END - HOUR_START }, (_, i) => HOUR_START + i);
+    if (slotMode === "days") return [];
+    return Array.from(
+      { length: HOUR_END - HOUR_START },
+      (_, i) => HOUR_START + i,
+    );
   }, [slotMode]);
 
   // Build heatmap cells
   const cells = React.useMemo((): HeatmapCell[][] => {
     return userIds.map((userId) => {
-      if (slotMode === 'hours') {
+      if (slotMode === "hours") {
         // Hour-by-hour for each day
         return days.flatMap((day) =>
           hours.map((hour) => {
@@ -233,7 +241,7 @@ export function HeatmapView({
               items: slotItems,
               intensity: calculateIntensity(slotItems.length),
             };
-          })
+          }),
         );
       } else {
         // Day-by-day
@@ -253,20 +261,25 @@ export function HeatmapView({
 
   // Navigation
   const handlePrev = () => {
-    const offset = viewMode === 'week' ? -7 : -28;
+    const offset = viewMode === "week" ? -7 : -28;
     setCurrentDate(addDays(currentDate, offset));
   };
 
   const handleNext = () => {
-    const offset = viewMode === 'week' ? 7 : 28;
+    const offset = viewMode === "week" ? 7 : 28;
     setCurrentDate(addDays(currentDate, offset));
   };
 
   if (isLoading && items.length === 0) {
     return (
-      <div className={cn('flex h-full items-center justify-center', className)}>
+      <div className={cn("flex h-full items-center justify-center", className)}>
         <div className="flex flex-col items-center gap-2">
-          <SpinnerInfinity size={32} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} />
+          <SpinnerInfinity
+            size={32}
+            secondaryColor="rgba(128,128,128,0.2)"
+            color="currentColor"
+            speed={120}
+          />
           <p className="text-sm text-muted-foreground">Chargement...</p>
         </div>
       </div>
@@ -274,7 +287,7 @@ export function HeatmapView({
   }
 
   return (
-    <div className={cn('flex h-full flex-col', className)}>
+    <div className={cn("flex h-full flex-col", className)}>
       {/* Toolbar */}
       <div className="flex items-center justify-between border-b p-3">
         <div className="flex items-center gap-2">
@@ -285,13 +298,16 @@ export function HeatmapView({
             <ChevronRight className="h-4 w-4" />
           </Button>
           <span className="text-sm font-medium">
-            {format(dateRange.start, 'd MMM', { locale: fr })} -{' '}
-            {format(dateRange.end, 'd MMM yyyy', { locale: fr })}
+            {format(dateRange.start, "d MMM", { locale: fr })} -{" "}
+            {format(dateRange.end, "d MMM yyyy", { locale: fr })}
           </span>
         </div>
 
         <div className="flex items-center gap-2">
-          <Select value={viewMode} onValueChange={(v) => setViewMode(v as ViewMode)}>
+          <Select
+            value={viewMode}
+            onValueChange={(v) => setViewMode(v as ViewMode)}
+          >
             <SelectTrigger className="w-28">
               <SelectValue />
             </SelectTrigger>
@@ -301,7 +317,10 @@ export function HeatmapView({
             </SelectContent>
           </Select>
 
-          <Select value={slotMode} onValueChange={(v) => setSlotMode(v as SlotMode)}>
+          <Select
+            value={slotMode}
+            onValueChange={(v) => setSlotMode(v as SlotMode)}
+          >
             <SelectTrigger className="w-28">
               <SelectValue />
             </SelectTrigger>
@@ -316,9 +335,9 @@ export function HeatmapView({
       {/* Legend */}
       <div className="flex items-center justify-end gap-2 border-b p-2 text-xs">
         <span className="text-muted-foreground">Charge:</span>
-        {['Libre', 'Léger', 'Modéré', 'Chargé', 'Surchargé'].map((label, i) => (
+        {["Libre", "Léger", "Modéré", "Chargé", "Surchargé"].map((label, i) => (
           <div key={i} className="flex items-center gap-1">
-            <div className={cn('h-4 w-4 rounded', INTENSITY_COLORS[i])} />
+            <div className={cn("h-4 w-4 rounded", INTENSITY_COLORS[i])} />
             <span>{label}</span>
           </div>
         ))}
@@ -334,7 +353,7 @@ export function HeatmapView({
           {/* Header spacer */}
           <div
             className="border-b"
-            style={{ height: slotMode === 'hours' ? 64 : 48 }}
+            style={{ height: slotMode === "hours" ? 64 : 48 }}
           />
 
           {/* User rows */}
@@ -345,7 +364,9 @@ export function HeatmapView({
               style={{ height: ROW_HEIGHT }}
             >
               <Avatar className="h-8 w-8">
-                <AvatarFallback>{userId.charAt(0).toUpperCase()}</AvatarFallback>
+                <AvatarFallback>
+                  {userId.charAt(0).toUpperCase()}
+                </AvatarFallback>
               </Avatar>
               <span className="truncate text-sm">{userId}</span>
             </div>
@@ -358,7 +379,7 @@ export function HeatmapView({
             className="relative"
             style={{
               minWidth:
-                slotMode === 'hours'
+                slotMode === "hours"
                   ? days.length * hours.length * CELL_SIZE
                   : days.length * (CELL_SIZE * 2),
             }}
@@ -371,37 +392,43 @@ export function HeatmapView({
                   <div
                     key={i}
                     className={cn(
-                      'flex items-center justify-center border-r text-xs font-medium',
-                      isSameDay(day, new Date()) && 'bg-primary/10'
+                      "flex items-center justify-center border-r text-xs font-medium",
+                      isSameDay(day, new Date()) && "bg-primary/10",
                     )}
                     style={{
-                      width: slotMode === 'hours' ? hours.length * CELL_SIZE : CELL_SIZE * 2,
+                      width:
+                        slotMode === "hours"
+                          ? hours.length * CELL_SIZE
+                          : CELL_SIZE * 2,
                       height: 32,
                     }}
                   >
-                    {format(day, 'EEE d', { locale: fr })}
+                    {format(day, "EEE d", { locale: fr })}
                   </div>
                 ))}
               </div>
 
               {/* Hour row (only in hours mode) */}
-              {slotMode === 'hours' && (
+              {slotMode === "hours" && (
                 <div className="flex border-b">
                   {days.flatMap((day, dayIdx) =>
                     hours.map((hour, hourIdx) => (
                       <div
                         key={`${dayIdx}-${hourIdx}`}
                         className={cn(
-                          'flex items-center justify-center border-r text-[10px] text-muted-foreground',
+                          "flex items-center justify-center border-r text-[10px] text-muted-foreground",
                           isSameDay(day, new Date()) &&
-                            isSameHour(new Date(), new Date(day.setHours(hour))) &&
-                            'bg-primary/10'
+                            isSameHour(
+                              new Date(),
+                              new Date(day.setHours(hour)),
+                            ) &&
+                            "bg-primary/10",
                         )}
                         style={{ width: CELL_SIZE, height: 32 }}
                       >
                         {hour}h
                       </div>
-                    ))
+                    )),
                   )}
                 </div>
               )}
@@ -419,30 +446,38 @@ export function HeatmapView({
                     <TooltipTrigger asChild>
                       <button
                         className={cn(
-                          'border-r flex items-center justify-center transition-colors hover:ring-1 hover:ring-primary',
-                          INTENSITY_COLORS[cell.intensity]
+                          "border-r flex items-center justify-center transition-colors hover:ring-1 hover:ring-primary",
+                          INTENSITY_COLORS[cell.intensity],
                         )}
                         style={{
-                          width: slotMode === 'hours' ? CELL_SIZE : CELL_SIZE * 2,
+                          width:
+                            slotMode === "hours" ? CELL_SIZE : CELL_SIZE * 2,
                           height: ROW_HEIGHT,
                         }}
-                        onClick={() => onSlotClick?.(cell.userId, cell.date, cell.hour)}
+                        onClick={() =>
+                          onSlotClick?.(cell.userId, cell.date, cell.hour)
+                        }
                       >
                         {cell.count > 0 && (
-                          <span className="text-xs font-medium">{cell.count}</span>
+                          <span className="text-xs font-medium">
+                            {cell.count}
+                          </span>
                         )}
                       </button>
                     </TooltipTrigger>
                     <TooltipContent side="bottom" className="max-w-xs">
                       <div className="text-sm">
                         <p className="font-medium">
-                          {format(cell.date, 'EEEE d MMMM', { locale: fr })}
+                          {format(cell.date, "EEEE d MMMM", { locale: fr })}
                           {cell.hour !== undefined && ` à ${cell.hour}h`}
                         </p>
                         {cell.items.length > 0 ? (
                           <ul className="mt-1 space-y-1">
                             {cell.items.slice(0, 5).map((item) => (
-                              <li key={item.id} className="text-muted-foreground">
+                              <li
+                                key={item.id}
+                                className="text-muted-foreground"
+                              >
                                 • {item.title}
                               </li>
                             ))}
@@ -469,7 +504,9 @@ export function HeatmapView({
       {userIds.length === 0 && !isLoading && (
         <div className="flex flex-1 items-center justify-center">
           <div className="text-center">
-            <p className="text-muted-foreground">Aucun utilisateur à afficher</p>
+            <p className="text-muted-foreground">
+              Aucun utilisateur à afficher
+            </p>
             <p className="text-sm text-muted-foreground">
               Assignez des tâches à des utilisateurs pour voir leur charge
             </p>

@@ -1,8 +1,8 @@
 //! Device repository for VPN management.
 
 use crate::models::device::{CreateDevice, Device, UpdateDevice};
-use signapps_db_shared::DatabasePool;
 use signapps_common::Result;
+use signapps_db_shared::DatabasePool;
 use uuid::Uuid;
 
 /// Repository for device operations.

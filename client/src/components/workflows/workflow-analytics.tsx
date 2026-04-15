@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useMemo } from 'react';
+import { useMemo } from "react";
 import {
   BarChart,
   Bar,
@@ -10,11 +10,16 @@ import {
   Tooltip,
   ResponsiveContainer,
   Cell,
-} from 'recharts';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Badge } from '@/components/ui/badge';
-import { AlertTriangle, TrendingUp, Clock } from 'lucide-react';
-import type { Workflow } from '@/app/workflows/page';
+} from "recharts";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import { AlertTriangle, TrendingUp, Clock } from "lucide-react";
+import type { Workflow } from "@/app/workflows/page";
 
 interface WorkflowAnalyticsProps {
   workflow: Workflow;
@@ -23,7 +28,7 @@ interface WorkflowAnalyticsProps {
 
 // Simulate analytics data from localStorage or generate synthetic data
 function generateAnalytics(workflow: Workflow) {
-  const months = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun'];
+  const months = ["Jan", "Fév", "Mar", "Avr", "Mai", "Jun"];
 
   // Per-state average time (simulated)
   const stateMetrics = workflow.states.map((s, i) => ({
@@ -34,10 +39,12 @@ function generateAnalytics(workflow: Workflow) {
   }));
 
   // Find bottleneck
-  const bottleneck = stateMetrics.reduce((a, b) => a.avgDays > b.avgDays ? a : b);
+  const bottleneck = stateMetrics.reduce((a, b) =>
+    a.avgDays > b.avgDays ? a : b,
+  );
 
   // Monthly comparison data
-  const monthlyData = months.map(m => ({
+  const monthlyData = months.map((m) => ({
     month: m,
     completed: Math.round(3 + Math.random() * 15),
     rejected: Math.round(Math.random() * 5),
@@ -46,7 +53,10 @@ function generateAnalytics(workflow: Workflow) {
   return { stateMetrics, bottleneck, monthlyData };
 }
 
-export function WorkflowAnalytics({ workflow, onClose }: WorkflowAnalyticsProps) {
+export function WorkflowAnalytics({
+  workflow,
+  onClose,
+}: WorkflowAnalyticsProps) {
   const analytics = useMemo(() => generateAnalytics(workflow), [workflow]);
 
   return (
@@ -68,8 +78,10 @@ export function WorkflowAnalytics({ workflow, onClose }: WorkflowAnalyticsProps)
                 Goulot d&apos;étranglement détecté
               </p>
               <p className="text-xs text-amber-700 dark:text-amber-300 mt-0.5">
-                L&apos;état <strong>&ldquo;{analytics.bottleneck.name}&rdquo;</strong> prend en moyenne{' '}
-                <strong>{analytics.bottleneck.avgDays} jours</strong> — le plus long de la chaîne.
+                L&apos;état{" "}
+                <strong>&ldquo;{analytics.bottleneck.name}&rdquo;</strong> prend
+                en moyenne <strong>{analytics.bottleneck.avgDays} jours</strong>{" "}
+                — le plus long de la chaîne.
               </p>
             </div>
           </div>
@@ -77,10 +89,11 @@ export function WorkflowAnalytics({ workflow, onClose }: WorkflowAnalyticsProps)
           {/* Per-state metrics */}
           <div>
             <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
-              <Clock className="h-4 w-4" />Durée moyenne par état
+              <Clock className="h-4 w-4" />
+              Durée moyenne par état
             </h3>
             <div className="space-y-2">
-              {analytics.stateMetrics.map(m => (
+              {analytics.stateMetrics.map((m) => (
                 <div key={m.name} className="flex items-center gap-3">
                   <span
                     className="w-24 shrink-0 text-xs font-medium px-2 py-1 rounded-full text-white text-center truncate"
@@ -112,14 +125,20 @@ export function WorkflowAnalytics({ workflow, onClose }: WorkflowAnalyticsProps)
 
           {/* Monthly chart */}
           <div>
-            <h3 className="text-sm font-semibold mb-3">Comparaison mensuelle</h3>
+            <h3 className="text-sm font-semibold mb-3">
+              Comparaison mensuelle
+            </h3>
             <ResponsiveContainer width="100%" height={180}>
               <BarChart data={analytics.monthlyData} barGap={4}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                 <XAxis dataKey="month" tick={{ fontSize: 11 }} />
                 <YAxis tick={{ fontSize: 11 }} />
                 <Tooltip
-                  contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid var(--border)' }}
+                  contentStyle={{
+                    fontSize: 12,
+                    borderRadius: 8,
+                    border: "1px solid var(--border)",
+                  }}
                 />
                 <Bar dataKey="completed" name="Complétés" radius={[4, 4, 0, 0]}>
                   {analytics.monthlyData.map((_, i) => (
@@ -135,10 +154,12 @@ export function WorkflowAnalytics({ workflow, onClose }: WorkflowAnalyticsProps)
             </ResponsiveContainer>
             <div className="flex gap-4 justify-center mt-2">
               <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <div className="w-3 h-3 rounded-sm bg-green-500" />Complétés
+                <div className="w-3 h-3 rounded-sm bg-green-500" />
+                Complétés
               </div>
               <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <div className="w-3 h-3 rounded-sm bg-red-500" />Rejetés
+                <div className="w-3 h-3 rounded-sm bg-red-500" />
+                Rejetés
               </div>
             </div>
           </div>

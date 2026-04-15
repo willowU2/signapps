@@ -1,31 +1,31 @@
-'use client';
+"use client";
 
-import { SpinnerInfinity } from 'spinners-react';
+import { SpinnerInfinity } from "spinners-react";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { authApi } from '@/lib/api';
-import { useAuthStore } from '@/lib/store';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { authApi } from "@/lib/api";
+import { useAuthStore } from "@/lib/store";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Eye, EyeOff, Network } from 'lucide-react';
-import { parseApiError } from '@/lib/errors';
+} from "@/components/ui/dialog";
+import { Eye, EyeOff, Network } from "lucide-react";
+import { parseApiError } from "@/lib/errors";
 
 const ldapLoginSchema = z.object({
-  username: z.string().min(1, 'Username is required'),
-  password: z.string().min(1, 'Password is required'),
+  username: z.string().min(1, "Username is required"),
+  password: z.string().min(1, "Password is required"),
 });
 
 type LdapLoginForm = z.infer<typeof ldapLoginSchema>;
@@ -37,7 +37,12 @@ interface LdapLoginDialogProps {
 
 export function LdapLoginDialog({ open, onOpenChange }: LdapLoginDialogProps) {
   const router = useRouter();
-  const { setUser, setMfaSessionToken, redirectAfterLogin, setRedirectAfterLogin } = useAuthStore();
+  const {
+    setUser,
+    setMfaSessionToken,
+    redirectAfterLogin,
+    setRedirectAfterLogin,
+  } = useAuthStore();
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -57,14 +62,14 @@ export function LdapLoginDialog({ open, onOpenChange }: LdapLoginDialogProps) {
       const response = await authApi.login({
         username: data.username,
         password: data.password,
-        remember_me: rememberMe
+        remember_me: rememberMe,
       });
 
       // Check if MFA is required
       if (response.data.mfa_required && response.data.mfa_session_token) {
         setMfaSessionToken(response.data.mfa_session_token);
         onOpenChange(false);
-        router.push('/login/verify');
+        router.push("/login/verify");
         return;
       }
 
@@ -81,12 +86,14 @@ export function LdapLoginDialog({ open, onOpenChange }: LdapLoginDialogProps) {
         }
 
         // Sync cookie immediately so middleware sees authenticated state
-        const cookieValue = JSON.stringify({ state: { isAuthenticated: true } });
-        const secure = window.location.protocol === 'https:' ? ' Secure;' : '';
+        const cookieValue = JSON.stringify({
+          state: { isAuthenticated: true },
+        });
+        const secure = window.location.protocol === "https:" ? " Secure;" : "";
         document.cookie = `auth-storage=${encodeURIComponent(cookieValue)}; path=/;${secure} max-age=31536000; SameSite=Lax`;
 
         // Redirect
-        const redirectPath = redirectAfterLogin || '/dashboard';
+        const redirectPath = redirectAfterLogin || "/dashboard";
         setRedirectAfterLogin(null);
         onOpenChange(false);
         router.push(redirectPath);
@@ -111,7 +118,9 @@ export function LdapLoginDialog({ open, onOpenChange }: LdapLoginDialogProps) {
           <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
             <Network className="h-5 w-5 text-primary" />
           </div>
-          <DialogTitle className="text-center">LDAP / Active Directory</DialogTitle>
+          <DialogTitle className="text-center">
+            LDAP / Active Directory
+          </DialogTitle>
           <DialogDescription className="text-center">
             Sign in with your corporate credentials
           </DialogDescription>
@@ -129,10 +138,12 @@ export function LdapLoginDialog({ open, onOpenChange }: LdapLoginDialogProps) {
             <Input
               id="ldap-username"
               placeholder="domain\\username or username@domain"
-              {...register('username')}
+              {...register("username")}
             />
             {errors.username && (
-              <p className="text-sm text-destructive">{errors.username.message}</p>
+              <p className="text-sm text-destructive">
+                {errors.username.message}
+              </p>
             )}
           </div>
 
@@ -141,9 +152,9 @@ export function LdapLoginDialog({ open, onOpenChange }: LdapLoginDialogProps) {
             <div className="relative">
               <Input
                 id="ldap-password"
-                type={showPassword ? 'text' : 'password'}
+                type={showPassword ? "text" : "password"}
                 placeholder="Enter your password"
-                {...register('password')}
+                {...register("password")}
               />
               <Button
                 type="button"
@@ -160,7 +171,9 @@ export function LdapLoginDialog({ open, onOpenChange }: LdapLoginDialogProps) {
               </Button>
             </div>
             {errors.password && (
-              <p className="text-sm text-destructive">{errors.password.message}</p>
+              <p className="text-sm text-destructive">
+                {errors.password.message}
+              </p>
             )}
           </div>
 
@@ -170,7 +183,10 @@ export function LdapLoginDialog({ open, onOpenChange }: LdapLoginDialogProps) {
               checked={rememberMe}
               onCheckedChange={(checked) => setRememberMe(checked === true)}
             />
-            <Label htmlFor="ldap-remember" className="text-sm font-normal cursor-pointer">
+            <Label
+              htmlFor="ldap-remember"
+              className="text-sm font-normal cursor-pointer"
+            >
               Remember me
             </Label>
           </div>
@@ -178,11 +194,17 @@ export function LdapLoginDialog({ open, onOpenChange }: LdapLoginDialogProps) {
           <Button type="submit" className="w-full" disabled={isSubmitting}>
             {isSubmitting ? (
               <>
-                <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />
+                <SpinnerInfinity
+                  size={24}
+                  secondaryColor="rgba(128,128,128,0.2)"
+                  color="currentColor"
+                  speed={120}
+                  className="mr-2 h-4 w-4 "
+                />
                 Authenticating...
               </>
             ) : (
-              'Sign In with LDAP'
+              "Sign In with LDAP"
             )}
           </Button>
         </form>

@@ -67,21 +67,13 @@ impl E2eChannelManager {
     }
 
     /// Encrypt a message using XOR cipher (stub for real crypto later)
-    pub fn encrypt_message(
-        &self,
-        content: &str,
-        key: &str,
-    ) -> Result<String, E2eCryptoError> {
+    pub fn encrypt_message(&self, content: &str, key: &str) -> Result<String, E2eCryptoError> {
         let encrypted_bytes = self.xor_cipher(content.as_bytes(), key.as_bytes());
         Ok(general_purpose::STANDARD.encode(encrypted_bytes))
     }
 
     /// Decrypt a message using XOR cipher (stub for real crypto later)
-    pub fn decrypt_message(
-        &self,
-        encrypted: &str,
-        key: &str,
-    ) -> Result<String, E2eCryptoError> {
+    pub fn decrypt_message(&self, encrypted: &str, key: &str) -> Result<String, E2eCryptoError> {
         let encrypted_bytes = general_purpose::STANDARD
             .decode(encrypted)
             .map_err(|_| E2eCryptoError::InvalidBase64)?;

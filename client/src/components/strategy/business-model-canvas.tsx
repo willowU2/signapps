@@ -87,8 +87,8 @@ export function BusinessModelCanvas() {
   const handleUpdateBlock = (blockId: string, content: string) => {
     setBlocks(
       blocks.map((block) =>
-        block.id === blockId ? { ...block, content } : block
-      )
+        block.id === blockId ? { ...block, content } : block,
+      ),
     );
   };
 
@@ -236,7 +236,7 @@ function CanvasBlockComponent({
     <div
       className={cn(
         "border border-border/50 rounded-lg bg-muted/30 p-3 cursor-pointer transition-all hover:bg-muted/50",
-        size === "lg" ? "col-span-4 min-h-24" : "min-h-32"
+        size === "lg" ? "col-span-4 min-h-24" : "min-h-32",
       )}
       onClick={onEdit}
     >

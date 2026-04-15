@@ -12,7 +12,15 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle, ExternalLink, Copy, ChevronRight, ChevronLeft, Loader2, AlertCircle } from "lucide-react";
+import {
+  CheckCircle,
+  ExternalLink,
+  Copy,
+  ChevronRight,
+  ChevronLeft,
+  Loader2,
+  AlertCircle,
+} from "lucide-react";
 import { socialApi } from "@/lib/api/social";
 
 // ---------------------------------------------------------------------------
@@ -212,7 +220,8 @@ export function OAuthSetupWizard({
     } catch (err: unknown) {
       setSaving(false);
       const errorMsg =
-        (err as { response?: { data?: { error?: string } } })?.response?.data?.error ??
+        (err as { response?: { data?: { error?: string } } })?.response?.data
+          ?.error ??
         (err as Error)?.message ??
         "Erreur lors de la sauvegarde des credentials.";
       setSaveError(errorMsg);
@@ -232,7 +241,8 @@ export function OAuthSetupWizard({
             </Badge>
           </DialogTitle>
           <DialogDescription>
-            Suivez ces étapes pour créer vos credentials OAuth et connecter {guide.name} à SignApps.
+            Suivez ces étapes pour créer vos credentials OAuth et connecter{" "}
+            {guide.name} à SignApps.
           </DialogDescription>
         </DialogHeader>
 
@@ -245,8 +255,8 @@ export function OAuthSetupWizard({
                 i === currentStep
                   ? "w-6 bg-primary"
                   : i < currentStep
-                  ? "w-1.5 bg-primary/50"
-                  : "w-1.5 bg-muted"
+                    ? "w-1.5 bg-primary/50"
+                    : "w-1.5 bg-muted"
               }`}
             />
           ))}
@@ -256,13 +266,17 @@ export function OAuthSetupWizard({
         <div className="space-y-4">
           <div className="rounded-lg border p-4 space-y-2">
             <h3 className="font-semibold text-sm">{step.title}</h3>
-            <p className="text-sm text-muted-foreground leading-relaxed">{step.desc}</p>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              {step.desc}
+            </p>
           </div>
 
           {/* Callback URL (shown on step 3, 0-indexed = step 2) */}
           {currentStep === 2 && (
             <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground">URL de callback à copier</Label>
+              <Label className="text-xs text-muted-foreground">
+                URL de callback à copier
+              </Label>
               <div className="flex gap-2">
                 <Input
                   readOnly
@@ -290,7 +304,10 @@ export function OAuthSetupWizard({
             <div className="space-y-3">
               <div className="space-y-1.5">
                 <Label htmlFor="wizard-client-id" className="text-xs">
-                  Client ID <span className="text-muted-foreground">({guide.envKeys.id})</span>
+                  Client ID{" "}
+                  <span className="text-muted-foreground">
+                    ({guide.envKeys.id})
+                  </span>
                 </Label>
                 <Input
                   id="wizard-client-id"
@@ -302,7 +319,10 @@ export function OAuthSetupWizard({
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="wizard-client-secret" className="text-xs">
-                  Client Secret <span className="text-muted-foreground">({guide.envKeys.secret})</span>
+                  Client Secret{" "}
+                  <span className="text-muted-foreground">
+                    ({guide.envKeys.secret})
+                  </span>
                 </Label>
                 <Input
                   id="wizard-client-secret"
@@ -330,7 +350,9 @@ export function OAuthSetupWizard({
             variant="ghost"
             size="sm"
             className="text-xs gap-1.5 text-muted-foreground hover:text-foreground"
-            onClick={() => window.open(guide.devUrl, "_blank", "noopener,noreferrer")}
+            onClick={() =>
+              window.open(guide.devUrl, "_blank", "noopener,noreferrer")
+            }
           >
             <ExternalLink className="h-3.5 w-3.5" />
             Ouvrir le portail développeur
@@ -368,10 +390,7 @@ export function OAuthSetupWizard({
                 )}
               </Button>
             ) : (
-              <Button
-                size="sm"
-                onClick={() => setCurrentStep((s) => s + 1)}
-              >
+              <Button size="sm" onClick={() => setCurrentStep((s) => s + 1)}>
                 Suivant
                 <ChevronRight className="h-3.5 w-3.5 ml-1" />
               </Button>

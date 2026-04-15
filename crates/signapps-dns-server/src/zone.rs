@@ -75,7 +75,10 @@ pub async fn create_ad_zone(
         .await?;
     }
 
-    tracing::info!(zone = dns_name, "AD DNS zone created with default SRV records");
+    tracing::info!(
+        zone = dns_name,
+        "AD DNS zone created with default SRV records"
+    );
     Ok(())
 }
 

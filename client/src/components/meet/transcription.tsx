@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { useState, useRef, useEffect, useCallback } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useState, useRef, useEffect, useCallback } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Mic,
   MicOff,
@@ -13,10 +13,10 @@ import {
   Sparkles,
   CheckCircle2,
   AlertCircle,
-} from 'lucide-react';
-import { toast } from 'sonner';
-import { aiApi } from '@/lib/api';
-import { getClient, ServiceName } from '@/lib/api/factory';
+} from "lucide-react";
+import { toast } from "sonner";
+import { aiApi } from "@/lib/api";
+import { getClient, ServiceName } from "@/lib/api/factory";
 
 interface TranscriptSegment {
   id: string;
@@ -65,7 +65,7 @@ export function Transcription({
   const [isRecording, setIsRecording] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [segments, setSegments] = useState<TranscriptSegment[]>([]);
-  const [interimText, setInterimText] = useState('');
+  const [interimText, setInterimText] = useState("");
   const [isSummarizing, setIsSummarizing] = useState(false);
   const [summary, setSummary] = useState<string | null>(null);
   const [isSupported, setIsSupported] = useState(true);
@@ -78,7 +78,7 @@ export function Transcription({
   const transcriptEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = useCallback(() => {
-    transcriptEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    transcriptEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, []);
 
   useEffect(() => {
@@ -110,7 +110,7 @@ export function Transcription({
     return segments
       .filter((s) => s.isFinal)
       .map((s) => s.text)
-      .join(' ');
+      .join(" ");
   }, [segments]);
 
   useEffect(() => {
@@ -122,12 +122,12 @@ export function Transcription({
   // AQ-AITR: Whisper backend recording — sends audio chunks to signapps-ai /transcribe
   const startWhisperRecording = async () => {
     if (!navigator.mediaDevices?.getUserMedia) {
-      toast.error('Microphone access not supported');
+      toast.error("Microphone access not supported");
       return;
     }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const recorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+      const recorder = new MediaRecorder(stream, { mimeType: "audio/webm" });
       audioChunksRef.current = [];
       let segmentStart = Date.now();
 
@@ -136,19 +136,23 @@ export function Transcription({
       };
 
       recorder.onstop = async () => {
-        const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        const blob = new Blob(audioChunksRef.current, { type: "audio/webm" });
         audioChunksRef.current = [];
         if (blob.size < 1000) return; // skip silent/empty chunks
 
         const formData = new FormData();
-        formData.append('audio', blob, 'audio.webm');
-        formData.append('language', navigator.language?.split('-')[0] ?? 'fr');
+        formData.append("audio", blob, "audio.webm");
+        formData.append("language", navigator.language?.split("-")[0] ?? "fr");
 
         try {
           const aiClient = getClient(ServiceName.AI);
-          const res = await aiClient.post<{ text: string }>('/transcribe', formData, {
-            headers: { 'Content-Type': 'multipart/form-data' },
-          });
+          const res = await aiClient.post<{ text: string }>(
+            "/transcribe",
+            formData,
+            {
+              headers: { "Content-Type": "multipart/form-data" },
+            },
+          );
           const text = res.data?.text?.trim();
           if (text) {
             const seg: TranscriptSegment = {
@@ -168,7 +172,7 @@ export function Transcription({
       recorder.start();
       // Flush a chunk every 8 seconds
       const interval = setInterval(() => {
-        if (recorder.state === 'recording') {
+        if (recorder.state === "recording") {
           recorder.stop();
           recorder.start();
         } else {
@@ -180,12 +184,15 @@ export function Transcription({
       setIsRecording(true);
       if (!startTime) setStartTime(Date.now());
     } catch {
-      toast.error('Failed to access microphone');
+      toast.error("Failed to access microphone");
     }
   };
 
   const stopWhisperRecording = () => {
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+    if (
+      mediaRecorderRef.current &&
+      mediaRecorderRef.current.state !== "inactive"
+    ) {
       mediaRecorderRef.current.stop();
       mediaRecorderRef.current.stream?.getTracks().forEach((t) => t.stop());
       mediaRecorderRef.current = null;
@@ -201,14 +208,15 @@ export function Transcription({
     const SpeechRecognitionAPI =
       window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognitionAPI) {
-      toast.error('Speech recognition not supported in this browser');
+      toast.error("Speech recognition not supported in this browser");
       return;
     }
 
-    const recognition = new SpeechRecognitionAPI() as unknown as SpeechRecognitionInstance;
+    const recognition =
+      new SpeechRecognitionAPI() as unknown as SpeechRecognitionInstance;
     recognition.continuous = true;
     recognition.interimResults = true;
-    recognition.lang = navigator.language || 'en-US';
+    recognition.lang = navigator.language || "en-US";
     recognition.maxAlternatives = 1;
 
     recognition.onstart = () => {
@@ -220,7 +228,7 @@ export function Transcription({
     };
 
     recognition.onresult = (event: SpeechRecognitionEventLocal) => {
-      let interim = '';
+      let interim = "";
 
       for (let i = event.resultIndex; i < event.results.length; i++) {
         const result = event.results[i];
@@ -234,7 +242,7 @@ export function Transcription({
             isFinal: true,
           };
           setSegments((prev) => [...prev, segment]);
-          setInterimText('');
+          setInterimText("");
         } else {
           interim += transcript;
         }
@@ -246,11 +254,11 @@ export function Transcription({
     };
 
     recognition.onerror = (event: { error: string; message: string }) => {
-      if (event.error === 'no-speech') {
+      if (event.error === "no-speech") {
         // Silence is fine, just continue
         return;
       }
-      if (event.error === 'aborted') {
+      if (event.error === "aborted") {
         return;
       }
       toast.error(`Speech recognition error: ${event.error}`);
@@ -273,7 +281,7 @@ export function Transcription({
     try {
       recognition.start();
     } catch {
-      toast.error('Failed to start speech recognition');
+      toast.error("Failed to start speech recognition");
     }
   };
 
@@ -288,7 +296,7 @@ export function Transcription({
       recognitionRef.current.stop();
       recognitionRef.current = null;
     }
-    setInterimText('');
+    setInterimText("");
   };
 
   const toggleRecording = () => {
@@ -302,7 +310,7 @@ export function Transcription({
   const handleSummarize = async () => {
     const transcript = getFullTranscript();
     if (!transcript.trim()) {
-      toast.error('No transcript to summarize');
+      toast.error("No transcript to summarize");
       return;
     }
 
@@ -320,14 +328,14 @@ Transcript:
 ${transcript}`,
         {
           systemPrompt:
-            'You are a professional meeting assistant. Clean up and summarize transcripts clearly and concisely.',
-        }
+            "You are a professional meeting assistant. Clean up and summarize transcripts clearly and concisely.",
+        },
       );
 
       setSummary(response.data.answer);
-      toast.success('Transcript summarized');
+      toast.success("Transcript summarized");
     } catch {
-      toast.error('Failed to summarize transcript');
+      toast.error("Failed to summarize transcript");
     } finally {
       setIsSummarizing(false);
     }
@@ -336,37 +344,37 @@ ${transcript}`,
   const handleCopy = async () => {
     const text = summary || getFullTranscript();
     if (!text.trim()) {
-      toast.error('Nothing to copy');
+      toast.error("Nothing to copy");
       return;
     }
 
     await navigator.clipboard.writeText(text);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
-    toast.success('Copié dans le presse-papiers');
+    toast.success("Copié dans le presse-papiers");
   };
 
   const handleExport = () => {
     const transcript = getFullTranscript();
     const exportText = summary
-      ? `Meeting Transcript\n${'='.repeat(50)}\n\n${transcript}\n\n\nAI Summary\n${'='.repeat(50)}\n\n${summary}`
-      : `Meeting Transcript\n${'='.repeat(50)}\n\n${transcript}`;
+      ? `Meeting Transcript\n${"=".repeat(50)}\n\n${transcript}\n\n\nAI Summary\n${"=".repeat(50)}\n\n${summary}`
+      : `Meeting Transcript\n${"=".repeat(50)}\n\n${transcript}`;
 
-    const blob = new Blob([exportText], { type: 'text/plain' });
+    const blob = new Blob([exportText], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    const a = document.createElement("a");
     a.href = url;
     a.download = `transcript-${new Date().toISOString().slice(0, 10)}.txt`;
     a.click();
     URL.revokeObjectURL(url);
-    toast.success('Transcript exported');
+    toast.success("Transcript exported");
   };
 
   const formatTimestamp = (ms: number) => {
     const totalSeconds = Math.floor(ms / 1000);
     const minutes = Math.floor(totalSeconds / 60);
     const seconds = totalSeconds % 60;
-    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    return `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
   };
 
   if (!isSupported) {
@@ -418,7 +426,7 @@ ${transcript}`,
           <div className="flex items-center gap-2">
             <Button
               onClick={toggleRecording}
-              variant={isRecording ? 'destructive' : 'default'}
+              variant={isRecording ? "destructive" : "default"}
               className="gap-2"
             >
               {isRecording ? (
@@ -486,7 +494,7 @@ ${transcript}`,
                   <Mic className="h-8 w-8 mx-auto mb-2 opacity-50" />
                   <p className="text-sm">
                     {isRecording
-                      ? 'Listening... Start speaking'
+                      ? "Listening... Start speaking"
                       : 'Click "Start Recording" to begin'}
                   </p>
                 </div>
@@ -518,7 +526,7 @@ ${transcript}`,
 
           {segments.length > 0 && (
             <p className="text-xs text-muted-foreground">
-              {segments.length} segment{segments.length !== 1 ? 's' : ''}{' '}
+              {segments.length} segment{segments.length !== 1 ? "s" : ""}{" "}
               transcribed
             </p>
           )}

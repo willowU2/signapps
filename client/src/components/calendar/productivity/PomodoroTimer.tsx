@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * PomodoroTimer Component
@@ -8,25 +8,25 @@
  * Integrates with scheduling for time tracking.
  */
 
-import * as React from 'react';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { Slider } from '@/components/ui/slider';
+import * as React from "react";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { Slider } from "@/components/ui/slider";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from '@/components/ui/popover';
+} from "@/components/ui/popover";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 import {
   Play,
   Pause,
@@ -39,9 +39,9 @@ import {
   Volume2,
   VolumeX,
   CheckCircle2,
-} from 'lucide-react';
-import { usePreferencesStore } from '@/stores/scheduling/preferences-store';
-import type { TimeItem } from '@/lib/scheduling/types';
+} from "lucide-react";
+import { usePreferencesStore } from "@/stores/scheduling/preferences-store";
+import type { TimeItem } from "@/lib/scheduling/types";
 
 // ============================================================================
 // Types
@@ -50,12 +50,12 @@ import type { TimeItem } from '@/lib/scheduling/types';
 interface PomodoroTimerProps {
   className?: string;
   currentTask?: TimeItem | null;
-  onSessionComplete?: (type: 'work' | 'break', duration: number) => void;
+  onSessionComplete?: (type: "work" | "break", duration: number) => void;
   onPomodoroComplete?: (count: number) => void;
   compact?: boolean;
 }
 
-type TimerPhase = 'work' | 'shortBreak' | 'longBreak';
+type TimerPhase = "work" | "shortBreak" | "longBreak";
 
 interface PomodoroSettings {
   workDuration: number; // minutes
@@ -82,21 +82,21 @@ const DEFAULT_SETTINGS: PomodoroSettings = {
 };
 
 const PHASE_COLORS: Record<TimerPhase, string> = {
-  work: 'text-red-500',
-  shortBreak: 'text-green-500',
-  longBreak: 'text-blue-500',
+  work: "text-red-500",
+  shortBreak: "text-green-500",
+  longBreak: "text-blue-500",
 };
 
 const PHASE_BG_COLORS: Record<TimerPhase, string> = {
-  work: 'bg-red-500/10',
-  shortBreak: 'bg-green-500/10',
-  longBreak: 'bg-blue-500/10',
+  work: "bg-red-500/10",
+  shortBreak: "bg-green-500/10",
+  longBreak: "bg-blue-500/10",
 };
 
 const PHASE_LABELS: Record<TimerPhase, string> = {
-  work: 'Focus',
-  shortBreak: 'Pause courte',
-  longBreak: 'Pause longue',
+  work: "Focus",
+  shortBreak: "Pause courte",
+  longBreak: "Pause longue",
 };
 
 const PHASE_ICONS: Record<TimerPhase, React.ReactNode> = {
@@ -110,7 +110,7 @@ const PHASE_ICONS: Record<TimerPhase, React.ReactNode> = {
 // ============================================================================
 
 function usePomodoroTimer(settings: PomodoroSettings) {
-  const [phase, setPhase] = React.useState<TimerPhase>('work');
+  const [phase, setPhase] = React.useState<TimerPhase>("work");
   const [timeLeft, setTimeLeft] = React.useState(settings.workDuration * 60);
   const [isRunning, setIsRunning] = React.useState(false);
   const [completedPomodoros, setCompletedPomodoros] = React.useState(0);
@@ -120,11 +120,11 @@ function usePomodoroTimer(settings: PomodoroSettings) {
 
   const totalTime = React.useMemo(() => {
     switch (phase) {
-      case 'work':
+      case "work":
         return settings.workDuration * 60;
-      case 'shortBreak':
+      case "shortBreak":
         return settings.shortBreakDuration * 60;
-      case 'longBreak':
+      case "longBreak":
         return settings.longBreakDuration * 60;
     }
   }, [phase, settings]);
@@ -132,9 +132,9 @@ function usePomodoroTimer(settings: PomodoroSettings) {
   const progress = ((totalTime - timeLeft) / totalTime) * 100;
 
   const playSound = React.useCallback(() => {
-    if (settings.soundEnabled && typeof window !== 'undefined') {
+    if (settings.soundEnabled && typeof window !== "undefined") {
       try {
-        const audio = new Audio('/sounds/bell.mp3');
+        const audio = new Audio("/sounds/bell.mp3");
         audio.volume = 0.5;
         audio.play().catch(() => {
           // Fallback: Use Web Audio API
@@ -145,7 +145,10 @@ function usePomodoroTimer(settings: PomodoroSettings) {
           gain.connect(context.destination);
           oscillator.frequency.value = 800;
           gain.gain.setValueAtTime(0.5, context.currentTime);
-          gain.gain.exponentialRampToValueAtTime(0.01, context.currentTime + 0.5);
+          gain.gain.exponentialRampToValueAtTime(
+            0.01,
+            context.currentTime + 0.5,
+          );
           oscillator.start(context.currentTime);
           oscillator.stop(context.currentTime + 0.5);
         });
@@ -158,17 +161,17 @@ function usePomodoroTimer(settings: PomodoroSettings) {
   const handlePhaseComplete = React.useCallback(() => {
     playSound();
 
-    if (phase === 'work') {
+    if (phase === "work") {
       const newCount = completedPomodoros + 1;
       setCompletedPomodoros(newCount);
       setTodayPomodoros((t) => t + 1);
 
       // Determine next break type
       if (newCount % settings.pomodorosUntilLongBreak === 0) {
-        setPhase('longBreak');
+        setPhase("longBreak");
         setTimeLeft(settings.longBreakDuration * 60);
       } else {
-        setPhase('shortBreak');
+        setPhase("shortBreak");
         setTimeLeft(settings.shortBreakDuration * 60);
       }
 
@@ -179,7 +182,7 @@ function usePomodoroTimer(settings: PomodoroSettings) {
       }
     } else {
       // Break complete, back to work
-      setPhase('work');
+      setPhase("work");
       setTimeLeft(settings.workDuration * 60);
 
       if (settings.autoStartPomodoros) {
@@ -209,7 +212,7 @@ function usePomodoroTimer(settings: PomodoroSettings) {
         clearInterval(intervalRef.current);
       }
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isRunning, handlePhaseComplete]);
 
   const start = () => setIsRunning(true);
@@ -218,7 +221,7 @@ function usePomodoroTimer(settings: PomodoroSettings) {
 
   const reset = () => {
     setIsRunning(false);
-    setPhase('work');
+    setPhase("work");
     setTimeLeft(settings.workDuration * 60);
     setCompletedPomodoros(0);
   };
@@ -232,13 +235,13 @@ function usePomodoroTimer(settings: PomodoroSettings) {
     setIsRunning(false);
     setPhase(newPhase);
     switch (newPhase) {
-      case 'work':
+      case "work":
         setTimeLeft(settings.workDuration * 60);
         break;
-      case 'shortBreak':
+      case "shortBreak":
         setTimeLeft(settings.shortBreakDuration * 60);
         break;
-      case 'longBreak':
+      case "longBreak":
         setTimeLeft(settings.longBreakDuration * 60);
         break;
     }
@@ -272,7 +275,8 @@ export function PomodoroTimer({
   onPomodoroComplete,
   compact = false,
 }: PomodoroTimerProps) {
-  const [settings, setSettings] = React.useState<PomodoroSettings>(DEFAULT_SETTINGS);
+  const [settings, setSettings] =
+    React.useState<PomodoroSettings>(DEFAULT_SETTINGS);
   const [settingsOpen, setSettingsOpen] = React.useState(false);
 
   const {
@@ -292,12 +296,12 @@ export function PomodoroTimer({
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
 
   // Notify on pomodoro complete
   React.useEffect(() => {
-    if (phase !== 'work' && completedPomodoros > 0) {
+    if (phase !== "work" && completedPomodoros > 0) {
       onPomodoroComplete?.(completedPomodoros);
     }
   }, [completedPomodoros, phase, onPomodoroComplete]);
@@ -305,17 +309,19 @@ export function PomodoroTimer({
   // Compact view for sidebar/widget
   if (compact) {
     return (
-      <div className={cn('flex items-center gap-3', className)}>
+      <div className={cn("flex items-center gap-3", className)}>
         <div
           className={cn(
-            'flex items-center justify-center w-10 h-10 rounded-full',
-            PHASE_BG_COLORS[phase]
+            "flex items-center justify-center w-10 h-10 rounded-full",
+            PHASE_BG_COLORS[phase],
           )}
         >
           {PHASE_ICONS[phase]}
         </div>
         <div className="flex-1">
-          <div className={cn('text-2xl font-mono font-bold', PHASE_COLORS[phase])}>
+          <div
+            className={cn("text-2xl font-mono font-bold", PHASE_COLORS[phase])}
+          >
             {formatTime(timeLeft)}
           </div>
           <div className="text-xs text-muted-foreground">
@@ -326,16 +332,20 @@ export function PomodoroTimer({
           variant="ghost"
           size="icon"
           onClick={toggle}
-          className={cn(isRunning && 'text-primary')}
+          className={cn(isRunning && "text-primary")}
         >
-          {isRunning ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
+          {isRunning ? (
+            <Pause className="h-5 w-5" />
+          ) : (
+            <Play className="h-5 w-5" />
+          )}
         </Button>
       </div>
     );
   }
 
   return (
-    <Card className={cn('w-full max-w-sm', className)}>
+    <Card className={cn("w-full max-w-sm", className)}>
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg flex items-center gap-2">
@@ -347,7 +357,9 @@ export function PomodoroTimer({
               variant="ghost"
               size="icon"
               className="h-8 w-8"
-              onClick={() => setSettings((s) => ({ ...s, soundEnabled: !s.soundEnabled }))}
+              onClick={() =>
+                setSettings((s) => ({ ...s, soundEnabled: !s.soundEnabled }))
+              }
             >
               {settings.soundEnabled ? (
                 <Volume2 className="h-4 w-4" />
@@ -410,12 +422,16 @@ export function PomodoroTimer({
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-medium">
-                      Pomodoros avant pause longue: {settings.pomodorosUntilLongBreak}
+                      Pomodoros avant pause longue:{" "}
+                      {settings.pomodorosUntilLongBreak}
                     </label>
                     <Slider
                       value={[settings.pomodorosUntilLongBreak]}
                       onValueChange={([v]) =>
-                        setSettings((s) => ({ ...s, pomodorosUntilLongBreak: v }))
+                        setSettings((s) => ({
+                          ...s,
+                          pomodorosUntilLongBreak: v,
+                        }))
                       }
                       min={2}
                       max={8}
@@ -434,8 +450,8 @@ export function PomodoroTimer({
         <div className="flex flex-col items-center">
           <div
             className={cn(
-              'text-6xl font-mono font-bold tracking-tight',
-              PHASE_COLORS[phase]
+              "text-6xl font-mono font-bold tracking-tight",
+              PHASE_COLORS[phase],
             )}
           >
             {formatTime(timeLeft)}
@@ -445,24 +461,25 @@ export function PomodoroTimer({
           <div className="w-full mt-4">
             <Progress
               value={progress}
-              className={cn('h-2', PHASE_BG_COLORS[phase])}
+              className={cn("h-2", PHASE_BG_COLORS[phase])}
             />
           </div>
 
           {/* Current task */}
           {currentTask && (
             <div className="mt-3 text-sm text-muted-foreground text-center">
-              Travail sur: <span className="font-medium">{currentTask.title}</span>
+              Travail sur:{" "}
+              <span className="font-medium">{currentTask.title}</span>
             </div>
           )}
         </div>
 
         {/* Phase selector */}
         <div className="flex justify-center gap-2">
-          {(['work', 'shortBreak', 'longBreak'] as TimerPhase[]).map((p) => (
+          {(["work", "shortBreak", "longBreak"] as TimerPhase[]).map((p) => (
             <Button
               key={p}
-              variant={phase === p ? 'secondary' : 'ghost'}
+              variant={phase === p ? "secondary" : "ghost"}
               size="sm"
               onClick={() => setPhase(p)}
               className="text-xs"
@@ -477,11 +494,7 @@ export function PomodoroTimer({
           <Button variant="outline" size="icon" onClick={reset}>
             <RotateCcw className="h-4 w-4" />
           </Button>
-          <Button
-            size="lg"
-            className="w-16 h-16 rounded-full"
-            onClick={toggle}
-          >
+          <Button size="lg" className="w-16 h-16 rounded-full" onClick={toggle}>
             {isRunning ? (
               <Pause className="h-6 w-6" />
             ) : (
@@ -497,7 +510,9 @@ export function PomodoroTimer({
         <div className="flex items-center justify-center gap-4 pt-2 border-t">
           <div className="flex items-center gap-1 text-sm">
             <CheckCircle2 className="h-4 w-4 text-green-500" />
-            <span>{completedPomodoros} session{completedPomodoros !== 1 ? 's' : ''}</span>
+            <span>
+              {completedPomodoros} session{completedPomodoros !== 1 ? "s" : ""}
+            </span>
           </div>
           <div className="text-sm text-muted-foreground">
             Aujourd'hui: {todayPomodoros}

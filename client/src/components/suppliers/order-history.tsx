@@ -1,7 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from "recharts";
 
 interface Order {
   id: string;
@@ -87,14 +96,16 @@ export default function OrderHistory() {
       acc[order.supplier].push(order);
       return acc;
     },
-    {} as Record<string, Order[]>
+    {} as Record<string, Order[]>,
   );
 
-  const chartData = Object.entries(groupedBySupplier).map(([supplier, supplierOrders]) => ({
-    supplier: supplier.split(" ")[0],
-    total: supplierOrders.reduce((sum, o) => sum + o.amount, 0),
-    count: supplierOrders.length,
-  }));
+  const chartData = Object.entries(groupedBySupplier).map(
+    ([supplier, supplierOrders]) => ({
+      supplier: supplier.split(" ")[0],
+      total: supplierOrders.reduce((sum, o) => sum + o.amount, 0),
+      count: supplierOrders.length,
+    }),
+  );
 
   const totalSpent = orders.reduce((sum, o) => sum + o.amount, 0);
 
@@ -111,7 +122,9 @@ export default function OrderHistory() {
         </div>
         <div className="rounded-lg border p-4">
           <p className="text-sm text-muted-foreground">Average Order</p>
-          <p className="text-2xl font-bold">${Math.round(totalSpent / orders.length).toLocaleString()}</p>
+          <p className="text-2xl font-bold">
+            ${Math.round(totalSpent / orders.length).toLocaleString()}
+          </p>
         </div>
       </div>
 
@@ -122,7 +135,11 @@ export default function OrderHistory() {
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="supplier" />
             <YAxis />
-            <Tooltip formatter={(value) => typeof value === 'number' ? `$${value.toLocaleString()}` : value} />
+            <Tooltip
+              formatter={(value) =>
+                typeof value === "number" ? `$${value.toLocaleString()}` : value
+              }
+            />
             <Legend />
             <Bar dataKey="total" fill="#3b82f6" name="Total Spent" />
           </BarChart>
@@ -138,21 +155,35 @@ export default function OrderHistory() {
             <table className="w-full">
               <thead>
                 <tr className="border-b">
-                  <th className="px-4 py-3 text-left text-sm font-semibold">Order Date</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold">Amount</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold">Status</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold">
+                    Order Date
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold">
+                    Amount
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold">
+                    Status
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y">
                 {supplierOrders
-                  .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                  .sort(
+                    (a, b) =>
+                      new Date(b.date).getTime() - new Date(a.date).getTime(),
+                  )
                   .map((order) => (
                     <tr key={order.id} className="hover:bg-muted">
                       <td className="px-4 py-3 text-sm">{order.date}</td>
-                      <td className="px-4 py-3 text-sm font-semibold">${order.amount.toLocaleString()}</td>
+                      <td className="px-4 py-3 text-sm font-semibold">
+                        ${order.amount.toLocaleString()}
+                      </td>
                       <td className="px-4 py-3 text-sm">
-                        <span className={`rounded px-2 py-1 text-xs font-semibold ${getStatusColor(order.status)}`}>
-                          {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                        <span
+                          className={`rounded px-2 py-1 text-xs font-semibold ${getStatusColor(order.status)}`}
+                        >
+                          {order.status.charAt(0).toUpperCase() +
+                            order.status.slice(1)}
                         </span>
                       </td>
                     </tr>
@@ -162,7 +193,10 @@ export default function OrderHistory() {
           </div>
           <div className="border-t bg-muted p-4 text-right">
             <p className="text-sm font-semibold">
-              Subtotal: ${supplierOrders.reduce((sum, o) => sum + o.amount, 0).toLocaleString()}
+              Subtotal: $
+              {supplierOrders
+                .reduce((sum, o) => sum + o.amount, 0)
+                .toLocaleString()}
             </p>
           </div>
         </div>

@@ -3,8 +3,8 @@
  * These declarations allow TypeScript to recognize dynamic imports.
  */
 
-declare module '@/components/docs/document-editor' {
-  import type { ComponentType } from 'react';
+declare module "@/components/docs/document-editor" {
+  import type { ComponentType } from "react";
 
   interface EditorProps {
     content?: unknown;
@@ -18,8 +18,8 @@ declare module '@/components/docs/document-editor' {
   export default DocumentEditor;
 }
 
-declare module '@/components/sheets/sheet-editor' {
-  import type { ComponentType } from 'react';
+declare module "@/components/sheets/sheet-editor" {
+  import type { ComponentType } from "react";
 
   interface EditorProps {
     content?: unknown;
@@ -33,8 +33,8 @@ declare module '@/components/sheets/sheet-editor' {
   export default SheetEditor;
 }
 
-declare module '@/components/slides/slide-editor' {
-  import type { ComponentType } from 'react';
+declare module "@/components/slides/slide-editor" {
+  import type { ComponentType } from "react";
 
   interface EditorProps {
     content?: unknown;
@@ -49,42 +49,42 @@ declare module '@/components/slides/slide-editor' {
 }
 
 // Tiptap extension modules
-declare module '@/lib/tiptap/extensions/comments' {
+declare module "@/lib/tiptap/extensions/comments" {
   const extension: unknown;
   export default extension;
 }
 
-declare module '@/lib/tiptap/extensions/track-changes' {
+declare module "@/lib/tiptap/extensions/track-changes" {
   const extension: unknown;
   export default extension;
 }
 
-declare module '@/lib/tiptap/extensions/collaboration' {
+declare module "@/lib/tiptap/extensions/collaboration" {
   const extension: unknown;
   export default extension;
 }
 
-declare module '@/lib/tiptap/extensions/mentions' {
+declare module "@/lib/tiptap/extensions/mentions" {
   const extension: unknown;
   export default extension;
 }
 
-declare module '@/lib/tiptap/extensions/emoji' {
+declare module "@/lib/tiptap/extensions/emoji" {
   const extension: unknown;
   export default extension;
 }
 
-declare module '@/lib/tiptap/extensions/math' {
+declare module "@/lib/tiptap/extensions/math" {
   const extension: unknown;
   export default extension;
 }
 
-declare module '@/lib/tiptap/extensions/code-block' {
+declare module "@/lib/tiptap/extensions/code-block" {
   const extension: unknown;
   export default extension;
 }
 
-declare module '@/lib/tiptap/extensions/table' {
+declare module "@/lib/tiptap/extensions/table" {
   const extension: unknown;
   export default extension;
 }

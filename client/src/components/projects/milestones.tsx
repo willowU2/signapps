@@ -23,18 +23,68 @@ interface Milestone {
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
-const STATUS_CONFIG: Record<MilestoneStatus, { color: string; icon: React.ReactNode; textClass: string }> = {
-  "On Track": { color: "bg-green-100 text-green-800", icon: <CheckCircle2 className="size-4" />, textClass: "text-green-700" },
-  "At Risk": { color: "bg-yellow-100 text-yellow-800", icon: <AlertCircle className="size-4" />, textClass: "text-yellow-700" },
-  Overdue: { color: "bg-red-100 text-red-800", icon: <AlertCircle className="size-4" />, textClass: "text-red-700" },
+const STATUS_CONFIG: Record<
+  MilestoneStatus,
+  { color: string; icon: React.ReactNode; textClass: string }
+> = {
+  "On Track": {
+    color: "bg-green-100 text-green-800",
+    icon: <CheckCircle2 className="size-4" />,
+    textClass: "text-green-700",
+  },
+  "At Risk": {
+    color: "bg-yellow-100 text-yellow-800",
+    icon: <AlertCircle className="size-4" />,
+    textClass: "text-yellow-700",
+  },
+  Overdue: {
+    color: "bg-red-100 text-red-800",
+    icon: <AlertCircle className="size-4" />,
+    textClass: "text-red-700",
+  },
 };
 
 const INITIAL_MILESTONES: Milestone[] = [
-  { id: "1", name: "Authentification complète", targetDate: "2026-03-28", owner: "AL", status: "On Track", progress: 85 },
-  { id: "2", name: "API REST utilisateurs", targetDate: "2026-03-25", owner: "JD", status: "Overdue", progress: 60 },
-  { id: "3", name: "Dashboard UI", targetDate: "2026-04-05", owner: "MR", status: "On Track", progress: 45 },
-  { id: "4", name: "Système de notifications", targetDate: "2026-04-15", owner: "AL", status: "At Risk", progress: 30 },
-  { id: "5", name: "Tests d'intégration", targetDate: "2026-04-10", owner: "JD", status: "On Track", progress: 25 },
+  {
+    id: "1",
+    name: "Authentification complète",
+    targetDate: "2026-03-28",
+    owner: "AL",
+    status: "On Track",
+    progress: 85,
+  },
+  {
+    id: "2",
+    name: "API REST utilisateurs",
+    targetDate: "2026-03-25",
+    owner: "JD",
+    status: "Overdue",
+    progress: 60,
+  },
+  {
+    id: "3",
+    name: "Dashboard UI",
+    targetDate: "2026-04-05",
+    owner: "MR",
+    status: "On Track",
+    progress: 45,
+  },
+  {
+    id: "4",
+    name: "Système de notifications",
+    targetDate: "2026-04-15",
+    owner: "AL",
+    status: "At Risk",
+    progress: 30,
+  },
+  {
+    id: "5",
+    name: "Tests d'intégration",
+    targetDate: "2026-04-10",
+    owner: "JD",
+    status: "On Track",
+    progress: 25,
+  },
 ];
 
 // ── Sub-components ─────────────────────────────────────────────────────────────
@@ -69,11 +119,16 @@ function ProgressBar({ progress }: ProgressBarProps) {
     <div className="flex items-center gap-2 w-full">
       <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
         <div
-          className={cn("h-full rounded-full transition-all", getColor(progress))}
+          className={cn(
+            "h-full rounded-full transition-all",
+            getColor(progress),
+          )}
           style={{ width: `${progress}%` }}
         />
       </div>
-      <span className="text-xs font-semibold text-muted-foreground w-8 text-right">{progress}%</span>
+      <span className="text-xs font-semibold text-muted-foreground w-8 text-right">
+        {progress}%
+      </span>
     </div>
   );
 }
@@ -85,13 +140,18 @@ interface MilestoneRowProps {
 
 function MilestoneRow({ milestone, onRemove }: MilestoneRowProps) {
   const isOverdue = new Date(milestone.targetDate) < new Date();
-  const daysUntil = Math.ceil((new Date(milestone.targetDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+  const daysUntil = Math.ceil(
+    (new Date(milestone.targetDate).getTime() - new Date().getTime()) /
+      (1000 * 60 * 60 * 24),
+  );
 
   return (
     <div className="border rounded-lg p-4 space-y-3 hover:shadow-md transition-shadow bg-background">
       {/* Header: name and status badge */}
       <div className="flex items-start justify-between gap-3">
-        <h3 className="text-sm font-semibold flex-1 line-clamp-1">{milestone.name}</h3>
+        <h3 className="text-sm font-semibold flex-1 line-clamp-1">
+          {milestone.name}
+        </h3>
         <StatusBadge status={milestone.status} />
       </div>
 
@@ -102,13 +162,32 @@ function MilestoneRow({ milestone, onRemove }: MilestoneRowProps) {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Avatar size="sm">
-            <AvatarFallback className="text-[10px] font-bold">{milestone.owner}</AvatarFallback>
+            <AvatarFallback className="text-[10px] font-bold">
+              {milestone.owner}
+            </AvatarFallback>
           </Avatar>
-          <div className={cn("flex items-center gap-1.5 text-xs", isOverdue ? "text-red-600 font-medium" : "text-muted-foreground")}>
+          <div
+            className={cn(
+              "flex items-center gap-1.5 text-xs",
+              isOverdue ? "text-red-600 font-medium" : "text-muted-foreground",
+            )}
+          >
             <Calendar className="size-3 shrink-0" />
-            <span>{new Date(milestone.targetDate).toLocaleDateString("fr-FR", { day: "2-digit", month: "short", year: "numeric" })}</span>
-            {!isOverdue && daysUntil >= 0 && <span className="text-muted-foreground">({daysUntil}j)</span>}
-            {isOverdue && <span className="text-red-600 font-medium">({Math.abs(daysUntil)}j retard)</span>}
+            <span>
+              {new Date(milestone.targetDate).toLocaleDateString("fr-FR", {
+                day: "2-digit",
+                month: "short",
+                year: "numeric",
+              })}
+            </span>
+            {!isOverdue && daysUntil >= 0 && (
+              <span className="text-muted-foreground">({daysUntil}j)</span>
+            )}
+            {isOverdue && (
+              <span className="text-red-600 font-medium">
+                ({Math.abs(daysUntil)}j retard)
+              </span>
+            )}
           </div>
         </div>
         <Button
@@ -171,7 +250,10 @@ function AddMilestoneForm({ onAdd, nextId }: AddMilestoneFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="border rounded-lg p-4 space-y-3 bg-background/50">
+    <form
+      onSubmit={handleSubmit}
+      className="border rounded-lg p-4 space-y-3 bg-background/50"
+    >
       <div className="space-y-2">
         <label className="text-xs font-medium">Nom du jalon</label>
         <Input
@@ -245,7 +327,8 @@ export function Milestones() {
         <div>
           <h2 className="text-lg font-semibold">Jalons</h2>
           <p className="text-xs text-muted-foreground mt-1">
-            {onTrackCount} en cours • {atRiskCount} à risque • {overdueCount} en retard
+            {onTrackCount} en cours • {atRiskCount} à risque • {overdueCount} en
+            retard
           </p>
         </div>
       </div>

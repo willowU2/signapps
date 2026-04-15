@@ -56,46 +56,62 @@ export default function ESGReporting() {
   const [scores, setScores] = useState<ESGScore[]>(DEFAULT_SCORES);
   const [quarterly, setQuarterly] = useState<number[]>(DEFAULT_QUARTERLY);
   const [editingScore, setEditingScore] = useState<string | null>(null);
-  const [editingQuarterIdx, setEditingQuarterIdx] = useState<number | null>(null);
+  const [editingQuarterIdx, setEditingQuarterIdx] = useState<number | null>(
+    null,
+  );
 
   // Load persisted values on mount — API first, localStorage fallback
   useEffect(() => {
     const load = async () => {
       try {
         const [scoresRes, quarterlyRes] = await Promise.all([
-          metricsClient.get<any>('/esg/scores'),
-          metricsClient.get<any>('/esg/quarterly'),
+          metricsClient.get<any>("/esg/scores"),
+          metricsClient.get<any>("/esg/quarterly"),
         ]);
         if (scoresRes.data) {
-          const apiScores = Array.isArray(scoresRes.data) ? scoresRes.data : scoresRes.data.scores;
+          const apiScores = Array.isArray(scoresRes.data)
+            ? scoresRes.data
+            : scoresRes.data.scores;
           if (Array.isArray(apiScores) && apiScores.length > 0) {
             const mapped = apiScores.map((s: any) => ({
               category: s.category ?? s.name,
               score: s.score ?? s.value ?? 0,
-              trend: (['up','down','stable'].includes(s.trend) ? s.trend : 'stable') as ESGScore['trend'],
-              color: s.color ?? 'bg-muted text-gray-800',
+              trend: (["up", "down", "stable"].includes(s.trend)
+                ? s.trend
+                : "stable") as ESGScore["trend"],
+              color: s.color ?? "bg-muted text-gray-800",
             }));
             setScores(mapped);
             localStorage.setItem(STORAGE_KEY_SCORES, JSON.stringify(mapped));
           }
         }
         if (quarterlyRes.data) {
-          const apiQ = Array.isArray(quarterlyRes.data) ? quarterlyRes.data : quarterlyRes.data.quarterly;
+          const apiQ = Array.isArray(quarterlyRes.data)
+            ? quarterlyRes.data
+            : quarterlyRes.data.quarterly;
           if (Array.isArray(apiQ) && apiQ.length > 0) {
-            const vals = apiQ.map((q: any) => typeof q === 'number' ? q : q.value ?? q.score ?? 0);
+            const vals = apiQ.map((q: any) =>
+              typeof q === "number" ? q : (q.value ?? q.score ?? 0),
+            );
             setQuarterly(vals);
             localStorage.setItem(STORAGE_KEY_QUARTERLY, JSON.stringify(vals));
           }
         }
       } catch {
-        setScores(loadFromStorage<ESGScore[]>(STORAGE_KEY_SCORES, DEFAULT_SCORES));
-        setQuarterly(loadFromStorage<number[]>(STORAGE_KEY_QUARTERLY, DEFAULT_QUARTERLY));
+        setScores(
+          loadFromStorage<ESGScore[]>(STORAGE_KEY_SCORES, DEFAULT_SCORES),
+        );
+        setQuarterly(
+          loadFromStorage<number[]>(STORAGE_KEY_QUARTERLY, DEFAULT_QUARTERLY),
+        );
       }
     };
     load();
   }, []);
 
-  const avgScore = (scores.reduce((sum, s) => sum + s.score, 0) / scores.length).toFixed(1);
+  const avgScore = (
+    scores.reduce((sum, s) => sum + s.score, 0) / scores.length
+  ).toFixed(1);
 
   const getTrendIcon = (trend: string) => {
     if (trend === "up") return "📈";
@@ -106,12 +122,12 @@ export default function ESGReporting() {
   const updateScore = (category: string, newScore: number) => {
     const clamped = Math.min(100, Math.max(0, newScore));
     const updated = scores.map((s) =>
-      s.category === category ? { ...s, score: clamped } : s
+      s.category === category ? { ...s, score: clamped } : s,
     );
     setScores(updated);
     localStorage.setItem(STORAGE_KEY_SCORES, JSON.stringify(updated));
     setEditingScore(null);
-    metricsClient.put('/esg/scores', { scores: updated }).catch(() => {});
+    metricsClient.put("/esg/scores", { scores: updated }).catch(() => {});
     toast.success(`${category} score updated`);
   };
 
@@ -121,7 +137,7 @@ export default function ESGReporting() {
     setQuarterly(updated);
     localStorage.setItem(STORAGE_KEY_QUARTERLY, JSON.stringify(updated));
     setEditingQuarterIdx(null);
-    metricsClient.put('/esg/quarterly', { quarterly: updated }).catch(() => {});
+    metricsClient.put("/esg/quarterly", { quarterly: updated }).catch(() => {});
     toast.success(`Q${idx + 1} trend updated`);
   };
 
@@ -165,10 +181,15 @@ export default function ESGReporting() {
                       defaultValue={item.score}
                       className="h-7 w-24 text-sm"
                       autoFocus
-                      onBlur={(e) => updateScore(item.category, Number(e.target.value))}
+                      onBlur={(e) =>
+                        updateScore(item.category, Number(e.target.value))
+                      }
                       onKeyDown={(e) => {
                         if (e.key === "Enter")
-                          updateScore(item.category, Number((e.target as HTMLInputElement).value));
+                          updateScore(
+                            item.category,
+                            Number((e.target as HTMLInputElement).value),
+                          );
                         if (e.key === "Escape") setEditingScore(null);
                       }}
                     />
@@ -214,7 +235,12 @@ export default function ESGReporting() {
 
       {/* Quarterly Trend — editable bars */}
       <div className="p-4 bg-muted rounded-lg border border-border">
-        <p className="font-semibold mb-2 text-sm">Quarterly Trend <span className="text-xs font-normal text-muted-foreground">(click bar to edit)</span></p>
+        <p className="font-semibold mb-2 text-sm">
+          Quarterly Trend{" "}
+          <span className="text-xs font-normal text-muted-foreground">
+            (click bar to edit)
+          </span>
+        </p>
         <div className="h-20 flex items-end gap-2 justify-around">
           {quarterly.map((value, idx) => (
             <div key={idx} className="flex-1 flex flex-col items-center">
@@ -229,7 +255,10 @@ export default function ESGReporting() {
                   onBlur={(e) => updateQuarterly(idx, Number(e.target.value))}
                   onKeyDown={(e) => {
                     if (e.key === "Enter")
-                      updateQuarterly(idx, Number((e.target as HTMLInputElement).value));
+                      updateQuarterly(
+                        idx,
+                        Number((e.target as HTMLInputElement).value),
+                      );
                     if (e.key === "Escape") setEditingQuarterIdx(null);
                   }}
                 />

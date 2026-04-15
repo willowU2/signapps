@@ -5,8 +5,8 @@ use crate::models::{
     ApprovalWorkflow, Category, CreateApprovalWorkflow, CreateCategory, CreatePresenceRule,
     LeaveBalance, PresenceRule, TimesheetEntry,
 };
-use signapps_db_shared::DatabasePool;
 use signapps_common::Result;
+use signapps_db_shared::DatabasePool;
 use uuid::Uuid;
 
 // ============================================================================

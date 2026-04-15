@@ -265,7 +265,12 @@ async fn handle_kdc_request(pool: &PgPool, data: &[u8]) -> Result<Vec<u8>, Strin
                     .await;
 
             let response = match result {
-                crate::handlers::as_req::AsResult::Success { user_id, realm, principal, tgt } => {
+                crate::handlers::as_req::AsResult::Success {
+                    user_id,
+                    realm,
+                    principal,
+                    tgt,
+                } => {
                     serde_json::json!({
                         "type": "AS-REP",
                         "success": true,
@@ -274,25 +279,28 @@ async fn handle_kdc_request(pool: &PgPool, data: &[u8]) -> Result<Vec<u8>, Strin
                         "principal": principal,
                         "tgt_size": tgt.as_ref().map(|t| t.len()),
                     })
-                }
-                crate::handlers::as_req::AsResult::PreAuthRequired { realm, supported_etypes } => {
+                },
+                crate::handlers::as_req::AsResult::PreAuthRequired {
+                    realm,
+                    supported_etypes,
+                } => {
                     serde_json::json!({
                         "type": "AS-REP",
                         "preauth_required": true,
                         "realm": realm,
                         "supported_etypes": supported_etypes,
                     })
-                }
+                },
                 crate::handlers::as_req::AsResult::Error { code, message } => {
                     serde_json::json!({
                         "type": "KRB-ERROR",
                         "error_code": code,
                         "message": message,
                     })
-                }
+                },
             };
             serde_json::to_vec(&response).map_err(|e| e.to_string())
-        }
+        },
 
         "TGS-REQ" => {
             let service = req.service.as_deref().ok_or("Missing service principal")?;
@@ -314,17 +322,17 @@ async fn handle_kdc_request(pool: &PgPool, data: &[u8]) -> Result<Vec<u8>, Strin
                         "realm": realm,
                         "ticket_size": ticket.as_ref().map(|t| t.len()),
                     })
-                }
+                },
                 crate::handlers::tgs_req::TgsResult::Error { code, message } => {
                     serde_json::json!({
                         "type": "KRB-ERROR",
                         "error_code": code,
                         "message": message,
                     })
-                }
+                },
             };
             serde_json::to_vec(&response).map_err(|e| e.to_string())
-        }
+        },
 
         other => Err(format!("Unknown KDC message type: {other}")),
     }

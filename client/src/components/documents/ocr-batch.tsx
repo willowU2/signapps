@@ -90,11 +90,15 @@ export function OCRBatch({
       setResults(ocrResults);
       setProgress(100);
 
-      const successCount = ocrResults.filter((r) => r.status === "completed").length;
-      const failedCount = ocrResults.filter((r) => r.status === "failed").length;
+      const successCount = ocrResults.filter(
+        (r) => r.status === "completed",
+      ).length;
+      const failedCount = ocrResults.filter(
+        (r) => r.status === "failed",
+      ).length;
 
       toast.success(
-        `OCR terminé: ${successCount} fichiers traités, ${failedCount} erreurs`
+        `OCR terminé: ${successCount} fichiers traités, ${failedCount} erreurs`,
       );
     } catch (error) {
       toast.error("Erreur lors du traitement OCR");
@@ -108,7 +112,9 @@ export function OCRBatch({
     <Card className="p-6 space-y-4">
       <div>
         <h3 className="text-lg font-semibold">Traitement OCR par lot</h3>
-        <p className="text-sm text-muted-foreground">Extrayez le texte de plusieurs fichiers à la fois</p>
+        <p className="text-sm text-muted-foreground">
+          Extrayez le texte de plusieurs fichiers à la fois
+        </p>
       </div>
 
       {/* Folder Selection */}
@@ -116,7 +122,9 @@ export function OCRBatch({
         <div className="flex items-center gap-3">
           <Folder className="w-5 h-5 text-muted-foreground" />
           <div className="flex-1">
-            <p className="text-sm font-medium text-muted-foreground">Dossier sélectionné</p>
+            <p className="text-sm font-medium text-muted-foreground">
+              Dossier sélectionné
+            </p>
             <p className="text-xs text-muted-foreground mt-0.5">
               {folderPath || "Aucun dossier sélectionné"}
             </p>
@@ -137,7 +145,8 @@ export function OCRBatch({
       {folderPath && fileCount > 0 && (
         <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
           <p className="text-sm text-blue-700">
-            <span className="font-semibold">{fileCount}</span> fichier(s) détecté(s) dans le dossier
+            <span className="font-semibold">{fileCount}</span> fichier(s)
+            détecté(s) dans le dossier
           </p>
         </div>
       )}
@@ -146,8 +155,12 @@ export function OCRBatch({
       {isProcessing && (
         <div className="space-y-2">
           <div className="flex justify-between items-center">
-            <p className="text-sm font-medium text-muted-foreground">Progression</p>
-            <p className="text-sm font-semibold text-muted-foreground">{Math.round(progress)}%</p>
+            <p className="text-sm font-medium text-muted-foreground">
+              Progression
+            </p>
+            <p className="text-sm font-semibold text-muted-foreground">
+              {Math.round(progress)}%
+            </p>
           </div>
           <Progress value={progress} className="h-2" />
         </div>
@@ -165,7 +178,9 @@ export function OCRBatch({
       {/* Results List */}
       {results.length > 0 && (
         <div className="space-y-2">
-          <h4 className="text-sm font-semibold text-muted-foreground">Résultats</h4>
+          <h4 className="text-sm font-semibold text-muted-foreground">
+            Résultats
+          </h4>
           <div className="max-h-64 overflow-y-auto space-y-2">
             {results.map((result) => (
               <div
@@ -174,12 +189,12 @@ export function OCRBatch({
                   result.status === "completed"
                     ? "bg-green-50 border-green-200 hover:bg-green-100"
                     : result.status === "failed"
-                    ? "bg-red-50 border-red-200 hover:bg-red-100"
-                    : "bg-muted border-border hover:bg-muted"
+                      ? "bg-red-50 border-red-200 hover:bg-red-100"
+                      : "bg-muted border-border hover:bg-muted"
                 }`}
                 onClick={() =>
                   setExpandedResults(
-                    expandedResults === result.fileId ? null : result.fileId
+                    expandedResults === result.fileId ? null : result.fileId,
                   )
                 }
               >
@@ -203,7 +218,9 @@ export function OCRBatch({
                       <Check className="w-4 h-4 text-green-600" />
                     )}
                     {result.status === "failed" && (
-                      <span className="text-xs font-semibold text-red-600">Erreur</span>
+                      <span className="text-xs font-semibold text-red-600">
+                        Erreur
+                      </span>
                     )}
                   </div>
                 </div>

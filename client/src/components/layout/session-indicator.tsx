@@ -1,14 +1,19 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useCallback } from 'react';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useState, useEffect, useCallback } from "react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 /** Decode the payload of a JWT without verifying signature. */
 function decodeJwtPayload(token: string): Record<string, unknown> | null {
   try {
-    const parts = token.split('.');
+    const parts = token.split(".");
     if (parts.length !== 3) return null;
-    const payload = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+    const payload = parts[1].replace(/-/g, "+").replace(/_/g, "/");
     const decoded = atob(payload);
     return JSON.parse(decoded);
   } catch {
@@ -18,20 +23,20 @@ function decodeJwtPayload(token: string): Record<string, unknown> | null {
 
 /** Returns { remaining: seconds, total: seconds } or null */
 function getSessionTimes(): { remaining: number; total: number } | null {
-  if (typeof window === 'undefined') return null;
+  if (typeof window === "undefined") return null;
 
   // Try cookies first (httpOnly won't be readable, fallback to localStorage)
   const token =
-    localStorage.getItem('access_token') ||
+    localStorage.getItem("access_token") ||
     document.cookie
-      .split('; ')
-      .find((c) => c.startsWith('access_token='))
-      ?.split('=')[1];
+      .split("; ")
+      .find((c) => c.startsWith("access_token="))
+      ?.split("=")[1];
 
   if (!token) return null;
 
   const payload = decodeJwtPayload(token);
-  if (!payload || typeof payload.exp !== 'number') return null;
+  if (!payload || typeof payload.exp !== "number") return null;
 
   const now = Math.floor(Date.now() / 1000);
   const exp = payload.exp as number;
@@ -44,7 +49,7 @@ function getSessionTimes(): { remaining: number; total: number } | null {
 }
 
 function formatDuration(seconds: number): string {
-  if (seconds <= 0) return '0s';
+  if (seconds <= 0) return "0s";
   const h = Math.floor(seconds / 3600);
   const m = Math.floor((seconds % 3600) / 60);
   if (h > 0) return `${h}h ${m}m`;
@@ -53,7 +58,10 @@ function formatDuration(seconds: number): string {
 }
 
 export function SessionIndicator() {
-  const [times, setTimes] = useState<{ remaining: number; total: number } | null>(null);
+  const [times, setTimes] = useState<{
+    remaining: number;
+    total: number;
+  } | null>(null);
 
   const refresh = useCallback(() => {
     setTimes(getSessionTimes());
@@ -73,8 +81,8 @@ export function SessionIndicator() {
   // Dot color: green = active, yellow = expiring soon
   const isExpiringSoon = remaining <= WARNING_THRESHOLD;
   const dotColor = isExpiringSoon
-    ? 'bg-yellow-400 shadow-yellow-400/50'
-    : 'bg-green-500 shadow-green-500/50';
+    ? "bg-yellow-400 shadow-yellow-400/50"
+    : "bg-green-500 shadow-green-500/50";
 
   const label = `Session : ${formatDuration(remaining)}`;
   const tooltipText = isExpiringSoon
@@ -87,7 +95,7 @@ export function SessionIndicator() {
         <TooltipTrigger asChild>
           <div className="flex items-center gap-1.5 px-2 py-1 rounded-md text-xs text-muted-foreground hover:bg-accent transition-colors cursor-default select-none">
             <span
-              className={`h-2 w-2 rounded-full ${dotColor} shadow-sm ${isExpiringSoon ? 'animate-pulse' : ''}`}
+              className={`h-2 w-2 rounded-full ${dotColor} shadow-sm ${isExpiringSoon ? "animate-pulse" : ""}`}
             />
             <span className="hidden sm:inline font-medium tabular-nums">
               {label}

@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { SpinnerInfinity } from 'spinners-react';
+import { SpinnerInfinity } from "spinners-react";
 
 /**
  * CacheManager
@@ -8,29 +8,44 @@ import { SpinnerInfinity } from 'spinners-react';
  * Component for managing and monitoring office cache.
  */
 
-import React, { useEffect } from 'react';
-import { formatDistanceToNow } from 'date-fns';
-import { fr } from 'date-fns/locale';
-import { Database, Trash2, RefreshCw, Flame, Filter, MoreHorizontal, ChevronRight, HardDrive, Cloud, MemoryStick, FileText, Image, FileType, AlertTriangle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
+import React, { useEffect } from "react";
+import { formatDistanceToNow } from "date-fns";
+import { fr } from "date-fns/locale";
+import {
+  Database,
+  Trash2,
+  RefreshCw,
+  Flame,
+  Filter,
+  MoreHorizontal,
+  ChevronRight,
+  HardDrive,
+  Cloud,
+  MemoryStick,
+  FileText,
+  Image,
+  FileType,
+  AlertTriangle,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from "@/components/ui/dropdown-menu";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from "@/components/ui/select";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -41,15 +56,19 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
-import { cn } from '@/lib/utils';
-import { useCacheStore } from '@/stores/cache-store';
-import type { CacheEntry, CacheType, CacheLocation } from '@/lib/office/cache/types';
+} from "@/components/ui/alert-dialog";
+import { cn } from "@/lib/utils";
+import { useCacheStore } from "@/stores/cache-store";
+import type {
+  CacheEntry,
+  CacheType,
+  CacheLocation,
+} from "@/lib/office/cache/types";
 import {
   CACHE_TYPE_LABELS,
   CACHE_TYPE_COLORS,
   CACHE_LOCATION_LABELS,
-} from '@/lib/office/cache/types';
+} from "@/lib/office/cache/types";
 
 // ============================================================================
 // Helpers
@@ -58,28 +77,29 @@ import {
 function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  if (bytes < 1024 * 1024 * 1024)
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
 }
 
 function getLocationIcon(location: CacheLocation) {
   switch (location) {
-    case 'memory':
+    case "memory":
       return <MemoryStick className="h-4 w-4" />;
-    case 'disk':
+    case "disk":
       return <HardDrive className="h-4 w-4" />;
-    case 'cdn':
+    case "cdn":
       return <Cloud className="h-4 w-4" />;
   }
 }
 
 function getTypeIcon(type: CacheType) {
   switch (type) {
-    case 'document_content':
-    case 'document_preview':
+    case "document_content":
+    case "document_preview":
       return <FileText className="h-4 w-4" />;
-    case 'thumbnail':
-    case 'image':
+    case "thumbnail":
+    case "image":
       return <Image className="h-4 w-4" />;
     default:
       return <FileType className="h-4 w-4" />;
@@ -97,17 +117,22 @@ interface CacheEntryItemProps {
   onDelete: () => void;
 }
 
-function CacheEntryItem({ entry, isSelected, onSelect, onDelete }: CacheEntryItemProps) {
+function CacheEntryItem({
+  entry,
+  isSelected,
+  onSelect,
+  onDelete,
+}: CacheEntryItemProps) {
   const isExpired = entry.expiresAt && new Date(entry.expiresAt) < new Date();
 
   return (
     <div
       className={cn(
-        'flex items-center gap-3 p-3 rounded-lg border transition-all cursor-pointer',
+        "flex items-center gap-3 p-3 rounded-lg border transition-all cursor-pointer",
         isSelected
-          ? 'border-primary bg-primary/5'
-          : 'border-transparent hover:bg-muted/50',
-        isExpired && 'opacity-60'
+          ? "border-primary bg-primary/5"
+          : "border-transparent hover:bg-muted/50",
+        isExpired && "opacity-60",
       )}
       onClick={onSelect}
     >
@@ -129,7 +154,10 @@ function CacheEntryItem({ entry, isSelected, onSelect, onDelete }: CacheEntryIte
           )}
         </div>
         <div className="flex items-center gap-2 mt-0.5 text-xs text-muted-foreground">
-          <Badge variant="secondary" className={cn('text-xs', CACHE_TYPE_COLORS[entry.type])}>
+          <Badge
+            variant="secondary"
+            className={cn("text-xs", CACHE_TYPE_COLORS[entry.type])}
+          >
             {CACHE_TYPE_LABELS[entry.type]}
           </Badge>
           <span>·</span>
@@ -205,27 +233,30 @@ export function CacheManager({ className }: CacheManagerProps) {
     loadStats();
   }, [loadEntries, loadStats]);
 
-  const typeOptions: Array<{ value: CacheType | 'all'; label: string }> = [
-    { value: 'all', label: 'Tous les types' },
-    { value: 'document_content', label: 'Contenu document' },
-    { value: 'document_preview', label: 'Aperçu' },
-    { value: 'export_result', label: 'Export' },
-    { value: 'conversion_result', label: 'Conversion' },
-    { value: 'thumbnail', label: 'Miniature' },
-    { value: 'template', label: 'Template' },
-    { value: 'font', label: 'Police' },
-    { value: 'image', label: 'Image' },
+  const typeOptions: Array<{ value: CacheType | "all"; label: string }> = [
+    { value: "all", label: "Tous les types" },
+    { value: "document_content", label: "Contenu document" },
+    { value: "document_preview", label: "Aperçu" },
+    { value: "export_result", label: "Export" },
+    { value: "conversion_result", label: "Conversion" },
+    { value: "thumbnail", label: "Miniature" },
+    { value: "template", label: "Template" },
+    { value: "font", label: "Police" },
+    { value: "image", label: "Image" },
   ];
 
-  const locationOptions: Array<{ value: CacheLocation | 'all'; label: string }> = [
-    { value: 'all', label: 'Tous les emplacements' },
-    { value: 'memory', label: 'Mémoire' },
-    { value: 'disk', label: 'Disque' },
-    { value: 'cdn', label: 'CDN' },
+  const locationOptions: Array<{
+    value: CacheLocation | "all";
+    label: string;
+  }> = [
+    { value: "all", label: "Tous les emplacements" },
+    { value: "memory", label: "Mémoire" },
+    { value: "disk", label: "Disque" },
+    { value: "cdn", label: "CDN" },
   ];
 
   return (
-    <div className={cn('flex flex-col h-full', className)}>
+    <div className={cn("flex flex-col h-full", className)}>
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b">
         <div className="flex items-center gap-2">
@@ -233,8 +264,9 @@ export function CacheManager({ className }: CacheManagerProps) {
           <div>
             <h2 className="font-semibold">Gestionnaire de cache</h2>
             <p className="text-xs text-muted-foreground">
-              {totalEntries} entrée{totalEntries !== 1 ? 's' : ''}
-              {stats && ` · ${formatBytes(stats.totalSize)} / ${formatBytes(stats.maxSize)}`}
+              {totalEntries} entrée{totalEntries !== 1 ? "s" : ""}
+              {stats &&
+                ` · ${formatBytes(stats.totalSize)} / ${formatBytes(stats.maxSize)}`}
             </p>
           </div>
         </div>
@@ -246,7 +278,13 @@ export function CacheManager({ className }: CacheManagerProps) {
             disabled={isPrewarming}
           >
             {isPrewarming ? (
-              <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-4 w-4  mr-2" />
+              <SpinnerInfinity
+                size={24}
+                secondaryColor="rgba(128,128,128,0.2)"
+                color="currentColor"
+                speed={120}
+                className="h-4 w-4  mr-2"
+              />
             ) : (
               <Flame className="h-4 w-4 mr-2" />
             )}
@@ -259,7 +297,13 @@ export function CacheManager({ className }: CacheManagerProps) {
             disabled={isInvalidating}
           >
             {isInvalidating ? (
-              <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-4 w-4  mr-2" />
+              <SpinnerInfinity
+                size={24}
+                secondaryColor="rgba(128,128,128,0.2)"
+                color="currentColor"
+                speed={120}
+                className="h-4 w-4  mr-2"
+              />
             ) : (
               <RefreshCw className="h-4 w-4 mr-2" />
             )}
@@ -276,7 +320,8 @@ export function CacheManager({ className }: CacheManagerProps) {
               <AlertDialogHeader>
                 <AlertDialogTitle>Vider le cache ?</AlertDialogTitle>
                 <AlertDialogDescription>
-                  Cette action supprimera toutes les entrées du cache. Les documents devront être rechargés ou régénérés.
+                  Cette action supprimera toutes les entrées du cache. Les
+                  documents devront être rechargés ou régénérés.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
@@ -297,19 +342,23 @@ export function CacheManager({ className }: CacheManagerProps) {
             <div className="flex-1">
               <div className="flex items-center justify-between text-sm mb-1">
                 <span>Utilisation</span>
-                <span className="font-medium">{stats.usedPercentage.toFixed(1)}%</span>
+                <span className="font-medium">
+                  {stats.usedPercentage.toFixed(1)}%
+                </span>
               </div>
               <Progress
                 value={stats.usedPercentage}
                 className={cn(
-                  'h-2',
-                  stats.usedPercentage > 90 && 'bg-red-100 [&>div]:bg-red-500'
+                  "h-2",
+                  stats.usedPercentage > 90 && "bg-red-100 [&>div]:bg-red-500",
                 )}
               />
             </div>
             <Separator orientation="vertical" className="h-8" />
             <div className="text-center">
-              <p className="text-lg font-semibold">{stats.hitRate.toFixed(1)}%</p>
+              <p className="text-lg font-semibold">
+                {stats.hitRate.toFixed(1)}%
+              </p>
               <p className="text-xs text-muted-foreground">Hit rate</p>
             </div>
             <div className="text-center">
@@ -328,8 +377,10 @@ export function CacheManager({ className }: CacheManagerProps) {
       <div className="flex items-center gap-2 p-3 border-b">
         <Filter className="h-4 w-4 text-muted-foreground" />
         <Select
-          value={typeFilter ?? 'all'}
-          onValueChange={(value) => setTypeFilter(value === 'all' ? null : (value as CacheType))}
+          value={typeFilter ?? "all"}
+          onValueChange={(value) =>
+            setTypeFilter(value === "all" ? null : (value as CacheType))
+          }
         >
           <SelectTrigger className="w-[180px] h-8">
             <SelectValue />
@@ -343,9 +394,9 @@ export function CacheManager({ className }: CacheManagerProps) {
           </SelectContent>
         </Select>
         <Select
-          value={locationFilter ?? 'all'}
+          value={locationFilter ?? "all"}
           onValueChange={(value) =>
-            setLocationFilter(value === 'all' ? null : (value as CacheLocation))
+            setLocationFilter(value === "all" ? null : (value as CacheLocation))
           }
         >
           <SelectTrigger className="w-[160px] h-8">
@@ -367,7 +418,7 @@ export function CacheManager({ className }: CacheManagerProps) {
           onClick={refreshEntries}
           disabled={isLoading}
         >
-          <RefreshCw className={cn('h-4 w-4', isLoading && 'animate-spin')} />
+          <RefreshCw className={cn("h-4 w-4", isLoading && "animate-spin")} />
         </Button>
       </div>
 
@@ -376,7 +427,13 @@ export function CacheManager({ className }: CacheManagerProps) {
         <div className="p-3 space-y-1">
           {isLoading && entries.length === 0 ? (
             <div className="flex items-center justify-center py-12">
-              <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-8 w-8  text-muted-foreground" />
+              <SpinnerInfinity
+                size={24}
+                secondaryColor="rgba(128,128,128,0.2)"
+                color="currentColor"
+                speed={120}
+                className="h-8 w-8  text-muted-foreground"
+              />
             </div>
           ) : entries.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
@@ -390,7 +447,9 @@ export function CacheManager({ className }: CacheManagerProps) {
                   key={entry.key}
                   entry={entry}
                   isSelected={selectedEntry?.key === entry.key}
-                  onSelect={() => selectEntry(selectedEntry?.key === entry.key ? null : entry)}
+                  onSelect={() =>
+                    selectEntry(selectedEntry?.key === entry.key ? null : entry)
+                  }
                   onDelete={() => deleteEntry(entry.key)}
                 />
               ))}
@@ -404,7 +463,13 @@ export function CacheManager({ className }: CacheManagerProps) {
                     disabled={isLoading}
                   >
                     {isLoading ? (
-                      <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-4 w-4  mr-2" />
+                      <SpinnerInfinity
+                        size={24}
+                        secondaryColor="rgba(128,128,128,0.2)"
+                        color="currentColor"
+                        speed={120}
+                        className="h-4 w-4  mr-2"
+                      />
                     ) : null}
                     Charger plus
                   </Button>
@@ -419,8 +484,11 @@ export function CacheManager({ className }: CacheManagerProps) {
       {stats && (
         <div className="flex items-center justify-between px-4 py-2 border-t bg-muted/30 text-xs text-muted-foreground">
           <span>
-            Dernier nettoyage:{' '}
-            {formatDistanceToNow(new Date(stats.lastCleanup), { addSuffix: true, locale: fr })}
+            Dernier nettoyage:{" "}
+            {formatDistanceToNow(new Date(stats.lastCleanup), {
+              addSuffix: true,
+              locale: fr,
+            })}
           </span>
           <span>
             Temps d'accès moyen: {stats.averageAccessTime.toFixed(1)}ms

@@ -73,17 +73,18 @@ async fn handle_socket(socket: WebSocket, doc_id: String, doc_type: String, stat
         entry.clone()
     } else {
         // Try loading from DB
-        let loaded_doc = match persistence::load_document(state.pool.inner(), &doc_id, None, None).await {
-            Ok(Some(d)) => {
-                info!(doc_id = %doc_id, "Loaded document from database");
-                Some(d)
-            },
-            Ok(None) => None,
-            Err(e) => {
-                error!(doc_id = %doc_id, error = %e, "Failed to load document");
-                None
-            },
-        };
+        let loaded_doc =
+            match persistence::load_document(state.pool.inner(), &doc_id, None, None).await {
+                Ok(Some(d)) => {
+                    info!(doc_id = %doc_id, "Loaded document from database");
+                    Some(d)
+                },
+                Ok(None) => None,
+                Err(e) => {
+                    error!(doc_id = %doc_id, error = %e, "Failed to load document");
+                    None
+                },
+            };
 
         let new_doc = loaded_doc.unwrap_or_else(Doc::new);
         state.docs.insert(cache_key.clone(), new_doc.clone());
@@ -153,8 +154,15 @@ async fn handle_socket(socket: WebSocket, doc_id: String, doc_type: String, stat
 
                     tokio::spawn(async move {
                         // Save snapshot
-                        if let Err(e) =
-                            persistence::save_document(pool.inner(), &d_id, &d_type, &d_ref, None, None).await
+                        if let Err(e) = persistence::save_document(
+                            pool.inner(),
+                            &d_id,
+                            &d_type,
+                            &d_ref,
+                            None,
+                            None,
+                        )
+                        .await
                         {
                             error!(doc_id = %d_id, error = %e, "Failed to persist document");
                         }

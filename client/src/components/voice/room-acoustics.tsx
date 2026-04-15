@@ -1,52 +1,52 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Volume2, AlertCircle } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { useState } from "react";
+import { Volume2, AlertCircle } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface Room {
   id: string;
   name: string;
   acousticsScore: number;
-  noiseLevel: 'low' | 'medium' | 'high';
+  noiseLevel: "low" | "medium" | "high";
   recommendation: string;
 }
 
 export function RoomAcoustics() {
   const [rooms] = useState<Room[]>([
     {
-      id: '1',
-      name: 'Conference Room A',
+      id: "1",
+      name: "Conference Room A",
       acousticsScore: 5,
-      noiseLevel: 'low',
-      recommendation: 'Excellent for calls',
+      noiseLevel: "low",
+      recommendation: "Excellent for calls",
     },
     {
-      id: '2',
-      name: 'Open Office Area',
+      id: "2",
+      name: "Open Office Area",
       acousticsScore: 2,
-      noiseLevel: 'high',
-      recommendation: 'Use noise cancellation',
+      noiseLevel: "high",
+      recommendation: "Use noise cancellation",
     },
     {
-      id: '3',
-      name: 'Quiet Work Room',
+      id: "3",
+      name: "Quiet Work Room",
       acousticsScore: 4,
-      noiseLevel: 'low',
-      recommendation: 'Ideal for focused work',
+      noiseLevel: "low",
+      recommendation: "Ideal for focused work",
     },
   ]);
 
   const getNoiseLevelColor = (level: string) => {
     switch (level) {
-      case 'low':
-        return 'bg-green-100 dark:bg-green-950 text-green-800 dark:text-green-200';
-      case 'medium':
-        return 'bg-yellow-100 dark:bg-yellow-950 text-yellow-800 dark:text-yellow-200';
-      case 'high':
-        return 'bg-red-100 dark:bg-red-950 text-red-800 dark:text-red-200';
+      case "low":
+        return "bg-green-100 dark:bg-green-950 text-green-800 dark:text-green-200";
+      case "medium":
+        return "bg-yellow-100 dark:bg-yellow-950 text-yellow-800 dark:text-yellow-200";
+      case "high":
+        return "bg-red-100 dark:bg-red-950 text-red-800 dark:text-red-200";
       default:
-        return 'bg-muted dark:bg-gray-800';
+        return "bg-muted dark:bg-gray-800";
     }
   };
 
@@ -57,8 +57,8 @@ export function RoomAcoustics() {
           <div
             key={i}
             className={cn(
-              'h-2 w-2 rounded-full',
-              i < score ? 'bg-primary' : 'bg-muted'
+              "h-2 w-2 rounded-full",
+              i < score ? "bg-primary" : "bg-muted",
             )}
           />
         ))}
@@ -79,17 +79,20 @@ export function RoomAcoustics() {
             {/* Room Header */}
             <div className="flex items-start justify-between gap-3">
               <div className="flex-1">
-                <h3 className="font-semibold text-foreground text-sm">{room.name}</h3>
+                <h3 className="font-semibold text-foreground text-sm">
+                  {room.name}
+                </h3>
               </div>
               <div className="flex items-center gap-2 flex-shrink-0">
                 <Volume2 className="h-4 w-4 text-muted-foreground" />
                 <span
                   className={cn(
-                    'px-2 py-1 rounded text-xs font-medium',
-                    getNoiseLevelColor(room.noiseLevel)
+                    "px-2 py-1 rounded text-xs font-medium",
+                    getNoiseLevelColor(room.noiseLevel),
                   )}
                 >
-                  {room.noiseLevel.charAt(0).toUpperCase() + room.noiseLevel.slice(1)}
+                  {room.noiseLevel.charAt(0).toUpperCase() +
+                    room.noiseLevel.slice(1)}
                 </span>
               </div>
             </div>

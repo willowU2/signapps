@@ -6,12 +6,16 @@
  */
 
 // Sidebars
-export { CommentsSidebar, type Comment, type CommentReply } from '../comments-sidebar';
+export {
+  CommentsSidebar,
+  type Comment,
+  type CommentReply,
+} from "../comments-sidebar";
 export {
   TrackChangesSidebar,
   type TrackChange,
   type ChangeType,
-} from '../track-changes-sidebar';
+} from "../track-changes-sidebar";
 
 // Notifications
 export {
@@ -20,4 +24,4 @@ export {
   trackChangesNotifications,
   collaborationNotifications,
   exportNotifications,
-} from '../change-notifications';
+} from "../change-notifications";

@@ -87,12 +87,11 @@ impl AdDomainRepository {
     ///
     /// Returns `Error::Database` if the query fails.
     pub async fn get_by_realm(pool: &PgPool, realm: &str) -> Result<Option<AdDomain>> {
-        let domain =
-            sqlx::query_as::<_, AdDomain>("SELECT * FROM ad_domains WHERE realm = $1")
-                .bind(realm)
-                .fetch_optional(pool)
-                .await
-                .map_err(|e| Error::Database(e.to_string()))?;
+        let domain = sqlx::query_as::<_, AdDomain>("SELECT * FROM ad_domains WHERE realm = $1")
+            .bind(realm)
+            .fetch_optional(pool)
+            .await
+            .map_err(|e| Error::Database(e.to_string()))?;
 
         Ok(domain)
     }

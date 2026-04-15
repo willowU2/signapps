@@ -64,11 +64,7 @@ export function PayVariables() {
 
   const handleEditSave = (id: string) => {
     setVariables(
-      variables.map((v) =>
-        v.id === id
-          ? { ...v, ...editValues }
-          : v
-      )
+      variables.map((v) => (v.id === id ? { ...v, ...editValues } : v)),
     );
     setEditingId(null);
   };
@@ -80,7 +76,7 @@ export function PayVariables() {
 
   const handleFieldChange = (
     field: keyof PayVariable,
-    value: string | number
+    value: string | number,
   ) => {
     setEditValues({
       ...editValues,

@@ -107,9 +107,15 @@ fn decode_tag(input: &[u8]) -> Result<(BerTag, &[u8]), BerError> {
             _ => return Err(BerError::InvalidTag(byte)),
         },
         // Application (class = 0b01) — used for LDAP operation tags (0x60-0x7F)
-        0b01 => BerTag::Application { number: tag_number, constructed },
+        0b01 => BerTag::Application {
+            number: tag_number,
+            constructed,
+        },
         // Context-specific (class = 0b10) — used for LDAP filters and controls
-        0b10 => BerTag::Context { number: tag_number, constructed },
+        0b10 => BerTag::Context {
+            number: tag_number,
+            constructed,
+        },
         // Private (class = 0b11) — not used in LDAP
         _ => return Err(BerError::InvalidTag(byte)),
     };
@@ -297,7 +303,8 @@ pub fn decode_enumerated(elem: &BerElement) -> Result<i32, BerError> {
     }
     let bytes = primitive_bytes(elem)?;
     let value = bytes_to_integer(bytes)?;
-    i32::try_from(value).map_err(|_| BerError::InvalidEncoding("ENUMERATED value overflows i32".into()))
+    i32::try_from(value)
+        .map_err(|_| BerError::InvalidEncoding("ENUMERATED value overflows i32".into()))
 }
 
 // ─── Internal shared helpers ──────────────────────────────────────────────────

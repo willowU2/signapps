@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { SpinnerInfinity } from 'spinners-react';
+import { SpinnerInfinity } from "spinners-react";
 
 /**
  * CreateTemplateDialog
@@ -8,23 +8,42 @@ import { SpinnerInfinity } from 'spinners-react';
  * Dialog for creating a new template from a document.
  */
 
-import React, { useState } from 'react';
-import { FileText, Table, Presentation, Briefcase, GraduationCap, User, Megaphone, Scale, Users, Calculator, Palette, Folder, Globe, Lock, Building2, ImagePlus, X, Plus } from 'lucide-react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
+import React, { useState } from "react";
+import {
+  FileText,
+  Table,
+  Presentation,
+  Briefcase,
+  GraduationCap,
+  User,
+  Megaphone,
+  Scale,
+  Users,
+  Calculator,
+  Palette,
+  Folder,
+  Globe,
+  Lock,
+  Building2,
+  ImagePlus,
+  X,
+  Plus,
+} from "lucide-react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -32,7 +51,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 import {
   Form,
   FormControl,
@@ -41,12 +60,19 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
-import { cn } from '@/lib/utils';
-import type { TemplateCategory, DocumentType, TemplateVisibility } from '@/lib/office/templates/types';
-import { TEMPLATE_CATEGORIES, DOCUMENT_TYPE_LABELS } from '@/lib/office/templates/types';
+} from "@/components/ui/form";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
+import type {
+  TemplateCategory,
+  DocumentType,
+  TemplateVisibility,
+} from "@/lib/office/templates/types";
+import {
+  TEMPLATE_CATEGORIES,
+  DOCUMENT_TYPE_LABELS,
+} from "@/lib/office/templates/types";
 
 // ============================================================================
 // Icons
@@ -77,11 +103,20 @@ const VISIBILITY_ICONS: Record<TemplateVisibility, React.ElementType> = {
   public: Globe,
 };
 
-const VISIBILITY_LABELS: Record<TemplateVisibility, { label: string; description: string }> = {
-  private: { label: 'Privé', description: 'Visible uniquement par vous' },
-  workspace: { label: 'Espace de travail', description: 'Visible par les membres de l\'espace de travail' },
-  organization: { label: 'Organisation', description: 'Visible par toute l\'organisation' },
-  public: { label: 'Public', description: 'Visible par tous les utilisateurs' },
+const VISIBILITY_LABELS: Record<
+  TemplateVisibility,
+  { label: string; description: string }
+> = {
+  private: { label: "Privé", description: "Visible uniquement par vous" },
+  workspace: {
+    label: "Espace de travail",
+    description: "Visible par les membres de l'espace de travail",
+  },
+  organization: {
+    label: "Organisation",
+    description: "Visible par toute l'organisation",
+  },
+  public: { label: "Public", description: "Visible par tous les utilisateurs" },
 };
 
 // ============================================================================
@@ -89,22 +124,27 @@ const VISIBILITY_LABELS: Record<TemplateVisibility, { label: string; description
 // ============================================================================
 
 const createTemplateSchema = z.object({
-  name: z.string().min(1, 'Le nom est requis').max(100, 'Le nom est trop long'),
-  description: z.string().max(500, 'La description est trop longue').optional(),
+  name: z.string().min(1, "Le nom est requis").max(100, "Le nom est trop long"),
+  description: z.string().max(500, "La description est trop longue").optional(),
   category: z.enum([
-    'business',
-    'education',
-    'personal',
-    'marketing',
-    'legal',
-    'hr',
-    'finance',
-    'creative',
-    'custom',
+    "business",
+    "education",
+    "personal",
+    "marketing",
+    "legal",
+    "hr",
+    "finance",
+    "creative",
+    "custom",
   ] as const),
-  documentType: z.enum(['doc', 'sheet', 'slide'] as const),
-  visibility: z.enum(['private', 'workspace', 'organization', 'public'] as const),
-  tags: z.array(z.string()).max(10, 'Maximum 10 tags'),
+  documentType: z.enum(["doc", "sheet", "slide"] as const),
+  visibility: z.enum([
+    "private",
+    "workspace",
+    "organization",
+    "public",
+  ] as const),
+  tags: z.array(z.string()).max(10, "Maximum 10 tags"),
 });
 
 type CreateTemplateFormData = z.infer<typeof createTemplateSchema>;
@@ -120,10 +160,10 @@ interface TagsInputProps {
 }
 
 function TagsInput({ value, onChange, maxTags = 10 }: TagsInputProps) {
-  const [inputValue, setInputValue] = useState('');
+  const [inputValue, setInputValue] = useState("");
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' || e.key === ',') {
+    if (e.key === "Enter" || e.key === ",") {
       e.preventDefault();
       addTag();
     }
@@ -133,7 +173,7 @@ function TagsInput({ value, onChange, maxTags = 10 }: TagsInputProps) {
     const tag = inputValue.trim().toLowerCase();
     if (tag && !value.includes(tag) && value.length < maxTags) {
       onChange([...value, tag]);
-      setInputValue('');
+      setInputValue("");
     }
   };
 
@@ -196,7 +236,7 @@ export function CreateTemplateDialog({
   onOpenChange,
   documentId,
   documentName,
-  documentType = 'doc',
+  documentType = "doc",
   onSubmit,
 }: CreateTemplateDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -204,11 +244,11 @@ export function CreateTemplateDialog({
   const form = useForm<CreateTemplateFormData>({
     resolver: zodResolver(createTemplateSchema),
     defaultValues: {
-      name: documentName ? `${documentName} - Modèle` : '',
-      description: '',
-      category: 'custom',
+      name: documentName ? `${documentName} - Modèle` : "",
+      description: "",
+      category: "custom",
       documentType: documentType,
-      visibility: 'private',
+      visibility: "private",
       tags: [],
     },
   });
@@ -217,11 +257,11 @@ export function CreateTemplateDialog({
   React.useEffect(() => {
     if (open) {
       form.reset({
-        name: documentName ? `${documentName} - Modèle` : '',
-        description: '',
-        category: 'custom',
+        name: documentName ? `${documentName} - Modèle` : "",
+        description: "",
+        category: "custom",
         documentType: documentType,
-        visibility: 'private',
+        visibility: "private",
         tags: [],
       });
     }
@@ -250,7 +290,10 @@ export function CreateTemplateDialog({
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+          <form
+            onSubmit={form.handleSubmit(handleSubmit)}
+            className="space-y-6"
+          >
             <ScrollArea className="max-h-[60vh] pr-4">
               <div className="space-y-6">
                 {/* Name */}
@@ -284,7 +327,8 @@ export function CreateTemplateDialog({
                         />
                       </FormControl>
                       <FormDescription>
-                        Une description claire aide les autres à comprendre quand utiliser ce modèle.
+                        Une description claire aide les autres à comprendre
+                        quand utiliser ce modèle.
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
@@ -300,24 +344,30 @@ export function CreateTemplateDialog({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Catégorie</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Sélectionner une catégorie" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {Object.entries(TEMPLATE_CATEGORIES).map(([key, { label }]) => {
-                            const Icon = CATEGORY_ICONS[key as TemplateCategory];
-                            return (
-                              <SelectItem key={key} value={key}>
-                                <div className="flex items-center gap-2">
-                                  <Icon className="h-4 w-4" />
-                                  {label}
-                                </div>
-                              </SelectItem>
-                            );
-                          })}
+                          {Object.entries(TEMPLATE_CATEGORIES).map(
+                            ([key, { label }]) => {
+                              const Icon =
+                                CATEGORY_ICONS[key as TemplateCategory];
+                              return (
+                                <SelectItem key={key} value={key}>
+                                  <div className="flex items-center gap-2">
+                                    <Icon className="h-4 w-4" />
+                                    {label}
+                                  </div>
+                                </SelectItem>
+                              );
+                            },
+                          )}
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -332,24 +382,30 @@ export function CreateTemplateDialog({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Type de document</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {Object.entries(DOCUMENT_TYPE_LABELS).map(([key, label]) => {
-                            const Icon = DOCUMENT_TYPE_ICONS[key as DocumentType];
-                            return (
-                              <SelectItem key={key} value={key}>
-                                <div className="flex items-center gap-2">
-                                  <Icon className="h-4 w-4" />
-                                  {label}
-                                </div>
-                              </SelectItem>
-                            );
-                          })}
+                          {Object.entries(DOCUMENT_TYPE_LABELS).map(
+                            ([key, label]) => {
+                              const Icon =
+                                DOCUMENT_TYPE_ICONS[key as DocumentType];
+                              return (
+                                <SelectItem key={key} value={key}>
+                                  <div className="flex items-center gap-2">
+                                    <Icon className="h-4 w-4" />
+                                    {label}
+                                  </div>
+                                </SelectItem>
+                              );
+                            },
+                          )}
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -367,35 +423,44 @@ export function CreateTemplateDialog({
                     <FormItem>
                       <FormLabel>Visibilité</FormLabel>
                       <div className="grid grid-cols-2 gap-3">
-                        {Object.entries(VISIBILITY_LABELS).map(([key, { label, description }]) => {
-                          const Icon = VISIBILITY_ICONS[key as TemplateVisibility];
-                          const isSelected = field.value === key;
+                        {Object.entries(VISIBILITY_LABELS).map(
+                          ([key, { label, description }]) => {
+                            const Icon =
+                              VISIBILITY_ICONS[key as TemplateVisibility];
+                            const isSelected = field.value === key;
 
-                          return (
-                            <button
-                              key={key}
-                              type="button"
-                              onClick={() => field.onChange(key)}
-                              className={cn(
-                                'flex items-start gap-3 p-3 rounded-lg border text-left transition-colors',
-                                isSelected
-                                  ? 'border-primary bg-primary/5'
-                                  : 'border-border hover:border-muted-foreground/50'
-                              )}
-                            >
-                              <Icon
+                            return (
+                              <button
+                                key={key}
+                                type="button"
+                                onClick={() => field.onChange(key)}
                                 className={cn(
-                                  'h-5 w-5 mt-0.5',
-                                  isSelected ? 'text-primary' : 'text-muted-foreground'
+                                  "flex items-start gap-3 p-3 rounded-lg border text-left transition-colors",
+                                  isSelected
+                                    ? "border-primary bg-primary/5"
+                                    : "border-border hover:border-muted-foreground/50",
                                 )}
-                              />
-                              <div>
-                                <div className="font-medium text-sm">{label}</div>
-                                <div className="text-xs text-muted-foreground">{description}</div>
-                              </div>
-                            </button>
-                          );
-                        })}
+                              >
+                                <Icon
+                                  className={cn(
+                                    "h-5 w-5 mt-0.5",
+                                    isSelected
+                                      ? "text-primary"
+                                      : "text-muted-foreground",
+                                  )}
+                                />
+                                <div>
+                                  <div className="font-medium text-sm">
+                                    {label}
+                                  </div>
+                                  <div className="text-xs text-muted-foreground">
+                                    {description}
+                                  </div>
+                                </div>
+                              </button>
+                            );
+                          },
+                        )}
                       </div>
                       <FormMessage />
                     </FormItem>
@@ -412,7 +477,10 @@ export function CreateTemplateDialog({
                     <FormItem>
                       <FormLabel>Tags</FormLabel>
                       <FormControl>
-                        <TagsInput value={field.value} onChange={field.onChange} />
+                        <TagsInput
+                          value={field.value}
+                          onChange={field.onChange}
+                        />
                       </FormControl>
                       <FormDescription>
                         Ajoutez des tags pour faciliter la recherche.
@@ -436,11 +504,17 @@ export function CreateTemplateDialog({
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting ? (
                   <>
-                    <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />
+                    <SpinnerInfinity
+                      size={24}
+                      secondaryColor="rgba(128,128,128,0.2)"
+                      color="currentColor"
+                      speed={120}
+                      className="mr-2 h-4 w-4 "
+                    />
                     Création...
                   </>
                 ) : (
-                  'Créer le modèle'
+                  "Créer le modèle"
                 )}
               </Button>
             </DialogFooter>

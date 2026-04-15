@@ -38,10 +38,10 @@ button:hover {
 
 // Tenant ID mapping (demo tenants)
 const TENANT_IDS: Record<string, string> = {
-  "default": "default",
+  default: "default",
   "acme-corp": "acme-corp",
   "tech-startup": "tech-startup",
-  "enterprise": "enterprise",
+  enterprise: "enterprise",
 };
 
 export function CSSOverrideEditor() {
@@ -54,7 +54,9 @@ export function CSSOverrideEditor() {
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await identityClient.get<{ css: string }>(`/admin/tenants/${TENANT_IDS[tenant]}/css`);
+        const res = await identityClient.get<{ css: string }>(
+          `/admin/tenants/${TENANT_IDS[tenant]}/css`,
+        );
         setCSS(res.data?.css ?? DEFAULT_CSS);
       } catch {
         const cached = localStorage.getItem(`css-override-${tenant}`);
@@ -70,7 +72,9 @@ export function CSSOverrideEditor() {
     setIsSaved(true);
     toast.success("CSS enregistré avec succès");
     try {
-      await identityClient.put(`/admin/tenants/${TENANT_IDS[tenant]}/css`, { css });
+      await identityClient.put(`/admin/tenants/${TENANT_IDS[tenant]}/css`, {
+        css,
+      });
     } catch {
       // localStorage already updated
     }
@@ -104,7 +108,9 @@ export function CSSOverrideEditor() {
     <div className="space-y-4 w-full max-w-6xl">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-foreground">CSS Override Editor</h2>
+          <h2 className="text-2xl font-bold text-foreground">
+            CSS Override Editor
+          </h2>
           <p className="text-sm text-muted-foreground mt-1">
             Customize tenant branding with custom CSS
           </p>
@@ -148,20 +154,12 @@ export function CSSOverrideEditor() {
             )}
           </Button>
 
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleReset}
-          >
+          <Button variant="outline" size="sm" onClick={handleReset}>
             <RotateCcw className="w-4 h-4 mr-2" />
             Reset
           </Button>
 
-          <Button
-            onClick={handleSave}
-            disabled={isSaved}
-            size="sm"
-          >
+          <Button onClick={handleSave} disabled={isSaved} size="sm">
             <Save className="w-4 h-4 mr-2" />
             Save
           </Button>
@@ -184,7 +182,9 @@ export function CSSOverrideEditor() {
         {showPreview && (
           <Card className="border border-border overflow-hidden">
             <div className="bg-muted px-4 py-2 border-b border-border">
-              <p className="text-sm font-medium text-muted-foreground">Live Preview</p>
+              <p className="text-sm font-medium text-muted-foreground">
+                Live Preview
+              </p>
             </div>
             <div className="h-96 overflow-auto bg-card p-4">
               <style>{css}</style>
@@ -233,7 +233,9 @@ export function CSSOverrideEditor() {
       <Card className="bg-blue-50 border border-blue-200 p-4">
         <h3 className="font-semibold text-blue-900 mb-2">Tips</h3>
         <ul className="text-sm text-blue-800 space-y-1">
-          <li>• Use CSS variables for consistent theming (--primary-color, etc)</li>
+          <li>
+            • Use CSS variables for consistent theming (--primary-color, etc)
+          </li>
           <li>• Apply styles to .tenant-override class for isolated changes</li>
           <li>• Avoid !important unless necessary for specificity</li>
           <li>• Test responsive design at different breakpoints</li>

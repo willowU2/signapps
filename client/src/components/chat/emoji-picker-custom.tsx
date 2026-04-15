@@ -1,11 +1,15 @@
-'use client';
+"use client";
 
-import { useState, useRef } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Upload, Plus, X, Search } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { useState, useRef } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Upload, Plus, X, Search } from "lucide-react";
+import { cn } from "@/lib/utils";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 interface CustomEmoji {
   id: string;
@@ -21,15 +25,64 @@ interface EmojiPickerCustomProps {
 
 const STANDARD_EMOJIS = [
   // Smileys & Emotions
-  '😀', '😃', '😄', '😁', '😆', '😅', '🤣', '😂',
-  '😇', '🙂', '🙃', '😉', '😊', '😌', '😍', '🥰',
-  '😘', '😗', '😚', '😙', '😜', '🤪', '😛', '😜',
+  "😀",
+  "😃",
+  "😄",
+  "😁",
+  "😆",
+  "😅",
+  "🤣",
+  "😂",
+  "😇",
+  "🙂",
+  "🙃",
+  "😉",
+  "😊",
+  "😌",
+  "😍",
+  "🥰",
+  "😘",
+  "😗",
+  "😚",
+  "😙",
+  "😜",
+  "🤪",
+  "😛",
+  "😜",
   // Hand Gestures
-  '👍', '👎', '👏', '🙌', '👐', '🤝', '✋', '✌️',
-  '🤟', '🤘', '👊', '✊', '👋', '🖐️', '🖖', '👌',
+  "👍",
+  "👎",
+  "👏",
+  "🙌",
+  "👐",
+  "🤝",
+  "✋",
+  "✌️",
+  "🤟",
+  "🤘",
+  "👊",
+  "✊",
+  "👋",
+  "🖐️",
+  "🖖",
+  "👌",
   // Popular
-  '❤️', '🧡', '💛', '💚', '💙', '💜', '🎉', '🎊',
-  '🎈', '🎁', '⭐', '✨', '🔥', '💯', '🚀', '👻',
+  "❤️",
+  "🧡",
+  "💛",
+  "💚",
+  "💙",
+  "💜",
+  "🎉",
+  "🎊",
+  "🎈",
+  "🎁",
+  "⭐",
+  "✨",
+  "🔥",
+  "💯",
+  "🚀",
+  "👻",
 ];
 
 export function EmojiPickerCustom({
@@ -37,15 +90,15 @@ export function EmojiPickerCustom({
   customEmojis = [],
   onCustomEmojiAdd,
 }: EmojiPickerCustomProps) {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [uploadName, setUploadName] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [uploadName, setUploadName] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isOpen, setIsOpen] = useState(false);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file && file.type.startsWith('image/')) {
+    if (file && file.type.startsWith("image/")) {
       setSelectedFile(file);
     }
   };
@@ -61,10 +114,10 @@ export function EmojiPickerCustom({
         data: e.target?.result as string,
       };
       onCustomEmojiAdd?.(customEmoji);
-      setUploadName('');
+      setUploadName("");
       setSelectedFile(null);
       if (fileInputRef.current) {
-        fileInputRef.current.value = '';
+        fileInputRef.current.value = "";
       }
     };
     reader.readAsDataURL(selectedFile);
@@ -73,7 +126,7 @@ export function EmojiPickerCustom({
   const handleSelectEmoji = (emoji: string | CustomEmoji) => {
     onSelect(emoji);
     setIsOpen(false);
-    setSearchTerm('');
+    setSearchTerm("");
   };
 
   // Filter standard emojis by search
@@ -85,7 +138,7 @@ export function EmojiPickerCustom({
 
   // Filter custom emojis by name
   const filteredCustom = customEmojis.filter((emoji) =>
-    emoji.name.toLowerCase().includes(searchTerm.toLowerCase())
+    emoji.name.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   return (
@@ -124,15 +177,17 @@ export function EmojiPickerCustom({
             {/* Standard Emojis */}
             {filteredStandard.length > 0 && (
               <div>
-                <p className="text-xs font-medium text-muted-foreground mb-1.5">Standard</p>
+                <p className="text-xs font-medium text-muted-foreground mb-1.5">
+                  Standard
+                </p>
                 <div className="grid grid-cols-8 gap-1">
                   {filteredStandard.map((emoji, idx) => (
                     <button
                       key={idx}
                       onClick={() => handleSelectEmoji(emoji)}
                       className={cn(
-                        'h-8 w-8 flex items-center justify-center rounded hover:bg-muted transition-colors text-lg',
-                        'hover:scale-110 cursor-pointer'
+                        "h-8 w-8 flex items-center justify-center rounded hover:bg-muted transition-colors text-lg",
+                        "hover:scale-110 cursor-pointer",
                       )}
                       title={emoji}
                     >
@@ -146,15 +201,17 @@ export function EmojiPickerCustom({
             {/* Custom Emojis */}
             {filteredCustom.length > 0 && (
               <div>
-                <p className="text-xs font-medium text-muted-foreground mb-1.5">Custom</p>
+                <p className="text-xs font-medium text-muted-foreground mb-1.5">
+                  Custom
+                </p>
                 <div className="grid grid-cols-8 gap-1">
                   {filteredCustom.map((emoji) => (
                     <button
                       key={emoji.id}
                       onClick={() => handleSelectEmoji(emoji)}
                       className={cn(
-                        'h-8 w-8 flex items-center justify-center rounded hover:bg-muted transition-colors',
-                        'hover:scale-110 cursor-pointer'
+                        "h-8 w-8 flex items-center justify-center rounded hover:bg-muted transition-colors",
+                        "hover:scale-110 cursor-pointer",
                       )}
                       title={emoji.name}
                     >
@@ -171,13 +228,17 @@ export function EmojiPickerCustom({
             )}
 
             {filteredStandard.length === 0 && filteredCustom.length === 0 && (
-              <p className="text-xs text-muted-foreground text-center py-4">No emojis found</p>
+              <p className="text-xs text-muted-foreground text-center py-4">
+                No emojis found
+              </p>
             )}
           </div>
 
           {/* Upload Section */}
           <div className="border-t pt-2 space-y-2">
-            <p className="text-xs font-medium text-muted-foreground">Add Custom Emoji</p>
+            <p className="text-xs font-medium text-muted-foreground">
+              Add Custom Emoji
+            </p>
             <div className="flex gap-1.5 items-end">
               <div className="flex-1 space-y-1">
                 <Input
@@ -202,7 +263,7 @@ export function EmojiPickerCustom({
                   onClick={() => fileInputRef.current?.click()}
                 >
                   <Upload className="h-3 w-3 mr-1" />
-                  {selectedFile ? selectedFile.name.slice(0, 10) : 'Upload'}
+                  {selectedFile ? selectedFile.name.slice(0, 10) : "Upload"}
                 </Button>
               </div>
               <Button

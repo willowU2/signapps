@@ -26,7 +26,6 @@ pub use models::infrastructure::*;
 
 pub use repositories::{
     AdDnsRepository, AdDomainRepository, AdOuRepository, AdPrincipalKeysRepository,
-    AdSyncQueueRepository, AdUserAccountRepository, DeployProfileRepository,
-    DhcpLeaseRepository, DhcpScopeRepository, InfraCertificateRepository,
-    InfraDomainRepository,
+    AdSyncQueueRepository, AdUserAccountRepository, DeployProfileRepository, DhcpLeaseRepository,
+    DhcpScopeRepository, InfraCertificateRepository, InfraDomainRepository,
 };

@@ -188,7 +188,10 @@ mod tests {
 
         assert!(session.is_authenticated());
         assert_eq!(session.auth_method, AuthMethod::Simple);
-        assert_eq!(session.bound_dn.as_ref().unwrap().to_string(), dn.to_string());
+        assert_eq!(
+            session.bound_dn.as_ref().unwrap().to_string(),
+            dn.to_string()
+        );
         assert_eq!(session.bound_user_id, Some(uid));
         assert_eq!(session.user_role, 1);
     }

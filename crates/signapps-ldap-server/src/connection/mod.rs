@@ -113,10 +113,10 @@ pub async fn handle_connection_upgradable(
             tracing::info!(peer = %addr, "StartTLS handshake complete");
             // Phase 3: TLS message loop.
             run_stream_loop(tls_stream, &pool, &mut session, addr, &domain).await;
-        }
+        },
         Err(e) => {
             tracing::warn!(peer = %addr, error = %e, "StartTLS handshake failed");
-        }
+        },
     }
 }
 
@@ -146,12 +146,12 @@ async fn run_plain_loop(
             Ok(0) => {
                 tracing::debug!(peer = %addr, "Client disconnected");
                 return None;
-            }
+            },
             Ok(n) => n,
             Err(e) => {
                 tracing::warn!(peer = %addr, error = %e, "TCP read error");
                 return None;
-            }
+            },
         };
 
         pending.extend_from_slice(&buf[..n]);
@@ -161,7 +161,7 @@ async fn run_plain_loop(
         match signal {
             LoopSignal::Unbind | LoopSignal::Error => return None,
             LoopSignal::StartTls => return Some(stream),
-            LoopSignal::Continue => {}
+            LoopSignal::Continue => {},
         }
     }
 }
@@ -190,12 +190,12 @@ async fn run_stream_loop<S>(
             Ok(0) => {
                 tracing::debug!(peer = %addr, "Client disconnected (TLS)");
                 return;
-            }
+            },
             Ok(n) => n,
             Err(e) => {
                 tracing::warn!(peer = %addr, error = %e, "Read error");
                 return;
-            }
+            },
         };
 
         pending.extend_from_slice(&buf[..n]);
@@ -205,7 +205,7 @@ async fn run_stream_loop<S>(
         match signal {
             LoopSignal::Unbind | LoopSignal::Error => return,
             // StartTLS nested in TLS is rejected by the dispatcher (is_tls = true).
-            LoopSignal::StartTls | LoopSignal::Continue => {}
+            LoopSignal::StartTls | LoopSignal::Continue => {},
         }
     }
 }
@@ -286,7 +286,7 @@ where
                             pending.drain(..consumed);
                             return LoopSignal::StartTls;
                         }
-                    }
+                    },
                     Err(e) => {
                         tracing::warn!(
                             peer = %addr,
@@ -294,20 +294,20 @@ where
                             "Failed to decode LDAP message"
                         );
                         // Non-fatal per-message error — continue with remaining buffer.
-                    }
+                    },
                 }
 
                 pending.drain(..consumed);
-            }
+            },
             Err(ber::BerError::UnexpectedEnd) => {
                 tracing::trace!(peer = %addr, pending = pending.len(), "BER needs more data");
                 // Need more data — wait for the next read.
                 return LoopSignal::Continue;
-            }
+            },
             Err(e) => {
                 tracing::warn!(peer = %addr, error = %e, "BER decode error — closing connection");
                 return LoopSignal::Error;
-            }
+            },
         }
     }
 }

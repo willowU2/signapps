@@ -33,9 +33,10 @@ export function ResourceSelector({
 }: ResourceSelectorProps) {
   const { resources, loadResources, loadResourcesByType, checkAvailability } =
     useResources();
-  const [localSelected, setLocalSelected] = useState<string[]>(selectedResourceIds);
+  const [localSelected, setLocalSelected] =
+    useState<string[]>(selectedResourceIds);
   const [conflicts, setConflicts] = useState<Map<string, ResourceConflict[]>>(
-    new Map()
+    new Map(),
   );
   const [checking, setChecking] = useState(false);
 
@@ -60,7 +61,7 @@ export function ResourceSelector({
     } else {
       setConflicts(new Map());
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [startTime, endTime, localSelected, open]);
 
   const checkAvailabilityForSelected = async () => {
@@ -88,7 +89,7 @@ export function ResourceSelector({
     setLocalSelected((prev) =>
       prev.includes(resourceId)
         ? prev.filter((id) => id !== resourceId)
-        : [...prev, resourceId]
+        : [...prev, resourceId],
     );
   };
 
@@ -180,16 +181,16 @@ export function ResourceSelector({
                               key={conflict.conflicting_event_id}
                               className="text-red-600 text-xs ml-4"
                             >
-                              • {conflict.conflicting_event_title}
-                              {" "}
+                              • {conflict.conflicting_event_title}{" "}
                               <span className="text-red-500">
-                                ({new Date(conflict.conflicting_start).toLocaleTimeString(
-                                  "en-US",
-                                  {
-                                    hour: "2-digit",
-                                    minute: "2-digit",
-                                  }
-                                )})
+                                (
+                                {new Date(
+                                  conflict.conflicting_start,
+                                ).toLocaleTimeString("en-US", {
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })}
+                                )
                               </span>
                             </div>
                           ))}
@@ -224,7 +225,11 @@ export function ResourceSelector({
             >
               Cancel
             </Button>
-            <Button onClick={handleConfirm} className="flex-1" disabled={checking}>
+            <Button
+              onClick={handleConfirm}
+              className="flex-1"
+              disabled={checking}
+            >
               {checking ? "Checking..." : "Confirm"}
             </Button>
           </div>

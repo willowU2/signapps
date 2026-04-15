@@ -66,7 +66,12 @@ export function ReductionGoals({
         deadline: formData.deadline,
         trend: "stable",
       });
-      setFormData({ name: "", targetPercent: 0, currentPercent: 0, deadline: "" });
+      setFormData({
+        name: "",
+        targetPercent: 0,
+        currentPercent: 0,
+        deadline: "",
+      });
       setShowForm(false);
     }
   };
@@ -74,13 +79,9 @@ export function ReductionGoals({
   const getTrendIcon = (trend: string) => {
     switch (trend) {
       case "up":
-        return (
-          <TrendingUp className="h-5 w-5 text-green-600" />
-        );
+        return <TrendingUp className="h-5 w-5 text-green-600" />;
       case "down":
-        return (
-          <TrendingDown className="h-5 w-5 text-red-600" />
-        );
+        return <TrendingDown className="h-5 w-5 text-red-600" />;
       default:
         return <div className="h-5 w-5 text-muted-foreground" />;
     }
@@ -101,7 +102,7 @@ export function ReductionGoals({
     const end = new Date(deadline);
     const today = new Date();
     const days = Math.ceil(
-      (end.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+      (end.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
     );
     return days;
   };
@@ -139,7 +140,10 @@ export function ReductionGoals({
                 placeholder="Cible %"
                 value={formData.targetPercent}
                 onChange={(e) =>
-                  setFormData({ ...formData, targetPercent: Number(e.target.value) })
+                  setFormData({
+                    ...formData,
+                    targetPercent: Number(e.target.value),
+                  })
                 }
                 className="rounded border px-3 py-2"
               />

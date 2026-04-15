@@ -1,7 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { CheckCircle, Circle, Target, BookOpen, Calendar, Check, X } from "lucide-react";
+import {
+  CheckCircle,
+  Circle,
+  Target,
+  BookOpen,
+  Calendar,
+  Check,
+  X,
+} from "lucide-react";
 
 interface Milestone {
   id: string;
@@ -32,7 +40,8 @@ const DEFAULT_OBJECTIVES: Objective[] = [
   {
     id: "1",
     title: "Master Kubernetes Deployment",
-    description: "Become proficient in deploying and managing containerized applications",
+    description:
+      "Become proficient in deploying and managing containerized applications",
     status: "in-progress",
     trainings: [
       {
@@ -133,56 +142,59 @@ export function DevPlan() {
   const handleApprove = (id: string) => {
     setObjectives(
       objectives.map((obj) =>
-        obj.id === id ? { ...obj, managerApproved: true } : obj
-      )
+        obj.id === id ? { ...obj, managerApproved: true } : obj,
+      ),
     );
   };
 
   const handleReject = (id: string) => {
     setObjectives(
       objectives.map((obj) =>
-        obj.id === id ? { ...obj, managerApproved: false } : obj
-      )
+        obj.id === id ? { ...obj, managerApproved: false } : obj,
+      ),
     );
   };
 
-  const handleToggleTrainingCompletion = (objId: string, trainingId: string) => {
+  const handleToggleTrainingCompletion = (
+    objId: string,
+    trainingId: string,
+  ) => {
     setObjectives(
       objectives.map((obj) =>
         obj.id === objId
           ? {
               ...obj,
               trainings: obj.trainings.map((t) =>
-                t.id === trainingId
-                  ? { ...t, completed: !t.completed }
-                  : t
+                t.id === trainingId ? { ...t, completed: !t.completed } : t,
               ),
             }
-          : obj
-      )
+          : obj,
+      ),
     );
   };
 
-  const handleToggleMilestoneCompletion = (objId: string, milestoneId: string) => {
+  const handleToggleMilestoneCompletion = (
+    objId: string,
+    milestoneId: string,
+  ) => {
     setObjectives(
       objectives.map((obj) =>
         obj.id === objId
           ? {
               ...obj,
               milestones: obj.milestones.map((m) =>
-                m.id === milestoneId
-                  ? { ...m, completed: !m.completed }
-                  : m
+                m.id === milestoneId ? { ...m, completed: !m.completed } : m,
               ),
             }
-          : obj
-      )
+          : obj,
+      ),
     );
   };
 
   const completionPercentages = objectives.map((obj) => {
     const totalItems = obj.trainings.length + obj.milestones.length;
-    const completedItems = obj.trainings.filter((t) => t.completed).length +
+    const completedItems =
+      obj.trainings.filter((t) => t.completed).length +
       obj.milestones.filter((m) => m.completed).length;
     return totalItems > 0 ? (completedItems / totalItems) * 100 : 0;
   });
@@ -191,7 +203,9 @@ export function DevPlan() {
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-bold text-foreground">Development Plan</h2>
-        <p className="text-muted-foreground">Track objectives, trainings, and milestones</p>
+        <p className="text-muted-foreground">
+          Track objectives, trainings, and milestones
+        </p>
       </div>
 
       <div className="space-y-4">
@@ -206,9 +220,7 @@ export function DevPlan() {
             >
               <div
                 className="p-6 cursor-pointer hover:opacity-90 transition-opacity"
-                onClick={() =>
-                  setExpandedId(isExpanded ? null : objective.id)
-                }
+                onClick={() => setExpandedId(isExpanded ? null : objective.id)}
               >
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-start gap-4 flex-1">
@@ -241,7 +253,9 @@ export function DevPlan() {
                 <div className="space-y-2">
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">Progress</span>
-                    <span className="font-medium text-foreground">{Math.round(progress)}%</span>
+                    <span className="font-medium text-foreground">
+                      {Math.round(progress)}%
+                    </span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2">
                     <div
@@ -258,7 +272,9 @@ export function DevPlan() {
                   <div>
                     <div className="flex items-center gap-2 mb-4">
                       <BookOpen className="w-5 h-5 text-blue-600" />
-                      <h4 className="font-semibold text-foreground">Linked Trainings</h4>
+                      <h4 className="font-semibold text-foreground">
+                        Linked Trainings
+                      </h4>
                     </div>
                     <div className="space-y-3">
                       {objective.trainings.map((training) => (
@@ -271,7 +287,10 @@ export function DevPlan() {
                               type="checkbox"
                               checked={training.completed}
                               onChange={() =>
-                                handleToggleTrainingCompletion(objective.id, training.id)
+                                handleToggleTrainingCompletion(
+                                  objective.id,
+                                  training.id,
+                                )
                               }
                               className="rounded"
                             />
@@ -296,7 +315,9 @@ export function DevPlan() {
                   <div>
                     <div className="flex items-center gap-2 mb-4">
                       <Target className="w-5 h-5 text-purple-600" />
-                      <h4 className="font-semibold text-foreground">Milestones</h4>
+                      <h4 className="font-semibold text-foreground">
+                        Milestones
+                      </h4>
                     </div>
                     <div className="space-y-3">
                       {objective.milestones.map((milestone) => (
@@ -309,7 +330,10 @@ export function DevPlan() {
                               type="checkbox"
                               checked={milestone.completed}
                               onChange={() =>
-                                handleToggleMilestoneCompletion(objective.id, milestone.id)
+                                handleToggleMilestoneCompletion(
+                                  objective.id,
+                                  milestone.id,
+                                )
                               }
                               className="rounded"
                             />
@@ -319,7 +343,9 @@ export function DevPlan() {
                               </p>
                               <p className="text-sm text-muted-foreground flex items-center gap-1">
                                 <Calendar className="w-3 h-3" />
-                                {new Date(milestone.dueDate).toLocaleDateString()}
+                                {new Date(
+                                  milestone.dueDate,
+                                ).toLocaleDateString()}
                               </p>
                             </div>
                           </div>
@@ -333,7 +359,9 @@ export function DevPlan() {
 
                   {/* Manager Approval */}
                   <div className="border-t pt-4">
-                    <p className="text-sm text-muted-foreground mb-3">Manager Approval</p>
+                    <p className="text-sm text-muted-foreground mb-3">
+                      Manager Approval
+                    </p>
                     <div className="flex gap-2">
                       <button
                         onClick={() => handleApprove(objective.id)}

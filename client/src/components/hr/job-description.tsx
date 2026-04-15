@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * Job Description Card Component
@@ -6,10 +6,10 @@
  * Displays job details with title, department, skills, description, and salary range.
  */
 
-import * as React from 'react';
-import { Briefcase, DollarSign, Users, MapPin } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import * as React from "react";
+import { Briefcase, DollarSign, Users, MapPin } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 export interface JobDescriptionProps {
   jobTitle: string;
@@ -33,9 +33,9 @@ export function JobDescription({
   className,
 }: JobDescriptionProps) {
   const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('fr-FR', {
-      style: 'currency',
-      currency: 'EUR',
+    return new Intl.NumberFormat("fr-FR", {
+      style: "currency",
+      currency: "EUR",
       minimumFractionDigits: 0,
     }).format(value);
   };
@@ -58,7 +58,9 @@ export function JobDescription({
         {/* Description */}
         <div>
           <h3 className="text-sm font-semibold mb-2">Description</h3>
-          <p className="text-sm text-muted-foreground leading-relaxed">{description}</p>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            {description}
+          </p>
         </div>
 
         {/* Required Skills */}

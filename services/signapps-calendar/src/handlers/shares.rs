@@ -358,7 +358,11 @@ pub async fn check_permission(
         }
     };
 
-    Ok(Json(PermissionResponse { can_view, can_edit, can_manage }))
+    Ok(Json(PermissionResponse {
+        can_view,
+        can_edit,
+        can_manage,
+    }))
 }
 
 #[cfg(test)]

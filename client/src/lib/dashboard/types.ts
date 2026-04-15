@@ -132,7 +132,14 @@ export interface DashboardPreset {
   /** Preset description */
   description: string;
   /** Target audience (role-based) */
-  targetRole?: "developer" | "manager" | "analyst" | "admin" | "hr" | "sales" | "all";
+  targetRole?:
+    | "developer"
+    | "manager"
+    | "analyst"
+    | "admin"
+    | "hr"
+    | "sales"
+    | "all";
   /** Icon */
   icon: LucideIcon;
   /** Preview image URL */
@@ -159,7 +166,7 @@ export interface DashboardContextValue {
   /** Update widget position/size */
   updateWidgetLayout: (
     id: string,
-    position: { x: number; y: number; w: number; h: number }
+    position: { x: number; y: number; w: number; h: number },
   ) => void;
   /** Update widget config */
   updateWidgetConfig: (id: string, config: Record<string, unknown>) => void;

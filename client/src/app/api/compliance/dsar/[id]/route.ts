@@ -1,13 +1,20 @@
 // CO1/CO2: Next.js proxy → identity service /api/v1/compliance/dsar/:id
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from "next/server";
 
-const IDENTITY = process.env.IDENTITY_URL ?? 'http://localhost:3001';
+const IDENTITY = process.env.IDENTITY_URL ?? "http://localhost:3001";
 
-async function proxy(req: NextRequest, method: string, id: string, body?: unknown) {
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-  const authHeader = req.headers.get('authorization');
-  if (authHeader) headers['Authorization'] = authHeader;
+async function proxy(
+  req: NextRequest,
+  method: string,
+  id: string,
+  body?: unknown,
+) {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+  const authHeader = req.headers.get("authorization");
+  if (authHeader) headers["Authorization"] = authHeader;
 
   const res = await fetch(`${IDENTITY}/api/v1/compliance/dsar/${id}`, {
     method,
@@ -25,7 +32,7 @@ export async function PATCH(
 ) {
   const { id } = await params;
   const body = await req.json().catch(() => ({}));
-  return proxy(req, 'PATCH', id, body);
+  return proxy(req, "PATCH", id, body);
 }
 
 // DSAR export stub — returns empty blob for now
@@ -35,11 +42,11 @@ export async function GET(
 ) {
   const { id } = await params;
   const url = new URL(req.url);
-  if (url.pathname.endsWith('/export')) {
-    return new NextResponse('{}', {
+  if (url.pathname.endsWith("/export")) {
+    return new NextResponse("{}", {
       status: 200,
-      headers: { 'Content-Type': 'application/zip' },
+      headers: { "Content-Type": "application/zip" },
     });
   }
-  return proxy(req, 'GET', id);
+  return proxy(req, "GET", id);
 }

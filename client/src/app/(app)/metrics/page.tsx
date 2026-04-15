@@ -1,15 +1,28 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
-import { AppLayout } from '@/components/layout/app-layout';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Switch } from '@/components/ui/switch';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Skeleton } from '@/components/ui/skeleton';
+import { useState, useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { AppLayout } from "@/components/layout/app-layout";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Cpu,
   MemoryStick,
@@ -26,11 +39,11 @@ import {
   Trash2,
   Eye,
   Server,
-} from 'lucide-react';
-import { AlertConfig, AlertSeverity } from '@/lib/api';
-import { toast } from 'sonner';
-import { AlertConfigDialog } from '@/components/monitoring/alert-config-dialog';
-import { ConfirmDialog } from '@/components/confirm-dialog';
+} from "lucide-react";
+import { AlertConfig, AlertSeverity } from "@/lib/api";
+import { toast } from "sonner";
+import { AlertConfigDialog } from "@/components/monitoring/alert-config-dialog";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 import {
   useMetricsSummary,
   useDiskMetrics,
@@ -40,21 +53,21 @@ import {
   useAcknowledgeAlert,
   useToggleAlertConfig,
   useDeleteAlertConfig,
-} from '@/hooks/use-monitoring';
-import { usePageTitle } from '@/hooks/use-page-title';
+} from "@/hooks/use-monitoring";
+import { usePageTitle } from "@/hooks/use-page-title";
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
 function formatBytes(bytes: number): string {
-  if (!bytes || bytes === 0) return '0 B';
+  if (!bytes || bytes === 0) return "0 B";
   const k = 1024;
-  const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+  const sizes = ["B", "KB", "MB", "GB", "TB"];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
 }
 
 function formatUptime(seconds: number): string {
-  if (!seconds) return '—';
+  if (!seconds) return "—";
   const d = Math.floor(seconds / 86400);
   const h = Math.floor((seconds % 86400) / 3600);
   const m = Math.floor((seconds % 3600) / 60);
@@ -65,44 +78,48 @@ function formatUptime(seconds: number): string {
 
 function formatTimeAgo(dateStr: string): string {
   const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
-  if (diff < 60) return 'just now';
+  if (diff < 60) return "just now";
   if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
   if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
   return `${Math.floor(diff / 86400)}d ago`;
 }
 
-type StatusLevel = 'ok' | 'warning' | 'critical';
+type StatusLevel = "ok" | "warning" | "critical";
 
 function getLevel(pct: number): StatusLevel {
-  if (pct < 70) return 'ok';
-  if (pct < 90) return 'warning';
-  return 'critical';
+  if (pct < 70) return "ok";
+  if (pct < 90) return "warning";
+  return "critical";
 }
 
 function usageColor(pct: number): string {
   const level = getLevel(pct);
-  if (level === 'ok') return 'text-green-500';
-  if (level === 'warning') return 'text-yellow-500';
-  return 'text-red-500';
+  if (level === "ok") return "text-green-500";
+  if (level === "warning") return "text-yellow-500";
+  return "text-red-500";
 }
 
 function progressColor(pct: number): string {
   const level = getLevel(pct);
-  if (level === 'ok') return 'bg-green-500';
-  if (level === 'warning') return 'bg-yellow-500';
-  return 'bg-red-500';
+  if (level === "ok") return "bg-green-500";
+  if (level === "warning") return "bg-yellow-500";
+  return "bg-red-500";
 }
 
 function StatusBadge({ pct }: { pct: number }) {
   const level = getLevel(pct);
-  if (level === 'ok') return <Badge className="bg-green-500/10 text-green-600">OK</Badge>;
-  if (level === 'warning') return <Badge className="bg-yellow-500/10 text-yellow-600">Warning</Badge>;
+  if (level === "ok")
+    return <Badge className="bg-green-500/10 text-green-600">OK</Badge>;
+  if (level === "warning")
+    return <Badge className="bg-yellow-500/10 text-yellow-600">Warning</Badge>;
   return <Badge variant="destructive">Critical</Badge>;
 }
 
 function SeverityBadge({ severity }: { severity: AlertSeverity }) {
-  if (severity === 'critical') return <Badge variant="destructive">Critical</Badge>;
-  if (severity === 'warning') return <Badge className="bg-yellow-500/10 text-yellow-600">Warning</Badge>;
+  if (severity === "critical")
+    return <Badge variant="destructive">Critical</Badge>;
+  if (severity === "warning")
+    return <Badge className="bg-yellow-500/10 text-yellow-600">Warning</Badge>;
   return <Badge variant="secondary">Info</Badge>;
 }
 
@@ -122,12 +139,16 @@ function MetricCard({ icon, iconBg, label, value, subtitle }: MetricCardProps) {
       <CardContent className="p-5">
         <div className="flex items-start justify-between mb-3">
           <div className="flex items-center gap-3">
-            <div className={`flex h-9 w-9 items-center justify-center rounded-lg ${iconBg}`}>
+            <div
+              className={`flex h-9 w-9 items-center justify-center rounded-lg ${iconBg}`}
+            >
               {icon}
             </div>
             <div>
               <p className="text-sm text-muted-foreground">{label}</p>
-              <p className={`text-2xl font-bold leading-none mt-0.5 ${usageColor(value)}`}>
+              <p
+                className={`text-2xl font-bold leading-none mt-0.5 ${usageColor(value)}`}
+              >
                 {value.toFixed(1)}%
               </p>
             </div>
@@ -140,7 +161,9 @@ function MetricCard({ icon, iconBg, label, value, subtitle }: MetricCardProps) {
             style={{ width: `${Math.min(value, 100)}%` }}
           />
         </div>
-        {subtitle && <p className="mt-1.5 text-xs text-muted-foreground">{subtitle}</p>}
+        {subtitle && (
+          <p className="mt-1.5 text-xs text-muted-foreground">{subtitle}</p>
+        )}
       </CardContent>
     </Card>
   );
@@ -152,11 +175,18 @@ function MonitoringTab() {
   const [autoRefresh, setAutoRefresh] = useState(true);
   const queryClient = useQueryClient();
 
-  const { data: metrics, isLoading, isError: metricsError } = useMetricsSummary(autoRefresh ? 5000 : undefined);
-  const { data: disks = [], isLoading: disksLoading } = useDiskMetrics(autoRefresh ? 10000 : undefined);
+  const {
+    data: metrics,
+    isLoading,
+    isError: metricsError,
+  } = useMetricsSummary(autoRefresh ? 5000 : undefined);
+  const { data: disks = [], isLoading: disksLoading } = useDiskMetrics(
+    autoRefresh ? 10000 : undefined,
+  );
 
   useEffect(() => {
-    if (metricsError) toast.error('Impossible de charger les métriques système');
+    if (metricsError)
+      toast.error("Impossible de charger les métriques système");
   }, [metricsError]);
 
   const cpu = metrics?.cpu_usage_percent ?? metrics?.cpu ?? 0;
@@ -171,7 +201,7 @@ function MonitoringTab() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-lg font-semibold">
-            {metrics?.hostname ?? 'System'}
+            {metrics?.hostname ?? "System"}
             {metrics?.os_name && (
               <span className="ml-2 text-sm font-normal text-muted-foreground">
                 {metrics.os_name}
@@ -192,7 +222,9 @@ function MonitoringTab() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => queryClient.invalidateQueries({ queryKey: ['metrics'] })}
+            onClick={() =>
+              queryClient.invalidateQueries({ queryKey: ["metrics"] })
+            }
           >
             <RefreshCw className="h-4 w-4" />
           </Button>
@@ -209,7 +241,11 @@ function MonitoringTab() {
       {isLoading && !metrics ? (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {Array.from({ length: 4 }).map((_, i) => (
-            <Card key={i}><CardContent className="p-5"><Skeleton className="h-20 w-full" /></CardContent></Card>
+            <Card key={i}>
+              <CardContent className="p-5">
+                <Skeleton className="h-20 w-full" />
+              </CardContent>
+            </Card>
           ))}
         </div>
       ) : (
@@ -219,7 +255,11 @@ function MonitoringTab() {
             iconBg="bg-blue-500/10"
             label="CPU Usage"
             value={cpu}
-            subtitle={metrics?.cpu_cores ? `${metrics.cpu_cores} logical cores` : undefined}
+            subtitle={
+              metrics?.cpu_cores
+                ? `${metrics.cpu_cores} logical cores`
+                : undefined
+            }
           />
           <MetricCard
             icon={<MemoryStick className="h-5 w-5 text-purple-500" />}
@@ -284,16 +324,22 @@ function MonitoringTab() {
         <CardContent>
           {disksLoading && disks.length === 0 ? (
             <div className="space-y-4">
-              {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}
+              {Array.from({ length: 3 }).map((_, i) => (
+                <Skeleton key={i} className="h-10 w-full" />
+              ))}
             </div>
           ) : disks.length === 0 ? (
-            <p className="py-6 text-center text-sm text-muted-foreground">No disk data available</p>
+            <p className="py-6 text-center text-sm text-muted-foreground">
+              No disk data available
+            </p>
           ) : (
             <div className="space-y-4">
               {disks.map((d, i) => (
                 <div key={i} className="space-y-1.5">
                   <div className="flex items-center justify-between text-sm">
-                    <span className="font-mono font-medium">{d.mount_point}</span>
+                    <span className="font-mono font-medium">
+                      {d.mount_point}
+                    </span>
                     <div className="flex items-center gap-3">
                       <span className="text-muted-foreground">
                         {formatBytes(d.used)} / {formatBytes(d.total)}
@@ -308,7 +354,8 @@ function MonitoringTab() {
                     />
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    {d.percent.toFixed(1)}% used · {formatBytes(d.available)} free
+                    {d.percent.toFixed(1)}% used · {formatBytes(d.available)}{" "}
+                    free
                     {d.file_system && ` · ${d.file_system}`}
                   </p>
                 </div>
@@ -337,8 +384,14 @@ function AlertsTab() {
   const toggleConfig = useToggleAlertConfig();
   const deleteConfig = useDeleteAlertConfig();
 
-  const openCreate = () => { setEditingConfig(null); setDialogOpen(true); };
-  const openEdit = (cfg: AlertConfig) => { setEditingConfig(cfg); setDialogOpen(true); };
+  const openCreate = () => {
+    setEditingConfig(null);
+    setDialogOpen(true);
+  };
+  const openEdit = (cfg: AlertConfig) => {
+    setEditingConfig(cfg);
+    setDialogOpen(true);
+  };
 
   return (
     <div className="space-y-6">
@@ -351,9 +404,11 @@ function AlertsTab() {
                 <AlertTriangle className="h-5 w-5 text-destructive" />
                 <div>
                   <p className="font-medium text-destructive">
-                    {active.length} active alert{active.length > 1 ? 's' : ''}
+                    {active.length} active alert{active.length > 1 ? "s" : ""}
                   </p>
-                  <p className="text-sm text-muted-foreground">{active[0]?.message}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {active[0]?.message}
+                  </p>
                 </div>
               </div>
               <Button
@@ -379,7 +434,9 @@ function AlertsTab() {
                 <Bell className="h-5 w-5" />
                 Alert Rules
               </CardTitle>
-              <CardDescription>Configure thresholds and notifications</CardDescription>
+              <CardDescription>
+                Configure thresholds and notifications
+              </CardDescription>
             </div>
             <Button size="sm" onClick={openCreate}>
               <Plus className="mr-2 h-4 w-4" />
@@ -390,13 +447,22 @@ function AlertsTab() {
         <CardContent className="overflow-x-auto">
           {configsLoading ? (
             <div className="space-y-2">
-              {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}
+              {Array.from({ length: 3 }).map((_, i) => (
+                <Skeleton key={i} className="h-10 w-full" />
+              ))}
             </div>
           ) : configs.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-10 text-center">
               <BellOff className="mb-2 h-10 w-10 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">No alert rules configured</p>
-              <Button variant="outline" size="sm" className="mt-3" onClick={openCreate}>
+              <p className="text-sm text-muted-foreground">
+                No alert rules configured
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                className="mt-3"
+                onClick={openCreate}
+              >
                 <Plus className="mr-2 h-4 w-4" />
                 Create your first rule
               </Button>
@@ -418,27 +484,42 @@ function AlertsTab() {
                   <TableRow key={cfg.id}>
                     <TableCell className="font-medium">{cfg.name}</TableCell>
                     <TableCell className="font-mono text-sm">
-                      {(cfg.metric_type || cfg.metric || '').replace(/_/g, ' ')}
+                      {(cfg.metric_type || cfg.metric || "").replace(/_/g, " ")}
                       {cfg.metric_target && (
-                        <span className="ml-1 text-muted-foreground">({cfg.metric_target})</span>
+                        <span className="ml-1 text-muted-foreground">
+                          ({cfg.metric_target})
+                        </span>
                       )}
                     </TableCell>
                     <TableCell>
-                      {(cfg.operator || cfg.condition || '').replace(/_/g, ' ')} {cfg.threshold}%
+                      {(cfg.operator || cfg.condition || "").replace(/_/g, " ")}{" "}
+                      {cfg.threshold}%
                     </TableCell>
-                    <TableCell><SeverityBadge severity={cfg.severity} /></TableCell>
+                    <TableCell>
+                      <SeverityBadge severity={cfg.severity} />
+                    </TableCell>
                     <TableCell>
                       <Switch
                         checked={cfg.enabled}
-                        onCheckedChange={(v) => toggleConfig.mutate({ id: cfg.id, enabled: v })}
+                        onCheckedChange={(v) =>
+                          toggleConfig.mutate({ id: cfg.id, enabled: v })
+                        }
                       />
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1">
-                        <Button variant="ghost" size="icon" onClick={() => openEdit(cfg)}>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => openEdit(cfg)}
+                        >
                           <Settings className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="icon" onClick={() => setDeleteId(cfg.id)}>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setDeleteId(cfg.id)}
+                        >
                           <Trash2 className="h-4 w-4 text-destructive" />
                         </Button>
                       </div>
@@ -475,14 +556,21 @@ function AlertsTab() {
               <TableBody>
                 {active.map((alert) => (
                   <TableRow key={alert.id}>
-                    <TableCell className="font-medium">{alert.config_name}</TableCell>
+                    <TableCell className="font-medium">
+                      {alert.config_name}
+                    </TableCell>
                     <TableCell>
-                      {(alert.metric_value ?? alert.current_value ?? 0).toFixed(1)}%
+                      {(alert.metric_value ?? alert.current_value ?? 0).toFixed(
+                        1,
+                      )}
+                      %
                       <span className="ml-1 text-muted-foreground text-xs">
                         (threshold: {alert.threshold}%)
                       </span>
                     </TableCell>
-                    <TableCell><SeverityBadge severity={alert.severity} /></TableCell>
+                    <TableCell>
+                      <SeverityBadge severity={alert.severity} />
+                    </TableCell>
                     <TableCell className="text-muted-foreground text-sm">
                       {formatTimeAgo(alert.triggered_at)}
                     </TableCell>
@@ -520,7 +608,9 @@ function AlertsTab() {
           {history.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-8 text-center">
               <CheckCircle className="mb-2 h-8 w-8 text-green-500" />
-              <p className="text-sm text-muted-foreground">No recent alerts — all systems nominal</p>
+              <p className="text-sm text-muted-foreground">
+                No recent alerts — all systems nominal
+              </p>
             </div>
           ) : (
             <Table>
@@ -545,11 +635,15 @@ function AlertsTab() {
                         <AlertTriangle className="h-4 w-4 text-destructive" />
                       )}
                     </TableCell>
-                    <TableCell className="font-medium">{evt.config_name}</TableCell>
+                    <TableCell className="font-medium">
+                      {evt.config_name}
+                    </TableCell>
                     <TableCell className="text-sm text-muted-foreground max-w-xs truncate">
                       {evt.message}
                     </TableCell>
-                    <TableCell><SeverityBadge severity={evt.severity} /></TableCell>
+                    <TableCell>
+                      <SeverityBadge severity={evt.severity} />
+                    </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       {formatTimeAgo(evt.triggered_at)}
                     </TableCell>
@@ -566,11 +660,15 @@ function AlertsTab() {
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         config={editingConfig}
-        onSuccess={() => queryClient.invalidateQueries({ queryKey: ['alerts'] })}
+        onSuccess={() =>
+          queryClient.invalidateQueries({ queryKey: ["alerts"] })
+        }
       />
       <ConfirmDialog
         open={deleteId !== null}
-        onOpenChange={(open) => { if (!open) setDeleteId(null); }}
+        onOpenChange={(open) => {
+          if (!open) setDeleteId(null);
+        }}
         title="Delete Alert Rule"
         description="This alert rule will be permanently deleted. This action cannot be undone."
         onConfirm={() => {
@@ -585,7 +683,7 @@ function AlertsTab() {
 // ── Page ───────────────────────────────────────────────────────────────────
 
 export default function MetricsPage() {
-  usePageTitle('Metriques');
+  usePageTitle("Metriques");
   return (
     <AppLayout>
       <div className="space-y-6">

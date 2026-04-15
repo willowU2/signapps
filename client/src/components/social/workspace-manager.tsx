@@ -1,18 +1,18 @@
-'use client';
+"use client";
 
-import { useEffect, useState, useCallback } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
+import { useEffect, useState, useCallback } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,19 +22,19 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+} from "@/components/ui/alert-dialog";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Building2, Plus, Trash2, Users, Shield, Loader2 } from 'lucide-react';
-import { format } from 'date-fns';
-import { toast } from 'sonner';
-import { socialApi } from '@/lib/api/social';
-import type { Workspace, WorkspaceMember } from '@/lib/api/social';
+} from "@/components/ui/select";
+import { Building2, Plus, Trash2, Users, Shield, Loader2 } from "lucide-react";
+import { format } from "date-fns";
+import { toast } from "sonner";
+import { socialApi } from "@/lib/api/social";
+import type { Workspace, WorkspaceMember } from "@/lib/api/social";
 
 // --- Create Workspace Dialog ---
 
@@ -49,13 +49,13 @@ function CreateWorkspaceDialog({
   onCreate: (data: { name: string; description?: string }) => void;
   saving: boolean;
 }) {
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
 
   useEffect(() => {
     if (open) {
-      setName('');
-      setDescription('');
+      setName("");
+      setDescription("");
     }
   }, [open]);
 
@@ -93,7 +93,11 @@ function CreateWorkspaceDialog({
           </div>
           <Separator />
           <div className="flex gap-2">
-            <Button className="flex-1" onClick={handleCreate} disabled={!name.trim() || saving}>
+            <Button
+              className="flex-1"
+              onClick={handleCreate}
+              disabled={!name.trim() || saving}
+            >
               {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               Create Workspace
             </Button>
@@ -120,13 +124,13 @@ function InviteMemberDialog({
   onInvite: (data: { userId: string; role: string }) => void;
   saving: boolean;
 }) {
-  const [userId, setUserId] = useState('');
-  const [role, setRole] = useState<'admin' | 'member'>('member');
+  const [userId, setUserId] = useState("");
+  const [role, setRole] = useState<"admin" | "member">("member");
 
   useEffect(() => {
     if (open) {
-      setUserId('');
-      setRole('member');
+      setUserId("");
+      setRole("member");
     }
   }, [open]);
 
@@ -152,7 +156,10 @@ function InviteMemberDialog({
           </div>
           <div className="space-y-1">
             <Label>Role</Label>
-            <Select value={role} onValueChange={(v) => setRole(v as 'admin' | 'member')}>
+            <Select
+              value={role}
+              onValueChange={(v) => setRole(v as "admin" | "member")}
+            >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -164,7 +171,11 @@ function InviteMemberDialog({
           </div>
           <Separator />
           <div className="flex gap-2">
-            <Button className="flex-1" onClick={handleInvite} disabled={!userId.trim() || saving}>
+            <Button
+              className="flex-1"
+              onClick={handleInvite}
+              disabled={!userId.trim() || saving}
+            >
               {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               Send Invite
             </Button>
@@ -180,7 +191,11 @@ function InviteMemberDialog({
 
 // --- Main Component ---
 
-export function WorkspaceManager({ currentUserId }: { currentUserId?: string }) {
+export function WorkspaceManager({
+  currentUserId,
+}: {
+  currentUserId?: string;
+}) {
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [members, setMembers] = useState<WorkspaceMember[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -201,7 +216,7 @@ export function WorkspaceManager({ currentUserId }: { currentUserId?: string }) 
         setSelectedId(res.data[0].id);
       }
     } catch {
-      toast.error('Failed to load workspaces');
+      toast.error("Failed to load workspaces");
     } finally {
       setLoading(false);
     }
@@ -213,7 +228,7 @@ export function WorkspaceManager({ currentUserId }: { currentUserId?: string }) 
       const res = await socialApi.workspaces.listMembers(wsId);
       setMembers(res.data);
     } catch {
-      toast.error('Impossible de charger les membres');
+      toast.error("Impossible de charger les membres");
       setMembers([]);
     } finally {
       setLoadingMembers(false);
@@ -233,22 +248,27 @@ export function WorkspaceManager({ currentUserId }: { currentUserId?: string }) 
   }, [selectedId, fetchMembers]);
 
   const currentWorkspace = workspaces.find((w) => w.id === selectedId);
-  const isOwner = members.some((m) => m.role === 'owner' && m.userId === currentUserId);
+  const isOwner = members.some(
+    (m) => m.role === "owner" && m.userId === currentUserId,
+  );
 
   const handleSelectWorkspace = (id: string) => {
     setSelectedId(id);
   };
 
-  const handleCreateWorkspace = async (data: { name: string; description?: string }) => {
+  const handleCreateWorkspace = async (data: {
+    name: string;
+    description?: string;
+  }) => {
     try {
       setSaving(true);
       const res = await socialApi.workspaces.create(data);
-      toast.success('Workspace created');
+      toast.success("Workspace created");
       setIsCreateOpen(false);
       await fetchWorkspaces();
       setSelectedId(res.data.id);
     } catch {
-      toast.error('Impossible de créer workspace');
+      toast.error("Impossible de créer workspace");
     } finally {
       setSaving(false);
     }
@@ -258,14 +278,14 @@ export function WorkspaceManager({ currentUserId }: { currentUserId?: string }) 
     if (!deleteWsId) return;
     try {
       await socialApi.workspaces.delete(deleteWsId);
-      toast.success('Workspace deleted');
+      toast.success("Workspace deleted");
       setDeleteWsId(null);
       if (selectedId === deleteWsId) {
         setSelectedId(null);
       }
       await fetchWorkspaces();
     } catch {
-      toast.error('Impossible de supprimer workspace');
+      toast.error("Impossible de supprimer workspace");
     }
   };
 
@@ -274,11 +294,11 @@ export function WorkspaceManager({ currentUserId }: { currentUserId?: string }) 
     try {
       setSaving(true);
       await socialApi.workspaces.inviteMember(selectedId, data);
-      toast.success('Member invited');
+      toast.success("Member invited");
       setIsInviteOpen(false);
       await fetchMembers(selectedId);
     } catch {
-      toast.error('Failed to invite member');
+      toast.error("Failed to invite member");
     } finally {
       setSaving(false);
     }
@@ -288,22 +308,22 @@ export function WorkspaceManager({ currentUserId }: { currentUserId?: string }) 
     if (!removeMemberId || !selectedId) return;
     try {
       await socialApi.workspaces.removeMember(selectedId, removeMemberId);
-      toast.success('Member removed');
+      toast.success("Member removed");
       setRemoveMemberId(null);
       await fetchMembers(selectedId);
     } catch {
-      toast.error('Impossible de retirer le membre');
+      toast.error("Impossible de retirer le membre");
     }
   };
 
   const roleColor = (role: string) => {
     switch (role) {
-      case 'owner':
-        return 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300';
-      case 'admin':
-        return 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300';
+      case "owner":
+        return "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300";
+      case "admin":
+        return "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300";
       default:
-        return 'bg-muted text-muted-foreground dark:bg-gray-800 dark:text-gray-300';
+        return "bg-muted text-muted-foreground dark:bg-gray-800 dark:text-gray-300";
     }
   };
 
@@ -321,11 +341,16 @@ export function WorkspaceManager({ currentUserId }: { currentUserId?: string }) 
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-semibold">Workspaces</h2>
-          <p className="text-sm text-muted-foreground">Organize your team&apos;s social media accounts</p>
+          <p className="text-sm text-muted-foreground">
+            Organize your team&apos;s social media accounts
+          </p>
         </div>
         <div className="flex items-center gap-2">
           {workspaces.length > 0 && (
-            <Select value={selectedId ?? ''} onValueChange={handleSelectWorkspace}>
+            <Select
+              value={selectedId ?? ""}
+              onValueChange={handleSelectWorkspace}
+            >
               <SelectTrigger className="w-[200px]">
                 <SelectValue placeholder="Select workspace" />
               </SelectTrigger>
@@ -355,7 +380,9 @@ export function WorkspaceManager({ currentUserId }: { currentUserId?: string }) 
                   <Building2 className="h-7 w-7 text-primary" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-lg font-semibold">{currentWorkspace.name}</h3>
+                  <h3 className="text-lg font-semibold">
+                    {currentWorkspace.name}
+                  </h3>
                   {currentWorkspace.description && (
                     <p className="text-sm text-muted-foreground mt-1">
                       {currentWorkspace.description}
@@ -364,10 +391,15 @@ export function WorkspaceManager({ currentUserId }: { currentUserId?: string }) 
                   <div className="flex items-center gap-3 mt-3 text-sm text-muted-foreground">
                     <span className="flex items-center gap-1">
                       <Users className="h-4 w-4" />
-                      {currentWorkspace.memberCount} member{currentWorkspace.memberCount !== 1 ? 's' : ''}
+                      {currentWorkspace.memberCount} member
+                      {currentWorkspace.memberCount !== 1 ? "s" : ""}
                     </span>
                     <span>
-                      Created {format(new Date(currentWorkspace.createdAt), 'MMM d, yyyy')}
+                      Created{" "}
+                      {format(
+                        new Date(currentWorkspace.createdAt),
+                        "MMM d, yyyy",
+                      )}
                     </span>
                   </div>
                 </div>
@@ -390,7 +422,11 @@ export function WorkspaceManager({ currentUserId }: { currentUserId?: string }) 
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold">Members</h3>
-              <Button variant="outline" size="sm" onClick={() => setIsInviteOpen(true)}>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsInviteOpen(true)}
+              >
                 <Plus className="h-4 w-4 mr-2" />
                 Invite Member
               </Button>
@@ -407,25 +443,35 @@ export function WorkspaceManager({ currentUserId }: { currentUserId?: string }) 
                       <div className="flex items-center gap-3">
                         <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center shrink-0">
                           <span className="text-sm font-medium text-muted-foreground">
-                            {(member.displayName ?? member.username ?? '?').charAt(0).toUpperCase()}
+                            {(member.displayName ?? member.username ?? "?")
+                              .charAt(0)
+                              .toUpperCase()}
                           </span>
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
-                            <span className="font-medium text-sm">{member.displayName || member.username}</span>
+                            <span className="font-medium text-sm">
+                              {member.displayName || member.username}
+                            </span>
                             <span
                               className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${roleColor(member.role)}`}
                             >
-                              {member.role === 'owner' && <Shield className="h-3 w-3 mr-1" />}
+                              {member.role === "owner" && (
+                                <Shield className="h-3 w-3 mr-1" />
+                              )}
                               {member.role}
                             </span>
                           </div>
-                          <p className="text-xs text-muted-foreground">@{member.username}</p>
+                          <p className="text-xs text-muted-foreground">
+                            @{member.username}
+                          </p>
                         </div>
                         <div className="text-xs text-muted-foreground shrink-0">
-                          {member.joinedAt ? `Joined ${format(new Date(member.joinedAt), 'MMM d, yyyy')}` : ''}
+                          {member.joinedAt
+                            ? `Joined ${format(new Date(member.joinedAt), "MMM d, yyyy")}`
+                            : ""}
                         </div>
-                        {isOwner && member.role !== 'owner' && (
+                        {isOwner && member.role !== "owner" && (
                           <Button
                             variant="ghost"
                             size="icon"
@@ -440,7 +486,9 @@ export function WorkspaceManager({ currentUserId }: { currentUserId?: string }) 
                   </Card>
                 ))}
                 {members.length === 0 && (
-                  <p className="text-sm text-muted-foreground text-center py-4">No members yet</p>
+                  <p className="text-sm text-muted-foreground text-center py-4">
+                    No members yet
+                  </p>
                 )}
               </div>
             )}
@@ -474,34 +522,48 @@ export function WorkspaceManager({ currentUserId }: { currentUserId?: string }) 
         saving={saving}
       />
 
-      <AlertDialog open={!!removeMemberId} onOpenChange={(o) => !o && setRemoveMemberId(null)}>
+      <AlertDialog
+        open={!!removeMemberId}
+        onOpenChange={(o) => !o && setRemoveMemberId(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Retirer le membre</AlertDialogTitle>
             <AlertDialogDescription>
-              Ce membre perdra l'accès à cet espace de travail. Il pourra être réinvité ultérieurement.
+              Ce membre perdra l'accès à cet espace de travail. Il pourra être
+              réinvité ultérieurement.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction onClick={handleRemoveMember} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            <AlertDialogAction
+              onClick={handleRemoveMember}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
               Retirer
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
-      <AlertDialog open={!!deleteWsId} onOpenChange={(o) => !o && setDeleteWsId(null)}>
+      <AlertDialog
+        open={!!deleteWsId}
+        onOpenChange={(o) => !o && setDeleteWsId(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Supprimer l'espace de travail</AlertDialogTitle>
             <AlertDialogDescription>
-              Cet espace de travail sera supprimé définitivement et tous les membres seront retirés. Cette action est irréversible.
+              Cet espace de travail sera supprimé définitivement et tous les
+              membres seront retirés. Cette action est irréversible.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteWorkspace} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            <AlertDialogAction
+              onClick={handleDeleteWorkspace}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
               Supprimer
             </AlertDialogAction>
           </AlertDialogFooter>

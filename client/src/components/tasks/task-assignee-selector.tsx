@@ -1,18 +1,18 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { UserPlus, X, Search } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Input } from '@/components/ui/input';
+import { useState, useEffect } from "react";
+import { UserPlus, X, Search } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Input } from "@/components/ui/input";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from '@/components/ui/popover';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { cn } from '@/lib/utils';
-import { usersApi, type User } from '@/lib/api/identity';
+} from "@/components/ui/popover";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { cn } from "@/lib/utils";
+import { usersApi, type User } from "@/lib/api/identity";
 
 // ============================================================================
 // Types
@@ -26,7 +26,7 @@ export interface TaskAssigneeSelectorProps {
   /** Callback when assignee changes */
   onAssigneeChange: (userId: string | null, user: User | null) => void;
   /** Size variant */
-  size?: 'sm' | 'md';
+  size?: "sm" | "md";
   className?: string;
 }
 
@@ -38,14 +38,16 @@ export function TaskAssigneeSelector({
   assigneeId,
   assignee: initialAssignee,
   onAssigneeChange,
-  size = 'md',
+  size = "md",
   className,
 }: TaskAssigneeSelectorProps) {
   const [open, setOpen] = useState(false);
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState("");
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [assignee, setAssignee] = useState<User | null>(initialAssignee || null);
+  const [assignee, setAssignee] = useState<User | null>(
+    initialAssignee || null,
+  );
 
   // Load user if we have an ID but no user object
   useEffect(() => {
@@ -76,7 +78,7 @@ export function TaskAssigneeSelector({
     ? users.filter(
         (u) =>
           u.username.toLowerCase().includes(search.toLowerCase()) ||
-          (u.display_name || '').toLowerCase().includes(search.toLowerCase())
+          (u.display_name || "").toLowerCase().includes(search.toLowerCase()),
       )
     : users;
 
@@ -84,7 +86,7 @@ export function TaskAssigneeSelector({
     setAssignee(user);
     onAssigneeChange(user.id, user);
     setOpen(false);
-    setSearch('');
+    setSearch("");
   };
 
   const handleClear = (e: React.MouseEvent) => {
@@ -93,8 +95,8 @@ export function TaskAssigneeSelector({
     onAssigneeChange(null, null);
   };
 
-  const avatarSize = size === 'sm' ? 'h-5 w-5' : 'h-7 w-7';
-  const textSize = size === 'sm' ? 'text-xs' : 'text-sm';
+  const avatarSize = size === "sm" ? "h-5 w-5" : "h-7 w-7";
+  const textSize = size === "sm" ? "text-xs" : "text-sm";
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -102,10 +104,10 @@ export function TaskAssigneeSelector({
         <Button
           variant="outline"
           className={cn(
-            'justify-start gap-2 font-normal',
-            size === 'sm' && 'h-7 px-2',
-            !assignee && 'text-muted-foreground',
-            className
+            "justify-start gap-2 font-normal",
+            size === "sm" && "h-7 px-2",
+            !assignee && "text-muted-foreground",
+            className,
           )}
         >
           {assignee ? (
@@ -118,7 +120,7 @@ export function TaskAssigneeSelector({
                     .toUpperCase()}
                 </AvatarFallback>
               </Avatar>
-              <span className={cn('truncate', textSize)}>
+              <span className={cn("truncate", textSize)}>
                 {assignee.display_name || assignee.username}
               </span>
               <X
@@ -164,9 +166,9 @@ export function TaskAssigneeSelector({
               <button
                 key={user.id}
                 className={cn(
-                  'flex items-center gap-2 w-full px-3 py-2 text-sm text-left transition-colors',
-                  'hover:bg-accent hover:text-accent-foreground',
-                  user.id === assigneeId && 'bg-accent/50'
+                  "flex items-center gap-2 w-full px-3 py-2 text-sm text-left transition-colors",
+                  "hover:bg-accent hover:text-accent-foreground",
+                  user.id === assigneeId && "bg-accent/50",
                 )}
                 onClick={() => handleSelect(user)}
               >

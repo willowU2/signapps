@@ -29,11 +29,7 @@ use crate::AppState;
 /// `Response::builder().body()` can theoretically fail when header values are
 /// invalid (e.g. non-ASCII filenames from user-supplied data). Using this helper
 /// prevents a panic in the publicly-exposed WebDAV endpoint.
-fn build_response(
-    status: StatusCode,
-    headers: &[(&str, String)],
-    body: Body,
-) -> Response {
+fn build_response(status: StatusCode, headers: &[(&str, String)], body: Body) -> Response {
     let mut builder = Response::builder().status(status);
     for (name, value) in headers {
         builder = builder.header(*name, value.as_str());
@@ -483,8 +479,15 @@ pub async fn webdav_dispatch(State(state): State<AppState>, request: Request) ->
                 .get(header::CONTENT_TYPE)
                 .and_then(|h| h.to_str().ok())
                 .map(|s| s.to_owned());
-            match handle_put(&state, user_id, claims.as_ref(), &vpath, body_bytes, content_type)
-                .await
+            match handle_put(
+                &state,
+                user_id,
+                claims.as_ref(),
+                &vpath,
+                body_bytes,
+                content_type,
+            )
+            .await
             {
                 Ok(r) => r,
                 Err(e) => error_response(e),
@@ -1169,7 +1172,14 @@ async fn check_write_permission(
     claims: Option<&Claims>,
     node_id: Uuid,
 ) -> Result<(), AppError> {
-    let allowed = check_min_role(state, user_id, claims, node_id, signapps_sharing::types::Role::Editor).await;
+    let allowed = check_min_role(
+        state,
+        user_id,
+        claims,
+        node_id,
+        signapps_sharing::types::Role::Editor,
+    )
+    .await;
     if !allowed {
         return Err(AppError::Forbidden(
             "Requires editor role on this node".into(),
@@ -1185,7 +1195,14 @@ async fn check_manage_permission(
     claims: Option<&Claims>,
     node_id: Uuid,
 ) -> Result<bool, AppError> {
-    Ok(check_min_role(state, user_id, claims, node_id, signapps_sharing::types::Role::Manager).await)
+    Ok(check_min_role(
+        state,
+        user_id,
+        claims,
+        node_id,
+        signapps_sharing::types::Role::Manager,
+    )
+    .await)
 }
 
 /// Core helper: returns `true` when the user holds at least `min_role` on `node_id`.
@@ -1220,7 +1237,10 @@ async fn check_min_role(
             })
             .unwrap_or(signapps_sharing::types::ResourceType::File);
 
-    let resource = signapps_sharing::types::ResourceRef { resource_type: rtype, resource_id: node_id };
+    let resource = signapps_sharing::types::ResourceRef {
+        resource_type: rtype,
+        resource_id: node_id,
+    };
     let action = match min_role {
         signapps_sharing::types::Role::Manager => signapps_sharing::types::Action::new("manage"),
         signapps_sharing::types::Role::Editor => signapps_sharing::types::Action::write(),
@@ -1241,7 +1261,11 @@ async fn check_min_role(
         return true;
     }
 
-    state.sharing.check(&user_ctx, resource, action, None).await.is_ok()
+    state
+        .sharing
+        .check(&user_ctx, resource, action, None)
+        .await
+        .is_ok()
 }
 
 /// Convert `AppError` into an HTTP response.

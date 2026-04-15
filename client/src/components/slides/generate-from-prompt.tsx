@@ -147,10 +147,17 @@ export function GenerateFromPromptDialog({
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
+          <Button
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={loading}
+          >
             Cancel
           </Button>
-          <Button onClick={handleGenerate} disabled={loading || prompt.trim().length < 10}>
+          <Button
+            onClick={handleGenerate}
+            disabled={loading || prompt.trim().length < 10}
+          >
             {loading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />

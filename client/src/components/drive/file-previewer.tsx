@@ -13,9 +13,23 @@ function getExtension(filename: string): string {
 const IMAGE_EXTS = new Set(["jpg", "jpeg", "png", "gif", "webp", "svg"]);
 const VIDEO_EXTS = new Set(["mp4", "webm"]);
 const AUDIO_EXTS = new Set(["mp3", "wav", "ogg"]);
-const TEXT_EXTS  = new Set(["txt", "md", "json", "js", "ts", "py", "rs", "css", "html", "xml", "yaml", "yml", "toml"]);
-const DOCX_EXTS  = new Set(["docx", "doc", "odt"]);
-const PDF_EXTS   = new Set(["pdf"]);
+const TEXT_EXTS = new Set([
+  "txt",
+  "md",
+  "json",
+  "js",
+  "ts",
+  "py",
+  "rs",
+  "css",
+  "html",
+  "xml",
+  "yaml",
+  "yml",
+  "toml",
+]);
+const DOCX_EXTS = new Set(["docx", "doc", "odt"]);
+const PDF_EXTS = new Set(["pdf"]);
 
 type PreviewKind =
   | "pdf"
@@ -29,12 +43,12 @@ type PreviewKind =
 function resolveKind(filename: string, mimeType?: string | null): PreviewKind {
   const ext = getExtension(filename);
 
-  if (PDF_EXTS.has(ext) || mimeType === "application/pdf")        return "pdf";
-  if (IMAGE_EXTS.has(ext) || mimeType?.startsWith("image/"))     return "image";
-  if (VIDEO_EXTS.has(ext) || mimeType?.startsWith("video/"))     return "video";
-  if (AUDIO_EXTS.has(ext) || mimeType?.startsWith("audio/"))     return "audio";
-  if (TEXT_EXTS.has(ext)  || mimeType?.startsWith("text/"))      return "text";
-  if (DOCX_EXTS.has(ext)  || mimeType?.includes("wordprocessing")) return "docx";
+  if (PDF_EXTS.has(ext) || mimeType === "application/pdf") return "pdf";
+  if (IMAGE_EXTS.has(ext) || mimeType?.startsWith("image/")) return "image";
+  if (VIDEO_EXTS.has(ext) || mimeType?.startsWith("video/")) return "video";
+  if (AUDIO_EXTS.has(ext) || mimeType?.startsWith("audio/")) return "audio";
+  if (TEXT_EXTS.has(ext) || mimeType?.startsWith("text/")) return "text";
+  if (DOCX_EXTS.has(ext) || mimeType?.includes("wordprocessing")) return "docx";
 
   return "unsupported";
 }
@@ -56,17 +70,38 @@ function PdfPreview({ url, filename }: { url: string; filename: string }) {
       <div className="flex items-center justify-between px-3 py-2 border-b bg-muted/30">
         <span className="text-sm font-medium truncate">{filename}</span>
         <div className="flex items-center gap-2">
-          <button onClick={() => setZoom(z => Math.max(z - 25, 25))} className="px-2 py-0.5 text-xs rounded bg-muted hover:bg-accent">-</button>
+          <button
+            onClick={() => setZoom((z) => Math.max(z - 25, 25))}
+            className="px-2 py-0.5 text-xs rounded bg-muted hover:bg-accent"
+          >
+            -
+          </button>
           <span className="text-xs font-mono w-10 text-center">{zoom}%</span>
-          <button onClick={() => setZoom(z => Math.min(z + 25, 200))} className="px-2 py-0.5 text-xs rounded bg-muted hover:bg-accent">+</button>
-          <a href={url} download className="px-2 py-0.5 text-xs rounded bg-muted hover:bg-accent">Telecharger</a>
+          <button
+            onClick={() => setZoom((z) => Math.min(z + 25, 200))}
+            className="px-2 py-0.5 text-xs rounded bg-muted hover:bg-accent"
+          >
+            +
+          </button>
+          <a
+            href={url}
+            download
+            className="px-2 py-0.5 text-xs rounded bg-muted hover:bg-accent"
+          >
+            Telecharger
+          </a>
         </div>
       </div>
       <div className="flex-1 overflow-auto bg-muted/10">
         <iframe
           src={url}
           className="w-full h-full border-none"
-          style={{ transform: `scale(${zoom / 100})`, transformOrigin: "top left", width: `${10000 / zoom}%`, height: `${10000 / zoom}%` }}
+          style={{
+            transform: `scale(${zoom / 100})`,
+            transformOrigin: "top left",
+            width: `${10000 / zoom}%`,
+            height: `${10000 / zoom}%`,
+          }}
           title={filename}
         />
       </div>
@@ -79,7 +114,13 @@ function ImagePreview({ url, filename }: { url: string; filename: string }) {
     <div className="flex flex-col h-full">
       <div className="flex items-center justify-between px-3 py-2 border-b bg-muted/30">
         <span className="text-sm font-medium truncate">{filename}</span>
-        <a href={url} download className="px-2 py-0.5 text-xs rounded bg-muted hover:bg-accent">Telecharger</a>
+        <a
+          href={url}
+          download
+          className="px-2 py-0.5 text-xs rounded bg-muted hover:bg-accent"
+        >
+          Telecharger
+        </a>
       </div>
       <div className="flex-1 overflow-auto flex items-center justify-center bg-muted/10 p-4">
         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -98,14 +139,16 @@ function VideoPreview({ url, filename }: { url: string; filename: string }) {
     <div className="flex flex-col h-full">
       <div className="flex items-center justify-between px-3 py-2 border-b bg-muted/30">
         <span className="text-sm font-medium truncate">{filename}</span>
-        <a href={url} download className="px-2 py-0.5 text-xs rounded bg-muted hover:bg-accent">Telecharger</a>
+        <a
+          href={url}
+          download
+          className="px-2 py-0.5 text-xs rounded bg-muted hover:bg-accent"
+        >
+          Telecharger
+        </a>
       </div>
       <div className="flex-1 overflow-auto flex items-center justify-center bg-black p-4">
-        <video
-          src={url}
-          controls
-          className="max-w-full max-h-full rounded"
-        >
+        <video src={url} controls className="max-w-full max-h-full rounded">
           Votre navigateur ne supporte pas la lecture video.
         </video>
       </div>
@@ -118,11 +161,19 @@ function AudioPreview({ url, filename }: { url: string; filename: string }) {
     <div className="flex flex-col h-full">
       <div className="flex items-center justify-between px-3 py-2 border-b bg-muted/30">
         <span className="text-sm font-medium truncate">{filename}</span>
-        <a href={url} download className="px-2 py-0.5 text-xs rounded bg-muted hover:bg-accent">Telecharger</a>
+        <a
+          href={url}
+          download
+          className="px-2 py-0.5 text-xs rounded bg-muted hover:bg-accent"
+        >
+          Telecharger
+        </a>
       </div>
       <div className="flex-1 flex items-center justify-center bg-muted/10 p-8">
         <div className="w-full max-w-lg space-y-4 text-center">
-          <p className="text-sm text-muted-foreground font-medium">{filename}</p>
+          <p className="text-sm text-muted-foreground font-medium">
+            {filename}
+          </p>
           <audio src={url} controls className="w-full">
             Votre navigateur ne supporte pas la lecture audio.
           </audio>
@@ -140,7 +191,7 @@ function TextPreview({ url, filename }: { url: string; filename: string }) {
     setContent(null);
     setError(false);
     fetch(url)
-      .then(r => {
+      .then((r) => {
         if (!r.ok) throw new Error("fetch failed");
         return r.text();
       })
@@ -152,11 +203,19 @@ function TextPreview({ url, filename }: { url: string; filename: string }) {
     <div className="flex flex-col h-full">
       <div className="flex items-center justify-between px-3 py-2 border-b bg-muted/30">
         <span className="text-sm font-medium truncate">{filename}</span>
-        <a href={url} download className="px-2 py-0.5 text-xs rounded bg-muted hover:bg-accent">Telecharger</a>
+        <a
+          href={url}
+          download
+          className="px-2 py-0.5 text-xs rounded bg-muted hover:bg-accent"
+        >
+          Telecharger
+        </a>
       </div>
       <div className="flex-1 overflow-auto bg-muted/5 p-4">
         {error && (
-          <p className="text-sm text-destructive">Impossible de charger le fichier.</p>
+          <p className="text-sm text-destructive">
+            Impossible de charger le fichier.
+          </p>
         )}
         {!error && content === null && (
           <p className="text-sm text-muted-foreground">Chargement...</p>
@@ -192,7 +251,13 @@ function DocxPreview({ url, filename }: { url: string; filename: string }) {
   );
 }
 
-function UnsupportedPreview({ url, filename }: { url: string; filename: string }) {
+function UnsupportedPreview({
+  url,
+  filename,
+}: {
+  url: string;
+  filename: string;
+}) {
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-center justify-between px-3 py-2 border-b bg-muted/30">
@@ -220,13 +285,20 @@ export function FilePreviewer({ url, filename, mimeType }: FilePreviewerProps) {
 
   const inner = (() => {
     switch (kind) {
-      case "pdf":         return <PdfPreview   url={url} filename={filename} />;
-      case "image":       return <ImagePreview url={url} filename={filename} />;
-      case "video":       return <VideoPreview url={url} filename={filename} />;
-      case "audio":       return <AudioPreview url={url} filename={filename} />;
-      case "text":        return <TextPreview  url={url} filename={filename} />;
-      case "docx":        return <DocxPreview  url={url} filename={filename} />;
-      default:            return <UnsupportedPreview url={url} filename={filename} />;
+      case "pdf":
+        return <PdfPreview url={url} filename={filename} />;
+      case "image":
+        return <ImagePreview url={url} filename={filename} />;
+      case "video":
+        return <VideoPreview url={url} filename={filename} />;
+      case "audio":
+        return <AudioPreview url={url} filename={filename} />;
+      case "text":
+        return <TextPreview url={url} filename={filename} />;
+      case "docx":
+        return <DocxPreview url={url} filename={filename} />;
+      default:
+        return <UnsupportedPreview url={url} filename={filename} />;
     }
   })();
 

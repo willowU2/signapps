@@ -578,7 +578,13 @@ export function EventForm({
     }
     // Extract complex expressions into stable values for the deps array
     // so eslint react-hooks/exhaustive-deps is satisfied.
-  }, [open, initialEventId, defaultStartTime, defaultEndTime, buildInitialFormData]);
+  }, [
+    open,
+    initialEventId,
+    defaultStartTime,
+    defaultEndTime,
+    buildInitialFormData,
+  ]);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedResourceIds, setSelectedResourceIds] = useState<string[]>([]);
@@ -1060,10 +1066,7 @@ export function EventForm({
       />
 
       {/* Recurring-event edit scope dialog */}
-      <Dialog
-        open={recurringDialogOpen}
-        onOpenChange={setRecurringDialogOpen}
-      >
+      <Dialog open={recurringDialogOpen} onOpenChange={setRecurringDialogOpen}>
         <DialogContent className="sm:max-w-[440px]">
           <DialogHeader>
             <DialogTitle>Modifier quel(s) événement(s) ?</DialogTitle>

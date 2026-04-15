@@ -55,7 +55,7 @@ export interface UseUniversalSearchResult {
 // ============================================================================
 
 export function useUniversalSearch(
-  options: UseUniversalSearchOptions = {}
+  options: UseUniversalSearchOptions = {},
 ): UseUniversalSearchResult {
   const {
     includeUsers = true,
@@ -116,7 +116,7 @@ export function useUniversalSearch(
       const response = await calendarApi.listEvents(
         calendars[0].id,
         startOfMonth,
-        endOfMonth
+        endOfMonth,
       );
       return (response.data || []).slice(0, limitPerType);
     },
@@ -142,7 +142,7 @@ export function useUniversalSearch(
             department: user.department,
             createdAt: user.created_at,
             lastLoginAt: user.last_login_at,
-          } as UserEntity)
+          } as UserEntity),
         );
         allBlocks.push(...userBlocks);
       } catch (e) {
@@ -159,13 +159,14 @@ export function useUniversalSearch(
             name: file.name || file.key?.split("/").pop() || "",
             key: file.key || "",
             bucket: file.bucket || "default",
-            content_type: file.mime_type || file.content_type || "application/octet-stream",
+            content_type:
+              file.mime_type || file.content_type || "application/octet-stream",
             size: file.size || 0,
             is_folder: file.is_directory || false,
             created_at: file.created_at,
             updated_at: file.updated_at,
             thumbnail_url: file.thumbnail_url,
-          } as FileEntity)
+          } as FileEntity),
         );
         allBlocks.push(...fileBlocks);
       } catch (e) {
@@ -189,7 +190,7 @@ export function useUniversalSearch(
             tags: task.tags || [],
             created_at: task.created_at,
             updated_at: task.updated_at,
-          } as TaskEntity)
+          } as TaskEntity),
         );
         allBlocks.push(...taskBlocks);
       } catch (e) {
@@ -212,7 +213,7 @@ export function useUniversalSearch(
             calendar_id: event.calendar_id,
             attendees: event.attendees || [],
             created_at: event.created_at,
-          } as EventEntity)
+          } as EventEntity),
         );
         allBlocks.push(...eventBlocks);
       } catch (e) {

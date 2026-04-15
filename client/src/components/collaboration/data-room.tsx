@@ -1,7 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { FileText, Eye, Download, MessageCircle, Droplet, Filter } from "lucide-react";
+import {
+  FileText,
+  Eye,
+  Download,
+  MessageCircle,
+  Droplet,
+  Filter,
+} from "lucide-react";
 
 interface Document {
   id: string;
@@ -125,7 +132,9 @@ export function DataRoom() {
           <p className="text-2xl font-bold text-blue-900">{documents.length}</p>
         </div>
         <div className="rounded-lg border bg-purple-50 p-4">
-          <p className="text-sm text-purple-700 font-medium">Total Access Events</p>
+          <p className="text-sm text-purple-700 font-medium">
+            Total Access Events
+          </p>
           <p className="text-2xl font-bold text-purple-900">{totalAccess}</p>
         </div>
         <div className="rounded-lg border bg-green-50 p-4">
@@ -142,16 +151,23 @@ export function DataRoom() {
 
         <div className="divide-y">
           {documents.map((doc) => (
-            <div key={doc.id} className="p-4 hover:bg-muted flex items-center justify-between">
+            <div
+              key={doc.id}
+              className="p-4 hover:bg-muted flex items-center justify-between"
+            >
               <div className="flex items-center gap-3 flex-1">
                 <FileText className="w-5 h-5 text-blue-600 flex-shrink-0" />
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-foreground truncate">{doc.name}</p>
+                  <p className="font-medium text-foreground truncate">
+                    {doc.name}
+                  </p>
                   <div className="flex items-center gap-2 mt-1">
                     <span className="text-xs bg-gray-200 text-muted-foreground px-2 py-0.5 rounded">
                       {doc.type}
                     </span>
-                    <span className="text-xs text-muted-foreground">{doc.size}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {doc.size}
+                    </span>
                     {doc.watermark && (
                       <span className="flex items-center gap-1 text-xs text-red-600">
                         <Droplet className="w-3 h-3" />
@@ -163,7 +179,9 @@ export function DataRoom() {
               </div>
 
               <div className="text-right flex-shrink-0 ml-4">
-                <p className="text-xs text-muted-foreground">{doc.uploadedAt}</p>
+                <p className="text-xs text-muted-foreground">
+                  {doc.uploadedAt}
+                </p>
                 <p className="text-sm font-semibold text-foreground">
                   {doc.accessCount} views
                 </p>
@@ -193,13 +211,18 @@ export function DataRoom() {
 
         <div className="divide-y max-h-64 overflow-y-auto">
           {logs.map((log) => (
-            <div key={log.id} className="p-4 hover:bg-muted flex items-center justify-between">
+            <div
+              key={log.id}
+              className="p-4 hover:bg-muted flex items-center justify-between"
+            >
               <div>
                 <p className="font-medium text-foreground">{log.userName}</p>
                 <p className="text-sm text-muted-foreground">{log.timestamp}</p>
               </div>
               <div className="text-right">
-                <p className="text-sm font-semibold text-foreground">{log.action}</p>
+                <p className="text-sm font-semibold text-foreground">
+                  {log.action}
+                </p>
                 <p className="text-xs text-muted-foreground">{log.duration}</p>
               </div>
             </div>
@@ -241,11 +264,15 @@ export function DataRoom() {
                 <p className="text-sm font-medium text-foreground mb-1">
                   Q: {item.question}
                 </p>
-                <p className="text-xs text-muted-foreground">Asked by {item.askedBy}</p>
+                <p className="text-xs text-muted-foreground">
+                  Asked by {item.askedBy}
+                </p>
               </div>
               <div className="bg-green-50 border border-green-200 rounded p-2 mt-2">
                 <p className="text-sm text-foreground mb-1">A: {item.answer}</p>
-                <p className="text-xs text-muted-foreground">Answered by {item.answeredBy}</p>
+                <p className="text-xs text-muted-foreground">
+                  Answered by {item.answeredBy}
+                </p>
               </div>
             </div>
           ))}

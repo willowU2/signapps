@@ -4,14 +4,14 @@
  * Migrated to use API Factory pattern.
  * @see factory.ts for client creation details
  */
-import axios from 'axios';
-import { getClient, getServiceBaseUrl, ServiceName } from './factory';
+import axios from "axios";
+import { getClient, getServiceBaseUrl, ServiceName } from "./factory";
 
 const billingClient = getClient(ServiceName.BILLING);
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-export type InvoiceStatus = 'draft' | 'sent' | 'paid' | 'overdue';
+export type InvoiceStatus = "draft" | "sent" | "paid" | "overdue";
 
 export interface Invoice {
   id: string;
@@ -115,36 +115,33 @@ export interface BillingUsage {
 
 export const billingApi = {
   // Plans
-  listPlans: () =>
-    billingClient.get<BillingPlan[]>('/plans'),
+  listPlans: () => billingClient.get<BillingPlan[]>("/plans"),
 
   createPlan: (data: CreatePlanRequest) =>
-    billingClient.post<BillingPlan>('/plans', data),
+    billingClient.post<BillingPlan>("/plans", data),
 
   updatePlan: (id: string, data: Partial<CreatePlanRequest>) =>
     billingClient.put<BillingPlan>(`/plans/${id}`, data),
 
-  deletePlan: (id: string) =>
-    billingClient.delete(`/plans/${id}`),
+  deletePlan: (id: string) => billingClient.delete(`/plans/${id}`),
 
   // Invoices
-  listInvoices: () =>
-    billingClient.get<Invoice[]>('/invoices'),
+  listInvoices: () => billingClient.get<Invoice[]>("/invoices"),
 
   createInvoice: (data: CreateInvoiceRequest) =>
-    billingClient.post<Invoice>('/invoices', data),
+    billingClient.post<Invoice>("/invoices", data),
 
-  getInvoice: (id: string) =>
-    billingClient.get<Invoice>(`/invoices/${id}`),
+  getInvoice: (id: string) => billingClient.get<Invoice>(`/invoices/${id}`),
 
   updateInvoiceStatus: (id: string, status: string) =>
     billingClient.patch<Invoice>(`/invoices/${id}`, { status }),
 
-  updateInvoice: (id: string, data: Partial<CreateInvoiceRequest> & { status?: string }) =>
-    billingClient.patch<Invoice>(`/invoices/${id}`, data),
+  updateInvoice: (
+    id: string,
+    data: Partial<CreateInvoiceRequest> & { status?: string },
+  ) => billingClient.patch<Invoice>(`/invoices/${id}`, data),
 
-  deleteInvoice: (id: string) =>
-    billingClient.delete(`/invoices/${id}`),
+  deleteInvoice: (id: string) => billingClient.delete(`/invoices/${id}`),
 
   // Line Items — AQ-BILLDB
   listLineItems: (invoiceId: string) =>
@@ -164,18 +161,25 @@ export const billingApi = {
     billingClient.post<Payment>(`/invoices/${invoiceId}/payments`, data),
 
   // Usage
-  getUsage: () =>
-    billingClient.get<BillingUsage>('/usage'),
+  getUsage: () => billingClient.get<BillingUsage>("/usage"),
 
   // EX3: Stripe Checkout — create a payment session for an invoice
-  createStripeCheckout: (invoiceId: string, options?: { successUrl?: string; cancelUrl?: string }) =>
-    billingClient.post<{ checkout_url: string; session_id: string }>('/billing/stripe/checkout', {
-      invoice_id: invoiceId,
-      success_url: options?.successUrl,
-      cancel_url: options?.cancelUrl,
-    }),
+  createStripeCheckout: (
+    invoiceId: string,
+    options?: { successUrl?: string; cancelUrl?: string },
+  ) =>
+    billingClient.post<{ checkout_url: string; session_id: string }>(
+      "/billing/stripe/checkout",
+      {
+        invoice_id: invoiceId,
+        success_url: options?.successUrl,
+        cancel_url: options?.cancelUrl,
+      },
+    ),
 
   // Health endpoint is at root /health (not under /api/v1)
   health: () =>
-    axios.get(`${getServiceBaseUrl(ServiceName.BILLING)}/health`, { withCredentials: true }),
+    axios.get(`${getServiceBaseUrl(ServiceName.BILLING)}/health`, {
+      withCredentials: true,
+    }),
 };

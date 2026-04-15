@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { useState, useRef, useCallback, useEffect } from "react";
 
 interface UseInlineRenameOptions {
   onRename: (id: string, newName: string) => Promise<void> | void;
@@ -8,7 +8,7 @@ interface UseInlineRenameOptions {
 
 export function useInlineRename({ onRename }: UseInlineRenameOptions) {
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editValue, setEditValue] = useState('');
+  const [editValue, setEditValue] = useState("");
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   const startRename = useCallback((id: string, currentName: string) => {
@@ -18,7 +18,7 @@ export function useInlineRename({ onRename }: UseInlineRenameOptions) {
 
   const cancelRename = useCallback(() => {
     setEditingId(null);
-    setEditValue('');
+    setEditValue("");
   }, []);
 
   const confirmRename = useCallback(async () => {
@@ -28,17 +28,20 @@ export function useInlineRename({ onRename }: UseInlineRenameOptions) {
     }
     await onRename(editingId, editValue.trim());
     setEditingId(null);
-    setEditValue('');
+    setEditValue("");
   }, [editingId, editValue, onRename, cancelRename]);
 
-  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      confirmRename();
-    } else if (e.key === 'Escape') {
-      cancelRename();
-    }
-  }, [confirmRename, cancelRename]);
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        confirmRename();
+      } else if (e.key === "Escape") {
+        cancelRename();
+      }
+    },
+    [confirmRename, cancelRename],
+  );
 
   useEffect(() => {
     if (editingId && inputRef.current) {

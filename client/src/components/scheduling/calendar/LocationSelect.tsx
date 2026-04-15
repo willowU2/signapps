@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * LocationSelect Component
@@ -6,17 +6,17 @@
  * Enhanced location input with suggestions from resources and recent locations.
  */
 
-import * as React from 'react';
-import { MapPin, Building, Video, ExternalLink, X, Check } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import * as React from "react";
+import { MapPin, Building, Video, ExternalLink, X, Check } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from '@/components/ui/popover';
+} from "@/components/ui/popover";
 import {
   Command,
   CommandEmpty,
@@ -25,8 +25,11 @@ import {
   CommandItem,
   CommandList,
   CommandSeparator,
-} from '@/components/ui/command';
-import type { EventLocation, Resource } from '@/lib/scheduling/types/scheduling';
+} from "@/components/ui/command";
+import type {
+  EventLocation,
+  Resource,
+} from "@/lib/scheduling/types/scheduling";
 
 // ============================================================================
 // Types
@@ -42,7 +45,7 @@ interface LocationSelectProps {
 }
 
 interface LocationSuggestion {
-  type: 'resource' | 'recent' | 'virtual';
+  type: "resource" | "recent" | "virtual";
   name: string;
   address?: string;
   resourceId?: string;
@@ -56,21 +59,21 @@ interface LocationSuggestion {
 
 const VIRTUAL_MEETING_OPTIONS: LocationSuggestion[] = [
   {
-    type: 'virtual',
-    name: 'Visioconférence',
-    meetingUrl: '',
+    type: "virtual",
+    name: "Visioconférence",
+    meetingUrl: "",
     icon: Video,
   },
 ];
 
-const RECENT_LOCATIONS_KEY = 'scheduling_recent_locations';
+const RECENT_LOCATIONS_KEY = "scheduling_recent_locations";
 
 // ============================================================================
 // Helpers
 // ============================================================================
 
 function getStoredRecentLocations(): string[] {
-  if (typeof window === 'undefined') return [];
+  if (typeof window === "undefined") return [];
   try {
     const data = localStorage.getItem(RECENT_LOCATIONS_KEY);
     return data ? JSON.parse(data) : [];
@@ -80,7 +83,7 @@ function getStoredRecentLocations(): string[] {
 }
 
 function saveRecentLocation(location: string): void {
-  if (typeof window === 'undefined' || !location.trim()) return;
+  if (typeof window === "undefined" || !location.trim()) return;
   try {
     const recent = getStoredRecentLocations();
     const filtered = recent.filter((l) => l !== location);
@@ -100,12 +103,14 @@ export function LocationSelect({
   onChange,
   resources = [],
   recentLocations: propRecentLocations,
-  placeholder = 'Ajouter un lieu ou un lien de visio',
+  placeholder = "Ajouter un lieu ou un lien de visio",
   className,
 }: LocationSelectProps) {
   const [open, setOpen] = React.useState(false);
-  const [inputValue, setInputValue] = React.useState(value?.name || '');
-  const [showMeetingUrlInput, setShowMeetingUrlInput] = React.useState(!!value?.meetingUrl);
+  const [inputValue, setInputValue] = React.useState(value?.name || "");
+  const [showMeetingUrlInput, setShowMeetingUrlInput] = React.useState(
+    !!value?.meetingUrl,
+  );
 
   // Get recent locations
   const recentLocations = React.useMemo(() => {
@@ -118,10 +123,10 @@ export function LocationSelect({
     const result: LocationSuggestion[] = [];
 
     // Add room resources
-    const rooms = resources.filter((r) => r.type === 'room');
+    const rooms = resources.filter((r) => r.type === "room");
     rooms.forEach((room) => {
       result.push({
-        type: 'resource',
+        type: "resource",
         name: room.name,
         address: room.location,
         resourceId: room.id,
@@ -135,7 +140,7 @@ export function LocationSelect({
       .slice(0, 5)
       .forEach((loc) => {
         result.push({
-          type: 'recent',
+          type: "recent",
           name: loc,
           icon: MapPin,
         });
@@ -154,17 +159,17 @@ export function LocationSelect({
     return suggestions.filter(
       (s) =>
         s.name.toLowerCase().includes(search) ||
-        s.address?.toLowerCase().includes(search)
+        s.address?.toLowerCase().includes(search),
     );
   }, [suggestions, inputValue]);
 
   // Handle selection
   const handleSelect = (suggestion: LocationSuggestion) => {
-    if (suggestion.type === 'virtual') {
+    if (suggestion.type === "virtual") {
       setShowMeetingUrlInput(true);
       onChange({
-        name: 'Visioconférence',
-        meetingUrl: '',
+        name: "Visioconférence",
+        meetingUrl: "",
       });
     } else {
       const location: EventLocation = {
@@ -196,20 +201,20 @@ export function LocationSelect({
   const handleMeetingUrlChange = (url: string) => {
     onChange({
       ...value,
-      name: value?.name || 'Visioconférence',
+      name: value?.name || "Visioconférence",
       meetingUrl: url,
     });
   };
 
   // Handle clear
   const handleClear = () => {
-    setInputValue('');
+    setInputValue("");
     setShowMeetingUrlInput(false);
     onChange(undefined);
   };
 
   return (
-    <div className={cn('space-y-2', className)}>
+    <div className={cn("space-y-2", className)}>
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <div className="relative">
@@ -251,10 +256,11 @@ export function LocationSelect({
               </CommandEmpty>
 
               {/* Rooms */}
-              {filteredSuggestions.filter((s) => s.type === 'resource').length > 0 && (
+              {filteredSuggestions.filter((s) => s.type === "resource").length >
+                0 && (
                 <CommandGroup heading="Salles">
                   {filteredSuggestions
-                    .filter((s) => s.type === 'resource')
+                    .filter((s) => s.type === "resource")
                     .map((suggestion) => (
                       <CommandItem
                         key={suggestion.resourceId}
@@ -279,12 +285,13 @@ export function LocationSelect({
               )}
 
               {/* Recent */}
-              {filteredSuggestions.filter((s) => s.type === 'recent').length > 0 && (
+              {filteredSuggestions.filter((s) => s.type === "recent").length >
+                0 && (
                 <>
                   <CommandSeparator />
                   <CommandGroup heading="Récents">
                     {filteredSuggestions
-                      .filter((s) => s.type === 'recent')
+                      .filter((s) => s.type === "recent")
                       .map((suggestion) => (
                         <CommandItem
                           key={suggestion.name}
@@ -306,7 +313,7 @@ export function LocationSelect({
               <CommandSeparator />
               <CommandGroup heading="Virtuel">
                 {filteredSuggestions
-                  .filter((s) => s.type === 'virtual')
+                  .filter((s) => s.type === "virtual")
                   .map((suggestion) => (
                     <CommandItem
                       key={suggestion.name}
@@ -332,7 +339,7 @@ export function LocationSelect({
           <ExternalLink className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             type="url"
-            value={value?.meetingUrl || ''}
+            value={value?.meetingUrl || ""}
             onChange={(e) => handleMeetingUrlChange(e.target.value)}
             placeholder="https://meet.example.com/..."
             className="pl-9"

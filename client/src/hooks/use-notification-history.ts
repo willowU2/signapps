@@ -3,8 +3,8 @@
  * Fetches and manages notification history
  */
 
-import { useEffect, useState, useCallback } from 'react';
-import { calendarApiClient } from '@/lib/api/core';
+import { useEffect, useState, useCallback } from "react";
+import { calendarApiClient } from "@/lib/api/core";
 
 export interface Notification {
   id: string;
@@ -32,7 +32,7 @@ export interface UseNotificationHistoryReturn {
  * Hook to fetch notification history
  */
 export function useNotificationHistory(
-  limit: number = 50
+  limit: number = 50,
 ): UseNotificationHistoryReturn {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
@@ -45,12 +45,12 @@ export function useNotificationHistory(
       setError(null);
 
       const response = await calendarApiClient.get(
-        `/notifications/history?limit=${limit}`
+        `/notifications/history?limit=${limit}`,
       );
 
       setNotifications(response.data || []);
     } catch {
-      setError('Failed to load notification history');
+      setError("Failed to load notification history");
     } finally {
       setLoading(false);
     }
@@ -69,17 +69,17 @@ export function useNotificationHistory(
 
         await calendarApiClient.post(
           `/notifications/${notificationId}/resend`,
-          {}
+          {},
         );
 
         // Refresh the list
         await fetchNotifications();
       } catch (err) {
-        setError('Failed to resend notification');
+        setError("Failed to resend notification");
         throw err;
       }
     },
-    [fetchNotifications]
+    [fetchNotifications],
   );
 
   return {

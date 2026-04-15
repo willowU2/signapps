@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { TrendingUp } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { TrendingUp } from "lucide-react";
 
 interface ForecastPoint {
   month: string;
@@ -13,11 +13,29 @@ interface ForecastPoint {
 
 export default function AIForecast() {
   const data: ForecastPoint[] = [
-    { month: 'Jan', actual: 45000, forecast: 46000, upper: 52000, lower: 40000 },
-    { month: 'Feb', actual: 52000, forecast: 51000, upper: 57000, lower: 45000 },
-    { month: 'Mar', actual: 48000, forecast: 54000, upper: 61000, lower: 47000 },
-    { month: 'Apr', forecast: 58000, actual: 0, upper: 66000, lower: 50000 },
-    { month: 'May', forecast: 62000, actual: 0, upper: 71000, lower: 53000 },
+    {
+      month: "Jan",
+      actual: 45000,
+      forecast: 46000,
+      upper: 52000,
+      lower: 40000,
+    },
+    {
+      month: "Feb",
+      actual: 52000,
+      forecast: 51000,
+      upper: 57000,
+      lower: 45000,
+    },
+    {
+      month: "Mar",
+      actual: 48000,
+      forecast: 54000,
+      upper: 61000,
+      lower: 47000,
+    },
+    { month: "Apr", forecast: 58000, actual: 0, upper: 66000, lower: 50000 },
+    { month: "May", forecast: 62000, actual: 0, upper: 71000, lower: 53000 },
   ];
 
   const maxValue = Math.max(...data.map((d) => Math.max(d.upper, d.actual)));
@@ -44,7 +62,12 @@ export default function AIForecast() {
         <div className="space-y-4">
           {/* Chart */}
           <div className="bg-muted p-4 rounded-lg">
-            <svg className="w-full" height="300" viewBox="0 0 540 300" preserveAspectRatio="xMidYMid meet">
+            <svg
+              className="w-full"
+              height="300"
+              viewBox="0 0 540 300"
+              preserveAspectRatio="xMidYMid meet"
+            >
               {/* Grid */}
               {[0, 1, 2, 3, 4].map((i) => (
                 <line
@@ -60,7 +83,7 @@ export default function AIForecast() {
 
               {/* Confidence band */}
               <path
-                d={`M ${getX(0)} ${getY(data[0].lower)} L ${data.map((d, i) => `${getX(i)} ${getY(d.lower)}`).join(' L ')} L ${data.map((d, i) => `${getX(data.length - 1 - i)} ${getY(d.upper)}`).join(' L ')} Z`}
+                d={`M ${getX(0)} ${getY(data[0].lower)} L ${data.map((d, i) => `${getX(i)} ${getY(d.lower)}`).join(" L ")} L ${data.map((d, i) => `${getX(data.length - 1 - i)} ${getY(d.upper)}`).join(" L ")} Z`}
                 fill="#dbeafe"
                 opacity="0.6"
               />
@@ -69,8 +92,10 @@ export default function AIForecast() {
               <polyline
                 points={data
                   .filter((d) => d.actual > 0)
-                  .map((d, i, arr) => `${getX(data.indexOf(d))} ${getY(d.actual)}`)
-                  .join(' ')}
+                  .map(
+                    (d, i, arr) => `${getX(data.indexOf(d))} ${getY(d.actual)}`,
+                  )
+                  .join(" ")}
                 fill="none"
                 stroke="#0ea5e9"
                 strokeWidth="3"
@@ -78,7 +103,9 @@ export default function AIForecast() {
 
               {/* Forecast line */}
               <polyline
-                points={data.map((d, i) => `${getX(i)} ${getY(d.forecast)}`).join(' ')}
+                points={data
+                  .map((d, i) => `${getX(i)} ${getY(d.forecast)}`)
+                  .join(" ")}
                 fill="none"
                 stroke="#f97316"
                 strokeWidth="2"
@@ -88,23 +115,49 @@ export default function AIForecast() {
               {/* Points */}
               {data.map((d, i) =>
                 d.actual > 0 ? (
-                  <circle key={`actual-${i}`} cx={getX(i)} cy={getY(d.actual)} r="4" fill="#0ea5e9" />
-                ) : null
+                  <circle
+                    key={`actual-${i}`}
+                    cx={getX(i)}
+                    cy={getY(d.actual)}
+                    r="4"
+                    fill="#0ea5e9"
+                  />
+                ) : null,
               )}
               {data.map((d, i) => (
-                <circle key={`forecast-${i}`} cx={getX(i)} cy={getY(d.forecast)} r="3" fill="#f97316" />
+                <circle
+                  key={`forecast-${i}`}
+                  cx={getX(i)}
+                  cy={getY(d.forecast)}
+                  r="3"
+                  fill="#f97316"
+                />
               ))}
 
               {/* X-axis labels */}
               {data.map((d, i) => (
-                <text key={`label-${i}`} x={getX(i)} y="280" textAnchor="middle" fontSize="12" fill="#666">
+                <text
+                  key={`label-${i}`}
+                  x={getX(i)}
+                  y="280"
+                  textAnchor="middle"
+                  fontSize="12"
+                  fill="#666"
+                >
                   {d.month}
                 </text>
               ))}
 
               {/* Y-axis labels */}
               {[0, 20000, 40000, 60000].map((val, i) => (
-                <text key={`y-${i}`} x="35" y={getY(val) + 4} textAnchor="end" fontSize="11" fill="#999">
+                <text
+                  key={`y-${i}`}
+                  x="35"
+                  y={getY(val) + 4}
+                  textAnchor="end"
+                  fontSize="11"
+                  fill="#999"
+                >
                   ${(val / 1000).toFixed(0)}k
                 </text>
               ))}

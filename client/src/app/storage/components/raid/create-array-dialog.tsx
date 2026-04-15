@@ -1,54 +1,88 @@
-'use client';
+"use client";
 
-import { SpinnerInfinity } from 'spinners-react';
+import { SpinnerInfinity } from "spinners-react";
 
-import { useState } from 'react';
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Database, HardDrive } from 'lucide-react';
-import { raidApi, type DiskInfo } from '@/lib/api';
+} from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Database, HardDrive } from "lucide-react";
+import { raidApi, type DiskInfo } from "@/lib/api";
 
 interface CreateArrayDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (data: { name: string; raid_level: string; disk_ids: string[] }) => Promise<void>;
+  onSubmit: (data: {
+    name: string;
+    raid_level: string;
+    disk_ids: string[];
+  }) => Promise<void>;
 }
 
 const RAID_LEVELS = [
-  { value: 'raid0', label: 'RAID 0 (Striping)', minDisks: 2, description: 'Performance maximale, aucune redondance' },
-  { value: 'raid1', label: 'RAID 1 (Mirroring)', minDisks: 2, description: 'Mirroir complet, 50% de capacité' },
-  { value: 'raid5', label: 'RAID 5 (Parity)', minDisks: 3, description: 'Bon équilibre performance/sécurité' },
-  { value: 'raid6', label: 'RAID 6 (Double Parity)', minDisks: 4, description: 'Tolère 2 pannes de disque' },
-  { value: 'raid10', label: 'RAID 10 (Stripe + Mirror)', minDisks: 4, description: 'Performance + redondance' },
+  {
+    value: "raid0",
+    label: "RAID 0 (Striping)",
+    minDisks: 2,
+    description: "Performance maximale, aucune redondance",
+  },
+  {
+    value: "raid1",
+    label: "RAID 1 (Mirroring)",
+    minDisks: 2,
+    description: "Mirroir complet, 50% de capacité",
+  },
+  {
+    value: "raid5",
+    label: "RAID 5 (Parity)",
+    minDisks: 3,
+    description: "Bon équilibre performance/sécurité",
+  },
+  {
+    value: "raid6",
+    label: "RAID 6 (Double Parity)",
+    minDisks: 4,
+    description: "Tolère 2 pannes de disque",
+  },
+  {
+    value: "raid10",
+    label: "RAID 10 (Stripe + Mirror)",
+    minDisks: 4,
+    description: "Performance + redondance",
+  },
 ];
 
-export function CreateArrayDialog({ open, onOpenChange, onSubmit }: CreateArrayDialogProps) {
-  const [name, setName] = useState('');
-  const [raidLevel, setRaidLevel] = useState('');
+export function CreateArrayDialog({
+  open,
+  onOpenChange,
+  onSubmit,
+}: CreateArrayDialogProps) {
+  const [name, setName] = useState("");
+  const [raidLevel, setRaidLevel] = useState("");
   const [selectedDisks, setSelectedDisks] = useState<string[]>([]);
   const [availableDisks, setAvailableDisks] = useState<DiskInfo[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingDisks, setLoadingDisks] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
-  const selectedLevel = RAID_LEVELS.find(l => l.value === raidLevel);
-  const canSubmit = name.trim() &&
+  const selectedLevel = RAID_LEVELS.find((l) => l.value === raidLevel);
+  const canSubmit =
+    name.trim() &&
     raidLevel &&
     selectedLevel &&
     selectedDisks.length >= selectedLevel.minDisks;
@@ -58,7 +92,9 @@ export function CreateArrayDialog({ open, onOpenChange, onSubmit }: CreateArrayD
     try {
       const response = await raidApi.listDisks();
       // Filter out disks already in an array
-      const available = response.data.filter(d => !d.array_id && d.status !== 'failed');
+      const available = response.data.filter(
+        (d) => !d.array_id && d.status !== "failed",
+      );
       setAvailableDisks(available);
     } catch {
       // ignore
@@ -71,19 +107,19 @@ export function CreateArrayDialog({ open, onOpenChange, onSubmit }: CreateArrayD
     if (newOpen) {
       loadDisks();
     } else {
-      setName('');
-      setRaidLevel('');
+      setName("");
+      setRaidLevel("");
       setSelectedDisks([]);
-      setError('');
+      setError("");
     }
     onOpenChange(newOpen);
   };
 
   const toggleDisk = (diskId: string) => {
-    setSelectedDisks(prev =>
+    setSelectedDisks((prev) =>
       prev.includes(diskId)
-        ? prev.filter(id => id !== diskId)
-        : [...prev, diskId]
+        ? prev.filter((id) => id !== diskId)
+        : [...prev, diskId],
     );
   };
 
@@ -91,7 +127,7 @@ export function CreateArrayDialog({ open, onOpenChange, onSubmit }: CreateArrayD
     if (!canSubmit) return;
 
     setLoading(true);
-    setError('');
+    setError("");
     try {
       await onSubmit({
         name: name.trim(),
@@ -100,7 +136,9 @@ export function CreateArrayDialog({ open, onOpenChange, onSubmit }: CreateArrayD
       });
       handleOpenChange(false);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Erreur lors de la création');
+      setError(
+        err instanceof Error ? err.message : "Erreur lors de la création",
+      );
     } finally {
       setLoading(false);
     }
@@ -145,7 +183,9 @@ export function CreateArrayDialog({ open, onOpenChange, onSubmit }: CreateArrayD
                   <SelectItem key={level.value} value={level.value}>
                     <div>
                       <span className="font-medium">{level.label}</span>
-                      <p className="text-xs text-muted-foreground">{level.description}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {level.description}
+                      </p>
                     </div>
                   </SelectItem>
                 ))}
@@ -161,11 +201,18 @@ export function CreateArrayDialog({ open, onOpenChange, onSubmit }: CreateArrayD
           {/* Disk Selection */}
           <div className="space-y-2">
             <Label>
-              Disques ({selectedDisks.length} sélectionné{selectedDisks.length > 1 ? 's' : ''})
+              Disques ({selectedDisks.length} sélectionné
+              {selectedDisks.length > 1 ? "s" : ""})
             </Label>
             {loadingDisks ? (
               <div className="flex items-center justify-center py-8">
-                <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-6 w-6 " />
+                <SpinnerInfinity
+                  size={24}
+                  secondaryColor="rgba(128,128,128,0.2)"
+                  color="currentColor"
+                  speed={120}
+                  className="h-6 w-6 "
+                />
               </div>
             ) : availableDisks.length === 0 ? (
               <div className="rounded-lg border border-dashed p-8 text-center text-muted-foreground">
@@ -186,7 +233,8 @@ export function CreateArrayDialog({ open, onOpenChange, onSubmit }: CreateArrayD
                     <div className="flex-1">
                       <span className="font-medium">{disk.device_path}</span>
                       <span className="ml-2 text-sm text-muted-foreground">
-                        {disk.model || 'Unknown'} - {formatBytes(disk.size_bytes)}
+                        {disk.model || "Unknown"} -{" "}
+                        {formatBytes(disk.size_bytes)}
                       </span>
                     </div>
                   </label>
@@ -195,9 +243,7 @@ export function CreateArrayDialog({ open, onOpenChange, onSubmit }: CreateArrayD
             )}
           </div>
 
-          {error && (
-            <p className="text-sm text-destructive">{error}</p>
-          )}
+          {error && <p className="text-sm text-destructive">{error}</p>}
         </div>
 
         <DialogFooter>
@@ -205,7 +251,15 @@ export function CreateArrayDialog({ open, onOpenChange, onSubmit }: CreateArrayD
             Annuler
           </Button>
           <Button onClick={handleSubmit} disabled={!canSubmit || loading}>
-            {loading && <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />}
+            {loading && (
+              <SpinnerInfinity
+                size={24}
+                secondaryColor="rgba(128,128,128,0.2)"
+                color="currentColor"
+                speed={120}
+                className="mr-2 h-4 w-4 "
+              />
+            )}
             Créer l'Array
           </Button>
         </DialogFooter>

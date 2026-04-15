@@ -75,27 +75,25 @@ export function GoalSetter() {
           };
         }
         return goal;
-      })
+      }),
     );
   };
 
-  const updateProgress = (
-    goalId: string,
-    krId: string,
-    progress: number
-  ) => {
+  const updateProgress = (goalId: string, krId: string, progress: number) => {
     setGoals(
       goals.map((goal) => {
         if (goal.id === goalId) {
           return {
             ...goal,
             keyResults: goal.keyResults.map((kr) =>
-              kr.id === krId ? { ...kr, progress: Math.min(100, Math.max(0, progress)) } : kr
+              kr.id === krId
+                ? { ...kr, progress: Math.min(100, Math.max(0, progress)) }
+                : kr,
             ),
           };
         }
         return goal;
-      })
+      }),
     );
   };
 
@@ -113,7 +111,7 @@ export function GoalSetter() {
           };
         }
         return goal;
-      })
+      }),
     );
   };
 
@@ -157,7 +155,11 @@ export function GoalSetter() {
                   </option>
                 ))}
               </select>
-              <Button onClick={addGoal} size="sm" className="bg-blue-600 hover:bg-blue-700">
+              <Button
+                onClick={addGoal}
+                size="sm"
+                className="bg-blue-600 hover:bg-blue-700"
+              >
                 <Plus className="w-4 h-4" />
               </Button>
             </div>
@@ -173,7 +175,9 @@ export function GoalSetter() {
                 {/* Goal Header */}
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex-1">
-                    <h3 className="font-semibold text-foreground">{goal.title}</h3>
+                    <h3 className="font-semibold text-foreground">
+                      {goal.title}
+                    </h3>
                     <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded mt-1 inline-block">
                       {goal.quarter}
                     </span>
@@ -200,9 +204,7 @@ export function GoalSetter() {
                               {kr.progress}%
                             </span>
                             <button
-                              onClick={() =>
-                                deleteKeyResult(goal.id, kr.id)
-                              }
+                              onClick={() => deleteKeyResult(goal.id, kr.id)}
                               className="p-0.5 hover:bg-red-50 rounded text-red-500 transition"
                             >
                               <Trash2 className="w-3 h-3" />
@@ -215,7 +217,7 @@ export function GoalSetter() {
                           <div
                             className={cn(
                               "h-2 rounded-full transition-all",
-                              getProgressColor(kr.progress)
+                              getProgressColor(kr.progress),
                             )}
                             style={{ width: `${kr.progress}%` }}
                           />
@@ -233,7 +235,7 @@ export function GoalSetter() {
                                 "px-2 py-0.5 rounded border text-xs font-medium transition",
                                 kr.progress === val
                                   ? "border-blue-500 bg-blue-50 text-blue-700"
-                                  : "border-border text-muted-foreground hover:border-border"
+                                  : "border-border text-muted-foreground hover:border-border",
                               )}
                             >
                               {val}%
@@ -250,14 +252,18 @@ export function GoalSetter() {
                 </div>
 
                 {/* Add Key Result */}
-                <KeyResultInput onAdd={(title) => addKeyResult(goal.id, title)} />
+                <KeyResultInput
+                  onAdd={(title) => addKeyResult(goal.id, title)}
+                />
               </div>
             ))}
           </div>
 
           {goals.length === 0 && (
             <div className="text-center py-8 text-muted-foreground">
-              <p className="text-sm">No goals yet. Create one to get started!</p>
+              <p className="text-sm">
+                No goals yet. Create one to get started!
+              </p>
             </div>
           )}
         </CardContent>
@@ -266,11 +272,7 @@ export function GoalSetter() {
   );
 }
 
-function KeyResultInput({
-  onAdd,
-}: {
-  onAdd: (title: string) => void;
-}) {
+function KeyResultInput({ onAdd }: { onAdd: (title: string) => void }) {
   const [value, setValue] = useState("");
 
   const handleAdd = () => {

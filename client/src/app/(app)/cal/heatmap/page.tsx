@@ -15,7 +15,14 @@
 
 import * as React from "react";
 import { useQuery } from "@tanstack/react-query";
-import { subDays, format, startOfDay, differenceInMinutes, parseISO, getDay } from "date-fns";
+import {
+  subDays,
+  format,
+  startOfDay,
+  differenceInMinutes,
+  parseISO,
+  getDay,
+} from "date-fns";
 import { fr } from "date-fns/locale";
 import { calendarApi } from "@/lib/api/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,7 +30,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Calendar, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { usePageTitle } from '@/hooks/use-page-title';
+import { usePageTitle } from "@/hooks/use-page-title";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -64,11 +71,15 @@ function buildDateRange(endDate: Date, days: number): DayData[] {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function CalHeatmapPage() {
-  usePageTitle('Carte thermique');
+  usePageTitle("Carte thermique");
   const DAYS = 90;
   const today = startOfDay(new Date());
 
-  const { data: heatmapData, isLoading, error } = useQuery({
+  const {
+    data: heatmapData,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ["cal-heatmap"],
     queryFn: async (): Promise<DayData[]> => {
       const startDate = subDays(today, DAYS - 1);
@@ -85,13 +96,20 @@ export default function CalHeatmapPage() {
       // Collect events across all calendars in the 90-day window
       for (const cal of calendars) {
         try {
-          const eventsResponse = await calendarApi.listEvents(cal.id, startDate, endDate);
+          const eventsResponse = await calendarApi.listEvents(
+            cal.id,
+            startDate,
+            endDate,
+          );
           const events = eventsResponse.data || [];
           for (const ev of events) {
             if (!ev.start_time || !ev.end_time) continue;
             const start = parseISO(ev.start_time);
             const end = parseISO(ev.end_time);
-            const durationMinutes = Math.max(0, differenceInMinutes(end, start));
+            const durationMinutes = Math.max(
+              0,
+              differenceInMinutes(end, start),
+            );
             const dateKey = format(startOfDay(start), "yyyy-MM-dd");
             const day = dayMap.get(dateKey);
             if (day) {
@@ -167,12 +185,13 @@ export default function CalHeatmapPage() {
     const totalHours = heatmapData.reduce((s, d) => s + d.hours, 0);
     const busiest = heatmapData.reduce(
       (max, d) => (d.hours > max.hours ? d : max),
-      heatmapData[0]!
+      heatmapData[0]!,
     );
     return {
       totalHours: totalHours.toFixed(1),
       meetingDays: nonZero.length,
-      avgHoursPerDay: nonZero.length > 0 ? (totalHours / nonZero.length).toFixed(1) : "0",
+      avgHoursPerDay:
+        nonZero.length > 0 ? (totalHours / nonZero.length).toFixed(1) : "0",
       busiestDay: busiest.hours > 0 ? busiest : null,
     };
   }, [heatmapData]);
@@ -291,9 +310,15 @@ export default function CalHeatmapPage() {
               </div>
 
               {/* Day-of-week labels + grid */}
-              <div className="flex items-start gap-1" style={{ marginTop: "16px" }}>
+              <div
+                className="flex items-start gap-1"
+                style={{ marginTop: "16px" }}
+              >
                 {/* Day-of-week labels */}
-                <div className="flex flex-col" style={{ gap: "3px", width: "20px", marginRight: "4px" }}>
+                <div
+                  className="flex flex-col"
+                  style={{ gap: "3px", width: "20px", marginRight: "4px" }}
+                >
                   {["D", "L", "M", "Me", "J", "V", "S"].map((dow, i) => (
                     <div
                       key={dow}

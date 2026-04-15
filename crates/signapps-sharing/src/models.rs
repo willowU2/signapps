@@ -552,8 +552,7 @@ mod tests {
             errors: vec![],
         };
         let json = serde_json::to_string(&result).expect("serialization failed");
-        let decoded: BulkGrantResult =
-            serde_json::from_str(&json).expect("deserialization failed");
+        let decoded: BulkGrantResult = serde_json::from_str(&json).expect("deserialization failed");
         assert_eq!(decoded.created, 5);
         assert!(decoded.errors.is_empty());
     }

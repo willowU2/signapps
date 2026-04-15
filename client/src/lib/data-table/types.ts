@@ -42,9 +42,19 @@ export interface ColumnConfig<TData> {
   /** Required permission to see this column */
   requiredPermission?: string;
   /** Cell renderer type */
-  cellType?: "text" | "date" | "datetime" | "badge" | "avatar" | "actions" | "custom";
+  cellType?:
+    | "text"
+    | "date"
+    | "datetime"
+    | "badge"
+    | "avatar"
+    | "actions"
+    | "custom";
   /** Badge variant mapping for cellType="badge" */
-  badgeVariants?: Record<string, "default" | "secondary" | "destructive" | "outline">;
+  badgeVariants?: Record<
+    string,
+    "default" | "secondary" | "destructive" | "outline"
+  >;
   /** Format function for display value */
   format?: (value: unknown, row: TData) => string;
   /** Custom cell renderer */

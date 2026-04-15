@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Mic, Copy, Check } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Mic, Copy, Check } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export function SmartDictation() {
-  const [text, setText] = useState('');
+  const [text, setText] = useState("");
   const [isRecording, isRecordingState] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -15,8 +15,9 @@ export function SmartDictation() {
     if (!isRecording) {
       // Simulate recording
       setTimeout(() => {
-        const newText = 'This is a voice dictated text. Add more content as needed.';
-        setText((prev) => (prev ? prev + ' ' + newText : newText));
+        const newText =
+          "This is a voice dictated text. Add more content as needed.";
+        setText((prev) => (prev ? prev + " " + newText : newText));
         isRecordingState(false);
       }, 2500);
     }
@@ -38,9 +39,9 @@ export function SmartDictation() {
         onChange={(e) => setText(e.target.value)}
         placeholder="Start dictating or type here..."
         className={cn(
-          'w-full h-48 p-4 border border-input rounded-md bg-background text-foreground',
-          'resize-none focus:outline-none focus:ring-2 focus:ring-primary',
-          'placeholder:text-muted-foreground'
+          "w-full h-48 p-4 border border-input rounded-md bg-background text-foreground",
+          "resize-none focus:outline-none focus:ring-2 focus:ring-primary",
+          "placeholder:text-muted-foreground",
         )}
         aria-label="Dictation textarea"
       />
@@ -50,15 +51,15 @@ export function SmartDictation() {
         {/* Dictate Button */}
         <Button
           onClick={handleDictateClick}
-          variant={isRecording ? 'destructive' : 'default'}
+          variant={isRecording ? "destructive" : "default"}
           className={cn(
-            'transition-all duration-300',
-            isRecording && 'animate-pulse'
+            "transition-all duration-300",
+            isRecording && "animate-pulse",
           )}
-          aria-label={isRecording ? 'Stop recording' : 'Start dictation'}
+          aria-label={isRecording ? "Stop recording" : "Start dictation"}
         >
           <Mic className="h-4 w-4 mr-2" />
-          {isRecording ? 'Recording...' : 'Dictate'}
+          {isRecording ? "Recording..." : "Dictate"}
         </Button>
 
         {/* Copy Button */}

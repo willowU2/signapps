@@ -59,15 +59,18 @@ function computeDiff(oldText: string, newText: string): DiffLine[] {
 
 export function DocCompare({ versions, onVersionSelect }: DocCompareProps) {
   const [selectedVersionIndex, setSelectedVersionIndex] = useState(
-    Math.max(0, versions.length - 1)
+    Math.max(0, versions.length - 1),
   );
 
   const baseVersion = versions[0];
   const selectedVersion = versions[selectedVersionIndex];
 
   const diff = useMemo(
-    () => (baseVersion && selectedVersion ? computeDiff(baseVersion.content, selectedVersion.content) : []),
-    [baseVersion, selectedVersion]
+    () =>
+      baseVersion && selectedVersion
+        ? computeDiff(baseVersion.content, selectedVersion.content)
+        : [],
+    [baseVersion, selectedVersion],
   );
 
   const handleVersionChange = (versionId: string) => {
@@ -81,7 +84,9 @@ export function DocCompare({ versions, onVersionSelect }: DocCompareProps) {
   if (!baseVersion || !selectedVersion) {
     return (
       <Card className="p-6 text-center">
-        <p className="text-muted-foreground">Aucune version disponible pour la comparaison</p>
+        <p className="text-muted-foreground">
+          Aucune version disponible pour la comparaison
+        </p>
       </Card>
     );
   }
@@ -92,14 +97,18 @@ export function DocCompare({ versions, onVersionSelect }: DocCompareProps) {
         <h3 className="text-lg font-semibold">Comparaison des versions</h3>
         <div className="flex items-center gap-2">
           <span className="text-sm text-muted-foreground">Comparer vers:</span>
-          <Select value={selectedVersion.id} onValueChange={handleVersionChange}>
+          <Select
+            value={selectedVersion.id}
+            onValueChange={handleVersionChange}
+          >
             <SelectTrigger className="w-48">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
               {versions.map((version) => (
                 <SelectItem key={version.id} value={version.id}>
-                  v{version.version} - {version.author} ({version.timestamp.toLocaleDateString()})
+                  v{version.version} - {version.author} (
+                  {version.timestamp.toLocaleDateString()})
                 </SelectItem>
               ))}
             </SelectContent>
@@ -110,11 +119,18 @@ export function DocCompare({ versions, onVersionSelect }: DocCompareProps) {
       {/* Version Info */}
       <div className="grid grid-cols-3 gap-4 mb-4">
         <div className="p-3 bg-muted rounded-lg border border-border">
-          <p className="text-xs font-semibold text-muted-foreground uppercase">Base</p>
-          <p className="text-sm text-muted-foreground mt-1">v{baseVersion.version}</p>
-          <p className="text-xs text-muted-foreground mt-1">{baseVersion.author}</p>
+          <p className="text-xs font-semibold text-muted-foreground uppercase">
+            Base
+          </p>
+          <p className="text-sm text-muted-foreground mt-1">
+            v{baseVersion.version}
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">
+            {baseVersion.author}
+          </p>
           <p className="text-xs text-muted-foreground">
-            {baseVersion.timestamp.toLocaleDateString()} {baseVersion.timestamp.toLocaleTimeString()}
+            {baseVersion.timestamp.toLocaleDateString()}{" "}
+            {baseVersion.timestamp.toLocaleTimeString()}
           </p>
         </div>
 
@@ -123,11 +139,16 @@ export function DocCompare({ versions, onVersionSelect }: DocCompareProps) {
         </div>
 
         <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
-          <p className="text-xs font-semibold text-blue-600 uppercase">Comparaison</p>
-          <p className="text-sm text-blue-700 mt-1">v{selectedVersion.version}</p>
+          <p className="text-xs font-semibold text-blue-600 uppercase">
+            Comparaison
+          </p>
+          <p className="text-sm text-blue-700 mt-1">
+            v{selectedVersion.version}
+          </p>
           <p className="text-xs text-blue-600 mt-1">{selectedVersion.author}</p>
           <p className="text-xs text-blue-600">
-            {selectedVersion.timestamp.toLocaleDateString()} {selectedVersion.timestamp.toLocaleTimeString()}
+            {selectedVersion.timestamp.toLocaleDateString()}{" "}
+            {selectedVersion.timestamp.toLocaleTimeString()}
           </p>
         </div>
       </div>
@@ -136,12 +157,16 @@ export function DocCompare({ versions, onVersionSelect }: DocCompareProps) {
       <div className="grid grid-cols-2 gap-4 max-h-96 overflow-y-auto border rounded-lg p-4 bg-muted">
         {/* Original */}
         <div className="space-y-0 font-mono text-xs">
-          <div className="text-muted-foreground font-semibold mb-2">Version de base</div>
+          <div className="text-muted-foreground font-semibold mb-2">
+            Version de base
+          </div>
           <div className="space-y-0">
             {baseVersion.content.split("\n").map((line, idx) => (
               <div key={idx} className="flex gap-2">
                 <span className="text-gray-400 w-6 text-right">{idx + 1}</span>
-                <span className="flex-1 text-muted-foreground">{line || "\u00A0"}</span>
+                <span className="flex-1 text-muted-foreground">
+                  {line || "\u00A0"}
+                </span>
               </div>
             ))}
           </div>
@@ -149,7 +174,9 @@ export function DocCompare({ versions, onVersionSelect }: DocCompareProps) {
 
         {/* Comparison with highlights */}
         <div className="space-y-0 font-mono text-xs">
-          <div className="text-muted-foreground font-semibold mb-2">Version {selectedVersion.version}</div>
+          <div className="text-muted-foreground font-semibold mb-2">
+            Version {selectedVersion.version}
+          </div>
           <div className="space-y-0">
             {diff.map((line, idx) => (
               <div
@@ -158,8 +185,8 @@ export function DocCompare({ versions, onVersionSelect }: DocCompareProps) {
                   line.type === "added"
                     ? "bg-green-100"
                     : line.type === "removed"
-                    ? "bg-red-100"
-                    : "bg-transparent"
+                      ? "bg-red-100"
+                      : "bg-transparent"
                 }`}
               >
                 <span
@@ -167,8 +194,8 @@ export function DocCompare({ versions, onVersionSelect }: DocCompareProps) {
                     line.type === "added"
                       ? "text-green-700"
                       : line.type === "removed"
-                      ? "text-red-700"
-                      : "text-gray-400"
+                        ? "text-red-700"
+                        : "text-gray-400"
                   }`}
                 >
                   {line.lineNumber}
@@ -178,8 +205,8 @@ export function DocCompare({ versions, onVersionSelect }: DocCompareProps) {
                     line.type === "added"
                       ? "text-green-900 font-semibold"
                       : line.type === "removed"
-                      ? "text-red-900 line-through opacity-70"
-                      : "text-muted-foreground"
+                        ? "text-red-900 line-through opacity-70"
+                        : "text-muted-foreground"
                   }`}
                 >
                   {line.content || "\u00A0"}

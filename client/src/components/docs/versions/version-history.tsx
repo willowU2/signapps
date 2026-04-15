@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { useEffect } from 'react';
-import { formatDistanceToNow, format } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { useEffect } from "react";
+import { formatDistanceToNow, format } from "date-fns";
+import { fr } from "date-fns/locale";
 import {
   History,
   Star,
@@ -12,26 +12,26 @@ import {
   GitCompare,
   Loader2,
   ChevronDown,
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { cn } from '@/lib/utils';
-import { useVersionsStore } from '@/stores/versions-store';
+} from "@/components/ui/select";
+import { cn } from "@/lib/utils";
+import { useVersionsStore } from "@/stores/versions-store";
 import {
   VERSION_TYPE_LABELS,
   VERSION_TYPE_COLORS,
   type DocumentVersion,
   type VersionType,
-} from '@/lib/office/versions/types';
+} from "@/lib/office/versions/types";
 
 // ============================================================================
 // Types
@@ -100,7 +100,9 @@ export function VersionHistory({
   };
 
   return (
-    <div className={cn('flex flex-col h-full bg-background border-l', className)}>
+    <div
+      className={cn("flex flex-col h-full bg-background border-l", className)}
+    >
       {/* Header */}
       <div className="p-4 border-b space-y-3 shrink-0">
         <div className="flex items-center gap-2">
@@ -113,7 +115,7 @@ export function VersionHistory({
         <div className="flex items-center gap-2">
           <Select
             value={typeFilter}
-            onValueChange={(v) => setTypeFilter(v as VersionType | 'all')}
+            onValueChange={(v) => setTypeFilter(v as VersionType | "all")}
           >
             <SelectTrigger className="h-7 text-xs flex-1">
               <SelectValue />
@@ -128,7 +130,7 @@ export function VersionHistory({
           </Select>
 
           <Button
-            variant={starredOnly ? 'default' : 'outline'}
+            variant={starredOnly ? "default" : "outline"}
             size="sm"
             className="h-7 px-2"
             onClick={() => setStarredOnly(!starredOnly)}
@@ -258,9 +260,9 @@ function VersionItem({
   return (
     <div
       className={cn(
-        'rounded-lg border p-3 cursor-pointer transition-all hover:bg-muted/50',
-        isSelected && 'ring-2 ring-primary bg-primary/5',
-        version.isCurrent && 'border-primary/50'
+        "rounded-lg border p-3 cursor-pointer transition-all hover:bg-muted/50",
+        isSelected && "ring-2 ring-primary bg-primary/5",
+        version.isCurrent && "border-primary/50",
       )}
       onClick={onSelect}
     >
@@ -291,7 +293,10 @@ function VersionItem({
             </span>
             <Badge
               variant="secondary"
-              className={cn('text-[10px] h-5', VERSION_TYPE_COLORS[version.type])}
+              className={cn(
+                "text-[10px] h-5",
+                VERSION_TYPE_COLORS[version.type],
+              )}
             >
               {VERSION_TYPE_LABELS[version.type]}
             </Badge>
@@ -326,7 +331,7 @@ function VersionItem({
               <span>{version.wordCount} mots</span>
             )}
             <span>
-              {format(new Date(version.createdAt), 'dd/MM/yyyy HH:mm', {
+              {format(new Date(version.createdAt), "dd/MM/yyyy HH:mm", {
                 locale: fr,
               })}
             </span>

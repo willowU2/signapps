@@ -37,9 +37,9 @@ export function CSATWidget({
   // Calculate average score
   const avgScore =
     ratings.length > 0
-      ? (
-          ratings.reduce((sum, r) => sum + r.score, 0) / ratings.length
-        ).toFixed(1)
+      ? (ratings.reduce((sum, r) => sum + r.score, 0) / ratings.length).toFixed(
+          1,
+        )
       : 0;
 
   // Prepare trend data

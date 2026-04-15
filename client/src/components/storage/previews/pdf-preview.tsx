@@ -1,20 +1,31 @@
-'use client';
+"use client";
 
-import { SpinnerInfinity } from 'spinners-react';
+import { SpinnerInfinity } from "spinners-react";
 
-import { useState, useCallback, useEffect, useRef } from 'react';
-import { Document, Page, pdfjs } from 'react-pdf';
-import { ZoomIn, ZoomOut, ChevronLeft, ChevronRight, Maximize2, Minimize2, Download, Search, FileWarning, RotateCw } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { cn } from '@/lib/utils';
+import { useState, useCallback, useEffect, useRef } from "react";
+import { Document, Page, pdfjs } from "react-pdf";
+import {
+  ZoomIn,
+  ZoomOut,
+  ChevronLeft,
+  ChevronRight,
+  Maximize2,
+  Minimize2,
+  Download,
+  Search,
+  FileWarning,
+  RotateCw,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
 
 // Configure PDF.js worker
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
 // Required CSS for text layer and annotations
-import 'react-pdf/dist/Page/AnnotationLayer.css';
-import 'react-pdf/dist/Page/TextLayer.css';
+import "react-pdf/dist/Page/AnnotationLayer.css";
+import "react-pdf/dist/Page/TextLayer.css";
 
 interface PDFPreviewProps {
   /** URL or base64 data of the PDF file */
@@ -48,7 +59,7 @@ export function PDFPreview({
   initialZoom = 1,
   className,
   showDownload = true,
-  downloadFilename = 'document.pdf',
+  downloadFilename = "document.pdf",
 }: PDFPreviewProps) {
   const [numPages, setNumPages] = useState<number | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -57,8 +68,8 @@ export function PDFPreview({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [pageInputValue, setPageInputValue] = useState('1');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [pageInputValue, setPageInputValue] = useState("1");
 
   const containerRef = useRef<HTMLDivElement>(null);
   const pageRefs = useRef<Map<number, HTMLDivElement>>(new Map());
@@ -71,14 +82,16 @@ export function PDFPreview({
       setError(null);
       onLoadSuccess?.(numPages);
     },
-    [onLoadSuccess]
+    [onLoadSuccess],
   );
 
   // Handle document load error
   const handleLoadError = useCallback((err: Error) => {
-    console.error('PDF load error:', err);
+    console.error("PDF load error:", err);
     setLoading(false);
-    setError('Impossible de charger le document PDF. Le fichier est peut-être corrompu ou dans un format non supporté.');
+    setError(
+      "Impossible de charger le document PDF. Le fichier est peut-être corrompu ou dans un format non supporté.",
+    );
   }, []);
 
   // Zoom controls
@@ -103,11 +116,11 @@ export function PDFPreview({
         // Scroll to page
         const pageEl = pageRefs.current.get(page);
         if (pageEl) {
-          pageEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          pageEl.scrollIntoView({ behavior: "smooth", block: "start" });
         }
       }
     },
-    [numPages]
+    [numPages],
   );
 
   const nextPage = useCallback(() => {
@@ -157,9 +170,9 @@ export function PDFPreview({
     const handleFullscreenChange = () => {
       setIsFullscreen(!!document.fullscreenElement);
     };
-    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
     return () => {
-      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
     };
   }, []);
 
@@ -169,42 +182,44 @@ export function PDFPreview({
       if (e.target instanceof HTMLInputElement) return;
 
       switch (e.key) {
-        case 'ArrowRight':
-        case 'PageDown':
+        case "ArrowRight":
+        case "PageDown":
           e.preventDefault();
           nextPage();
           break;
-        case 'ArrowLeft':
-        case 'PageUp':
+        case "ArrowLeft":
+        case "PageUp":
           e.preventDefault();
           prevPage();
           break;
-        case '+':
-        case '=':
+        case "+":
+        case "=":
           if (e.ctrlKey || e.metaKey) {
             e.preventDefault();
             zoomIn();
           }
           break;
-        case '-':
+        case "-":
           if (e.ctrlKey || e.metaKey) {
             e.preventDefault();
             zoomOut();
           }
           break;
-        case 'f':
+        case "f":
           if (e.ctrlKey || e.metaKey) {
             e.preventDefault();
             // Focus search
-            const searchInput = document.querySelector('[data-pdf-search]') as HTMLInputElement;
+            const searchInput = document.querySelector(
+              "[data-pdf-search]",
+            ) as HTMLInputElement;
             searchInput?.focus();
           }
           break;
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [nextPage, prevPage, zoomIn, zoomOut]);
 
   // Handle text selection for callback
@@ -218,13 +233,13 @@ export function PDFPreview({
       }
     };
 
-    document.addEventListener('mouseup', handleSelection);
-    return () => document.removeEventListener('mouseup', handleSelection);
+    document.addEventListener("mouseup", handleSelection);
+    return () => document.removeEventListener("mouseup", handleSelection);
   }, [onTextSelect]);
 
   // Download handler
   const handleDownload = useCallback(() => {
-    const link = document.createElement('a');
+    const link = document.createElement("a");
     link.href = src;
     link.download = downloadFilename;
     link.click();
@@ -234,8 +249,16 @@ export function PDFPreview({
   if (loading && !numPages) {
     return (
       <div className="flex flex-col items-center justify-center h-64 space-y-4">
-        <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-8 w-8  text-primary" />
-        <p className="text-sm text-muted-foreground">Chargement du document...</p>
+        <SpinnerInfinity
+          size={24}
+          secondaryColor="rgba(128,128,128,0.2)"
+          color="currentColor"
+          speed={120}
+          className="h-8 w-8  text-primary"
+        />
+        <p className="text-sm text-muted-foreground">
+          Chargement du document...
+        </p>
       </div>
     );
   }
@@ -249,7 +272,11 @@ export function PDFPreview({
           <p className="font-medium text-destructive">Erreur de chargement</p>
           <p className="text-sm text-muted-foreground mt-1">{error}</p>
         </div>
-        <Button variant="outline" size="sm" onClick={() => window.location.reload()}>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => window.location.reload()}
+        >
           Réessayer
         </Button>
       </div>
@@ -260,9 +287,9 @@ export function PDFPreview({
     <div
       ref={containerRef}
       className={cn(
-        'flex flex-col bg-background border rounded-lg overflow-hidden',
-        isFullscreen && 'fixed inset-0 z-50 rounded-none border-0',
-        className
+        "flex flex-col bg-background border rounded-lg overflow-hidden",
+        isFullscreen && "fixed inset-0 z-50 rounded-none border-0",
+        className,
       )}
     >
       {/* Toolbar */}
@@ -279,7 +306,10 @@ export function PDFPreview({
             <ChevronLeft className="h-4 w-4" />
           </Button>
 
-          <form onSubmit={handlePageInputSubmit} className="flex items-center gap-1">
+          <form
+            onSubmit={handlePageInputSubmit}
+            className="flex items-center gap-1"
+          >
             <Input
               type="text"
               value={pageInputValue}
@@ -287,7 +317,9 @@ export function PDFPreview({
               className="w-12 h-8 text-center text-sm"
               aria-label="Numéro de page"
             />
-            <span className="text-sm text-muted-foreground">/ {numPages || '-'}</span>
+            <span className="text-sm text-muted-foreground">
+              / {numPages || "-"}
+            </span>
           </form>
 
           <Button
@@ -352,7 +384,7 @@ export function PDFPreview({
             variant="ghost"
             size="icon"
             onClick={toggleFullscreen}
-            title={isFullscreen ? 'Quitter plein écran' : 'Plein écran'}
+            title={isFullscreen ? "Quitter plein écran" : "Plein écran"}
           >
             {isFullscreen ? (
               <Minimize2 className="h-4 w-4" />
@@ -399,7 +431,13 @@ export function PDFPreview({
           onLoadError={handleLoadError}
           loading={
             <div className="flex items-center justify-center h-64">
-              <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-8 w-8  text-primary" />
+              <SpinnerInfinity
+                size={24}
+                secondaryColor="rgba(128,128,128,0.2)"
+                color="currentColor"
+                speed={120}
+                className="h-8 w-8  text-primary"
+              />
             </div>
           }
           className="flex flex-col items-center gap-4"
@@ -426,25 +464,36 @@ export function PDFPreview({
                   className="max-w-full"
                   loading={
                     <div className="flex items-center justify-center h-32 w-64">
-                      <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-6 w-6  text-muted-foreground" />
+                      <SpinnerInfinity
+                        size={24}
+                        secondaryColor="rgba(128,128,128,0.2)"
+                        color="currentColor"
+                        speed={120}
+                        className="h-6 w-6  text-muted-foreground"
+                      />
                     </div>
                   }
                   // Highlight search terms - cast needed because react-pdf types are strict
                   customTextRenderer={
                     searchTerm
-                      ? (({ str }: { str: string }) => {
+                      ? ((({ str }: { str: string }) => {
                           if (!searchTerm) return str;
-                          const parts = str.split(new RegExp(`(${searchTerm})`, 'gi'));
+                          const parts = str.split(
+                            new RegExp(`(${searchTerm})`, "gi"),
+                          );
                           return parts.map((part, i) =>
                             part.toLowerCase() === searchTerm.toLowerCase() ? (
-                              <mark key={i} className="bg-yellow-300 text-foreground">
+                              <mark
+                                key={i}
+                                className="bg-yellow-300 text-foreground"
+                              >
                                 {part}
                               </mark>
                             ) : (
                               part
-                            )
+                            ),
                           );
-                        }) as unknown as (textItem: { str: string }) => string
+                        }) as unknown as (textItem: { str: string }) => string)
                       : undefined
                   }
                 />
@@ -456,12 +505,12 @@ export function PDFPreview({
       {/* Status bar */}
       <div className="flex items-center justify-between px-3 py-1.5 border-t bg-muted/30 text-xs text-muted-foreground">
         <span>
-          {numPages ? `${numPages} page${numPages > 1 ? 's' : ''}` : 'Chargement...'}
+          {numPages
+            ? `${numPages} page${numPages > 1 ? "s" : ""}`
+            : "Chargement..."}
         </span>
         <span>Zoom: {Math.round(zoom * 100)}%</span>
-        <span>
-          Utilisez les flèches ← → pour naviguer
-        </span>
+        <span>Utilisez les flèches ← → pour naviguer</span>
       </div>
     </div>
   );
@@ -483,8 +532,8 @@ export function PDFThumbnail({ src, className, onClick }: PDFThumbnailProps) {
   return (
     <div
       className={cn(
-        'relative w-full aspect-[3/4] bg-muted rounded overflow-hidden cursor-pointer hover:ring-2 hover:ring-primary transition-all',
-        className
+        "relative w-full aspect-[3/4] bg-muted rounded overflow-hidden cursor-pointer hover:ring-2 hover:ring-primary transition-all",
+        className,
       )}
       onClick={onClick}
     >
@@ -509,7 +558,13 @@ export function PDFThumbnail({ src, className, onClick }: PDFThumbnailProps) {
 
       {loading && (
         <div className="absolute inset-0 flex items-center justify-center bg-muted">
-          <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-4 w-4  text-muted-foreground" />
+          <SpinnerInfinity
+            size={24}
+            secondaryColor="rgba(128,128,128,0.2)"
+            color="currentColor"
+            speed={120}
+            className="h-4 w-4  text-muted-foreground"
+          />
         </div>
       )}
 

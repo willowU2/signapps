@@ -1,19 +1,19 @@
-'use client';
+"use client";
 
-import { useEffect, useState, useCallback } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
+import { useEffect, useState, useCallback } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,26 +23,35 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+} from "@/components/ui/alert-dialog";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { Webhook as WebhookIcon, Plus, Trash2, Edit, Send, Check, AlertTriangle, Loader2 } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
-import { toast } from 'sonner';
-import { socialApi } from '@/lib/api/social';
-import type { Webhook } from '@/lib/api/social';
+} from "@/components/ui/tooltip";
+import {
+  Webhook as WebhookIcon,
+  Plus,
+  Trash2,
+  Edit,
+  Send,
+  Check,
+  AlertTriangle,
+  Loader2,
+} from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
+import { toast } from "sonner";
+import { socialApi } from "@/lib/api/social";
+import type { Webhook } from "@/lib/api/social";
 
 // --- Constants ---
 
 const WEBHOOK_EVENTS = [
-  { value: 'post.published', label: 'Post Published' },
-  { value: 'post.scheduled', label: 'Post Scheduled' },
-  { value: 'post.failed', label: 'Post Failed' },
-  { value: 'inbox.new', label: 'New Inbox Message' },
+  { value: "post.published", label: "Post Published" },
+  { value: "post.scheduled", label: "Post Scheduled" },
+  { value: "post.failed", label: "Post Failed" },
+  { value: "inbox.new", label: "New Inbox Message" },
 ];
 
 // --- Types ---
@@ -64,22 +73,28 @@ function WebhookDialog({
 }: {
   open: boolean;
   onClose: () => void;
-  onSave: (data: { name: string; url: string; events: string[]; active: boolean; secret?: string }) => void;
+  onSave: (data: {
+    name: string;
+    url: string;
+    events: string[];
+    active: boolean;
+    secret?: string;
+  }) => void;
   initial?: Webhook;
   saving: boolean;
 }) {
-  const [name, setName] = useState(initial?.name ?? '');
-  const [url, setUrl] = useState(initial?.url ?? '');
+  const [name, setName] = useState(initial?.name ?? "");
+  const [url, setUrl] = useState(initial?.url ?? "");
   const [events, setEvents] = useState<string[]>(initial?.events ?? []);
-  const [secret, setSecret] = useState(initial?.secret ?? '');
+  const [secret, setSecret] = useState(initial?.secret ?? "");
   const [active, setActive] = useState(initial?.active ?? true);
 
   useEffect(() => {
     if (open) {
-      setName(initial?.name ?? '');
-      setUrl(initial?.url ?? '');
+      setName(initial?.name ?? "");
+      setUrl(initial?.url ?? "");
       setEvents(initial?.events ?? []);
-      setSecret(initial?.secret ?? '');
+      setSecret(initial?.secret ?? "");
       setActive(initial?.active ?? true);
     }
   }, [open, initial]);
@@ -105,7 +120,7 @@ function WebhookDialog({
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>{initial ? 'Edit Webhook' : 'Add Webhook'}</DialogTitle>
+          <DialogTitle>{initial ? "Edit Webhook" : "Add Webhook"}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 pt-2">
           <div className="space-y-1">
@@ -134,8 +149,8 @@ function WebhookDialog({
                   onClick={() => toggleEvent(ev.value)}
                   className={`px-3 py-1.5 rounded-full border text-sm transition-all ${
                     events.includes(ev.value)
-                      ? 'border-primary bg-primary/10 text-primary'
-                      : 'border-border hover:border-primary/50'
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-border hover:border-primary/50"
                   }`}
                 >
                   {ev.label}
@@ -150,7 +165,9 @@ function WebhookDialog({
               value={secret}
               onChange={(e) => setSecret(e.target.value)}
             />
-            <p className="text-xs text-muted-foreground">Used to sign payloads with HMAC-SHA256</p>
+            <p className="text-xs text-muted-foreground">
+              Used to sign payloads with HMAC-SHA256
+            </p>
           </div>
           <div className="flex items-center gap-2">
             <Switch checked={active} onCheckedChange={setActive} />
@@ -161,10 +178,12 @@ function WebhookDialog({
             <Button
               className="flex-1"
               onClick={handleSave}
-              disabled={!name.trim() || !url.trim() || events.length === 0 || saving}
+              disabled={
+                !name.trim() || !url.trim() || events.length === 0 || saving
+              }
             >
               {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              {initial ? 'Save Changes' : 'Create Webhook'}
+              {initial ? "Save Changes" : "Create Webhook"}
             </Button>
             <Button variant="outline" onClick={onClose} disabled={saving}>
               Annuler
@@ -185,7 +204,9 @@ export function WebhookManager() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingWebhook, setEditingWebhook] = useState<Webhook | undefined>();
   const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [testResults, setTestResults] = useState<Record<string, TestResult>>({});
+  const [testResults, setTestResults] = useState<Record<string, TestResult>>(
+    {},
+  );
   const [testingId, setTestingId] = useState<string | null>(null);
 
   const fetchWebhooks = useCallback(async () => {
@@ -194,7 +215,7 @@ export function WebhookManager() {
       const res = await socialApi.webhooks.list();
       setWebhooks(res.data);
     } catch {
-      toast.error('Failed to load webhooks');
+      toast.error("Failed to load webhooks");
     } finally {
       setLoading(false);
     }
@@ -204,32 +225,44 @@ export function WebhookManager() {
     fetchWebhooks();
   }, [fetchWebhooks]);
 
-  const handleCreate = async (data: { name: string; url: string; events: string[]; active: boolean; secret?: string }) => {
+  const handleCreate = async (data: {
+    name: string;
+    url: string;
+    events: string[];
+    active: boolean;
+    secret?: string;
+  }) => {
     try {
       setSaving(true);
       await socialApi.webhooks.create(data);
-      toast.success('Webhook created');
+      toast.success("Webhook created");
       setIsDialogOpen(false);
       setEditingWebhook(undefined);
       await fetchWebhooks();
     } catch {
-      toast.error('Impossible de créer webhook');
+      toast.error("Impossible de créer webhook");
     } finally {
       setSaving(false);
     }
   };
 
-  const handleUpdate = async (data: { name: string; url: string; events: string[]; active: boolean; secret?: string }) => {
+  const handleUpdate = async (data: {
+    name: string;
+    url: string;
+    events: string[];
+    active: boolean;
+    secret?: string;
+  }) => {
     if (!editingWebhook) return;
     try {
       setSaving(true);
       await socialApi.webhooks.update(editingWebhook.id, data);
-      toast.success('Webhook updated');
+      toast.success("Webhook updated");
       setIsDialogOpen(false);
       setEditingWebhook(undefined);
       await fetchWebhooks();
     } catch {
-      toast.error('Impossible de mettre à jour webhook');
+      toast.error("Impossible de mettre à jour webhook");
     } finally {
       setSaving(false);
     }
@@ -238,9 +271,11 @@ export function WebhookManager() {
   const handleToggle = async (id: string, active: boolean) => {
     try {
       await socialApi.webhooks.update(id, { active });
-      setWebhooks((prev) => prev.map((w) => (w.id === id ? { ...w, active } : w)));
+      setWebhooks((prev) =>
+        prev.map((w) => (w.id === id ? { ...w, active } : w)),
+      );
     } catch {
-      toast.error('Failed to toggle webhook');
+      toast.error("Failed to toggle webhook");
     }
   };
 
@@ -248,11 +283,11 @@ export function WebhookManager() {
     if (!deleteId) return;
     try {
       await socialApi.webhooks.delete(deleteId);
-      toast.success('Webhook deleted');
+      toast.success("Webhook deleted");
       setDeleteId(null);
       await fetchWebhooks();
     } catch {
-      toast.error('Impossible de supprimer webhook');
+      toast.error("Impossible de supprimer webhook");
     }
   };
 
@@ -274,7 +309,7 @@ export function WebhookManager() {
       }
       await fetchWebhooks();
     } catch {
-      toast.error('Failed to send test payload');
+      toast.error("Failed to send test payload");
     } finally {
       setTestingId(null);
     }
@@ -340,8 +375,10 @@ export function WebhookManager() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="font-medium">{webhook.name}</span>
-                          <Badge variant={webhook.active ? 'default' : 'secondary'}>
-                            {webhook.active ? 'Active' : 'Inactive'}
+                          <Badge
+                            variant={webhook.active ? "default" : "secondary"}
+                          >
+                            {webhook.active ? "Active" : "Inactive"}
                           </Badge>
                         </div>
                         <p className="text-xs text-muted-foreground mt-0.5 truncate font-mono">
@@ -349,7 +386,11 @@ export function WebhookManager() {
                         </p>
                         <div className="flex flex-wrap gap-1 mt-2">
                           {webhook.events.map((ev) => (
-                            <Badge key={ev} variant="outline" className="text-xs">
+                            <Badge
+                              key={ev}
+                              variant="outline"
+                              className="text-xs"
+                            >
                               {ev}
                             </Badge>
                           ))}
@@ -357,15 +398,20 @@ export function WebhookManager() {
                         <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
                           {webhook.lastTriggeredAt && (
                             <span>
-                              Last triggered{' '}
-                              {formatDistanceToNow(new Date(webhook.lastTriggeredAt), { addSuffix: true })}
+                              Last triggered{" "}
+                              {formatDistanceToNow(
+                                new Date(webhook.lastTriggeredAt),
+                                { addSuffix: true },
+                              )}
                             </span>
                           )}
                         </div>
                         {testResult && (
                           <div
                             className={`mt-2 flex items-center gap-1.5 text-xs font-medium ${
-                              testResult.success ? 'text-green-600' : 'text-red-600'
+                              testResult.success
+                                ? "text-green-600"
+                                : "text-red-600"
                             }`}
                           >
                             {testResult.success ? (
@@ -444,17 +490,24 @@ export function WebhookManager() {
           saving={saving}
         />
 
-        <AlertDialog open={!!deleteId} onOpenChange={(o) => !o && setDeleteId(null)}>
+        <AlertDialog
+          open={!!deleteId}
+          onOpenChange={(o) => !o && setDeleteId(null)}
+        >
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>Supprimer le webhook</AlertDialogTitle>
               <AlertDialogDescription>
-                Ce webhook sera supprimé définitivement. Vous ne recevrez plus de notifications pour ses événements.
+                Ce webhook sera supprimé définitivement. Vous ne recevrez plus
+                de notifications pour ses événements.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>Annuler</AlertDialogCancel>
-              <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              <AlertDialogAction
+                onClick={handleDelete}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
                 Supprimer
               </AlertDialogAction>
             </AlertDialogFooter>

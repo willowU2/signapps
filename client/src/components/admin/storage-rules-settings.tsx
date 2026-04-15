@@ -14,13 +14,17 @@ import {
 } from "@/components/ui/table";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { storageSettingsApi, StorageRule, UpsertStorageRule } from "@/lib/api/storageSettingsApi";
+import {
+  storageSettingsApi,
+  StorageRule,
+  UpsertStorageRule,
+} from "@/lib/api/storageSettingsApi";
 
 export function StorageRulesSettings() {
   const [rules, setRules] = useState<StorageRule[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
-  
+
   // Form state for new/editing
   const [editForm, setEditForm] = useState<UpsertStorageRule>({
     file_type: "",
@@ -78,7 +82,7 @@ export function StorageRulesSettings() {
 
       const payload = {
         ...editForm,
-        mime_type_pattern: editForm.mime_type_pattern || null
+        mime_type_pattern: editForm.mime_type_pattern || null,
       };
 
       if (editingId === "new") {
@@ -88,7 +92,7 @@ export function StorageRulesSettings() {
         await storageSettingsApi.updateStorageRule(editingId, payload);
         toast.success("Règle de stockage mise à jour");
       }
-      
+
       setEditingId(null);
       fetchRules();
     } catch (error) {
@@ -99,7 +103,7 @@ export function StorageRulesSettings() {
 
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this rule?")) return;
-    
+
     try {
       await storageSettingsApi.deleteStorageRule(id);
       toast.success("Règle supprimée");
@@ -130,7 +134,11 @@ export function StorageRulesSettings() {
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-medium">Configured Rules</h3>
-        <Button onClick={handleCreateNew} disabled={editingId !== null} size="sm">
+        <Button
+          onClick={handleCreateNew}
+          disabled={editingId !== null}
+          size="sm"
+        >
           <Plus className="h-4 w-4 mr-2" />
           Add Rule
         </Button>
@@ -150,12 +158,18 @@ export function StorageRulesSettings() {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center h-24">Chargement...</TableCell>
+                <TableCell colSpan={5} className="text-center h-24">
+                  Chargement...
+                </TableCell>
               </TableRow>
             ) : rules.length === 0 && editingId !== "new" ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center h-24 text-muted-foreground">
-                  No storage rules configured. Files will use the default bucket paths.
+                <TableCell
+                  colSpan={5}
+                  className="text-center h-24 text-muted-foreground"
+                >
+                  No storage rules configured. Files will use the default bucket
+                  paths.
                 </TableCell>
               </TableRow>
             ) : null}
@@ -164,41 +178,65 @@ export function StorageRulesSettings() {
             {editingId === "new" && (
               <TableRow className="bg-muted/30">
                 <TableCell>
-                  <Switch 
-                    checked={editForm.is_active} 
-                    onCheckedChange={(c) => setEditForm({...editForm, is_active: c})} 
+                  <Switch
+                    checked={editForm.is_active}
+                    onCheckedChange={(c) =>
+                      setEditForm({ ...editForm, is_active: c })
+                    }
                   />
                 </TableCell>
                 <TableCell>
-                  <Input 
-                    placeholder="e.g. Images" 
+                  <Input
+                    placeholder="e.g. Images"
                     value={editForm.file_type}
-                    onChange={(e) => setEditForm({...editForm, file_type: e.target.value})}
+                    onChange={(e) =>
+                      setEditForm({ ...editForm, file_type: e.target.value })
+                    }
                     className="h-8"
                   />
                 </TableCell>
                 <TableCell>
-                  <Input 
-                    placeholder="image/*" 
+                  <Input
+                    placeholder="image/*"
                     value={editForm.mime_type_pattern || ""}
-                    onChange={(e) => setEditForm({...editForm, mime_type_pattern: e.target.value})}
+                    onChange={(e) =>
+                      setEditForm({
+                        ...editForm,
+                        mime_type_pattern: e.target.value,
+                      })
+                    }
                     className="h-8 font-mono text-sm"
                   />
                 </TableCell>
                 <TableCell>
-                  <Input 
-                    placeholder="images_bucket" 
+                  <Input
+                    placeholder="images_bucket"
                     value={editForm.target_bucket}
-                    onChange={(e) => setEditForm({...editForm, target_bucket: e.target.value})}
+                    onChange={(e) =>
+                      setEditForm({
+                        ...editForm,
+                        target_bucket: e.target.value,
+                      })
+                    }
                     className="h-8 font-mono text-sm"
                   />
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-2">
-                    <Button size="icon" variant="ghost" className="h-8 w-8 text-green-600" onClick={handleSave}>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-8 w-8 text-green-600"
+                      onClick={handleSave}
+                    >
                       <Save className="h-4 w-4" />
                     </Button>
-                    <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => setEditingId(null)}>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-8 w-8 text-destructive"
+                      onClick={() => setEditingId(null)}
+                    >
                       <X className="h-4 w-4" />
                     </Button>
                   </div>
@@ -207,58 +245,89 @@ export function StorageRulesSettings() {
             )}
 
             {/* Existing Rules */}
-            {rules.map((rule) => 
+            {rules.map((rule) =>
               editingId === rule.id ? (
                 <TableRow key={rule.id} className="bg-muted/30">
                   <TableCell>
-                    <Switch 
-                      checked={editForm.is_active} 
-                      onCheckedChange={(c) => setEditForm({...editForm, is_active: c})} 
+                    <Switch
+                      checked={editForm.is_active}
+                      onCheckedChange={(c) =>
+                        setEditForm({ ...editForm, is_active: c })
+                      }
                     />
                   </TableCell>
                   <TableCell>
-                    <Input 
+                    <Input
                       value={editForm.file_type}
-                      onChange={(e) => setEditForm({...editForm, file_type: e.target.value})}
+                      onChange={(e) =>
+                        setEditForm({ ...editForm, file_type: e.target.value })
+                      }
                       className="h-8"
                     />
                   </TableCell>
                   <TableCell>
-                    <Input 
+                    <Input
                       value={editForm.mime_type_pattern || ""}
-                      onChange={(e) => setEditForm({...editForm, mime_type_pattern: e.target.value})}
+                      onChange={(e) =>
+                        setEditForm({
+                          ...editForm,
+                          mime_type_pattern: e.target.value,
+                        })
+                      }
                       className="h-8 font-mono text-sm"
                     />
                   </TableCell>
                   <TableCell>
-                     <Input 
+                    <Input
                       value={editForm.target_bucket}
-                      onChange={(e) => setEditForm({...editForm, target_bucket: e.target.value})}
+                      onChange={(e) =>
+                        setEditForm({
+                          ...editForm,
+                          target_bucket: e.target.value,
+                        })
+                      }
                       className="h-8 font-mono text-sm"
                     />
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      <Button size="icon" variant="ghost" className="h-8 w-8 text-green-600" onClick={handleSave}>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-8 w-8 text-green-600"
+                        onClick={handleSave}
+                      >
                         <Save className="h-4 w-4" />
                       </Button>
-                      <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => setEditingId(null)}>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-8 w-8 text-destructive"
+                        onClick={() => setEditingId(null)}
+                      >
                         <X className="h-4 w-4" />
                       </Button>
                     </div>
                   </TableCell>
                 </TableRow>
               ) : (
-                <TableRow key={rule.id} className={!rule.is_active ? "opacity-60" : ""}>
+                <TableRow
+                  key={rule.id}
+                  className={!rule.is_active ? "opacity-60" : ""}
+                >
                   <TableCell>
-                    <Switch 
-                      checked={rule.is_active} 
-                      onCheckedChange={() => toggleActive(rule)} 
+                    <Switch
+                      checked={rule.is_active}
+                      onCheckedChange={() => toggleActive(rule)}
                       disabled={editingId !== null}
                     />
                   </TableCell>
-                  <TableCell className="font-medium">{rule.file_type}</TableCell>
-                  <TableCell className="font-mono text-sm">{rule.mime_type_pattern || "*"}</TableCell>
+                  <TableCell className="font-medium">
+                    {rule.file_type}
+                  </TableCell>
+                  <TableCell className="font-mono text-sm">
+                    {rule.mime_type_pattern || "*"}
+                  </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2 font-mono text-sm">
                       <HardDrive className="h-3 w-3 text-muted-foreground" />
@@ -267,16 +336,28 @@ export function StorageRulesSettings() {
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => handleEdit(rule)} disabled={editingId !== null}>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-8 w-8"
+                        onClick={() => handleEdit(rule)}
+                        disabled={editingId !== null}
+                      >
                         <Pencil className="h-4 w-4" />
                       </Button>
-                      <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => handleDelete(rule.id)} disabled={editingId !== null}>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-8 w-8 text-destructive hover:text-destructive"
+                        onClick={() => handleDelete(rule.id)}
+                        disabled={editingId !== null}
+                      >
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
                   </TableCell>
                 </TableRow>
-              )
+              ),
             )}
           </TableBody>
         </Table>

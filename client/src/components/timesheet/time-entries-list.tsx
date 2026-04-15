@@ -27,7 +27,11 @@ interface TimeEntriesListProps {
   onUpdate: (id: string, updated: Partial<TimeEntry>) => void;
 }
 
-export function TimeEntriesList({ entries, onDelete, onUpdate }: TimeEntriesListProps) {
+export function TimeEntriesList({
+  entries,
+  onDelete,
+  onUpdate,
+}: TimeEntriesListProps) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Partial<TimeEntry>>({});
 
@@ -93,7 +97,10 @@ export function TimeEntriesList({ entries, onDelete, onUpdate }: TimeEntriesList
           <TableBody>
             {entries.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center h-24 text-muted-foreground">
+                <TableCell
+                  colSpan={5}
+                  className="text-center h-24 text-muted-foreground"
+                >
                   No time entries yet. Start tracking to see entries here.
                 </TableCell>
               </TableRow>
@@ -102,7 +109,9 @@ export function TimeEntriesList({ entries, onDelete, onUpdate }: TimeEntriesList
             {entries.map((entry) =>
               editingId === entry.id ? (
                 <TableRow key={entry.id} className="bg-muted/30">
-                  <TableCell className="text-sm">{formatDate(entry.date)}</TableCell>
+                  <TableCell className="text-sm">
+                    {formatDate(entry.date)}
+                  </TableCell>
                   <TableCell>
                     <Input
                       value={editForm.project || ""}
@@ -160,7 +169,9 @@ export function TimeEntriesList({ entries, onDelete, onUpdate }: TimeEntriesList
                 </TableRow>
               ) : (
                 <TableRow key={entry.id}>
-                  <TableCell className="text-sm">{formatDate(entry.date)}</TableCell>
+                  <TableCell className="text-sm">
+                    {formatDate(entry.date)}
+                  </TableCell>
                   <TableCell className="text-sm">{entry.project}</TableCell>
                   <TableCell className="text-sm">{entry.task}</TableCell>
                   <TableCell className="font-mono text-sm">
@@ -189,7 +200,7 @@ export function TimeEntriesList({ entries, onDelete, onUpdate }: TimeEntriesList
                     </div>
                   </TableCell>
                 </TableRow>
-              )
+              ),
             )}
           </TableBody>
         </Table>

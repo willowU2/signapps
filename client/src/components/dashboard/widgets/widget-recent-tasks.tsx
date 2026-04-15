@@ -137,8 +137,13 @@ export function WidgetRecentTasks({ widget }: WidgetRenderProps) {
           ) : (
             <div className="space-y-2">
               {tasks.map((task) => {
-                const status = statusConfig[task.status as keyof typeof statusConfig] || statusConfig.todo;
-                const priority = priorityConfig[task.priority as keyof typeof priorityConfig] || priorityConfig.medium;
+                const status =
+                  statusConfig[task.status as keyof typeof statusConfig] ||
+                  statusConfig.todo;
+                const priority =
+                  priorityConfig[
+                    task.priority as keyof typeof priorityConfig
+                  ] || priorityConfig.medium;
                 const StatusIcon = status.icon;
 
                 return (
@@ -154,7 +159,10 @@ export function WidgetRecentTasks({ widget }: WidgetRenderProps) {
                         {task.title}
                       </div>
                       <div className="flex items-center gap-2 mt-1">
-                        <Badge variant={priority.variant} className="text-[10px] h-4">
+                        <Badge
+                          variant={priority.variant}
+                          className="text-[10px] h-4"
+                        >
                           {priority.label}
                         </Badge>
                         {task.due_date && (

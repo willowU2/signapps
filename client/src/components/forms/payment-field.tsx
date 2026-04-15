@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { CreditCard, Lock, CheckCircle } from 'lucide-react';
+import { useState } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { CreditCard, Lock, CheckCircle } from "lucide-react";
 
 // ── Types ──
 export interface PaymentFieldConfig {
@@ -14,7 +14,7 @@ export interface PaymentFieldConfig {
 }
 
 export interface PaymentFieldValue {
-  status: 'pending' | 'processing' | 'completed' | 'failed';
+  status: "pending" | "processing" | "completed" | "failed";
   sessionId?: string;
   paymentIntentId?: string;
 }
@@ -28,10 +28,10 @@ interface PaymentFieldProps {
 }
 
 const CURRENCY_SYMBOLS: Record<string, string> = {
-  EUR: '€',
-  USD: '$',
-  GBP: '£',
-  CHF: 'CHF',
+  EUR: "€",
+  USD: "$",
+  GBP: "£",
+  CHF: "CHF",
 };
 
 /**
@@ -60,51 +60,60 @@ export function PaymentField({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const status = value?.status ?? 'pending';
+  const status = value?.status ?? "pending";
   const currencySymbol = CURRENCY_SYMBOLS[config.currency] ?? config.currency;
-  const displayAmount = (config.amount / 100).toLocaleString('fr-FR', {
+  const displayAmount = (config.amount / 100).toLocaleString("fr-FR", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
 
   const handlePay = async () => {
     if (!onPaymentRequired) {
-      onChange?.({ status: 'completed', paymentIntentId: 'demo_pi_' + Date.now() });
+      onChange?.({
+        status: "completed",
+        paymentIntentId: "demo_pi_" + Date.now(),
+      });
       return;
     }
     setLoading(true);
     setError(null);
-    onChange?.({ status: 'processing' });
+    onChange?.({ status: "processing" });
     try {
       const sessionId = await onPaymentRequired(config);
       if (sessionId) {
-        onChange?.({ status: 'completed', sessionId });
+        onChange?.({ status: "completed", sessionId });
       } else {
-        setError('Le paiement n\'a pas pu etre initie. Veuillez reessayer.');
-        onChange?.({ status: 'failed' });
+        setError("Le paiement n'a pas pu etre initie. Veuillez reessayer.");
+        onChange?.({ status: "failed" });
       }
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Erreur de paiement';
+      const msg = err instanceof Error ? err.message : "Erreur de paiement";
       setError(msg);
-      onChange?.({ status: 'failed' });
+      onChange?.({ status: "failed" });
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <Card className={`border-2 transition-colors ${
-      status === 'completed' ? 'border-green-400' :
-      status === 'failed' ? 'border-red-400' :
-      'border-border'
-    }`}>
+    <Card
+      className={`border-2 transition-colors ${
+        status === "completed"
+          ? "border-green-400"
+          : status === "failed"
+            ? "border-red-400"
+            : "border-border"
+      }`}
+    >
       <CardContent className="pt-4 pb-4">
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-              status === 'completed' ? 'bg-green-100' : 'bg-primary/10'
-            }`}>
-              {status === 'completed' ? (
+            <div
+              className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                status === "completed" ? "bg-green-100" : "bg-primary/10"
+              }`}
+            >
+              {status === "completed" ? (
                 <CheckCircle className="w-5 h-5 text-green-600" />
               ) : (
                 <CreditCard className="w-5 h-5 text-primary" />
@@ -112,10 +121,11 @@ export function PaymentField({
             </div>
             <div>
               <div className="font-semibold text-sm">
-                {config.description ?? 'Paiement requis'}
+                {config.description ?? "Paiement requis"}
               </div>
               <div className="text-lg font-bold text-primary">
-                {currencySymbol}{displayAmount}
+                {currencySymbol}
+                {displayAmount}
               </div>
               {config.required && (
                 <div className="text-xs text-muted-foreground">
@@ -126,12 +136,12 @@ export function PaymentField({
           </div>
 
           <div className="flex flex-col items-end gap-2">
-            {status === 'completed' ? (
+            {status === "completed" ? (
               <Badge className="bg-green-100 text-green-800">
                 <CheckCircle className="w-3 h-3 mr-1" />
                 Paye
               </Badge>
-            ) : status === 'processing' ? (
+            ) : status === "processing" ? (
               <Badge variant="secondary" className="animate-pulse">
                 Traitement...
               </Badge>
@@ -144,19 +154,22 @@ export function PaymentField({
                 aria-label={`Payer ${currencySymbol}${displayAmount}`}
               >
                 <Lock className="w-3 h-3" />
-                {loading ? 'Redirection...' : 'Payer maintenant'}
+                {loading ? "Redirection..." : "Payer maintenant"}
               </button>
             )}
           </div>
         </div>
 
         {error && (
-          <div className="mt-3 text-sm text-red-600 bg-red-50 rounded-md px-3 py-2" role="alert">
+          <div
+            className="mt-3 text-sm text-red-600 bg-red-50 rounded-md px-3 py-2"
+            role="alert"
+          >
             {error}
           </div>
         )}
 
-        {status === 'completed' && value?.paymentIntentId && (
+        {status === "completed" && value?.paymentIntentId && (
           <div className="mt-3 text-xs text-muted-foreground font-mono">
             Ref: {value.paymentIntentId}
           </div>

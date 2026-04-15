@@ -76,15 +76,30 @@ function generatePreview(range: DateRange): ReportPreview {
     totalEngagements: Math.floor(days * 120 + Math.random() * 500),
     followerGrowth: Math.floor(days * 4 + Math.random() * 20),
     topPosts: [
-      { id: "p1", content: "Introducing SignApps v2.0 with AI features...", engagements: 842 },
-      { id: "p2", content: "How we achieved 100% local AI processing...", engagements: 631 },
-      { id: "p3", content: "Open source spotlight: our Rust backend...", engagements: 514 },
+      {
+        id: "p1",
+        content: "Introducing SignApps v2.0 with AI features...",
+        engagements: 842,
+      },
+      {
+        id: "p2",
+        content: "How we achieved 100% local AI processing...",
+        engagements: 631,
+      },
+      {
+        id: "p3",
+        content: "Open source spotlight: our Rust backend...",
+        engagements: 514,
+      },
     ],
     growthData: Array.from({ length: Math.min(days, 30) }, (_, i) => ({
-      date: new Date(Date.now() - (days - i) * 86400000).toLocaleDateString("en", {
-        month: "short",
-        day: "numeric",
-      }),
+      date: new Date(Date.now() - (days - i) * 86400000).toLocaleDateString(
+        "en",
+        {
+          month: "short",
+          day: "numeric",
+        },
+      ),
       followers: 1200 + i * Math.floor(4 + Math.random() * 3),
     })),
   };
@@ -94,7 +109,10 @@ export function ReportGenerator() {
   const [range, setRange] = useState<DateRange>("30d");
   const [customFrom, setCustomFrom] = useState("");
   const [customTo, setCustomTo] = useState("");
-  const [selectedAccounts, setSelectedAccounts] = useState<string[]>(["a1", "a2"]);
+  const [selectedAccounts, setSelectedAccounts] = useState<string[]>([
+    "a1",
+    "a2",
+  ]);
   const [preview, setPreview] = useState<ReportPreview | null>(null);
   const [loadingPreview, setLoadingPreview] = useState(false);
   const [exporting, setExporting] = useState(false);
@@ -104,7 +122,7 @@ export function ReportGenerator() {
 
   const toggleAccount = (id: string) => {
     setSelectedAccounts((prev) =>
-      prev.includes(id) ? prev.filter((a) => a !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((a) => a !== id) : [...prev, id],
     );
   };
 
@@ -115,11 +133,19 @@ export function ReportGenerator() {
     }
     setLoadingPreview(true);
     try {
-      const res = await fetch(`${getServiceUrl(ServiceName.SOCIAL)}/social/reports/preview`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ range, accounts: selectedAccounts, customFrom, customTo }),
-      });
+      const res = await fetch(
+        `${getServiceUrl(ServiceName.SOCIAL)}/social/reports/preview`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            range,
+            accounts: selectedAccounts,
+            customFrom,
+            customTo,
+          }),
+        },
+      );
       if (!res.ok) throw new Error("Preview failed");
       const data = await res.json();
       setPreview(data);
@@ -166,11 +192,18 @@ export function ReportGenerator() {
       return;
     }
     try {
-      await fetch(`${getServiceUrl(ServiceName.SOCIAL)}/social/reports/schedule`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ frequency: schedule, email: scheduleEmail, accounts: selectedAccounts }),
-      });
+      await fetch(
+        `${getServiceUrl(ServiceName.SOCIAL)}/social/reports/schedule`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            frequency: schedule,
+            email: scheduleEmail,
+            accounts: selectedAccounts,
+          }),
+        },
+      );
       toast.success(`Auto-report scheduled ${schedule}`);
     } catch {
       toast.warning("Enregistré localement — API indisponible");
@@ -200,7 +233,13 @@ export function ReportGenerator() {
                   className="h-7 text-xs"
                   onClick={() => setRange(r)}
                 >
-                  {r === "7d" ? "Last 7 days" : r === "30d" ? "Last 30 days" : r === "90d" ? "Last 90 days" : "Custom"}
+                  {r === "7d"
+                    ? "Last 7 days"
+                    : r === "30d"
+                      ? "Last 30 days"
+                      : r === "90d"
+                        ? "Last 90 days"
+                        : "Custom"}
                 </Button>
               ))}
             </div>
@@ -212,7 +251,9 @@ export function ReportGenerator() {
                   onChange={(e) => setCustomFrom(e.target.value)}
                   className="h-8 text-xs"
                 />
-                <span className="self-center text-xs text-muted-foreground">to</span>
+                <span className="self-center text-xs text-muted-foreground">
+                  to
+                </span>
                 <Input
                   type="date"
                   value={customTo}
@@ -238,7 +279,9 @@ export function ReportGenerator() {
                   />
                   <span
                     className="w-2 h-2 rounded-full shrink-0"
-                    style={{ backgroundColor: PLATFORM_COLORS[acc.platform] ?? "#888" }}
+                    style={{
+                      backgroundColor: PLATFORM_COLORS[acc.platform] ?? "#888",
+                    }}
                   />
                   <span className="text-xs truncate">{acc.name}</span>
                 </label>
@@ -293,11 +336,15 @@ export function ReportGenerator() {
                 <p className="text-xs text-muted-foreground">Posts</p>
               </div>
               <div className="text-center p-2 bg-muted/30 rounded-md">
-                <p className="text-lg font-bold">{preview.totalEngagements.toLocaleString()}</p>
+                <p className="text-lg font-bold">
+                  {preview.totalEngagements.toLocaleString()}
+                </p>
                 <p className="text-xs text-muted-foreground">Engagements</p>
               </div>
               <div className="text-center p-2 bg-muted/30 rounded-md">
-                <p className="text-lg font-bold text-green-600">+{preview.followerGrowth}</p>
+                <p className="text-lg font-bold text-green-600">
+                  +{preview.followerGrowth}
+                </p>
                 <p className="text-xs text-muted-foreground">Followers</p>
               </div>
             </div>
@@ -306,7 +353,11 @@ export function ReportGenerator() {
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={preview.growthData}>
                   <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.2} />
-                  <XAxis dataKey="date" tick={{ fontSize: 9 }} interval="preserveStartEnd" />
+                  <XAxis
+                    dataKey="date"
+                    tick={{ fontSize: 9 }}
+                    interval="preserveStartEnd"
+                  />
                   <YAxis tick={{ fontSize: 9 }} width={35} />
                   <Tooltip contentStyle={{ fontSize: "10px" }} />
                   <Line
@@ -324,8 +375,12 @@ export function ReportGenerator() {
               <p className="text-xs font-medium">Top Posts</p>
               {preview.topPosts.map((p) => (
                 <div key={p.id} className="flex items-center gap-2 text-xs">
-                  <Badge variant="secondary" className="text-xs shrink-0">{p.engagements}</Badge>
-                  <span className="truncate text-muted-foreground">{p.content}</span>
+                  <Badge variant="secondary" className="text-xs shrink-0">
+                    {p.engagements}
+                  </Badge>
+                  <span className="truncate text-muted-foreground">
+                    {p.content}
+                  </span>
                 </div>
               ))}
             </div>
@@ -342,7 +397,9 @@ export function ReportGenerator() {
               Auto-Reports
             </span>
             {autoReportEnabled && (
-              <Badge variant="default" className="text-xs">Active</Badge>
+              <Badge variant="default" className="text-xs">
+                Active
+              </Badge>
             )}
           </CardTitle>
         </CardHeader>
@@ -350,14 +407,23 @@ export function ReportGenerator() {
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
               <Label className="text-xs">Frequency</Label>
-              <Select value={schedule} onValueChange={(v) => setSchedule(v as ScheduleFreq)}>
+              <Select
+                value={schedule}
+                onValueChange={(v) => setSchedule(v as ScheduleFreq)}
+              >
                 <SelectTrigger className="h-8 text-xs">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none" className="text-xs">Disabled</SelectItem>
-                  <SelectItem value="weekly" className="text-xs">Weekly</SelectItem>
-                  <SelectItem value="monthly" className="text-xs">Monthly</SelectItem>
+                  <SelectItem value="none" className="text-xs">
+                    Disabled
+                  </SelectItem>
+                  <SelectItem value="weekly" className="text-xs">
+                    Weekly
+                  </SelectItem>
+                  <SelectItem value="monthly" className="text-xs">
+                    Monthly
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>

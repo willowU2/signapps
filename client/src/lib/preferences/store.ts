@@ -74,7 +74,7 @@ interface PreferencesState {
   // Actions - Generic update
   updateSection: <T extends PreferencesSection>(
     section: T,
-    data: Partial<UserPreferences[T]>
+    data: Partial<UserPreferences[T]>,
   ) => void;
 }
 
@@ -113,7 +113,10 @@ export const usePreferencesStore = create<PreferencesState>()(
 
           if (isOnline()) {
             const response = await fetchPreferences();
-            const merged = mergePreferences(state.preferences, response.preferences);
+            const merged = mergePreferences(
+              state.preferences,
+              response.preferences,
+            );
 
             set({
               preferences: merged,
@@ -147,7 +150,8 @@ export const usePreferencesStore = create<PreferencesState>()(
             syncStatus: {
               isSyncing: false,
               lastSyncedAt: null,
-              lastError: error instanceof Error ? error.message : "Unknown error",
+              lastError:
+                error instanceof Error ? error.message : "Unknown error",
               pendingChanges: getQueue().length,
             },
           });
@@ -254,7 +258,8 @@ export const usePreferencesStore = create<PreferencesState>()(
             syncStatus: {
               ...s.syncStatus,
               isSyncing: false,
-              lastError: error instanceof Error ? error.message : "Flush failed",
+              lastError:
+                error instanceof Error ? error.message : "Flush failed",
             },
           }));
         }
@@ -309,8 +314,8 @@ export const usePreferencesStore = create<PreferencesState>()(
         preferences: state.preferences,
         isInitialized: state.isInitialized,
       }),
-    }
-  )
+    },
+  ),
 );
 
 // ============================================================================
@@ -318,17 +323,27 @@ export const usePreferencesStore = create<PreferencesState>()(
 // ============================================================================
 
 export const selectTheme = (state: PreferencesState) => state.preferences.theme;
-export const selectLayout = (state: PreferencesState) => state.preferences.layout;
-export const selectNotifications = (state: PreferencesState) => state.preferences.notifications;
-export const selectEditor = (state: PreferencesState) => state.preferences.editor;
-export const selectDashboard = (state: PreferencesState) => state.preferences.dashboard;
-export const selectCalendar = (state: PreferencesState) => state.preferences.calendar;
-export const selectStorage = (state: PreferencesState) => state.preferences.storage;
+export const selectLayout = (state: PreferencesState) =>
+  state.preferences.layout;
+export const selectNotifications = (state: PreferencesState) =>
+  state.preferences.notifications;
+export const selectEditor = (state: PreferencesState) =>
+  state.preferences.editor;
+export const selectDashboard = (state: PreferencesState) =>
+  state.preferences.dashboard;
+export const selectCalendar = (state: PreferencesState) =>
+  state.preferences.calendar;
+export const selectStorage = (state: PreferencesState) =>
+  state.preferences.storage;
 export const selectMail = (state: PreferencesState) => state.preferences.mail;
-export const selectAccessibility = (state: PreferencesState) => state.preferences.accessibility;
-export const selectKeyboard = (state: PreferencesState) => state.preferences.keyboard;
-export const selectPrivacy = (state: PreferencesState) => state.preferences.privacy;
-export const selectLocale = (state: PreferencesState) => state.preferences.locale;
+export const selectAccessibility = (state: PreferencesState) =>
+  state.preferences.accessibility;
+export const selectKeyboard = (state: PreferencesState) =>
+  state.preferences.keyboard;
+export const selectPrivacy = (state: PreferencesState) =>
+  state.preferences.privacy;
+export const selectLocale = (state: PreferencesState) =>
+  state.preferences.locale;
 export const selectSyncStatus = (state: PreferencesState) => state.syncStatus;
 
 // ============================================================================

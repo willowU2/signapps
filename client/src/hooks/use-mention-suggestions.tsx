@@ -1,10 +1,18 @@
-'use client';
+"use client";
 
-import { ReactRenderer } from '@tiptap/react';
-import tippy, { Instance as TippyInstance } from 'tippy.js';
-import { SuggestionOptions, SuggestionProps, SuggestionKeyDownProps } from '@tiptap/suggestion';
-import { MentionList, MentionListRef, MentionUser } from '@/components/docs/extensions/mention-suggestion';
-import { createServiceClient, ServiceName } from '@/lib/api/factory';
+import { ReactRenderer } from "@tiptap/react";
+import tippy, { Instance as TippyInstance } from "tippy.js";
+import {
+  SuggestionOptions,
+  SuggestionProps,
+  SuggestionKeyDownProps,
+} from "@tiptap/suggestion";
+import {
+  MentionList,
+  MentionListRef,
+  MentionUser,
+} from "@/components/docs/extensions/mention-suggestion";
+import { createServiceClient, ServiceName } from "@/lib/api/factory";
 
 /**
  * Fetch users from the identity service for mention suggestions
@@ -12,7 +20,7 @@ import { createServiceClient, ServiceName } from '@/lib/api/factory';
 async function fetchUsers(query: string): Promise<MentionUser[]> {
   try {
     const api = createServiceClient(ServiceName.IDENTITY);
-    const response = await api.get('/users', {
+    const response = await api.get("/users", {
       params: {
         search: query,
         limit: 10,
@@ -27,7 +35,7 @@ async function fetchUsers(query: string): Promise<MentionUser[]> {
       avatar: user.avatar || user.avatar_url,
     }));
   } catch (error) {
-    console.error('Error fetching users for mentions:', error);
+    console.error("Error fetching users for mentions:", error);
     return [];
   }
 }
@@ -35,14 +43,17 @@ async function fetchUsers(query: string): Promise<MentionUser[]> {
 /**
  * Create suggestion configuration for the Mention extension
  */
-export function createMentionSuggestion(): Omit<SuggestionOptions<MentionUser>, 'editor'> {
+export function createMentionSuggestion(): Omit<
+  SuggestionOptions<MentionUser>,
+  "editor"
+> {
   return {
-    char: '@',
+    char: "@",
 
     items: async ({ query }) => {
       if (!query) {
         // Return recent/all users when no query
-        return fetchUsers('');
+        return fetchUsers("");
       }
       return fetchUsers(query);
     },
@@ -62,14 +73,14 @@ export function createMentionSuggestion(): Omit<SuggestionOptions<MentionUser>, 
             return;
           }
 
-          popup = tippy('body', {
+          popup = tippy("body", {
             getReferenceClientRect: props.clientRect as () => DOMRect,
             appendTo: () => document.body,
             content: component.element,
             showOnCreate: true,
             interactive: true,
-            trigger: 'manual',
-            placement: 'bottom-start',
+            trigger: "manual",
+            placement: "bottom-start",
           });
         },
 
@@ -86,7 +97,7 @@ export function createMentionSuggestion(): Omit<SuggestionOptions<MentionUser>, 
         },
 
         onKeyDown(props: SuggestionKeyDownProps) {
-          if (props.event.key === 'Escape') {
+          if (props.event.key === "Escape") {
             popup?.[0]?.hide();
             return true;
           }

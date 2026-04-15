@@ -42,7 +42,6 @@ pub mod types;
 mod tests;
 
 // Re-export everything at the same paths as before
-pub use types::{BerData, BerElement, BerError, BerTag};
 pub use decoder::{
     decode, decode_all, decode_boolean, decode_enumerated, decode_integer, decode_octet_string,
 };
@@ -50,3 +49,4 @@ pub use encoder::{
     encode, encode_application, encode_boolean, encode_context, encode_enumerated, encode_integer,
     encode_octet_string, encode_sequence, encode_set,
 };
+pub use types::{BerData, BerElement, BerError, BerTag};

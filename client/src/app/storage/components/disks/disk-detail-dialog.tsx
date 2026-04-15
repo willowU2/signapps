@@ -1,22 +1,22 @@
-'use client';
+"use client";
 
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { Separator } from '@/components/ui/separator';
+} from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { Separator } from "@/components/ui/separator";
 import {
   HardDrive,
   ThermometerSun,
   Clock,
   AlertTriangle,
   CheckCircle,
-} from 'lucide-react';
-import type { DiskInfo } from '@/lib/api';
+} from "lucide-react";
+import type { DiskInfo } from "@/lib/api";
 
 interface DiskDetailDialogProps {
   disk: DiskInfo | null;
@@ -25,14 +25,18 @@ interface DiskDetailDialogProps {
 }
 
 function formatBytes(bytes?: number): string {
-  if (!bytes || bytes === 0) return '0 B';
+  if (!bytes || bytes === 0) return "0 B";
   const k = 1024;
-  const sizes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB'];
+  const sizes = ["B", "KB", "MB", "GB", "TB", "PB"];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
 }
 
-export function DiskDetailDialog({ disk, open, onOpenChange }: DiskDetailDialogProps) {
+export function DiskDetailDialog({
+  disk,
+  open,
+  onOpenChange,
+}: DiskDetailDialogProps) {
   if (!disk) return null;
 
   const smart = disk.smart_data;
@@ -52,11 +56,15 @@ export function DiskDetailDialog({ disk, open, onOpenChange }: DiskDetailDialogP
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-sm text-muted-foreground">Modèle</label>
-              <p className="font-medium">{disk.model || 'Inconnu'}</p>
+              <p className="font-medium">{disk.model || "Inconnu"}</p>
             </div>
             <div>
-              <label className="text-sm text-muted-foreground">Numéro de série</label>
-              <p className="font-medium font-mono text-sm">{disk.serial_number || 'N/A'}</p>
+              <label className="text-sm text-muted-foreground">
+                Numéro de série
+              </label>
+              <p className="font-medium font-mono text-sm">
+                {disk.serial_number || "N/A"}
+              </p>
             </div>
             <div>
               <label className="text-sm text-muted-foreground">Capacité</label>
@@ -65,13 +73,15 @@ export function DiskDetailDialog({ disk, open, onOpenChange }: DiskDetailDialogP
             <div>
               <label className="text-sm text-muted-foreground">Statut</label>
               <div className="flex items-center gap-2 mt-1">
-                {disk.status === 'healthy' ? (
+                {disk.status === "healthy" ? (
                   <CheckCircle className="h-4 w-4 text-green-500" />
                 ) : (
                   <AlertTriangle className="h-4 w-4 text-yellow-500" />
                 )}
                 <Badge
-                  variant={disk.status === 'healthy' ? 'default' : 'destructive'}
+                  variant={
+                    disk.status === "healthy" ? "default" : "destructive"
+                  }
                   className="capitalize"
                 >
                   {disk.status}
@@ -91,19 +101,30 @@ export function DiskDetailDialog({ disk, open, onOpenChange }: DiskDetailDialogP
                 <div className="flex items-center gap-3 rounded-lg border p-3">
                   <Clock className="h-5 w-5 text-muted-foreground" />
                   <div>
-                    <p className="text-sm text-muted-foreground">Heures de fonctionnement</p>
-                    <p className="font-medium">{smart.power_on_hours?.toLocaleString() || 'N/A'} h</p>
+                    <p className="text-sm text-muted-foreground">
+                      Heures de fonctionnement
+                    </p>
+                    <p className="font-medium">
+                      {smart.power_on_hours?.toLocaleString() || "N/A"} h
+                    </p>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-3 rounded-lg border p-3">
-                  <ThermometerSun className={`h-5 w-5 ${
-                    smart.temperature > 50 ? 'text-red-500' :
-                    smart.temperature > 40 ? 'text-yellow-500' : 'text-green-500'
-                  }`} />
+                  <ThermometerSun
+                    className={`h-5 w-5 ${
+                      smart.temperature > 50
+                        ? "text-red-500"
+                        : smart.temperature > 40
+                          ? "text-yellow-500"
+                          : "text-green-500"
+                    }`}
+                  />
                   <div>
                     <p className="text-sm text-muted-foreground">Température</p>
-                    <p className="font-medium">{smart.temperature || disk.temperature || 'N/A'}°C</p>
+                    <p className="font-medium">
+                      {smart.temperature || disk.temperature || "N/A"}°C
+                    </p>
                   </div>
                 </div>
               </div>
@@ -112,7 +133,11 @@ export function DiskDetailDialog({ disk, open, onOpenChange }: DiskDetailDialogP
                 <div>
                   <div className="flex justify-between text-sm mb-1">
                     <span>Secteurs réalloués</span>
-                    <span className={smart.reallocated_sectors > 0 ? 'text-yellow-500' : ''}>
+                    <span
+                      className={
+                        smart.reallocated_sectors > 0 ? "text-yellow-500" : ""
+                      }
+                    >
                       {smart.reallocated_sectors}
                     </span>
                   </div>
@@ -125,7 +150,11 @@ export function DiskDetailDialog({ disk, open, onOpenChange }: DiskDetailDialogP
                 <div>
                   <div className="flex justify-between text-sm mb-1">
                     <span>Secteurs en attente</span>
-                    <span className={smart.pending_sectors > 0 ? 'text-yellow-500' : ''}>
+                    <span
+                      className={
+                        smart.pending_sectors > 0 ? "text-yellow-500" : ""
+                      }
+                    >
                       {smart.pending_sectors}
                     </span>
                   </div>
@@ -137,8 +166,10 @@ export function DiskDetailDialog({ disk, open, onOpenChange }: DiskDetailDialogP
               </div>
 
               <div className="rounded-lg bg-muted p-3">
-                <p className="text-sm text-muted-foreground">Évaluation santé</p>
-                <p className="font-medium">{smart.health_assessment || 'OK'}</p>
+                <p className="text-sm text-muted-foreground">
+                  Évaluation santé
+                </p>
+                <p className="font-medium">{smart.health_assessment || "OK"}</p>
               </div>
             </div>
           ) : (

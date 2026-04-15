@@ -59,7 +59,7 @@ where
                 relations_created: 0,
                 source: "calendar.events".to_string(),
             });
-        }
+        },
     };
 
     let mut entity_count = 0usize;
@@ -130,7 +130,11 @@ where
         }
     }
 
-    tracing::info!(entities = entity_count, relations = relation_count, "Seeded calendar events");
+    tracing::info!(
+        entities = entity_count,
+        relations = relation_count,
+        "Seeded calendar events"
+    );
     Ok(SeedResult {
         entities_created: entity_count,
         relations_created: relation_count,

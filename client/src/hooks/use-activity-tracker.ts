@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useCallback, useSyncExternalStore } from 'react';
+import { useCallback, useSyncExternalStore } from "react";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -14,7 +14,7 @@ export interface TrackedActivity {
   timestamp: string;
 }
 
-const STORAGE_KEY = 'user_activities';
+const STORAGE_KEY = "user_activities";
 const MAX_ITEMS = 100;
 
 // ---------------------------------------------------------------------------
@@ -40,7 +40,7 @@ let cachedSnapshot: TrackedActivity[] = [];
 let cachedRaw: string | null = null;
 
 function getSnapshot(): TrackedActivity[] {
-  if (typeof window === 'undefined') return cachedSnapshot;
+  if (typeof window === "undefined") return cachedSnapshot;
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw !== cachedRaw) {
@@ -66,7 +66,7 @@ function getServerSnapshot(): TrackedActivity[] {
  * Can be called from anywhere (does not require React context).
  */
 export function logActivity(action: string, target: string, details?: string) {
-  if (typeof window === 'undefined') return;
+  if (typeof window === "undefined") return;
 
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -83,7 +83,7 @@ export function logActivity(action: string, target: string, details?: string) {
     // Keep last MAX_ITEMS
     localStorage.setItem(
       STORAGE_KEY,
-      JSON.stringify(activities.slice(0, MAX_ITEMS))
+      JSON.stringify(activities.slice(0, MAX_ITEMS)),
     );
 
     emitChange();
@@ -96,7 +96,7 @@ export function logActivity(action: string, target: string, details?: string) {
  * Clear all tracked activities.
  */
 export function clearActivities() {
-  if (typeof window === 'undefined') return;
+  if (typeof window === "undefined") return;
   localStorage.removeItem(STORAGE_KEY);
   emitChange();
 }
@@ -106,13 +106,17 @@ export function clearActivities() {
  * Automatically re-renders when `logActivity()` is called.
  */
 export function useActivityTracker() {
-  const activities = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  const activities = useSyncExternalStore(
+    subscribe,
+    getSnapshot,
+    getServerSnapshot,
+  );
 
   const log = useCallback(
     (action: string, target: string, details?: string) => {
       logActivity(action, target, details);
     },
-    []
+    [],
   );
 
   return { activities, log, clear: clearActivities };

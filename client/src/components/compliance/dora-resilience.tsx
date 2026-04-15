@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Shield } from 'lucide-react';
+import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Shield } from "lucide-react";
 
 interface ICTRisk {
   id: string;
@@ -11,55 +11,55 @@ interface ICTRisk {
   rto: number; // minutes
   rpo: number; // minutes
   lastTest: string;
-  status: 'pass' | 'fail' | 'pending';
+  status: "pass" | "fail" | "pending";
 }
 
 export default function DORAResilience() {
   const [risks] = useState<ICTRisk[]>([
     {
-      id: '1',
-      component: 'Authentication Service',
+      id: "1",
+      component: "Authentication Service",
       rto: 15,
       rpo: 5,
-      lastTest: '2024-03-15',
-      status: 'pass',
+      lastTest: "2024-03-15",
+      status: "pass",
     },
     {
-      id: '2',
-      component: 'Database Primary',
+      id: "2",
+      component: "Database Primary",
       rto: 30,
       rpo: 10,
-      lastTest: '2024-03-10',
-      status: 'pass',
+      lastTest: "2024-03-10",
+      status: "pass",
     },
     {
-      id: '3',
-      component: 'API Gateway',
+      id: "3",
+      component: "API Gateway",
       rto: 5,
       rpo: 1,
-      lastTest: '2024-03-08',
-      status: 'fail',
+      lastTest: "2024-03-08",
+      status: "fail",
     },
     {
-      id: '4',
-      component: 'File Storage',
+      id: "4",
+      component: "File Storage",
       rto: 60,
       rpo: 30,
-      lastTest: '2024-03-12',
-      status: 'pending',
+      lastTest: "2024-03-12",
+      status: "pending",
     },
   ]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'pass':
-        return 'bg-emerald-100 text-emerald-800';
-      case 'fail':
-        return 'bg-red-100 text-red-800';
-      case 'pending':
-        return 'bg-amber-100 text-amber-800';
+      case "pass":
+        return "bg-emerald-100 text-emerald-800";
+      case "fail":
+        return "bg-red-100 text-red-800";
+      case "pending":
+        return "bg-amber-100 text-amber-800";
       default:
-        return 'bg-muted text-gray-800';
+        return "bg-muted text-gray-800";
     }
   };
 
@@ -85,9 +85,15 @@ export default function DORAResilience() {
             <tbody>
               {risks.map((risk) => (
                 <tr key={risk.id} className="border-b hover:bg-muted">
-                  <td className="py-3 px-2 font-medium text-foreground">{risk.component}</td>
-                  <td className="py-3 px-2 text-right text-muted-foreground">{risk.rto}m</td>
-                  <td className="py-3 px-2 text-right text-muted-foreground">{risk.rpo}m</td>
+                  <td className="py-3 px-2 font-medium text-foreground">
+                    {risk.component}
+                  </td>
+                  <td className="py-3 px-2 text-right text-muted-foreground">
+                    {risk.rto}m
+                  </td>
+                  <td className="py-3 px-2 text-right text-muted-foreground">
+                    {risk.rpo}m
+                  </td>
                   <td className="py-3 px-2">
                     <Badge className={getStatusColor(risk.status)}>
                       {risk.status.toUpperCase()}

@@ -156,50 +156,50 @@ impl LdapFilter {
                 *counter += 1;
                 params.push(value.clone());
                 format!("LOWER({col}) = LOWER(${idx})")
-            }
+            },
             LdapFilter::Substring(attr, pattern) => {
                 let col = Self::attr_to_column(attr);
                 let idx = *counter;
                 *counter += 1;
                 params.push(pattern.clone());
                 format!("{col} ILIKE ${idx}")
-            }
+            },
             LdapFilter::Present(attr) => {
                 let col = Self::attr_to_column(attr);
                 format!("{col} IS NOT NULL")
-            }
+            },
             LdapFilter::GreaterOrEqual(attr, value) => {
                 let col = Self::attr_to_column(attr);
                 let idx = *counter;
                 *counter += 1;
                 params.push(value.clone());
                 format!("{col} >= ${idx}")
-            }
+            },
             LdapFilter::LessOrEqual(attr, value) => {
                 let col = Self::attr_to_column(attr);
                 let idx = *counter;
                 *counter += 1;
                 params.push(value.clone());
                 format!("{col} <= ${idx}")
-            }
+            },
             LdapFilter::And(children) => {
                 let parts: Vec<String> = children
                     .iter()
                     .map(|c| c.compile_sql(params, counter))
                     .collect();
                 format!("({})", parts.join(" AND "))
-            }
+            },
             LdapFilter::Or(children) => {
                 let parts: Vec<String> = children
                     .iter()
                     .map(|c| c.compile_sql(params, counter))
                     .collect();
                 format!("({})", parts.join(" OR "))
-            }
+            },
             LdapFilter::Not(child) => {
                 let inner = child.compile_sql(params, counter);
                 format!("NOT ({inner})")
-            }
+            },
         }
     }
 
@@ -225,7 +225,7 @@ impl LdapFilter {
                 // Escape single quotes to prevent injection via JSONB key lookup.
                 let safe = other.replace('\'', "''");
                 format!("n.attributes->>'{}' ", safe)
-            }
+            },
         }
     }
 }
@@ -308,7 +308,7 @@ fn find_matching_close(input: &str) -> Result<usize, FilterError> {
             '(' => depth += 1,
             ')' if depth == 0 => return Ok(i),
             ')' => depth -= 1,
-            _ => {}
+            _ => {},
         }
     }
     Err(FilterError::UnbalancedParens)
@@ -393,10 +393,7 @@ mod tests {
     #[test]
     fn parse_substring_filter() {
         let f = LdapFilter::parse("(cn=*john*)").unwrap();
-        assert_eq!(
-            f,
-            LdapFilter::Substring("cn".into(), "%john%".into())
-        );
+        assert_eq!(f, LdapFilter::Substring("cn".into(), "%john%".into()));
     }
 
     #[test]
@@ -413,7 +410,7 @@ mod tests {
                     children[1],
                     LdapFilter::Equal("sAMAccountName".into(), "admin".into())
                 );
-            }
+            },
             other => panic!("expected And, got {other:?}"),
         }
     }
@@ -424,15 +421,9 @@ mod tests {
         match f {
             LdapFilter::Or(children) => {
                 assert_eq!(children.len(), 2);
-                assert_eq!(
-                    children[0],
-                    LdapFilter::Equal("cn".into(), "Alice".into())
-                );
-                assert_eq!(
-                    children[1],
-                    LdapFilter::Equal("cn".into(), "Bob".into())
-                );
-            }
+                assert_eq!(children[0], LdapFilter::Equal("cn".into(), "Alice".into()));
+                assert_eq!(children[1], LdapFilter::Equal("cn".into(), "Bob".into()));
+            },
             other => panic!("expected Or, got {other:?}"),
         }
     }
@@ -446,17 +437,15 @@ mod tests {
                     *inner,
                     LdapFilter::Equal("objectClass".into(), "computer".into())
                 );
-            }
+            },
             other => panic!("expected Not, got {other:?}"),
         }
     }
 
     #[test]
     fn parse_nested_compound() {
-        let f = LdapFilter::parse(
-            "(&(objectClass=user)(|(mail=*@example.com)(department=IT)))",
-        )
-        .unwrap();
+        let f = LdapFilter::parse("(&(objectClass=user)(|(mail=*@example.com)(department=IT)))")
+            .unwrap();
         match f {
             LdapFilter::And(children) => {
                 assert_eq!(children.len(), 2);
@@ -475,10 +464,10 @@ mod tests {
                             or_children[1],
                             LdapFilter::Equal("department".into(), "IT".into())
                         );
-                    }
+                    },
                     other => panic!("expected Or, got {other:?}"),
                 }
-            }
+            },
             other => panic!("expected And, got {other:?}"),
         }
     }
@@ -494,19 +483,16 @@ mod tests {
 
     #[test]
     fn compile_and_to_sql() {
-        let (sql, params) =
-            LdapFilter::parse("(&(objectClass=user)(sAMAccountName=admin))")
-                .unwrap()
-                .to_sql(1);
+        let (sql, params) = LdapFilter::parse("(&(objectClass=user)(sAMAccountName=admin))")
+            .unwrap()
+            .to_sql(1);
         assert!(sql.contains("AND"), "expected AND in: {sql}");
         assert_eq!(params.len(), 2);
     }
 
     #[test]
     fn compile_presence_to_sql() {
-        let (sql, params) = LdapFilter::parse("(telephoneNumber=*)")
-            .unwrap()
-            .to_sql(1);
+        let (sql, params) = LdapFilter::parse("(telephoneNumber=*)").unwrap().to_sql(1);
         assert_eq!(sql, "u.phone IS NOT NULL");
         assert!(params.is_empty());
     }

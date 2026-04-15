@@ -21,6 +21,4 @@ pub mod repositories;
 
 pub use models::mailserver::*;
 
-pub use repositories::{
-    AccountRepository, DomainRepository, MailboxRepository, MessageRepository,
-};
+pub use repositories::{AccountRepository, DomainRepository, MailboxRepository, MessageRepository};

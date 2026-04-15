@@ -51,7 +51,7 @@
 
 pub mod asn1;
 pub mod crypto;
-pub mod pac;
 pub mod handlers;
 pub mod keytab;
 pub mod listener;
+pub mod pac;

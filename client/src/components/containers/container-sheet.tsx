@@ -1,6 +1,6 @@
 "use client";
 
-import { SpinnerInfinity } from 'spinners-react';
+import { SpinnerInfinity } from "spinners-react";
 
 import { useEffect, useState } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
@@ -23,9 +23,15 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2 } from "lucide-react";
 import { containersApi, CreateContainerRequest } from "@/lib/api";
 import { toast } from "sonner";
 
@@ -81,17 +87,29 @@ export function ContainerSheet({
     },
   });
 
-  const { fields: portFields, append: appendPort, remove: removePort } = useFieldArray({
+  const {
+    fields: portFields,
+    append: appendPort,
+    remove: removePort,
+  } = useFieldArray({
     control: form.control,
     name: "ports",
   });
 
-  const { fields: envFields, append: appendEnv, remove: removeEnv } = useFieldArray({
+  const {
+    fields: envFields,
+    append: appendEnv,
+    remove: removeEnv,
+  } = useFieldArray({
     control: form.control,
     name: "envVars",
   });
 
-  const { fields: volumeFields, append: appendVolume, remove: removeVolume } = useFieldArray({
+  const {
+    fields: volumeFields,
+    append: appendVolume,
+    remove: removeVolume,
+  } = useFieldArray({
     control: form.control,
     name: "volumes",
   });
@@ -130,9 +148,10 @@ export function ContainerSheet({
         });
       }
 
-      const volumesList = values.volumes
-        ?.filter((v) => v.hostPath && v.containerPath)
-        .map((v) => `${v.hostPath}:${v.containerPath}`) || [];
+      const volumesList =
+        values.volumes
+          ?.filter((v) => v.hostPath && v.containerPath)
+          .map((v) => `${v.hostPath}:${v.containerPath}`) || [];
 
       const request: CreateContainerRequest = {
         name: values.name,
@@ -167,12 +186,16 @@ export function ContainerSheet({
         <SheetHeader>
           <SheetTitle>Create Container</SheetTitle>
           <SheetDescription>
-            Deploy a new Docker container with custom network, environment, and volume settings.
+            Deploy a new Docker container with custom network, environment, and
+            volume settings.
           </SheetDescription>
         </SheetHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6 mt-6">
+          <form
+            onSubmit={form.handleSubmit(handleSubmit)}
+            className="space-y-6 mt-6"
+          >
             <Tabs defaultValue="general" className="w-full">
               <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="general">General</TabsTrigger>
@@ -189,7 +212,11 @@ export function ContainerSheet({
                     <FormItem>
                       <FormLabel>Container Name</FormLabel>
                       <FormControl>
-                        <Input placeholder="my-container" disabled={loading} {...field} />
+                        <Input
+                          placeholder="my-container"
+                          disabled={loading}
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -203,7 +230,11 @@ export function ContainerSheet({
                     <FormItem>
                       <FormLabel>Image</FormLabel>
                       <FormControl>
-                        <Input placeholder="nginx:latest" disabled={loading} {...field} />
+                        <Input
+                          placeholder="nginx:latest"
+                          disabled={loading}
+                          {...field}
+                        />
                       </FormControl>
                       <p className="text-xs text-muted-foreground mt-2">
                         Docker image name with optional tag (e.g., nginx:alpine)
@@ -219,7 +250,11 @@ export function ContainerSheet({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Restart Policy</FormLabel>
-                      <Select disabled={loading} onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select
+                        disabled={loading}
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue />
@@ -229,7 +264,9 @@ export function ContainerSheet({
                           <SelectItem value="no">No</SelectItem>
                           <SelectItem value="always">Always</SelectItem>
                           <SelectItem value="on-failure">On Failure</SelectItem>
-                          <SelectItem value="unless-stopped">Unless Stopped</SelectItem>
+                          <SelectItem value="unless-stopped">
+                            Unless Stopped
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -245,7 +282,13 @@ export function ContainerSheet({
                     type="button"
                     variant="outline"
                     size="sm"
-                    onClick={() => appendPort({ hostPort: "", containerPort: "", protocol: "tcp" })}
+                    onClick={() =>
+                      appendPort({
+                        hostPort: "",
+                        containerPort: "",
+                        protocol: "tcp",
+                      })
+                    }
                     disabled={loading}
                   >
                     <Plus className="mr-2 h-4 w-4" />
@@ -267,7 +310,11 @@ export function ContainerSheet({
                           render={({ field }) => (
                             <FormItem className="flex-1">
                               <FormControl>
-                                <Input placeholder="Host" disabled={loading} {...field} />
+                                <Input
+                                  placeholder="Host"
+                                  disabled={loading}
+                                  {...field}
+                                />
                               </FormControl>
                             </FormItem>
                           )}
@@ -279,7 +326,11 @@ export function ContainerSheet({
                           render={({ field }) => (
                             <FormItem className="flex-1">
                               <FormControl>
-                                <Input placeholder="Container" disabled={loading} {...field} />
+                                <Input
+                                  placeholder="Container"
+                                  disabled={loading}
+                                  {...field}
+                                />
                               </FormControl>
                             </FormItem>
                           )}
@@ -289,7 +340,11 @@ export function ContainerSheet({
                           name={`ports.${index}.protocol`}
                           render={({ field }) => (
                             <FormItem className="w-24">
-                              <Select disabled={loading} onValueChange={field.onChange} defaultValue={field.value}>
+                              <Select
+                                disabled={loading}
+                                onValueChange={field.onChange}
+                                defaultValue={field.value}
+                              >
                                 <FormControl>
                                   <SelectTrigger>
                                     <SelectValue />
@@ -347,7 +402,14 @@ export function ContainerSheet({
                           render={({ field }) => (
                             <FormItem className="flex-1">
                               <FormControl>
-                                <Input placeholder="KEY" disabled={loading} {...field} onChange={e => field.onChange(e.target.value.toUpperCase())}/>
+                                <Input
+                                  placeholder="KEY"
+                                  disabled={loading}
+                                  {...field}
+                                  onChange={(e) =>
+                                    field.onChange(e.target.value.toUpperCase())
+                                  }
+                                />
                               </FormControl>
                             </FormItem>
                           )}
@@ -359,7 +421,11 @@ export function ContainerSheet({
                           render={({ field }) => (
                             <FormItem className="flex-1">
                               <FormControl>
-                                <Input placeholder="Value" disabled={loading} {...field} />
+                                <Input
+                                  placeholder="Value"
+                                  disabled={loading}
+                                  {...field}
+                                />
                               </FormControl>
                             </FormItem>
                           )}
@@ -386,7 +452,9 @@ export function ContainerSheet({
                     type="button"
                     variant="outline"
                     size="sm"
-                    onClick={() => appendVolume({ hostPath: "", containerPath: "" })}
+                    onClick={() =>
+                      appendVolume({ hostPath: "", containerPath: "" })
+                    }
                     disabled={loading}
                   >
                     <Plus className="mr-2 h-4 w-4" />
@@ -408,7 +476,11 @@ export function ContainerSheet({
                           render={({ field }) => (
                             <FormItem className="flex-1">
                               <FormControl>
-                                <Input placeholder="/host/path" disabled={loading} {...field} />
+                                <Input
+                                  placeholder="/host/path"
+                                  disabled={loading}
+                                  {...field}
+                                />
                               </FormControl>
                             </FormItem>
                           )}
@@ -420,7 +492,11 @@ export function ContainerSheet({
                           render={({ field }) => (
                             <FormItem className="flex-1">
                               <FormControl>
-                                <Input placeholder="/container/path" disabled={loading} {...field} />
+                                <Input
+                                  placeholder="/container/path"
+                                  disabled={loading}
+                                  {...field}
+                                />
                               </FormControl>
                             </FormItem>
                           )}
@@ -443,7 +519,15 @@ export function ContainerSheet({
 
             <div className="flex justify-end pt-4">
               <Button type="submit" disabled={loading}>
-                {loading && <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />}
+                {loading && (
+                  <SpinnerInfinity
+                    size={24}
+                    secondaryColor="rgba(128,128,128,0.2)"
+                    color="currentColor"
+                    speed={120}
+                    className="mr-2 h-4 w-4 "
+                  />
+                )}
                 Create Container
               </Button>
             </div>

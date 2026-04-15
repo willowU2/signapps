@@ -4,19 +4,24 @@
  * React hook for finding available meeting times across multiple participants.
  */
 
-import * as React from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { addDays, startOfDay, endOfDay } from 'date-fns';
+import * as React from "react";
+import { useQuery } from "@tanstack/react-query";
+import { addDays, startOfDay, endOfDay } from "date-fns";
 import {
   findAvailability,
   suggestBestMeetingTime,
   type AvailabilityQuery,
   type AvailabilityResult,
   type CommonSlot,
-} from '../utils/availability-finder';
-import type { ScheduleBlock, TeamMember, BlockType, BlockStatus } from '../types/scheduling';
-import { usersApi } from '../../api/identity';
-import { timeItemsApi } from '../../api/scheduler';
+} from "../utils/availability-finder";
+import type {
+  ScheduleBlock,
+  TeamMember,
+  BlockType,
+  BlockStatus,
+} from "../types/scheduling";
+import { usersApi } from "../../api/identity";
+import { timeItemsApi } from "../../api/scheduler";
 
 // ============================================================================
 // Types
@@ -41,7 +46,7 @@ export interface UseAvailabilityFinderOptions {
   /** Buffer time between meetings in minutes */
   bufferMinutes?: number;
   /** Preferred time of day */
-  preferredTimes?: ('morning' | 'afternoon' | 'evening')[];
+  preferredTimes?: ("morning" | "afternoon" | "evening")[];
   /** Whether to enable the query */
   enabled?: boolean;
 }
@@ -68,7 +73,7 @@ export interface UseAvailabilityFinderResult {
 async function fetchAvailabilityData(
   participantIds: string[],
   start: Date,
-  end: Date
+  end: Date,
 ): Promise<{ events: ScheduleBlock[]; members: TeamMember[] }> {
   // Fetch users
   const usersRes = await usersApi.list(0, 100);
@@ -77,22 +82,24 @@ async function fetchAvailabilityData(
     .map((u) => ({
       id: u.id,
       name: u.display_name || u.username,
-      email: u.email || '',
-      role: u.role === 2 ? 'Admin' : 'Utilisateur',
-      department: 'Général',
+      email: u.email || "",
+      role: u.role === 2 ? "Admin" : "Utilisateur",
+      department: "Général",
     }));
 
   // Fetch TimeItems
   const eventsRes = await timeItemsApi.queryUsersEvents(
     participantIds,
     start.toISOString(),
-    end.toISOString()
+    end.toISOString(),
   );
 
   const events: ScheduleBlock[] = eventsRes.data.items.map((item) => ({
     id: item.id,
     title: item.title,
-    start: new Date(item.start_time || item.deadline || new Date().toISOString()),
+    start: new Date(
+      item.start_time || item.deadline || new Date().toISOString(),
+    ),
     end: item.end_time ? new Date(item.end_time) : undefined,
     allDay: item.all_day,
     type: item.item_type as BlockType,
@@ -102,7 +109,16 @@ async function fetchAvailabilityData(
     },
     // To support checkTimeSlot which looks at attendees, we map owner_id to attendees for MVP.
     // In a full implementation, we would extract actual attendees from TimeItemRelations.
-    attendees: [{ id: item.owner_id, name: '', email: '', responseStatus: 'accepted', status: 'accepted', required: true }],
+    attendees: [
+      {
+        id: item.owner_id,
+        name: "",
+        email: "",
+        responseStatus: "accepted",
+        status: "accepted",
+        required: true,
+      },
+    ],
     createdAt: new Date(item.created_at),
     updatedAt: new Date(item.updated_at),
   }));
@@ -115,7 +131,7 @@ async function fetchAvailabilityData(
 // ============================================================================
 
 export function useAvailabilityFinder(
-  options: UseAvailabilityFinderOptions
+  options: UseAvailabilityFinderOptions,
 ): UseAvailabilityFinderResult {
   const {
     participantIds,
@@ -142,9 +158,9 @@ export function useAvailabilityFinder(
   });
 
   // Stable keys for array/date deps to avoid re-running on every render
-  const participantIdsKey = participantIds.join(',');
+  const participantIdsKey = participantIds.join(",");
   const startDateMs = startDate.getTime();
-  const preferredTimesKey = preferredTimes.join(',');
+  const preferredTimesKey = preferredTimes.join(",");
   const workingHoursStart = workingHours?.start;
   const workingHoursEnd = workingHours?.end;
 
@@ -160,7 +176,7 @@ export function useAvailabilityFinder(
       bufferMinutes,
       preferredTimes,
     });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     participantIdsKey,
     duration,
@@ -187,7 +203,7 @@ export function useAvailabilityFinder(
       bufferMinutes: params.bufferMinutes,
       preferredTimes: params.preferredTimes,
     }),
-    [params]
+    [params],
   );
 
   // Query for availability
@@ -197,13 +213,13 @@ export function useAvailabilityFinder(
     error,
     refetch,
   } = useQuery({
-    queryKey: ['availability', query],
+    queryKey: ["availability", query],
     queryFn: async () => {
       // Get real data from APIs
       const { events, members } = await fetchAvailabilityData(
         query.participantIds,
         query.dateRange.start,
-        query.dateRange.end
+        query.dateRange.end,
       );
 
       // Find availability
@@ -230,7 +246,7 @@ export function useAvailabilityFinder(
         preferredTimes: newParams.preferredTimes || prev.preferredTimes,
       }));
     },
-    []
+    [],
   );
 
   return {
@@ -253,16 +269,14 @@ export interface UseQuickAvailabilityOptions {
   limit?: number;
 }
 
-export function useQuickAvailability(
-  options: UseQuickAvailabilityOptions
-): {
+export function useQuickAvailability(options: UseQuickAvailabilityOptions): {
   suggestions: CommonSlot[];
   isLoading: boolean;
 } {
   const { participantIds, duration, limit = 5 } = options;
 
   const { data: suggestions = [], isLoading } = useQuery({
-    queryKey: ['quick-availability', participantIds.join(','), duration, limit],
+    queryKey: ["quick-availability", participantIds.join(","), duration, limit],
     queryFn: async () => {
       const searchStart = startOfDay(new Date());
       const searchEnd = endOfDay(addDays(new Date(), 14)); // Search 2 weeks
@@ -270,7 +284,7 @@ export function useQuickAvailability(
       const { events, members } = await fetchAvailabilityData(
         participantIds,
         searchStart,
-        searchEnd
+        searchEnd,
       );
 
       const query: AvailabilityQuery = {

@@ -99,11 +99,7 @@ pub async fn seed_acme(
     for i in 0..100usize {
         let parent_folder = *crate::helpers::pick(&all_folder_ids, i);
         let owner = crate::helpers::pick(user_ids, rng.gen_range(0..user_ids.len())).0;
-        let file_name = format!(
-            "{} ({})",
-            crate::helpers::pick(file_names, i),
-            i + 1
-        );
+        let file_name = format!("{} ({})", crate::helpers::pick(file_names, i), i + 1);
         let mime = *crate::helpers::pick(mime_types, i);
         let size: i64 = rng.gen_range(1024i64..10_485_760); // 1 KB – 10 MB
 

@@ -6,17 +6,27 @@
  */
 
 // Import shared types from time-item
-import type { Priority, DateRange, ViewType, RecurrenceRule } from './time-item';
+import type {
+  Priority,
+  DateRange,
+  ViewType,
+  RecurrenceRule,
+} from "./time-item";
 
 // Re-export for backwards compatibility
-export type { Priority, DateRange, ViewType, RecurrenceRule } from './time-item';
+export type {
+  Priority,
+  DateRange,
+  ViewType,
+  RecurrenceRule,
+} from "./time-item";
 
 // ============================================================================
 // Core Types
 // ============================================================================
 
-export type TabType = 'my-day' | 'tasks' | 'resources' | 'team';
-export type BlockType = 'event' | 'task' | 'booking';
+export type TabType = "my-day" | "tasks" | "resources" | "team";
+export type BlockType = "event" | "task" | "booking";
 
 // ============================================================================
 // Schedule Block (Unified Event/Task/Booking)
@@ -46,11 +56,11 @@ export interface ScheduleBlock {
   updatedAt: Date;
 }
 
-export type BlockStatus = 'confirmed' | 'tentative' | 'cancelled' | 'completed';
+export type BlockStatus = "confirmed" | "tentative" | "cancelled" | "completed";
 
 // Priority is defined in time-item.ts - use that version
 
-export type RSVPStatus = 'pending' | 'accepted' | 'declined' | 'tentative';
+export type RSVPStatus = "pending" | "accepted" | "declined" | "tentative";
 
 export interface Attendee {
   id: string;
@@ -71,7 +81,7 @@ export interface RSVPInput {
 
 // RecurrenceRule for ScheduleBlock (simpler than TimeItem version)
 export interface ScheduleRecurrenceRule {
-  frequency: 'daily' | 'weekly' | 'monthly' | 'yearly' | 'custom';
+  frequency: "daily" | "weekly" | "monthly" | "yearly" | "custom";
   interval: number;
   endDate?: Date;
   count?: number;
@@ -98,10 +108,10 @@ export interface EventLayout {
 // Tasks
 // ============================================================================
 
-export type TaskStatus = 'backlog' | 'today' | 'in-progress' | 'done';
+export type TaskStatus = "backlog" | "today" | "in-progress" | "done";
 
-export interface Task extends Omit<ScheduleBlock, 'type' | 'status'> {
-  type: 'task';
+export interface Task extends Omit<ScheduleBlock, "type" | "status"> {
+  type: "task";
   status: TaskStatus;
   dueDate?: Date;
   completedAt?: Date;
@@ -124,7 +134,7 @@ export interface Subtask {
 export interface Resource {
   id: string;
   name: string;
-  type: 'room' | 'equipment' | 'vehicle' | 'other';
+  type: "room" | "equipment" | "vehicle" | "other";
   description?: string;
   capacity?: number;
   location?: string;
@@ -134,12 +144,12 @@ export interface Resource {
   available: boolean;
 }
 
-export interface Booking extends Omit<ScheduleBlock, 'type'> {
-  type: 'booking';
+export interface Booking extends Omit<ScheduleBlock, "type"> {
+  type: "booking";
   resourceId: string;
   organizerId: string;
   purpose?: string;
-  approvalStatus?: 'pending' | 'approved' | 'rejected';
+  approvalStatus?: "pending" | "approved" | "rejected";
 }
 
 // ============================================================================
@@ -183,7 +193,7 @@ export interface AvailabilitySlot {
   memberId: string;
   start: Date;
   end: Date;
-  status: 'available' | 'busy' | 'tentative' | 'out-of-office';
+  status: "available" | "busy" | "tentative" | "out-of-office";
 }
 
 // ============================================================================
@@ -233,7 +243,7 @@ export interface Command {
   label: string;
   description?: string;
   shortcut?: string;
-  category: 'navigation' | 'create' | 'search' | 'action';
+  category: "navigation" | "create" | "search" | "action";
   action: () => void;
   keywords?: string[];
 }
@@ -243,7 +253,7 @@ export interface Command {
 // ============================================================================
 
 export interface ParsedInput {
-  type: 'event' | 'task' | 'booking' | 'navigation' | 'search';
+  type: "event" | "task" | "booking" | "navigation" | "search";
   confidence: number;
   extracted: {
     title?: string;
@@ -372,7 +382,7 @@ export interface FloorPlanResource {
   id: string;
   resourceId: string; // Links to Resource
   name: string;
-  type: 'room' | 'desk' | 'equipment' | 'zone';
+  type: "room" | "desk" | "equipment" | "zone";
   path: string; // SVG path or element ID
   bounds: {
     x: number;
@@ -405,7 +415,7 @@ export interface WorkloadData {
   capacityHours: number;
   utilizationPercent: number;
   breakdown: WorkloadBreakdown;
-  trend: 'up' | 'down' | 'stable';
+  trend: "up" | "down" | "stable";
   trendPercent?: number;
 }
 
@@ -434,13 +444,13 @@ export interface TimeAnalytics {
 
 export interface AnalyticsInsight {
   id: string;
-  type: 'info' | 'warning' | 'suggestion';
+  type: "info" | "warning" | "suggestion";
   title: string;
   description: string;
   metric?: {
     value: number;
     unit: string;
-    trend?: 'up' | 'down' | 'stable';
+    trend?: "up" | "down" | "stable";
   };
   actionLabel?: string;
   action?: () => void;
@@ -452,13 +462,13 @@ export interface AnalyticsInsight {
 
 export interface SchedulingSuggestion {
   id: string;
-  type: 'time-block' | 'reschedule' | 'conflict-resolution' | 'optimization';
+  type: "time-block" | "reschedule" | "conflict-resolution" | "optimization";
   title: string;
   description: string;
   confidence: number; // 0-1
-  impact: 'low' | 'medium' | 'high';
+  impact: "low" | "medium" | "high";
   suggestedAction: {
-    type: 'create' | 'update' | 'delete' | 'move';
+    type: "create" | "update" | "delete" | "move";
     targetId?: string;
     data?: Partial<ScheduleBlock>;
   };
@@ -503,8 +513,8 @@ export interface AutoScheduleResult {
 
 export interface ConflictInfo {
   id: string;
-  type: 'overlap' | 'overload' | 'deadline' | 'preference';
-  severity: 'low' | 'medium' | 'high';
+  type: "overlap" | "overload" | "deadline" | "preference";
+  severity: "low" | "medium" | "high";
   blocks: ScheduleBlock[];
   description: string;
   suggestions: SchedulingSuggestion[];
@@ -516,7 +526,7 @@ export interface ConflictInfo {
 
 export interface UndoableAction {
   id: string;
-  type: 'create' | 'update' | 'delete' | 'move' | 'batch';
+  type: "create" | "update" | "delete" | "move" | "batch";
   timestamp: Date;
   description: string;
   undo: () => Promise<void>;

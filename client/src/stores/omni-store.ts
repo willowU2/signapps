@@ -1,13 +1,13 @@
 "use client";
 
-import { create } from 'zustand';
-import { useShallow } from 'zustand/react/shallow';
+import { create } from "zustand";
+import { useShallow } from "zustand/react/shallow";
 
-export type OmniSearchPage = 'home' | 'apps' | 'recent' | 'settings';
+export type OmniSearchPage = "home" | "apps" | "recent" | "settings";
 
 export interface OmniSearchResult {
   id: string;
-  type: 'app' | 'note' | 'mail' | 'task' | 'chat' | 'action';
+  type: "app" | "note" | "mail" | "task" | "chat" | "action";
   title: string;
   description?: string;
   icon?: string;
@@ -34,18 +34,18 @@ interface OmniState {
 
 export const useOmniStore = create<OmniState>()((set, get) => ({
   isOpen: false,
-  query: '',
-  page: 'home',
+  query: "",
+  page: "home",
   recentSearches: [],
 
-  open: () => set({ isOpen: true, query: '', page: 'home' }),
-  close: () => set({ isOpen: false, query: '', page: 'home' }),
+  open: () => set({ isOpen: true, query: "", page: "home" }),
+  close: () => set({ isOpen: false, query: "", page: "home" }),
   toggle: () => {
     const { isOpen } = get();
     if (isOpen) {
-      set({ isOpen: false, query: '', page: 'home' });
+      set({ isOpen: false, query: "", page: "home" });
     } else {
-      set({ isOpen: true, query: '', page: 'home' });
+      set({ isOpen: true, query: "", page: "home" });
     }
   },
 
@@ -78,5 +78,5 @@ export const useOmniActions = () =>
       setQuery: state.setQuery,
       setPage: state.setPage,
       addRecentSearch: state.addRecentSearch,
-    }))
+    })),
   );

@@ -28,7 +28,8 @@ function matchesLayer(
     case "my-tasks":
       return (
         event.event_type === "task" &&
-        (event.assigned_to === currentUserId || event.created_by === currentUserId)
+        (event.assigned_to === currentUserId ||
+          event.created_by === currentUserId)
       );
 
     case "team-leaves":

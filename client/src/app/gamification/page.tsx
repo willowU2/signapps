@@ -1,17 +1,17 @@
-'use client';
+"use client";
 
-import { AppLayout } from '@/components/layout/app-layout';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { XpSystemFull } from '@/components/gamification/XpSystemFull';
-import { AchievementBadges } from '@/components/gamification/AchievementBadges';
-import { ProductivityStreaks } from '@/components/gamification/ProductivityStreaks';
-import { TeamLeaderboardFull } from '@/components/gamification/TeamLeaderboardFull';
-import { FeatureDiscoveryChecklist } from '@/components/onboarding/FeatureDiscoveryChecklist';
-import { Zap } from 'lucide-react';
-import { usePageTitle } from '@/hooks/use-page-title';
+import { AppLayout } from "@/components/layout/app-layout";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { XpSystemFull } from "@/components/gamification/XpSystemFull";
+import { AchievementBadges } from "@/components/gamification/AchievementBadges";
+import { ProductivityStreaks } from "@/components/gamification/ProductivityStreaks";
+import { TeamLeaderboardFull } from "@/components/gamification/TeamLeaderboardFull";
+import { FeatureDiscoveryChecklist } from "@/components/onboarding/FeatureDiscoveryChecklist";
+import { Zap } from "lucide-react";
+import { usePageTitle } from "@/hooks/use-page-title";
 
 export default function GamificationPage() {
-  usePageTitle('Gamification');
+  usePageTitle("Gamification");
   return (
     <AppLayout>
       <div className="w-full py-6 space-y-6">
@@ -19,7 +19,9 @@ export default function GamificationPage() {
           <Zap className="w-6 h-6 text-yellow-500" />
           <div>
             <h1 className="text-2xl font-bold">Progression & Gamification</h1>
-            <p className="text-sm text-muted-foreground">Suivez votre progression et comparez-vous à votre équipe</p>
+            <p className="text-sm text-muted-foreground">
+              Suivez votre progression et comparez-vous à votre équipe
+            </p>
           </div>
         </div>
 

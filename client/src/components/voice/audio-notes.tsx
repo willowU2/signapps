@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Mic, Play, Trash2, Paperclip } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { tasksApi } from '@/lib/api/calendar';
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Mic, Play, Trash2, Paperclip } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { tasksApi } from "@/lib/api/calendar";
 
 interface AudioNote {
   id: string;
@@ -24,24 +24,24 @@ interface AudioNotesProps {
 export function AudioNotes({ taskId, calendarId }: AudioNotesProps = {}) {
   const [notes, setNotes] = useState<AudioNote[]>([
     {
-      id: '1',
-      title: 'Project kickoff notes',
-      duration: '5:23',
-      date: '2026-03-22',
+      id: "1",
+      title: "Project kickoff notes",
+      duration: "5:23",
+      date: "2026-03-22",
       recording: false,
     },
     {
-      id: '2',
-      title: 'Client feedback summary',
-      duration: '3:47',
-      date: '2026-03-21',
+      id: "2",
+      title: "Client feedback summary",
+      duration: "3:47",
+      date: "2026-03-21",
       recording: false,
     },
     {
-      id: '3',
-      title: 'Architecture discussion',
-      duration: '8:15',
-      date: '2026-03-20',
+      id: "3",
+      title: "Architecture discussion",
+      duration: "8:15",
+      date: "2026-03-20",
       recording: false,
     },
   ]);
@@ -55,9 +55,9 @@ export function AudioNotes({ taskId, calendarId }: AudioNotesProps = {}) {
       setTimeout(() => {
         const newNote: AudioNote = {
           id: Date.now().toString(),
-          title: 'New audio note',
-          duration: '0:45',
-          date: new Date().toISOString().split('T')[0],
+          title: "New audio note",
+          duration: "0:45",
+          date: new Date().toISOString().split("T")[0],
           recording: false,
         };
         setNotes((prev) => [newNote, ...prev]);
@@ -76,7 +76,7 @@ export function AudioNotes({ taskId, calendarId }: AudioNotesProps = {}) {
 
   const handleAttachToTask = async (note: AudioNote) => {
     if (!taskId) {
-      alert('No task selected. Open this panel from a task to attach notes.');
+      alert("No task selected. Open this panel from a task to attach notes.");
       return;
     }
     setAttachingId(note.id);
@@ -87,8 +87,8 @@ export function AudioNotes({ taskId, calendarId }: AudioNotesProps = {}) {
         audio_note_duration: note.duration,
       });
     } catch (err) {
-      console.error('Failed to attach audio note to task:', err);
-      alert('Failed to attach audio note. Please try again.');
+      console.error("Failed to attach audio note to task:", err);
+      alert("Failed to attach audio note. Please try again.");
     } finally {
       setAttachingId(null);
     }
@@ -102,12 +102,12 @@ export function AudioNotes({ taskId, calendarId }: AudioNotesProps = {}) {
       {/* Record Button */}
       <Button
         onClick={handleRecordClick}
-        variant={isRecording ? 'destructive' : 'default'}
-        className={cn('w-full transition-all', isRecording && 'animate-pulse')}
-        aria-label={isRecording ? 'Stop recording' : 'Start recording'}
+        variant={isRecording ? "destructive" : "default"}
+        className={cn("w-full transition-all", isRecording && "animate-pulse")}
+        aria-label={isRecording ? "Stop recording" : "Start recording"}
       >
         <Mic className="h-4 w-4 mr-2" />
-        {isRecording ? 'Recording...' : 'Record New Note'}
+        {isRecording ? "Recording..." : "Record New Note"}
       </Button>
 
       {/* Notes List */}
@@ -120,7 +120,9 @@ export function AudioNotes({ taskId, calendarId }: AudioNotesProps = {}) {
             {/* Note Header */}
             <div className="flex items-start justify-between gap-3">
               <div className="flex-1 min-w-0">
-                <h3 className="font-medium text-foreground text-sm">{note.title}</h3>
+                <h3 className="font-medium text-foreground text-sm">
+                  {note.title}
+                </h3>
                 <p className="text-xs text-muted-foreground">
                   {note.duration} • {note.date}
                 </p>
@@ -134,12 +136,12 @@ export function AudioNotes({ taskId, calendarId }: AudioNotesProps = {}) {
                 size="sm"
                 variant="outline"
                 className={cn(
-                  playingId === note.id && 'bg-primary/10 border-primary'
+                  playingId === note.id && "bg-primary/10 border-primary",
                 )}
                 aria-label={`Play note: ${note.title}`}
               >
                 <Play className="h-4 w-4 mr-1" />
-                {playingId === note.id ? 'Playing' : 'Play'}
+                {playingId === note.id ? "Playing" : "Play"}
               </Button>
 
               <Button
@@ -148,7 +150,11 @@ export function AudioNotes({ taskId, calendarId }: AudioNotesProps = {}) {
                 variant="outline"
                 disabled={attachingId === note.id}
                 aria-label="Attach to task"
-                title={taskId ? 'Attach audio note to current task' : 'Open from a task to attach'}
+                title={
+                  taskId
+                    ? "Attach audio note to current task"
+                    : "Open from a task to attach"
+                }
               >
                 <Paperclip className="h-4 w-4" />
                 {attachingId === note.id && (

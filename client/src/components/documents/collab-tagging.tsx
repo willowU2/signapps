@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Tag, X, Filter } from 'lucide-react';
-import { toast } from 'sonner';
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Tag, X, Filter } from "lucide-react";
+import { toast } from "sonner";
 
 interface CollabTaggingProps {
   documentName?: string;
@@ -13,37 +13,40 @@ interface CollabTaggingProps {
 }
 
 const POPULAR_TAGS = [
-  { name: 'urgent', count: 12 },
-  { name: 'review', count: 8 },
-  { name: 'final', count: 7 },
-  { name: 'draft', count: 6 },
-  { name: 'important', count: 5 },
-  { name: 'legal', count: 4 },
-  { name: 'marketing', count: 3 },
-  { name: 'finance', count: 3 },
+  { name: "urgent", count: 12 },
+  { name: "review", count: 8 },
+  { name: "final", count: 7 },
+  { name: "draft", count: 6 },
+  { name: "important", count: 5 },
+  { name: "legal", count: 4 },
+  { name: "marketing", count: 3 },
+  { name: "finance", count: 3 },
 ];
 
-export function CollabTagging({ documentName = 'document.pdf', onTagsChange }: CollabTaggingProps) {
+export function CollabTagging({
+  documentName = "document.pdf",
+  onTagsChange,
+}: CollabTaggingProps) {
   const [tags, setTags] = useState<string[]>([]);
-  const [inputValue, setInputValue] = useState('');
+  const [inputValue, setInputValue] = useState("");
   const [selectedFilter, setSelectedFilter] = useState<string | null>(null);
 
   const addTag = (tag: string) => {
     const normalized = tag.toLowerCase().trim();
     if (!normalized) return;
     if (tags.includes(normalized)) {
-      toast.info('Tag already added');
+      toast.info("Tag already added");
       return;
     }
     if (tags.length >= 10) {
-      toast.error('Maximum 10 tags allowed');
+      toast.error("Maximum 10 tags allowed");
       return;
     }
     const newTags = [...tags, normalized];
     setTags(newTags);
-    setInputValue('');
+    setInputValue("");
     onTagsChange?.(newTags);
-    toast.success('Tag added');
+    toast.success("Tag added");
   };
 
   const removeTag = (tag: string) => {
@@ -53,7 +56,7 @@ export function CollabTagging({ documentName = 'document.pdf', onTagsChange }: C
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
+    if (e.key === "Enter") {
       e.preventDefault();
       addTag(inputValue);
     }
@@ -75,7 +78,9 @@ export function CollabTagging({ documentName = 'document.pdf', onTagsChange }: C
         <CardContent className="space-y-4">
           {/* Document Preview */}
           <div className="p-3 bg-muted rounded-lg border">
-            <p className="text-sm text-muted-foreground font-medium mb-1">Document</p>
+            <p className="text-sm text-muted-foreground font-medium mb-1">
+              Document
+            </p>
             <p className="text-sm text-muted-foreground">{documentName}</p>
           </div>
 
@@ -131,7 +136,7 @@ export function CollabTagging({ documentName = 'document.pdf', onTagsChange }: C
               </label>
               <div className="flex gap-1 flex-wrap">
                 <Button
-                  variant={selectedFilter === null ? 'default' : 'outline'}
+                  variant={selectedFilter === null ? "default" : "outline"}
                   size="sm"
                   onClick={() => setSelectedFilter(null)}
                   className="text-xs"
@@ -141,7 +146,7 @@ export function CollabTagging({ documentName = 'document.pdf', onTagsChange }: C
                 {tags.map((tag) => (
                   <Button
                     key={tag}
-                    variant={selectedFilter === tag ? 'default' : 'outline'}
+                    variant={selectedFilter === tag ? "default" : "outline"}
                     size="sm"
                     onClick={() => setSelectedFilter(tag)}
                     className="text-xs"

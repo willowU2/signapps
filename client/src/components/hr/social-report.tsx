@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * Social Report Component
@@ -7,12 +7,12 @@
  * Includes export PDF button.
  */
 
-import * as React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Download, Users, TrendingUp, BookOpen, UserX } from 'lucide-react';
-import { toast } from 'sonner';
+import * as React from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Download, Users, TrendingUp, BookOpen, UserX } from "lucide-react";
+import { toast } from "sonner";
 
 export interface SocialReportData {
   totalEmployees: number;
@@ -42,14 +42,14 @@ function KPICard({
   value: string | number;
   unit?: string;
   icon: React.ReactNode;
-  trend?: 'up' | 'down' | 'neutral';
+  trend?: "up" | "down" | "neutral";
   trendLabel?: string;
   color: string;
 }) {
   const getTrendColor = () => {
-    if (trend === 'up') return 'text-green-600';
-    if (trend === 'down') return 'text-red-600';
-    return 'text-muted-foreground';
+    if (trend === "up") return "text-green-600";
+    if (trend === "down") return "text-red-600";
+    return "text-muted-foreground";
   };
 
   return (
@@ -59,9 +59,7 @@ function KPICard({
           <CardTitle className="text-sm font-medium text-muted-foreground">
             {title}
           </CardTitle>
-          <div className={`p-2 rounded-lg ${color}`}>
-            {Icon}
-          </div>
+          <div className={`p-2 rounded-lg ${color}`}>{Icon}</div>
         </div>
       </CardHeader>
       <CardContent>
@@ -72,8 +70,8 @@ function KPICard({
           </div>
           {trendLabel && (
             <p className={`text-xs font-medium ${getTrendColor()}`}>
-              {trend === 'up' && '↑ '}
-              {trend === 'down' && '↓ '}
+              {trend === "up" && "↑ "}
+              {trend === "down" && "↓ "}
               {trendLabel}
             </p>
           )}
@@ -92,9 +90,9 @@ export function SocialReport({ data, onExportPDF }: SocialReportProps) {
   const handleExport = async () => {
     try {
       onExportPDF?.();
-      toast.success('Rapport en cours de téléchargement');
+      toast.success("Rapport en cours de téléchargement");
     } catch (error) {
-      toast.error('Erreur lors de l\'export');
+      toast.error("Erreur lors de l'export");
     }
   };
 
@@ -119,7 +117,7 @@ export function SocialReport({ data, onExportPDF }: SocialReportProps) {
           value={data.totalEmployees}
           icon={<Users className="w-5 h-5 text-blue-600" />}
           color="bg-blue-100"
-          trendLabel={`+${data.newHires} embauche${data.newHires > 1 ? 's' : ''}`}
+          trendLabel={`+${data.newHires} embauche${data.newHires > 1 ? "s" : ""}`}
           trend="up"
         />
 
@@ -152,7 +150,7 @@ export function SocialReport({ data, onExportPDF }: SocialReportProps) {
           unit="%"
           icon={<UserX className="w-5 h-5 text-red-600" />}
           color="bg-red-100"
-          trendLabel={`${data.departures} départ${data.departures > 1 ? 's' : ''}`}
+          trendLabel={`${data.departures} départ${data.departures > 1 ? "s" : ""}`}
           trend="down"
         />
       </div>
@@ -197,23 +195,29 @@ export function SocialReport({ data, onExportPDF }: SocialReportProps) {
         <CardContent>
           <div className="grid gap-4 md:grid-cols-2">
             <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-              <p className="text-sm font-medium text-green-700 mb-1">Nouvelles Embauches</p>
-              <p className="text-2xl font-bold text-green-600">{data.newHires}</p>
+              <p className="text-sm font-medium text-green-700 mb-1">
+                Nouvelles Embauches
+              </p>
+              <p className="text-2xl font-bold text-green-600">
+                {data.newHires}
+              </p>
             </div>
             <div className="bg-red-50 p-4 rounded-lg border border-red-200">
               <p className="text-sm font-medium text-red-700 mb-1">Départs</p>
-              <p className="text-2xl font-bold text-red-600">{data.departures}</p>
+              <p className="text-2xl font-bold text-red-600">
+                {data.departures}
+              </p>
             </div>
           </div>
         </CardContent>
       </Card>
 
       <div className="text-xs text-muted-foreground">
-        Dernière mise à jour :{' '}
-        {data.lastUpdated.toLocaleDateString('fr-FR', {
-          day: 'numeric',
-          month: 'long',
-          year: 'numeric',
+        Dernière mise à jour :{" "}
+        {data.lastUpdated.toLocaleDateString("fr-FR", {
+          day: "numeric",
+          month: "long",
+          year: "numeric",
         })}
       </div>
     </div>

@@ -222,9 +222,16 @@ pub fn parse_negotiate_request(data: &[u8]) -> Result<Vec<Smb2Dialect>, &'static
 /// # Panics
 ///
 /// No panics — all errors are propagated via `Result`.
-pub fn build_negotiate_response(client_dialects: &[Smb2Dialect], server_guid: &[u8; 16]) -> Vec<u8> {
+pub fn build_negotiate_response(
+    client_dialects: &[Smb2Dialect],
+    server_guid: &[u8; 16],
+) -> Vec<u8> {
     // Select highest common dialect
-    let selected = client_dialects.iter().max().copied().unwrap_or(Smb2Dialect::Smb202);
+    let selected = client_dialects
+        .iter()
+        .max()
+        .copied()
+        .unwrap_or(Smb2Dialect::Smb202);
 
     let mut response = Vec::with_capacity(200);
 
@@ -256,9 +263,8 @@ pub fn build_negotiate_response(client_dialects: &[Smb2Dialect], server_guid: &[
     response.extend_from_slice(&1_048_576u32.to_le_bytes()); // MaxTransactSize (1MB)
     response.extend_from_slice(&1_048_576u32.to_le_bytes()); // MaxReadSize (1MB)
     response.extend_from_slice(&1_048_576u32.to_le_bytes()); // MaxWriteSize (1MB)
-    // SystemTime (8 bytes) — Windows FILETIME
-    let now_filetime =
-        chrono::Utc::now().timestamp() as u64 * 10_000_000 + 116_444_736_000_000_000;
+                                                             // SystemTime (8 bytes) — Windows FILETIME
+    let now_filetime = chrono::Utc::now().timestamp() as u64 * 10_000_000 + 116_444_736_000_000_000;
     response.extend_from_slice(&now_filetime.to_le_bytes());
     // ServerStartTime (8 bytes)
     response.extend_from_slice(&0u64.to_le_bytes());
@@ -266,7 +272,7 @@ pub fn build_negotiate_response(client_dialects: &[Smb2Dialect], server_guid: &[
     let sec_offset = (64 + 65) as u16; // header + body
     response.extend_from_slice(&sec_offset.to_le_bytes());
     response.extend_from_slice(&0u16.to_le_bytes()); // No security buffer
-    // NegotiateContextOffset (4 bytes)
+                                                     // NegotiateContextOffset (4 bytes)
     response.extend_from_slice(&0u32.to_le_bytes());
 
     // Fix NetBIOS length (total - 4 bytes header)
@@ -298,7 +304,11 @@ pub fn build_negotiate_response(client_dialects: &[Smb2Dialect], server_guid: &[
 ///
 /// No panics — all errors are propagated via `Result`.
 pub fn parse_session_setup_request(data: &[u8]) -> Result<SessionSetupInfo, &'static str> {
-    let offset = if data.len() > 4 && data[0] == 0x00 { 4 } else { 0 };
+    let offset = if data.len() > 4 && data[0] == 0x00 {
+        4
+    } else {
+        0
+    };
     let smb = &data[offset..];
 
     if !Smb2Header::is_smb2(smb) || smb.len() < 64 {
@@ -364,11 +374,7 @@ pub struct SessionSetupInfo {
 /// # Panics
 ///
 /// No panics — all errors are propagated via `Result`.
-pub fn build_session_setup_response(
-    message_id: u64,
-    session_id: u64,
-    status: NtStatus,
-) -> Vec<u8> {
+pub fn build_session_setup_response(message_id: u64, session_id: u64, status: NtStatus) -> Vec<u8> {
     let mut response = Vec::with_capacity(140);
 
     // NetBIOS header
@@ -392,7 +398,7 @@ pub fn build_session_setup_response(
     // Session Setup Response body (9 bytes minimum)
     response.extend_from_slice(&9u16.to_le_bytes()); // StructureSize
     response.extend_from_slice(&0u16.to_le_bytes()); // SessionFlags
-    // SecurityBufferOffset + Length
+                                                     // SecurityBufferOffset + Length
     response.extend_from_slice(&((64 + 9) as u16).to_le_bytes());
     response.extend_from_slice(&0u16.to_le_bytes()); // No security blob
     response.push(0); // Padding to reach 9 bytes body
@@ -428,7 +434,11 @@ pub fn build_session_setup_response(
 ///
 /// No panics — all errors are propagated via `Result`.
 pub fn parse_tree_connect_request(data: &[u8]) -> Result<TreeConnectInfo, &'static str> {
-    let offset = if data.len() > 4 && data[0] == 0x00 { 4 } else { 0 };
+    let offset = if data.len() > 4 && data[0] == 0x00 {
+        4
+    } else {
+        0
+    };
     let smb = &data[offset..];
 
     if !Smb2Header::is_smb2(smb) || smb.len() < 64 {
@@ -467,7 +477,11 @@ pub fn parse_tree_connect_request(data: &[u8]) -> Result<TreeConnectInfo, &'stat
         String::new()
     };
 
-    Ok(TreeConnectInfo { message_id, session_id, path })
+    Ok(TreeConnectInfo {
+        message_id,
+        session_id,
+        path,
+    })
 }
 
 /// Info extracted from a Tree Connect request.
@@ -580,7 +594,11 @@ pub struct CreateInfo {
 ///
 /// No panics — all errors are propagated via `Result`.
 pub fn parse_create_request(data: &[u8]) -> Result<CreateInfo, &'static str> {
-    let offset = if data.len() > 4 && data[0] == 0x00 { 4 } else { 0 };
+    let offset = if data.len() > 4 && data[0] == 0x00 {
+        4
+    } else {
+        0
+    };
     let smb = &data[offset..];
 
     if !Smb2Header::is_smb2(smb) || smb.len() < 64 {
@@ -622,7 +640,12 @@ pub fn parse_create_request(data: &[u8]) -> Result<CreateInfo, &'static str> {
         String::new()
     };
 
-    Ok(CreateInfo { message_id, session_id, tree_id, filename })
+    Ok(CreateInfo {
+        message_id,
+        session_id,
+        tree_id,
+        filename,
+    })
 }
 
 /// Build an SMB2 Create Response (file or directory opened successfully).
@@ -785,12 +808,7 @@ pub fn build_close_response(message_id: u64, session_id: u64, tree_id: u32) -> V
 /// # Panics
 ///
 /// No panics — all errors are propagated via `Result`.
-pub fn build_read_response(
-    message_id: u64,
-    session_id: u64,
-    tree_id: u32,
-    data: &[u8],
-) -> Vec<u8> {
+pub fn build_read_response(message_id: u64, session_id: u64, tree_id: u32, data: &[u8]) -> Vec<u8> {
     let mut resp = Vec::with_capacity(100 + data.len());
 
     // NetBIOS session header (length filled below)
@@ -867,15 +885,17 @@ mod tests {
         // Should contain SMB2 magic after NetBIOS header
         assert_eq!(&resp[4..8], &Smb2Header::MAGIC);
         // Should select highest dialect (0x0311)
-        assert_eq!(u16::from_le_bytes([resp[4 + 64 + 4], resp[4 + 64 + 5]]), 0x0311);
+        assert_eq!(
+            u16::from_le_bytes([resp[4 + 64 + 4], resp[4 + 64 + 5]]),
+            0x0311
+        );
     }
 
     #[test]
     fn negotiate_response_has_correct_length() {
         let guid = [0u8; 16];
         let resp = build_negotiate_response(&[Smb2Dialect::Smb300], &guid);
-        let netbios_len =
-            ((resp[1] as u32) << 16) | ((resp[2] as u32) << 8) | (resp[3] as u32);
+        let netbios_len = ((resp[1] as u32) << 16) | ((resp[2] as u32) << 8) | (resp[3] as u32);
         assert_eq!(netbios_len as usize, resp.len() - 4);
     }
 
@@ -891,8 +911,7 @@ mod tests {
     #[test]
     fn session_setup_response_netbios_length() {
         let resp = build_session_setup_response(2, 0x5678, NtStatus::MoreProcessingRequired);
-        let netbios_len =
-            ((resp[1] as u32) << 16) | ((resp[2] as u32) << 8) | (resp[3] as u32);
+        let netbios_len = ((resp[1] as u32) << 16) | ((resp[2] as u32) << 8) | (resp[3] as u32);
         assert_eq!(netbios_len as usize, resp.len() - 4);
     }
 
@@ -931,8 +950,7 @@ mod tests {
     fn create_response_netbios_length() {
         let file_id = [0u8; 16];
         let resp = build_create_response(99, 0, 0, file_id, NtStatus::Success);
-        let netbios_len =
-            ((resp[1] as u32) << 16) | ((resp[2] as u32) << 8) | (resp[3] as u32);
+        let netbios_len = ((resp[1] as u32) << 16) | ((resp[2] as u32) << 8) | (resp[3] as u32);
         assert_eq!(netbios_len as usize, resp.len() - 4);
     }
 
@@ -966,8 +984,7 @@ mod tests {
     #[test]
     fn close_response_netbios_length() {
         let resp = build_close_response(99, 0xABCD, 2);
-        let netbios_len =
-            ((resp[1] as u32) << 16) | ((resp[2] as u32) << 8) | (resp[3] as u32);
+        let netbios_len = ((resp[1] as u32) << 16) | ((resp[2] as u32) << 8) | (resp[3] as u32);
         assert_eq!(netbios_len as usize, resp.len() - 4);
     }
 
@@ -991,8 +1008,7 @@ mod tests {
     fn read_response_empty_data() {
         let resp = build_read_response(2, 0, 0, b"");
         assert_eq!(&resp[4..8], &Smb2Header::MAGIC);
-        let netbios_len =
-            ((resp[1] as u32) << 16) | ((resp[2] as u32) << 8) | (resp[3] as u32);
+        let netbios_len = ((resp[1] as u32) << 16) | ((resp[2] as u32) << 8) | (resp[3] as u32);
         assert_eq!(netbios_len as usize, resp.len() - 4);
     }
 }

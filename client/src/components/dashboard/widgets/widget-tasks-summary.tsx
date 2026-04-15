@@ -33,22 +33,28 @@ export function WidgetTasksSummary({ widget }: WidgetRenderProps) {
 
       const allTasksNested = await Promise.all(
         calendars.map((cal: { id: string }) =>
-          tasksApi.listTasks(cal.id).then((r) => r.data ?? []).catch(() => [])
-        )
+          tasksApi
+            .listTasks(cal.id)
+            .then((r) => r.data ?? [])
+            .catch(() => []),
+        ),
       );
-      const allTasks: Array<{ status: string; due_date?: string | null }> = allTasksNested.flat();
+      const allTasks: Array<{ status: string; due_date?: string | null }> =
+        allTasksNested.flat();
 
       const now = new Date();
       const total = allTasks.length;
       const completed = allTasks.filter((t) => t.status === "completed").length;
-      const in_progress = allTasks.filter((t) => t.status === "in_progress").length;
+      const in_progress = allTasks.filter(
+        (t) => t.status === "in_progress",
+      ).length;
       // "blocked" is not a native status — count tasks that are open and overdue as blocked
       const overdue = allTasks.filter(
         (t) =>
           t.status !== "completed" &&
           t.status !== "archived" &&
           t.due_date != null &&
-          new Date(t.due_date) < now
+          new Date(t.due_date) < now,
       ).length;
       const blocked = 0; // no native blocked status in the data model
 
@@ -97,9 +103,8 @@ export function WidgetTasksSummary({ widget }: WidgetRenderProps) {
     );
   }
 
-  const completionRate = stats.total > 0
-    ? Math.round((stats.completed / stats.total) * 100)
-    : 0;
+  const completionRate =
+    stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0;
 
   return (
     <Card className="h-full flex flex-col">
@@ -136,9 +141,7 @@ export function WidgetTasksSummary({ widget }: WidgetRenderProps) {
               <div className="text-2xl font-bold text-primary">
                 {stats.total}
               </div>
-              <div className="text-xs text-muted-foreground mt-1">
-                Total
-              </div>
+              <div className="text-xs text-muted-foreground mt-1">Total</div>
             </div>
 
             {/* Completed */}
@@ -162,9 +165,7 @@ export function WidgetTasksSummary({ widget }: WidgetRenderProps) {
                 </div>
                 <Clock className="h-4 w-4 text-blue-600" />
               </div>
-              <div className="text-xs text-muted-foreground mt-1">
-                En cours
-              </div>
+              <div className="text-xs text-muted-foreground mt-1">En cours</div>
             </div>
 
             {/* Blocked */}
@@ -175,9 +176,7 @@ export function WidgetTasksSummary({ widget }: WidgetRenderProps) {
                 </div>
                 <AlertCircle className="h-4 w-4 text-red-600" />
               </div>
-              <div className="text-xs text-muted-foreground mt-1">
-                Bloquées
-              </div>
+              <div className="text-xs text-muted-foreground mt-1">Bloquées</div>
             </div>
           </div>
 
@@ -187,8 +186,8 @@ export function WidgetTasksSummary({ widget }: WidgetRenderProps) {
               <div className="flex items-center gap-2 text-amber-700 text-sm">
                 <AlertCircle className="h-4 w-4" />
                 <span>
-                  <strong>{stats.overdue}</strong> tâche{stats.overdue > 1 ? "s" : ""} en
-                  retard
+                  <strong>{stats.overdue}</strong> tâche
+                  {stats.overdue > 1 ? "s" : ""} en retard
                 </span>
               </div>
             </div>

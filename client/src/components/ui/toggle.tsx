@@ -1,20 +1,31 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { Slot } from "@radix-ui/react-slot"
-import { cn } from "@/lib/utils"
+import * as React from "react";
+import { Slot } from "@radix-ui/react-slot";
+import { cn } from "@/lib/utils";
 
 export interface ToggleProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  pressed?: boolean
-  onPressedChange?: (pressed: boolean) => void
-  size?: "default" | "sm" | "lg"
-  variant?: "default" | "outline"
-  asChild?: boolean
+  pressed?: boolean;
+  onPressedChange?: (pressed: boolean) => void;
+  size?: "default" | "sm" | "lg";
+  variant?: "default" | "outline";
+  asChild?: boolean;
 }
 
 const Toggle = React.forwardRef<HTMLButtonElement, ToggleProps>(
-  ({ className, variant = "default", size = "default", pressed, onPressedChange, asChild = false, ...props }, ref) => {
-    const Comp = asChild ? Slot : "button"
+  (
+    {
+      className,
+      variant = "default",
+      size = "default",
+      pressed,
+      onPressedChange,
+      asChild = false,
+      ...props
+    },
+    ref,
+  ) => {
+    const Comp = asChild ? Slot : "button";
     return (
       <Comp
         ref={ref}
@@ -30,14 +41,15 @@ const Toggle = React.forwardRef<HTMLButtonElement, ToggleProps>(
             "h-8 px-2": size === "sm",
             "h-10 px-3": size === "lg",
           },
-          variant === "outline" && "border border-input bg-transparent shadow-sm hover:bg-accent hover:text-accent-foreground",
-          className
+          variant === "outline" &&
+            "border border-input bg-transparent shadow-sm hover:bg-accent hover:text-accent-foreground",
+          className,
         )}
         {...props}
       />
-    )
-  }
-)
-Toggle.displayName = "Toggle"
+    );
+  },
+);
+Toggle.displayName = "Toggle";
 
-export { Toggle }
+export { Toggle };

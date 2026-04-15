@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Code, Copy, Download, Wand2 } from 'lucide-react';
-import { toast } from 'sonner';
+import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Code, Copy, Download, Wand2 } from "lucide-react";
+import { toast } from "sonner";
 
 const TS_SDK = `// SignApps TypeScript SDK v1.0.0
 // Auto-generated — do not edit manually
@@ -113,21 +113,26 @@ class SignAppsClient:
 `;
 
 export function SdkGeneration() {
-  const [lang, setLang] = useState<'typescript' | 'python'>('typescript');
+  const [lang, setLang] = useState<"typescript" | "python">("typescript");
 
-  const code = lang === 'typescript' ? TS_SDK : PY_SDK;
+  const code = lang === "typescript" ? TS_SDK : PY_SDK;
 
   const copy = () => {
     navigator.clipboard.writeText(code);
-    toast.success(`${lang === 'typescript' ? 'TypeScript' : 'Python'} SDK copied`);
+    toast.success(
+      `${lang === "typescript" ? "TypeScript" : "Python"} SDK copied`,
+    );
   };
 
   const download = () => {
-    const filename = lang === 'typescript' ? 'signapps-sdk.ts' : 'signapps_sdk.py';
-    const blob = new Blob([code], { type: 'text/plain' });
+    const filename =
+      lang === "typescript" ? "signapps-sdk.ts" : "signapps_sdk.py";
+    const blob = new Blob([code], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = filename; a.click();
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
     URL.revokeObjectURL(url);
     toast.success(`Downloaded ${filename}`);
   };
@@ -141,23 +146,44 @@ export function SdkGeneration() {
             SDK Generation
           </CardTitle>
           <div className="flex gap-2">
-            <Button variant="ghost" size="sm" onClick={copy} className="gap-1.5">
-              <Copy className="h-3.5 w-3.5" />Copy
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={copy}
+              className="gap-1.5"
+            >
+              <Copy className="h-3.5 w-3.5" />
+              Copy
             </Button>
-            <Button variant="outline" size="sm" onClick={download} className="gap-1.5">
-              <Download className="h-3.5 w-3.5" />Download
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={download}
+              className="gap-1.5"
+            >
+              <Download className="h-3.5 w-3.5" />
+              Download
             </Button>
           </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
-        <Tabs value={lang} onValueChange={(v) => setLang(v as 'typescript' | 'python')}>
+        <Tabs
+          value={lang}
+          onValueChange={(v) => setLang(v as "typescript" | "python")}
+        >
           <TabsList>
             <TabsTrigger value="typescript" className="gap-1.5">
-              <Badge variant="outline" className="text-[10px] px-1">TS</Badge>TypeScript
+              <Badge variant="outline" className="text-[10px] px-1">
+                TS
+              </Badge>
+              TypeScript
             </TabsTrigger>
             <TabsTrigger value="python" className="gap-1.5">
-              <Badge variant="outline" className="text-[10px] px-1">PY</Badge>Python
+              <Badge variant="outline" className="text-[10px] px-1">
+                PY
+              </Badge>
+              Python
             </TabsTrigger>
           </TabsList>
           <TabsContent value="typescript">
@@ -174,7 +200,8 @@ export function SdkGeneration() {
 
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <Wand2 className="h-3.5 w-3.5" />
-          SDKs are auto-generated from the OpenAPI schema. Regenerate after API changes.
+          SDKs are auto-generated from the OpenAPI schema. Regenerate after API
+          changes.
         </div>
       </CardContent>
     </Card>

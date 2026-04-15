@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { Button } from '@/components/ui/button';
+import { useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { Button } from "@/components/ui/button";
 import {
   Brain,
   Mic,
@@ -16,44 +16,50 @@ import {
   Cloud,
   Server,
   ArrowUpCircle,
-} from 'lucide-react';
-import { useAiCapabilities, type Capability } from '@/hooks/use-ai-capabilities';
-import { SpinnerInfinity } from 'spinners-react';
+} from "lucide-react";
+import {
+  useAiCapabilities,
+  type Capability,
+} from "@/hooks/use-ai-capabilities";
+import { SpinnerInfinity } from "spinners-react";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // HELPERS
 // ═══════════════════════════════════════════════════════════════════════════
 
 const CAPABILITY_META: Record<string, { label: string; icon: typeof Brain }> = {
-  llm: { label: 'LLM', icon: Brain },
-  stt: { label: 'Speech-to-Text', icon: Mic },
-  tts: { label: 'Text-to-Speech', icon: Volume2 },
-  ocr: { label: 'OCR', icon: ScanText },
-  embeddings: { label: 'Embeddings', icon: Database },
+  llm: { label: "LLM", icon: Brain },
+  stt: { label: "Speech-to-Text", icon: Mic },
+  tts: { label: "Text-to-Speech", icon: Volume2 },
+  ocr: { label: "OCR", icon: ScanText },
+  embeddings: { label: "Embeddings", icon: Database },
 };
 
 function getCapabilityMeta(capability: string) {
   return CAPABILITY_META[capability] ?? { label: capability, icon: Brain };
 }
 
-function getBackendTypeLabel(backendType: string): { label: string; icon: typeof Brain } {
+function getBackendTypeLabel(backendType: string): {
+  label: string;
+  icon: typeof Brain;
+} {
   switch (backendType) {
-    case 'native':
-    case 'local':
-      return { label: 'Native', icon: Server };
-    case 'http':
-      return { label: 'HTTP', icon: Server };
-    case 'cloud':
-      return { label: 'Cloud', icon: Cloud };
+    case "native":
+    case "local":
+      return { label: "Native", icon: Server };
+    case "http":
+      return { label: "HTTP", icon: Server };
+    case "cloud":
+      return { label: "Cloud", icon: Cloud };
     default:
       return { label: backendType, icon: Server };
   }
 }
 
 function qualityColor(score: number): string {
-  if (score >= 80) return 'text-green-600';
-  if (score >= 50) return 'text-yellow-600';
-  return 'text-red-600';
+  if (score >= 80) return "text-green-600";
+  if (score >= 50) return "text-yellow-600";
+  return "text-red-600";
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -76,7 +82,10 @@ function CapabilityCard({ cap }: { cap: Capability }) {
           </CardTitle>
           <div className="flex items-center gap-2">
             {cap.gpu_loaded && (
-              <Badge variant="outline" className="text-xs bg-blue-500/10 text-blue-700 border-blue-200">
+              <Badge
+                variant="outline"
+                className="text-xs bg-blue-500/10 text-blue-700 border-blue-200"
+              >
                 <Cpu className="h-3 w-3 mr-1" />
                 GPU
               </Badge>
@@ -105,7 +114,9 @@ function CapabilityCard({ cap }: { cap: Capability }) {
         <div className="space-y-1.5">
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">Qualite locale</span>
-            <span className={`text-sm font-semibold ${qualityColor(cap.local_quality)}`}>
+            <span
+              className={`text-sm font-semibold ${qualityColor(cap.local_quality)}`}
+            >
               {cap.local_quality}%
             </span>
           </div>
@@ -117,7 +128,9 @@ function CapabilityCard({ cap }: { cap: Capability }) {
           <div className="space-y-1.5">
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">Qualite cloud</span>
-              <span className={`text-sm font-semibold ${qualityColor(cap.cloud_quality)}`}>
+              <span
+                className={`text-sm font-semibold ${qualityColor(cap.cloud_quality)}`}
+              >
                 {cap.cloud_quality}%
               </span>
             </div>
@@ -140,12 +153,14 @@ function CapabilityCard({ cap }: { cap: Capability }) {
         {/* Backends list */}
         {cap.backends.length > 0 && (
           <div className="pt-2 border-t space-y-1">
-            <p className="text-xs text-muted-foreground font-medium">Backends disponibles</p>
+            <p className="text-xs text-muted-foreground font-medium">
+              Backends disponibles
+            </p>
             <div className="flex flex-wrap gap-1">
               {cap.backends.map((b) => (
                 <Badge
                   key={b.name}
-                  variant={b.available ? 'outline' : 'secondary'}
+                  variant={b.available ? "outline" : "secondary"}
                   className="text-[10px]"
                 >
                   {b.name} ({b.quality_score}%)
@@ -174,7 +189,8 @@ function CapabilityCard({ cap }: { cap: Capability }) {
 // ═══════════════════════════════════════════════════════════════════════════
 
 export function CapabilityDashboard() {
-  const { capabilities, loading, error, fetchCapabilities } = useAiCapabilities();
+  const { capabilities, loading, error, fetchCapabilities } =
+    useAiCapabilities();
 
   useEffect(() => {
     fetchCapabilities();
@@ -199,7 +215,12 @@ export function CapabilityDashboard() {
       <Card>
         <CardContent className="pt-6 text-center">
           <p className="text-sm text-destructive">{error}</p>
-          <Button variant="outline" size="sm" className="mt-3" onClick={fetchCapabilities}>
+          <Button
+            variant="outline"
+            size="sm"
+            className="mt-3"
+            onClick={fetchCapabilities}
+          >
             <RefreshCw className="h-4 w-4 mr-2" />
             Reessayer
           </Button>
@@ -219,8 +240,15 @@ export function CapabilityDashboard() {
             {availableCount}/{capabilities.length} capacites disponibles
           </p>
         </div>
-        <Button variant="outline" size="sm" onClick={fetchCapabilities} disabled={loading}>
-          <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={fetchCapabilities}
+          disabled={loading}
+        >
+          <RefreshCw
+            className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`}
+          />
           Actualiser
         </Button>
       </div>
@@ -236,7 +264,8 @@ export function CapabilityDashboard() {
           <CardContent className="pt-6 text-center">
             <Brain className="h-10 w-10 mx-auto text-muted-foreground mb-3" />
             <p className="text-sm text-muted-foreground">
-              Aucune capacite IA detectee. Verifiez que le service AI est demarre.
+              Aucune capacite IA detectee. Verifiez que le service AI est
+              demarre.
             </p>
           </CardContent>
         </Card>

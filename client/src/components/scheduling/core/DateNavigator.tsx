@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * DateNavigator Component
@@ -8,7 +8,7 @@
  * Raccourcis: T=today, G=go to date, H/L=prev/next
  */
 
-import * as React from 'react';
+import * as React from "react";
 import {
   format,
   startOfWeek,
@@ -18,19 +18,19 @@ import {
   isToday,
   addDays,
   getISOWeek,
-} from 'date-fns';
-import { fr } from 'date-fns/locale';
-import { ChevronLeft, ChevronRight, CalendarIcon } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { Calendar } from '@/components/ui/calendar';
+} from "date-fns";
+import { fr } from "date-fns/locale";
+import { ChevronLeft, ChevronRight, CalendarIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from '@/components/ui/popover';
-import { useCalendarStore } from '@/stores/scheduling/calendar-store';
-import type { ViewType } from '@/lib/scheduling/types';
+} from "@/components/ui/popover";
+import { useCalendarStore } from "@/stores/scheduling/calendar-store";
+import type { ViewType } from "@/lib/scheduling/types";
 
 // ============================================================================
 // Types
@@ -48,39 +48,43 @@ interface DateNavigatorProps {
 /**
  * Get the display title based on view and date
  */
-function getDateTitle(view: ViewType, date: Date, weekStartsOn: 0 | 1 = 1): string {
+function getDateTitle(
+  view: ViewType,
+  date: Date,
+  weekStartsOn: 0 | 1 = 1,
+): string {
   const locale = { locale: fr };
 
   switch (view) {
-    case 'day':
-    case 'focus':
+    case "day":
+    case "focus":
       if (isToday(date)) {
         return "Aujourd'hui";
       }
-      return format(date, 'EEEE d MMMM yyyy', locale);
+      return format(date, "EEEE d MMMM yyyy", locale);
 
-    case 'week':
-    case 'roster': {
+    case "week":
+    case "roster": {
       const weekStart = startOfWeek(date, { weekStartsOn });
       const weekEnd = endOfWeek(date, { weekStartsOn });
       if (isSameMonth(weekStart, weekEnd)) {
-        return format(weekStart, 'MMMM yyyy', locale);
+        return format(weekStart, "MMMM yyyy", locale);
       }
       if (isSameYear(weekStart, weekEnd)) {
-        return `${format(weekStart, 'MMM', locale)} - ${format(weekEnd, 'MMM yyyy', locale)}`;
+        return `${format(weekStart, "MMM", locale)} - ${format(weekEnd, "MMM yyyy", locale)}`;
       }
-      return `${format(weekStart, 'MMM yyyy', locale)} - ${format(weekEnd, 'MMM yyyy', locale)}`;
+      return `${format(weekStart, "MMM yyyy", locale)} - ${format(weekEnd, "MMM yyyy", locale)}`;
     }
 
-    case 'month':
-    case 'heatmap':
-      return format(date, 'MMMM yyyy', locale);
+    case "month":
+    case "heatmap":
+      return format(date, "MMMM yyyy", locale);
 
-    case 'agenda':
-    case 'timeline':
-    case 'kanban':
+    case "agenda":
+    case "timeline":
+    case "kanban":
     default:
-      return format(date, 'MMMM yyyy', locale);
+      return format(date, "MMMM yyyy", locale);
   }
 }
 
@@ -108,8 +112,14 @@ export function DateNavigator({
 
   const [isCalendarOpen, setIsCalendarOpen] = React.useState(false);
 
-  const navigatePrev = React.useCallback(() => navigateRelative('prev'), [navigateRelative]);
-  const navigateNext = React.useCallback(() => navigateRelative('next'), [navigateRelative]);
+  const navigatePrev = React.useCallback(
+    () => navigateRelative("prev"),
+    [navigateRelative],
+  );
+  const navigateNext = React.useCallback(
+    () => navigateRelative("next"),
+    [navigateRelative],
+  );
 
   // Keyboard shortcuts
   React.useEffect(() => {
@@ -128,23 +138,23 @@ export function DateNavigator({
       }
 
       switch (e.key.toLowerCase()) {
-        case 't':
+        case "t":
           e.preventDefault();
           goToToday();
           break;
-        case 'g':
+        case "g":
           e.preventDefault();
           setIsCalendarOpen(true);
           break;
-        case 'h':
-        case 'arrowleft':
+        case "h":
+        case "arrowleft":
           if (!e.shiftKey) {
             e.preventDefault();
             navigatePrev();
           }
           break;
-        case 'l':
-        case 'arrowright':
+        case "l":
+        case "arrowright":
           if (!e.shiftKey) {
             e.preventDefault();
             navigateNext();
@@ -153,16 +163,16 @@ export function DateNavigator({
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [goToToday, navigatePrev, navigateNext]);
 
   const title = getDateTitle(view, currentDate, weekStartsOn);
   const weekNumber = getWeekNumber(currentDate);
-  const showWeekNumber = view === 'week' || view === 'roster';
+  const showWeekNumber = view === "week" || view === "roster";
 
   return (
-    <div className={cn('flex items-center gap-2', className)}>
+    <div className={cn("flex items-center gap-2", className)}>
       {/* Navigation Buttons */}
       <div className="flex items-center">
         <Button
@@ -206,8 +216,8 @@ export function DateNavigator({
             <Button
               variant="ghost"
               className={cn(
-                'justify-start text-left font-semibold',
-                'hover:bg-accent hover:text-accent-foreground'
+                "justify-start text-left font-semibold",
+                "hover:bg-accent hover:text-accent-foreground",
               )}
               title="Aller à une date (G)"
             >
@@ -259,11 +269,11 @@ export function DateNavigatorCompact({ className }: { className?: string }) {
   const navigateRelative = useCalendarStore((state) => state.navigateRelative);
 
   return (
-    <div className={cn('flex items-center gap-1', className)}>
+    <div className={cn("flex items-center gap-1", className)}>
       <Button
         variant="ghost"
         size="icon"
-        onClick={() => navigateRelative('prev')}
+        onClick={() => navigateRelative("prev")}
         className="h-7 w-7"
       >
         <ChevronLeft className="h-4 w-4" />
@@ -275,13 +285,13 @@ export function DateNavigatorCompact({ className }: { className?: string }) {
         onClick={goToToday}
         className="h-7 px-2 text-xs"
       >
-        {format(currentDate, 'd MMM', { locale: fr })}
+        {format(currentDate, "d MMM", { locale: fr })}
       </Button>
 
       <Button
         variant="ghost"
         size="icon"
-        onClick={() => navigateRelative('next')}
+        onClick={() => navigateRelative("next")}
         className="h-7 w-7"
       >
         <ChevronRight className="h-4 w-4" />

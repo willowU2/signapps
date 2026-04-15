@@ -15,14 +15,42 @@ interface Site {
 export function SiteManager() {
   const [sites, setSites] = useState<Site[]>([]);
   const [showForm, setShowForm] = useState(false);
-  const [newSite, setNewSite] = useState({ name: "", address: "", employeeCount: 0 });
+  const [newSite, setNewSite] = useState({
+    name: "",
+    address: "",
+    employeeCount: 0,
+  });
 
   useEffect(() => {
     setSites([
-      { id: "s1", name: "New York HQ", address: "123 Park Ave, New York, NY 10001", employeeCount: 450, status: "active" },
-      { id: "s2", name: "San Francisco Office", address: "456 Market St, San Francisco, CA 94102", employeeCount: 280, status: "active" },
-      { id: "s3", name: "Chicago Branch", address: "789 Michigan Ave, Chicago, IL 60611", employeeCount: 120, status: "inactive" },
-      { id: "s4", name: "Boston Tech Center", address: "321 Newbury St, Boston, MA 02115", employeeCount: 95, status: "active" },
+      {
+        id: "s1",
+        name: "New York HQ",
+        address: "123 Park Ave, New York, NY 10001",
+        employeeCount: 450,
+        status: "active",
+      },
+      {
+        id: "s2",
+        name: "San Francisco Office",
+        address: "456 Market St, San Francisco, CA 94102",
+        employeeCount: 280,
+        status: "active",
+      },
+      {
+        id: "s3",
+        name: "Chicago Branch",
+        address: "789 Michigan Ave, Chicago, IL 60611",
+        employeeCount: 120,
+        status: "inactive",
+      },
+      {
+        id: "s4",
+        name: "Boston Tech Center",
+        address: "321 Newbury St, Boston, MA 02115",
+        employeeCount: 95,
+        status: "active",
+      },
     ]);
   }, []);
 
@@ -45,9 +73,12 @@ export function SiteManager() {
     setSites(
       sites.map((site) =>
         site.id === id
-          ? { ...site, status: site.status === "active" ? "inactive" : "active" }
-          : site
-      )
+          ? {
+              ...site,
+              status: site.status === "active" ? "inactive" : "active",
+            }
+          : site,
+      ),
     );
   };
 
@@ -66,11 +97,15 @@ export function SiteManager() {
           <h3 className="font-semibold mb-3">Add New Site</h3>
           <div className="space-y-3">
             <div>
-              <label className="block text-sm font-medium mb-1">Site Name</label>
+              <label className="block text-sm font-medium mb-1">
+                Site Name
+              </label>
               <input
                 type="text"
                 value={newSite.name}
-                onChange={(e) => setNewSite({ ...newSite, name: e.target.value })}
+                onChange={(e) =>
+                  setNewSite({ ...newSite, name: e.target.value })
+                }
                 placeholder="e.g., New York HQ"
                 className="w-full border rounded px-3 py-2"
               />
@@ -80,17 +115,26 @@ export function SiteManager() {
               <input
                 type="text"
                 value={newSite.address}
-                onChange={(e) => setNewSite({ ...newSite, address: e.target.value })}
+                onChange={(e) =>
+                  setNewSite({ ...newSite, address: e.target.value })
+                }
                 placeholder="Street address"
                 className="w-full border rounded px-3 py-2"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Employee Count</label>
+              <label className="block text-sm font-medium mb-1">
+                Employee Count
+              </label>
               <input
                 type="number"
                 value={newSite.employeeCount}
-                onChange={(e) => setNewSite({ ...newSite, employeeCount: parseInt(e.target.value) || 0 })}
+                onChange={(e) =>
+                  setNewSite({
+                    ...newSite,
+                    employeeCount: parseInt(e.target.value) || 0,
+                  })
+                }
                 placeholder="0"
                 className="w-full border rounded px-3 py-2"
               />
@@ -99,7 +143,11 @@ export function SiteManager() {
               <Button onClick={handleAddSite} size="sm">
                 Save Site
               </Button>
-              <Button variant="outline" size="sm" onClick={() => setShowForm(false)}>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowForm(false)}
+              >
                 Cancel
               </Button>
             </div>
@@ -118,18 +166,22 @@ export function SiteManager() {
                   <span className="text-sm">{site.address}</span>
                 </div>
               </div>
-              <span className={`text-xs font-bold px-2 py-1 rounded ${
-                site.status === "active"
-                  ? "bg-green-100 text-green-800"
-                  : "bg-muted text-gray-800"
-              }`}>
+              <span
+                className={`text-xs font-bold px-2 py-1 rounded ${
+                  site.status === "active"
+                    ? "bg-green-100 text-green-800"
+                    : "bg-muted text-gray-800"
+                }`}
+              >
                 {site.status === "active" ? "Active" : "Inactive"}
               </span>
             </div>
 
             <div className="flex items-center space-x-2 mb-4">
               <Users className="w-4 h-4 text-blue-600" />
-              <span className="font-medium">{site.employeeCount} employees</span>
+              <span className="font-medium">
+                {site.employeeCount} employees
+              </span>
             </div>
 
             <div className="flex gap-2">

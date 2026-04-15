@@ -1,7 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { Leaf, Trash2, Plus, History, Settings, GripVertical, Loader2 } from "lucide-react";
+import {
+  Leaf,
+  Trash2,
+  Plus,
+  History,
+  Settings,
+  GripVertical,
+  Loader2,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -53,7 +61,8 @@ const PLATFORM_COLORS: Record<string, string> = {
 const DEFAULT_POSTS: EvergreenPost[] = [
   {
     id: "1",
-    content: "Did you know SignApps is 100% local and free? No data leaves your network.",
+    content:
+      "Did you know SignApps is 100% local and free? No data leaves your network.",
     platforms: ["twitter", "linkedin"],
     timesRepublished: 5,
     lastPublishedAt: "2026-03-10",
@@ -61,7 +70,8 @@ const DEFAULT_POSTS: EvergreenPost[] = [
   },
   {
     id: "2",
-    content: "Top 5 reasons to switch from proprietary office suites to open-source alternatives...",
+    content:
+      "Top 5 reasons to switch from proprietary office suites to open-source alternatives...",
     platforms: ["facebook", "linkedin"],
     timesRepublished: 3,
     lastPublishedAt: "2026-02-28",
@@ -76,9 +86,15 @@ export function EvergreenQueue({
   onRemovePost,
   onSettingsChange,
 }: EvergreenQueueProps) {
-  const [posts, setPosts] = useState<EvergreenPost[]>(initialPosts ?? DEFAULT_POSTS);
+  const [posts, setPosts] = useState<EvergreenPost[]>(
+    initialPosts ?? DEFAULT_POSTS,
+  );
   const [settings, setSettings] = useState<QueueSettings>(
-    initialSettings ?? { minIntervalDays: 30, randomizeOrder: true, enabled: true }
+    initialSettings ?? {
+      minIntervalDays: 30,
+      randomizeOrder: true,
+      enabled: true,
+    },
   );
   const [newPostId, setNewPostId] = useState("");
   const [showHistory, setShowHistory] = useState<string | null>(null);
@@ -95,15 +111,20 @@ export function EvergreenQueue({
     if (!id) return;
     setLoading("add");
     try {
-      await fetch(`${getServiceUrl(ServiceName.SOCIAL)}/social/posts/${id}/evergreen`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ is_evergreen: true }),
-      });
+      await fetch(
+        `${getServiceUrl(ServiceName.SOCIAL)}/social/posts/${id}/evergreen`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ is_evergreen: true }),
+        },
+      );
       onAddPost?.(id);
       toast.success("Publication ajoutée à la file evergreen");
     } catch {
-      toast.error("Impossible de mettre à jour la publication — vérifiez l'API");
+      toast.error(
+        "Impossible de mettre à jour la publication — vérifiez l'API",
+      );
     } finally {
       setLoading(null);
       setNewPostId("");
@@ -113,11 +134,14 @@ export function EvergreenQueue({
   const handleRemove = async (post: EvergreenPost) => {
     setLoading(post.id);
     try {
-      await fetch(`${getServiceUrl(ServiceName.SOCIAL)}/social/posts/${post.id}/evergreen`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ is_evergreen: false }),
-      });
+      await fetch(
+        `${getServiceUrl(ServiceName.SOCIAL)}/social/posts/${post.id}/evergreen`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ is_evergreen: false }),
+        },
+      );
       setPosts((prev) => prev.filter((p) => p.id !== post.id));
       onRemovePost?.(post.id);
       toast.success("Retiré from evergreen queue");
@@ -136,7 +160,10 @@ export function EvergreenQueue({
           <span className="flex items-center gap-2">
             <Leaf className="w-4 h-4 text-green-500" />
             Evergreen Queue
-            <Badge variant={settings.enabled ? "default" : "secondary"} className="text-xs">
+            <Badge
+              variant={settings.enabled ? "default" : "secondary"}
+              className="text-xs"
+            >
               {settings.enabled ? "Active" : "Paused"}
             </Badge>
           </span>
@@ -155,14 +182,18 @@ export function EvergreenQueue({
                   <Label>Enable Queue</Label>
                   <Switch
                     checked={settings.enabled}
-                    onCheckedChange={(v) => handleSettingsChange({ enabled: v })}
+                    onCheckedChange={(v) =>
+                      handleSettingsChange({ enabled: v })
+                    }
                   />
                 </div>
                 <div className="flex items-center justify-between">
                   <Label>Randomize Order</Label>
                   <Switch
                     checked={settings.randomizeOrder}
-                    onCheckedChange={(v) => handleSettingsChange({ randomizeOrder: v })}
+                    onCheckedChange={(v) =>
+                      handleSettingsChange({ randomizeOrder: v })
+                    }
                   />
                 </div>
                 <div className="space-y-2">
@@ -174,7 +205,9 @@ export function EvergreenQueue({
                       max={365}
                       value={settings.minIntervalDays}
                       onChange={(e) =>
-                        handleSettingsChange({ minIntervalDays: Number(e.target.value) })
+                        handleSettingsChange({
+                          minIntervalDays: Number(e.target.value),
+                        })
                       }
                       className="w-24"
                     />
@@ -194,7 +227,12 @@ export function EvergreenQueue({
             onChange={(e) => setNewPostId(e.target.value)}
             className="h-8 text-xs"
           />
-          <Button size="sm" variant="outline" onClick={handleAdd} disabled={loading === "add"}>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={handleAdd}
+            disabled={loading === "add"}
+          >
             {loading === "add" ? (
               <Loader2 className="w-3 h-3 animate-spin" />
             ) : (
@@ -222,7 +260,9 @@ export function EvergreenQueue({
                       <span
                         key={p}
                         className="w-2 h-2 rounded-full"
-                        style={{ backgroundColor: PLATFORM_COLORS[p] ?? "#888" }}
+                        style={{
+                          backgroundColor: PLATFORM_COLORS[p] ?? "#888",
+                        }}
                         title={p}
                       />
                     ))}
@@ -242,7 +282,9 @@ export function EvergreenQueue({
                     size="icon"
                     className="h-6 w-6"
                     title="View history"
-                    onClick={() => setShowHistory(showHistory === post.id ? null : post.id)}
+                    onClick={() =>
+                      setShowHistory(showHistory === post.id ? null : post.id)
+                    }
                   >
                     <History className="w-3 h-3" />
                   </Button>

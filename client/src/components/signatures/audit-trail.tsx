@@ -1,12 +1,21 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useCallback } from 'react';
-import { signaturesApi } from '@/lib/api/crosslinks';
-import type { EnvelopeTransition, EnvelopeStep } from '@/types/crosslinks';
-import { Loader2, CheckCircle2, Send, Ban, Clock, ShieldCheck, Eye, UserCheck } from 'lucide-react';
-import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
-import { cn } from '@/lib/utils';
+import { useState, useEffect, useCallback } from "react";
+import { signaturesApi } from "@/lib/api/crosslinks";
+import type { EnvelopeTransition, EnvelopeStep } from "@/types/crosslinks";
+import {
+  Loader2,
+  CheckCircle2,
+  Send,
+  Ban,
+  Clock,
+  ShieldCheck,
+  Eye,
+  UserCheck,
+} from "lucide-react";
+import { format } from "date-fns";
+import { fr } from "date-fns/locale";
+import { cn } from "@/lib/utils";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -28,17 +37,17 @@ const STATUS_ICONS: Record<string, React.ReactNode> = {
 };
 
 const ACTION_LABELS: Record<string, string> = {
-  draft: 'Brouillon créé',
-  sent: 'Envoyé aux signataires',
-  in_progress: 'Signature en cours',
-  completed: 'Complété',
-  declined: 'Refusé',
-  voided: 'Annulé',
-  expired: 'Expiré',
-  signed: 'Signé',
-  viewed: 'Document consulté',
-  notified: 'Notification envoyée',
-  pending: 'En attente',
+  draft: "Brouillon créé",
+  sent: "Envoyé aux signataires",
+  in_progress: "Signature en cours",
+  completed: "Complété",
+  declined: "Refusé",
+  voided: "Annulé",
+  expired: "Expiré",
+  signed: "Signé",
+  viewed: "Document consulté",
+  notified: "Notification envoyée",
+  pending: "En attente",
 };
 
 interface TimelineEvent {
@@ -104,17 +113,17 @@ export function AuditTrail({ envelopeId, steps, className }: AuditTrailProps) {
   // Add step-level sign events
   if (steps) {
     for (const step of steps) {
-      if (step.status === 'signed' && step.signed_at) {
+      if (step.status === "signed" && step.signed_at) {
         // Check if not already covered by a transition
         const alreadyIn = events.some(
-          (e) => e.stepId === step.id && e.toStatus === 'signed'
+          (e) => e.stepId === step.id && e.toStatus === "signed",
         );
         if (!alreadyIn) {
           events.push({
             id: `step-${step.id}`,
             timestamp: step.signed_at,
-            action: 'signed',
-            toStatus: 'signed',
+            action: "signed",
+            toStatus: "signed",
             stepId: step.id,
             documentHash: step.signature_hash ?? undefined,
           });
@@ -125,7 +134,7 @@ export function AuditTrail({ envelopeId, steps, className }: AuditTrailProps) {
 
   // Sort chronologically
   events.sort(
-    (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+    (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
   );
 
   if (loading) {
@@ -145,7 +154,7 @@ export function AuditTrail({ envelopeId, steps, className }: AuditTrailProps) {
   }
 
   return (
-    <div className={cn('space-y-0', className)}>
+    <div className={cn("space-y-0", className)}>
       <div className="relative">
         {/* Vertical line */}
         <div className="absolute left-[18px] top-0 bottom-0 w-px bg-border" />
@@ -159,7 +168,10 @@ export function AuditTrail({ envelopeId, steps, className }: AuditTrailProps) {
             const isLast = idx === events.length - 1;
 
             return (
-              <div key={event.id} className={cn('relative flex gap-4 pb-4', isLast && 'pb-0')}>
+              <div
+                key={event.id}
+                className={cn("relative flex gap-4 pb-4", isLast && "pb-0")}
+              >
                 {/* Icon bubble */}
                 <div className="relative z-10 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-background border border-border shadow-sm">
                   {icon}
@@ -169,7 +181,9 @@ export function AuditTrail({ envelopeId, steps, className }: AuditTrailProps) {
                 <div className="flex-1 pt-1 pb-1">
                   <div className="flex items-start justify-between gap-2">
                     <div>
-                      <p className="text-sm font-medium leading-tight">{label}</p>
+                      <p className="text-sm font-medium leading-tight">
+                        {label}
+                      </p>
                       {event.reason && (
                         <p className="text-xs text-muted-foreground mt-0.5 italic">
                           Raison : {event.reason}
@@ -185,14 +199,17 @@ export function AuditTrail({ envelopeId, steps, className }: AuditTrailProps) {
                       )}
                       {event.stepId && steps && (
                         <p className="text-xs text-muted-foreground mt-0.5">
-                          {steps.find((s) => s.id === event.stepId)?.signer_email
+                          {steps.find((s) => s.id === event.stepId)
+                            ?.signer_email
                             ? `Signataire : ${steps.find((s) => s.id === event.stepId)!.signer_email}`
                             : null}
                         </p>
                       )}
                     </div>
                     <time className="text-xs text-muted-foreground shrink-0 pt-0.5">
-                      {format(new Date(event.timestamp), 'dd MMM yyyy HH:mm', { locale: fr })}
+                      {format(new Date(event.timestamp), "dd MMM yyyy HH:mm", {
+                        locale: fr,
+                      })}
                     </time>
                   </div>
                 </div>

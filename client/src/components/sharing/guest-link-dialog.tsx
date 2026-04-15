@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback } from "react";
 import {
   Link2,
   Copy,
@@ -11,13 +11,13 @@ import {
   Loader2,
   Trash2,
   QrCode,
-} from 'lucide-react';
-import { QRCodeSVG } from 'qrcode.react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { Badge } from '@/components/ui/badge';
+} from "lucide-react";
+import { QRCodeSVG } from "qrcode.react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -25,17 +25,17 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { toast } from 'sonner';
-import { cn } from '@/lib/utils';
-import { getClient, ServiceName } from '@/lib/api/factory';
+} from "@/components/ui/select";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
+import { getClient, ServiceName } from "@/lib/api/factory";
 
 // ============================================================================
 // Types
@@ -46,7 +46,7 @@ export interface GuestLink {
   token: string;
   resource_type: string;
   resource_id: string;
-  permission: 'read' | 'comment';
+  permission: "read" | "comment";
   expires_at: string | null;
   password_protected: boolean;
   created_at: string;
@@ -67,26 +67,26 @@ export interface GuestLinkDialogProps {
 // ============================================================================
 
 const EXPIRY_OPTIONS = [
-  { value: 'none', label: 'Pas d\'expiration' },
-  { value: '1h', label: '1 heure' },
-  { value: '24h', label: '24 heures' },
-  { value: '7d', label: '7 jours' },
-  { value: '30d', label: '30 jours' },
-  { value: '90d', label: '90 jours' },
+  { value: "none", label: "Pas d'expiration" },
+  { value: "1h", label: "1 heure" },
+  { value: "24h", label: "24 heures" },
+  { value: "7d", label: "7 jours" },
+  { value: "30d", label: "30 jours" },
+  { value: "90d", label: "90 jours" },
 ];
 
 function getExpiryDate(option: string): string | null {
   const now = new Date();
   switch (option) {
-    case '1h':
+    case "1h":
       return new Date(now.getTime() + 60 * 60 * 1000).toISOString();
-    case '24h':
+    case "24h":
       return new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString();
-    case '7d':
+    case "7d":
       return new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString();
-    case '30d':
+    case "30d":
       return new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString();
-    case '90d':
+    case "90d":
       return new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000).toISOString();
     default:
       return null;
@@ -102,16 +102,16 @@ const securelinkClient = getClient(ServiceName.SECURELINK);
 async function createGuestLink(data: {
   resource_type: string;
   resource_id: string;
-  permission: 'read' | 'comment';
+  permission: "read" | "comment";
   expires_at: string | null;
   password?: string;
 }): Promise<GuestLink> {
-  const response = await securelinkClient.post<GuestLink>('/guest-links', data);
+  const response = await securelinkClient.post<GuestLink>("/guest-links", data);
   return response.data;
 }
 
 async function listGuestLinks(resourceId: string): Promise<GuestLink[]> {
-  const response = await securelinkClient.get<GuestLink[]>('/guest-links', {
+  const response = await securelinkClient.get<GuestLink[]>("/guest-links", {
     params: { resource_id: resourceId },
   });
   return response.data;
@@ -132,10 +132,10 @@ export function GuestLinkDialog({
   resourceId,
   resourceName,
 }: GuestLinkDialogProps) {
-  const [expiry, setExpiry] = useState('7d');
-  const [permission, setPermission] = useState<'read' | 'comment'>('read');
+  const [expiry, setExpiry] = useState("7d");
+  const [permission, setPermission] = useState<"read" | "comment">("read");
   const [passwordProtected, setPasswordProtected] = useState(false);
-  const [password, setPassword] = useState('');
+  const [password, setPassword] = useState("");
   const [isCreating, setIsCreating] = useState(false);
   const [createdLink, setCreatedLink] = useState<GuestLink | null>(null);
   const [existingLinks, setExistingLinks] = useState<GuestLink[]>([]);
@@ -174,9 +174,9 @@ export function GuestLinkDialog({
       });
       setCreatedLink(link);
       setExistingLinks((prev) => [link, ...prev]);
-      toast.success('Lien de partage cree');
+      toast.success("Lien de partage cree");
     } catch {
-      toast.error('Erreur lors de la creation du lien');
+      toast.error("Erreur lors de la creation du lien");
     } finally {
       setIsCreating(false);
     }
@@ -187,7 +187,7 @@ export function GuestLinkDialog({
     const url = `${window.location.origin}/guest/${createdLink.token}`;
     navigator.clipboard.writeText(url);
     setCopied(true);
-    toast.success('Lien copie');
+    toast.success("Lien copie");
     setTimeout(() => setCopied(false), 2000);
   };
 
@@ -198,9 +198,9 @@ export function GuestLinkDialog({
       if (createdLink?.id === linkId) {
         setCreatedLink(null);
       }
-      toast.success('Lien revoque');
+      toast.success("Lien revoque");
     } catch {
-      toast.error('Erreur lors de la revocation');
+      toast.error("Erreur lors de la revocation");
     }
   };
 
@@ -208,7 +208,7 @@ export function GuestLinkDialog({
     if (!isOpen) {
       setCreatedLink(null);
       setCopied(false);
-      setPassword('');
+      setPassword("");
     }
     onOpenChange(isOpen);
   };
@@ -238,7 +238,7 @@ export function GuestLinkDialog({
             <div className="flex items-center gap-2">
               <Input
                 readOnly
-                value={`${typeof window !== 'undefined' ? window.location.origin : ''}/guest/${createdLink.token}`}
+                value={`${typeof window !== "undefined" ? window.location.origin : ""}/guest/${createdLink.token}`}
                 className="text-xs font-mono"
               />
               <Button size="sm" variant="outline" onClick={handleCopy}>
@@ -253,7 +253,7 @@ export function GuestLinkDialog({
             <div className="flex items-center gap-3">
               <div className="bg-card p-2 rounded border">
                 <QRCodeSVG
-                  value={`${typeof window !== 'undefined' ? window.location.origin : ''}/guest/${createdLink.token}`}
+                  value={`${typeof window !== "undefined" ? window.location.origin : ""}/guest/${createdLink.token}`}
                   size={80}
                   level="M"
                 />
@@ -266,7 +266,10 @@ export function GuestLinkDialog({
                 {createdLink.expires_at && (
                   <div className="flex items-center gap-1">
                     <Clock className="h-3 w-3" />
-                    Expire : {new Date(createdLink.expires_at).toLocaleDateString('fr-FR')}
+                    Expire :{" "}
+                    {new Date(createdLink.expires_at).toLocaleDateString(
+                      "fr-FR",
+                    )}
                   </div>
                 )}
               </div>
@@ -282,7 +285,7 @@ export function GuestLinkDialog({
               <Label>Permission</Label>
               <Select
                 value={permission}
-                onValueChange={(v) => setPermission(v as 'read' | 'comment')}
+                onValueChange={(v) => setPermission(v as "read" | "comment")}
               >
                 <SelectTrigger>
                   <SelectValue />

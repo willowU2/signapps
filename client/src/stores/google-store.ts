@@ -4,17 +4,17 @@
  * Zustand store for Google Workspace integration state.
  */
 
-import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
 import type {
   GoogleAuthState,
   GoogleDriveFile,
   SyncedDocument,
   SyncConflict,
   GoogleIntegrationSettings,
-} from '@/lib/office/google/types';
-import { DEFAULT_GOOGLE_SETTINGS } from '@/lib/office/google/types';
-import { googleApi } from '@/lib/office/google/api';
+} from "@/lib/office/google/types";
+import { DEFAULT_GOOGLE_SETTINGS } from "@/lib/office/google/types";
+import { googleApi } from "@/lib/office/google/api";
 
 // ============================================================================
 // Types
@@ -59,8 +59,14 @@ interface GoogleState {
   navigateToFolder: (folderId: string | null) => void;
 
   // Actions - Import/Export
-  importFile: (fileId: string, options?: { folderId?: string; keepSync?: boolean }) => Promise<string | null>;
-  exportFile: (documentId: string, options?: { googleFolderId?: string; keepSync?: boolean }) => Promise<string | null>;
+  importFile: (
+    fileId: string,
+    options?: { folderId?: string; keepSync?: boolean },
+  ) => Promise<string | null>;
+  exportFile: (
+    documentId: string,
+    options?: { googleFolderId?: string; keepSync?: boolean },
+  ) => Promise<string | null>;
 
   // Actions - Sync
   loadSyncedDocuments: () => Promise<void>;
@@ -68,10 +74,15 @@ interface GoogleState {
   enableSync: (documentId: string, googleFileId: string) => Promise<boolean>;
   disableSync: (documentId: string) => Promise<boolean>;
   triggerSync: (documentId: string) => Promise<boolean>;
-  resolveConflict: (documentId: string, resolution: 'keepLocal' | 'keepGoogle' | 'keepBoth') => Promise<boolean>;
+  resolveConflict: (
+    documentId: string,
+    resolution: "keepLocal" | "keepGoogle" | "keepBoth",
+  ) => Promise<boolean>;
 
   // Actions - Settings
-  updateSettings: (settings: Partial<GoogleIntegrationSettings>) => Promise<void>;
+  updateSettings: (
+    settings: Partial<GoogleIntegrationSettings>,
+  ) => Promise<void>;
 
   // Utility
   clearError: () => void;
@@ -125,7 +136,10 @@ export const useGoogleStore = create<GoogleState>()(
           set({
             auth: { isConnecté: false, scopes: [] },
             isAuthLoading: false,
-            authError: error instanceof Error ? error.message : 'Erreur d\'authentification',
+            authError:
+              error instanceof Error
+                ? error.message
+                : "Erreur d'authentification",
           });
         }
       },
@@ -140,7 +154,10 @@ export const useGoogleStore = create<GoogleState>()(
         } catch (error) {
           set({
             isAuthLoading: false,
-            authError: error instanceof Error ? error.message : 'Erreur d\'authentification',
+            authError:
+              error instanceof Error
+                ? error.message
+                : "Erreur d'authentification",
           });
           return null;
         }
@@ -162,7 +179,8 @@ export const useGoogleStore = create<GoogleState>()(
         } catch (error) {
           set({
             isAuthLoading: false,
-            error: error instanceof Error ? error.message : 'Erreur de déconnexion',
+            error:
+              error instanceof Error ? error.message : "Erreur de déconnexion",
           });
         }
       },
@@ -186,11 +204,13 @@ export const useGoogleStore = create<GoogleState>()(
           const response = await googleApi.listDriveFiles({
             folderId,
             pageSize: 50,
-            orderBy: 'modifiedTime',
+            orderBy: "modifiedTime",
           });
 
           set({
-            driveFiles: reset ? response.files : [...get().driveFiles, ...response.files],
+            driveFiles: reset
+              ? response.files
+              : [...get().driveFiles, ...response.files],
             filesPageToken: response.nextPageToken ?? null,
             hasMoreFiles: !!response.nextPageToken,
             isLoadingFiles: false,
@@ -198,13 +218,19 @@ export const useGoogleStore = create<GoogleState>()(
         } catch (error) {
           set({
             isLoadingFiles: false,
-            error: error instanceof Error ? error.message : 'Erreur de chargement',
+            error:
+              error instanceof Error ? error.message : "Erreur de chargement",
           });
         }
       },
 
       loadMoreFiles: async () => {
-        const { filesPageToken, hasMoreFiles, isLoadingFiles, currentFolderId } = get();
+        const {
+          filesPageToken,
+          hasMoreFiles,
+          isLoadingFiles,
+          currentFolderId,
+        } = get();
         if (!hasMoreFiles || isLoadingFiles || !filesPageToken) return;
 
         set({ isLoadingFiles: true });
@@ -225,7 +251,8 @@ export const useGoogleStore = create<GoogleState>()(
         } catch (error) {
           set({
             isLoadingFiles: false,
-            error: error instanceof Error ? error.message : 'Erreur de chargement',
+            error:
+              error instanceof Error ? error.message : "Erreur de chargement",
           });
         }
       },
@@ -249,7 +276,9 @@ export const useGoogleStore = create<GoogleState>()(
         set({ isLoadingFiles: true, error: null });
 
         try {
-          const response = await googleApi.searchDriveFiles(query, { pageSize: 50 });
+          const response = await googleApi.searchDriveFiles(query, {
+            pageSize: 50,
+          });
           set({
             driveFiles: response.files,
             filesPageToken: response.nextPageToken ?? null,
@@ -259,7 +288,8 @@ export const useGoogleStore = create<GoogleState>()(
         } catch (error) {
           set({
             isLoadingFiles: false,
-            error: error instanceof Error ? error.message : 'Erreur de recherche',
+            error:
+              error instanceof Error ? error.message : "Erreur de recherche",
           });
         }
       },
@@ -285,7 +315,8 @@ export const useGoogleStore = create<GoogleState>()(
           return result.documentId;
         } catch (error) {
           set({
-            error: error instanceof Error ? error.message : 'Erreur d\'importation',
+            error:
+              error instanceof Error ? error.message : "Erreur d'importation",
           });
           return null;
         }
@@ -297,7 +328,7 @@ export const useGoogleStore = create<GoogleState>()(
             documentId,
             googleFolderId: options.googleFolderId,
             keepSync: options.keepSync,
-            convertToNative: get().settings.defaultExportFormat === 'native',
+            convertToNative: get().settings.defaultExportFormat === "native",
           });
 
           // Refresh synced documents if sync enabled
@@ -308,7 +339,8 @@ export const useGoogleStore = create<GoogleState>()(
           return result.googleFileId;
         } catch (error) {
           set({
-            error: error instanceof Error ? error.message : 'Erreur d\'exportation',
+            error:
+              error instanceof Error ? error.message : "Erreur d'exportation",
           });
           return null;
         }
@@ -340,7 +372,7 @@ export const useGoogleStore = create<GoogleState>()(
           const synced = await googleApi.enableSync(
             documentId,
             googleFileId,
-            get().settings.defaultSyncDirection
+            get().settings.defaultSyncDirection,
           );
 
           set((state) => ({
@@ -350,7 +382,10 @@ export const useGoogleStore = create<GoogleState>()(
           return true;
         } catch (error) {
           set({
-            error: error instanceof Error ? error.message : 'Erreur de synchronisation',
+            error:
+              error instanceof Error
+                ? error.message
+                : "Erreur de synchronisation",
           });
           return false;
         }
@@ -361,13 +396,15 @@ export const useGoogleStore = create<GoogleState>()(
           await googleApi.disableSync(documentId);
 
           set((state) => ({
-            syncedDocuments: state.syncedDocuments.filter((d) => d.documentId !== documentId),
+            syncedDocuments: state.syncedDocuments.filter(
+              (d) => d.documentId !== documentId,
+            ),
           }));
 
           return true;
         } catch (error) {
           set({
-            error: error instanceof Error ? error.message : 'Erreur',
+            error: error instanceof Error ? error.message : "Erreur",
           });
           return false;
         }
@@ -381,7 +418,7 @@ export const useGoogleStore = create<GoogleState>()(
 
           set((state) => ({
             syncedDocuments: state.syncedDocuments.map((d) =>
-              d.documentId === documentId ? synced : d
+              d.documentId === documentId ? synced : d,
             ),
             isSyncing: null,
           }));
@@ -393,7 +430,10 @@ export const useGoogleStore = create<GoogleState>()(
         } catch (error) {
           set({
             isSyncing: null,
-            error: error instanceof Error ? error.message : 'Erreur de synchronisation',
+            error:
+              error instanceof Error
+                ? error.message
+                : "Erreur de synchronisation",
           });
           return false;
         }
@@ -401,19 +441,24 @@ export const useGoogleStore = create<GoogleState>()(
 
       resolveConflict: async (documentId: string, resolution) => {
         try {
-          const synced = await googleApi.resolveSyncConflict({ documentId, resolution });
+          const synced = await googleApi.resolveSyncConflict({
+            documentId,
+            resolution,
+          });
 
           set((state) => ({
             syncedDocuments: state.syncedDocuments.map((d) =>
-              d.documentId === documentId ? synced : d
+              d.documentId === documentId ? synced : d,
             ),
-            syncConflicts: state.syncConflicts.filter((c) => c.documentId !== documentId),
+            syncConflicts: state.syncConflicts.filter(
+              (c) => c.documentId !== documentId,
+            ),
           }));
 
           return true;
         } catch (error) {
           set({
-            error: error instanceof Error ? error.message : 'Erreur',
+            error: error instanceof Error ? error.message : "Erreur",
           });
           return false;
         }
@@ -426,7 +471,7 @@ export const useGoogleStore = create<GoogleState>()(
           set({ settings: updated });
         } catch (error) {
           set({
-            error: error instanceof Error ? error.message : 'Erreur',
+            error: error instanceof Error ? error.message : "Erreur",
           });
         }
       },
@@ -450,12 +495,12 @@ export const useGoogleStore = create<GoogleState>()(
       },
     }),
     {
-      name: 'google-store',
+      name: "google-store",
       partialize: (state) => ({
         settings: state.settings,
       }),
-    }
-  )
+    },
+  ),
 );
 
 // ============================================================================
@@ -464,7 +509,8 @@ export const useGoogleStore = create<GoogleState>()(
 
 export const selectIsConnecté = (state: GoogleState) => state.auth.isConnecté;
 export const selectDriveFiles = (state: GoogleState) => state.driveFiles;
-export const selectSyncedDocuments = (state: GoogleState) => state.syncedDocuments;
+export const selectSyncedDocuments = (state: GoogleState) =>
+  state.syncedDocuments;
 export const selectSyncConflicts = (state: GoogleState) => state.syncConflicts;
 export const selectSettings = (state: GoogleState) => state.settings;
 

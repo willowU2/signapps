@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { SpinnerInfinity } from 'spinners-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
+import { SpinnerInfinity } from "spinners-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import {
   Wifi,
   WifiOff,
@@ -15,16 +15,16 @@ import {
   ArrowDownUp,
   Copy,
   Plus,
-} from 'lucide-react';
-import { Tunnel, TunnelDashboardStats, TrafficDataPoint } from '@/lib/api';
+} from "lucide-react";
+import { Tunnel, TunnelDashboardStats, TrafficDataPoint } from "@/lib/api";
 
 // Utility functions
 function formatBytes(bytes: number): string {
-  if (bytes === 0) return '0 B';
+  if (bytes === 0) return "0 B";
   const k = 1024;
-  const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+  const sizes = ["B", "KB", "MB", "GB", "TB"];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
 }
 
 function formatNumber(num: number): string {
@@ -41,7 +41,7 @@ function TrafficChart({ data }: { data: TrafficDataPoint[] }) {
   }
 
   const maxValue = Math.max(
-    ...data.map(d => Math.max(d.bytes_in, d.bytes_out)),
+    ...data.map((d) => Math.max(d.bytes_in, d.bytes_out)),
     1,
   );
 
@@ -51,28 +51,57 @@ function TrafficChart({ data }: { data: TrafficDataPoint[] }) {
   const chartWidth = width - padding * 2;
   const chartHeight = height - padding * 2;
 
-  const inPath = data.map((point, i) => {
-    const x = padding + (i / (data.length - 1)) * chartWidth;
-    const y = height - padding - (point.bytes_in / maxValue) * chartHeight;
-    return `${i === 0 ? 'M' : 'L'} ${x} ${y}`;
-  }).join(' ');
+  const inPath = data
+    .map((point, i) => {
+      const x = padding + (i / (data.length - 1)) * chartWidth;
+      const y = height - padding - (point.bytes_in / maxValue) * chartHeight;
+      return `${i === 0 ? "M" : "L"} ${x} ${y}`;
+    })
+    .join(" ");
 
-  const outPath = data.map((point, i) => {
-    const x = padding + (i / (data.length - 1)) * chartWidth;
-    const y = height - padding - (point.bytes_out / maxValue) * chartHeight;
-    return `${i === 0 ? 'M' : 'L'} ${x} ${y}`;
-  }).join(' ');
+  const outPath = data
+    .map((point, i) => {
+      const x = padding + (i / (data.length - 1)) * chartWidth;
+      const y = height - padding - (point.bytes_out / maxValue) * chartHeight;
+      return `${i === 0 ? "M" : "L"} ${x} ${y}`;
+    })
+    .join(" ");
 
   return (
     <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-full">
-      <line x1={padding} y1={height - padding} x2={width - padding} y2={height - padding}
-        stroke="currentColor" strokeOpacity={0.1} />
-      <line x1={padding} y1={padding + chartHeight / 2} x2={width - padding} y2={padding + chartHeight / 2}
-        stroke="currentColor" strokeOpacity={0.1} strokeDasharray="2,2" />
-      <path d={inPath} fill="none" stroke="#22c55e" strokeWidth={2}
-        strokeLinecap="round" strokeLinejoin="round" />
-      <path d={outPath} fill="none" stroke="#3b82f6" strokeWidth={2}
-        strokeLinecap="round" strokeLinejoin="round" />
+      <line
+        x1={padding}
+        y1={height - padding}
+        x2={width - padding}
+        y2={height - padding}
+        stroke="currentColor"
+        strokeOpacity={0.1}
+      />
+      <line
+        x1={padding}
+        y1={padding + chartHeight / 2}
+        x2={width - padding}
+        y2={padding + chartHeight / 2}
+        stroke="currentColor"
+        strokeOpacity={0.1}
+        strokeDasharray="2,2"
+      />
+      <path
+        d={inPath}
+        fill="none"
+        stroke="#22c55e"
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d={outPath}
+        fill="none"
+        stroke="#3b82f6"
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }
@@ -111,9 +140,11 @@ export function VpnDashboardTab({
       {/* Quick Connect */}
       <Card className="border-green-200 dark:border-green-900">
         <CardContent className="flex items-center gap-4 p-6">
-          <div className={`flex h-16 w-16 items-center justify-center rounded-full ${
-            quickTunnel ? 'bg-green-500/20' : 'bg-muted'
-          }`}>
+          <div
+            className={`flex h-16 w-16 items-center justify-center rounded-full ${
+              quickTunnel ? "bg-green-500/20" : "bg-muted"
+            }`}
+          >
             {quickTunnel ? (
               <Wifi className="h-8 w-8 text-green-500" />
             ) : (
@@ -125,7 +156,9 @@ export function VpnDashboardTab({
             {quickTunnel ? (
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
-                  <Badge className="bg-green-500/10 text-green-600">Connecté</Badge>
+                  <Badge className="bg-green-500/10 text-green-600">
+                    Connecté
+                  </Badge>
                   <code className="text-xs bg-muted px-2 py-1 rounded">
                     {quickTunnel.subdomain}.relay
                   </code>
@@ -133,7 +166,11 @@ export function VpnDashboardTab({
                     variant="ghost"
                     size="icon"
                     className="h-6 w-6"
-                    onClick={() => onCopyPublicUrl(quickTunnel.public_url || quickTunnel.subdomain)}
+                    onClick={() =>
+                      onCopyPublicUrl(
+                        quickTunnel.public_url || quickTunnel.subdomain,
+                      )
+                    }
                   >
                     <Copy className="h-3 w-3" />
                   </Button>
@@ -203,13 +240,18 @@ export function VpnDashboardTab({
 
         <Card>
           <CardContent className="flex items-center gap-4 p-6">
-            <div className={`flex h-12 w-12 items-center justify-center rounded-lg ${
-              dashboardStats?.relay_status === 'connected' ? 'bg-green-500/10' :
-              dashboardStats?.relay_status === 'partial' ? 'bg-yellow-500/10' : 'bg-red-500/10'
-            }`}>
-              {dashboardStats?.relay_status === 'connected' ? (
+            <div
+              className={`flex h-12 w-12 items-center justify-center rounded-lg ${
+                dashboardStats?.relay_status === "connected"
+                  ? "bg-green-500/10"
+                  : dashboardStats?.relay_status === "partial"
+                    ? "bg-yellow-500/10"
+                    : "bg-red-500/10"
+              }`}
+            >
+              {dashboardStats?.relay_status === "connected" ? (
                 <Wifi className="h-6 w-6 text-green-500" />
-              ) : dashboardStats?.relay_status === 'partial' ? (
+              ) : dashboardStats?.relay_status === "partial" ? (
                 <Activity className="h-6 w-6 text-yellow-500" />
               ) : (
                 <WifiOff className="h-6 w-6 text-red-500" />
@@ -218,7 +260,7 @@ export function VpnDashboardTab({
             <div>
               <p className="text-sm text-muted-foreground">Relay Status</p>
               <p className="text-2xl font-bold capitalize">
-                {dashboardStats?.relay_status || 'Unknown'}
+                {dashboardStats?.relay_status || "Unknown"}
               </p>
             </div>
           </CardContent>
@@ -284,14 +326,22 @@ export function VpnDashboardTab({
                     className="flex items-center justify-between p-3 rounded-lg border"
                   >
                     <div className="flex items-center gap-3">
-                      <div className={`h-3 w-3 rounded-full ${
-                        tunnel.status === 'connected' ? 'bg-green-500' :
-                        tunnel.status === 'connecting' ? 'bg-yellow-500 animate-pulse' :
-                        tunnel.status === 'error' ? 'bg-red-500' : 'bg-gray-400'
-                      }`} />
+                      <div
+                        className={`h-3 w-3 rounded-full ${
+                          tunnel.status === "connected"
+                            ? "bg-green-500"
+                            : tunnel.status === "connecting"
+                              ? "bg-yellow-500 animate-pulse"
+                              : tunnel.status === "error"
+                                ? "bg-red-500"
+                                : "bg-gray-400"
+                        }`}
+                      />
                       <div>
                         <p className="font-medium">{tunnel.name}</p>
-                        <p className="text-xs text-muted-foreground">{tunnel.local_addr}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {tunnel.local_addr}
+                        </p>
                       </div>
                     </div>
                     <Button

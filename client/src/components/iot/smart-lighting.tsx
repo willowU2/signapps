@@ -17,10 +17,28 @@ interface Light {
 
 export default function SmartLighting() {
   const [lights, setLights] = useState<Light[]>([
-    { id: "1", room: "Lobby", isOn: true, brightness: 80, mode: "presence-auto" },
+    {
+      id: "1",
+      room: "Lobby",
+      isOn: true,
+      brightness: 80,
+      mode: "presence-auto",
+    },
     { id: "2", room: "Office A", isOn: true, brightness: 100, mode: "manual" },
-    { id: "3", room: "Meeting Room", isOn: false, brightness: 0, mode: "presence-auto" },
-    { id: "4", room: "Corridor", isOn: true, brightness: 60, mode: "presence-auto" },
+    {
+      id: "3",
+      room: "Meeting Room",
+      isOn: false,
+      brightness: 0,
+      mode: "presence-auto",
+    },
+    {
+      id: "4",
+      room: "Corridor",
+      isOn: true,
+      brightness: 60,
+      mode: "presence-auto",
+    },
   ]);
 
   const toggleLight = (id: string) => {
@@ -32,22 +50,24 @@ export default function SmartLighting() {
               isOn: !light.isOn,
               brightness: !light.isOn ? 50 : light.brightness,
             }
-          : light
-      )
+          : light,
+      ),
     );
   };
 
   const setBrightness = (id: string, brightness: number) => {
     setLights((prevLights) =>
       prevLights.map((light) =>
-        light.id === id ? { ...light, brightness, isOn: brightness > 0 } : light
-      )
+        light.id === id
+          ? { ...light, brightness, isOn: brightness > 0 }
+          : light,
+      ),
     );
   };
 
   const setMode = (id: string, mode: "manual" | "presence-auto") => {
     setLights((prevLights) =>
-      prevLights.map((light) => (light.id === id ? { ...light, mode } : light))
+      prevLights.map((light) => (light.id === id ? { ...light, mode } : light)),
     );
   };
 
@@ -73,7 +93,10 @@ export default function SmartLighting() {
                   {light.mode === "presence-auto" ? "Presence Auto" : "Manual"}
                 </Badge>
               </div>
-              <Switch checked={light.isOn} onCheckedChange={() => toggleLight(light.id)} />
+              <Switch
+                checked={light.isOn}
+                onCheckedChange={() => toggleLight(light.id)}
+              />
             </div>
 
             <div className="space-y-4">

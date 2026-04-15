@@ -49,7 +49,7 @@ export interface TemplateVariables {
  */
 export function interpolateTemplate(
   template: string,
-  variables: TemplateVariables
+  variables: TemplateVariables,
 ): string {
   let result = template;
 
@@ -63,7 +63,7 @@ export function interpolateTemplate(
   if (!variables.currentYear) {
     result = result.replace(
       /\{\{\s*currentYear\s*\}\}/g,
-      String(new Date().getFullYear())
+      String(new Date().getFullYear()),
     );
   }
 
@@ -416,7 +416,7 @@ export function buildEmail(
   templateType: EmailTemplateType,
   variables: TemplateVariables,
   customTemplate?: EmailTemplate,
-  branding?: TenantBranding
+  branding?: TenantBranding,
 ): { subject: string; html: string; text: string } {
   const template = customTemplate || DEFAULT_TEMPLATES[templateType];
 
@@ -441,7 +441,7 @@ export function buildEmail(
 
 export function getTemplatePreview(
   templateType: EmailTemplateType,
-  branding?: TenantBranding
+  branding?: TenantBranding,
 ): { subject: string; html: string; text: string } {
   const sampleVariables: TemplateVariables = {
     userName: "John Doe",

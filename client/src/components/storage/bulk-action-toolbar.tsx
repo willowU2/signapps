@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Trash2, Move, Copy, Tag, X, CheckSquare } from 'lucide-react';
-import { FileItem } from './types';
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Trash2, Move, Copy, Tag, X, CheckSquare } from "lucide-react";
+import { FileItem } from "./types";
 
 interface BulkActionToolbarProps {
   selectedItems: FileItem[];
@@ -36,7 +36,12 @@ export function BulkActionToolbar({
           {count} selected
         </Badge>
         {count < totalCount && (
-          <Button variant="ghost" size="sm" className="h-7 text-xs gap-1" onClick={onSelectAll}>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 text-xs gap-1"
+            onClick={onSelectAll}
+          >
             <CheckSquare className="h-3.5 w-3.5" />
             Select all {totalCount}
           </Button>

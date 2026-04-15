@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import { SpinnerInfinity } from 'spinners-react';
+import { SpinnerInfinity } from "spinners-react";
 
-import { useRef, useEffect, useState } from 'react';
-import { Play, Pause, Volume2, VolumeX, Maximize } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Slider } from '@/components/ui/slider';
+import { useRef, useEffect, useState } from "react";
+import { Play, Pause, Volume2, VolumeX, Maximize } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Slider } from "@/components/ui/slider";
 
 interface VideoPreviewProps {
   src: string;
@@ -37,20 +37,20 @@ export function VideoPreview({ src, fileName }: VideoPreviewProps) {
     const handleLoadStart = () => setIsLoading(true);
     const handleCanPlay = () => setIsLoading(false);
 
-    video.addEventListener('play', handlePlay);
-    video.addEventListener('pause', handlePause);
-    video.addEventListener('timeupdate', handleTimeUpdate);
-    video.addEventListener('durationchange', handleDurationChange);
-    video.addEventListener('loadstart', handleLoadStart);
-    video.addEventListener('canplay', handleCanPlay);
+    video.addEventListener("play", handlePlay);
+    video.addEventListener("pause", handlePause);
+    video.addEventListener("timeupdate", handleTimeUpdate);
+    video.addEventListener("durationchange", handleDurationChange);
+    video.addEventListener("loadstart", handleLoadStart);
+    video.addEventListener("canplay", handleCanPlay);
 
     return () => {
-      video.removeEventListener('play', handlePlay);
-      video.removeEventListener('pause', handlePause);
-      video.removeEventListener('timeupdate', handleTimeUpdate);
-      video.removeEventListener('durationchange', handleDurationChange);
-      video.removeEventListener('loadstart', handleLoadStart);
-      video.removeEventListener('canplay', handleCanPlay);
+      video.removeEventListener("play", handlePlay);
+      video.removeEventListener("pause", handlePause);
+      video.removeEventListener("timeupdate", handleTimeUpdate);
+      video.removeEventListener("durationchange", handleDurationChange);
+      video.removeEventListener("loadstart", handleLoadStart);
+      video.removeEventListener("canplay", handleCanPlay);
     };
   }, []);
 
@@ -97,21 +97,18 @@ export function VideoPreview({ src, fileName }: VideoPreviewProps) {
   };
 
   const formatTime = (seconds: number) => {
-    if (!isFinite(seconds)) return '0:00';
+    if (!isFinite(seconds)) return "0:00";
     const h = Math.floor(seconds / 3600);
     const m = Math.floor((seconds % 3600) / 60);
     const s = Math.floor(seconds % 60);
     if (h > 0) {
-      return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+      return `${h}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
     }
-    return `${m}:${s.toString().padStart(2, '0')}`;
+    return `${m}:${s.toString().padStart(2, "0")}`;
   };
 
   return (
-    <div
-      ref={containerRef}
-      className="bg-black rounded-lg overflow-hidden"
-    >
+    <div ref={containerRef} className="bg-black rounded-lg overflow-hidden">
       {/* Video Player */}
       <div className="relative w-full bg-black aspect-video flex items-center justify-center">
         <video
@@ -124,7 +121,13 @@ export function VideoPreview({ src, fileName }: VideoPreviewProps) {
         {/* Loading indicator */}
         {isLoading && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/50">
-            <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-8 w-8  text-white" />
+            <SpinnerInfinity
+              size={24}
+              secondaryColor="rgba(128,128,128,0.2)"
+              color="currentColor"
+              speed={120}
+              className="h-8 w-8  text-white"
+            />
           </div>
         )}
 
@@ -201,7 +204,9 @@ export function VideoPreview({ src, fileName }: VideoPreviewProps) {
               </div>
             </div>
 
-            <span className="text-xs text-gray-400">{Math.round(volume * 100)}%</span>
+            <span className="text-xs text-gray-400">
+              {Math.round(volume * 100)}%
+            </span>
           </div>
 
           {/* Right controls */}

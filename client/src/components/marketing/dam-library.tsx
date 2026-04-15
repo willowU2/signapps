@@ -1,7 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { Search, Image, Video, FileText, Download, Trash2, Tag } from "lucide-react";
+import {
+  Search,
+  Image,
+  Video,
+  FileText,
+  Download,
+  Trash2,
+  Tag,
+} from "lucide-react";
 
 interface Asset {
   id: string;
@@ -109,14 +117,14 @@ export function DAMLibrary() {
   const [selectedTags, setSelectedTags] = useState<Set<string>>(new Set());
 
   const allTags = Array.from(
-    new Set(assets.flatMap((asset) => asset.tags))
+    new Set(assets.flatMap((asset) => asset.tags)),
   ).sort();
 
   const filteredAssets = assets.filter((asset) => {
     const matchesSearch =
       asset.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       asset.tags.some((tag) =>
-        tag.toLowerCase().includes(searchQuery.toLowerCase())
+        tag.toLowerCase().includes(searchQuery.toLowerCase()),
       );
 
     const matchesTags =
@@ -151,26 +159,40 @@ export function DAMLibrary() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-foreground">Digital Asset Library</h2>
-        <p className="text-muted-foreground">Manage and organize marketing assets</p>
+        <h2 className="text-2xl font-bold text-foreground">
+          Digital Asset Library
+        </h2>
+        <p className="text-muted-foreground">
+          Manage and organize marketing assets
+        </p>
       </div>
 
       <div className="grid grid-cols-4 gap-4">
         <div className="rounded-lg border bg-blue-50 p-4">
-          <p className="text-sm text-muted-foreground font-medium">Total Assets</p>
+          <p className="text-sm text-muted-foreground font-medium">
+            Total Assets
+          </p>
           <p className="text-3xl font-bold text-blue-900">{assetStats.total}</p>
         </div>
         <div className="rounded-lg border bg-green-50 p-4">
           <p className="text-sm text-muted-foreground font-medium">Images</p>
-          <p className="text-3xl font-bold text-green-900">{assetStats.images}</p>
+          <p className="text-3xl font-bold text-green-900">
+            {assetStats.images}
+          </p>
         </div>
         <div className="rounded-lg border bg-purple-50 p-4">
           <p className="text-sm text-muted-foreground font-medium">Videos</p>
-          <p className="text-3xl font-bold text-purple-900">{assetStats.videos}</p>
+          <p className="text-3xl font-bold text-purple-900">
+            {assetStats.videos}
+          </p>
         </div>
         <div className="rounded-lg border bg-orange-50 p-4">
-          <p className="text-sm text-muted-foreground font-medium">Total Downloads</p>
-          <p className="text-3xl font-bold text-orange-900">{assetStats.totalDownloads}</p>
+          <p className="text-sm text-muted-foreground font-medium">
+            Total Downloads
+          </p>
+          <p className="text-3xl font-bold text-orange-900">
+            {assetStats.totalDownloads}
+          </p>
         </div>
       </div>
 
@@ -209,7 +231,9 @@ export function DAMLibrary() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {filteredAssets.length === 0 ? (
           <div className="col-span-full rounded-lg border border-dashed p-12 text-center bg-muted">
-            <p className="text-muted-foreground">No assets found matching your criteria</p>
+            <p className="text-muted-foreground">
+              No assets found matching your criteria
+            </p>
           </div>
         ) : (
           filteredAssets.map((asset) => (
@@ -241,7 +265,9 @@ export function DAMLibrary() {
                 </div>
 
                 <div>
-                  <p className="text-xs text-muted-foreground font-medium mb-1">Tags</p>
+                  <p className="text-xs text-muted-foreground font-medium mb-1">
+                    Tags
+                  </p>
                   <div className="flex flex-wrap gap-1">
                     {asset.tags.map((tag) => (
                       <span
@@ -256,7 +282,10 @@ export function DAMLibrary() {
 
                 <div className="border-t pt-3 flex items-center justify-between">
                   <p className="text-xs text-muted-foreground">
-                    <strong className="text-foreground">{asset.downloads}</strong> downloads
+                    <strong className="text-foreground">
+                      {asset.downloads}
+                    </strong>{" "}
+                    downloads
                   </p>
                   <div className="flex gap-2">
                     <button className="text-blue-600 hover:text-blue-700 p-2 hover:bg-blue-50 rounded">

@@ -1,29 +1,45 @@
-import type { Meta, StoryObj } from '@storybook/react';
-import { Button } from './button';
-import { Loader2, Mail, Trash2 } from 'lucide-react';
+import type { Meta, StoryObj } from "@storybook/react";
+import { Button } from "./button";
+import { Loader2, Mail, Trash2 } from "lucide-react";
 
 const meta: Meta<typeof Button> = {
-  title: 'UI/Button',
+  title: "UI/Button",
   component: Button,
-  tags: ['autodocs'],
+  tags: ["autodocs"],
   argTypes: {
     variant: {
-      control: 'select',
-      options: ['default', 'destructive', 'outline', 'secondary', 'ghost', 'link'],
+      control: "select",
+      options: [
+        "default",
+        "destructive",
+        "outline",
+        "secondary",
+        "ghost",
+        "link",
+      ],
     },
     size: {
-      control: 'select',
-      options: ['default', 'xs', 'sm', 'lg', 'icon', 'icon-xs', 'icon-sm', 'icon-lg'],
+      control: "select",
+      options: [
+        "default",
+        "xs",
+        "sm",
+        "lg",
+        "icon",
+        "icon-xs",
+        "icon-sm",
+        "icon-lg",
+      ],
     },
-    disabled: { control: 'boolean' },
+    disabled: { control: "boolean" },
   },
   parameters: {
-    layout: 'centered',
+    layout: "centered",
     docs: {
       description: {
         component:
-          'Primary action button component based on Radix UI Slot with CVA variants. ' +
-          'Supports six visual variants and eight sizes.',
+          "Primary action button component based on Radix UI Slot with CVA variants. " +
+          "Supports six visual variants and eight sizes.",
       },
     },
   },
@@ -38,9 +54,9 @@ type Story = StoryObj<typeof Button>;
 
 export const Default: Story = {
   args: {
-    children: 'Click me',
-    variant: 'default',
-    size: 'default',
+    children: "Click me",
+    variant: "default",
+    size: "default",
   },
 };
 
@@ -72,7 +88,9 @@ export const AllSizes: Story = {
       <Button size="sm">Small</Button>
       <Button size="default">Default</Button>
       <Button size="lg">Large</Button>
-      <Button size="icon"><Mail /></Button>
+      <Button size="icon">
+        <Mail />
+      </Button>
     </div>
   ),
 };
@@ -109,7 +127,7 @@ export const Destructive: Story = {
 
 export const Disabled: Story = {
   args: {
-    children: 'Cannot click',
+    children: "Cannot click",
     disabled: true,
   },
 };

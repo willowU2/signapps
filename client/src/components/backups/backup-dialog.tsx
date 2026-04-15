@@ -1,31 +1,31 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { useQueryClient, useQuery, useMutation } from '@tanstack/react-query';
+} from "@/components/ui/select";
+import { useQueryClient, useQuery, useMutation } from "@tanstack/react-query";
 import {
   backupsApi,
   containersApi,
   BackupProfile,
   CreateBackupProfileRequest,
-} from '@/lib/api';
-import { toast } from 'sonner';
+} from "@/lib/api";
+import { toast } from "sonner";
 
 interface BackupDialogProps {
   open: boolean;
@@ -33,33 +33,37 @@ interface BackupDialogProps {
   profile?: BackupProfile | null;
 }
 
-export function BackupDialog({ open, onOpenChange, profile }: BackupDialogProps) {
+export function BackupDialog({
+  open,
+  onOpenChange,
+  profile,
+}: BackupDialogProps) {
   const queryClient = useQueryClient();
   const isEdit = !!profile;
 
-  const [name, setName] = useState('');
-  const [destinationType, setDestinationType] = useState('local');
-  const [schedule, setSchedule] = useState('');
-  const [password, setPassword] = useState('');
+  const [name, setName] = useState("");
+  const [destinationType, setDestinationType] = useState("local");
+  const [schedule, setSchedule] = useState("");
+  const [password, setPassword] = useState("");
   const [selectedContainers, setSelectedContainers] = useState<string[]>([]);
 
   // Destination config fields
-  const [localPath, setLocalPath] = useState('/var/backups/signapps');
-  const [s3Endpoint, setS3Endpoint] = useState('');
-  const [s3Bucket, setS3Bucket] = useState('');
-  const [s3AccessKey, setS3AccessKey] = useState('');
-  const [s3SecretKey, setS3SecretKey] = useState('');
-  const [sftpHost, setSftpHost] = useState('');
-  const [sftpUser, setSftpUser] = useState('');
-  const [sftpPath, setSftpPath] = useState('');
+  const [localPath, setLocalPath] = useState("/var/backups/signapps");
+  const [s3Endpoint, setS3Endpoint] = useState("");
+  const [s3Bucket, setS3Bucket] = useState("");
+  const [s3AccessKey, setS3AccessKey] = useState("");
+  const [s3SecretKey, setS3SecretKey] = useState("");
+  const [sftpHost, setSftpHost] = useState("");
+  const [sftpUser, setSftpUser] = useState("");
+  const [sftpPath, setSftpPath] = useState("");
 
   // Retention
-  const [keepLast, setKeepLast] = useState('5');
-  const [keepDaily, setKeepDaily] = useState('7');
-  const [keepWeekly, setKeepWeekly] = useState('4');
+  const [keepLast, setKeepLast] = useState("5");
+  const [keepDaily, setKeepDaily] = useState("7");
+  const [keepWeekly, setKeepWeekly] = useState("4");
 
   const { data: containers = [] } = useQuery({
-    queryKey: ['containers-for-backup'],
+    queryKey: ["containers-for-backup"],
     queryFn: async () => {
       const res = await containersApi.list();
       return res.data || [];
@@ -71,20 +75,20 @@ export function BackupDialog({ open, onOpenChange, profile }: BackupDialogProps)
     if (profile) {
       setName(profile.name);
       setDestinationType(profile.destination_type);
-      setSchedule(profile.schedule || '');
+      setSchedule(profile.schedule || "");
       setSelectedContainers(profile.container_ids);
       const dc = profile.destination_config;
-      if (profile.destination_type === 'local') {
-        setLocalPath((dc.path as string) || '/var/backups/signapps');
-      } else if (profile.destination_type === 's3') {
-        setS3Endpoint((dc.endpoint as string) || '');
-        setS3Bucket((dc.bucket as string) || '');
-        setS3AccessKey((dc.access_key as string) || '');
-        setS3SecretKey((dc.secret_key as string) || '');
-      } else if (profile.destination_type === 'sftp') {
-        setSftpHost((dc.host as string) || '');
-        setSftpUser((dc.user as string) || '');
-        setSftpPath((dc.path as string) || '');
+      if (profile.destination_type === "local") {
+        setLocalPath((dc.path as string) || "/var/backups/signapps");
+      } else if (profile.destination_type === "s3") {
+        setS3Endpoint((dc.endpoint as string) || "");
+        setS3Bucket((dc.bucket as string) || "");
+        setS3AccessKey((dc.access_key as string) || "");
+        setS3SecretKey((dc.secret_key as string) || "");
+      } else if (profile.destination_type === "sftp") {
+        setSftpHost((dc.host as string) || "");
+        setSftpUser((dc.user as string) || "");
+        setSftpPath((dc.path as string) || "");
       }
       const rp = profile.retention_policy;
       if (rp) {
@@ -93,46 +97,46 @@ export function BackupDialog({ open, onOpenChange, profile }: BackupDialogProps)
         setKeepWeekly(String(rp.keep_weekly || 4));
       }
     } else {
-      setName('');
-      setDestinationType('local');
-      setSchedule('');
-      setPassword('');
+      setName("");
+      setDestinationType("local");
+      setSchedule("");
+      setPassword("");
       setSelectedContainers([]);
-      setLocalPath('/var/backups/signapps');
+      setLocalPath("/var/backups/signapps");
     }
   }, [profile, open]);
 
   const createMutation = useMutation({
     mutationFn: (data: CreateBackupProfileRequest) => backupsApi.create(data),
     onSuccess: () => {
-      toast.success('Backup profile created');
-      queryClient.invalidateQueries({ queryKey: ['backup-profiles'] });
+      toast.success("Backup profile created");
+      queryClient.invalidateQueries({ queryKey: ["backup-profiles"] });
       onOpenChange(false);
     },
-    onError: () => toast.error('Impossible de créer backup profile'),
+    onError: () => toast.error("Impossible de créer backup profile"),
   });
 
   const updateMutation = useMutation({
     mutationFn: (data: Partial<BackupProfile>) =>
       backupsApi.update(profile!.id, data),
     onSuccess: () => {
-      toast.success('Backup profile updated');
-      queryClient.invalidateQueries({ queryKey: ['backup-profiles'] });
+      toast.success("Backup profile updated");
+      queryClient.invalidateQueries({ queryKey: ["backup-profiles"] });
       onOpenChange(false);
     },
-    onError: () => toast.error('Impossible de mettre à jour backup profile'),
+    onError: () => toast.error("Impossible de mettre à jour backup profile"),
   });
 
   const buildDestinationConfig = () => {
     switch (destinationType) {
-      case 's3':
+      case "s3":
         return {
           endpoint: s3Endpoint,
           bucket: s3Bucket,
           access_key: s3AccessKey,
           secret_key: s3SecretKey,
         };
-      case 'sftp':
+      case "sftp":
         return { host: sftpHost, user: sftpUser, path: sftpPath };
       default:
         return { path: localPath };
@@ -160,7 +164,7 @@ export function BackupDialog({ open, onOpenChange, profile }: BackupDialogProps)
       } as Partial<BackupProfile>);
     } else {
       if (!password.trim()) {
-        toast.error('Password is required');
+        toast.error("Password is required");
         return;
       }
       createMutation.mutate({
@@ -188,7 +192,7 @@ export function BackupDialog({ open, onOpenChange, profile }: BackupDialogProps)
       <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
-            {isEdit ? 'Edit Backup Profile' : 'New Backup Profile'}
+            {isEdit ? "Edit Backup Profile" : "New Backup Profile"}
           </DialogTitle>
         </DialogHeader>
 
@@ -228,7 +232,7 @@ export function BackupDialog({ open, onOpenChange, profile }: BackupDialogProps)
             </Select>
           </div>
 
-          {destinationType === 'local' && (
+          {destinationType === "local" && (
             <div>
               <Label>Path</Label>
               <Input
@@ -239,7 +243,7 @@ export function BackupDialog({ open, onOpenChange, profile }: BackupDialogProps)
             </div>
           )}
 
-          {destinationType === 's3' && (
+          {destinationType === "s3" && (
             <div className="space-y-2">
               <div>
                 <Label>Endpoint</Label>
@@ -275,7 +279,7 @@ export function BackupDialog({ open, onOpenChange, profile }: BackupDialogProps)
             </div>
           )}
 
-          {destinationType === 'sftp' && (
+          {destinationType === "sftp" && (
             <div className="space-y-2">
               <div>
                 <Label>Host</Label>
@@ -314,7 +318,8 @@ export function BackupDialog({ open, onOpenChange, profile }: BackupDialogProps)
                 onChange={(e) => setPassword(e.target.value)}
               />
               <p className="text-xs text-muted-foreground mt-1">
-                Used to encrypt backups. Keep it safe — lost password means lost data.
+                Used to encrypt backups. Keep it safe — lost password means lost
+                data.
               </p>
             </div>
           )}
@@ -381,9 +386,11 @@ export function BackupDialog({ open, onOpenChange, profile }: BackupDialogProps)
           </Button>
           <Button
             onClick={handleSubmit}
-            disabled={loading || !name.trim() || selectedContainers.length === 0}
+            disabled={
+              loading || !name.trim() || selectedContainers.length === 0
+            }
           >
-            {loading ? 'Enregistrement...' : isEdit ? 'Mettre à jour' : 'Créer'}
+            {loading ? "Enregistrement..." : isEdit ? "Mettre à jour" : "Créer"}
           </Button>
         </DialogFooter>
       </DialogContent>

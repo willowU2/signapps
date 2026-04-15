@@ -65,7 +65,10 @@ fn create_router(state: AppState) -> Router {
         .merge(signapps_common::version::router("signapps-backup"));
 
     let backup_routes = Router::new()
-        .route("/api/v1/admin/backup", post(handlers::backup::create_backup))
+        .route(
+            "/api/v1/admin/backup",
+            post(handlers::backup::create_backup),
+        )
         .route("/api/v1/admin/backups", get(handlers::backup::list_backups))
         .route_layer(middleware::from_fn(require_admin))
         .route_layer(middleware::from_fn_with_state(
@@ -132,7 +135,12 @@ mod tests {
     async fn health_endpoint_returns_200() {
         let app = create_router(make_state());
         let response = app
-            .oneshot(Request::builder().uri("/health").body(Body::empty()).unwrap())
+            .oneshot(
+                Request::builder()
+                    .uri("/health")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
             .await
             .unwrap();
         assert_eq!(response.status(), StatusCode::OK);

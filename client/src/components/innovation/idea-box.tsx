@@ -33,7 +33,9 @@ export function IdeaBox() {
     },
   ]);
   const [newIdea, setNewIdea] = useState("");
-  const [votedIdeas, setVotedIdeas] = useState<Record<string, "up" | "down">>({});
+  const [votedIdeas, setVotedIdeas] = useState<Record<string, "up" | "down">>(
+    {},
+  );
 
   const submitIdea = () => {
     if (!newIdea.trim()) {
@@ -73,8 +75,8 @@ export function IdeaBox() {
 
     setIdeas(
       ideas.map((idea) =>
-        idea.id === id ? { ...idea, votes: idea.votes + voteChange } : idea
-      )
+        idea.id === id ? { ...idea, votes: idea.votes + voteChange } : idea,
+      ),
     );
     setVotedIdeas({
       ...votedIdeas,
@@ -112,7 +114,9 @@ export function IdeaBox() {
 
       <div className="space-y-2">
         {ideas.length === 0 ? (
-          <p className="text-center text-muted-foreground py-4">No ideas yet. Be the first to share!</p>
+          <p className="text-center text-muted-foreground py-4">
+            No ideas yet. Be the first to share!
+          </p>
         ) : (
           ideas.map((idea) => (
             <div key={idea.id} className="border rounded-lg p-4 hover:bg-muted">
@@ -130,11 +134,14 @@ export function IdeaBox() {
                     variant={votedIdeas[idea.id] === "up" ? "default" : "ghost"}
                     onClick={() => handleVote(idea.id, "up")}
                   >
-                    <ThumbsUp className="w-4 h-4 mr-1" /> {idea.votes > 0 ? idea.votes : ""}
+                    <ThumbsUp className="w-4 h-4 mr-1" />{" "}
+                    {idea.votes > 0 ? idea.votes : ""}
                   </Button>
                   <Button
                     size="sm"
-                    variant={votedIdeas[idea.id] === "down" ? "default" : "ghost"}
+                    variant={
+                      votedIdeas[idea.id] === "down" ? "default" : "ghost"
+                    }
                     onClick={() => handleVote(idea.id, "down")}
                   >
                     <ThumbsDown className="w-4 h-4" />

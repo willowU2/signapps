@@ -1,26 +1,26 @@
-'use client';
+"use client";
 
-import { useState, useCallback, useEffect, useMemo } from 'react';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Label } from '@/components/ui/label';
+import { useState, useCallback, useEffect, useMemo } from "react";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Label } from "@/components/ui/label";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from '@/components/ui/popover';
+} from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Separator } from '@/components/ui/separator';
-import { Calendar } from '@/components/ui/calendar';
+} from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import { Calendar } from "@/components/ui/calendar";
 import {
   Sparkles,
   Hash,
@@ -36,45 +36,45 @@ import {
   Globe,
   Layers,
   Repeat,
-} from 'lucide-react';
-import { toast } from 'sonner';
-import { useSocialStore } from '@/stores/social-store';
-import { socialApi } from '@/lib/api/social';
-import type { SocialAccount, ThreadPost } from '@/lib/api/social';
-import { PostPreview } from './post-preview';
-import { SignatureSelector } from './post-signatures';
-import { UrlShortenerPopover } from './url-shortener';
-import { SocialAttachDrive } from '@/components/interop/SocialAttachDrive';
-import { DocFromTemplate } from '@/components/interop/DocFromTemplate';
+} from "lucide-react";
+import { toast } from "sonner";
+import { useSocialStore } from "@/stores/social-store";
+import { socialApi } from "@/lib/api/social";
+import type { SocialAccount, ThreadPost } from "@/lib/api/social";
+import { PostPreview } from "./post-preview";
+import { SignatureSelector } from "./post-signatures";
+import { UrlShortenerPopover } from "./url-shortener";
+import { SocialAttachDrive } from "@/components/interop/SocialAttachDrive";
+import { DocFromTemplate } from "@/components/interop/DocFromTemplate";
 import {
   PLATFORM_LABELS,
   PLATFORM_COLORS,
   getPlatformCharLimit,
   getCharLimitColor,
-} from './platform-utils';
-import { format } from 'date-fns';
+} from "./platform-utils";
+import { format } from "date-fns";
 
 // ---------- Thread delay options ----------
 const THREAD_DELAY_OPTIONS = [
-  { value: '1', label: '1 min' },
-  { value: '2', label: '2 min' },
-  { value: '5', label: '5 min' },
-  { value: '10', label: '10 min' },
-  { value: '15', label: '15 min' },
-  { value: '30', label: '30 min' },
-  { value: '60', label: '1 hour' },
-  { value: '120', label: '2 hours' },
+  { value: "1", label: "1 min" },
+  { value: "2", label: "2 min" },
+  { value: "5", label: "5 min" },
+  { value: "10", label: "10 min" },
+  { value: "15", label: "15 min" },
+  { value: "30", label: "30 min" },
+  { value: "60", label: "1 hour" },
+  { value: "120", label: "2 hours" },
 ];
 
 // ---------- Repeat interval options ----------
 const REPEAT_OPTIONS = [
-  { value: '0', label: 'None', days: 0 },
-  { value: '1', label: 'Every day', days: 1 },
-  { value: '2', label: 'Every 2 days', days: 2 },
-  { value: '3', label: 'Every 3 days', days: 3 },
-  { value: '7', label: 'Weekly', days: 7 },
-  { value: '14', label: 'Every 2 weeks', days: 14 },
-  { value: '30', label: 'Monthly', days: 30 },
+  { value: "0", label: "None", days: 0 },
+  { value: "1", label: "Every day", days: 1 },
+  { value: "2", label: "Every 2 days", days: 2 },
+  { value: "3", label: "Every 3 days", days: 3 },
+  { value: "7", label: "Weekly", days: 7 },
+  { value: "14", label: "Every 2 weeks", days: 14 },
+  { value: "30", label: "Monthly", days: 30 },
 ] as const;
 
 // ---------- Helpers to generate IDs ----------
@@ -90,32 +90,40 @@ interface PostComposerProps {
   initialContent?: string;
 }
 
-export function PostComposer({ onSaved, initialContent = '' }: PostComposerProps) {
-  const { accounts, signatures, createPost, schedulePost, publishPost } = useSocialStore();
+export function PostComposer({
+  onSaved,
+  initialContent = "",
+}: PostComposerProps) {
+  const { accounts, signatures, createPost, schedulePost, publishPost } =
+    useSocialStore();
 
   // ----- Core content -----
   const [content, setContent] = useState(initialContent);
-  const [platformContent, setPlatformContent] = useState<Record<string, string>>({});
+  const [platformContent, setPlatformContent] = useState<
+    Record<string, string>
+  >({});
   const [selectedAccountIds, setSelectedAccountIds] = useState<string[]>([]);
   const [mediaUrls, setMediaUrls] = useState<string[]>([]);
   const [hashtags, setHashtags] = useState<string[]>([]);
 
   // ----- AI -----
-  const [aiTopic, setAiTopic] = useState('');
+  const [aiTopic, setAiTopic] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [isHashtagLoading, setIsHashtagLoading] = useState(false);
 
   // ----- Scheduling / saving -----
   const [isSaving, setIsSaving] = useState(false);
   const [scheduleDate, setScheduleDate] = useState<Date | undefined>();
-  const [scheduleHour, setScheduleHour] = useState('09');
-  const [scheduleMinute, setScheduleMinute] = useState('00');
+  const [scheduleHour, setScheduleHour] = useState("09");
+  const [scheduleMinute, setScheduleMinute] = useState("00");
 
   // ----- Recurring / Repeat -----
   const [repeatInterval, setRepeatInterval] = useState(0);
 
   // ----- Preview -----
-  const [activePreviewPlatform, setActivePreviewPlatform] = useState<SocialAccount['platform'] | null>(null);
+  const [activePreviewPlatform, setActivePreviewPlatform] = useState<
+    SocialAccount["platform"] | null
+  >(null);
 
   // ----- Thread state -----
   const [threadPosts, setThreadPosts] = useState<ThreadPost[]>([
@@ -123,7 +131,9 @@ export function PostComposer({ onSaved, initialContent = '' }: PostComposerProps
   ]);
 
   // ----- Compose mode: 'global' (single content) vs 'per-platform' -----
-  const [composeMode, setComposeMode] = useState<'global' | 'per-platform'>('global');
+  const [composeMode, setComposeMode] = useState<"global" | "per-platform">(
+    "global",
+  );
 
   // ----- Per-platform thread overrides -----
   // Key = platform string, value = ThreadPost[] for that platform
@@ -132,29 +142,35 @@ export function PostComposer({ onSaved, initialContent = '' }: PostComposerProps
   >({});
 
   // The currently active platform tab when in per-platform mode
-  const [activePlatformTab, setActivePlatformTab] = useState<string>('');
+  const [activePlatformTab, setActivePlatformTab] = useState<string>("");
 
-  const connectedAccounts = useMemo(() => accounts.filter((a) => a.status === 'connected'), [accounts]);
+  const connectedAccounts = useMemo(
+    () => accounts.filter((a) => a.status === "connected"),
+    [accounts],
+  );
   const selectedAccounts = useMemo(
     () => connectedAccounts.filter((a) => selectedAccountIds.includes(a.id)),
-    [connectedAccounts, selectedAccountIds]
+    [connectedAccounts, selectedAccountIds],
   );
   const selectedPlatforms = useMemo(
     () => [...new Set(selectedAccounts.map((a) => a.platform))],
-    [selectedAccounts]
+    [selectedAccounts],
   );
 
   // When switching to per-platform mode, populate per-platform threads from global threads
   const handleToggleComposeMode = useCallback(() => {
     setComposeMode((prev) => {
-      const next = prev === 'global' ? 'per-platform' : 'global';
-      if (next === 'per-platform') {
+      const next = prev === "global" ? "per-platform" : "global";
+      if (next === "per-platform") {
         // Pre-populate overrides from global thread state
         const overrides: Record<string, ThreadPost[]> = {};
         for (const p of selectedPlatforms) {
           // If override already exists, keep it; otherwise clone from global
           if (!platformThreadOverrides[p]) {
-            overrides[p] = threadPosts.map((tp) => ({ ...tp, id: nextThreadId() }));
+            overrides[p] = threadPosts.map((tp) => ({
+              ...tp,
+              id: nextThreadId(),
+            }));
           }
         }
         if (Object.keys(overrides).length > 0) {
@@ -167,12 +183,17 @@ export function PostComposer({ onSaved, initialContent = '' }: PostComposerProps
       }
       return next;
     });
-  }, [selectedPlatforms, threadPosts, platformThreadOverrides, activePlatformTab]);
+  }, [
+    selectedPlatforms,
+    threadPosts,
+    platformThreadOverrides,
+    activePlatformTab,
+  ]);
 
   // ----- Account toggling -----
   const toggleAccount = useCallback((id: string) => {
     setSelectedAccountIds((prev) =>
-      prev.includes(id) ? prev.filter((a) => a !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((a) => a !== id) : [...prev, id],
     );
   }, []);
 
@@ -191,7 +212,8 @@ export function PostComposer({ onSaved, initialContent = '' }: PostComposerProps
         }
         return copy;
       });
-      if (res.data.hashtags && res.data.hashtags.length > 0) setHashtags(res.data.hashtags);
+      if (res.data.hashtags && res.data.hashtags.length > 0)
+        setHashtags(res.data.hashtags);
     } catch {
       // silent -- backend not running yet
     } finally {
@@ -220,7 +242,7 @@ export function PostComposer({ onSaved, initialContent = '' }: PostComposerProps
   function updateThreadPosts(
     setter: React.Dispatch<React.SetStateAction<ThreadPost[]>>,
     fn: (prev: ThreadPost[]) => ThreadPost[],
-    syncContent?: boolean
+    syncContent?: boolean,
   ) {
     setter((prev) => {
       const next = fn(prev);
@@ -234,43 +256,43 @@ export function PostComposer({ onSaved, initialContent = '' }: PostComposerProps
 
   function addThreadPost(
     setter: React.Dispatch<React.SetStateAction<ThreadPost[]>>,
-    syncContent?: boolean
+    syncContent?: boolean,
   ) {
     updateThreadPosts(
       setter,
-      (prev) => [...prev, { id: nextThreadId(), content: '', delayMinutes: 5 }],
-      syncContent
+      (prev) => [...prev, { id: nextThreadId(), content: "", delayMinutes: 5 }],
+      syncContent,
     );
   }
 
   function removeThreadPost(
     setter: React.Dispatch<React.SetStateAction<ThreadPost[]>>,
     id: string,
-    syncContent?: boolean
+    syncContent?: boolean,
   ) {
     updateThreadPosts(
       setter,
       (prev) => prev.filter((p) => p.id !== id),
-      syncContent
+      syncContent,
     );
   }
 
   function moveThreadPost(
     setter: React.Dispatch<React.SetStateAction<ThreadPost[]>>,
     index: number,
-    direction: 'up' | 'down',
-    syncContent?: boolean
+    direction: "up" | "down",
+    syncContent?: boolean,
   ) {
     updateThreadPosts(
       setter,
       (prev) => {
-        const target = direction === 'up' ? index - 1 : index + 1;
+        const target = direction === "up" ? index - 1 : index + 1;
         if (target < 0 || target >= prev.length) return prev;
         const copy = [...prev];
         [copy[index], copy[target]] = [copy[target], copy[index]];
         return copy;
       },
-      syncContent
+      syncContent,
     );
   }
 
@@ -278,48 +300,56 @@ export function PostComposer({ onSaved, initialContent = '' }: PostComposerProps
     setter: React.Dispatch<React.SetStateAction<ThreadPost[]>>,
     id: string,
     newContent: string,
-    syncContent?: boolean
+    syncContent?: boolean,
   ) {
     updateThreadPosts(
       setter,
-      (prev) => prev.map((p) => (p.id === id ? { ...p, content: newContent } : p)),
-      syncContent
+      (prev) =>
+        prev.map((p) => (p.id === id ? { ...p, content: newContent } : p)),
+      syncContent,
     );
   }
 
   function setThreadPostDelay(
     setter: React.Dispatch<React.SetStateAction<ThreadPost[]>>,
     id: string,
-    delayMinutes: number
+    delayMinutes: number,
   ) {
     updateThreadPosts(setter, (prev) =>
-      prev.map((p) => (p.id === id ? { ...p, delayMinutes } : p))
+      prev.map((p) => (p.id === id ? { ...p, delayMinutes } : p)),
     );
   }
 
   // ----- Content getters for preview -----
-  function getContentForPlatform(platform: SocialAccount['platform']): string {
-    if (composeMode === 'per-platform' && platformThreadOverrides[platform]) {
-      return platformThreadOverrides[platform].map((p) => p.content).join('\n\n---\n\n');
+  function getContentForPlatform(platform: SocialAccount["platform"]): string {
+    if (composeMode === "per-platform" && platformThreadOverrides[platform]) {
+      return platformThreadOverrides[platform]
+        .map((p) => p.content)
+        .join("\n\n---\n\n");
     }
-    return platformContent[platform] ?? threadPosts.map((p) => p.content).join('\n\n---\n\n');
+    return (
+      platformContent[platform] ??
+      threadPosts.map((p) => p.content).join("\n\n---\n\n")
+    );
   }
 
   // ----- Active threads for the current editing context -----
   function getActiveThreads(): ThreadPost[] {
-    if (composeMode === 'per-platform' && activePlatformTab) {
+    if (composeMode === "per-platform" && activePlatformTab) {
       return platformThreadOverrides[activePlatformTab] ?? threadPosts;
     }
     return threadPosts;
   }
 
-  function getActiveThreadSetter(): React.Dispatch<React.SetStateAction<ThreadPost[]>> {
-    if (composeMode === 'per-platform' && activePlatformTab) {
+  function getActiveThreadSetter(): React.Dispatch<
+    React.SetStateAction<ThreadPost[]>
+  > {
+    if (composeMode === "per-platform" && activePlatformTab) {
       // Return a wrapper that updates the correct platform entry
       return (action: React.SetStateAction<ThreadPost[]>) => {
         setPlatformThreadOverrides((prev) => {
           const current = prev[activePlatformTab] ?? threadPosts;
-          const next = typeof action === 'function' ? action(current) : action;
+          const next = typeof action === "function" ? action(current) : action;
           return { ...prev, [activePlatformTab]: next };
         });
       };
@@ -329,7 +359,9 @@ export function PostComposer({ onSaved, initialContent = '' }: PostComposerProps
 
   // ----- Signature helpers -----
   const autoSignature = signatures.find((s) => s.autoAdd);
-  const autoSignatureText = autoSignature ? `\n---\n${autoSignature.content}` : '';
+  const autoSignatureText = autoSignature
+    ? `\n---\n${autoSignature.content}`
+    : "";
 
   function appendSignatureToContent(text: string): string {
     if (!autoSignatureText) return text;
@@ -345,7 +377,7 @@ export function PostComposer({ onSaved, initialContent = '' }: PostComposerProps
         setThreadPosts,
         lastPost.id,
         lastPost.content + suffix,
-        true
+        true,
       );
     } else {
       setContent((prev) => prev + suffix);
@@ -353,11 +385,12 @@ export function PostComposer({ onSaved, initialContent = '' }: PostComposerProps
   };
 
   // ----- Build payload -----
-  function buildPayload(status: 'draft') {
-    const baseContent = threadPosts.length === 1 ? threadPosts[0].content : content;
+  function buildPayload(status: "draft") {
+    const baseContent =
+      threadPosts.length === 1 ? threadPosts[0].content : content;
     const finalContent = appendSignatureToContent(baseContent);
 
-    const payload: import('@/stores/social-store').CreatePostRequest = {
+    const payload: import("@/stores/social-store").CreatePostRequest = {
       content: finalContent,
       accounts: selectedAccountIds,
       hashtags,
@@ -375,25 +408,28 @@ export function PostComposer({ onSaved, initialContent = '' }: PostComposerProps
         ? threadPosts.map((tp, i) =>
             i === threadPosts.length - 1
               ? { ...tp, content: appendSignatureToContent(tp.content) }
-              : tp
+              : tp,
           )
         : threadPosts;
       payload.threadPosts = postsWithSig;
     }
 
     // Platform overrides
-    if (composeMode === 'per-platform') {
-      const overrides: Record<string, { content: string; threadPosts?: ThreadPost[] }> = {};
+    if (composeMode === "per-platform") {
+      const overrides: Record<
+        string,
+        { content: string; threadPosts?: ThreadPost[] }
+      > = {};
       for (const [platform, posts] of Object.entries(platformThreadOverrides)) {
         const postsWithSig = autoSignatureText
           ? posts.map((p, i) =>
               i === posts.length - 1
                 ? { ...p, content: appendSignatureToContent(p.content) }
-                : p
+                : p,
             )
           : posts;
         overrides[platform] = {
-          content: postsWithSig.map((p) => p.content).join('\n\n'),
+          content: postsWithSig.map((p) => p.content).join("\n\n"),
           threadPosts: postsWithSig.length > 1 ? postsWithSig : undefined,
         };
       }
@@ -411,8 +447,8 @@ export function PostComposer({ onSaved, initialContent = '' }: PostComposerProps
   const handleSaveDraft = async () => {
     setIsSaving(true);
     try {
-      await createPost(buildPayload('draft'));
-      toast.success('Draft saved');
+      await createPost(buildPayload("draft"));
+      toast.success("Draft saved");
       onSaved?.();
     } catch {
       toast.error("Impossible d'enregistrer draft");
@@ -425,14 +461,18 @@ export function PostComposer({ onSaved, initialContent = '' }: PostComposerProps
     if (!scheduleDate) return;
     setIsSaving(true);
     try {
-      const post = await createPost(buildPayload('draft'));
+      const post = await createPost(buildPayload("draft"));
       const dt = new Date(scheduleDate);
       dt.setHours(parseInt(scheduleHour), parseInt(scheduleMinute), 0, 0);
-      await schedulePost(post.id, dt.toISOString(), repeatInterval > 0 ? repeatInterval : undefined);
-      toast.success('Post scheduled');
+      await schedulePost(
+        post.id,
+        dt.toISOString(),
+        repeatInterval > 0 ? repeatInterval : undefined,
+      );
+      toast.success("Post scheduled");
       onSaved?.();
     } catch {
-      toast.error('Failed to schedule post');
+      toast.error("Failed to schedule post");
     } finally {
       setIsSaving(false);
     }
@@ -441,12 +481,12 @@ export function PostComposer({ onSaved, initialContent = '' }: PostComposerProps
   const handlePublishNow = async () => {
     setIsSaving(true);
     try {
-      const post = await createPost(buildPayload('draft'));
+      const post = await createPost(buildPayload("draft"));
       await publishPost(post.id);
-      toast.success('Post published');
+      toast.success("Post published");
       onSaved?.();
     } catch {
-      toast.error('Failed to publish post');
+      toast.error("Failed to publish post");
     } finally {
       setIsSaving(false);
     }
@@ -464,7 +504,7 @@ export function PostComposer({ onSaved, initialContent = '' }: PostComposerProps
     posts: ThreadPost[],
     setter: React.Dispatch<React.SetStateAction<ThreadPost[]>>,
     syncContent: boolean,
-    charLimit?: number
+    charLimit?: number,
   ) {
     const total = posts.length;
     const isFirst = index === 0;
@@ -472,7 +512,10 @@ export function PostComposer({ onSaved, initialContent = '' }: PostComposerProps
     const textLen = post.content.length;
 
     return (
-      <div key={post.id} className="relative rounded-lg border bg-card p-3 space-y-2">
+      <div
+        key={post.id}
+        className="relative rounded-lg border bg-card p-3 space-y-2"
+      >
         {/* Header: numbering + actions */}
         <div className="flex items-center justify-between">
           <span className="text-xs font-semibold text-muted-foreground">
@@ -485,7 +528,7 @@ export function PostComposer({ onSaved, initialContent = '' }: PostComposerProps
               className="h-6 w-6"
               aria-label="Déplacer vers le haut"
               disabled={isFirst}
-              onClick={() => moveThreadPost(setter, index, 'up', syncContent)}
+              onClick={() => moveThreadPost(setter, index, "up", syncContent)}
             >
               <ChevronUp className="h-3.5 w-3.5" />
             </Button>
@@ -495,7 +538,7 @@ export function PostComposer({ onSaved, initialContent = '' }: PostComposerProps
               className="h-6 w-6"
               aria-label="Déplacer vers le bas"
               disabled={isLast}
-              onClick={() => moveThreadPost(setter, index, 'down', syncContent)}
+              onClick={() => moveThreadPost(setter, index, "down", syncContent)}
             >
               <ChevronDown className="h-3.5 w-3.5" />
             </Button>
@@ -515,9 +558,13 @@ export function PostComposer({ onSaved, initialContent = '' }: PostComposerProps
 
         {/* Textarea */}
         <Textarea
-          placeholder={isFirst ? "What's on your mind?" : `Thread post ${index + 1}...`}
+          placeholder={
+            isFirst ? "What's on your mind?" : `Thread post ${index + 1}...`
+          }
           value={post.content}
-          onChange={(e) => setThreadPostContent(setter, post.id, e.target.value, syncContent)}
+          onChange={(e) =>
+            setThreadPostContent(setter, post.id, e.target.value, syncContent)
+          }
           className="min-h-[100px] resize-none text-sm"
         />
 
@@ -527,9 +574,11 @@ export function PostComposer({ onSaved, initialContent = '' }: PostComposerProps
             {textLen} characters
             {charLimit && (
               <span className={`ml-2 ${getCharLimitColor(textLen, charLimit)}`}>
-                ({charLimit - textLen >= 0
+                (
+                {charLimit - textLen >= 0
                   ? `${charLimit - textLen} remaining`
-                  : `${Math.abs(charLimit - textLen)} over`})
+                  : `${Math.abs(charLimit - textLen)} over`}
+                )
               </span>
             )}
           </div>
@@ -573,7 +622,7 @@ export function PostComposer({ onSaved, initialContent = '' }: PostComposerProps
             placeholder="Topic to generate content about..."
             value={aiTopic}
             onChange={(e) => setAiTopic(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleAiGenerate()}
+            onKeyDown={(e) => e.key === "Enter" && handleAiGenerate()}
           />
           <Button
             variant="outline"
@@ -582,7 +631,7 @@ export function PostComposer({ onSaved, initialContent = '' }: PostComposerProps
             disabled={isGenerating || !aiTopic}
           >
             <Sparkles className="h-4 w-4 mr-1" />
-            {isGenerating ? 'Generating...' : 'Generate'}
+            {isGenerating ? "Generating..." : "Generate"}
           </Button>
         </div>
 
@@ -590,18 +639,18 @@ export function PostComposer({ onSaved, initialContent = '' }: PostComposerProps
         {selectedPlatforms.length > 1 && (
           <div className="flex items-center justify-between rounded-lg border bg-muted/30 px-3 py-2">
             <div className="flex items-center gap-2 text-sm">
-              {composeMode === 'global' ? (
+              {composeMode === "global" ? (
                 <Globe className="h-4 w-4 text-primary" />
               ) : (
                 <Layers className="h-4 w-4 text-primary" />
               )}
               <span className="font-medium">
-                {composeMode === 'global' ? 'Global mode' : 'Per-platform mode'}
+                {composeMode === "global" ? "Global mode" : "Per-platform mode"}
               </span>
               <span className="text-xs text-muted-foreground">
-                {composeMode === 'global'
-                  ? '-- same content for all platforms'
-                  : '-- customize per platform'}
+                {composeMode === "global"
+                  ? "-- same content for all platforms"
+                  : "-- customize per platform"}
               </span>
             </div>
             <Button
@@ -609,7 +658,7 @@ export function PostComposer({ onSaved, initialContent = '' }: PostComposerProps
               size="sm"
               onClick={handleToggleComposeMode}
             >
-              {composeMode === 'global' ? (
+              {composeMode === "global" ? (
                 <>
                   <Layers className="h-3.5 w-3.5 mr-1" />
                   Per-platform
@@ -625,10 +674,10 @@ export function PostComposer({ onSaved, initialContent = '' }: PostComposerProps
         )}
 
         {/* =============== GLOBAL MODE =============== */}
-        {composeMode === 'global' && (
+        {composeMode === "global" && (
           <div className="space-y-3">
             {threadPosts.map((post, i) =>
-              renderThreadPost(post, i, threadPosts, setThreadPosts, true)
+              renderThreadPost(post, i, threadPosts, setThreadPosts, true),
             )}
             <Button
               variant="outline"
@@ -643,7 +692,7 @@ export function PostComposer({ onSaved, initialContent = '' }: PostComposerProps
         )}
 
         {/* =============== PER-PLATFORM MODE =============== */}
-        {composeMode === 'per-platform' && selectedPlatforms.length > 0 && (
+        {composeMode === "per-platform" && selectedPlatforms.length > 0 && (
           <Tabs
             value={activePlatformTab || selectedPlatforms[0]}
             onValueChange={setActivePlatformTab}
@@ -660,7 +709,9 @@ export function PostComposer({ onSaved, initialContent = '' }: PostComposerProps
                     className="inline-block w-2.5 h-2.5 rounded-full"
                     style={{ backgroundColor: PLATFORM_COLORS[p] }}
                   />
-                  <span className="capitalize text-xs">{PLATFORM_LABELS[p]}</span>
+                  <span className="capitalize text-xs">
+                    {PLATFORM_LABELS[p]}
+                  </span>
                 </TabsTrigger>
               ))}
             </TabsList>
@@ -668,22 +719,40 @@ export function PostComposer({ onSaved, initialContent = '' }: PostComposerProps
             {selectedPlatforms.map((platform) => {
               const limit = getPlatformCharLimit(platform);
               const posts = platformThreadOverrides[platform] ?? threadPosts;
-              const platformSetter: React.Dispatch<React.SetStateAction<ThreadPost[]>> = (action) => {
+              const platformSetter: React.Dispatch<
+                React.SetStateAction<ThreadPost[]>
+              > = (action) => {
                 setPlatformThreadOverrides((prev) => {
-                  const current = prev[platform] ?? threadPosts.map((tp) => ({ ...tp, id: nextThreadId() }));
-                  const next = typeof action === 'function' ? action(current) : action;
+                  const current =
+                    prev[platform] ??
+                    threadPosts.map((tp) => ({ ...tp, id: nextThreadId() }));
+                  const next =
+                    typeof action === "function" ? action(current) : action;
                   return { ...prev, [platform]: next };
                 });
               };
 
               return (
-                <TabsContent key={platform} value={platform} className="space-y-3 mt-3">
+                <TabsContent
+                  key={platform}
+                  value={platform}
+                  className="space-y-3 mt-3"
+                >
                   <div className="flex items-center justify-between text-xs text-muted-foreground">
-                    <span className="capitalize font-medium">{PLATFORM_LABELS[platform]}</span>
+                    <span className="capitalize font-medium">
+                      {PLATFORM_LABELS[platform]}
+                    </span>
                     <span>Character limit: {limit.toLocaleString()}</span>
                   </div>
                   {posts.map((post, i) =>
-                    renderThreadPost(post, i, posts, platformSetter, false, limit)
+                    renderThreadPost(
+                      post,
+                      i,
+                      posts,
+                      platformSetter,
+                      false,
+                      limit,
+                    ),
                   )}
                   <Button
                     variant="outline"
@@ -705,7 +774,8 @@ export function PostComposer({ onSaved, initialContent = '' }: PostComposerProps
           <SignatureSelector onSelect={handleAppendSignature} />
           {autoSignature && (
             <span className="text-xs text-muted-foreground">
-              Auto-signature: <span className="font-medium">{autoSignature.name}</span>
+              Auto-signature:{" "}
+              <span className="font-medium">{autoSignature.name}</span>
             </span>
           )}
         </div>
@@ -723,7 +793,7 @@ export function PostComposer({ onSaved, initialContent = '' }: PostComposerProps
               disabled={isHashtagLoading || !hasContent}
             >
               <Hash className="h-3 w-3 mr-1" />
-              {isHashtagLoading ? 'Chargement...' : 'Suggest'}
+              {isHashtagLoading ? "Chargement..." : "Suggest"}
             </Button>
           </div>
           {hashtags.length > 0 && (
@@ -747,13 +817,17 @@ export function PostComposer({ onSaved, initialContent = '' }: PostComposerProps
         <div className="flex items-center gap-2 flex-wrap">
           <SocialAttachDrive
             onAttach={(attachments) => {
-              const links = attachments.map((a) => `\n📎 ${a.node.name}: ${a.url}`).join('');
+              const links = attachments
+                .map((a) => `\n📎 ${a.node.name}: ${a.url}`)
+                .join("");
               setContent((prev) => prev + links);
             }}
           />
           <DocFromTemplate
             triggerLabel="Modèle doc"
-            onInsertContent={(text) => setContent((prev) => prev ? `${prev}\n\n${text}` : text)}
+            onInsertContent={(text) =>
+              setContent((prev) => (prev ? `${prev}\n\n${text}` : text))
+            }
           />
         </div>
 
@@ -779,11 +853,11 @@ export function PostComposer({ onSaved, initialContent = '' }: PostComposerProps
           <Label className="text-sm">Media</Label>
           <div className="border-2 border-dashed rounded-lg p-4 text-center text-muted-foreground text-sm">
             <ImagePlus className="h-6 w-6 mx-auto mb-1 opacity-50" />
-            <span>Drag & drop images/video or</span>{' '}
+            <span>Drag & drop images/video or</span>{" "}
             <button
               className="underline text-primary"
               onClick={() => {
-                const url = prompt('Enter image URL:');
+                const url = prompt("Enter image URL:");
                 if (url) setMediaUrls((prev) => [...prev, url]);
               }}
             >
@@ -795,11 +869,17 @@ export function PostComposer({ onSaved, initialContent = '' }: PostComposerProps
               {mediaUrls.map((url, i) => (
                 <div key={i} className="relative">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={url} alt="" className="h-16 w-16 object-cover rounded" />
+                  <img
+                    src={url}
+                    alt=""
+                    className="h-16 w-16 object-cover rounded"
+                  />
                   <button
                     aria-label="Supprimer ce média"
                     className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full w-4 h-4 text-xs flex items-center justify-center"
-                    onClick={() => setMediaUrls((prev) => prev.filter((_, j) => j !== i))}
+                    onClick={() =>
+                      setMediaUrls((prev) => prev.filter((_, j) => j !== i))
+                    }
                   >
                     x
                   </button>
@@ -824,8 +904,8 @@ export function PostComposer({ onSaved, initialContent = '' }: PostComposerProps
                   onClick={() => toggleAccount(account.id)}
                   className={`flex items-center gap-2 px-3 py-1.5 rounded-full border text-sm transition-all ${
                     selectedAccountIds.includes(account.id)
-                      ? 'border-primary bg-primary/10 text-primary'
-                      : 'border-border hover:border-primary/50'
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-border hover:border-primary/50"
                   }`}
                 >
                   <span className="capitalize">{account.platform}</span>
@@ -839,23 +919,33 @@ export function PostComposer({ onSaved, initialContent = '' }: PostComposerProps
         {/* Character count bars per selected platform */}
         {selectedPlatforms.length > 0 && hasContent && (
           <div className="space-y-2 pt-1">
-            <p className="text-xs text-muted-foreground font-medium">Character limits</p>
+            <p className="text-xs text-muted-foreground font-medium">
+              Character limits
+            </p>
             {selectedPlatforms.map((platform) => {
-              const textLen = threadPosts.reduce((sum, tp) => sum + tp.content.length, 0);
-              const limit = getPlatformCharLimit(platform as SocialAccount['platform']);
+              const textLen = threadPosts.reduce(
+                (sum, tp) => sum + tp.content.length,
+                0,
+              );
+              const limit = getPlatformCharLimit(
+                platform as SocialAccount["platform"],
+              );
               const ratio = Math.min(textLen / limit, 1);
               const pct = Math.round(ratio * 100);
               const barColor =
                 ratio < 0.8
-                  ? 'bg-green-500'
+                  ? "bg-green-500"
                   : ratio < 0.95
-                  ? 'bg-yellow-500'
-                  : 'bg-red-500';
+                    ? "bg-yellow-500"
+                    : "bg-red-500";
               const textColor = getCharLimitColor(textLen, limit);
               return (
                 <div key={platform} className="space-y-0.5">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="capitalize text-muted-foreground">{PLATFORM_LABELS[platform as SocialAccount['platform']] ?? platform}</span>
+                    <span className="capitalize text-muted-foreground">
+                      {PLATFORM_LABELS[platform as SocialAccount["platform"]] ??
+                        platform}
+                    </span>
                     <span className={textColor}>
                       {limit - textLen >= 0
                         ? `${limit - textLen} remaining`
@@ -876,7 +966,11 @@ export function PostComposer({ onSaved, initialContent = '' }: PostComposerProps
 
         {/* Actions */}
         <div className="flex flex-wrap gap-2 pt-2">
-          <Button variant="outline" onClick={handleSaveDraft} disabled={isSaving || !hasContent}>
+          <Button
+            variant="outline"
+            onClick={handleSaveDraft}
+            disabled={isSaving || !hasContent}
+          >
             <Save className="h-4 w-4 mr-2" />
             Save Draft
           </Button>
@@ -904,7 +998,9 @@ export function PostComposer({ onSaved, initialContent = '' }: PostComposerProps
                   min={0}
                   max={23}
                   value={scheduleHour}
-                  onChange={(e) => setScheduleHour(e.target.value.padStart(2, '0'))}
+                  onChange={(e) =>
+                    setScheduleHour(e.target.value.padStart(2, "0"))
+                  }
                   className="w-16 text-center"
                 />
                 <span>:</span>
@@ -914,7 +1010,9 @@ export function PostComposer({ onSaved, initialContent = '' }: PostComposerProps
                   max={59}
                   step={5}
                   value={scheduleMinute}
-                  onChange={(e) => setScheduleMinute(e.target.value.padStart(2, '0'))}
+                  onChange={(e) =>
+                    setScheduleMinute(e.target.value.padStart(2, "0"))
+                  }
                   className="w-16 text-center"
                 />
               </div>
@@ -942,17 +1040,20 @@ export function PostComposer({ onSaved, initialContent = '' }: PostComposerProps
                 {repeatInterval > 0 && (
                   <p className="text-xs text-muted-foreground flex items-center gap-1">
                     <Repeat className="h-3 w-3" />
-                    Will repeat every {repeatInterval} day{repeatInterval !== 1 ? 's' : ''}
+                    Will repeat every {repeatInterval} day
+                    {repeatInterval !== 1 ? "s" : ""}
                   </p>
                 )}
               </div>
 
               {scheduleDate && (
                 <p className="text-xs text-muted-foreground">
-                  {format(scheduleDate, 'PPP')} at {scheduleHour}:{scheduleMinute}
+                  {format(scheduleDate, "PPP")} at {scheduleHour}:
+                  {scheduleMinute}
                   {repeatInterval > 0 && (
                     <span className="ml-1 font-medium">
-                      (repeats every {repeatInterval} day{repeatInterval !== 1 ? 's' : ''})
+                      (repeats every {repeatInterval} day
+                      {repeatInterval !== 1 ? "s" : ""})
                     </span>
                   )}
                 </p>
@@ -969,7 +1070,9 @@ export function PostComposer({ onSaved, initialContent = '' }: PostComposerProps
 
           <Button
             onClick={handlePublishNow}
-            disabled={isSaving || !hasContent || selectedAccountIds.length === 0}
+            disabled={
+              isSaving || !hasContent || selectedAccountIds.length === 0
+            }
           >
             <Send className="h-4 w-4 mr-2" />
             Publish Now
@@ -989,8 +1092,8 @@ export function PostComposer({ onSaved, initialContent = '' }: PostComposerProps
                   onClick={() => setActivePreviewPlatform(p)}
                   className={`px-2 py-1 rounded text-xs capitalize transition-colors ${
                     activePreviewPlatform === p
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-muted hover:bg-muted/80'
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted hover:bg-muted/80"
                   }`}
                 >
                   {p}
@@ -1006,66 +1109,71 @@ export function PostComposer({ onSaved, initialContent = '' }: PostComposerProps
           </div>
         ) : (
           <div className="space-y-4 max-h-[600px] overflow-y-auto pr-1">
-            {(activePreviewPlatform ? [activePreviewPlatform] : selectedPlatforms).map(
-              (platform) => {
-                const account = selectedAccounts.find((a) => a.platform === platform);
-                // Determine which thread to show in preview
-                const previewThreads =
-                  composeMode === 'per-platform' && platformThreadOverrides[platform]
-                    ? platformThreadOverrides[platform]
-                    : threadPosts;
+            {(activePreviewPlatform
+              ? [activePreviewPlatform]
+              : selectedPlatforms
+            ).map((platform) => {
+              const account = selectedAccounts.find(
+                (a) => a.platform === platform,
+              );
+              // Determine which thread to show in preview
+              const previewThreads =
+                composeMode === "per-platform" &&
+                platformThreadOverrides[platform]
+                  ? platformThreadOverrides[platform]
+                  : threadPosts;
 
-                if (previewThreads.length <= 1) {
-                  // Single post
-                  return (
-                    <PostPreview
-                      key={platform}
-                      platform={platform}
-                      content={getContentForPlatform(platform)}
-                      accountName={account?.displayName}
-                      accountAvatar={account?.avatar}
-                      mediaUrls={mediaUrls}
-                    />
-                  );
-                }
-
-                // Thread: render multiple previews with numbering
+              if (previewThreads.length <= 1) {
+                // Single post
                 return (
-                  <div key={platform} className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <span
-                        className="inline-block w-2.5 h-2.5 rounded-full"
-                        style={{ backgroundColor: PLATFORM_COLORS[platform] }}
-                      />
-                      <span className="text-xs font-semibold capitalize">
-                        {PLATFORM_LABELS[platform]} Thread ({previewThreads.length} posts)
-                      </span>
-                    </div>
-                    {previewThreads.map((tp, i) => (
-                      <div key={tp.id} className="relative">
-                        {i > 0 && (
-                          <div className="absolute -top-2 left-6 w-px h-2 bg-border" />
-                        )}
-                        <PostPreview
-                          platform={platform}
-                          content={tp.content}
-                          accountName={account?.displayName}
-                          accountAvatar={account?.avatar}
-                          mediaUrls={i === 0 ? mediaUrls : undefined}
-                        />
-                        {i < previewThreads.length - 1 && tp.delayMinutes > 0 && (
-                          <div className="text-center text-[10px] text-muted-foreground py-0.5">
-                            {tp.delayMinutes >= 60
-                              ? `${tp.delayMinutes / 60}h delay`
-                              : `${previewThreads[i + 1]?.delayMinutes ?? 0}m delay`}
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
+                  <PostPreview
+                    key={platform}
+                    platform={platform}
+                    content={getContentForPlatform(platform)}
+                    accountName={account?.displayName}
+                    accountAvatar={account?.avatar}
+                    mediaUrls={mediaUrls}
+                  />
                 );
               }
-            )}
+
+              // Thread: render multiple previews with numbering
+              return (
+                <div key={platform} className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <span
+                      className="inline-block w-2.5 h-2.5 rounded-full"
+                      style={{ backgroundColor: PLATFORM_COLORS[platform] }}
+                    />
+                    <span className="text-xs font-semibold capitalize">
+                      {PLATFORM_LABELS[platform]} Thread (
+                      {previewThreads.length} posts)
+                    </span>
+                  </div>
+                  {previewThreads.map((tp, i) => (
+                    <div key={tp.id} className="relative">
+                      {i > 0 && (
+                        <div className="absolute -top-2 left-6 w-px h-2 bg-border" />
+                      )}
+                      <PostPreview
+                        platform={platform}
+                        content={tp.content}
+                        accountName={account?.displayName}
+                        accountAvatar={account?.avatar}
+                        mediaUrls={i === 0 ? mediaUrls : undefined}
+                      />
+                      {i < previewThreads.length - 1 && tp.delayMinutes > 0 && (
+                        <div className="text-center text-[10px] text-muted-foreground py-0.5">
+                          {tp.delayMinutes >= 60
+                            ? `${tp.delayMinutes / 60}h delay`
+                            : `${previewThreads[i + 1]?.delayMinutes ?? 0}m delay`}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              );
+            })}
           </div>
         )}
       </div>

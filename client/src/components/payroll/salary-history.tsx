@@ -116,11 +116,15 @@ export function SalaryHistory() {
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-bold text-foreground">Salary History</h2>
-        <p className="text-muted-foreground">Salary adjustments and changes over time</p>
+        <p className="text-muted-foreground">
+          Salary adjustments and changes over time
+        </p>
       </div>
 
       <div className="border rounded-lg p-6 bg-card">
-        <h3 className="font-semibold text-foreground mb-4">Salary Evolution Chart</h3>
+        <h3 className="font-semibold text-foreground mb-4">
+          Salary Evolution Chart
+        </h3>
         <div className="h-48 flex items-end justify-between gap-2 px-2 pb-4 border-b">
           {chartData.map((data, index) => {
             const height = ((data.salary - minSalary) / range) * 100;
@@ -179,9 +183,7 @@ export function SalaryHistory() {
                   <td className="px-4 py-3">
                     <p className="font-medium text-foreground">{entry.date}</p>
                   </td>
-                  <td className="px-4 py-3">
-                    {getTypeBadge(entry.type)}
-                  </td>
+                  <td className="px-4 py-3">{getTypeBadge(entry.type)}</td>
                   <td className="px-4 py-3">
                     <p className="text-muted-foreground">{entry.description}</p>
                   </td>

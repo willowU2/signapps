@@ -1,25 +1,25 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
-import { Badge } from '@/components/ui/badge';
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from '@/components/ui/popover';
-import { Link, Copy, ExternalLink, Loader2 } from 'lucide-react';
-import { toast } from 'sonner';
-import { socialApi, ShortUrl } from '@/lib/api/social';
-import { getServiceBaseUrl, ServiceName } from '@/lib/api/factory';
+} from "@/components/ui/popover";
+import { Link, Copy, ExternalLink, Loader2 } from "lucide-react";
+import { toast } from "sonner";
+import { socialApi, ShortUrl } from "@/lib/api/social";
+import { getServiceBaseUrl, ServiceName } from "@/lib/api/factory";
 
 // ---------------------------------------------------------------------------
 // Types & constants
 // ---------------------------------------------------------------------------
 
-type ShortenPreference = 'always' | 'never' | 'ask';
+type ShortenPreference = "always" | "never" | "ask";
 
 interface ShortenedEntry {
   original: string;
@@ -27,7 +27,7 @@ interface ShortenedEntry {
   clicks: number;
 }
 
-const SETTINGS_KEY = 'signsocial-url-shortener-settings';
+const SETTINGS_KEY = "signsocial-url-shortener-settings";
 
 // URL regex -- matches http(s) links in text
 const URL_REGEX = /https?:\/\/[^\s<>"')\]]+/g;
@@ -37,14 +37,14 @@ const URL_REGEX = /https?:\/\/[^\s<>"')\]]+/g;
 // ---------------------------------------------------------------------------
 
 function loadPreference(): ShortenPreference {
-  if (typeof window === 'undefined') return 'ask';
+  if (typeof window === "undefined") return "ask";
   try {
     const v = localStorage.getItem(SETTINGS_KEY);
-    if (v === 'always' || v === 'never' || v === 'ask') return v;
+    if (v === "always" || v === "never" || v === "ask") return v;
   } catch {
     // ignore
   }
-  return 'ask';
+  return "ask";
 }
 
 function savePreference(pref: ShortenPreference) {
@@ -60,8 +60,10 @@ function savePreference(pref: ShortenPreference) {
 // ---------------------------------------------------------------------------
 
 export function useUrlShortener(content: string) {
-  const [preference, setPreference] = useState<ShortenPreference>('ask');
-  const [shortenedMap, setShortenedMap] = useState<Record<string, ShortenedEntry>>({});
+  const [preference, setPreference] = useState<ShortenPreference>("ask");
+  const [shortenedMap, setShortenedMap] = useState<
+    Record<string, ShortenedEntry>
+  >({});
   const [shortening, setShortening] = useState(false);
 
   // Ref to always have latest shortenedMap available (avoids stale closures)
@@ -84,7 +86,9 @@ export function useUrlShortener(content: string) {
         for (const su of res.data) {
           map[su.originalUrl] = {
             original: su.originalUrl,
-            short: su.shortUrl || `${getServiceBaseUrl(ServiceName.SOCIAL)}/s/${su.shortCode}`,
+            short:
+              su.shortUrl ||
+              `${getServiceBaseUrl(ServiceName.SOCIAL)}/s/${su.shortCode}`,
             clicks: su.clickCount,
           };
         }
@@ -93,7 +97,9 @@ export function useUrlShortener(content: string) {
         // silent -- API may not be up
       }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // Detect URLs in content
@@ -119,14 +125,16 @@ export function useUrlShortener(content: string) {
         const res = await socialApi.shortUrls.create({ originalUrl: url });
         const entry: ShortenedEntry = {
           original: url,
-          short: res.data.shortUrl || `${getServiceBaseUrl(ServiceName.SOCIAL)}/s/${res.data.shortCode}`,
+          short:
+            res.data.shortUrl ||
+            `${getServiceBaseUrl(ServiceName.SOCIAL)}/s/${res.data.shortCode}`,
           clicks: res.data.clickCount,
         };
         setShortenedMap((prev) => ({ ...prev, [url]: entry }));
         return entry;
       } catch {
-        toast.error('Failed to shorten URL');
-        throw new Error('Failed to shorten URL');
+        toast.error("Failed to shorten URL");
+        throw new Error("Failed to shorten URL");
       } finally {
         setShortening(false);
       }
@@ -135,7 +143,9 @@ export function useUrlShortener(content: string) {
   );
 
   // Shorten all detected URLs via the API
-  const shortenAll = useCallback(async (): Promise<Record<string, ShortenedEntry>> => {
+  const shortenAll = useCallback(async (): Promise<
+    Record<string, ShortenedEntry>
+  > => {
     setShortening(true);
     const currentMap = { ...shortenedMapRef.current };
     try {
@@ -144,7 +154,9 @@ export function useUrlShortener(content: string) {
           const res = await socialApi.shortUrls.create({ originalUrl: url });
           currentMap[url] = {
             original: url,
-            short: res.data.shortUrl || `${getServiceBaseUrl(ServiceName.SOCIAL)}/s/${res.data.shortCode}`,
+            short:
+              res.data.shortUrl ||
+              `${getServiceBaseUrl(ServiceName.SOCIAL)}/s/${res.data.shortCode}`,
             clicks: res.data.clickCount,
           };
         }
@@ -152,7 +164,7 @@ export function useUrlShortener(content: string) {
       setShortenedMap(currentMap);
       return currentMap;
     } catch {
-      toast.error('Failed to shorten some URLs');
+      toast.error("Failed to shorten some URLs");
       // Still update with whatever we got
       setShortenedMap(currentMap);
       return currentMap;
@@ -178,7 +190,7 @@ export function useUrlShortener(content: string) {
   );
 
   // Whether shortening is active based on preference
-  const isActive = preference === 'always';
+  const isActive = preference === "always";
 
   return {
     preference,
@@ -202,7 +214,10 @@ interface UrlShortenerPopoverProps {
   onContentChange: (newContent: string) => void;
 }
 
-export function UrlShortenerPopover({ content, onContentChange }: UrlShortenerPopoverProps) {
+export function UrlShortenerPopover({
+  content,
+  onContentChange,
+}: UrlShortenerPopoverProps) {
   const {
     preference,
     updatePreference,
@@ -221,7 +236,7 @@ export function UrlShortenerPopover({ content, onContentChange }: UrlShortenerPo
     const result = applyShortening(content, updatedMap);
     if (result !== content) {
       onContentChange(result);
-      toast.success('All URLs shortened');
+      toast.success("All URLs shortened");
     }
   };
 
@@ -231,7 +246,7 @@ export function UrlShortenerPopover({ content, onContentChange }: UrlShortenerPo
       const result = content.replaceAll(url, entry.short);
       if (result !== content) {
         onContentChange(result);
-        toast.success('URL shortened');
+        toast.success("URL shortened");
       }
     } catch {
       // error already toasted inside shortenUrl
@@ -240,8 +255,8 @@ export function UrlShortenerPopover({ content, onContentChange }: UrlShortenerPo
 
   const handleCopy = (text: string) => {
     navigator.clipboard.writeText(text).then(
-      () => toast.success('Copié dans le presse-papiers'),
-      () => toast.error('Impossible de copier'),
+      () => toast.success("Copié dans le presse-papiers"),
+      () => toast.error("Impossible de copier"),
     );
   };
 
@@ -281,19 +296,19 @@ export function UrlShortenerPopover({ content, onContentChange }: UrlShortenerPo
             Default Behavior
           </Label>
           <div className="space-y-2">
-            {(['always', 'ask', 'never'] as ShortenPreference[]).map((pref) => {
+            {(["always", "ask", "never"] as ShortenPreference[]).map((pref) => {
               const labels: Record<ShortenPreference, string> = {
-                always: 'Always shorten',
-                ask: 'Ask every time',
-                never: 'Never shorten',
+                always: "Always shorten",
+                ask: "Ask every time",
+                never: "Never shorten",
               };
               return (
                 <label
                   key={pref}
                   className={`flex items-center gap-3 rounded-md border px-3 py-2 cursor-pointer transition-colors ${
                     preference === pref
-                      ? 'border-primary bg-primary/5'
-                      : 'border-transparent hover:bg-muted'
+                      ? "border-primary bg-primary/5"
+                      : "border-transparent hover:bg-muted"
                   }`}
                 >
                   <input
@@ -319,20 +334,21 @@ export function UrlShortenerPopover({ content, onContentChange }: UrlShortenerPo
             <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
               Detected Links ({detectedUrls.length})
             </Label>
-            {detectedUrls.length > 1 && shortenedCount < detectedUrls.length && (
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-6 text-xs"
-                onClick={handleShortenAll}
-                disabled={shortening}
-              >
-                {shortening ? (
-                  <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                ) : null}
-                Shorten All
-              </Button>
-            )}
+            {detectedUrls.length > 1 &&
+              shortenedCount < detectedUrls.length && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-6 text-xs"
+                  onClick={handleShortenAll}
+                  disabled={shortening}
+                >
+                  {shortening ? (
+                    <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                  ) : null}
+                  Shorten All
+                </Button>
+              )}
           </div>
 
           {detectedUrls.length === 0 ? (
@@ -351,15 +367,20 @@ export function UrlShortenerPopover({ content, onContentChange }: UrlShortenerPo
                   >
                     <div className="flex items-start gap-1.5">
                       <ExternalLink className="h-3 w-3 mt-0.5 shrink-0 text-muted-foreground" />
-                      <span className="break-all text-muted-foreground line-through" title={url}>
-                        {url.length > 60 ? url.slice(0, 60) + '...' : url}
+                      <span
+                        className="break-all text-muted-foreground line-through"
+                        title={url}
+                      >
+                        {url.length > 60 ? url.slice(0, 60) + "..." : url}
                       </span>
                     </div>
                     {isShortened ? (
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-1.5">
                           <Link className="h-3 w-3 text-primary" />
-                          <span className="font-medium text-primary">{entry.short}</span>
+                          <span className="font-medium text-primary">
+                            {entry.short}
+                          </span>
                         </div>
                         <div className="flex items-center gap-1.5">
                           <Badge variant="outline" className="text-xs h-5">

@@ -60,9 +60,16 @@ pub async fn effective_gpo(
 
     // Collect all policies from node + ancestors, respecting no_inherit flags.
     // Rows: (policy_id, policy_name, domain, settings, priority, depth, no_inherit)
-    let rows: Vec<(Uuid, String, String, Option<serde_json::Value>, i32, i32, bool)> =
-        sqlx::query_as(
-            r#"
+    let rows: Vec<(
+        Uuid,
+        String,
+        String,
+        Option<serde_json::Value>,
+        i32,
+        i32,
+        bool,
+    )> = sqlx::query_as(
+        r#"
             SELECT p.id, p.name, p.domain, p.settings, p.priority, oc.depth, n.no_inherit
             FROM workforce_org_policies p
             JOIN workforce_org_nodes n ON n.id = p.node_id
@@ -70,14 +77,14 @@ pub async fn effective_gpo(
             WHERE oc.descendant_id = $1
             ORDER BY oc.depth ASC, p.priority DESC
             "#,
-        )
-        .bind(node_id)
-        .fetch_all(&**pool)
-        .await
-        .map_err(|e| {
-            tracing::error!(?e, "DB error fetching effective GPO");
-            StatusCode::INTERNAL_SERVER_ERROR
-        })?;
+    )
+    .bind(node_id)
+    .fetch_all(&**pool)
+    .await
+    .map_err(|e| {
+        tracing::error!(?e, "DB error fetching effective GPO");
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
 
     // Merge by domain+name: closest node (lowest depth) wins.
     // If a no_inherit node is encountered, stop inheriting from higher ancestors.
@@ -177,22 +184,21 @@ pub async fn gpo_hierarchy(
     let mut levels: Vec<serde_json::Value> = Vec::new();
 
     for (ancestor_id, ancestor_name, depth, no_inherit) in ancestors {
-        let policies: Vec<(Uuid, String, String, Option<serde_json::Value>, i32)> =
-            sqlx::query_as(
-                r#"
+        let policies: Vec<(Uuid, String, String, Option<serde_json::Value>, i32)> = sqlx::query_as(
+            r#"
                 SELECT id, name, domain, settings, priority
                 FROM workforce_org_policies
                 WHERE node_id = $1
                 ORDER BY priority DESC, name
                 "#,
-            )
-            .bind(ancestor_id)
-            .fetch_all(&**pool)
-            .await
-            .map_err(|e| {
-                tracing::error!(?e, "DB error fetching policies for node");
-                StatusCode::INTERNAL_SERVER_ERROR
-            })?;
+        )
+        .bind(ancestor_id)
+        .fetch_all(&**pool)
+        .await
+        .map_err(|e| {
+            tracing::error!(?e, "DB error fetching policies for node");
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
 
         let policies_json: Vec<_> = policies
             .into_iter()
@@ -276,7 +282,9 @@ pub async fn toggle_no_inherit(
     }
 
     tracing::info!(node_id = %node_id, no_inherit = body.no_inherit, "no_inherit flag updated");
-    Ok(Json(json!({ "node_id": node_id, "no_inherit": body.no_inherit })))
+    Ok(Json(
+        json!({ "node_id": node_id, "no_inherit": body.no_inherit }),
+    ))
 }
 
 /// Request body for toggling the no-inherit flag on an org node.

@@ -16,12 +16,42 @@ export default function ErgonomicsChecker() {
   const [answers, setAnswers] = useState<Record<string, boolean>>({});
 
   const questions: ErgonomicsQuestion[] = [
-    { id: "p1", category: "posture", question: "Back straight and supported?", weight: 25 },
-    { id: "p2", category: "posture", question: "Neck aligned with screen?", weight: 25 },
-    { id: "s1", category: "screen", question: "Screen at arm's length distance?", weight: 25 },
-    { id: "s2", category: "screen", question: "Top of screen at eye level?", weight: 25 },
-    { id: "c1", category: "chair", question: "Feet flat on ground?", weight: 25 },
-    { id: "c2", category: "chair", question: "Armrests at elbow height?", weight: 25 },
+    {
+      id: "p1",
+      category: "posture",
+      question: "Back straight and supported?",
+      weight: 25,
+    },
+    {
+      id: "p2",
+      category: "posture",
+      question: "Neck aligned with screen?",
+      weight: 25,
+    },
+    {
+      id: "s1",
+      category: "screen",
+      question: "Screen at arm's length distance?",
+      weight: 25,
+    },
+    {
+      id: "s2",
+      category: "screen",
+      question: "Top of screen at eye level?",
+      weight: 25,
+    },
+    {
+      id: "c1",
+      category: "chair",
+      question: "Feet flat on ground?",
+      weight: 25,
+    },
+    {
+      id: "c2",
+      category: "chair",
+      question: "Armrests at elbow height?",
+      weight: 25,
+    },
   ];
 
   const handleToggle = (id: string) => {
@@ -41,7 +71,12 @@ export default function ErgonomicsChecker() {
   };
 
   const overallScore = (scores.posture + scores.screen + scores.chair) / 3;
-  const statusColor = overallScore >= 75 ? "text-green-600" : overallScore >= 50 ? "text-yellow-600" : "text-red-600";
+  const statusColor =
+    overallScore >= 75
+      ? "text-green-600"
+      : overallScore >= 50
+        ? "text-yellow-600"
+        : "text-red-600";
 
   const recommendations = [
     "Adjust monitor height to eye level",
@@ -59,13 +94,17 @@ export default function ErgonomicsChecker() {
           <div key={category} className="bg-muted p-4 rounded-lg">
             <div className="flex justify-between items-center mb-3">
               <h3 className="font-semibold capitalize">{category}</h3>
-              <span className={`text-2xl font-bold ${scores[category as keyof typeof scores] >= 50 ? "text-green-600" : "text-orange-600"}`}>
+              <span
+                className={`text-2xl font-bold ${scores[category as keyof typeof scores] >= 50 ? "text-green-600" : "text-orange-600"}`}
+              >
                 {Math.round(scores[category as keyof typeof scores])}%
               </span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2">
-              <div className={`h-2 rounded-full transition-all ${scores[category as keyof typeof scores] >= 50 ? "bg-green-500" : "bg-orange-500"}`}
-                style={{ width: `${scores[category as keyof typeof scores]}%` }} />
+              <div
+                className={`h-2 rounded-full transition-all ${scores[category as keyof typeof scores] >= 50 ? "bg-green-500" : "bg-orange-500"}`}
+                style={{ width: `${scores[category as keyof typeof scores]}%` }}
+              />
             </div>
           </div>
         ))}
@@ -74,7 +113,10 @@ export default function ErgonomicsChecker() {
       <div className="space-y-3">
         <h3 className="font-semibold">Assessment</h3>
         {questions.map((q) => (
-          <label key={q.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted cursor-pointer">
+          <label
+            key={q.id}
+            className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted cursor-pointer"
+          >
             <input
               type="checkbox"
               checked={answers[q.id] || false}
@@ -86,12 +128,26 @@ export default function ErgonomicsChecker() {
         ))}
       </div>
 
-      <div className={`p-4 rounded-lg border-2 ${overallScore >= 75 ? "bg-green-50 border-green-200" : overallScore >= 50 ? "bg-yellow-50 border-yellow-200" : "bg-red-50 border-red-200"}`}>
+      <div
+        className={`p-4 rounded-lg border-2 ${overallScore >= 75 ? "bg-green-50 border-green-200" : overallScore >= 50 ? "bg-yellow-50 border-yellow-200" : "bg-red-50 border-red-200"}`}
+      >
         <div className="flex items-start gap-2">
-          {overallScore >= 75 ? <CheckCircle2 className={`w-5 h-5 ${statusColor} flex-shrink-0 mt-0.5`} /> : <AlertCircle className={`w-5 h-5 ${statusColor} flex-shrink-0 mt-0.5`} />}
+          {overallScore >= 75 ? (
+            <CheckCircle2
+              className={`w-5 h-5 ${statusColor} flex-shrink-0 mt-0.5`}
+            />
+          ) : (
+            <AlertCircle
+              className={`w-5 h-5 ${statusColor} flex-shrink-0 mt-0.5`}
+            />
+          )}
           <div>
-            <p className={`font-semibold ${statusColor}`}>Overall Score: {Math.round(overallScore)}%</p>
-            <p className="text-sm text-muted-foreground mt-1">{overallScore >= 75 ? "Excellent posture!" : "Improve your setup"}</p>
+            <p className={`font-semibold ${statusColor}`}>
+              Overall Score: {Math.round(overallScore)}%
+            </p>
+            <p className="text-sm text-muted-foreground mt-1">
+              {overallScore >= 75 ? "Excellent posture!" : "Improve your setup"}
+            </p>
           </div>
         </div>
       </div>
@@ -100,7 +156,10 @@ export default function ErgonomicsChecker() {
         <h3 className="font-semibold text-blue-900 mb-2">Recommendations</h3>
         <ul className="space-y-1">
           {recommendations.map((rec, i) => (
-            <li key={i} className="text-sm text-blue-800 flex items-start gap-2">
+            <li
+              key={i}
+              className="text-sm text-blue-800 flex items-start gap-2"
+            >
               <span className="text-blue-600 font-bold">•</span>
               {rec}
             </li>

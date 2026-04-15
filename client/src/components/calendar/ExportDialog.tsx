@@ -1,4 +1,4 @@
-import { SpinnerInfinity } from 'spinners-react';
+import { SpinnerInfinity } from "spinners-react";
 import React, { useState } from "react";
 import {
   Dialog,
@@ -10,7 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Download } from 'lucide-react';
+import { Download } from "lucide-react";
 import { calendarApi } from "@/lib/api";
 
 interface ExportDialogProps {
@@ -40,7 +40,7 @@ export function ExportDialog({
 
       const response = await calendarApi.get(
         `/calendars/${calendarId}/export`,
-        { responseType: "blob" }
+        { responseType: "blob" },
       );
 
       // Create download link
@@ -56,7 +56,7 @@ export function ExportDialog({
       onOpenChange(false);
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Failed to export calendar"
+        err instanceof Error ? err.message : "Failed to export calendar",
       );
     } finally {
       setIsExporting(false);
@@ -70,9 +70,7 @@ export function ExportDialog({
       setIsExporting(true);
       setError(null);
 
-      const response = await calendarApi.get(
-        `/calendars/${calendarId}/events`
-      );
+      const response = await calendarApi.get(`/calendars/${calendarId}/events`);
 
       // Create JSON blob
       const jsonData = JSON.stringify(response.data, null, 2);
@@ -89,7 +87,7 @@ export function ExportDialog({
       onOpenChange(false);
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Failed to export calendar"
+        err instanceof Error ? err.message : "Failed to export calendar",
       );
     } finally {
       setIsExporting(false);
@@ -113,11 +111,15 @@ export function ExportDialog({
             <RadioGroup value={format} onValueChange={(v: any) => setFormat(v)}>
               <div className="flex items-center space-x-2 p-3 rounded border hover:bg-muted/50 cursor-pointer">
                 <RadioGroupItem value="ics" id="format-ics" />
-                <Label htmlFor="format-ics" className="cursor-pointer flex-1 mb-0">
+                <Label
+                  htmlFor="format-ics"
+                  className="cursor-pointer flex-1 mb-0"
+                >
                   <div>
                     <p className="font-medium">iCalendar (.ics)</p>
                     <p className="text-xs text-muted-foreground mt-1">
-                      Format RFC 5545 - compatible avec Outlook, Apple Calendar et d'autres agendas
+                      Format RFC 5545 - compatible avec Outlook, Apple Calendar
+                      et d'autres agendas
                     </p>
                   </div>
                 </Label>
@@ -125,7 +127,10 @@ export function ExportDialog({
 
               <div className="flex items-center space-x-2 p-3 rounded border hover:bg-muted/50 cursor-pointer">
                 <RadioGroupItem value="json" id="format-json" />
-                <Label htmlFor="format-json" className="cursor-pointer flex-1 mb-0">
+                <Label
+                  htmlFor="format-json"
+                  className="cursor-pointer flex-1 mb-0"
+                >
                   <div>
                     <p className="font-medium">JSON (.json)</p>
                     <p className="text-xs text-muted-foreground">
@@ -145,7 +150,10 @@ export function ExportDialog({
                 <li>Standard format supported by all calendar apps</li>
                 <li>Includes events, recurrence rules, and timezones</li>
                 <li>Peut être importé dans Outlook, Apple Calendar, etc.</li>
-                <li>Inclut les événements récurrents et les informations de téléchargement</li>
+                <li>
+                  Inclut les événements récurrents et les informations de
+                  téléchargement
+                </li>
               </ul>
             </div>
           )}
@@ -185,7 +193,13 @@ export function ExportDialog({
             >
               {isExporting ? (
                 <>
-                  <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-4 w-4 " />
+                  <SpinnerInfinity
+                    size={24}
+                    secondaryColor="rgba(128,128,128,0.2)"
+                    color="currentColor"
+                    speed={120}
+                    className="h-4 w-4 "
+                  />
                   Exporting...
                 </>
               ) : (

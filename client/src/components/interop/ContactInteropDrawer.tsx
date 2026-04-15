@@ -1,33 +1,43 @@
-"use client"
+"use client";
 // Features 1, 3, 5, 7, 9, 12, 17, 24, 26, 28: Complete contact interop panel (used as side-drawer or inline)
 
-import { useState } from "react"
-import { X, TrendingUp, Mail, Calendar, CheckSquare, Globe, FolderOpen, Gift, StickyNote } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { ContactDealsPanel } from "./ContactDealsPanel"
-import { ContactCalendarPanel } from "./ContactCalendarPanel"
-import { ContactTasksPanel } from "./ContactTasksPanel"
-import { ContactSocialProfiles } from "./ContactSocialProfiles"
-import { DealDocumentsPanel } from "./DealDocumentsPanel"
-import { ContactBirthdayCrmContext } from "./ContactBirthdayCrmContext"
-import { SharedContactNotes } from "./SharedContactNotes"
-import { InvoiceEmailSender } from "./InvoiceEmailSender"
-import { ContactPaymentHistory } from "./ContactPaymentHistory"
+import { useState } from "react";
+import {
+  X,
+  TrendingUp,
+  Mail,
+  Calendar,
+  CheckSquare,
+  Globe,
+  FolderOpen,
+  Gift,
+  StickyNote,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ContactDealsPanel } from "./ContactDealsPanel";
+import { ContactCalendarPanel } from "./ContactCalendarPanel";
+import { ContactTasksPanel } from "./ContactTasksPanel";
+import { ContactSocialProfiles } from "./ContactSocialProfiles";
+import { DealDocumentsPanel } from "./DealDocumentsPanel";
+import { ContactBirthdayCrmContext } from "./ContactBirthdayCrmContext";
+import { SharedContactNotes } from "./SharedContactNotes";
+import { InvoiceEmailSender } from "./InvoiceEmailSender";
+import { ContactPaymentHistory } from "./ContactPaymentHistory";
 
 interface Contact {
-  id: string
-  name: string
-  email: string
-  phone?: string
-  company?: string
-  birthday?: string
-  tags?: string[]
+  id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  company?: string;
+  birthday?: string;
+  tags?: string[];
 }
 
 interface Props {
-  contact: Contact
-  onClose?: () => void
+  contact: Contact;
+  onClose?: () => void;
 }
 
 export function ContactInteropDrawer({ contact, onClose }: Props) {
@@ -49,7 +59,12 @@ export function ContactInteropDrawer({ contact, onClose }: Props) {
             mode="quick"
           />
           {onClose && (
-            <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={onClose}>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 w-7 p-0"
+              onClick={onClose}
+            >
               <X className="h-4 w-4" />
             </Button>
           )}
@@ -94,21 +109,34 @@ export function ContactInteropDrawer({ contact, onClose }: Props) {
           </TabsList>
 
           <TabsContent value="deals" className="mt-2">
-            <ContactDealsPanel contactId={contact.id} contactEmail={contact.email} />
+            <ContactDealsPanel
+              contactId={contact.id}
+              contactEmail={contact.email}
+            />
           </TabsContent>
 
           <TabsContent value="billing" className="mt-2">
-            <ContactPaymentHistory contactId={contact.id} contactEmail={contact.email} />
+            <ContactPaymentHistory
+              contactId={contact.id}
+              contactEmail={contact.email}
+            />
           </TabsContent>
 
           <TabsContent value="email" className="mt-2">
             <div className="space-y-3">
-              <InvoiceEmailSender contactEmail={contact.email} contactName={contact.name} />
+              <InvoiceEmailSender
+                contactEmail={contact.email}
+                contactName={contact.name}
+              />
               <p className="text-xs text-muted-foreground">
                 Emails échangés disponibles dans le module{" "}
-                <a href={`/mail?search=${encodeURIComponent(contact.email)}`} className="text-primary hover:underline">
+                <a
+                  href={`/mail?search=${encodeURIComponent(contact.email)}`}
+                  className="text-primary hover:underline"
+                >
                   Mail
-                </a>.
+                </a>
+                .
               </p>
             </div>
           </TabsContent>
@@ -123,7 +151,10 @@ export function ContactInteropDrawer({ contact, onClose }: Props) {
           </TabsContent>
 
           <TabsContent value="tasks" className="mt-2">
-            <ContactTasksPanel contactId={contact.id} contactEmail={contact.email} />
+            <ContactTasksPanel
+              contactId={contact.id}
+              contactEmail={contact.email}
+            />
           </TabsContent>
 
           <TabsContent value="social" className="mt-2">
@@ -144,5 +175,5 @@ export function ContactInteropDrawer({ contact, onClose }: Props) {
         </Tabs>
       </div>
     </div>
-  )
+  );
 }

@@ -69,7 +69,7 @@ pub async fn process_event(pool: &PgPool, event: &AdSyncEvent) -> Result<()> {
         _ => {
             tracing::warn!(event_type = %event.event_type, "Unknown event type — skipping");
             Ok(())
-        }
+        },
     }
 }
 
@@ -92,7 +92,7 @@ pub async fn run_sync_worker(pool: PgPool) {
             Ok(events) if events.is_empty() => {
                 // No events — wait briefly before polling again
                 tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
-            }
+            },
             Ok(events) => {
                 for event in &events {
                     match process_event(&pool, event).await {
@@ -106,7 +106,7 @@ pub async fn run_sync_worker(pool: PgPool) {
                                     "Failed to mark event completed"
                                 );
                             }
-                        }
+                        },
                         Err(e) => {
                             tracing::warn!(
                                 event_id = %event.id,
@@ -124,14 +124,14 @@ pub async fn run_sync_worker(pool: PgPool) {
                                     "Failed to mark event for retry"
                                 );
                             }
-                        }
+                        },
                     }
                 }
-            }
+            },
             Err(e) => {
                 tracing::error!(error = %e, "Failed to dequeue sync events");
                 tokio::time::sleep(tokio::time::Duration::from_secs(5)).await;
-            }
+            },
         }
     }
 }
@@ -143,11 +143,15 @@ async fn handle_ou_create(pool: &PgPool, event: &AdSyncEvent) -> Result<()> {
     let node_id: Uuid = serde_json::from_value(event.payload["node_id"].clone())
         .map_err(|e| signapps_common::Error::Internal(format!("Bad payload node_id: {e}")))?;
     let name = event.payload["name"].as_str().unwrap_or("Unknown");
-    let parent_id: Option<Uuid> =
-        event.payload["parent_id"].as_str().and_then(|s| s.parse().ok());
+    let parent_id: Option<Uuid> = event.payload["parent_id"]
+        .as_str()
+        .and_then(|s| s.parse().ok());
 
     // Idempotent: skip if already created
-    if AdOuRepository::find_by_node(pool, event.domain_id, node_id).await?.is_some() {
+    if AdOuRepository::find_by_node(pool, event.domain_id, node_id)
+        .await?
+        .is_some()
+    {
         tracing::debug!(node_id = %node_id, "OU already exists — skipping");
         return Ok(());
     }
@@ -210,14 +214,19 @@ async fn handle_ou_rename(pool: &PgPool, event: &AdSyncEvent) -> Result<()> {
 async fn handle_ou_move(pool: &PgPool, event: &AdSyncEvent) -> Result<()> {
     let node_id: Uuid = serde_json::from_value(event.payload["node_id"].clone())
         .map_err(|e| signapps_common::Error::Internal(format!("Bad payload node_id: {e}")))?;
-    let new_parent: Option<Uuid> =
-        event.payload["new_parent"].as_str().and_then(|s| s.parse().ok());
+    let new_parent: Option<Uuid> = event.payload["new_parent"]
+        .as_str()
+        .and_then(|s| s.parse().ok());
 
     let domain_dn = resolve_domain_dn(pool, event.domain_id).await?;
 
     if let Some(ou) = AdOuRepository::find_by_node(pool, event.domain_id, node_id).await? {
         // Extract the leaf name from the current DN
-        let ou_name = ou.distinguished_name.split(',').next().unwrap_or("OU=Unknown");
+        let ou_name = ou
+            .distinguished_name
+            .split(',')
+            .next()
+            .unwrap_or("OU=Unknown");
         let name = ou_name.strip_prefix("OU=").unwrap_or(ou_name);
 
         let new_parent_ou = if let Some(np) = new_parent {
@@ -228,7 +237,9 @@ async fn handle_ou_move(pool: &PgPool, event: &AdSyncEvent) -> Result<()> {
 
         let new_dn = naming::build_ou_dn(
             name,
-            new_parent_ou.as_ref().map(|p| p.distinguished_name.as_str()),
+            new_parent_ou
+                .as_ref()
+                .map(|p| p.distinguished_name.as_str()),
             &domain_dn,
         );
 
@@ -288,9 +299,8 @@ async fn handle_user_provision(pool: &PgPool, event: &AdSyncEvent) -> Result<()>
     .await
     .map_err(|e| signapps_common::Error::Database(e.to_string()))?;
 
-    let (first_name, last_name, _email, _phone) = person.ok_or_else(|| {
-        signapps_common::Error::NotFound(format!("Person {person_id} not found"))
-    })?;
+    let (first_name, last_name, _email, _phone) = person
+        .ok_or_else(|| signapps_common::Error::NotFound(format!("Person {person_id} not found")))?;
 
     // Generate unique SAM account name
     let sam =
@@ -307,7 +317,9 @@ async fn handle_user_provision(pool: &PgPool, event: &AdSyncEvent) -> Result<()>
     let dn = format!(
         "CN={},{}",
         display_name,
-        ou.as_ref().map(|o| o.distinguished_name.as_str()).unwrap_or(&domain_dn)
+        ou.as_ref()
+            .map(|o| o.distinguished_name.as_str())
+            .unwrap_or(&domain_dn)
     );
 
     // Resolve primary mail domain via closure table inheritance
@@ -364,14 +376,8 @@ async fn handle_user_provision(pool: &PgPool, event: &AdSyncEvent) -> Result<()>
 
     // ── Phase 5: mail provisioning ─────────────────────────────────────────
     // Compute and persist mail aliases (default + sub-branch domains).
-    if let Err(e) = mail_provisioner::compute_user_mail_aliases(
-        pool,
-        user.id,
-        person_id,
-        node_id,
-        &sam,
-    )
-    .await
+    if let Err(e) =
+        mail_provisioner::compute_user_mail_aliases(pool, user.id, person_id, node_id, &sam).await
     {
         tracing::warn!(
             sam = %sam,
@@ -381,9 +387,7 @@ async fn handle_user_provision(pool: &PgPool, event: &AdSyncEvent) -> Result<()>
     }
 
     // Compute and persist IMAP shared-folder subscriptions.
-    if let Err(e) =
-        mail_provisioner::compute_user_subscriptions(pool, user.id, node_id).await
-    {
+    if let Err(e) = mail_provisioner::compute_user_subscriptions(pool, user.id, node_id).await {
         tracing::warn!(
             sam = %sam,
             error = %e,
@@ -424,7 +428,10 @@ async fn handle_user_move(pool: &PgPool, event: &AdSyncEvent) -> Result<()> {
         let new_dn = format!(
             "CN={},{}",
             user.display_name,
-            new_ou.as_ref().map(|o| o.distinguished_name.as_str()).unwrap_or(&domain_dn)
+            new_ou
+                .as_ref()
+                .map(|o| o.distinguished_name.as_str())
+                .unwrap_or(&domain_dn)
         );
 
         sqlx::query(
@@ -617,7 +624,7 @@ async fn handle_group_sync(pool: &PgPool, event: &AdSyncEvent) -> Result<()> {
         None => {
             tracing::warn!(source_id = %source_id, "No AD group found for source — skipping sync");
             return Ok(());
-        }
+        },
     };
 
     // Resolve expected members (as AD user account UUIDs)
@@ -755,8 +762,9 @@ async fn handle_computer_create(pool: &PgPool, event: &AdSyncEvent) -> Result<()
         .unwrap_or("UNKNOWN")
         .to_uppercase();
 
-    let hardware_id: Option<Uuid> =
-        event.payload["hardware_id"].as_str().and_then(|s| s.parse().ok());
+    let hardware_id: Option<Uuid> = event.payload["hardware_id"]
+        .as_str()
+        .and_then(|s| s.parse().ok());
 
     // Idempotent check
     let sam = format!("{hostname}$");
@@ -778,15 +786,13 @@ async fn handle_computer_create(pool: &PgPool, event: &AdSyncEvent) -> Result<()
     // Try to enrich from it.hardware if a hardware_id was provided
     let (dns_hostname, os_name, os_version): (Option<String>, Option<String>, Option<String>) =
         if let Some(hw_id) = hardware_id {
-            sqlx::query_as(
-                "SELECT hostname, os_name, os_version FROM it.hardware WHERE id = $1",
-            )
-            .bind(hw_id)
-            .fetch_optional(pool)
-            .await
-            .map_err(|e| signapps_common::Error::Database(e.to_string()))?
-            .map(|(h, o, ov): (Option<String>, Option<String>, Option<String>)| (h, o, ov))
-            .unwrap_or((None, None, None))
+            sqlx::query_as("SELECT hostname, os_name, os_version FROM it.hardware WHERE id = $1")
+                .bind(hw_id)
+                .fetch_optional(pool)
+                .await
+                .map_err(|e| signapps_common::Error::Database(e.to_string()))?
+                .map(|(h, o, ov): (Option<String>, Option<String>, Option<String>)| (h, o, ov))
+                .unwrap_or((None, None, None))
         } else {
             (Some(hostname.to_lowercase()), None, None)
         };
@@ -820,8 +826,9 @@ async fn handle_computer_create(pool: &PgPool, event: &AdSyncEvent) -> Result<()
 async fn handle_computer_disable(pool: &PgPool, event: &AdSyncEvent) -> Result<()> {
     // Payload may carry hostname or hardware_id
     let hostname = event.payload["hostname"].as_str().map(|h| h.to_uppercase());
-    let hardware_id: Option<Uuid> =
-        event.payload["hardware_id"].as_str().and_then(|s| s.parse().ok());
+    let hardware_id: Option<Uuid> = event.payload["hardware_id"]
+        .as_str()
+        .and_then(|s| s.parse().ok());
 
     let id: Option<Uuid> = if let Some(hw_id) = hardware_id {
         sqlx::query_scalar(
@@ -891,7 +898,10 @@ async fn handle_mail_domain_bind(pool: &PgPool, event: &AdSyncEvent) -> Result<(
         .map_err(|e| signapps_common::Error::Internal(format!("Bad payload node_id: {e}")))?;
     let domain_id: Uuid = serde_json::from_value(event.payload["domain_id"].clone())
         .map_err(|e| signapps_common::Error::Internal(format!("Bad payload domain_id: {e}")))?;
-    let dns_name = event.payload["dns_name"].as_str().unwrap_or_default().to_string();
+    let dns_name = event.payload["dns_name"]
+        .as_str()
+        .unwrap_or_default()
+        .to_string();
 
     // ── 1. Re-provision mail aliases for all users in the subtree ─────────
     // Find all enabled user accounts whose assigned node is at or below node_id.
@@ -966,11 +976,7 @@ async fn handle_mail_domain_bind(pool: &PgPool, event: &AdSyncEvent) -> Result<(
     let ou_count = ous.len();
     for (ou_id, ou_name) in ous {
         if let Err(e) = mail_provisioner::provision_ou_shared_mailbox(
-            pool,
-            ou_id,
-            &ou_name,
-            domain_id,
-            &dns_name,
+            pool, ou_id, &ou_name, domain_id, &dns_name,
         )
         .await
         {

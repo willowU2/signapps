@@ -27,9 +27,36 @@ const STATUS_COLOR: Record<HRMember["status"], string> = {
 };
 
 const DEMO_MEMBERS: HRMember[] = [
-  { id: "1", name: "Alice Martin", role: "Lead Developer", department: "Technologie", email: "alice.martin@signapps.io", status: "active", skills: ["React", "TypeScript", "Rust"], allocation: 80 },
-  { id: "2", name: "Bob Dupont", role: "DevOps Engineer", department: "Technologie", email: "bob.dupont@signapps.io", status: "remote", skills: ["Docker", "Kubernetes"], allocation: 50 },
-  { id: "5", name: "Emma Leroy", role: "Designer UX/UI", department: "Technologie", email: "emma.leroy@signapps.io", status: "active", skills: ["Figma", "Design System"], allocation: 30 },
+  {
+    id: "1",
+    name: "Alice Martin",
+    role: "Lead Developer",
+    department: "Technologie",
+    email: "alice.martin@signapps.io",
+    status: "active",
+    skills: ["React", "TypeScript", "Rust"],
+    allocation: 80,
+  },
+  {
+    id: "2",
+    name: "Bob Dupont",
+    role: "DevOps Engineer",
+    department: "Technologie",
+    email: "bob.dupont@signapps.io",
+    status: "remote",
+    skills: ["Docker", "Kubernetes"],
+    allocation: 50,
+  },
+  {
+    id: "5",
+    name: "Emma Leroy",
+    role: "Designer UX/UI",
+    department: "Technologie",
+    email: "emma.leroy@signapps.io",
+    status: "active",
+    skills: ["Figma", "Design System"],
+    allocation: 30,
+  },
 ];
 
 interface ProjectTeamMembersProps {
@@ -37,7 +64,9 @@ interface ProjectTeamMembersProps {
   projectName?: string;
 }
 
-export function ProjectTeamMembers({ projectName = "Sprint Alpha" }: ProjectTeamMembersProps) {
+export function ProjectTeamMembers({
+  projectName = "Sprint Alpha",
+}: ProjectTeamMembersProps) {
   const [members] = useState<HRMember[]>(DEMO_MEMBERS);
 
   return (
@@ -51,27 +80,54 @@ export function ProjectTeamMembers({ projectName = "Sprint Alpha" }: ProjectTeam
       </CardHeader>
       <CardContent className="space-y-3">
         {members.map((m) => (
-          <div key={m.id} className="flex items-center gap-3 rounded-lg border p-2">
+          <div
+            key={m.id}
+            className="flex items-center gap-3 rounded-lg border p-2"
+          >
             <div className="relative">
               <Avatar className="size-8">
-                <AvatarFallback className="text-xs">{m.name.split(" ").map((n) => n[0]).join("")}</AvatarFallback>
+                <AvatarFallback className="text-xs">
+                  {m.name
+                    .split(" ")
+                    .map((n) => n[0])
+                    .join("")}
+                </AvatarFallback>
               </Avatar>
-              <span className={`absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full border-2 border-white ${STATUS_COLOR[m.status]}`} />
+              <span
+                className={`absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full border-2 border-white ${STATUS_COLOR[m.status]}`}
+              />
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
                 <span className="truncate text-sm font-medium">{m.name}</span>
-                <span className="shrink-0 text-xs text-muted-foreground">{m.allocation}%</span>
+                <span className="shrink-0 text-xs text-muted-foreground">
+                  {m.allocation}%
+                </span>
               </div>
-              <p className="truncate text-xs text-muted-foreground">{m.role} · {m.department}</p>
+              <p className="truncate text-xs text-muted-foreground">
+                {m.role} · {m.department}
+              </p>
               <div className="mt-1 flex flex-wrap gap-1">
                 {m.skills.slice(0, 3).map((s) => (
-                  <Badge key={s} variant="outline" className="text-[10px] py-0 h-4">{s}</Badge>
+                  <Badge
+                    key={s}
+                    variant="outline"
+                    className="text-[10px] py-0 h-4"
+                  >
+                    {s}
+                  </Badge>
                 ))}
               </div>
             </div>
-            <Button variant="ghost" size="icon" className="size-7 shrink-0" asChild>
-              <a href={`mailto:${m.email}`}><Mail className="size-3.5" /></a>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-7 shrink-0"
+              asChild
+            >
+              <a href={`mailto:${m.email}`}>
+                <Mail className="size-3.5" />
+              </a>
             </Button>
           </div>
         ))}

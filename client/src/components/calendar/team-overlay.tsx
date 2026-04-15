@@ -1,13 +1,13 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useCallback } from 'react';
-import { Users, Eye, EyeOff, ChevronDown, ChevronRight } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { cn } from '@/lib/utils';
-import { usersApi, type User } from '@/lib/api/identity';
-import { timeItemsApi, type TimeItem } from '@/lib/api/scheduler';
+import { useState, useEffect, useCallback } from "react";
+import { Users, Eye, EyeOff, ChevronDown, ChevronRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { cn } from "@/lib/utils";
+import { usersApi, type User } from "@/lib/api/identity";
+import { timeItemsApi, type TimeItem } from "@/lib/api/scheduler";
 
 // ============================================================================
 // Types
@@ -34,16 +34,16 @@ export interface TeamOverlayProps {
 // ============================================================================
 
 const MEMBER_COLORS = [
-  '#4285F4', // Blue
-  '#EA4335', // Red
-  '#34A853', // Green
-  '#FBBC04', // Yellow
-  '#FF6D01', // Orange
-  '#46BDC6', // Teal
-  '#7B1FA2', // Purple
-  '#C2185B', // Pink
-  '#00897B', // Dark teal
-  '#6D4C41', // Brown
+  "#4285F4", // Blue
+  "#EA4335", // Red
+  "#34A853", // Green
+  "#FBBC04", // Yellow
+  "#FF6D01", // Orange
+  "#46BDC6", // Teal
+  "#7B1FA2", // Purple
+  "#C2185B", // Pink
+  "#00897B", // Dark teal
+  "#6D4C41", // Brown
 ];
 
 // ============================================================================
@@ -60,7 +60,7 @@ export function TeamOverlay({
   const [isExpanded, setIsExpanded] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [overlayEvents, setOverlayEvents] = useState<Map<string, TimeItem[]>>(
-    new Map()
+    new Map(),
   );
 
   // Load team members
@@ -70,11 +70,13 @@ export function TeamOverlay({
         const response = await usersApi.list(0, 50);
         const ud = response.data;
         const users = ud?.users ?? [];
-        const teamMembers: TeamMember[] = users.map((user: User, index: number) => ({
-          user,
-          color: MEMBER_COLORS[index % MEMBER_COLORS.length],
-          visible: false,
-        }));
+        const teamMembers: TeamMember[] = users.map(
+          (user: User, index: number) => ({
+            user,
+            color: MEMBER_COLORS[index % MEMBER_COLORS.length],
+            visible: false,
+          }),
+        );
         setMembers(teamMembers);
       } catch {
         // Silently fail - team overlay is optional
@@ -99,7 +101,7 @@ export function TeamOverlay({
       const response = await timeItemsApi.queryUsersEvents(
         userIds,
         rangeStart.toISOString(),
-        rangeEnd.toISOString()
+        rangeEnd.toISOString(),
       );
       const items = response.data?.items || [];
 
@@ -128,22 +130,20 @@ export function TeamOverlay({
   const toggleMember = (userId: string) => {
     setMembers((prev) =>
       prev.map((m) =>
-        m.user.id === userId ? { ...m, visible: !m.visible } : m
-      )
+        m.user.id === userId ? { ...m, visible: !m.visible } : m,
+      ),
     );
   };
 
   const toggleAll = () => {
     const anyVisible = members.some((m) => m.visible);
-    setMembers((prev) =>
-      prev.map((m) => ({ ...m, visible: !anyVisible }))
-    );
+    setMembers((prev) => prev.map((m) => ({ ...m, visible: !anyVisible })));
   };
 
   const visibleCount = members.filter((m) => m.visible).length;
 
   return (
-    <div className={cn('border-b', className)}>
+    <div className={cn("border-b", className)}>
       {/* Header toggle */}
       <button
         className="flex items-center justify-between w-full py-2 px-2 hover:bg-muted dark:hover:bg-gray-800 rounded cursor-pointer group transition-colors"
@@ -184,7 +184,9 @@ export function TeamOverlay({
               ) : (
                 <Eye className="h-3 w-3" />
               )}
-              {members.some((m) => m.visible) ? 'Masquer tous' : 'Afficher tous'}
+              {members.some((m) => m.visible)
+                ? "Masquer tous"
+                : "Afficher tous"}
             </button>
           )}
 
@@ -247,7 +249,7 @@ function TeamMemberItem({ member, eventCount, onToggle }: TeamMemberItemProps) {
         <AvatarImage src={user.avatar_url} />
         <AvatarFallback
           className="text-[10px]"
-          style={{ backgroundColor: color, color: 'white' }}
+          style={{ backgroundColor: color, color: "white" }}
         >
           {displayName.slice(0, 2).toUpperCase()}
         </AvatarFallback>

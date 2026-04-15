@@ -116,11 +116,7 @@ function WorkloadBar({ value }: { value?: number }) {
   if (value === undefined) return null;
   const pct = Math.min(100, Math.max(0, value));
   const color =
-    pct < 50
-      ? "bg-green-500"
-      : pct < 75
-      ? "bg-yellow-500"
-      : "bg-destructive";
+    pct < 50 ? "bg-green-500" : pct < 75 ? "bg-yellow-500" : "bg-destructive";
 
   return (
     <div className="flex items-center gap-1.5 min-w-[80px]">
@@ -165,7 +161,10 @@ export function LeaveDelegationDialog({
 
   // ── Initialize data ───────────────────────────────────────────────────────
   const initData = useCallback(
-    async (taskList: DelegationTask[], colleagueList: DelegationColleague[]) => {
+    async (
+      taskList: DelegationTask[],
+      colleagueList: DelegationColleague[],
+    ) => {
       setTasks(taskList);
       setColleagues(colleagueList);
 
@@ -177,14 +176,14 @@ export function LeaveDelegationDialog({
         } else if (colleagueList.length > 0) {
           // Pick colleague with lowest workload as default
           const sorted = [...colleagueList].sort(
-            (a, b) => (a.workload ?? 100) - (b.workload ?? 100)
+            (a, b) => (a.workload ?? 100) - (b.workload ?? 100),
           );
           initial[t.id] = sorted[0].id;
         }
       });
       setAssignments(initial);
     },
-    []
+    [],
   );
 
   useEffect(() => {
@@ -216,7 +215,9 @@ export function LeaveDelegationDialog({
       .map(([taskId, assignTo]) => ({ task_id: taskId, assign_to: assignTo }));
 
     if (delegationList.length === 0) {
-      toast.warning("Aucune délégation configurée. Veuillez assigner au moins une tâche.");
+      toast.warning(
+        "Aucune délégation configurée. Veuillez assigner au moins une tâche.",
+      );
       return;
     }
 
@@ -225,14 +226,14 @@ export function LeaveDelegationDialog({
       await leaveApi.delegate(eventId, delegationList);
       setHasDelegated(true);
       toast.success(
-        `${delegationList.length} délégation${delegationList.length > 1 ? "s" : ""} confirmée${delegationList.length > 1 ? "s" : ""} avec succès.`
+        `${delegationList.length} délégation${delegationList.length > 1 ? "s" : ""} confirmée${delegationList.length > 1 ? "s" : ""} avec succès.`,
       );
       onDelegated?.();
     } catch (err) {
       toast.error(
         err instanceof Error
           ? err.message
-          : "Erreur lors de la confirmation des délégations."
+          : "Erreur lors de la confirmation des délégations.",
       );
     } finally {
       setIsSubmitting(false);
@@ -244,8 +245,7 @@ export function LeaveDelegationDialog({
   const totalTasks = tasks.length;
   const unassignedCount = totalTasks - assignedCount;
 
-  const getColleague = (id: string) =>
-    colleagues.find((c) => c.id === id);
+  const getColleague = (id: string) => colleagues.find((c) => c.id === id);
 
   // ── Format date range header ──────────────────────────────────────────────
   const periodLabel =
@@ -253,7 +253,7 @@ export function LeaveDelegationDialog({
       ? `${format(parseISO(leaveStart), "d MMM", { locale: fr })} – ${format(
           parseISO(leaveEnd),
           "d MMM yyyy",
-          { locale: fr }
+          { locale: fr },
         )}`
       : "période de congé";
 
@@ -268,9 +268,14 @@ export function LeaveDelegationDialog({
           <DialogDescription>
             {employeeName ? (
               <>
-                <span className="font-medium text-foreground">{employeeName}</span>{" "}
+                <span className="font-medium text-foreground">
+                  {employeeName}
+                </span>{" "}
                 sera absent(e) du{" "}
-                <span className="font-medium text-foreground">{periodLabel}</span>.
+                <span className="font-medium text-foreground">
+                  {periodLabel}
+                </span>
+                .
               </>
             ) : (
               <>Réassignez les tâches et événements pour la {periodLabel}.</>
@@ -328,7 +333,8 @@ export function LeaveDelegationDialog({
                   à déléguer
                   {unassignedCount > 0 && (
                     <>
-                      {" "}—{" "}
+                      {" "}
+                      —{" "}
                       <span className="text-destructive font-medium">
                         {unassignedCount} non assigné
                         {unassignedCount > 1 ? "s" : ""}
@@ -337,7 +343,8 @@ export function LeaveDelegationDialog({
                   )}
                   {unassignedCount === 0 && (
                     <>
-                      {" "}—{" "}
+                      {" "}
+                      —{" "}
                       <span className="text-green-600 dark:text-green-400 font-medium">
                         tous assignés
                       </span>
@@ -467,7 +474,7 @@ export function LeaveDelegationDialog({
                                     .sort(
                                       (a, b) =>
                                         (a.workload ?? 100) -
-                                        (b.workload ?? 100)
+                                        (b.workload ?? 100),
                                     )
                                     .map((c) => (
                                       <SelectItem key={c.id} value={c.id}>
@@ -495,17 +502,17 @@ export function LeaveDelegationDialog({
                               </Select>
 
                               {/* Suggestion hint */}
-                              {suggestedColleague && !isSuggestionOverridden && (
-                                <div className="flex items-center gap-1 text-[10px] text-muted-foreground pl-0.5">
-                                  <CheckCircle2 className="h-3 w-3 text-green-500 shrink-0" />
-                                  Suggestion automatique
-                                </div>
-                              )}
+                              {suggestedColleague &&
+                                !isSuggestionOverridden && (
+                                  <div className="flex items-center gap-1 text-[10px] text-muted-foreground pl-0.5">
+                                    <CheckCircle2 className="h-3 w-3 text-green-500 shrink-0" />
+                                    Suggestion automatique
+                                  </div>
+                                )}
                               {isSuggestionOverridden && suggestedColleague && (
                                 <div className="flex items-center gap-1 text-[10px] text-muted-foreground pl-0.5">
                                   <RefreshCw className="h-3 w-3 text-blue-500 shrink-0" />
-                                  Modifié (suggéré :{" "}
-                                  {suggestedColleague.name})
+                                  Modifié (suggéré : {suggestedColleague.name})
                                 </div>
                               )}
                             </div>
@@ -525,12 +532,10 @@ export function LeaveDelegationDialog({
                   </p>
                   <div className="grid grid-cols-2 gap-2">
                     {colleagues
-                      .filter((c) =>
-                        Object.values(assignments).includes(c.id)
-                      )
+                      .filter((c) => Object.values(assignments).includes(c.id))
                       .map((c) => {
                         const taskCount = Object.values(assignments).filter(
-                          (id) => id === c.id
+                          (id) => id === c.id,
                         ).length;
                         return (
                           <div
@@ -539,9 +544,7 @@ export function LeaveDelegationDialog({
                           >
                             <div className="flex items-center gap-1.5 min-w-0">
                               <User className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                              <span className="truncate text-xs">
-                                {c.name}
-                              </span>
+                              <span className="truncate text-xs">{c.name}</span>
                               <Badge
                                 variant="outline"
                                 className="text-[10px] px-1 py-0 shrink-0"
@@ -563,7 +566,10 @@ export function LeaveDelegationDialog({
         {/* ── Footer ──────────────────────────────────────────────────────── */}
         <DialogFooter className="border-t pt-4 gap-2">
           {hasDelegated ? (
-            <Button onClick={() => onOpenChange(false)} className="w-full sm:w-auto">
+            <Button
+              onClick={() => onOpenChange(false)}
+              className="w-full sm:w-auto"
+            >
               Fermer
             </Button>
           ) : (

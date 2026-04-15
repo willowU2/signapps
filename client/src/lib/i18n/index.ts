@@ -1,15 +1,15 @@
-'use client';
+"use client";
 
-import { useCallback, useSyncExternalStore } from 'react';
-import { fr, type TranslationKey } from './fr';
-import { en } from './en';
+import { useCallback, useSyncExternalStore } from "react";
+import { fr, type TranslationKey } from "./fr";
+import { en } from "./en";
 
-export type Locale = 'fr' | 'en';
+export type Locale = "fr" | "en";
 
-const STORAGE_KEY = 'signapps-locale';
+const STORAGE_KEY = "signapps-locale";
 const dictionaries: Record<Locale, Record<TranslationKey, string>> = { fr, en };
 
-let currentLocale: Locale = 'fr';
+let currentLocale: Locale = "fr";
 const listeners = new Set<() => void>();
 
 function notify() {
@@ -26,23 +26,27 @@ function subscribe(listener: () => void) {
 }
 
 // Initialize from localStorage
-if (typeof window !== 'undefined') {
+if (typeof window !== "undefined") {
   const stored = localStorage.getItem(STORAGE_KEY);
-  if (stored === 'en' || stored === 'fr') {
+  if (stored === "en" || stored === "fr") {
     currentLocale = stored;
   }
 }
 
 export function setLocale(locale: Locale) {
   currentLocale = locale;
-  if (typeof window !== 'undefined') {
+  if (typeof window !== "undefined") {
     localStorage.setItem(STORAGE_KEY, locale);
   }
   notify();
 }
 
 export function useTranslation() {
-  const locale = useSyncExternalStore(subscribe, getLocale, () => 'fr' as Locale);
+  const locale = useSyncExternalStore(
+    subscribe,
+    getLocale,
+    () => "fr" as Locale,
+  );
   const dict = dictionaries[locale];
 
   const t = useCallback(
@@ -55,7 +59,7 @@ export function useTranslation() {
       }
       return text;
     },
-    [dict]
+    [dict],
   );
 
   return { t, locale, setLocale };

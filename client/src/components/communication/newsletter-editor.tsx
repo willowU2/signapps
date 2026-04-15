@@ -45,7 +45,8 @@ const groupColors: Record<RecipientGroup, string> = {
   Tous: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
   RH: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
   IT: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
-  Direction: "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200",
+  Direction:
+    "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200",
 };
 
 export function NewsletterEditor({
@@ -54,24 +55,25 @@ export function NewsletterEditor({
 }: NewsletterEditorProps) {
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
-  const [selectedRecipients, setSelectedRecipients] = useState<RecipientGroup[]>(
-    []
-  );
+  const [selectedRecipients, setSelectedRecipients] = useState<
+    RecipientGroup[]
+  >([]);
   const [scheduledDate, setScheduledDate] = useState<Date | undefined>();
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [newsletters, setNewsletters] = useState<Newsletter[]>(
-    initialNewsletters
-  );
+  const [newsletters, setNewsletters] =
+    useState<Newsletter[]>(initialNewsletters);
 
   const handleRecipientToggle = (group: RecipientGroup) => {
     setSelectedRecipients((prev) =>
-      prev.includes(group) ? prev.filter((g) => g !== group) : [...prev, group]
+      prev.includes(group) ? prev.filter((g) => g !== group) : [...prev, group],
     );
   };
 
   const handleSendNow = () => {
     if (!title.trim() || !body.trim() || selectedRecipients.length === 0) {
-      toast.error("Veuillez remplir le titre, le contenu et sélectionner des destinataires");
+      toast.error(
+        "Veuillez remplir le titre, le contenu et sélectionner des destinataires",
+      );
       return;
     }
 
@@ -96,7 +98,9 @@ export function NewsletterEditor({
 
   const handleSchedule = () => {
     if (!title.trim() || !body.trim() || selectedRecipients.length === 0) {
-      toast.error("Veuillez remplir le titre, le contenu et sélectionner des destinataires");
+      toast.error(
+        "Veuillez remplir le titre, le contenu et sélectionner des destinataires",
+      );
       return;
     }
 
@@ -113,7 +117,7 @@ export function NewsletterEditor({
     });
 
     toast.success(
-      `Newsletter programmée pour ${scheduledDate.toLocaleDateString("fr-FR")}`
+      `Newsletter programmée pour ${scheduledDate.toLocaleDateString("fr-FR")}`,
     );
     resetForm();
     setShowDatePicker(false);
@@ -174,7 +178,7 @@ export function NewsletterEditor({
                       {group}
                     </label>
                   </div>
-                )
+                ),
               )}
             </div>
           </div>
@@ -236,7 +240,9 @@ export function NewsletterEditor({
                 >
                   <div className="flex items-start justify-between gap-2 mb-2">
                     <div className="flex-1">
-                      <h4 className="font-medium text-sm">{newsletter.title}</h4>
+                      <h4 className="font-medium text-sm">
+                        {newsletter.title}
+                      </h4>
                       <p className="text-xs text-muted-foreground mt-1">
                         {newsletter.sentAt.toLocaleDateString("fr-FR", {
                           year: "numeric",

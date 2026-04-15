@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { useEffect, useState, useRef, useCallback } from 'react';
-import { usePathname, useSearchParams } from 'next/navigation';
+import { useEffect, useState, useRef, useCallback } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
 
 /**
  * Slim progress bar at the top of the page during route transitions.
@@ -14,7 +14,7 @@ export function RouteProgressBar() {
   const [visible, setVisible] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const prevUrlRef = useRef('');
+  const prevUrlRef = useRef("");
 
   const cleanup = useCallback(() => {
     if (timerRef.current) {
@@ -37,7 +37,7 @@ export function RouteProgressBar() {
   }, [cleanup]);
 
   useEffect(() => {
-    const currentUrl = pathname + (searchParams?.toString() || '');
+    const currentUrl = pathname + (searchParams?.toString() || "");
 
     // On first mount, just record the URL
     if (!prevUrlRef.current) {
@@ -56,14 +56,20 @@ export function RouteProgressBar() {
   // Intercept clicks on <a> tags to start progress
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
-      const anchor = (e.target as HTMLElement).closest('a');
+      const anchor = (e.target as HTMLElement).closest("a");
       if (!anchor) return;
 
-      const href = anchor.getAttribute('href');
-      if (!href || href.startsWith('#') || href.startsWith('http') || href.startsWith('mailto:')) return;
-      if (anchor.target === '_blank') return;
+      const href = anchor.getAttribute("href");
+      if (
+        !href ||
+        href.startsWith("#") ||
+        href.startsWith("http") ||
+        href.startsWith("mailto:")
+      )
+        return;
+      if (anchor.target === "_blank") return;
 
-      const currentUrl = pathname + (searchParams?.toString() || '');
+      const currentUrl = pathname + (searchParams?.toString() || "");
       // Only start progress if it's a different page
       if (href === currentUrl || href === pathname) return;
 
@@ -86,8 +92,8 @@ export function RouteProgressBar() {
       }, 200);
     };
 
-    document.addEventListener('click', handleClick, true);
-    return () => document.removeEventListener('click', handleClick, true);
+    document.addEventListener("click", handleClick, true);
+    return () => document.removeEventListener("click", handleClick, true);
   }, [pathname, searchParams, cleanup]);
 
   // Cleanup on unmount
@@ -108,7 +114,9 @@ export function RouteProgressBar() {
         style={{
           width: `${progress}%`,
           opacity: visible ? 1 : 0,
-          boxShadow: visible ? '0 0 8px var(--primary), 0 0 4px var(--primary)' : 'none',
+          boxShadow: visible
+            ? "0 0 8px var(--primary), 0 0 4px var(--primary)"
+            : "none",
         }}
       />
     </div>

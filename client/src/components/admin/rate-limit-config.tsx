@@ -38,9 +38,27 @@ const INITIAL_FORM_STATE: EditFormState = {
 
 export function RateLimitConfig() {
   const [rules, setRules] = useState<RateLimitRule[]>([
-    { id: "1", endpointPattern: "/api/documents/*", maxRequestsPerMin: 100, burstSize: 20, isActive: true },
-    { id: "2", endpointPattern: "/api/upload", maxRequestsPerMin: 50, burstSize: 10, isActive: true },
-    { id: "3", endpointPattern: "/api/search/*", maxRequestsPerMin: 200, burstSize: 30, isActive: false },
+    {
+      id: "1",
+      endpointPattern: "/api/documents/*",
+      maxRequestsPerMin: 100,
+      burstSize: 20,
+      isActive: true,
+    },
+    {
+      id: "2",
+      endpointPattern: "/api/upload",
+      maxRequestsPerMin: 50,
+      burstSize: 10,
+      isActive: true,
+    },
+    {
+      id: "3",
+      endpointPattern: "/api/search/*",
+      maxRequestsPerMin: 200,
+      burstSize: 30,
+      isActive: false,
+    },
   ]);
   const [isLoading, setIsLoading] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -63,7 +81,11 @@ export function RateLimitConfig() {
 
   const handleSave = async () => {
     try {
-      if (!editForm.endpointPattern || !editForm.maxRequestsPerMin || !editForm.burstSize) {
+      if (
+        !editForm.endpointPattern ||
+        !editForm.maxRequestsPerMin ||
+        !editForm.burstSize
+      ) {
         toast.error("Tous les champs sont obligatoires");
         return;
       }
@@ -113,7 +135,9 @@ export function RateLimitConfig() {
 
   const toggleActive = (id: string) => {
     try {
-      setRules(rules.map((r) => (r.id === id ? { ...r, isActive: !r.isActive } : r)));
+      setRules(
+        rules.map((r) => (r.id === id ? { ...r, isActive: !r.isActive } : r)),
+      );
     } catch (error) {
       toast.error("Impossible de modifier l'état de la règle");
       console.warn(error);
@@ -124,7 +148,11 @@ export function RateLimitConfig() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-medium">Rate Limit Rules</h3>
-        <Button onClick={handleCreateNew} disabled={editingId !== null} size="sm">
+        <Button
+          onClick={handleCreateNew}
+          disabled={editingId !== null}
+          size="sm"
+        >
           <Plus className="h-4 w-4 mr-2" />
           Add Rule
         </Button>
@@ -150,7 +178,10 @@ export function RateLimitConfig() {
               </TableRow>
             ) : rules.length === 0 && editingId !== "new" ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center h-24 text-muted-foreground">
+                <TableCell
+                  colSpan={5}
+                  className="text-center h-24 text-muted-foreground"
+                >
                   No rate limit rules configured.
                 </TableCell>
               </TableRow>
@@ -163,7 +194,10 @@ export function RateLimitConfig() {
                     placeholder="/api/endpoint/*"
                     value={editForm.endpointPattern}
                     onChange={(e) =>
-                      setEditForm({ ...editForm, endpointPattern: e.target.value })
+                      setEditForm({
+                        ...editForm,
+                        endpointPattern: e.target.value,
+                      })
                     }
                     className="h-8 font-mono text-sm"
                   />
@@ -174,7 +208,10 @@ export function RateLimitConfig() {
                     type="number"
                     value={editForm.maxRequestsPerMin}
                     onChange={(e) =>
-                      setEditForm({ ...editForm, maxRequestsPerMin: e.target.value })
+                      setEditForm({
+                        ...editForm,
+                        maxRequestsPerMin: e.target.value,
+                      })
                     }
                     className="h-8 font-mono text-sm"
                   />
@@ -202,10 +239,20 @@ export function RateLimitConfig() {
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-2">
-                    <Button size="icon" variant="ghost" className="h-8 w-8 text-green-600" onClick={handleSave}>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-8 w-8 text-green-600"
+                      onClick={handleSave}
+                    >
                       <Save className="h-4 w-4" />
                     </Button>
-                    <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => setEditingId(null)}>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-8 w-8 text-destructive"
+                      onClick={() => setEditingId(null)}
+                    >
                       <X className="h-4 w-4" />
                     </Button>
                   </div>
@@ -220,7 +267,10 @@ export function RateLimitConfig() {
                     <Input
                       value={editForm.endpointPattern}
                       onChange={(e) =>
-                        setEditForm({ ...editForm, endpointPattern: e.target.value })
+                        setEditForm({
+                          ...editForm,
+                          endpointPattern: e.target.value,
+                        })
                       }
                       className="h-8 font-mono text-sm"
                     />
@@ -230,7 +280,10 @@ export function RateLimitConfig() {
                       type="number"
                       value={editForm.maxRequestsPerMin}
                       onChange={(e) =>
-                        setEditForm({ ...editForm, maxRequestsPerMin: e.target.value })
+                        setEditForm({
+                          ...editForm,
+                          maxRequestsPerMin: e.target.value,
+                        })
                       }
                       className="h-8 font-mono text-sm"
                     />
@@ -257,19 +310,36 @@ export function RateLimitConfig() {
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      <Button size="icon" variant="ghost" className="h-8 w-8 text-green-600" onClick={handleSave}>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-8 w-8 text-green-600"
+                        onClick={handleSave}
+                      >
                         <Save className="h-4 w-4" />
                       </Button>
-                      <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => setEditingId(null)}>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-8 w-8 text-destructive"
+                        onClick={() => setEditingId(null)}
+                      >
                         <X className="h-4 w-4" />
                       </Button>
                     </div>
                   </TableCell>
                 </TableRow>
               ) : (
-                <TableRow key={rule.id} className={!rule.isActive ? "opacity-60" : ""}>
-                  <TableCell className="font-mono text-sm">{rule.endpointPattern}</TableCell>
-                  <TableCell className="text-sm">{rule.maxRequestsPerMin}</TableCell>
+                <TableRow
+                  key={rule.id}
+                  className={!rule.isActive ? "opacity-60" : ""}
+                >
+                  <TableCell className="font-mono text-sm">
+                    {rule.endpointPattern}
+                  </TableCell>
+                  <TableCell className="text-sm">
+                    {rule.maxRequestsPerMin}
+                  </TableCell>
                   <TableCell className="text-sm">{rule.burstSize}</TableCell>
                   <TableCell>
                     <input
@@ -303,7 +373,7 @@ export function RateLimitConfig() {
                     </div>
                   </TableCell>
                 </TableRow>
-              )
+              ),
             )}
           </TableBody>
         </Table>

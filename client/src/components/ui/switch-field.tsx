@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import * as React from 'react';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
-import { cn } from '@/lib/utils';
+import * as React from "react";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
 
 interface SwitchFieldProps {
   id?: string;
@@ -28,10 +28,10 @@ export function SwitchField({
   disabled,
   className,
 }: SwitchFieldProps) {
-  const fieldId = id ?? `switch-${label.toLowerCase().replace(/\s+/g, '-')}`;
+  const fieldId = id ?? `switch-${label.toLowerCase().replace(/\s+/g, "-")}`;
 
   return (
-    <div className={cn('flex items-center justify-between gap-4', className)}>
+    <div className={cn("flex items-center justify-between gap-4", className)}>
       <div className="space-y-0.5">
         <Label htmlFor={fieldId} className="text-sm font-medium cursor-pointer">
           {label}

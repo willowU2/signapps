@@ -29,10 +29,30 @@ export function FinancialConsolidation() {
 
   useEffect(() => {
     const siteData: SiteFinancial[] = [
-      { siteName: "New York HQ", revenue: 2500000, expenses: 1500000, variance: 0 },
-      { siteName: "San Francisco Office", revenue: 1800000, expenses: 1200000, variance: 0 },
-      { siteName: "Chicago Branch", revenue: 950000, expenses: 680000, variance: 0 },
-      { siteName: "Boston Tech Center", revenue: 750000, expenses: 520000, variance: 0 },
+      {
+        siteName: "New York HQ",
+        revenue: 2500000,
+        expenses: 1500000,
+        variance: 0,
+      },
+      {
+        siteName: "San Francisco Office",
+        revenue: 1800000,
+        expenses: 1200000,
+        variance: 0,
+      },
+      {
+        siteName: "Chicago Branch",
+        revenue: 950000,
+        expenses: 680000,
+        variance: 0,
+      },
+      {
+        siteName: "Boston Tech Center",
+        revenue: 750000,
+        expenses: 520000,
+        variance: 0,
+      },
     ];
 
     const totalRev = siteData.reduce((sum, s) => sum + s.revenue, 0);
@@ -66,19 +86,27 @@ export function FinancialConsolidation() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="border rounded-lg p-4 bg-blue-50">
           <p className="text-sm text-muted-foreground mb-1">Total Revenue</p>
-          <p className="text-2xl font-bold text-blue-700">{formatCurrency(consolidated.totalRevenue)}</p>
+          <p className="text-2xl font-bold text-blue-700">
+            {formatCurrency(consolidated.totalRevenue)}
+          </p>
         </div>
         <div className="border rounded-lg p-4 bg-red-50">
           <p className="text-sm text-muted-foreground mb-1">Total Expenses</p>
-          <p className="text-2xl font-bold text-red-700">{formatCurrency(consolidated.totalExpenses)}</p>
+          <p className="text-2xl font-bold text-red-700">
+            {formatCurrency(consolidated.totalExpenses)}
+          </p>
         </div>
         <div className="border rounded-lg p-4 bg-green-50">
           <p className="text-sm text-muted-foreground mb-1">Net Profit</p>
-          <p className="text-2xl font-bold text-green-700">{formatCurrency(consolidated.netProfit)}</p>
+          <p className="text-2xl font-bold text-green-700">
+            {formatCurrency(consolidated.netProfit)}
+          </p>
         </div>
         <div className="border rounded-lg p-4 bg-purple-50">
           <p className="text-sm text-muted-foreground mb-1">Profit Margin</p>
-          <p className="text-2xl font-bold text-purple-700">{consolidated.profitMargin}%</p>
+          <p className="text-2xl font-bold text-purple-700">
+            {consolidated.profitMargin}%
+          </p>
         </div>
       </div>
 
@@ -111,7 +139,11 @@ export function FinancialConsolidation() {
                       ) : (
                         <TrendingDown className="w-4 h-4 text-red-600" />
                       )}
-                      <span className={site.variance > 0 ? "text-green-700" : "text-red-700"}>
+                      <span
+                        className={
+                          site.variance > 0 ? "text-green-700" : "text-red-700"
+                        }
+                      >
                         {site.variance.toFixed(1)}%
                       </span>
                     </div>
@@ -128,15 +160,21 @@ export function FinancialConsolidation() {
         <div className="space-y-2 font-mono text-sm">
           <div className="flex justify-between">
             <span>Total Revenue:</span>
-            <span className="font-semibold text-green-700">{formatCurrency(consolidated.totalRevenue)}</span>
+            <span className="font-semibold text-green-700">
+              {formatCurrency(consolidated.totalRevenue)}
+            </span>
           </div>
           <div className="flex justify-between">
             <span>Total Expenses:</span>
-            <span className="font-semibold text-red-700">{formatCurrency(consolidated.totalExpenses)}</span>
+            <span className="font-semibold text-red-700">
+              {formatCurrency(consolidated.totalExpenses)}
+            </span>
           </div>
           <div className="border-t pt-2 flex justify-between font-bold">
             <span>Net Profit:</span>
-            <span className="text-green-700">{formatCurrency(consolidated.netProfit)}</span>
+            <span className="text-green-700">
+              {formatCurrency(consolidated.netProfit)}
+            </span>
           </div>
           <div className="flex justify-between text-muted-foreground">
             <span>Profit Margin:</span>

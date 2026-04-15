@@ -67,19 +67,20 @@ static CAPABILITIES_CACHE: OnceLock<HashMap<CapCacheKey, Vec<String>>> = OnceLoc
 /// # Errors
 ///
 /// Returns [`Error::Database`] if the query fails during the initial load.
-async fn load_capabilities_cache(pool: &PgPool) -> Result<&'static HashMap<CapCacheKey, Vec<String>>> {
+async fn load_capabilities_cache(
+    pool: &PgPool,
+) -> Result<&'static HashMap<CapCacheKey, Vec<String>>> {
     // Fast-path: already populated.
     if let Some(map) = CAPABILITIES_CACHE.get() {
         return Ok(map);
     }
 
     // Load all rows.
-    let rows: Vec<(String, String, Vec<String>)> = sqlx::query_as(
-        "SELECT resource_type, role, actions FROM sharing.capabilities",
-    )
-    .fetch_all(pool)
-    .await
-    .map_err(|e| Error::Database(e.to_string()))?;
+    let rows: Vec<(String, String, Vec<String>)> =
+        sqlx::query_as("SELECT resource_type, role, actions FROM sharing.capabilities")
+            .fetch_all(pool)
+            .await
+            .map_err(|e| Error::Database(e.to_string()))?;
 
     let mut map: HashMap<CapCacheKey, Vec<String>> = HashMap::with_capacity(rows.len());
     for (resource_type, role, actions) in rows {
@@ -195,7 +196,10 @@ impl<'pool> PermissionResolver<'pool> {
         // Check AFTER the superadmin/owner bypasses (those are not cached) and
         // BEFORE the deny check (deny is always checked live).
         if let Some(cache) = self.cache {
-            if let Some(cached_role_str) = cache.get_effective_role(tid, user_ctx.user_id, rt, rid).await {
+            if let Some(cached_role_str) = cache
+                .get_effective_role(tid, user_ctx.user_id, rt, rid)
+                .await
+            {
                 if let Ok(cached_role) = cached_role_str.parse::<Role>() {
                     tracing::debug!(role = %cached_role, "L2 cache hit");
                     let caps = self.get_capabilities(rt, cached_role.as_str()).await?;
@@ -653,9 +657,7 @@ impl<'pool> PermissionResolver<'pool> {
         let can_reshare = all_sources.iter().any(|s| {
             // can_reshare is only meaningful for direct grants (depth 0).
             // For inherited grants we conservatively disallow resharing.
-            found_level == Some(0)
-                && s.axis != "everyone"
-                && s.role != Role::Deny
+            found_level == Some(0) && s.axis != "everyone" && s.role != Role::Deny
         });
 
         // ── Step 6: Capability lookup ────────────────────────────────────────
@@ -900,10 +902,7 @@ mod tests {
     fn two_element_chain_ordering() {
         let file_id = Uuid::new_v4();
         let folder_id = Uuid::new_v4();
-        let chain = vec![
-            ResourceRef::file(file_id),
-            ResourceRef::folder(folder_id),
-        ];
+        let chain = vec![ResourceRef::file(file_id), ResourceRef::folder(folder_id)];
         assert_eq!(chain[0].resource_id, file_id);
         assert_eq!(chain[1].resource_id, folder_id);
     }
@@ -1007,9 +1006,9 @@ mod tests {
             role: Role::Editor,
             via: "inherited from folder".into(),
         }];
-        let can_reshare = sources.iter().any(|s| {
-            found_level == Some(0) && s.axis != "everyone" && s.role != Role::Deny
-        });
+        let can_reshare = sources
+            .iter()
+            .any(|s| found_level == Some(0) && s.axis != "everyone" && s.role != Role::Deny);
         assert!(!can_reshare);
     }
 
@@ -1023,9 +1022,9 @@ mod tests {
             role: Role::Manager,
             via: "direct grant".into(),
         }];
-        let can_reshare = sources.iter().any(|s| {
-            found_level == Some(0) && s.axis != "everyone" && s.role != Role::Deny
-        });
+        let can_reshare = sources
+            .iter()
+            .any(|s| found_level == Some(0) && s.axis != "everyone" && s.role != Role::Deny);
         assert!(can_reshare);
     }
 
@@ -1039,9 +1038,9 @@ mod tests {
             role: Role::Editor,
             via: "direct grant".into(),
         }];
-        let can_reshare = sources.iter().any(|s| {
-            found_level == Some(0) && s.axis != "everyone" && s.role != Role::Deny
-        });
+        let can_reshare = sources
+            .iter()
+            .any(|s| found_level == Some(0) && s.axis != "everyone" && s.role != Role::Deny);
         assert!(!can_reshare);
     }
 
@@ -1104,11 +1103,20 @@ mod tests {
         );
         map.insert(
             ("file".to_string(), "editor".to_string()),
-            vec!["read".to_string(), "write".to_string(), "download".to_string()],
+            vec![
+                "read".to_string(),
+                "write".to_string(),
+                "download".to_string(),
+            ],
         );
         map.insert(
             ("folder".to_string(), "manager".to_string()),
-            vec!["read".to_string(), "write".to_string(), "delete".to_string(), "share".to_string()],
+            vec![
+                "read".to_string(),
+                "write".to_string(),
+                "delete".to_string(),
+                "share".to_string(),
+            ],
         );
 
         // Attempt to populate the global OnceLock (may already be set in other tests).
@@ -1121,7 +1129,8 @@ mod tests {
             // either way the map must be non-empty (it was set above or by
             // another test run).
             assert!(
-                viewer_actions.is_some() || cache.contains_key(&("file".to_string(), "editor".to_string())),
+                viewer_actions.is_some()
+                    || cache.contains_key(&("file".to_string(), "editor".to_string())),
                 "cache must contain at least one entry after set()"
             );
         }
@@ -1133,7 +1142,10 @@ mod tests {
         // The OnceLock may already be populated (from the test above or a previous run).
         // Regardless, an unknown key must return None — never panic.
         if let Some(cache) = CAPABILITIES_CACHE.get() {
-            let missing = cache.get(&("nonexistent_type".to_string(), "nonexistent_role".to_string()));
+            let missing = cache.get(&(
+                "nonexistent_type".to_string(),
+                "nonexistent_role".to_string(),
+            ));
             assert!(missing.is_none(), "unknown key must return None");
         }
         // If the cache hasn't been populated yet, the test is vacuously true —

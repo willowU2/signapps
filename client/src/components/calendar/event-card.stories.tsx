@@ -1,7 +1,7 @@
-import type { Meta, StoryObj } from '@storybook/react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Calendar, Clock, MapPin, Users } from 'lucide-react';
+import type { Meta, StoryObj } from "@storybook/react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Calendar, Clock, MapPin, Users } from "lucide-react";
 
 // ---------------------------------------------------------------------------
 // Minimal EventCard for display purposes
@@ -25,15 +25,15 @@ function EventCard({
   end,
   location,
   attendees,
-  color = '#6366f1',
+  color = "#6366f1",
   isAllDay = false,
   isCancelled = false,
 }: EventCardProps) {
   const startDate = new Date(start);
   const endDate = new Date(end);
   const timeLabel = isAllDay
-    ? 'All day'
-    : `${startDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })} – ${endDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`;
+    ? "All day"
+    : `${startDate.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })} – ${endDate.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}`;
 
   return (
     <Card
@@ -42,11 +42,15 @@ function EventCard({
     >
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between gap-2">
-          <CardTitle className={`text-sm font-semibold ${isCancelled ? 'line-through text-muted-foreground' : ''}`}>
+          <CardTitle
+            className={`text-sm font-semibold ${isCancelled ? "line-through text-muted-foreground" : ""}`}
+          >
             {title}
           </CardTitle>
           {isCancelled && (
-            <Badge variant="destructive" className="text-xs">Cancelled</Badge>
+            <Badge variant="destructive" className="text-xs">
+              Cancelled
+            </Badge>
           )}
         </div>
       </CardHeader>
@@ -64,7 +68,9 @@ function EventCard({
         {attendees !== undefined && attendees > 0 && (
           <div className="flex items-center gap-1.5">
             <Users className="size-3.5" />
-            <span>{attendees} attendee{attendees > 1 ? 's' : ''}</span>
+            <span>
+              {attendees} attendee{attendees > 1 ? "s" : ""}
+            </span>
           </div>
         )}
       </CardContent>
@@ -73,21 +79,22 @@ function EventCard({
 }
 
 const meta: Meta<typeof EventCard> = {
-  title: 'Calendar/EventCard',
+  title: "Calendar/EventCard",
   component: EventCard,
-  tags: ['autodocs'],
+  tags: ["autodocs"],
   parameters: {
-    layout: 'centered',
+    layout: "centered",
     docs: {
       description: {
-        component: 'Compact calendar event display card used in list and agenda views.',
+        component:
+          "Compact calendar event display card used in list and agenda views.",
       },
     },
   },
   argTypes: {
-    color: { control: 'color' },
-    isAllDay: { control: 'boolean' },
-    isCancelled: { control: 'boolean' },
+    color: { control: "color" },
+    isAllDay: { control: "boolean" },
+    isCancelled: { control: "boolean" },
   },
 };
 
@@ -96,54 +103,54 @@ type Story = StoryObj<typeof EventCard>;
 
 export const Default: Story = {
   args: {
-    title: 'Team Standup',
-    start: '2026-04-01T09:00:00',
-    end: '2026-04-01T09:30:00',
-    location: 'Meeting Room A',
+    title: "Team Standup",
+    start: "2026-04-01T09:00:00",
+    end: "2026-04-01T09:30:00",
+    location: "Meeting Room A",
     attendees: 5,
-    color: '#6366f1',
+    color: "#6366f1",
   },
 };
 
 export const AllDay: Story = {
   args: {
-    title: 'Company Holiday',
-    start: '2026-04-01T00:00:00',
-    end: '2026-04-01T23:59:59',
+    title: "Company Holiday",
+    start: "2026-04-01T00:00:00",
+    end: "2026-04-01T23:59:59",
     isAllDay: true,
-    color: '#10b981',
+    color: "#10b981",
     attendees: 0,
   },
 };
 
 export const Cancelled: Story = {
   args: {
-    title: 'Q2 Planning Session',
-    start: '2026-04-02T14:00:00',
-    end: '2026-04-02T16:00:00',
-    location: 'Conference Room B',
+    title: "Q2 Planning Session",
+    start: "2026-04-02T14:00:00",
+    end: "2026-04-02T16:00:00",
+    location: "Conference Room B",
     attendees: 8,
     isCancelled: true,
-    color: '#ef4444',
+    color: "#ef4444",
   },
 };
 
 export const MinimalNoLocation: Story = {
   args: {
-    title: 'Quick sync',
-    start: '2026-04-01T11:00:00',
-    end: '2026-04-01T11:15:00',
-    color: '#f59e0b',
+    title: "Quick sync",
+    start: "2026-04-01T11:00:00",
+    end: "2026-04-01T11:15:00",
+    color: "#f59e0b",
   },
 };
 
 export const LongTitle: Story = {
   args: {
-    title: 'Annual Strategy Workshop — Executive Leadership Team',
-    start: '2026-04-03T09:00:00',
-    end: '2026-04-03T17:00:00',
-    location: 'Paris HQ, Floor 12 — Grand Salle',
+    title: "Annual Strategy Workshop — Executive Leadership Team",
+    start: "2026-04-03T09:00:00",
+    end: "2026-04-03T17:00:00",
+    location: "Paris HQ, Floor 12 — Grand Salle",
     attendees: 20,
-    color: '#8b5cf6',
+    color: "#8b5cf6",
   },
 };

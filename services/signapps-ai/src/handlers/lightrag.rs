@@ -262,11 +262,8 @@ pub async fn lightrag_query(
 ///
 /// No panics possible — all errors are propagated via `Result`.
 #[tracing::instrument(skip_all)]
-pub async fn lightrag_stats(
-    State(state): State<AppState>,
-) -> Result<Json<StatsResponse>> {
-    let stats =
-        signapps_db::repositories::KgRepository::get_stats(&state.pool, "default").await?;
+pub async fn lightrag_stats(State(state): State<AppState>) -> Result<Json<StatsResponse>> {
+    let stats = signapps_db::repositories::KgRepository::get_stats(&state.pool, "default").await?;
 
     Ok(Json(StatsResponse {
         collection: "default".to_string(),
@@ -434,17 +431,14 @@ pub async fn lightrag_graph(
 ///
 /// No panics possible — all errors are propagated via `Result`.
 #[tracing::instrument(skip_all)]
-pub async fn lightrag_seed(
-    State(state): State<AppState>,
-) -> Result<Json<SeedResponse>> {
+pub async fn lightrag_seed(State(state): State<AppState>) -> Result<Json<SeedResponse>> {
     let embed_client = state.embeddings.clone();
     let embed_fn = move |text: String| {
         let client = embed_client.clone();
         async move { client.embed(&text).await }
     };
 
-    let results =
-        crate::rag::lightrag_seeder::seed_all(&state.pool, "default", embed_fn).await?;
+    let results = crate::rag::lightrag_seeder::seed_all(&state.pool, "default", embed_fn).await?;
 
     let entities_created: usize = results.iter().map(|r| r.entities_created).sum();
     let relations_created: usize = results.iter().map(|r| r.relations_created).sum();

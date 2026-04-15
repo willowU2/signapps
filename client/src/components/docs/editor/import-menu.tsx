@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { SpinnerInfinity } from 'spinners-react';
+import { SpinnerInfinity } from "spinners-react";
 
-import { Editor } from '@tiptap/react';
-import { Button } from '@/components/ui/button';
+import { Editor } from "@tiptap/react";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,9 +11,9 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Upload, FileText, FileCode, FileJson, Clipboard } from 'lucide-react';
-import { useDocumentImport } from '@/hooks/use-document-import';
+} from "@/components/ui/dropdown-menu";
+import { Upload, FileText, FileCode, FileJson, Clipboard } from "lucide-react";
+import { useDocumentImport } from "@/hooks/use-document-import";
 
 interface ImportMenuProps {
   editor: Editor | null;
@@ -50,7 +50,13 @@ export function ImportMenu({ editor }: ImportMenuProps) {
           >
             {isImporting ? (
               <>
-                <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-4 w-4 mr-1.5 " />
+                <SpinnerInfinity
+                  size={24}
+                  secondaryColor="rgba(128,128,128,0.2)"
+                  color="currentColor"
+                  speed={120}
+                  className="h-4 w-4 mr-1.5 "
+                />
                 Import...
               </>
             ) : (
@@ -74,10 +80,18 @@ export function ImportMenu({ editor }: ImportMenuProps) {
             <FileText className="h-4 w-4 mr-2 text-blue-600" />
             <div className="flex flex-col">
               <span>Depuis un fichier</span>
-              <span className="text-xs text-muted-foreground">.docx, .md, .html, .txt</span>
+              <span className="text-xs text-muted-foreground">
+                .docx, .md, .html, .txt
+              </span>
             </div>
             {isImporting && importFormat && (
-              <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-4 w-4 ml-auto " />
+              <SpinnerInfinity
+                size={24}
+                secondaryColor="rgba(128,128,128,0.2)"
+                color="currentColor"
+                speed={120}
+                className="h-4 w-4 ml-auto "
+              />
             )}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
@@ -85,31 +99,47 @@ export function ImportMenu({ editor }: ImportMenuProps) {
             Depuis le presse-papier
           </DropdownMenuLabel>
           <DropdownMenuItem
-            onClick={() => importFromClipboard('markdown')}
+            onClick={() => importFromClipboard("markdown")}
             disabled={isImporting}
             className="cursor-pointer"
           >
             <FileCode className="h-4 w-4 mr-2 text-purple-600" />
             <div className="flex flex-col">
               <span>Coller comme Markdown</span>
-              <span className="text-xs text-muted-foreground">Convertit le Markdown en formatage</span>
+              <span className="text-xs text-muted-foreground">
+                Convertit le Markdown en formatage
+              </span>
             </div>
-            {isImporting && importFormat === 'markdown' && (
-              <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-4 w-4 ml-auto " />
+            {isImporting && importFormat === "markdown" && (
+              <SpinnerInfinity
+                size={24}
+                secondaryColor="rgba(128,128,128,0.2)"
+                color="currentColor"
+                speed={120}
+                className="h-4 w-4 ml-auto "
+              />
             )}
           </DropdownMenuItem>
           <DropdownMenuItem
-            onClick={() => importFromClipboard('html')}
+            onClick={() => importFromClipboard("html")}
             disabled={isImporting}
             className="cursor-pointer"
           >
             <FileJson className="h-4 w-4 mr-2 text-orange-600" />
             <div className="flex flex-col">
               <span>Coller comme HTML</span>
-              <span className="text-xs text-muted-foreground">Préserve la mise en forme HTML</span>
+              <span className="text-xs text-muted-foreground">
+                Préserve la mise en forme HTML
+              </span>
             </div>
-            {isImporting && importFormat === 'html' && (
-              <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-4 w-4 ml-auto " />
+            {isImporting && importFormat === "html" && (
+              <SpinnerInfinity
+                size={24}
+                secondaryColor="rgba(128,128,128,0.2)"
+                color="currentColor"
+                speed={120}
+                className="h-4 w-4 ml-auto "
+              />
             )}
           </DropdownMenuItem>
         </DropdownMenuContent>

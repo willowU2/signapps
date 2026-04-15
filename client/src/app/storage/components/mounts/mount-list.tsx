@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { Skeleton } from '@/components/ui/skeleton';
-import { FolderOpen, HardDrive, Network } from 'lucide-react';
-import type { MountPoint } from '@/lib/api';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { Skeleton } from "@/components/ui/skeleton";
+import { FolderOpen, HardDrive, Network } from "lucide-react";
+import type { MountPoint } from "@/lib/api";
 
 interface MountListProps {
   mounts: MountPoint[];
@@ -13,9 +13,9 @@ interface MountListProps {
 }
 
 function formatBytes(bytes?: number): string {
-  if (!bytes || bytes === 0) return '0 B';
+  if (!bytes || bytes === 0) return "0 B";
   const k = 1024;
-  const sizes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB'];
+  const sizes = ["B", "KB", "MB", "GB", "TB", "PB"];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
 }
@@ -52,10 +52,7 @@ export function MountList({ mounts, loading }: MountListProps) {
         ) : (
           <div className="space-y-4">
             {mounts.map((mount, index) => (
-              <div
-                key={index}
-                className="rounded-lg border p-4"
-              >
+              <div key={index} className="rounded-lg border p-4">
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-3">
                     {mount.is_network ? (
@@ -67,7 +64,9 @@ export function MountList({ mounts, loading }: MountListProps) {
                     )}
                     <div>
                       <p className="font-medium">{mount.mount_point}</p>
-                      <p className="text-sm text-muted-foreground">{mount.device}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {mount.device}
+                      </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
@@ -84,15 +83,20 @@ export function MountList({ mounts, loading }: MountListProps) {
                 <div>
                   <div className="flex justify-between text-sm mb-1">
                     <span className="text-muted-foreground">
-                      {formatBytes(mount.used_bytes)} utilisé sur {formatBytes(mount.total_bytes)}
+                      {formatBytes(mount.used_bytes)} utilisé sur{" "}
+                      {formatBytes(mount.total_bytes)}
                     </span>
-                    <span className={(mount.usage_percent ?? 0) > 90 ? 'text-red-500' : ''}>
+                    <span
+                      className={
+                        (mount.usage_percent ?? 0) > 90 ? "text-red-500" : ""
+                      }
+                    >
                       {(mount.usage_percent ?? 0).toFixed(1)}%
                     </span>
                   </div>
                   <Progress
                     value={mount.usage_percent ?? 0}
-                    className={`h-2 ${(mount.usage_percent ?? 0) > 90 ? 'bg-red-100' : ''}`}
+                    className={`h-2 ${(mount.usage_percent ?? 0) > 90 ? "bg-red-100" : ""}`}
                   />
                 </div>
               </div>

@@ -4,8 +4,8 @@
  * API client for organizational structure, employees, and coverage management.
  * @see factory.ts for client creation details
  */
-import { getClient, ServiceName } from './factory';
-import type { AxiosRequestConfig } from 'axios';
+import { getClient, ServiceName } from "./factory";
+import type { AxiosRequestConfig } from "axios";
 import type {
   OrgNodeType,
   CreateOrgNodeType,
@@ -39,7 +39,7 @@ import type {
   OrgTreeQueryParams,
   BulkMoveNodesRequest,
   BulkMoveNodesResponse,
-} from '@/types/workforce';
+} from "@/types/workforce";
 
 // Get the workforce service client (cached)
 const workforceClient = getClient(ServiceName.WORKFORCE);
@@ -49,14 +49,13 @@ const workforceClient = getClient(ServiceName.WORKFORCE);
 // ============================================================================
 
 export const orgNodeTypesApi = {
-  list: () =>
-    workforceClient.get<OrgNodeType[]>('/workforce/org/node-types'),
+  list: () => workforceClient.get<OrgNodeType[]>("/workforce/org/node-types"),
 
   get: (id: string) =>
     workforceClient.get<OrgNodeType>(`/workforce/org/node-types/${id}`),
 
   create: (data: CreateOrgNodeType) =>
-    workforceClient.post<OrgNodeType>('/workforce/org/node-types', data),
+    workforceClient.post<OrgNodeType>("/workforce/org/node-types", data),
 
   update: (id: string, data: UpdateOrgNodeType) =>
     workforceClient.put<OrgNodeType>(`/workforce/org/node-types/${id}`, data),
@@ -72,13 +71,15 @@ export const orgNodeTypesApi = {
 export const orgNodesApi = {
   // Tree operations
   getTree: (params?: OrgTreeQueryParams) =>
-    workforceClient.get<OrgNodeWithStats[]>('/workforce/org/tree', { params }),
+    workforceClient.get<OrgNodeWithStats[]>("/workforce/org/tree", { params }),
 
   getNode: (id: string) =>
     workforceClient.get<OrgNodeWithStats>(`/workforce/org/nodes/${id}`),
 
   getChildren: (id: string) =>
-    workforceClient.get<OrgNodeWithStats[]>(`/workforce/org/nodes/${id}/children`),
+    workforceClient.get<OrgNodeWithStats[]>(
+      `/workforce/org/nodes/${id}/children`,
+    ),
 
   getAncestors: (id: string) =>
     workforceClient.get<OrgNode[]>(`/workforce/org/nodes/${id}/ancestors`),
@@ -88,20 +89,22 @@ export const orgNodesApi = {
 
   // CRUD operations
   create: (data: CreateOrgNode) =>
-    workforceClient.post<OrgNode>('/workforce/org/nodes', data),
+    workforceClient.post<OrgNode>("/workforce/org/nodes", data),
 
   update: (id: string, data: UpdateOrgNode) =>
     workforceClient.put<OrgNode>(`/workforce/org/nodes/${id}`, data),
 
-  delete: (id: string) =>
-    workforceClient.delete(`/workforce/org/nodes/${id}`),
+  delete: (id: string) => workforceClient.delete(`/workforce/org/nodes/${id}`),
 
   // Move operations
   move: (id: string, data: MoveOrgNode) =>
     workforceClient.post<OrgNode>(`/workforce/org/nodes/${id}/move`, data),
 
   bulkMove: (data: BulkMoveNodesRequest) =>
-    workforceClient.post<BulkMoveNodesResponse>('/workforce/org/nodes/bulk-move', data),
+    workforceClient.post<BulkMoveNodesResponse>(
+      "/workforce/org/nodes/bulk-move",
+      data,
+    ),
 
   // Activation
   activate: (id: string) =>
@@ -116,20 +119,18 @@ export const orgNodesApi = {
 // ============================================================================
 
 export const functionDefsApi = {
-  list: () =>
-    workforceClient.get<FunctionDefinition[]>('/workforce/functions'),
+  list: () => workforceClient.get<FunctionDefinition[]>("/workforce/functions"),
 
   get: (id: string) =>
     workforceClient.get<FunctionDefinition>(`/workforce/functions/${id}`),
 
   create: (data: CreateFunctionDefinition) =>
-    workforceClient.post<FunctionDefinition>('/workforce/functions', data),
+    workforceClient.post<FunctionDefinition>("/workforce/functions", data),
 
   update: (id: string, data: UpdateFunctionDefinition) =>
     workforceClient.put<FunctionDefinition>(`/workforce/functions/${id}`, data),
 
-  delete: (id: string) =>
-    workforceClient.delete(`/workforce/functions/${id}`),
+  delete: (id: string) => workforceClient.delete(`/workforce/functions/${id}`),
 };
 
 // ============================================================================
@@ -138,36 +139,49 @@ export const functionDefsApi = {
 
 export const employeesApi = {
   list: (params?: EmployeeQueryParams) =>
-    workforceClient.get<{ employees: EmployeeWithDetails[]; total: number }>('/workforce/employees', { params }),
+    workforceClient.get<{ employees: EmployeeWithDetails[]; total: number }>(
+      "/workforce/employees",
+      { params },
+    ),
 
   get: (id: string) =>
     workforceClient.get<EmployeeWithDetails>(`/workforce/employees/${id}`),
 
   create: (data: CreateEmployee) =>
-    workforceClient.post<Employee>('/workforce/employees', data),
+    workforceClient.post<Employee>("/workforce/employees", data),
 
   update: (id: string, data: UpdateEmployee) =>
     workforceClient.put<Employee>(`/workforce/employees/${id}`, data),
 
-  delete: (id: string) =>
-    workforceClient.delete(`/workforce/employees/${id}`),
+  delete: (id: string) => workforceClient.delete(`/workforce/employees/${id}`),
 
   // Bulk operations
   bulkAssignFunction: (employeeIds: string[], functionCode: string) =>
-    workforceClient.post('/workforce/employees/bulk/assign-function', { employee_ids: employeeIds, function_code: functionCode }),
+    workforceClient.post("/workforce/employees/bulk/assign-function", {
+      employee_ids: employeeIds,
+      function_code: functionCode,
+    }),
 
   bulkMove: (employeeIds: string[], orgNodeId: string) =>
-    workforceClient.post('/workforce/employees/bulk/move', { employee_ids: employeeIds, org_node_id: orgNodeId }),
+    workforceClient.post("/workforce/employees/bulk/move", {
+      employee_ids: employeeIds,
+      org_node_id: orgNodeId,
+    }),
 
   // Search
   search: (query: string) =>
-    workforceClient.get<EmployeeWithDetails[]>('/workforce/employees/search', { params: { q: query } }),
+    workforceClient.get<EmployeeWithDetails[]>("/workforce/employees/search", {
+      params: { q: query },
+    }),
 
   // By org node
   listByOrgNode: (orgNodeId: string, includeDescendants?: boolean) =>
-    workforceClient.get<EmployeeWithDetails[]>(`/workforce/employees/by-node/${orgNodeId}`, {
-      params: { include_descendants: includeDescendants },
-    }),
+    workforceClient.get<EmployeeWithDetails[]>(
+      `/workforce/employees/by-node/${orgNodeId}`,
+      {
+        params: { include_descendants: includeDescendants },
+      },
+    ),
 };
 
 // ============================================================================
@@ -176,16 +190,24 @@ export const employeesApi = {
 
 export const coverageTemplatesApi = {
   list: () =>
-    workforceClient.get<CoverageTemplate[]>('/workforce/coverage/templates'),
+    workforceClient.get<CoverageTemplate[]>("/workforce/coverage/templates"),
 
   get: (id: string) =>
-    workforceClient.get<CoverageTemplate>(`/workforce/coverage/templates/${id}`),
+    workforceClient.get<CoverageTemplate>(
+      `/workforce/coverage/templates/${id}`,
+    ),
 
   create: (data: CreateCoverageTemplate) =>
-    workforceClient.post<CoverageTemplate>('/workforce/coverage/templates', data),
+    workforceClient.post<CoverageTemplate>(
+      "/workforce/coverage/templates",
+      data,
+    ),
 
   update: (id: string, data: UpdateCoverageTemplate) =>
-    workforceClient.put<CoverageTemplate>(`/workforce/coverage/templates/${id}`, data),
+    workforceClient.put<CoverageTemplate>(
+      `/workforce/coverage/templates/${id}`,
+      data,
+    ),
 
   delete: (id: string) =>
     workforceClient.delete(`/workforce/coverage/templates/${id}`),
@@ -194,7 +216,10 @@ export const coverageTemplatesApi = {
     workforceClient.post(`/workforce/coverage/templates/${id}/set-default`),
 
   duplicate: (id: string, name: string) =>
-    workforceClient.post<CoverageTemplate>(`/workforce/coverage/templates/${id}/duplicate`, { name }),
+    workforceClient.post<CoverageTemplate>(
+      `/workforce/coverage/templates/${id}/duplicate`,
+      { name },
+    ),
 };
 
 // ============================================================================
@@ -203,13 +228,15 @@ export const coverageTemplatesApi = {
 
 export const coverageRulesApi = {
   list: (orgNodeId?: string) =>
-    workforceClient.get<CoverageRule[]>('/workforce/coverage/rules', { params: { org_node_id: orgNodeId } }),
+    workforceClient.get<CoverageRule[]>("/workforce/coverage/rules", {
+      params: { org_node_id: orgNodeId },
+    }),
 
   get: (id: string) =>
     workforceClient.get<CoverageRule>(`/workforce/coverage/rules/${id}`),
 
   create: (data: CreateCoverageRule) =>
-    workforceClient.post<CoverageRule>('/workforce/coverage/rules', data),
+    workforceClient.post<CoverageRule>("/workforce/coverage/rules", data),
 
   update: (id: string, data: UpdateCoverageRule) =>
     workforceClient.put<CoverageRule>(`/workforce/coverage/rules/${id}`, data),
@@ -219,7 +246,10 @@ export const coverageRulesApi = {
 
   // Effective coverage (considering inheritance)
   getEffective: (orgNodeId: string, date?: string) =>
-    workforceClient.get<EffectiveCoverage>(`/workforce/coverage/effective/${orgNodeId}`, { params: { date } }),
+    workforceClient.get<EffectiveCoverage>(
+      `/workforce/coverage/effective/${orgNodeId}`,
+      { params: { date } },
+    ),
 };
 
 // ============================================================================
@@ -228,17 +258,28 @@ export const coverageRulesApi = {
 
 export const validationApi = {
   validateCoverage: (data: ValidateCoverageRequest) =>
-    workforceClient.post<ValidateCoverageResponse>('/workforce/validation/coverage', data),
+    workforceClient.post<ValidateCoverageResponse>(
+      "/workforce/validation/coverage",
+      data,
+    ),
 
   simulateLeave: (data: LeaveSimulationRequest) =>
-    workforceClient.post<LeaveSimulationResponse>('/workforce/validation/leave-simulation', data),
+    workforceClient.post<LeaveSimulationResponse>(
+      "/workforce/validation/leave-simulation",
+      data,
+    ),
 
   simulateShiftChange: (data: ShiftChangeSimulationRequest) =>
-    workforceClient.post<ShiftChangeSimulationResponse>('/workforce/validation/shift-simulation', data),
+    workforceClient.post<ShiftChangeSimulationResponse>(
+      "/workforce/validation/shift-simulation",
+      data,
+    ),
 
   // Quick validation (single org node, current date)
   quickValidate: (orgNodeId: string) =>
-    workforceClient.get<ValidateCoverageResponse>(`/workforce/validation/quick/${orgNodeId}`),
+    workforceClient.get<ValidateCoverageResponse>(
+      `/workforce/validation/quick/${orgNodeId}`,
+    ),
 };
 
 // ============================================================================
@@ -276,11 +317,18 @@ export interface UpdateProgressRequest {
 
 export const learningApi = {
   listCourses: () =>
-    workforceClient.get<{ courses: (Course & { user_progress?: CourseProgress })[] }>('/learning/courses'),
+    workforceClient.get<{
+      courses: (Course & { user_progress?: CourseProgress })[];
+    }>("/learning/courses"),
   getCourse: (id: string) =>
-    workforceClient.get<Course & { user_progress?: CourseProgress }>(`/learning/courses/${id}`),
+    workforceClient.get<Course & { user_progress?: CourseProgress }>(
+      `/learning/courses/${id}`,
+    ),
   updateProgress: (courseId: string, data: UpdateProgressRequest) =>
-    workforceClient.put<CourseProgress>(`/learning/courses/${courseId}/progress`, data),
+    workforceClient.put<CourseProgress>(
+      `/learning/courses/${courseId}/progress`,
+      data,
+    ),
 };
 
 export const workforceApi = {
@@ -297,11 +345,17 @@ export const workforceApi = {
   get: <T = unknown>(url: string, config?: AxiosRequestConfig) =>
     workforceClient.get<T>(url, config),
 
-  post: <T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig) =>
-    workforceClient.post<T>(url, data, config),
+  post: <T = unknown>(
+    url: string,
+    data?: unknown,
+    config?: AxiosRequestConfig,
+  ) => workforceClient.post<T>(url, data, config),
 
-  put: <T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig) =>
-    workforceClient.put<T>(url, data, config),
+  put: <T = unknown>(
+    url: string,
+    data?: unknown,
+    config?: AxiosRequestConfig,
+  ) => workforceClient.put<T>(url, data, config),
 
   delete: <T = unknown>(url: string, config?: AxiosRequestConfig) =>
     workforceClient.delete<T>(url, config),

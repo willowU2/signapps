@@ -21,7 +21,12 @@ interface SimpleTask {
   assigned_to?: string;
 }
 
-const PRIORITY_LABEL: Record<number, string> = { 0: "Basse", 1: "Moyenne", 2: "Haute", 3: "Urgente" };
+const PRIORITY_LABEL: Record<number, string> = {
+  0: "Basse",
+  1: "Moyenne",
+  2: "Haute",
+  3: "Urgente",
+};
 const PRIORITY_COLOR: Record<number, string> = {
   0: "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400",
   1: "bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-400",
@@ -32,8 +37,12 @@ const PRIORITY_COLOR: Record<number, string> = {
 function localStorageFallbackTasks(dateStr: string): SimpleTask[] {
   if (typeof window === "undefined") return [];
   try {
-    const stored: SimpleTask[] = JSON.parse(localStorage.getItem("email-tasks") || "[]");
-    return stored.filter(t => t.due_date?.slice(0, 10) === dateStr && t.status !== "completed");
+    const stored: SimpleTask[] = JSON.parse(
+      localStorage.getItem("email-tasks") || "[]",
+    );
+    return stored.filter(
+      (t) => t.due_date?.slice(0, 10) === dateStr && t.status !== "completed",
+    );
   } catch {
     return [];
   }
@@ -48,7 +57,7 @@ async function fetchTasksDueOn(date: Date): Promise<SimpleTask[]> {
     const { data: tasksRaw } = await tasksApi.listTasks(calId);
     const tasksArr: SimpleTask[] = Array.isArray(tasksRaw) ? tasksRaw : [];
     const filtered = tasksArr.filter(
-      t => t.due_date?.slice(0, 10) === dateStr && t.status !== "completed"
+      (t) => t.due_date?.slice(0, 10) === dateStr && t.status !== "completed",
     );
     return filtered.length > 0 ? filtered : localStorageFallbackTasks(dateStr);
   } catch {
@@ -63,15 +72,23 @@ interface Props {
   onTaskClick?: (task: SimpleTask) => void;
 }
 
-export function TasksDueInCalendar({ date, className, maxItems = 5, onTaskClick }: Props) {
+export function TasksDueInCalendar({
+  date,
+  className,
+  maxItems = 5,
+  onTaskClick,
+}: Props) {
   const [tasks, setTasks] = useState<SimpleTask[]>([]);
   const [loading, setLoading] = useState(true);
 
   const dateKey = date.toISOString().slice(0, 10);
   useEffect(() => {
     setLoading(true);
-    fetchTasksDueOn(date).then(t => { setTasks(t); setLoading(false); });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    fetchTasksDueOn(date).then((t) => {
+      setTasks(t);
+      setLoading(false);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dateKey]);
 
   if (loading) return <div className="h-6 animate-pulse bg-muted/40 rounded" />;
@@ -82,7 +99,7 @@ export function TasksDueInCalendar({ date, className, maxItems = 5, onTaskClick 
       <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium px-1">
         Tâches échéant ce jour ({tasks.length})
       </p>
-      {tasks.slice(0, maxItems).map(task => (
+      {tasks.slice(0, maxItems).map((task) => (
         <button
           key={task.id}
           onClick={() => onTaskClick?.(task)}
@@ -91,21 +108,34 @@ export function TasksDueInCalendar({ date, className, maxItems = 5, onTaskClick 
           <CheckSquare className="h-3.5 w-3.5 shrink-0 text-emerald-500" />
           <span className="flex-1 truncate">{task.title}</span>
           {task.priority !== undefined && (
-            <span className={cn("text-[10px] px-1 rounded", PRIORITY_COLOR[task.priority] ?? PRIORITY_COLOR[1])}>
+            <span
+              className={cn(
+                "text-[10px] px-1 rounded",
+                PRIORITY_COLOR[task.priority] ?? PRIORITY_COLOR[1],
+              )}
+            >
               {PRIORITY_LABEL[task.priority] ?? ""}
             </span>
           )}
         </button>
       ))}
       {tasks.length > maxItems && (
-        <p className="text-[11px] text-muted-foreground px-2">+{tasks.length - maxItems} autres</p>
+        <p className="text-[11px] text-muted-foreground px-2">
+          +{tasks.length - maxItems} autres
+        </p>
       )}
     </div>
   );
 }
 
 /** Feature 29: show pending tasks for an attendee email */
-export function AttendeePendingTasks({ email, className }: { email: string; className?: string }) {
+export function AttendeePendingTasks({
+  email,
+  className,
+}: {
+  email: string;
+  className?: string;
+}) {
   const [tasks, setTasks] = useState<SimpleTask[]>([]);
 
   useEffect(() => {
@@ -117,19 +147,25 @@ export function AttendeePendingTasks({ email, className }: { email: string; clas
         const { data: tasksRaw } = await tasksApi.listTasks(calId);
         const all: SimpleTask[] = Array.isArray(tasksRaw) ? tasksRaw : [];
         const filtered = all
-          .filter(t => t.assigned_to === email && t.status !== "completed")
+          .filter((t) => t.assigned_to === email && t.status !== "completed")
           .slice(0, 5);
         setTasks(filtered);
-      } catch { /* silent */ }
+      } catch {
+        /* silent */
+      }
     })();
   }, [email]);
 
   if (tasks.length === 0) return null;
 
   return (
-    <div className={cn("rounded border border-border/60 p-2 space-y-1", className)}>
-      <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Tâches en attente</p>
-      {tasks.map(t => (
+    <div
+      className={cn("rounded border border-border/60 p-2 space-y-1", className)}
+    >
+      <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+        Tâches en attente
+      </p>
+      {tasks.map((t) => (
         <div key={t.id} className="flex items-center gap-1.5 text-xs">
           <CheckSquare className="h-3 w-3 text-amber-500" />
           <span className="truncate">{t.title}</span>

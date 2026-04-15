@@ -1,10 +1,19 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Clock, FileUp, FileText, Image, FileArchive, FileCode, Film, Music } from 'lucide-react';
-import { searchApi } from '@/lib/api';
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Clock,
+  FileUp,
+  FileText,
+  Image,
+  FileArchive,
+  FileCode,
+  Film,
+  Music,
+} from "lucide-react";
+import { searchApi } from "@/lib/api";
 
 interface RecentFile {
   key: string;
@@ -16,20 +25,20 @@ interface RecentFile {
 }
 
 function formatBytes(bytes?: number): string {
-  if (!bytes || bytes === 0) return '0 B';
+  if (!bytes || bytes === 0) return "0 B";
   const k = 1024;
-  const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+  const sizes = ["B", "KB", "MB", "GB", "TB"];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
 }
 
 function formatTimeAgo(dateStr?: string): string {
-  if (!dateStr) return '';
+  if (!dateStr) return "";
   const date = new Date(dateStr);
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
   const diffMins = Math.floor(diffMs / 60000);
-  if (diffMins < 1) return 'A l\'instant';
+  if (diffMins < 1) return "A l'instant";
   if (diffMins < 60) return `Il y a ${diffMins}m`;
   const diffHours = Math.floor(diffMins / 60);
   if (diffHours < 24) return `Il y a ${diffHours}h`;
@@ -38,21 +47,44 @@ function formatTimeAgo(dateStr?: string): string {
 }
 
 function getFileIcon(filename: string, contentType?: string) {
-  const ext = filename.split('.').pop()?.toLowerCase() || '';
+  const ext = filename.split(".").pop()?.toLowerCase() || "";
 
-  if (contentType?.startsWith('image/') || ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext)) {
+  if (
+    contentType?.startsWith("image/") ||
+    ["jpg", "jpeg", "png", "gif", "webp", "svg"].includes(ext)
+  ) {
     return <Image className="h-4 w-4 text-pink-500" />;
   }
-  if (contentType?.startsWith('video/') || ['mp4', 'webm', 'mov', 'avi'].includes(ext)) {
+  if (
+    contentType?.startsWith("video/") ||
+    ["mp4", "webm", "mov", "avi"].includes(ext)
+  ) {
     return <Film className="h-4 w-4 text-blue-500" />;
   }
-  if (contentType?.startsWith('audio/') || ['mp3', 'wav', 'ogg', 'flac'].includes(ext)) {
+  if (
+    contentType?.startsWith("audio/") ||
+    ["mp3", "wav", "ogg", "flac"].includes(ext)
+  ) {
     return <Music className="h-4 w-4 text-violet-500" />;
   }
-  if (['zip', 'tar', 'gz', 'rar', '7z'].includes(ext)) {
+  if (["zip", "tar", "gz", "rar", "7z"].includes(ext)) {
     return <FileArchive className="h-4 w-4 text-amber-500" />;
   }
-  if (['js', 'ts', 'py', 'rs', 'go', 'java', 'c', 'cpp', 'json', 'html', 'css'].includes(ext)) {
+  if (
+    [
+      "js",
+      "ts",
+      "py",
+      "rs",
+      "go",
+      "java",
+      "c",
+      "cpp",
+      "json",
+      "html",
+      "css",
+    ].includes(ext)
+  ) {
     return <FileCode className="h-4 w-4 text-green-500" />;
   }
   return <FileText className="h-4 w-4 text-muted-foreground" />;
@@ -94,7 +126,9 @@ export function RecentUploads() {
         ) : recentFiles.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-8 text-center">
             <FileUp className="mb-2 h-8 w-8 text-muted-foreground" />
-            <p className="text-sm text-muted-foreground">Aucun fichier recent</p>
+            <p className="text-sm text-muted-foreground">
+              Aucun fichier recent
+            </p>
           </div>
         ) : (
           <div className="space-y-1">
@@ -105,7 +139,9 @@ export function RecentUploads() {
               >
                 {getFileIcon(file.filename, file.content_type)}
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{file.filename}</p>
+                  <p className="text-sm font-medium truncate">
+                    {file.filename}
+                  </p>
                   <p className="text-xs text-muted-foreground">
                     {file.bucket} - {formatBytes(file.size)}
                   </p>
@@ -133,7 +169,9 @@ export function LargestFiles() {
         // "largest" endpoint, so we reuse recent with a larger batch)
         const response = await searchApi.recent(50);
         const files: RecentFile[] = response.data || [];
-        const sorted = [...files].sort((a, b) => (b.size || 0) - (a.size || 0)).slice(0, 8);
+        const sorted = [...files]
+          .sort((a, b) => (b.size || 0) - (a.size || 0))
+          .slice(0, 8);
         setLargestFiles(sorted);
       } catch {
         setLargestFiles([]);
@@ -145,7 +183,10 @@ export function LargestFiles() {
   }, []);
 
   // Find the max file size for the bar chart
-  const maxSize = largestFiles.length > 0 ? Math.max(...largestFiles.map((f) => f.size || 0)) : 1;
+  const maxSize =
+    largestFiles.length > 0
+      ? Math.max(...largestFiles.map((f) => f.size || 0))
+      : 1;
 
   return (
     <Card>
@@ -165,14 +206,20 @@ export function LargestFiles() {
         ) : largestFiles.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-8 text-center">
             <FileText className="mb-2 h-8 w-8 text-muted-foreground" />
-            <p className="text-sm text-muted-foreground">Aucun fichier trouve</p>
+            <p className="text-sm text-muted-foreground">
+              Aucun fichier trouve
+            </p>
           </div>
         ) : (
           <div className="space-y-2">
             {largestFiles.map((file, i) => {
-              const widthPercent = maxSize > 0 ? ((file.size || 0) / maxSize) * 100 : 0;
+              const widthPercent =
+                maxSize > 0 ? ((file.size || 0) / maxSize) * 100 : 0;
               return (
-                <div key={`${file.bucket}-${file.key}-${i}`} className="space-y-1">
+                <div
+                  key={`${file.bucket}-${file.key}-${i}`}
+                  className="space-y-1"
+                >
                   <div className="flex items-center justify-between text-sm">
                     <div className="flex items-center gap-2 min-w-0 flex-1">
                       {getFileIcon(file.filename, file.content_type)}

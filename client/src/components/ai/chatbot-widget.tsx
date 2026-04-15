@@ -1,26 +1,26 @@
-'use client';
+"use client";
 
-import { useState, useRef, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { MessageCircle, Send, X, Loader2 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { useState, useRef, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { MessageCircle, Send, X, Loader2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface Message {
   id: string;
-  role: 'user' | 'bot';
+  role: "user" | "bot";
   content: string;
 }
 
 export function ChatbotWidget() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
-  const [inputValue, setInputValue] = useState('');
+  const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
   useEffect(() => {
@@ -32,12 +32,12 @@ export function ChatbotWidget() {
 
     const userMessage: Message = {
       id: Date.now().toString(),
-      role: 'user',
+      role: "user",
       content: inputValue,
     };
 
     setMessages((prev) => [...prev, userMessage]);
-    setInputValue('');
+    setInputValue("");
     setIsLoading(true);
 
     try {
@@ -45,8 +45,9 @@ export function ChatbotWidget() {
       setTimeout(() => {
         const botMessage: Message = {
           id: (Date.now() + 1).toString(),
-          role: 'bot',
-          content: 'Thank you for your message! This is a simulated response from the FAQ chatbot powered by Ollama.',
+          role: "bot",
+          content:
+            "Thank you for your message! This is a simulated response from the FAQ chatbot powered by Ollama.",
         };
         setMessages((prev) => [...prev, botMessage]);
         setIsLoading(false);
@@ -107,16 +108,16 @@ export function ChatbotWidget() {
                   <div
                     key={message.id}
                     className={cn(
-                      'flex gap-2',
-                      message.role === 'user' ? 'justify-end' : 'justify-start'
+                      "flex gap-2",
+                      message.role === "user" ? "justify-end" : "justify-start",
                     )}
                   >
                     <div
                       className={cn(
-                        'max-w-xs px-3 py-2 rounded-lg text-sm',
-                        message.role === 'user'
-                          ? 'bg-primary text-primary-foreground rounded-br-none'
-                          : 'bg-accent text-accent-foreground rounded-bl-none'
+                        "max-w-xs px-3 py-2 rounded-lg text-sm",
+                        message.role === "user"
+                          ? "bg-primary text-primary-foreground rounded-br-none"
+                          : "bg-accent text-accent-foreground rounded-bl-none",
                       )}
                     >
                       {message.content}
@@ -147,7 +148,7 @@ export function ChatbotWidget() {
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyPress={(e) => {
-                  if (e.key === 'Enter' && !isLoading) {
+                  if (e.key === "Enter" && !isLoading) {
                     handleSendMessage();
                   }
                 }}

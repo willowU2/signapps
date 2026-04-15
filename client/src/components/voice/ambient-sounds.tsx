@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Play, Pause, Volume2 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Play, Pause, Volume2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface AmbientSound {
   id: string;
@@ -13,10 +13,10 @@ interface AmbientSound {
 
 export function AmbientSounds() {
   const [sounds] = useState<AmbientSound[]>([
-    { id: '1', name: 'Rain', description: 'Gentle rain sounds' },
-    { id: '2', name: 'Forest', description: 'Natural forest ambience' },
-    { id: '3', name: 'Cafe', description: 'Coffee shop background' },
-    { id: '4', name: 'White Noise', description: 'Brown noise for focus' },
+    { id: "1", name: "Rain", description: "Gentle rain sounds" },
+    { id: "2", name: "Forest", description: "Natural forest ambience" },
+    { id: "3", name: "Cafe", description: "Coffee shop background" },
+    { id: "4", name: "White Noise", description: "Brown noise for focus" },
   ]);
   const [playingId, setPlayingId] = useState<string | null>(null);
   const [volumes, setVolumes] = useState<Record<string, number>>({});
@@ -34,7 +34,9 @@ export function AmbientSounds() {
       {/* Header */}
       <div className="flex items-center gap-2">
         <Volume2 className="h-5 w-5 text-muted-foreground" />
-        <h2 className="text-lg font-semibold text-foreground">Ambient Sounds</h2>
+        <h2 className="text-lg font-semibold text-foreground">
+          Ambient Sounds
+        </h2>
       </div>
 
       {/* Sounds Grid */}
@@ -43,10 +45,10 @@ export function AmbientSounds() {
           <div
             key={sound.id}
             className={cn(
-              'p-4 border border-input rounded-lg transition-all',
+              "p-4 border border-input rounded-lg transition-all",
               playingId === sound.id
-                ? 'bg-primary/10 border-primary'
-                : 'bg-muted/50 hover:bg-muted/70'
+                ? "bg-primary/10 border-primary"
+                : "bg-muted/50 hover:bg-muted/70",
             )}
           >
             {/* Sound Title */}
@@ -64,8 +66,9 @@ export function AmbientSounds() {
                 size="sm"
                 variant="outline"
                 className={cn(
-                  'flex-shrink-0',
-                  playingId === sound.id && 'bg-primary text-primary-foreground border-primary'
+                  "flex-shrink-0",
+                  playingId === sound.id &&
+                    "bg-primary text-primary-foreground border-primary",
                 )}
                 aria-label={
                   playingId === sound.id
@@ -80,7 +83,7 @@ export function AmbientSounds() {
                 )}
               </Button>
               <span className="text-xs text-muted-foreground">
-                {playingId === sound.id ? 'Playing' : 'Ready'}
+                {playingId === sound.id ? "Playing" : "Ready"}
               </span>
             </div>
 
@@ -88,7 +91,7 @@ export function AmbientSounds() {
             {playingId === sound.id && (
               <div className="space-y-1">
                 <label className="text-xs text-muted-foreground">
-                  Volume: {Math.round((volumes[sound.id] || 50))}%
+                  Volume: {Math.round(volumes[sound.id] || 50)}%
                 </label>
                 <input
                   type="range"

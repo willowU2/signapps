@@ -1,8 +1,8 @@
 //! SchedulingTemplateRepository — scheduling template CRUD operations.
 
 use crate::models::{CreateSchedulingTemplate, SchedulingTemplate};
-use signapps_db_shared::DatabasePool;
 use signapps_common::Result;
+use signapps_db_shared::DatabasePool;
 use uuid::Uuid;
 
 /// Repository for scheduling template CRUD operations.

@@ -45,13 +45,22 @@ function computeStrength(password: string): {
 
   const level = levels[Math.min(score, 4)];
 
-  return { score, label: level.label, color: level.color, width: level.width, requirements: reqs };
+  return {
+    score,
+    label: level.label,
+    color: level.color,
+    width: level.width,
+    requirements: reqs,
+  };
 }
 
-export function PasswordStrength({ password, showRequirements = true }: PasswordStrengthProps) {
+export function PasswordStrength({
+  password,
+  showRequirements = true,
+}: PasswordStrengthProps) {
   const { score, label, color, width, requirements } = useMemo(
     () => computeStrength(password),
-    [password]
+    [password],
   );
 
   if (!password) return null;
@@ -67,11 +76,15 @@ export function PasswordStrength({ password, showRequirements = true }: Password
         </div>
         <span
           className={`min-w-[72px] text-right text-xs font-medium ${
-            score <= 1 ? "text-red-600"
-            : score === 2 ? "text-orange-600"
-            : score === 3 ? "text-yellow-600"
-            : score === 4 ? "text-blue-600"
-            : "text-green-600"
+            score <= 1
+              ? "text-red-600"
+              : score === 2
+                ? "text-orange-600"
+                : score === 3
+                  ? "text-yellow-600"
+                  : score === 4
+                    ? "text-blue-600"
+                    : "text-green-600"
           }`}
         >
           {label}

@@ -4,9 +4,9 @@ use crate::models::{
     CreateTimeItem, TimeItem, TimeItemWithRelations, TimeItemsQuery, TimeItemsResponse,
     UpdateTimeItem,
 };
-use signapps_db_shared::DatabasePool;
 use chrono::{DateTime, Utc};
 use signapps_common::Result;
+use signapps_db_shared::DatabasePool;
 use uuid::Uuid;
 
 use super::{

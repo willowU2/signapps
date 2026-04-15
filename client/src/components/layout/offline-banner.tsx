@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { WifiOff, Wifi, RefreshCw } from 'lucide-react';
-import { useOnlineStatus } from '@/hooks/use-online-status';
-import { cn } from '@/lib/utils';
+import { useEffect, useState } from "react";
+import { WifiOff, Wifi, RefreshCw } from "lucide-react";
+import { useOnlineStatus } from "@/hooks/use-online-status";
+import { cn } from "@/lib/utils";
 
 /**
  * OfflineBanner — PW1
@@ -19,7 +19,9 @@ export function OfflineBanner() {
   const [showReconnected, setShowReconnected] = useState(false);
   const [wasOffline, setWasOffline] = useState(false);
 
-  useEffect(() => { setMounted(true); }, []);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (!isOnline) {
@@ -41,10 +43,10 @@ export function OfflineBanner() {
       role="status"
       aria-live="polite"
       className={cn(
-        'fixed top-0 inset-x-0 z-[9999] flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium shadow-md transition-all duration-300',
+        "fixed top-0 inset-x-0 z-[9999] flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium shadow-md transition-all duration-300",
         showReconnected
-          ? 'bg-green-500 text-white'
-          : 'bg-amber-400 text-amber-950',
+          ? "bg-green-500 text-white"
+          : "bg-amber-400 text-amber-950",
       )}
     >
       {showReconnected ? (
@@ -61,7 +63,9 @@ export function OfflineBanner() {
       ) : (
         <>
           <WifiOff className="h-4 w-4 shrink-0" />
-          <span>Vous etes hors ligne — les modifications seront synchronisees</span>
+          <span>
+            Vous etes hors ligne — les modifications seront synchronisees
+          </span>
           {queueSize > 0 && (
             <span className="inline-flex items-center gap-1 rounded-full bg-amber-950/20 px-2 py-0.5 text-xs">
               {queueSize} en attente
@@ -89,10 +93,10 @@ export function SyncIndicator() {
           : `Hors ligne — ${queueSize} modification(s) en attente`
       }
       className={cn(
-        'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium',
+        "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium",
         isOnline
-          ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
-          : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
+          ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
+          : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300",
       )}
     >
       {isOnline ? (

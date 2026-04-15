@@ -4,7 +4,7 @@
  * API client for metrics and monitoring.
  */
 
-import { getClient, ServiceName } from '@/lib/api/factory';
+import { getClient, ServiceName } from "@/lib/api/factory";
 
 const api = getClient(ServiceName.OFFICE);
 import type {
@@ -24,9 +24,9 @@ import type {
   TimeRange,
   Granularity,
   EventFilter,
-} from './types';
+} from "./types";
 
-const MONITORING_BASE = '/api/v1/office/monitoring';
+const MONITORING_BASE = "/api/v1/office/monitoring";
 
 // ============================================================================
 // Metrics
@@ -36,10 +36,10 @@ const MONITORING_BASE = '/api/v1/office/monitoring';
  * Get metrics summary
  */
 export async function getMetricsSummary(
-  timeRange: TimeRange = '24h'
+  timeRange: TimeRange = "24h",
 ): Promise<OfficeMetricsSummary> {
   const response = await api.get<OfficeMetricsSummary>(
-    `${MONITORING_BASE}/metrics/summary?timeRange=${timeRange}`
+    `${MONITORING_BASE}/metrics/summary?timeRange=${timeRange}`,
   );
   return response.data;
 }
@@ -48,14 +48,14 @@ export async function getMetricsSummary(
  * Get metric series data
  */
 export async function getMetricSeries(
-  params: GetMetricsParams
+  params: GetMetricsParams,
 ): Promise<MetricSeries[]> {
   const queryParams = new URLSearchParams();
 
-  if (params.category) queryParams.append('category', params.category);
-  if (params.names?.length) queryParams.append('names', params.names.join(','));
-  if (params.timeRange) queryParams.append('timeRange', params.timeRange);
-  if (params.granularity) queryParams.append('granularity', params.granularity);
+  if (params.category) queryParams.append("category", params.category);
+  if (params.names?.length) queryParams.append("names", params.names.join(","));
+  if (params.timeRange) queryParams.append("timeRange", params.timeRange);
+  if (params.granularity) queryParams.append("granularity", params.granularity);
   if (params.labels) {
     Object.entries(params.labels).forEach(([key, value]) => {
       queryParams.append(`label.${key}`, value);
@@ -63,7 +63,7 @@ export async function getMetricSeries(
   }
 
   const response = await api.get<MetricSeries[]>(
-    `${MONITORING_BASE}/metrics/series?${queryParams.toString()}`
+    `${MONITORING_BASE}/metrics/series?${queryParams.toString()}`,
   );
   return response.data;
 }
@@ -73,7 +73,7 @@ export async function getMetricSeries(
  */
 export async function getMetricDefinitions(): Promise<MetricDefinition[]> {
   const response = await api.get<MetricDefinition[]>(
-    `${MONITORING_BASE}/metrics/definitions`
+    `${MONITORING_BASE}/metrics/definitions`,
   );
   return response.data;
 }
@@ -81,12 +81,10 @@ export async function getMetricDefinitions(): Promise<MetricDefinition[]> {
 /**
  * Get current metric values
  */
-export async function getCurrentMetrics(
-  names?: string[]
-): Promise<Metric[]> {
-  const params = names ? `?names=${names.join(',')}` : '';
+export async function getCurrentMetrics(names?: string[]): Promise<Metric[]> {
+  const params = names ? `?names=${names.join(",")}` : "";
   const response = await api.get<Metric[]>(
-    `${MONITORING_BASE}/metrics/current${params}`
+    `${MONITORING_BASE}/metrics/current${params}`,
   );
   return response.data;
 }
@@ -95,10 +93,10 @@ export async function getCurrentMetrics(
  * Get document type breakdown
  */
 export async function getDocumentTypeBreakdown(
-  timeRange: TimeRange = '24h'
+  timeRange: TimeRange = "24h",
 ): Promise<DocumentTypeBreakdown[]> {
   const response = await api.get<DocumentTypeBreakdown[]>(
-    `${MONITORING_BASE}/metrics/documents/breakdown?timeRange=${timeRange}`
+    `${MONITORING_BASE}/metrics/documents/breakdown?timeRange=${timeRange}`,
   );
   return response.data;
 }
@@ -107,10 +105,10 @@ export async function getDocumentTypeBreakdown(
  * Get user activity metrics
  */
 export async function getUserActivityMetrics(
-  timeRange: TimeRange = '24h'
+  timeRange: TimeRange = "24h",
 ): Promise<UserActivityMetrics> {
   const response = await api.get<UserActivityMetrics>(
-    `${MONITORING_BASE}/metrics/users/activity?timeRange=${timeRange}`
+    `${MONITORING_BASE}/metrics/users/activity?timeRange=${timeRange}`,
   );
   return response.data;
 }
@@ -123,28 +121,30 @@ export async function getUserActivityMetrics(
  * Get monitoring events
  */
 export async function getEvents(
-  params?: GetEventsParams
+  params?: GetEventsParams,
 ): Promise<GetEventsResponse> {
   const queryParams = new URLSearchParams();
 
   if (params?.filter) {
     const filter = params.filter;
-    if (filter.types?.length) queryParams.append('types', filter.types.join(','));
-    if (filter.severity?.length) queryParams.append('severity', filter.severity.join(','));
-    if (filter.documentId) queryParams.append('documentId', filter.documentId);
-    if (filter.userId) queryParams.append('userId', filter.userId);
-    if (filter.startTime) queryParams.append('startTime', filter.startTime);
-    if (filter.endTime) queryParams.append('endTime', filter.endTime);
+    if (filter.types?.length)
+      queryParams.append("types", filter.types.join(","));
+    if (filter.severity?.length)
+      queryParams.append("severity", filter.severity.join(","));
+    if (filter.documentId) queryParams.append("documentId", filter.documentId);
+    if (filter.userId) queryParams.append("userId", filter.userId);
+    if (filter.startTime) queryParams.append("startTime", filter.startTime);
+    if (filter.endTime) queryParams.append("endTime", filter.endTime);
     if (filter.acknowledged !== undefined) {
-      queryParams.append('acknowledged', String(filter.acknowledged));
+      queryParams.append("acknowledged", String(filter.acknowledged));
     }
   }
-  if (params?.limit) queryParams.append('limit', String(params.limit));
-  if (params?.offset) queryParams.append('offset', String(params.offset));
-  if (params?.sortOrder) queryParams.append('sortOrder', params.sortOrder);
+  if (params?.limit) queryParams.append("limit", String(params.limit));
+  if (params?.offset) queryParams.append("offset", String(params.offset));
+  if (params?.sortOrder) queryParams.append("sortOrder", params.sortOrder);
 
   const response = await api.get<GetEventsResponse>(
-    `${MONITORING_BASE}/events?${queryParams.toString()}`
+    `${MONITORING_BASE}/events?${queryParams.toString()}`,
   );
   return response.data;
 }
@@ -154,7 +154,7 @@ export async function getEvents(
  */
 export async function getEvent(eventId: string): Promise<MonitoringEvent> {
   const response = await api.get<MonitoringEvent>(
-    `${MONITORING_BASE}/events/${eventId}`
+    `${MONITORING_BASE}/events/${eventId}`,
   );
   return response.data;
 }
@@ -162,9 +162,11 @@ export async function getEvent(eventId: string): Promise<MonitoringEvent> {
 /**
  * Acknowledge an event
  */
-export async function acknowledgeEvent(eventId: string): Promise<MonitoringEvent> {
+export async function acknowledgeEvent(
+  eventId: string,
+): Promise<MonitoringEvent> {
   const response = await api.post<MonitoringEvent>(
-    `${MONITORING_BASE}/events/${eventId}/acknowledge`
+    `${MONITORING_BASE}/events/${eventId}/acknowledge`,
   );
   return response.data;
 }
@@ -172,10 +174,12 @@ export async function acknowledgeEvent(eventId: string): Promise<MonitoringEvent
 /**
  * Acknowledge multiple events
  */
-export async function acknowledgeEvents(eventIds: string[]): Promise<{ count: number }> {
+export async function acknowledgeEvents(
+  eventIds: string[],
+): Promise<{ count: number }> {
   const response = await api.post<{ count: number }>(
     `${MONITORING_BASE}/events/acknowledge`,
-    { eventIds }
+    { eventIds },
   );
   return response.data;
 }
@@ -184,7 +188,7 @@ export async function acknowledgeEvents(eventIds: string[]): Promise<{ count: nu
  * Get recent events (shortcut)
  */
 export async function getRecentEvents(limit = 20): Promise<MonitoringEvent[]> {
-  const response = await getEvents({ limit, sortOrder: 'desc' });
+  const response = await getEvents({ limit, sortOrder: "desc" });
   return response.events;
 }
 
@@ -192,14 +196,14 @@ export async function getRecentEvents(limit = 20): Promise<MonitoringEvent[]> {
  * Get error events
  */
 export async function getErrorEvents(
-  timeRange: TimeRange = '24h'
+  timeRange: TimeRange = "24h",
 ): Promise<MonitoringEvent[]> {
   const response = await getEvents({
     filter: {
-      severity: ['error', 'critical'],
+      severity: ["error", "critical"],
       startTime: getStartTimeForRange(timeRange),
     },
-    sortOrder: 'desc',
+    sortOrder: "desc",
   });
   return response.events;
 }
@@ -212,7 +216,9 @@ export async function getErrorEvents(
  * Get alert rules
  */
 export async function getAlertRules(): Promise<AlertRule[]> {
-  const response = await api.get<AlertRule[]>(`${MONITORING_BASE}/alerts/rules`);
+  const response = await api.get<AlertRule[]>(
+    `${MONITORING_BASE}/alerts/rules`,
+  );
   return response.data;
 }
 
@@ -220,9 +226,12 @@ export async function getAlertRules(): Promise<AlertRule[]> {
  * Create alert rule
  */
 export async function createAlertRule(
-  rule: Omit<AlertRule, 'id' | 'status' | 'lastTriggered' | 'triggeredCount'>
+  rule: Omit<AlertRule, "id" | "status" | "lastTriggered" | "triggeredCount">,
 ): Promise<AlertRule> {
-  const response = await api.post<AlertRule>(`${MONITORING_BASE}/alerts/rules`, rule);
+  const response = await api.post<AlertRule>(
+    `${MONITORING_BASE}/alerts/rules`,
+    rule,
+  );
   return response.data;
 }
 
@@ -231,11 +240,11 @@ export async function createAlertRule(
  */
 export async function updateAlertRule(
   ruleId: string,
-  updates: Partial<AlertRule>
+  updates: Partial<AlertRule>,
 ): Promise<AlertRule> {
   const response = await api.patch<AlertRule>(
     `${MONITORING_BASE}/alerts/rules/${ruleId}`,
-    updates
+    updates,
   );
   return response.data;
 }
@@ -258,15 +267,16 @@ export async function getActiveAlerts(): Promise<Alert[]> {
 /**
  * Get alert history
  */
-export async function getAlertHistory(
-  params?: { limit?: number; offset?: number }
-): Promise<{ alerts: Alert[]; total: number }> {
+export async function getAlertHistory(params?: {
+  limit?: number;
+  offset?: number;
+}): Promise<{ alerts: Alert[]; total: number }> {
   const queryParams = new URLSearchParams();
-  if (params?.limit) queryParams.append('limit', String(params.limit));
-  if (params?.offset) queryParams.append('offset', String(params.offset));
+  if (params?.limit) queryParams.append("limit", String(params.limit));
+  if (params?.offset) queryParams.append("offset", String(params.offset));
 
   const response = await api.get<{ alerts: Alert[]; total: number }>(
-    `${MONITORING_BASE}/alerts/history?${queryParams.toString()}`
+    `${MONITORING_BASE}/alerts/history?${queryParams.toString()}`,
   );
   return response.data;
 }
@@ -276,11 +286,11 @@ export async function getAlertHistory(
  */
 export async function silenceAlert(
   alertId: string,
-  duration: number // seconds
+  duration: number, // seconds
 ): Promise<Alert> {
   const response = await api.post<Alert>(
     `${MONITORING_BASE}/alerts/${alertId}/silence`,
-    { duration }
+    { duration },
   );
   return response.data;
 }
@@ -290,7 +300,7 @@ export async function silenceAlert(
  */
 export async function acknowledgeAlert(alertId: string): Promise<Alert> {
   const response = await api.post<Alert>(
-    `${MONITORING_BASE}/alerts/${alertId}/acknowledge`
+    `${MONITORING_BASE}/alerts/${alertId}/acknowledge`,
   );
   return response.data;
 }
@@ -311,11 +321,11 @@ export async function getSystemHealth(): Promise<SystemHealth> {
  * Get health history
  */
 export async function getHealthHistory(
-  timeRange: TimeRange = '24h'
+  timeRange: TimeRange = "24h",
 ): Promise<Array<{ timestamp: string; health: SystemHealth }>> {
-  const response = await api.get<Array<{ timestamp: string; health: SystemHealth }>>(
-    `${MONITORING_BASE}/health/history?timeRange=${timeRange}`
-  );
+  const response = await api.get<
+    Array<{ timestamp: string; health: SystemHealth }>
+  >(`${MONITORING_BASE}/health/history?timeRange=${timeRange}`);
   return response.data;
 }
 
@@ -328,7 +338,7 @@ export async function getHealthHistory(
  */
 export function subscribeToMetricsUpdates(
   onUpdate: (metrics: Metric[]) => void,
-  onError?: (error: Event) => void
+  onError?: (error: Event) => void,
 ): () => void {
   const eventSource = new EventSource(`${MONITORING_BASE}/metrics/stream`);
 
@@ -337,7 +347,7 @@ export function subscribeToMetricsUpdates(
       const metrics: Metric[] = JSON.parse(event.data);
       onUpdate(metrics);
     } catch (e) {
-      console.error('Failed to parse metrics:', e);
+      console.error("Failed to parse metrics:", e);
     }
   };
 
@@ -353,7 +363,7 @@ export function subscribeToMetricsUpdates(
  */
 export function subscribeToEvents(
   onEvent: (event: MonitoringEvent) => void,
-  onError?: (error: Event) => void
+  onError?: (error: Event) => void,
 ): () => void {
   const eventSource = new EventSource(`${MONITORING_BASE}/events/stream`);
 
@@ -362,7 +372,7 @@ export function subscribeToEvents(
       const monitoringEvent: MonitoringEvent = JSON.parse(event.data);
       onEvent(monitoringEvent);
     } catch (e) {
-      console.error('Failed to parse event:', e);
+      console.error("Failed to parse event:", e);
     }
   };
 
@@ -380,15 +390,15 @@ export function subscribeToEvents(
 function getStartTimeForRange(timeRange: TimeRange): string {
   const now = new Date();
   switch (timeRange) {
-    case '1h':
+    case "1h":
       return new Date(now.getTime() - 60 * 60 * 1000).toISOString();
-    case '6h':
+    case "6h":
       return new Date(now.getTime() - 6 * 60 * 60 * 1000).toISOString();
-    case '24h':
+    case "24h":
       return new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString();
-    case '7d':
+    case "7d":
       return new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
-    case '30d':
+    case "30d":
       return new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
   }
 }

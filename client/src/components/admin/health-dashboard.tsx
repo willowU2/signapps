@@ -1,7 +1,13 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { Activity, AlertCircle, CheckCircle, RefreshCw, Loader2 } from "lucide-react";
+import {
+  Activity,
+  AlertCircle,
+  CheckCircle,
+  RefreshCw,
+  Loader2,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import axios from "axios";
 
@@ -62,7 +68,8 @@ function formatTime(date: Date): string {
 
 function LatencyBadge({ ms }: { ms: number | null }) {
   if (ms === null) return null;
-  const color = ms < 50 ? "text-green-600" : ms < 200 ? "text-yellow-600" : "text-red-600";
+  const color =
+    ms < 50 ? "text-green-600" : ms < 200 ? "text-yellow-600" : "text-red-600";
   return <span className={`text-xs font-mono ${color}`}>{ms}ms</span>;
 }
 
@@ -101,7 +108,9 @@ export function HealthDashboard() {
           <div>
             <h2 className="text-2xl font-bold">Services Health</h2>
             {lastRefresh && (
-              <p className="text-xs text-gray-400">Last checked: {formatTime(lastRefresh)}</p>
+              <p className="text-xs text-gray-400">
+                Last checked: {formatTime(lastRefresh)}
+              </p>
             )}
           </div>
         </div>
@@ -112,7 +121,9 @@ export function HealthDashboard() {
           disabled={isRefreshing}
           className="gap-1"
         >
-          <RefreshCw className={`h-3.5 w-3.5 ${isRefreshing ? "animate-spin" : ""}`} />
+          <RefreshCw
+            className={`h-3.5 w-3.5 ${isRefreshing ? "animate-spin" : ""}`}
+          />
           Refresh
         </Button>
       </div>
@@ -129,7 +140,9 @@ export function HealthDashboard() {
             <p className="text-xs text-red-600">Down</p>
           </div>
           <div className="rounded-lg border border-border bg-muted p-3 text-center">
-            <p className="text-2xl font-bold text-muted-foreground">{unknownCount}</p>
+            <p className="text-2xl font-bold text-muted-foreground">
+              {unknownCount}
+            </p>
             <p className="text-xs text-gray-400">Unknown</p>
           </div>
         </div>
@@ -151,8 +164,8 @@ export function HealthDashboard() {
               svc.isHealthy === true
                 ? "border-green-200 bg-card"
                 : svc.isHealthy === false
-                ? "border-red-200 bg-red-50"
-                : "border-border bg-muted"
+                  ? "border-red-200 bg-red-50"
+                  : "border-border bg-muted"
             }`}
           >
             <div className="flex items-start justify-between">
@@ -177,11 +190,15 @@ export function HealthDashboard() {
                   svc.isHealthy === true
                     ? "text-green-600"
                     : svc.isHealthy === false
-                    ? "text-red-600"
-                    : "text-gray-400"
+                      ? "text-red-600"
+                      : "text-gray-400"
                 }`}
               >
-                {svc.isHealthy === true ? "Healthy" : svc.isHealthy === false ? "Unreachable" : "Checking…"}
+                {svc.isHealthy === true
+                  ? "Healthy"
+                  : svc.isHealthy === false
+                    ? "Unreachable"
+                    : "Checking…"}
               </span>
               <LatencyBadge ms={svc.latencyMs} />
             </div>

@@ -60,11 +60,15 @@ export function ExpenseList({
         </Card>
         <Card className="p-4">
           <p className="text-sm text-muted-foreground">Approuvé</p>
-          <p className="text-2xl font-bold text-green-600">{approved.toFixed(2)}€</p>
+          <p className="text-2xl font-bold text-green-600">
+            {approved.toFixed(2)}€
+          </p>
         </Card>
         <Card className="p-4">
           <p className="text-sm text-muted-foreground">Attente</p>
-          <p className="text-2xl font-bold text-blue-600">{pending.toFixed(2)}€</p>
+          <p className="text-2xl font-bold text-blue-600">
+            {pending.toFixed(2)}€
+          </p>
         </Card>
       </div>
 
@@ -83,7 +87,10 @@ export function ExpenseList({
           <TableBody>
             {expenses.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                <TableCell
+                  colSpan={6}
+                  className="text-center py-8 text-muted-foreground"
+                >
                   Aucune note
                 </TableCell>
               </TableRow>
@@ -118,7 +125,7 @@ export function ExpenseList({
                           onClick={() =>
                             onDownloadReceipt?.(
                               e.receiptUrl as string,
-                              `receipt-${e.id}`
+                              `receipt-${e.id}`,
                             )
                           }
                         >

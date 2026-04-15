@@ -1,17 +1,30 @@
 #[cfg(test)]
 mod tests {
+    use super::super::types::{BerData, BerError, BerTag};
     use super::super::{
         decode, decode_all, decode_boolean, decode_enumerated, decode_integer, decode_octet_string,
         encode, encode_boolean, encode_context, encode_enumerated, encode_integer,
         encode_octet_string, encode_sequence,
     };
-    use super::super::types::{BerData, BerError, BerTag};
 
     // ── 1. INTEGER round-trip ─────────────────────────────────────────────────
 
     #[test]
     fn encode_decode_integer() {
-        let cases: &[i64] = &[0, 1, -1, 127, 128, 256, -128, -129, i32::MAX as i64, i32::MIN as i64, i64::MAX, i64::MIN];
+        let cases: &[i64] = &[
+            0,
+            1,
+            -1,
+            127,
+            128,
+            256,
+            -128,
+            -129,
+            i32::MAX as i64,
+            i32::MIN as i64,
+            i64::MAX,
+            i64::MIN,
+        ];
         for &value in cases {
             let elem = encode_integer(value);
             let bytes = encode(&elem);
@@ -110,7 +123,13 @@ mod tests {
 
         let (decoded, rest) = decode(&bytes).expect("decode should succeed");
         assert_eq!(rest, b"");
-        assert_eq!(decoded.tag, BerTag::Context { number: 0, constructed: true });
+        assert_eq!(
+            decoded.tag,
+            BerTag::Context {
+                number: 0,
+                constructed: true
+            }
+        );
         if let BerData::Constructed(children) = &decoded.data {
             assert_eq!(decode_integer(&children[0]).unwrap(), 42);
         } else {
@@ -121,7 +140,13 @@ mod tests {
         let ctx_prim = encode_context(1, false, BerData::Primitive(vec![0xDE, 0xAD]));
         let prim_bytes = encode(&ctx_prim);
         let (decoded_prim, _) = decode(&prim_bytes).unwrap();
-        assert_eq!(decoded_prim.tag, BerTag::Context { number: 1, constructed: false });
+        assert_eq!(
+            decoded_prim.tag,
+            BerTag::Context {
+                number: 1,
+                constructed: false
+            }
+        );
         assert_eq!(decoded_prim.data, BerData::Primitive(vec![0xDE, 0xAD]));
     }
 
@@ -246,7 +271,10 @@ mod tests {
         // INTEGER 128: 02 02 00 80
         assert_eq!(encode(&encode_integer(128)), [0x02, 0x02, 0x00, 0x80]);
         // OCTET STRING "hi": 04 02 68 69
-        assert_eq!(encode(&encode_octet_string(b"hi")), [0x04, 0x02, b'h', b'i']);
+        assert_eq!(
+            encode(&encode_octet_string(b"hi")),
+            [0x04, 0x02, b'h', b'i']
+        );
         // ENUMERATED 0: 0A 01 00
         assert_eq!(encode(&encode_enumerated(0)), [0x0A, 0x01, 0x00]);
         // Empty SEQUENCE: 30 00

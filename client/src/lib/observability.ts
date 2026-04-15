@@ -46,7 +46,10 @@ export const tracer = new Tracer();
 /**
  * Measure async operation duration
  */
-export async function measure<T>(name: string, fn: () => Promise<T>): Promise<T> {
+export async function measure<T>(
+  name: string,
+  fn: () => Promise<T>,
+): Promise<T> {
   const span = tracer.startSpan(name);
   try {
     const result = await fn();
@@ -71,5 +74,7 @@ export function reportWebVitals() {
       console.warn(`[Perf] ${entry.name}: ${Math.round(entry.startTime)}ms`);
     });
   });
-  observer.observe({ entryTypes: ["largest-contentful-paint", "first-input", "layout-shift"] });
+  observer.observe({
+    entryTypes: ["largest-contentful-paint", "first-input", "layout-shift"],
+  });
 }

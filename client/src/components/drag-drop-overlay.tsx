@@ -1,10 +1,16 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { Upload, FileText, Mail, FileSpreadsheet, HardDrive } from 'lucide-react';
-import { usePathname, useRouter } from 'next/navigation';
-import { toast } from 'sonner';
-import { storageApi } from '@/lib/api/storage';
+import { useState, useEffect, useCallback, useRef } from "react";
+import {
+  Upload,
+  FileText,
+  Mail,
+  FileSpreadsheet,
+  HardDrive,
+} from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { storageApi } from "@/lib/api/storage";
 
 /**
  * DragDropOverlay
@@ -23,131 +29,141 @@ export function DragDropOverlay() {
   const dragCountRef = useRef(0);
 
   const getContext = useCallback(() => {
-    if (pathname?.startsWith('/storage')) {
+    if (pathname?.startsWith("/storage")) {
       return {
         icon: HardDrive,
-        label: 'Uploader dans le Drive',
-        sublabel: 'Les fichiers seront ajoutés au dossier courant',
-        bucket: 'documents',
+        label: "Uploader dans le Drive",
+        sublabel: "Les fichiers seront ajoutés au dossier courant",
+        bucket: "documents",
       };
     }
-    if (pathname?.startsWith('/mail')) {
+    if (pathname?.startsWith("/mail")) {
       return {
         icon: Mail,
-        label: 'Joindre au message',
-        sublabel: 'Les fichiers seront ajoutés en pièce jointe',
-        bucket: '__mail_attach__',
+        label: "Joindre au message",
+        sublabel: "Les fichiers seront ajoutés en pièce jointe",
+        bucket: "__mail_attach__",
       };
     }
-    if (pathname?.startsWith('/docs')) {
+    if (pathname?.startsWith("/docs")) {
       return {
         icon: FileText,
-        label: 'Importer le document',
-        sublabel: 'Le fichier sera ouvert dans l\'éditeur',
-        bucket: '__docs_import__',
+        label: "Importer le document",
+        sublabel: "Le fichier sera ouvert dans l'éditeur",
+        bucket: "__docs_import__",
       };
     }
-    if (pathname?.startsWith('/sheets')) {
+    if (pathname?.startsWith("/sheets")) {
       return {
         icon: FileSpreadsheet,
-        label: 'Importer la feuille',
-        sublabel: 'Le fichier sera importé dans Sheets',
-        bucket: '__sheets_import__',
+        label: "Importer la feuille",
+        sublabel: "Le fichier sera importé dans Sheets",
+        bucket: "__sheets_import__",
       };
     }
     return {
       icon: Upload,
-      label: 'Déposer les fichiers ici',
-      sublabel: 'Les fichiers seront uploadés dans le Drive',
-      bucket: 'documents',
+      label: "Déposer les fichiers ici",
+      sublabel: "Les fichiers seront uploadés dans le Drive",
+      bucket: "documents",
     };
   }, [pathname]);
 
-  const handleUpload = useCallback(async (files: FileList) => {
-    const context = getContext();
-    const fileArray = Array.from(files);
+  const handleUpload = useCallback(
+    async (files: FileList) => {
+      const context = getContext();
+      const fileArray = Array.from(files);
 
-    if (fileArray.length === 0) return;
+      if (fileArray.length === 0) return;
 
-    // Mail context: store files in a custom event for the mail compose to pick up
-    if (context.bucket === '__mail_attach__') {
-      window.dispatchEvent(
-        new CustomEvent('dragdrop-mail-attach', { detail: { files: fileArray } })
-      );
-      toast.success(`${fileArray.length} fichier(s) ajouté(s) en pièce jointe`);
-      return;
-    }
-
-    // Docs context: dispatch event for docs editor to handle
-    if (context.bucket === '__docs_import__') {
-      window.dispatchEvent(
-        new CustomEvent('dragdrop-doc-import', { detail: { files: fileArray } })
-      );
-      toast.success(`Import de "${fileArray[0].name}" en cours...`);
-      return;
-    }
-
-    // Sheets context: dispatch event for sheets editor to handle
-    if (context.bucket === '__sheets_import__') {
-      window.dispatchEvent(
-        new CustomEvent('dragdrop-sheet-import', { detail: { files: fileArray } })
-      );
-      toast.success(`Import de "${fileArray[0].name}" en cours...`);
-      return;
-    }
-
-    // Storage upload (default)
-    const bucket = context.bucket;
-    const toastId = toast.loading(
-      `Upload de ${fileArray.length} fichier(s)...`
-    );
-
-    try {
-      let successCount = 0;
-      let errorCount = 0;
-
-      for (const file of fileArray) {
-        try {
-          await storageApi.uploadFile(bucket, file);
-          successCount++;
-        } catch {
-          errorCount++;
-        }
-      }
-
-      if (errorCount === 0) {
-        toast.success(`${successCount} fichier(s) uploadé(s) avec succès`, {
-          id: toastId,
-        });
-      } else {
-        toast.warning(
-          `${successCount} uploadé(s), ${errorCount} erreur(s)`,
-          { id: toastId }
+      // Mail context: store files in a custom event for the mail compose to pick up
+      if (context.bucket === "__mail_attach__") {
+        window.dispatchEvent(
+          new CustomEvent("dragdrop-mail-attach", {
+            detail: { files: fileArray },
+          }),
         );
+        toast.success(
+          `${fileArray.length} fichier(s) ajouté(s) en pièce jointe`,
+        );
+        return;
       }
 
-      // Dispatch event so the storage page can refresh
-      window.dispatchEvent(new CustomEvent('storage-files-changed'));
-
-      // If not on storage page, offer to navigate there
-      if (!pathname?.startsWith('/storage')) {
-        toast('Fichiers disponibles dans le Drive', {
-          action: {
-            label: 'Voir',
-            onClick: () => router.push('/storage'),
-          },
-        });
+      // Docs context: dispatch event for docs editor to handle
+      if (context.bucket === "__docs_import__") {
+        window.dispatchEvent(
+          new CustomEvent("dragdrop-doc-import", {
+            detail: { files: fileArray },
+          }),
+        );
+        toast.success(`Import de "${fileArray[0].name}" en cours...`);
+        return;
       }
-    } catch {
-      toast.error('Erreur lors de l\'upload', { id: toastId });
-    }
-  }, [getContext, pathname, router]);
+
+      // Sheets context: dispatch event for sheets editor to handle
+      if (context.bucket === "__sheets_import__") {
+        window.dispatchEvent(
+          new CustomEvent("dragdrop-sheet-import", {
+            detail: { files: fileArray },
+          }),
+        );
+        toast.success(`Import de "${fileArray[0].name}" en cours...`);
+        return;
+      }
+
+      // Storage upload (default)
+      const bucket = context.bucket;
+      const toastId = toast.loading(
+        `Upload de ${fileArray.length} fichier(s)...`,
+      );
+
+      try {
+        let successCount = 0;
+        let errorCount = 0;
+
+        for (const file of fileArray) {
+          try {
+            await storageApi.uploadFile(bucket, file);
+            successCount++;
+          } catch {
+            errorCount++;
+          }
+        }
+
+        if (errorCount === 0) {
+          toast.success(`${successCount} fichier(s) uploadé(s) avec succès`, {
+            id: toastId,
+          });
+        } else {
+          toast.warning(`${successCount} uploadé(s), ${errorCount} erreur(s)`, {
+            id: toastId,
+          });
+        }
+
+        // Dispatch event so the storage page can refresh
+        window.dispatchEvent(new CustomEvent("storage-files-changed"));
+
+        // If not on storage page, offer to navigate there
+        if (!pathname?.startsWith("/storage")) {
+          toast("Fichiers disponibles dans le Drive", {
+            action: {
+              label: "Voir",
+              onClick: () => router.push("/storage"),
+            },
+          });
+        }
+      } catch {
+        toast.error("Erreur lors de l'upload", { id: toastId });
+      }
+    },
+    [getContext, pathname, router],
+  );
 
   useEffect(() => {
     const handleDragEnter = (e: DragEvent) => {
       e.preventDefault();
       dragCountRef.current++;
-      if (e.dataTransfer?.types?.includes('Files')) {
+      if (e.dataTransfer?.types?.includes("Files")) {
         setIsDragging(true);
       }
     };
@@ -165,7 +181,7 @@ export function DragDropOverlay() {
       e.preventDefault();
       // Needed to allow drop
       if (e.dataTransfer) {
-        e.dataTransfer.dropEffect = 'copy';
+        e.dataTransfer.dropEffect = "copy";
       }
     };
 
@@ -180,16 +196,16 @@ export function DragDropOverlay() {
       }
     };
 
-    window.addEventListener('dragenter', handleDragEnter);
-    window.addEventListener('dragleave', handleDragLeave);
-    window.addEventListener('dragover', handleDragOver);
-    window.addEventListener('drop', handleDrop);
+    window.addEventListener("dragenter", handleDragEnter);
+    window.addEventListener("dragleave", handleDragLeave);
+    window.addEventListener("dragover", handleDragOver);
+    window.addEventListener("drop", handleDrop);
 
     return () => {
-      window.removeEventListener('dragenter', handleDragEnter);
-      window.removeEventListener('dragleave', handleDragLeave);
-      window.removeEventListener('dragover', handleDragOver);
-      window.removeEventListener('drop', handleDrop);
+      window.removeEventListener("dragenter", handleDragEnter);
+      window.removeEventListener("dragleave", handleDragLeave);
+      window.removeEventListener("dragover", handleDragOver);
+      window.removeEventListener("drop", handleDrop);
     };
   }, [handleUpload]);
 

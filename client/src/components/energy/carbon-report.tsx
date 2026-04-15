@@ -57,7 +57,9 @@ export function CarbonReport({
             <p className="text-4xl font-bold text-emerald-700">
               {totalCO2.toLocaleString("fr-FR")}
             </p>
-            <p className="mt-2 text-sm text-muted-foreground">tonnes équivalent CO₂</p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              tonnes équivalent CO₂
+            </p>
           </div>
           <div className="text-right">
             <Badge className="gap-1 bg-emerald-200 text-emerald-800">
@@ -126,14 +128,18 @@ export function CarbonReport({
             <div className="h-3 w-full rounded-full bg-gray-200">
               <div
                 className="h-3 rounded-full bg-blue-500 transition-all"
-                style={{ width: `${(currentReduction / targetReduction) * 100}%` }}
+                style={{
+                  width: `${(currentReduction / targetReduction) * 100}%`,
+                }}
               />
             </div>
           </div>
 
           <div className="flex justify-between text-sm text-muted-foreground">
             <span>Progression actuelle: {currentReduction}%</span>
-            <span>Restant: {(targetReduction - currentReduction).toFixed(1)}%</span>
+            <span>
+              Restant: {(targetReduction - currentReduction).toFixed(1)}%
+            </span>
           </div>
         </div>
       </Card>

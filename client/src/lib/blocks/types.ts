@@ -121,14 +121,14 @@ export interface UniversalBlock {
 // ============================================================================
 
 export type LinkType =
-  | "reference"    // Generic reference
-  | "parent"       // Parent-child relationship
+  | "reference" // Generic reference
+  | "parent" // Parent-child relationship
   | "child"
-  | "assignee"     // Task assignment
-  | "owner"        // Ownership
-  | "attachment"   // File attachment
-  | "mention"      // @mention in text
-  | "related";     // Generic relation
+  | "assignee" // Task assignment
+  | "owner" // Ownership
+  | "attachment" // File attachment
+  | "mention" // @mention in text
+  | "related"; // Generic relation
 
 export interface LinkedBlock {
   /** Linked block ID */

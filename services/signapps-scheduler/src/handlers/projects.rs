@@ -416,17 +416,15 @@ pub async fn remove_member(
     Extension(_ctx): Extension<TenantContext>,
     Path((project_id, user_id)): Path<(Uuid, Uuid)>,
 ) -> Result<impl IntoResponse, StatusCode> {
-    sqlx::query(
-        "DELETE FROM calendar.project_members WHERE project_id = $1 AND user_id = $2",
-    )
-    .bind(project_id)
-    .bind(user_id)
-    .execute(state.pool.inner())
-    .await
-    .map_err(|e| {
-        tracing::error!("Failed to remove project member: {}", e);
-        StatusCode::INTERNAL_SERVER_ERROR
-    })?;
+    sqlx::query("DELETE FROM calendar.project_members WHERE project_id = $1 AND user_id = $2")
+        .bind(project_id)
+        .bind(user_id)
+        .execute(state.pool.inner())
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to remove project member: {}", e);
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
 
     Ok(StatusCode::NO_CONTENT)
 }
@@ -570,16 +568,17 @@ pub async fn team_workload(
     Extension(ctx): Extension<TenantContext>,
 ) -> Result<impl IntoResponse, StatusCode> {
     // Resolve person_id for the caller
-    let caller_person_id: Option<Uuid> =
-        sqlx::query_scalar("SELECT id FROM core.persons WHERE user_id = $1 AND tenant_id = $2 LIMIT 1")
-            .bind(claims.sub)
-            .bind(ctx.tenant_id)
-            .fetch_optional(state.pool.inner())
-            .await
-            .map_err(|e| {
-                tracing::error!("Failed to resolve person for team_workload: {}", e);
-                StatusCode::INTERNAL_SERVER_ERROR
-            })?;
+    let caller_person_id: Option<Uuid> = sqlx::query_scalar(
+        "SELECT id FROM core.persons WHERE user_id = $1 AND tenant_id = $2 LIMIT 1",
+    )
+    .bind(claims.sub)
+    .bind(ctx.tenant_id)
+    .fetch_optional(state.pool.inner())
+    .await
+    .map_err(|e| {
+        tracing::error!("Failed to resolve person for team_workload: {}", e);
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
 
     let rows = if let Some(pid) = caller_person_id {
         // Resolve the caller's primary org node

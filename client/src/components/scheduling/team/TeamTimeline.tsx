@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * TeamTimeline Component
@@ -7,7 +7,7 @@
  * Great for finding common free slots.
  */
 
-import * as React from 'react';
+import * as React from "react";
 import {
   format,
   startOfDay,
@@ -16,24 +16,24 @@ import {
   isSameHour,
   isWithinInterval,
   differenceInMinutes,
-} from 'date-fns';
-import { fr } from 'date-fns/locale';
-import { ChevronLeft, ChevronRight, Users } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+} from "date-fns";
+import { fr } from "date-fns/locale";
+import { ChevronLeft, ChevronRight, Users } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@/components/ui/tooltip';
+} from "@/components/ui/tooltip";
 import type {
   TeamMember,
   AvailabilitySlot,
   ScheduleBlock,
-} from '@/lib/scheduling/types/scheduling';
+} from "@/lib/scheduling/types/scheduling";
 
 // ============================================================================
 // Types
@@ -55,11 +55,11 @@ interface TeamTimelineProps {
 // Status Colors
 // ============================================================================
 
-const statusColors: Record<AvailabilitySlot['status'], string> = {
-  available: 'bg-green-200',
-  busy: 'bg-red-200',
-  tentative: 'bg-amber-200',
-  'out-of-office': 'bg-slate-200',
+const statusColors: Record<AvailabilitySlot["status"], string> = {
+  available: "bg-green-200",
+  busy: "bg-red-200",
+  tentative: "bg-amber-200",
+  "out-of-office": "bg-slate-200",
 };
 
 // ============================================================================
@@ -68,9 +68,9 @@ const statusColors: Record<AvailabilitySlot['status'], string> = {
 
 function getInitials(name: string): string {
   return name
-    .split(' ')
+    .split(" ")
     .map((n) => n[0])
-    .join('')
+    .join("")
     .toUpperCase()
     .slice(0, 2);
 }
@@ -92,7 +92,7 @@ function TimeSlot({
   event?: ScheduleBlock;
   onClick?: () => void;
 }) {
-  const status = slot?.status ?? 'available';
+  const status = slot?.status ?? "available";
 
   return (
     <TooltipProvider>
@@ -100,9 +100,9 @@ function TimeSlot({
         <TooltipTrigger asChild>
           <div
             className={cn(
-              'h-10 min-w-[60px] border-r border-border/50 cursor-pointer transition-colors',
-              'hover:brightness-95',
-              event ? 'bg-primary/20' : statusColors[status]
+              "h-10 min-w-[60px] border-r border-border/50 cursor-pointer transition-colors",
+              "hover:brightness-95",
+              event ? "bg-primary/20" : statusColors[status],
             )}
             onClick={onClick}
           >
@@ -119,18 +119,23 @@ function TimeSlot({
           <div className="text-sm">
             <p className="font-medium">{member.name}</p>
             <p className="text-muted-foreground">
-              {format(hour, 'HH:mm', { locale: fr })}
+              {format(hour, "HH:mm", { locale: fr })}
             </p>
             {event && <p className="text-primary mt-1">{event.title}</p>}
             {!event && (
-              <p className={cn('mt-1', status === 'available' ? 'text-green-600' : 'text-red-600')}>
-                {status === 'available'
-                  ? 'Disponible'
-                  : status === 'busy'
-                  ? 'Occupé'
-                  : status === 'tentative'
-                  ? 'Peut-être'
-                  : 'Absent'}
+              <p
+                className={cn(
+                  "mt-1",
+                  status === "available" ? "text-green-600" : "text-red-600",
+                )}
+              >
+                {status === "available"
+                  ? "Disponible"
+                  : status === "busy"
+                    ? "Occupé"
+                    : status === "tentative"
+                      ? "Peut-être"
+                      : "Absent"}
               </p>
             )}
           </div>
@@ -178,16 +183,25 @@ export function TeamTimeline({
   };
 
   // Get slot for a member at a specific hour
-  const getSlotForMemberAtHour = (memberId: string, hour: Date): AvailabilitySlot | undefined => {
+  const getSlotForMemberAtHour = (
+    memberId: string,
+    hour: Date,
+  ): AvailabilitySlot | undefined => {
     return slots.find(
       (s) =>
         s.memberId === memberId &&
-        isWithinInterval(hour, { start: new Date(s.start), end: new Date(s.end) })
+        isWithinInterval(hour, {
+          start: new Date(s.start),
+          end: new Date(s.end),
+        }),
     );
   };
 
   // Get event for a member at a specific hour
-  const getEventForMemberAtHour = (memberId: string, hour: Date): ScheduleBlock | undefined => {
+  const getEventForMemberAtHour = (
+    memberId: string,
+    hour: Date,
+  ): ScheduleBlock | undefined => {
     return events.find((e) => {
       const attendeeIds = e.attendees?.map((a) => a.id) ?? [];
       if (!attendeeIds.includes(memberId)) return false;
@@ -203,14 +217,19 @@ export function TeamTimeline({
       return members.every((member) => {
         const slot = getSlotForMemberAtHour(member.id, hour);
         const event = getEventForMemberAtHour(member.id, hour);
-        return !event && (!slot || slot.status === 'available');
+        return !event && (!slot || slot.status === "available");
       });
     });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hours, members, slots, events]);
 
   return (
-    <div className={cn('flex flex-col border rounded-lg overflow-hidden', className)}>
+    <div
+      className={cn(
+        "flex flex-col border rounded-lg overflow-hidden",
+        className,
+      )}
+    >
       {/* Header */}
       <div className="flex items-center justify-between p-3 border-b bg-muted/30">
         <div className="flex items-center gap-2">
@@ -225,7 +244,7 @@ export function TeamTimeline({
           </Button>
         </div>
         <span className="font-medium">
-          {format(date, 'EEEE d MMMM yyyy', { locale: fr })}
+          {format(date, "EEEE d MMMM yyyy", { locale: fr })}
         </span>
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Users className="h-4 w-4" />
@@ -242,9 +261,9 @@ export function TeamTimeline({
           <span className="text-green-600 ml-2">
             {commonAvailableHours
               .slice(0, 3)
-              .map((h) => format(h, 'HH:mm'))
-              .join(', ')}
-            {commonAvailableHours.length > 3 && '...'}
+              .map((h) => format(h, "HH:mm"))
+              .join(", ")}
+            {commonAvailableHours.length > 3 && "..."}
           </span>
         </div>
       )}
@@ -261,12 +280,12 @@ export function TeamTimeline({
               <div
                 key={hour.toISOString()}
                 className={cn(
-                  'min-w-[60px] p-2 text-center text-xs font-medium border-r',
+                  "min-w-[60px] p-2 text-center text-xs font-medium border-r",
                   commonAvailableHours.some((h) => isSameHour(h, hour)) &&
-                    'bg-green-50'
+                    "bg-green-50",
                 )}
               >
-                {format(hour, 'HH:mm')}
+                {format(hour, "HH:mm")}
               </div>
             ))}
           </div>

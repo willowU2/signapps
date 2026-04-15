@@ -5,8 +5,12 @@
  * Self-contained utilities for ScheduleBlock layout calculations.
  */
 
-import { isSameDay, startOfDay, endOfDay } from 'date-fns';
-import type { ScheduleBlock, EventLayout, ViewConfig } from '../types/scheduling';
+import { isSameDay, startOfDay, endOfDay } from "date-fns";
+import type {
+  ScheduleBlock,
+  EventLayout,
+  ViewConfig,
+} from "../types/scheduling";
 
 // ============================================================================
 // Internal Layout Calculator for ScheduleBlock
@@ -29,18 +33,38 @@ function calculateBlockLayout(
     workingHoursStart: number;
     slotDuration: number;
     slotHeight: number;
+  },
+): Map<
+  string,
+  {
+    top: number;
+    height: number;
+    left: number;
+    width: number;
+    column: number;
+    totalColumns: number;
   }
-): Map<string, { top: number; height: number; left: number; width: number; column: number; totalColumns: number }> {
+> {
   const { workingHoursStart, slotDuration, slotHeight } = options;
   const pixelsPerMinute = slotHeight / slotDuration;
-  const layouts = new Map<string, { top: number; height: number; left: number; width: number; column: number; totalColumns: number }>();
+  const layouts = new Map<
+    string,
+    {
+      top: number;
+      height: number;
+      left: number;
+      width: number;
+      column: number;
+      totalColumns: number;
+    }
+  >();
 
   if (blocks.length === 0) return layouts;
 
   // Convert to intervals
   const intervals: BlockInterval[] = blocks
-    .filter(b => b.start)
-    .map(block => {
+    .filter((b) => b.start)
+    .map((block) => {
       const endTime = block.end || new Date(block.start.getTime() + 3600000); // Default 1 hour
       return {
         eventId: block.id,
@@ -84,30 +108,49 @@ function calculateBlockLayout(
 
     for (const interval of group.intervals) {
       const column = group.columns.get(interval.eventId) ?? 0;
-      const startMinutes = (interval.block.start.getHours() - workingHoursStart) * 60 + interval.block.start.getMinutes();
-      const endTime = interval.block.end || new Date(interval.block.start.getTime() + 3600000);
-      const endMinutes = (endTime.getHours() - workingHoursStart) * 60 + endTime.getMinutes();
+      const startMinutes =
+        (interval.block.start.getHours() - workingHoursStart) * 60 +
+        interval.block.start.getMinutes();
+      const endTime =
+        interval.block.end ||
+        new Date(interval.block.start.getTime() + 3600000);
+      const endMinutes =
+        (endTime.getHours() - workingHoursStart) * 60 + endTime.getMinutes();
 
       const top = startMinutes * pixelsPerMinute;
-      const height = Math.max((endMinutes - startMinutes) * pixelsPerMinute, 20);
+      const height = Math.max(
+        (endMinutes - startMinutes) * pixelsPerMinute,
+        20,
+      );
       const left = column * columnWidth + padding;
       const width = columnWidth - padding * 2;
 
-      layouts.set(interval.eventId, { top, height, left, width, column, totalColumns: group.maxColumns });
+      layouts.set(interval.eventId, {
+        top,
+        height,
+        left,
+        width,
+        column,
+        totalColumns: group.maxColumns,
+      });
     }
   }
 
   return layouts;
 }
 
-function assignBlockColumns(intervals: BlockInterval[]): { intervals: BlockInterval[]; columns: Map<string, number>; maxColumns: number } {
+function assignBlockColumns(intervals: BlockInterval[]): {
+  intervals: BlockInterval[];
+  columns: Map<string, number>;
+  maxColumns: number;
+} {
   const columns = new Map<string, number>();
   const columnEnds: number[] = [];
 
   const sorted = [...intervals].sort((a, b) => {
     const startDiff = a.start - b.start;
     if (startDiff !== 0) return startDiff;
-    return (b.end - b.start) - (a.end - a.start);
+    return b.end - b.start - (a.end - a.start);
   });
 
   for (const interval of sorted) {
@@ -152,13 +195,13 @@ export interface LayoutOptions {
 export function calculateDayLayouts(
   events: ScheduleBlock[],
   date: Date,
-  options: LayoutOptions
+  options: LayoutOptions,
 ): EventLayout[] {
   const { viewConfig, slotHeight } = options;
 
   // Filter events for this day (excluding all-day events)
   const dayEvents = events.filter(
-    (event) => !event.allDay && isSameDay(event.start, date)
+    (event) => !event.allDay && isSameDay(event.start, date),
   );
 
   if (dayEvents.length === 0) return [];
@@ -204,7 +247,7 @@ export function calculateDayLayouts(
 export function calculateMultiDayLayouts(
   events: ScheduleBlock[],
   days: Date[],
-  options: LayoutOptions
+  options: LayoutOptions,
 ): Map<string, EventLayout[]> {
   const layoutsByDay = new Map<string, EventLayout[]>();
 
@@ -222,7 +265,7 @@ export function calculateMultiDayLayouts(
  */
 export function getAllDayEvents(
   events: ScheduleBlock[],
-  days: Date[]
+  days: Date[],
 ): ScheduleBlock[] {
   return events.filter((event) => {
     if (!event.allDay) return false;
@@ -245,7 +288,7 @@ export function getAllDayEvents(
 export function filterEventsByTimeRange(
   events: ScheduleBlock[],
   start: Date,
-  end: Date
+  end: Date,
 ): ScheduleBlock[] {
   return events.filter((event) => {
     const eventStart = event.start;
@@ -260,7 +303,7 @@ export function filterEventsByTimeRange(
  */
 export function groupEventsByDay(
   events: ScheduleBlock[],
-  days: Date[]
+  days: Date[],
 ): Map<string, ScheduleBlock[]> {
   const grouped = new Map<string, ScheduleBlock[]>();
 
@@ -295,21 +338,24 @@ export function calculateEventPosition(
     workingHoursEnd: number;
     slotDuration: number;
     slotHeight: number;
-  }
+  },
 ): { top: number; height: number } {
-  const { workingHoursStart, workingHoursEnd, slotDuration, slotHeight } = options;
+  const { workingHoursStart, workingHoursEnd, slotDuration, slotHeight } =
+    options;
   const pixelsPerMinute = slotHeight / slotDuration;
 
   // Clamp event times to working hours
   const startHour = Math.max(event.start.getHours(), workingHoursStart);
-  const startMinute = event.start.getHours() >= workingHoursStart ? event.start.getMinutes() : 0;
+  const startMinute =
+    event.start.getHours() >= workingHoursStart ? event.start.getMinutes() : 0;
 
   const endHour = event.end
     ? Math.min(event.end.getHours(), workingHoursEnd)
     : Math.min(startHour + 1, workingHoursEnd);
-  const endMinute = event.end && event.end.getHours() <= workingHoursEnd
-    ? event.end.getMinutes()
-    : 0;
+  const endMinute =
+    event.end && event.end.getHours() <= workingHoursEnd
+      ? event.end.getMinutes()
+      : 0;
 
   const startMinutes = (startHour - workingHoursStart) * 60 + startMinute;
   const endMinutes = (endHour - workingHoursStart) * 60 + endMinute;

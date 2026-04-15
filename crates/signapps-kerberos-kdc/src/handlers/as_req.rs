@@ -74,7 +74,11 @@ pub async fn handle_as_req(
     padata: &[(i32, Vec<u8>)],
     requested_etypes: &[i32],
 ) -> AsResult {
-    tracing::info!(principal = client_principal, realm = realm, "AS-REQ received");
+    tracing::info!(
+        principal = client_principal,
+        realm = realm,
+        "AS-REQ received"
+    );
 
     // Look up principal keys
     let keys = sqlx::query_as::<_, (Uuid, i32, Vec<u8>, Option<String>)>(
@@ -99,7 +103,7 @@ pub async fn handle_as_req(
                 code: 6, // KDC_ERR_C_PRINCIPAL_UNKNOWN
                 message: "Client principal not found".to_string(),
             };
-        }
+        },
     };
 
     // Check if pre-authentication data was provided
@@ -117,7 +121,10 @@ pub async fn handle_as_req(
     let user_id = keys[0].0;
 
     // Verify PA-ENC-TIMESTAMP using the principal's own key.
-    let pa_timestamp = padata.iter().find(|(t, _)| *t == 2).map(|(_, v)| v.as_slice());
+    let pa_timestamp = padata
+        .iter()
+        .find(|(t, _)| *t == 2)
+        .map(|(_, v)| v.as_slice());
     if let Some(pa_data) = pa_timestamp {
         let user_key = &keys[0];
         let enc_type = user_key.1;
@@ -132,7 +139,7 @@ pub async fn handle_as_req(
                 } else {
                     false
                 }
-            }
+            },
             23 => {
                 // RC4-HMAC
                 if key_data.len() >= 16 {
@@ -141,7 +148,7 @@ pub async fn handle_as_req(
                 } else {
                     false
                 }
-            }
+            },
             _ => false,
         };
 
@@ -154,7 +161,10 @@ pub async fn handle_as_req(
         // Full timestamp replay-protection is a next-iteration concern;
         // we gate on decryption success (proves key knowledge).
         if !timestamp_ok {
-            tracing::warn!(principal = client_principal, "PA-ENC-TIMESTAMP decryption failed");
+            tracing::warn!(
+                principal = client_principal,
+                "PA-ENC-TIMESTAMP decryption failed"
+            );
             return AsResult::Error {
                 code: 24, // KDC_ERR_PREAUTH_FAILED
                 message: "Pre-authentication failed: bad timestamp".to_string(),
@@ -193,11 +203,11 @@ pub async fn handle_as_req(
             18 if krbtgt_data.len() >= 32 => {
                 let key: [u8; 32] = krbtgt_data[..32].try_into().unwrap_or([0u8; 32]);
                 Some(crate::crypto::aes_cts::encrypt(&key, &tgt_plaintext))
-            }
+            },
             23 if krbtgt_data.len() >= 16 => {
                 let key: [u8; 16] = krbtgt_data[..16].try_into().unwrap_or([0u8; 16]);
                 Some(crate::crypto::rc4_hmac::encrypt(&key, 2, &tgt_plaintext))
-            }
+            },
             _ => None,
         }
     } else {

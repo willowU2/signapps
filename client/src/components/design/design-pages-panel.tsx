@@ -6,13 +6,28 @@ import { Plus, Copy, Trash2, GripVertical } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function DesignPagesPanel() {
-  const { pages, currentPageIndex, setCurrentPage, addPage, duplicatePage, deletePage } = useDesignPages();
+  const {
+    pages,
+    currentPageIndex,
+    setCurrentPage,
+    addPage,
+    duplicatePage,
+    deletePage,
+  } = useDesignPages();
 
   return (
     <div className="flex flex-col h-full">
       <div className="px-3 py-2 border-b flex items-center justify-between">
-        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Pages</p>
-        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={addPage} title="Add page">
+        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+          Pages
+        </p>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-6 w-6"
+          onClick={addPage}
+          title="Add page"
+        >
           <Plus className="h-3.5 w-3.5" />
         </Button>
       </div>
@@ -24,7 +39,7 @@ export default function DesignPagesPanel() {
               "relative group rounded-lg border-2 cursor-pointer transition-all overflow-hidden",
               idx === currentPageIndex
                 ? "border-primary shadow-sm"
-                : "border-transparent hover:border-muted-foreground/30"
+                : "border-transparent hover:border-muted-foreground/30",
             )}
             onClick={() => setCurrentPage(idx)}
           >
@@ -35,7 +50,9 @@ export default function DesignPagesPanel() {
             >
               <div className="opacity-50">
                 {page.objects.length > 0 ? (
-                  <span className="text-[10px]">{page.objects.length} elements</span>
+                  <span className="text-[10px]">
+                    {page.objects.length} elements
+                  </span>
                 ) : (
                   <span className="text-[10px]">Empty</span>
                 )}
@@ -50,7 +67,10 @@ export default function DesignPagesPanel() {
             {/* Actions */}
             <div className="absolute top-1 right-1 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
               <button
-                onClick={(e) => { e.stopPropagation(); duplicatePage(idx); }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  duplicatePage(idx);
+                }}
                 className="p-1 rounded bg-background/80 backdrop-blur-sm hover:bg-background shadow-sm"
                 title="Duplicate page"
               >
@@ -58,7 +78,10 @@ export default function DesignPagesPanel() {
               </button>
               {pages.length > 1 && (
                 <button
-                  onClick={(e) => { e.stopPropagation(); deletePage(idx); }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    deletePage(idx);
+                  }}
                   className="p-1 rounded bg-background/80 backdrop-blur-sm hover:bg-destructive/10 shadow-sm"
                   title="Delete page"
                 >

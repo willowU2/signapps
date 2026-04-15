@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import * as React from 'react';
-import { Search, X } from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import { cn } from '@/lib/utils';
+import * as React from "react";
+import { Search, X } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
 
-interface SearchInputProps extends React.ComponentProps<'input'> {
+interface SearchInputProps extends React.ComponentProps<"input"> {
   value: string;
   onValueChange: (value: string) => void;
   placeholder?: string;
@@ -21,26 +21,26 @@ interface SearchInputProps extends React.ComponentProps<'input'> {
 export function SearchInput({
   value,
   onValueChange,
-  placeholder = 'Rechercher...',
+  placeholder = "Rechercher...",
   className,
   containerClassName,
   clearable = true,
   ...props
 }: SearchInputProps) {
   return (
-    <div className={cn('relative', containerClassName)}>
+    <div className={cn("relative", containerClassName)}>
       <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
       <Input
         value={value}
         onChange={(e) => onValueChange(e.target.value)}
         placeholder={placeholder}
-        className={cn('pl-9', clearable && value && 'pr-8', className)}
+        className={cn("pl-9", clearable && value && "pr-8", className)}
         {...props}
       />
       {clearable && value && (
         <button
           type="button"
-          onClick={() => onValueChange('')}
+          onClick={() => onValueChange("")}
           className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
           aria-label="Effacer la recherche"
         >

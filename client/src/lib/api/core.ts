@@ -115,7 +115,12 @@ export function createApiClient(baseURL: string): AxiosInstance {
         return Promise.reject(error);
       }
 
-      if (status === 401 && !originalRequest._retry && !requestUrl.includes("/auth/login") && !requestUrl.includes("/auth/refresh")) {
+      if (
+        status === 401 &&
+        !originalRequest._retry &&
+        !requestUrl.includes("/auth/login") &&
+        !requestUrl.includes("/auth/refresh")
+      ) {
         originalRequest._retry = true;
 
         if (typeof window !== "undefined") {

@@ -26,7 +26,7 @@ export function useShares(calendarId: string | null) {
     try {
       setLoading(true);
       const response = await calendarApiClient.get(
-        `/calendars/${calendarId}/shares`
+        `/calendars/${calendarId}/shares`,
       );
       setShares(response.data);
       setError(null);
@@ -44,7 +44,7 @@ export function useShares(calendarId: string | null) {
       try {
         const response = await calendarApiClient.post(
           `/calendars/${calendarId}/shares`,
-          { user_id: userId, role }
+          { user_id: userId, role },
         );
         setShares((prev) => [...prev, response.data]);
         setError(null);
@@ -54,7 +54,7 @@ export function useShares(calendarId: string | null) {
         throw err;
       }
     },
-    [calendarId]
+    [calendarId],
   );
 
   const unshareCalendar = useCallback(
@@ -63,7 +63,7 @@ export function useShares(calendarId: string | null) {
 
       try {
         await calendarApiClient.delete(
-          `/calendars/${calendarId}/shares/${userId}`
+          `/calendars/${calendarId}/shares/${userId}`,
         );
         setShares((prev) => prev.filter((s) => s.user_id !== userId));
         setError(null);
@@ -72,7 +72,7 @@ export function useShares(calendarId: string | null) {
         throw err;
       }
     },
-    [calendarId]
+    [calendarId],
   );
 
   const updatePermission = useCallback(
@@ -82,10 +82,10 @@ export function useShares(calendarId: string | null) {
       try {
         await calendarApiClient.put(
           `/calendars/${calendarId}/shares/${userId}`,
-          { role }
+          { role },
         );
         setShares((prev) =>
-          prev.map((s) => (s.user_id === userId ? { ...s, role } : s))
+          prev.map((s) => (s.user_id === userId ? { ...s, role } : s)),
         );
         setError(null);
       } catch (err) {
@@ -93,7 +93,7 @@ export function useShares(calendarId: string | null) {
         throw err;
       }
     },
-    [calendarId]
+    [calendarId],
   );
 
   const checkPermission = useCallback(
@@ -102,14 +102,14 @@ export function useShares(calendarId: string | null) {
 
       try {
         const response = await calendarApiClient.get(
-          `/calendars/${calendarId}/shares/${userId}/check`
+          `/calendars/${calendarId}/shares/${userId}/check`,
         );
         return response.data;
       } catch {
         return null;
       }
     },
-    [calendarId]
+    [calendarId],
   );
 
   return {

@@ -26,7 +26,14 @@ export interface SignatureEnvelope {
   title: string;
   document_id: string;
   created_by: string;
-  status: 'draft' | 'sent' | 'in_progress' | 'completed' | 'declined' | 'expired' | 'voided';
+  status:
+    | "draft"
+    | "sent"
+    | "in_progress"
+    | "completed"
+    | "declined"
+    | "expired"
+    | "voided";
   expires_at?: string;
   metadata: Record<string, unknown>;
   created_at: string;
@@ -40,8 +47,15 @@ export interface EnvelopeStep {
   signer_email: string;
   signer_user_id?: string;
   signer_name?: string;
-  action: 'sign' | 'approve' | 'witness' | 'acknowledge' | 'delegate';
-  status: 'pending' | 'notified' | 'viewed' | 'signed' | 'declined' | 'delegated' | 'expired';
+  action: "sign" | "approve" | "witness" | "acknowledge" | "delegate";
+  status:
+    | "pending"
+    | "notified"
+    | "viewed"
+    | "signed"
+    | "declined"
+    | "delegated"
+    | "expired";
   signed_at?: string;
   signature_hash?: string;
   decline_reason?: string;

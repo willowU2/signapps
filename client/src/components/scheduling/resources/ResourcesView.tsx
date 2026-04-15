@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * ResourcesView Component
@@ -7,9 +7,15 @@
  * Shows resource list with filtering and booking calendar.
  */
 
-import * as React from 'react';
-import { format, startOfWeek, endOfWeek, eachDayOfInterval, isSameDay } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import * as React from "react";
+import {
+  format,
+  startOfWeek,
+  endOfWeek,
+  eachDayOfInterval,
+  isSameDay,
+} from "date-fns";
+import { fr } from "date-fns/locale";
 import {
   Building2,
   Monitor,
@@ -23,12 +29,12 @@ import {
   ChevronRight,
   Plus,
   Map,
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -36,11 +42,11 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { ResourceCard, ResourceCardCompact } from './ResourceCard';
-import { BookingSheet } from './BookingSheet';
-import { FloorPlan } from './FloorPlan';
+} from "@/components/ui/dropdown-menu";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { ResourceCard, ResourceCardCompact } from "./ResourceCard";
+import { BookingSheet } from "./BookingSheet";
+import { FloorPlan } from "./FloorPlan";
 import {
   useResources,
   useBookings,
@@ -48,8 +54,8 @@ import {
   useUpdateBooking,
   useDeleteBooking,
   useFloorPlans,
-} from '@/lib/scheduling/api/resources';
-import type { Resource, Booking } from '@/lib/scheduling/types/scheduling';
+} from "@/lib/scheduling/api/resources";
+import type { Resource, Booking } from "@/lib/scheduling/types/scheduling";
 
 // ============================================================================
 // Types
@@ -59,18 +65,22 @@ interface ResourcesViewProps {
   className?: string;
 }
 
-type ViewMode = 'grid' | 'list' | 'calendar' | 'floorplan';
-type ResourceType = Resource['type'];
+type ViewMode = "grid" | "list" | "calendar" | "floorplan";
+type ResourceType = Resource["type"];
 
 // ============================================================================
 // Resource Type Filter
 // ============================================================================
 
-const resourceTypes: { value: ResourceType; label: string; icon: React.ElementType }[] = [
-  { value: 'room', label: 'Salles', icon: Building2 },
-  { value: 'equipment', label: 'Équipements', icon: Monitor },
-  { value: 'vehicle', label: 'Véhicules', icon: Car },
-  { value: 'other', label: 'Autres', icon: Box },
+const resourceTypes: {
+  value: ResourceType;
+  label: string;
+  icon: React.ElementType;
+}[] = [
+  { value: "room", label: "Salles", icon: Building2 },
+  { value: "equipment", label: "Équipements", icon: Monitor },
+  { value: "vehicle", label: "Véhicules", icon: Car },
+  { value: "other", label: "Autres", icon: Box },
 ];
 
 // ============================================================================
@@ -110,7 +120,7 @@ function ResourceCalendar({
 
   const getBookingsForResourceAndDay = (resourceId: string, day: Date) => {
     return bookings.filter(
-      (b) => b.resourceId === resourceId && isSameDay(new Date(b.start), day)
+      (b) => b.resourceId === resourceId && isSameDay(new Date(b.start), day),
     );
   };
 
@@ -122,8 +132,8 @@ function ResourceCalendar({
           <ChevronLeft className="h-4 w-4" />
         </Button>
         <span className="font-medium">
-          {format(weekStart, 'd MMM', { locale: fr })} -{' '}
-          {format(weekEnd, 'd MMM yyyy', { locale: fr })}
+          {format(weekStart, "d MMM", { locale: fr })} -{" "}
+          {format(weekEnd, "d MMM yyyy", { locale: fr })}
         </span>
         <Button variant="ghost" size="icon" onClick={goToNextWeek}>
           <ChevronRight className="h-4 w-4" />
@@ -142,19 +152,19 @@ function ResourceCalendar({
                 <th
                   key={day.toISOString()}
                   className={cn(
-                    'p-2 text-center text-sm font-medium border-b min-w-[120px]',
-                    isSameDay(day, new Date()) && 'bg-primary/5'
+                    "p-2 text-center text-sm font-medium border-b min-w-[120px]",
+                    isSameDay(day, new Date()) && "bg-primary/5",
                   )}
                 >
-                  <div>{format(day, 'EEE', { locale: fr })}</div>
+                  <div>{format(day, "EEE", { locale: fr })}</div>
                   <div
                     className={cn(
-                      'text-lg',
+                      "text-lg",
                       isSameDay(day, new Date()) &&
-                        'bg-primary text-primary-foreground rounded-full w-8 h-8 flex items-center justify-center mx-auto'
+                        "bg-primary text-primary-foreground rounded-full w-8 h-8 flex items-center justify-center mx-auto",
                     )}
                   >
-                    {format(day, 'd')}
+                    {format(day, "d")}
                   </div>
                 </th>
               ))}
@@ -172,13 +182,16 @@ function ResourceCalendar({
                   </div>
                 </td>
                 {days.map((day) => {
-                  const dayBookings = getBookingsForResourceAndDay(resource.id, day);
+                  const dayBookings = getBookingsForResourceAndDay(
+                    resource.id,
+                    day,
+                  );
                   return (
                     <td
                       key={day.toISOString()}
                       className={cn(
-                        'p-1 border-b min-h-[60px] align-top cursor-pointer hover:bg-muted/50',
-                        isSameDay(day, new Date()) && 'bg-primary/5'
+                        "p-1 border-b min-h-[60px] align-top cursor-pointer hover:bg-muted/50",
+                        isSameDay(day, new Date()) && "bg-primary/5",
                       )}
                       onClick={() => onSlotClick(resource, day)}
                     >
@@ -196,8 +209,9 @@ function ResourceCalendar({
                               {booking.title}
                             </div>
                             <div className="text-muted-foreground">
-                              {format(new Date(booking.start), 'HH:mm')} -{' '}
-                              {booking.end && format(new Date(booking.end), 'HH:mm')}
+                              {format(new Date(booking.start), "HH:mm")} -{" "}
+                              {booking.end &&
+                                format(new Date(booking.end), "HH:mm")}
                             </div>
                           </div>
                         ))}
@@ -220,20 +234,24 @@ function ResourceCalendar({
 
 export function ResourcesView({ className }: ResourcesViewProps) {
   // State
-  const [viewMode, setViewMode] = React.useState<ViewMode>('grid');
-  const [search, setSearch] = React.useState('');
+  const [viewMode, setViewMode] = React.useState<ViewMode>("grid");
+  const [search, setSearch] = React.useState("");
   const [selectedTypes, setSelectedTypes] = React.useState<ResourceType[]>([]);
   const [showOnlyAvailable, setShowOnlyAvailable] = React.useState(false);
   const [currentDate, setCurrentDate] = React.useState(new Date());
   const [isBookingSheetOpen, setIsBookingSheetOpen] = React.useState(false);
-  const [selectedResource, setSelectedResource] = React.useState<Resource | null>(null);
-  const [editingBooking, setEditingBooking] = React.useState<Booking | null>(null);
+  const [selectedResource, setSelectedResource] =
+    React.useState<Resource | null>(null);
+  const [editingBooking, setEditingBooking] = React.useState<Booking | null>(
+    null,
+  );
   const [bookingDate, setBookingDate] = React.useState<Date | null>(null);
 
   // Data
   const { data: resources = [], isLoading: resourcesLoading } = useResources();
   const { data: bookings = [], isLoading: bookingsLoading } = useBookings();
-  const { data: floorPlans = [], isLoading: floorPlansLoading } = useFloorPlans();
+  const { data: floorPlans = [], isLoading: floorPlansLoading } =
+    useFloorPlans();
   const createBooking = useCreateBooking();
   const updateBooking = useUpdateBooking();
   const deleteBooking = useDeleteBooking();
@@ -277,7 +295,7 @@ export function ResourcesView({ className }: ResourcesViewProps) {
 
   const handleViewSchedule = (resource: Resource) => {
     setSelectedResource(resource);
-    setViewMode('calendar');
+    setViewMode("calendar");
   };
 
   const handleBookingClick = (booking: Booking) => {
@@ -293,8 +311,11 @@ export function ResourcesView({ className }: ResourcesViewProps) {
     setIsBookingSheetOpen(true);
   };
 
-  const handleFloorPlanBook = (resourceId: string, slot: { start: Date; end: Date }) => {
-    const resource = resources.find(r => r.id === resourceId);
+  const handleFloorPlanBook = (
+    resourceId: string,
+    slot: { start: Date; end: Date },
+  ) => {
+    const resource = resources.find((r) => r.id === resourceId);
     if (resource) {
       setSelectedResource(resource);
       setEditingBooking(null);
@@ -308,12 +329,12 @@ export function ResourcesView({ className }: ResourcesViewProps) {
       updateBooking.mutate({ id: editingBooking.id, updates: data });
     } else {
       createBooking.mutate({
-        type: 'booking',
+        type: "booking",
         allDay: false,
         start: data.start ?? new Date(),
-        organizerId: 'current-user',
+        organizerId: "current-user",
         ...data,
-      } as Omit<Booking, 'id' | 'createdAt' | 'updatedAt'>);
+      } as Omit<Booking, "id" | "createdAt" | "updatedAt">);
     }
     setIsBookingSheetOpen(false);
     setSelectedResource(null);
@@ -342,7 +363,7 @@ export function ResourcesView({ className }: ResourcesViewProps) {
   }
 
   return (
-    <div className={cn('flex flex-col h-full', className)}>
+    <div className={cn("flex flex-col h-full", className)}>
       {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-3 p-4 border-b">
         {/* Search */}
@@ -380,7 +401,7 @@ export function ResourcesView({ className }: ResourcesViewProps) {
                   setSelectedTypes(
                     checked
                       ? [...selectedTypes, type.value]
-                      : selectedTypes.filter((t) => t !== type.value)
+                      : selectedTypes.filter((t) => t !== type.value),
                   );
                 }}
               >
@@ -429,7 +450,7 @@ export function ResourcesView({ className }: ResourcesViewProps) {
 
       {/* Content */}
       <div className="flex-1 overflow-hidden p-4">
-        {viewMode === 'grid' && (
+        {viewMode === "grid" && (
           <ScrollArea className="h-full">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {filteredResources.map((resource) => (
@@ -450,7 +471,7 @@ export function ResourcesView({ className }: ResourcesViewProps) {
           </ScrollArea>
         )}
 
-        {viewMode === 'list' && (
+        {viewMode === "list" && (
           <ScrollArea className="h-full">
             <div className="space-y-2 max-w-2xl">
               {filteredResources.map((resource) => (
@@ -470,7 +491,7 @@ export function ResourcesView({ className }: ResourcesViewProps) {
           </ScrollArea>
         )}
 
-        {viewMode === 'calendar' && (
+        {viewMode === "calendar" && (
           <ResourceCalendar
             resources={filteredResources}
             bookings={bookings}
@@ -481,7 +502,7 @@ export function ResourcesView({ className }: ResourcesViewProps) {
           />
         )}
 
-        {viewMode === 'floorplan' && (
+        {viewMode === "floorplan" && (
           <div className="h-full border rounded-lg overflow-hidden bg-background">
             {floorPlans.length > 0 ? (
               <FloorPlan

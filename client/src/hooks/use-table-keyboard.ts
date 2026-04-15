@@ -153,7 +153,7 @@ export function useTableKeyboard({
         }
       }
     },
-    [enabled, focusedRow, rowCount, onOpen, onDelete, onSelect]
+    [enabled, focusedRow, rowCount, onOpen, onDelete, onSelect],
   );
 
   useEffect(() => {
@@ -190,7 +190,7 @@ export function useTableKeyboard({
         onOpen(index);
       },
     }),
-    [focusedRow, selectedRows, onOpen]
+    [focusedRow, selectedRows, onOpen],
   );
 
   return {

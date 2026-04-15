@@ -1,11 +1,17 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { FileCheck, Copy, Download, CheckCircle2 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { FileCheck, Copy, Download, CheckCircle2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface DocumentCertificate {
   documentId: string;
@@ -24,7 +30,10 @@ interface DocCertificationProps {
   onCertify?: () => Promise<void>;
 }
 
-export function DocCertification({ document, onCertify }: DocCertificationProps) {
+export function DocCertification({
+  document,
+  onCertify,
+}: DocCertificationProps) {
   const [isCertifying, setIsCertifying] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -52,9 +61,12 @@ export function DocCertification({ document, onCertify }: DocCertificationProps)
           <div className="flex items-start gap-3 flex-1">
             <FileCheck className="w-5 h-5 text-blue-600 mt-1" />
             <div className="flex-1 min-w-0">
-              <CardTitle className="text-lg truncate">{document.name}</CardTitle>
+              <CardTitle className="text-lg truncate">
+                {document.name}
+              </CardTitle>
               <CardDescription className="text-xs mt-1">
-                Certified on {new Date(document.certifiedAt).toLocaleDateString()}
+                Certified on{" "}
+                {new Date(document.certifiedAt).toLocaleDateString()}
               </CardDescription>
             </div>
           </div>
@@ -67,7 +79,9 @@ export function DocCertification({ document, onCertify }: DocCertificationProps)
 
       <CardContent className="space-y-4">
         <div className="bg-slate-50 rounded-lg p-3">
-          <p className="text-xs font-semibold text-slate-600 mb-2">SHA-256 Hash</p>
+          <p className="text-xs font-semibold text-slate-600 mb-2">
+            SHA-256 Hash
+          </p>
           <div className="flex items-center gap-2">
             <code className="text-xs font-mono text-slate-700 break-all flex-1">
               {shortHash}
@@ -78,13 +92,15 @@ export function DocCertification({ document, onCertify }: DocCertificationProps)
               onClick={handleCopyHash}
               className="flex-shrink-0"
             >
-              <Copy className={cn('w-4 h-4', copied && 'text-green-600')} />
+              <Copy className={cn("w-4 h-4", copied && "text-green-600")} />
             </Button>
           </div>
         </div>
 
         <div className="border-t pt-3">
-          <p className="text-xs font-semibold text-slate-600 mb-2">Blockchain Receipt</p>
+          <p className="text-xs font-semibold text-slate-600 mb-2">
+            Blockchain Receipt
+          </p>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
               <span className="text-slate-600">Transaction ID:</span>
@@ -94,11 +110,17 @@ export function DocCertification({ document, onCertify }: DocCertificationProps)
             </div>
             <div className="flex justify-between">
               <span className="text-slate-600">Block Number:</span>
-              <span className="font-mono">{document.blockchainReceipt.blockNumber}</span>
+              <span className="font-mono">
+                {document.blockchainReceipt.blockNumber}
+              </span>
             </div>
             <div className="flex justify-between">
               <span className="text-slate-600">Timestamp:</span>
-              <span className="text-xs">{new Date(document.blockchainReceipt.timestamp).toLocaleString()}</span>
+              <span className="text-xs">
+                {new Date(
+                  document.blockchainReceipt.timestamp,
+                ).toLocaleString()}
+              </span>
             </div>
           </div>
         </div>
@@ -111,7 +133,7 @@ export function DocCertification({ document, onCertify }: DocCertificationProps)
             onClick={handleCertify}
             disabled={isCertifying}
           >
-            {isCertifying ? 'Certifying...' : 'Re-certify'}
+            {isCertifying ? "Certifying..." : "Re-certify"}
           </Button>
           <Button variant="outline" size="sm" className="flex-1">
             <Download className="w-4 h-4 mr-2" />

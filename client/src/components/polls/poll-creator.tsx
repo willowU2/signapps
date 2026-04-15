@@ -1,19 +1,19 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card } from '@/components/ui/card';
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { X, Plus } from 'lucide-react';
+} from "@/components/ui/select";
+import { X, Plus } from "lucide-react";
 
-export type PollType = 'single' | 'multiple';
+export type PollType = "single" | "multiple";
 
 export interface PollOption {
   id: string;
@@ -32,31 +32,31 @@ interface PollCreatorProps {
 }
 
 export function PollCreator({ onSubmit, onCancel }: PollCreatorProps) {
-  const [question, setQuestion] = useState('');
-  const [type, setType] = useState<PollType>('single');
+  const [question, setQuestion] = useState("");
+  const [type, setType] = useState<PollType>("single");
   const [options, setOptions] = useState<PollOption[]>([
-    { id: '1', text: '' },
-    { id: '2', text: '' },
+    { id: "1", text: "" },
+    { id: "2", text: "" },
   ]);
 
   const handleAddOption = () => {
-    const newId = Math.max(...options.map(o => parseInt(o.id) || 0), 0) + 1;
-    setOptions([...options, { id: String(newId), text: '' }]);
+    const newId = Math.max(...options.map((o) => parseInt(o.id) || 0), 0) + 1;
+    setOptions([...options, { id: String(newId), text: "" }]);
   };
 
   const handleRemoveOption = (id: string) => {
     if (options.length > 2) {
-      setOptions(options.filter(o => o.id !== id));
+      setOptions(options.filter((o) => o.id !== id));
     }
   };
 
   const handleOptionChange = (id: string, text: string) => {
-    setOptions(options.map(o => (o.id === id ? { ...o, text } : o)));
+    setOptions(options.map((o) => (o.id === id ? { ...o, text } : o)));
   };
 
   const isValid =
     question.trim().length > 0 &&
-    options.filter(o => o.text.trim().length > 0).length >= 2;
+    options.filter((o) => o.text.trim().length > 0).length >= 2;
 
   const handleSubmit = () => {
     if (!isValid) return;
@@ -64,7 +64,7 @@ export function PollCreator({ onSubmit, onCancel }: PollCreatorProps) {
     onSubmit({
       question: question.trim(),
       type,
-      options: options.filter(o => o.text.trim().length > 0),
+      options: options.filter((o) => o.text.trim().length > 0),
     });
   };
 
@@ -77,7 +77,7 @@ export function PollCreator({ onSubmit, onCancel }: PollCreatorProps) {
         <Input
           placeholder="What is your question?"
           value={question}
-          onChange={e => setQuestion(e.target.value)}
+          onChange={(e) => setQuestion(e.target.value)}
           className="w-full"
         />
       </div>
@@ -103,7 +103,7 @@ export function PollCreator({ onSubmit, onCancel }: PollCreatorProps) {
               <Input
                 placeholder={`Option ${index + 1}`}
                 value={option.text}
-                onChange={e => handleOptionChange(option.id, e.target.value)}
+                onChange={(e) => handleOptionChange(option.id, e.target.value)}
                 className="flex-1"
               />
               <Button
@@ -131,19 +131,11 @@ export function PollCreator({ onSubmit, onCancel }: PollCreatorProps) {
       </div>
 
       <div className="flex gap-2 pt-4">
-        <Button
-          onClick={handleSubmit}
-          disabled={!isValid}
-          className="flex-1"
-        >
+        <Button onClick={handleSubmit} disabled={!isValid} className="flex-1">
           Create Poll
         </Button>
         {onCancel && (
-          <Button
-            variant="outline"
-            onClick={onCancel}
-            className="flex-1"
-          >
+          <Button variant="outline" onClick={onCancel} className="flex-1">
             Cancel
           </Button>
         )}

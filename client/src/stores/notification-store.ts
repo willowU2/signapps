@@ -1,17 +1,17 @@
-import { create } from 'zustand';
-import { useShallow } from 'zustand/react/shallow';
-import { notificationsApi, type NotificationRecord } from '@/lib/api/calendar';
+import { create } from "zustand";
+import { useShallow } from "zustand/react/shallow";
+import { notificationsApi, type NotificationRecord } from "@/lib/api/calendar";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export type NotificationType =
-  | 'container'
-  | 'security'
-  | 'storage'
-  | 'user'
-  | 'system';
+  | "container"
+  | "security"
+  | "storage"
+  | "user"
+  | "system";
 
-export type NotificationStatus = 'info' | 'success' | 'warning' | 'error';
+export type NotificationStatus = "info" | "success" | "warning" | "error";
 
 export interface AppNotification {
   id: string;
@@ -28,38 +28,40 @@ export interface AppNotification {
 // ─── Mappers ──────────────────────────────────────────────────────────────────
 
 const TYPE_MAP: Record<string, NotificationType> = {
-  event_reminder: 'system',
-  event_invitation: 'user',
-  attendee_rsvp: 'user',
-  task_assigned: 'system',
-  task_completed: 'system',
-  daily_digest: 'system',
-  weekly_digest: 'system',
-  container: 'container',
-  security: 'security',
-  storage: 'storage',
+  event_reminder: "system",
+  event_invitation: "user",
+  attendee_rsvp: "user",
+  task_assigned: "system",
+  task_completed: "system",
+  daily_digest: "system",
+  weekly_digest: "system",
+  container: "container",
+  security: "security",
+  storage: "storage",
 };
 
 const STATUS_MAP: Record<string, NotificationStatus> = {
-  pending: 'info',
-  sent: 'success',
-  failed: 'error',
-  delivered: 'success',
+  pending: "info",
+  sent: "success",
+  failed: "error",
+  delivered: "success",
 };
 
-export function mapRecordToNotification(record: NotificationRecord): AppNotification {
+export function mapRecordToNotification(
+  record: NotificationRecord,
+): AppNotification {
   return {
     id: record.id,
-    type: TYPE_MAP[record.notification_type] ?? 'system',
-    status: STATUS_MAP[record.status] ?? 'info',
+    type: TYPE_MAP[record.notification_type] ?? "system",
+    status: STATUS_MAP[record.status] ?? "info",
     title: record.notification_type
-      .replace(/_/g, ' ')
+      .replace(/_/g, " ")
       .replace(/\b\w/g, (c) => c.toUpperCase()),
     description: record.recipient_address
       ? `Envoyé à ${record.recipient_address}`
       : `Via ${record.channel}`,
     timestamp: new Date(record.created_at),
-    read: record.status === 'sent' || record.status === 'delivered',
+    read: record.status === "sent" || record.status === "delivered",
   };
 }
 
@@ -79,7 +81,13 @@ interface NotificationActions {
   markAllAsRead: () => void;
   remove: (id: string) => void;
   clearAll: () => void;
-  pushSSENotification: (notification: Partial<AppNotification> & { id: string; title: string; description: string }) => void;
+  pushSSENotification: (
+    notification: Partial<AppNotification> & {
+      id: string;
+      title: string;
+      description: string;
+    },
+  ) => void;
 }
 
 export type NotificationStore = NotificationState & NotificationActions;
@@ -106,14 +114,17 @@ export const useNotificationStore = create<NotificationStore>()((set, get) => ({
         isLoading: false,
       });
     } catch {
-      set({ isLoading: false, error: 'Impossible de charger les notifications' });
+      set({
+        isLoading: false,
+        error: "Impossible de charger les notifications",
+      });
     }
   },
 
   markAsRead: (id) =>
     set((state) => ({
       notifications: state.notifications.map((n) =>
-        n.id === id ? { ...n, read: true } : n
+        n.id === id ? { ...n, read: true } : n,
       ),
     })),
 
@@ -133,8 +144,8 @@ export const useNotificationStore = create<NotificationStore>()((set, get) => ({
     set((state) => ({
       notifications: [
         {
-          type: 'system',
-          status: 'info',
+          type: "system",
+          status: "info",
           timestamp: new Date(),
           read: false,
           ...notification,
@@ -162,5 +173,5 @@ export const useNotificationActions = () =>
       remove: s.remove,
       clearAll: s.clearAll,
       pushSSENotification: s.pushSSENotification,
-    }))
+    })),
   );

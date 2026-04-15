@@ -163,8 +163,8 @@ pub fn validate_env(service_name: &str) {
                     "[{}] JWT_SECRET contains default value - change for production!",
                     service_name
                 );
-            }
-            _ => {}
+            },
+            _ => {},
         }
     } else {
         tracing::warn!(

@@ -1,9 +1,9 @@
-import { useQuery } from '@tanstack/react-query';
-import { routesApi, ProxyStatus } from '@/lib/api';
+import { useQuery } from "@tanstack/react-query";
+import { routesApi, ProxyStatus } from "@/lib/api";
 
 export function useProxyStatus() {
   return useQuery<ProxyStatus | null>({
-    queryKey: ['proxy', 'status'],
+    queryKey: ["proxy", "status"],
     retry: false,
     queryFn: async () => {
       try {

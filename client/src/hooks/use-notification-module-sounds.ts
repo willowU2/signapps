@@ -2,7 +2,13 @@
 
 import { useState, useCallback, useRef } from "react";
 
-export type NotifModule = "projects" | "hr" | "tasks" | "calendar" | "system" | "chat";
+export type NotifModule =
+  | "projects"
+  | "hr"
+  | "tasks"
+  | "calendar"
+  | "system"
+  | "chat";
 
 export interface ModuleSoundConfig {
   module: NotifModule;
@@ -11,9 +17,19 @@ export interface ModuleSoundConfig {
   enabled: boolean;
 }
 
-export type ModuleSoundId = "none" | "default" | "chime" | "pop" | "ding" | "beep" | "ping";
+export type ModuleSoundId =
+  | "none"
+  | "default"
+  | "chime"
+  | "pop"
+  | "ding"
+  | "beep"
+  | "ping";
 
-const SOUND_PARAMS: Record<ModuleSoundId, { freqs: number[]; duration: number; type: OscillatorType } | null> = {
+const SOUND_PARAMS: Record<
+  ModuleSoundId,
+  { freqs: number[]; duration: number; type: OscillatorType } | null
+> = {
   none: null,
   default: { freqs: [440], duration: 0.2, type: "sine" },
   chime: { freqs: [523, 659, 784], duration: 0.15, type: "sine" },
@@ -37,7 +53,10 @@ function playModuleSound(soundId: ModuleSoundId) {
       osc.type = type;
       osc.frequency.setValueAtTime(freq, ctx.currentTime + i * duration);
       gain.gain.setValueAtTime(0.15, ctx.currentTime + i * duration);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * duration + duration);
+      gain.gain.exponentialRampToValueAtTime(
+        0.001,
+        ctx.currentTime + i * duration + duration,
+      );
       osc.start(ctx.currentTime + i * duration);
       osc.stop(ctx.currentTime + i * duration + duration);
     });
@@ -60,32 +79,57 @@ export function useNotificationModuleSounds() {
   const [configs, setConfigs] = useState<ModuleSoundConfig[]>(DEFAULT_CONFIGS);
   const lastPlayed = useRef<Map<NotifModule, number>>(new Map());
 
-  const playForModule = useCallback((module: NotifModule) => {
-    const config = configs.find((c) => c.module === module);
-    if (!config?.enabled) return;
+  const playForModule = useCallback(
+    (module: NotifModule) => {
+      const config = configs.find((c) => c.module === module);
+      if (!config?.enabled) return;
 
-    // Debounce: don't play same module more than once per second
-    const now = Date.now();
-    const last = lastPlayed.current.get(module) ?? 0;
-    if (now - last < 1000) return;
-    lastPlayed.current.set(module, now);
+      // Debounce: don't play same module more than once per second
+      const now = Date.now();
+      const last = lastPlayed.current.get(module) ?? 0;
+      if (now - last < 1000) return;
+      lastPlayed.current.set(module, now);
 
-    playModuleSound(config.soundId);
-  }, [configs]);
+      playModuleSound(config.soundId);
+    },
+    [configs],
+  );
 
-  const setSoundForModule = useCallback((module: NotifModule, soundId: ModuleSoundId) => {
-    setConfigs((prev) => prev.map((c) => c.module === module ? { ...c, soundId } : c));
-  }, []);
+  const setSoundForModule = useCallback(
+    (module: NotifModule, soundId: ModuleSoundId) => {
+      setConfigs((prev) =>
+        prev.map((c) => (c.module === module ? { ...c, soundId } : c)),
+      );
+    },
+    [],
+  );
 
   const toggleModule = useCallback((module: NotifModule, enabled: boolean) => {
-    setConfigs((prev) => prev.map((c) => c.module === module ? { ...c, enabled } : c));
+    setConfigs((prev) =>
+      prev.map((c) => (c.module === module ? { ...c, enabled } : c)),
+    );
   }, []);
 
   const previewSound = useCallback((soundId: ModuleSoundId) => {
     playModuleSound(soundId);
   }, []);
 
-  const ALL_SOUND_IDS: ModuleSoundId[] = ["none", "default", "chime", "pop", "ding", "beep", "ping"];
+  const ALL_SOUND_IDS: ModuleSoundId[] = [
+    "none",
+    "default",
+    "chime",
+    "pop",
+    "ding",
+    "beep",
+    "ping",
+  ];
 
-  return { configs, playForModule, setSoundForModule, toggleModule, previewSound, ALL_SOUND_IDS };
+  return {
+    configs,
+    playForModule,
+    setSoundForModule,
+    toggleModule,
+    previewSound,
+    ALL_SOUND_IDS,
+  };
 }

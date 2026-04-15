@@ -20,14 +20,56 @@ export interface HRTimesheetEntry {
   employeeId: string;
   employeeName: string;
   weekStart: string;
-  entries: { projectName: string; taskTitle: string; date: string; hours: number; billable: boolean }[];
+  entries: {
+    projectName: string;
+    taskTitle: string;
+    date: string;
+    hours: number;
+    billable: boolean;
+  }[];
   totalHours: number;
 }
 
 const DEMO_ENTRIES: ProjectTimeEntry[] = [
-  { id: "te1", projectId: "p1", projectName: "Refonte Backend Auth", taskId: "t1", taskTitle: "API JWT", employeeId: "1", employeeName: "Alice Martin", date: "2026-03-24", minutes: 240, billable: true, syncedToHR: false },
-  { id: "te2", projectId: "p1", projectName: "Refonte Backend Auth", taskId: "t2", taskTitle: "Tests unitaires", employeeId: "1", employeeName: "Alice Martin", date: "2026-03-25", minutes: 120, billable: true, syncedToHR: false },
-  { id: "te3", projectId: "p2", projectName: "Dashboard Analytics", taskId: "t3", taskTitle: "Composant graphique", employeeId: "1", employeeName: "Alice Martin", date: "2026-03-25", minutes: 90, billable: false, syncedToHR: true },
+  {
+    id: "te1",
+    projectId: "p1",
+    projectName: "Refonte Backend Auth",
+    taskId: "t1",
+    taskTitle: "API JWT",
+    employeeId: "1",
+    employeeName: "Alice Martin",
+    date: "2026-03-24",
+    minutes: 240,
+    billable: true,
+    syncedToHR: false,
+  },
+  {
+    id: "te2",
+    projectId: "p1",
+    projectName: "Refonte Backend Auth",
+    taskId: "t2",
+    taskTitle: "Tests unitaires",
+    employeeId: "1",
+    employeeName: "Alice Martin",
+    date: "2026-03-25",
+    minutes: 120,
+    billable: true,
+    syncedToHR: false,
+  },
+  {
+    id: "te3",
+    projectId: "p2",
+    projectName: "Dashboard Analytics",
+    taskId: "t3",
+    taskTitle: "Composant graphique",
+    employeeId: "1",
+    employeeName: "Alice Martin",
+    date: "2026-03-25",
+    minutes: 90,
+    billable: false,
+    syncedToHR: true,
+  },
 ];
 
 function groupToTimesheets(entries: ProjectTimeEntry[]): HRTimesheetEntry[] {
@@ -44,7 +86,8 @@ function groupToTimesheets(entries: ProjectTimeEntry[]): HRTimesheetEntry[] {
     return {
       employeeId: first.employeeId,
       employeeName: first.employeeName,
-      weekStart: empEntries.sort((a, b) => a.date.localeCompare(b.date))[0].date,
+      weekStart: empEntries.sort((a, b) => a.date.localeCompare(b.date))[0]
+        .date,
       entries: empEntries.map((e) => ({
         projectName: e.projectName,
         taskTitle: e.taskTitle,
@@ -72,9 +115,15 @@ export function useProjectTimesheets() {
     setSyncing(false);
   }, []);
 
-  const addEntry = useCallback((entry: Omit<ProjectTimeEntry, "id" | "syncedToHR">) => {
-    setEntries((prev) => [...prev, { ...entry, id: `te-${Date.now()}`, syncedToHR: false }]);
-  }, []);
+  const addEntry = useCallback(
+    (entry: Omit<ProjectTimeEntry, "id" | "syncedToHR">) => {
+      setEntries((prev) => [
+        ...prev,
+        { ...entry, id: `te-${Date.now()}`, syncedToHR: false },
+      ]);
+    },
+    [],
+  );
 
   return { entries, timesheets, pendingSync, syncing, syncToHR, addEntry };
 }

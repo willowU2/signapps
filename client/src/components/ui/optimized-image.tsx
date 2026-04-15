@@ -1,16 +1,16 @@
-'use client';
+"use client";
 
-import NextImage, { type ImageProps } from 'next/image';
-import { useState } from 'react';
-import { cn } from '@/lib/utils';
+import NextImage, { type ImageProps } from "next/image";
+import { useState } from "react";
+import { cn } from "@/lib/utils";
 
 // A tiny 8x8 gray pixel encoded as base64 — used as blur placeholder
 // when no blurDataURL is provided. Avoids layout shift and gives instant
 // visual feedback before the real image loads.
 const BLUR_PLACEHOLDER =
-  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAYAAADED76LAAAAS0lEQVQoU2NkYGD4z8BQDwAEhgF/h6hKRgAAAABJRU5ErkJggg==';
+  "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAYAAADED76LAAAAS0lEQVQoU2NkYGD4z8BQDwAEhgF/h6hKRgAAAABJRU5ErkJggg==";
 
-interface OptimizedImageProps extends Omit<ImageProps, 'onLoad' | 'onError'> {
+interface OptimizedImageProps extends Omit<ImageProps, "onLoad" | "onError"> {
   fallback?: string;
   wrapperClassName?: string;
 }
@@ -24,7 +24,7 @@ export function OptimizedImage({
   alt,
   className,
   wrapperClassName,
-  fallback = '/placeholder.svg',
+  fallback = "/placeholder.svg",
   fill,
   width,
   height,
@@ -38,20 +38,20 @@ export function OptimizedImage({
   const imgSrc = error ? fallback : src;
 
   // Default to blur placeholder unless caller explicitly passes 'empty' or a custom blurDataURL
-  const resolvedPlaceholder = placeholder ?? 'blur';
+  const resolvedPlaceholder = placeholder ?? "blur";
   const resolvedBlurDataURL = blurDataURL ?? BLUR_PLACEHOLDER;
 
   return (
     <span
       className={cn(
-        'relative inline-block overflow-hidden',
-        !loaded && 'bg-muted',
+        "relative inline-block overflow-hidden",
+        !loaded && "bg-muted",
         wrapperClassName,
       )}
       style={
         fill
-          ? { display: 'block', width: '100%', height: '100%' }
-          : { display: 'inline-block', width, height }
+          ? { display: "block", width: "100%", height: "100%" }
+          : { display: "inline-block", width, height }
       }
     >
       <NextImage
@@ -63,9 +63,16 @@ export function OptimizedImage({
         height={fill ? undefined : (height as number)}
         placeholder={resolvedPlaceholder}
         blurDataURL={resolvedBlurDataURL}
-        className={cn('transition-opacity duration-300', loaded ? 'opacity-100' : 'opacity-0', className)}
+        className={cn(
+          "transition-opacity duration-300",
+          loaded ? "opacity-100" : "opacity-0",
+          className,
+        )}
         onLoad={() => setLoaded(true)}
-        onError={() => { setError(true); setLoaded(true); }}
+        onError={() => {
+          setError(true);
+          setLoaded(true);
+        }}
         {...props}
       />
     </span>

@@ -1,5 +1,5 @@
-import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
 
 interface BrandingState {
   logoUrl: string | null; // null = use default
@@ -12,10 +12,10 @@ export const useBrandingStore = create<BrandingState>()(
   persist(
     (set) => ({
       logoUrl: null,
-      appName: 'SignApps',
+      appName: "SignApps",
       setLogoUrl: (url) => set({ logoUrl: url }),
       setAppName: (name) => set({ appName: name }),
     }),
-    { name: 'signapps-branding' }
-  )
+    { name: "signapps-branding" },
+  ),
 );
