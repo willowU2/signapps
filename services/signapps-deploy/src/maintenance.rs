@@ -31,7 +31,9 @@ pub async fn disable(pool: &PgPool, env: &str) -> Result<()> {
 
 /// Check whether maintenance mode is currently enabled for the given env.
 pub async fn is_enabled(pool: &PgPool, env: &str) -> bool {
-    maintenance_flag::is_enabled(pool, env).await.unwrap_or(false)
+    maintenance_flag::is_enabled(pool, env)
+        .await
+        .unwrap_or(false)
 }
 
 #[cfg(test)]

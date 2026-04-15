@@ -22,12 +22,11 @@ use sqlx::PgPool;
 /// Returns an error on DB failure. The caller should fail closed (treat as
 /// disabled) to avoid DoS-by-DB.
 pub async fn is_enabled(pool: &PgPool, env: &str) -> Result<bool> {
-    let row: Option<(bool, Option<DateTime<Utc>>)> = sqlx::query_as(
-        "SELECT enabled, expires_at FROM maintenance_flags WHERE env = $1",
-    )
-    .bind(env)
-    .fetch_optional(pool)
-    .await?;
+    let row: Option<(bool, Option<DateTime<Utc>>)> =
+        sqlx::query_as("SELECT enabled, expires_at FROM maintenance_flags WHERE env = $1")
+            .bind(env)
+            .fetch_optional(pool)
+            .await?;
     match row {
         Some((true, Some(expiry))) => Ok(expiry > Utc::now()),
         Some((enabled, _)) => Ok(enabled),
@@ -42,8 +41,7 @@ pub async fn is_enabled(pool: &PgPool, env: &str) -> Result<bool> {
 ///
 /// Returns an error on DB failure.
 pub async fn enable(pool: &PgPool, env: &str, ttl_seconds: Option<i64>) -> Result<()> {
-    let expires_at = ttl_seconds
-        .map(|s| Utc::now() + chrono::Duration::seconds(s));
+    let expires_at = ttl_seconds.map(|s| Utc::now() + chrono::Duration::seconds(s));
     sqlx::query(
         "UPDATE maintenance_flags \
          SET enabled = true, set_at = now(), expires_at = $2 \
