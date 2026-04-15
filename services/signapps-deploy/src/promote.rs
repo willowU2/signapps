@@ -10,7 +10,9 @@
 
 use crate::{docker::DockerClient, orchestrator, persistence};
 use anyhow::{Context, Result};
+use chrono::{DateTime, Utc};
 use sqlx::PgPool;
+use uuid::Uuid;
 
 async fn connect_pool() -> Result<PgPool> {
     let url = std::env::var("DATABASE_URL").context("DATABASE_URL not set")?;
@@ -65,4 +67,66 @@ pub async fn promote_dev_to_prod() -> Result<()> {
     );
 
     orchestrator::deploy("prod", &dev_version).await
+}
+
+/// Insert a new row in `scheduled_maintenance` for the given env/time/duration.
+///
+/// # Errors
+///
+/// Returns an error if the DB pool cannot connect or if the INSERT fails.
+pub async fn schedule_maintenance(
+    env: &str,
+    at: DateTime<Utc>,
+    duration_minutes: i32,
+    message: &str,
+) -> anyhow::Result<()> {
+    let pool = connect_pool().await?;
+    let id = Uuid::new_v4();
+    sqlx::query(
+        "INSERT INTO scheduled_maintenance (id, env, scheduled_at, duration_minutes, message, status) \
+         VALUES ($1, $2, $3, $4, $5, 'scheduled')",
+    )
+    .bind(id)
+    .bind(env)
+    .bind(at)
+    .bind(duration_minutes)
+    .bind(message)
+    .execute(&pool)
+    .await?;
+    // CLI output — intentional stdout.
+    #[allow(clippy::print_stdout)]
+    {
+        println!("Scheduled maintenance window {id} for {env} at {at} ({duration_minutes}m)");
+    }
+    Ok(())
+}
+
+/// List upcoming (scheduled or active) maintenance windows for the given env.
+///
+/// # Errors
+///
+/// Returns an error if the DB pool cannot connect or if the SELECT fails.
+pub async fn list_maintenance(env: &str) -> anyhow::Result<()> {
+    let pool = connect_pool().await?;
+    let rows: Vec<(Uuid, DateTime<Utc>, i32, String, String)> = sqlx::query_as(
+        "SELECT id, scheduled_at, duration_minutes, status, message \
+         FROM scheduled_maintenance \
+         WHERE env = $1 AND status IN ('scheduled', 'active') \
+         ORDER BY scheduled_at",
+    )
+    .bind(env)
+    .fetch_all(&pool)
+    .await?;
+
+    #[allow(clippy::print_stdout)]
+    {
+        if rows.is_empty() {
+            println!("No scheduled maintenance for {env}");
+            return Ok(());
+        }
+        for (id, at, dur, status, message) in rows {
+            println!("{id} | {at} | {dur}m | {status} | {message}");
+        }
+    }
+    Ok(())
 }

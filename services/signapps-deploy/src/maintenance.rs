@@ -33,6 +33,11 @@ pub async fn disable(cache: &Arc<CacheService>, env: &str) -> Result<()> {
     Ok(())
 }
 
+/// Check whether maintenance mode is currently enabled for the given env.
+pub async fn is_enabled(cache: &Arc<CacheService>, env: &str) -> bool {
+    cache.get(&key(env)).await.as_deref() == Some("1")
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -54,5 +59,15 @@ mod tests {
         enable(&cache, "test").await.unwrap();
         enable(&cache, "test").await.unwrap();
         assert_eq!(cache.get(&key("test")).await.as_deref(), Some("1"));
+    }
+
+    #[tokio::test]
+    async fn is_enabled_matches_state() {
+        let cache = Arc::new(CacheService::default_config());
+        assert!(!is_enabled(&cache, "test").await);
+        enable(&cache, "test").await.unwrap();
+        assert!(is_enabled(&cache, "test").await);
+        disable(&cache, "test").await.unwrap();
+        assert!(!is_enabled(&cache, "test").await);
     }
 }

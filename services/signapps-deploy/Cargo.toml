@@ -11,6 +11,10 @@ description = "SignApps deployment orchestrator — multi-environment deploys wi
 name = "signapps-deploy"
 path = "src/main.rs"
 
+[[bin]]
+name = "signapps-deploy-scheduler"
+path = "src/bin/scheduler.rs"
+
 [lib]
 path = "src/lib.rs"
 
