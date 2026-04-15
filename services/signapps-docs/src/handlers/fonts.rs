@@ -177,3 +177,102 @@ pub async fn get_manifest(
             )
         })
 }
+
+/// Validates a URL slug used to build the path to a font file.
+///
+/// Only accepts ASCII lowercase letters, digits and dashes. This blocks
+/// path traversal (`..`, `/`), extension tampering (`.woff2`), mixed case
+/// and whitespace — keeping the on-disk lookup strictly flat and
+/// predictable.
+fn is_valid_slug(s: &str) -> bool {
+    !s.is_empty()
+        && s.len() <= 100
+        && s.chars()
+            .all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == '-')
+}
+
+/// Streams a single `.woff2` font file from storage.
+///
+/// The file is looked up at `system-fonts/{family}/{variant}.woff2`.
+/// Both slugs are strictly validated (`is_valid_slug`) to prevent path
+/// traversal.
+///
+/// # Errors
+///
+/// - `400 Bad Request` if either slug is invalid.
+/// - `503 Service Unavailable` if the file is missing or storage is down.
+///
+/// # Panics
+///
+/// Aucun panic possible — toutes les erreurs sont propagées via `Result`.
+#[utoipa::path(
+    get,
+    path = "/api/v1/fonts/files/{family}/{variant}",
+    params(
+        ("family" = String, Path, description = "Font family slug (lowercase, digits, dashes)"),
+        ("variant" = String, Path, description = "Font variant slug (e.g. `regular`, `bold-italic`)"),
+    ),
+    responses(
+        (status = 200, description = "woff2 font file"),
+        (status = 400, description = "Invalid slug"),
+        (status = 503, description = "File not available"),
+    ),
+    tag = "fonts"
+)]
+#[tracing::instrument(skip(state))]
+pub async fn get_font_file(
+    State(state): State<AppState>,
+    Path((family, variant)): Path<(String, String)>,
+) -> Result<Response, (StatusCode, String)> {
+    let _ = state;
+
+    if !is_valid_slug(&family) || !is_valid_slug(&variant) {
+        tracing::debug!(family, variant, "rejected invalid font slug");
+        return Err((StatusCode::BAD_REQUEST, "invalid slug".into()));
+    }
+
+    let key = format!("{family}/{variant}.woff2");
+    let (bytes, _content_type) = fetch_from_storage(&key).await.map_err(|(_, msg)| {
+        // Upstream errors (missing file, storage down) are surfaced as 503:
+        // the client is supposed to pin the URL via the manifest and we don't
+        // want to leak storage internals.
+        (StatusCode::SERVICE_UNAVAILABLE, msg)
+    })?;
+
+    Response::builder()
+        .status(StatusCode::OK)
+        .header(header::CONTENT_TYPE, "font/woff2")
+        .header(header::CACHE_CONTROL, "public, max-age=2592000, immutable")
+        .header(header::ACCESS_CONTROL_ALLOW_ORIGIN, "*")
+        .body(Body::from(bytes))
+        .map_err(|err| {
+            tracing::error!(?err, "failed to build font file response");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "failed to build response".to_string(),
+            )
+        })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn slug_accepts_simple_lowercase() {
+        assert!(is_valid_slug("roboto"));
+        assert!(is_valid_slug("fira-code-nerd-font"));
+        assert!(is_valid_slug("regular"));
+        assert!(is_valid_slug("bold-italic"));
+    }
+
+    #[test]
+    fn slug_rejects_path_traversal() {
+        assert!(!is_valid_slug(""));
+        assert!(!is_valid_slug("../etc/passwd"));
+        assert!(!is_valid_slug("foo/bar"));
+        assert!(!is_valid_slug("foo.woff2"));
+        assert!(!is_valid_slug("Foo"));
+        assert!(!is_valid_slug("foo bar"));
+    }
+}
