@@ -203,11 +203,25 @@ Cache TTL 60s; writes invalidate.
 
 `GET /api/v1/deploy/events` upgrades to a WebSocket. Phase 3a emits a `deploy.connected` startup frame and keeps the connection alive with 30-second pings. Real `deployment.*` event streaming from `PgEventBus` is a documented follow-up.
 
-### Phase limitations (still POC)
+### Phase 3c: POC limitations resolved
 
-- The `CacheService` used for maintenance flag is in-process: the deploy-server, deploy-scheduler, and proxy each have their own cache, so toggling via the API doesn't reach the proxy without a shared backend. Redis / a shared DB row / a direct HTTP call to the proxy are candidate solutions.
-- WebSocket events are a heartbeat; no real event forwarding yet.
-- No rate limiting on the API (relies on superadmin-only access).
+- ✅ **Maintenance flag reaches the proxy.** The flag is now stored in the
+  `maintenance_flags` table and read by both the deploy server (writer) and
+  the `signapps-proxy` maintenance middleware (reader). Seen by end users.
+- ✅ **WebSocket events stream real data.** `GET /api/v1/deploy/events`
+  subscribes to the `deployment_events` PG channel (populated by an
+  `AFTER INSERT` trigger on `deployment_audit_log`). Every audited deploy
+  transition now shows up live in the admin UI.
+
+### Remaining POC limitations
+
+- **No API rate limiting.** Access is gated by the superadmin role; any
+  caller with a valid superadmin JWT can spam endpoints. Add a per-IP or
+  per-actor limiter in Phase 4+ if the threat model changes.
+- **`.sqlx/` offline metadata.** The backend Dockerfile sets
+  `SQLX_OFFLINE=true` and expects a `.sqlx/` directory at the repo root.
+  Run `cargo sqlx prepare --workspace` against a live DB and commit the
+  resulting `.sqlx/*.json` files before CI image builds can succeed.
 
 ## Phase 3b additions — Admin UI
 
@@ -233,3 +247,15 @@ NEXT_PUBLIC_DEPLOY_URL=http://localhost:3700
 ### Auth
 
 Les pages `/admin/deploy/*` sont accessibles uniquement aux utilisateurs avec rôle `3` (SuperAdmin), conformément à la garde backend du Phase 3a. Le middleware existant du `/admin` redirige déjà les non-superadmins.
+
+## Phase 3c — Resolved follow-ups
+
+Three gaps identified during Phase 3a/3b review are now closed:
+
+| Gap | Resolution |
+|---|---|
+| Backend image for CI | `Dockerfile.backend` at repo root, multi-stage Rust build, aligned with existing `docker-compose.prod.yml` paths. |
+| WebSocket /events heartbeat-only | Trigger on `deployment_audit_log` → `pg_notify('deployment_events', ...)`, WS handler uses `PgListener` per connection. |
+| Maintenance flag in-process | New `maintenance_flags` table + `signapps_common::maintenance_flag` module. Deploy server writes, proxy reads. |
+
+Migration numbers added : `308_deployment_events_notify.sql`, `309_maintenance_flags.sql`.
