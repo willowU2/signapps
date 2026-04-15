@@ -12,12 +12,41 @@ import wawoff2 from "wawoff2";
 
 const WORK_DIR = resolve(process.cwd(), ".sync-fonts-work");
 const STORAGE_URL = process.env.STORAGE_URL ?? "http://localhost:3004/api/v1";
-const ADMIN_TOKEN = process.env.STORAGE_ADMIN_TOKEN;
+const IDENTITY_URL = process.env.IDENTITY_URL ?? "http://localhost:3001/api/v1";
+const ADMIN_USERNAME = process.env.STORAGE_ADMIN_USERNAME ?? "admin";
+const ADMIN_PASSWORD = process.env.STORAGE_ADMIN_PASSWORD ?? "admin";
+const SYNC_MODE = process.env.SYNC_MODE ?? "curated"; // "curated" | "full"
+const UPLOAD_DELAY_MS = Number(process.env.UPLOAD_DELAY_MS ?? "50");
 
-if (!ADMIN_TOKEN) {
-  console.error("STORAGE_ADMIN_TOKEN env var required");
-  process.exit(1);
-}
+// Curated top 100 Google Fonts (by popularity, 2024). Names matched against
+// the `name` field in METADATA.pb.
+const TOP_GOOGLE_NAMES = new Set<string>([
+  "Roboto", "Open Sans", "Noto Sans", "Noto Sans JP", "Montserrat", "Poppins",
+  "Lato", "Inter", "Roboto Condensed", "Material Symbols Outlined",
+  "Material Icons", "Oswald", "Raleway", "Nunito Sans", "Nunito", "Ubuntu",
+  "Roboto Mono", "PT Sans", "Rubik", "Playfair Display", "Lora", "Merriweather",
+  "Kanit", "Work Sans", "Fira Sans", "Mulish", "Roboto Slab", "Noto Sans KR",
+  "Quicksand", "Barlow", "Noto Sans TC", "DM Sans", "PT Serif", "Bebas Neue",
+  "Manrope", "Titillium Web", "Heebo", "Inconsolata", "Source Sans 3",
+  "Noto Serif", "Hind Siliguri", "Dosis", "Libre Franklin", "Josefin Sans",
+  "Mukta", "Source Code Pro", "Anton", "Cairo", "Bitter", "IBM Plex Sans",
+  "Arimo", "Karla", "PT Sans Narrow", "Fjalla One", "Jost", "Noto Sans SC",
+  "Libre Baskerville", "Abel", "Crimson Text", "Pacifico", "Teko", "Shadows Into Light",
+  "Varela Round", "Hind", "Comfortaa", "EB Garamond", "Exo 2", "Assistant",
+  "Prompt", "Archivo Narrow", "Cabin", "Dancing Script", "Slabo 27px",
+  "Overpass", "Outfit", "Space Grotesk", "Yanone Kaffeesatz", "Archivo",
+  "Tajawal", "Maven Pro", "Space Mono", "Figtree", "Caveat", "Barlow Condensed",
+  "Questrial", "IBM Plex Mono", "Signika", "Asap", "Domine", "Saira Condensed",
+  "Roboto Serif", "Noto Serif JP", "Permanent Marker", "Vollkorn", "Monda",
+  "Arvo", "Abril Fatface", "Cormorant Garamond", "Fira Code", "JetBrains Mono",
+  "Public Sans", "Plus Jakarta Sans", "Zilla Slab", "Satisfy", "Exo",
+]);
+
+// Curated popular Nerd Fonts (programming).
+const TOP_NERD_FOLDER_NAMES = new Set<string>([
+  "FiraCode", "JetBrainsMono", "Hack", "CascadiaCode", "SourceCodePro",
+  "Meslo", "Iosevka", "UbuntuMono", "Inconsolata", "RobotoMono",
+]);
 
 interface RawFamily {
   id: string;
@@ -55,6 +84,37 @@ interface FontsManifestOut {
   families: FontFamilyOut[];
 }
 
+// ─── Token management ──────────────────────────────────────────────────────
+
+let currentToken: string | null = null;
+let tokenFetchedAt = 0;
+const TOKEN_TTL_MS = 12 * 60 * 1000; // refresh every 12 min (token lives 15 min)
+
+async function fetchToken(): Promise<string> {
+  const res = await axios.post(
+    `${IDENTITY_URL}/auth/login`,
+    {
+      username: ADMIN_USERNAME,
+      password: ADMIN_PASSWORD,
+      remember_me: true,
+    },
+    { timeout: 10000 },
+  );
+  const token = res.data?.access_token;
+  if (!token) throw new Error("No access_token in login response");
+  return token;
+}
+
+async function getToken(): Promise<string> {
+  const now = Date.now();
+  if (!currentToken || now - tokenFetchedAt > TOKEN_TTL_MS) {
+    currentToken = await fetchToken();
+    tokenFetchedAt = now;
+    console.log(`  [token] refreshed at ${new Date(now).toISOString()}`);
+  }
+  return currentToken;
+}
+
 async function compressTtfToWoff2(ttfPath: string): Promise<Buffer> {
   const ttf = readFileSync(ttfPath);
   const woff2 = await wawoff2.compress(ttf);
@@ -68,25 +128,35 @@ function variantSlug(weight: number, style: string): string {
   return style === "italic" ? `${w}-italic` : w;
 }
 
+function sleep(ms: number): Promise<void> {
+  return new Promise((r) => setTimeout(r, ms));
+}
+
 async function uploadFont(family: string, variant: string, woff2: Buffer): Promise<void> {
   const key = `${family}/${variant}.woff2`;
+  const token = await getToken();
   await axios.put(
     `${STORAGE_URL}/files/system-fonts/${encodeURIComponent(key)}`,
     woff2,
     {
       headers: {
         "Content-Type": "font/woff2",
-        Authorization: `Bearer ${ADMIN_TOKEN}`,
+        Authorization: `Bearer ${token}`,
+        Connection: "close",
       },
       maxContentLength: Infinity,
       maxBodyLength: Infinity,
+      timeout: 30000,
     },
   );
 }
 
 async function processAll(families: RawFamily[]): Promise<FontFamilyOut[]> {
   const out: FontFamilyOut[] = [];
+  const total = families.length;
+  let idx = 0;
   for (const fam of families) {
+    idx += 1;
     const variants: FontVariantOut[] = [];
     for (const f of fam.files) {
       const slug = variantSlug(f.weight, f.style);
@@ -99,6 +169,7 @@ async function processAll(families: RawFamily[]): Promise<FontFamilyOut[]> {
           file: `${fam.id}/${slug}.woff2`,
           size_bytes: woff2.length,
         });
+        if (UPLOAD_DELAY_MS > 0) await sleep(UPLOAD_DELAY_MS);
       } catch (err) {
         console.warn(`  ⚠ skipped ${fam.id}/${slug}:`, (err as Error).message);
       }
@@ -113,9 +184,9 @@ async function processAll(families: RawFamily[]): Promise<FontFamilyOut[]> {
         license: fam.license,
         variants,
       });
-      console.log(`  uploaded ${fam.id} (${variants.length} variants)`);
+      console.log(`  [${idx}/${total}] uploaded ${fam.id} (${variants.length} variants)`);
     } else {
-      console.warn(`  skipped ${fam.id} — no variants succeeded`);
+      console.warn(`  [${idx}/${total}] skipped ${fam.id} — no variants succeeded`);
     }
   }
   return out;
@@ -129,14 +200,17 @@ async function uploadManifest(families: FontFamilyOut[]): Promise<void> {
     families,
   };
   const body = Buffer.from(JSON.stringify(manifest, null, 2), "utf8");
+  const token = await getToken();
   await axios.put(
     `${STORAGE_URL}/files/system-fonts/${encodeURIComponent("manifest.json")}`,
     body,
     {
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${ADMIN_TOKEN}`,
+        Authorization: `Bearer ${token}`,
+        Connection: "close",
       },
+      timeout: 30000,
     },
   );
   console.log(`Manifest uploaded — ${families.length} families`);
@@ -149,8 +223,6 @@ function cloneShallow(repo: string, dest: string, sparsePaths?: string[]) {
   }
   console.log(`  cloning ${repo} → ${dest}`);
   if (sparsePaths && sparsePaths.length > 0) {
-    // Sparse-checkout — only fetch the directories we actually parse.
-    // Avoids Windows path-length blow-ups on auxiliary doc folders.
     execSync(`git clone --depth 1 --filter=blob:none --no-checkout ${repo} ${dest}`, {
       stdio: "inherit",
     });
@@ -201,18 +273,25 @@ function parseGoogleMetadata(metadataPath: string): RawFamily | null {
 
 async function scanGoogleFonts(root: string): Promise<RawFamily[]> {
   const metadataPaths = await glob(`${root.replace(/\\/g, "/")}/{ofl,apache,ufl}/*/METADATA.pb`);
-  console.log(`  scanning ${metadataPaths.length} google families`);
-  return metadataPaths
+  console.log(`  scanning ${metadataPaths.length} google families (on disk)`);
+  const all = metadataPaths
     .map(parseGoogleMetadata)
     .filter((f): f is RawFamily => f !== null);
+  if (SYNC_MODE === "curated") {
+    const filtered = all.filter((f) => TOP_GOOGLE_NAMES.has(f.name));
+    console.log(`  curated mode: kept ${filtered.length}/${all.length}`);
+    return filtered;
+  }
+  return all;
 }
 
 async function scanNerdFonts(root: string): Promise<RawFamily[]> {
   const dirs = await glob(`${root.replace(/\\/g, "/")}/patched-fonts/*`, { onlyDirectories: true });
-  console.log(`  scanning ${dirs.length} nerd families`);
+  console.log(`  scanning ${dirs.length} nerd families (on disk)`);
   const families: RawFamily[] = [];
   for (const dir of dirs) {
     const folderName = basename(dir);
+    if (SYNC_MODE === "curated" && !TOP_NERD_FOLDER_NAMES.has(folderName)) continue;
     const displayName = folderName.replace(/([A-Z])/g, " $1").trim();
     const ttfs = await glob(`${dir}/**/*.ttf`);
     const files: RawFamily["files"] = ttfs.map((f) => {
@@ -231,16 +310,21 @@ async function scanNerdFonts(root: string): Promise<RawFamily[]> {
       files,
     });
   }
+  if (SYNC_MODE === "curated") {
+    console.log(`  curated mode: kept ${families.length}/${dirs.length}`);
+  }
   return families;
 }
 
 async function main() {
   await mkdir(WORK_DIR, { recursive: true });
   console.log(`Working in ${WORK_DIR}`);
+  console.log(`Sync mode: ${SYNC_MODE.toUpperCase()}`);
+
+  // Fetch initial token up front so a bad auth fails fast.
+  await getToken();
 
   console.log("Step 1/4 — clone sources");
-  // google/fonts: only the actual font folders. The cc-by-sa/knowledge tree
-  // contains paths longer than the Windows 260-char limit, so skip it.
   cloneShallow("https://github.com/google/fonts.git", `${WORK_DIR}/google-fonts`, [
     "ofl",
     "apache",
@@ -251,17 +335,17 @@ async function main() {
 
   console.log("Step 2/4 — scan sources");
   const googleFamilies = await scanGoogleFonts(`${WORK_DIR}/google-fonts`);
-  console.log(`  google: ${googleFamilies.length} families`);
+  console.log(`  google: ${googleFamilies.length} families selected`);
   const nerdFamilies = await scanNerdFonts(`${WORK_DIR}/nerd-fonts`);
-  console.log(`  nerd: ${nerdFamilies.length} families`);
+  console.log(`  nerd: ${nerdFamilies.length} families selected`);
 
-  console.log("Step 3/4 — convert + upload (this is the long one)");
+  console.log("Step 3/4 — convert + upload");
   const allFamilies = [...googleFamilies, ...nerdFamilies];
   const uploaded = await processAll(allFamilies);
 
   console.log("Step 4/4 — manifest");
   await uploadManifest(uploaded);
-  console.log("Done.");
+  console.log(`Done. ${uploaded.length} families uploaded.`);
 }
 
 main().catch((err) => {
