@@ -300,9 +300,12 @@ function OrgChartFlow({
   }, [orgNodes]);
 
   const [rfNodes, , onNodesChange] = useNodesState(initialNodes);
-  const [rfEdges, , onEdgesChange] = useEdgesState(initialEdges);
+  const [rfEdges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
 
-  // Sync node data changes (selection, boardMap) without full remount
+  // Sync node + edge data changes (selection, boardMap, topology) without
+  // full remount. useNodesState/useEdgesState only consume the initial
+  // argument once — subsequent changes to the memoised inputs are ignored
+  // unless we explicitly push them into the React Flow internal state.
   const { setNodes } = useReactFlow();
 
   useEffect(() => {
@@ -328,6 +331,13 @@ function OrgChartFlow({
         }),
     );
   }, [orgNodes, positions, selectedId, onSelect, boardMap, setNodes]);
+
+  // Same sync problem for edges: when orgNodes changes (initial fetch, new
+  // parent relationships), the `initialEdges` captured by useEdgesState is
+  // stale. Push the recomputed edges explicitly.
+  useEffect(() => {
+    setEdges(initialEdges);
+  }, [initialEdges, setEdges]);
 
   return (
     <ReactFlow
