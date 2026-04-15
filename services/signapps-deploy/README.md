@@ -66,3 +66,79 @@ See `docs/superpowers/specs/2026-04-15-multi-env-deployment-design.md`.
 
 `3035` (registered in `scripts/ports.json`). The HTTP server is dormant in
 Phase 1 — activated via `DEPLOY_API_ENABLED=true` in Phase 3.
+
+## Phase 2 additions
+
+### Staging environment
+
+The staging stack cohabits with prod on the same host. Ports are prod+1000 (e.g., identity at 4001), project name `signapps-staging`, database `signapps_staging`, isolated network.
+
+```bash
+# Create the staging DB and apply migrations (idempotent)
+./scripts/init-staging-db.sh
+
+# Start the staging stack
+just staging-up
+
+# Seed demo data into signapps_staging
+just staging-seed
+
+# Stop the staging stack
+just staging-down
+```
+
+### Promotion (dev -> prod)
+
+```bash
+# Deploy a version to dev first
+just deploy-dev v1.2.3
+
+# Once validated, promote the same version to prod
+just promote-to-prod
+```
+
+The `promote` command:
+1. Fetches the last successful `env=dev` deployment
+2. Verifies the staging stack is fully healthy
+3. Runs the normal production deploy flow with that same version
+
+### Scheduled maintenance
+
+A long-lived scheduler worker polls the `scheduled_maintenance` table every 30 seconds and toggles the maintenance flag based on `scheduled_at` and `duration_minutes`.
+
+```bash
+# Schedule a 15-min maintenance on prod starting Apr 20 at 03:00 UTC
+just schedule-maintenance prod 2026-04-20T03:00:00Z 15 "Nightly DB reindex"
+
+# List upcoming windows
+just list-maintenance prod
+
+# Run the worker in the foreground (typically managed as a systemd service)
+just scheduler-run
+```
+
+Lifecycle: `scheduled` -> `active` (flag ON) -> `completed` (flag OFF). Cancellation is supported at the DB level (status `cancelled`) but not yet exposed via CLI.
+
+### Hostname routing (proxy)
+
+`signapps-proxy` now selects the backend cluster based on the `Host` header:
+
+- `app.signapps.io` / `app.localhost` -> prod cluster
+- `staging.signapps.io` / `staging.localhost` -> staging cluster
+- Anything else -> prod (backward compatibility)
+
+The maintenance middleware reads the selected cluster from the request extensions, so `deploy:maintenance:prod` and `deploy:maintenance:dev` are independent keys and either env can be under maintenance without affecting the other.
+
+### CI/CD
+
+`.github/workflows/build-and-push.yml` runs on every push to `main` and on version tags (`v*.*.*`):
+- Builds + pushes the backend image to `ghcr.io/<org>/signapps-platform`
+- Builds + pushes the frontend image to `ghcr.io/<org>/signapps-frontend`
+- Auto-tags a new semver release via `git-cliff` based on Conventional Commits
+- Commits the updated `CHANGELOG.md`
+
+**Phase 2 CI prereq:** `Dockerfile.backend` at the repo root and `client/Dockerfile` must exist. They are not part of the Phase 2 plan — create them (or reuse existing ones) before merging.
+
+### Phase 1 POC limitation still applies
+
+The `CacheService` used for the maintenance flag is in-process. The scheduler worker writes to its own cache; the proxy reads from its own cache; they don't share state. A shared cache backend (Redis or similar) is planned for Phase 3+ — until then, the scheduler drives DB state correctly but cannot actually serve the maintenance page to end-users at the proxy level.
