@@ -294,7 +294,7 @@ function OrgChartFlow({
         id: `e-${n.parent_id}-${n.id}`,
         source: n.parent_id!,
         target: n.id,
-        style: { stroke: "hsl(var(--border))", strokeWidth: 1.5 },
+        style: { stroke: "var(--border)", strokeWidth: 1.5 },
         type: "smoothstep",
       }));
   }, [orgNodes]);
@@ -348,7 +348,7 @@ function OrgChartFlow({
         variant={BackgroundVariant.Dots}
         gap={20}
         size={1}
-        color="hsl(var(--border))"
+        color="var(--border)"
       />
       <Controls showInteractive={false} />
       <MiniMap
