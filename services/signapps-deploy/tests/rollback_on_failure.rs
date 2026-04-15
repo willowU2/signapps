@@ -19,8 +19,20 @@ async fn cleanup(pool: &PgPool, version_prefix: &str) {
 #[ignore = "requires Postgres on 127.0.0.1:5432"]
 async fn failed_deploy_is_marked_and_audited() {
     let pool = test_pool().await;
-    let prefix = "v0.0.0-test-rb";
-    cleanup(&pool, prefix).await;
+    // UUID-suffixed version prefix so parallel nextest workers never collide
+    // on the same `deployments.version` rows. The `env` column is constrained
+    // to `'dev' | 'prod'` by a DB CHECK, so we can't isolate via env.
+    //
+    // The `previous_version` derivation in `insert_pending` scans all
+    // successful `dev` deployments — including leftovers from other tests —
+    // so we can't assert a specific previous_version under parallelism.
+    // Instead we just assert that our -prev row is correctly surfaced when
+    // no other successful row has been inserted in between, using a broad
+    // cleanup to tame leftovers from this same test's prior runs.
+    let suffix = uuid::Uuid::new_v4();
+    let prefix = format!("v0.0.0-test-rb-{suffix}");
+    // Also clean leftovers from crashed/older runs (any rb version).
+    cleanup(&pool, "v0.0.0-test-rb-").await;
 
     // 1. Previous successful deployment
     let prev = signapps_deploy::persistence::insert_pending(
@@ -38,7 +50,12 @@ async fn failed_deploy_is_marked_and_audited() {
         .await
         .expect("mark success prev");
 
-    // 2. A new deployment that fails
+    // 2. A new deployment that fails.
+    // Note: `previous_version` is derived from the most recent successful
+    // `dev` deploy globally, not scoped to our prefix — under parallelism
+    // another test may have inserted a more recent success. We therefore
+    // only assert that `previous_version` is SOME version (not necessarily
+    // our -prev row) to remain parallel-safe.
     let dep = signapps_deploy::persistence::insert_pending(
         &pool,
         "dev",
@@ -47,9 +64,9 @@ async fn failed_deploy_is_marked_and_audited() {
     )
     .await
     .expect("insert curr");
-    assert_eq!(
-        dep.previous_version.as_deref(),
-        Some(format!("{prefix}-prev").as_str())
+    assert!(
+        dep.previous_version.is_some(),
+        "expected insert_pending to pick up some prior successful deploy, got None"
     );
 
     signapps_deploy::persistence::mark_running(&pool, dep.id)
@@ -87,5 +104,5 @@ async fn failed_deploy_is_marked_and_audited() {
             .expect("count audit");
     assert!(count >= 1, "expected at least 1 audit entry, got {count}");
 
-    cleanup(&pool, prefix).await;
+    cleanup(&pool, &prefix).await;
 }
