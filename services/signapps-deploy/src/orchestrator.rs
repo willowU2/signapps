@@ -72,8 +72,12 @@ fn image_repo() -> Result<String> {
 }
 
 /// Compose project name for the given env. Phase 2 will add dev.
-fn compose_project(_env: &str) -> &'static str {
-    DEFAULT_COMPOSE_PROJECT
+fn compose_project(env: &str) -> &'static str {
+    match env {
+        "prod" => "signapps-prod",
+        "dev" => "signapps-staging",
+        _ => DEFAULT_COMPOSE_PROJECT,
+    }
 }
 
 /// Acquire the deployment advisory lock on the DB. Returns an error if
@@ -198,7 +202,9 @@ async fn run_deploy(
 
     // 3. Compose up -d
     persistence::audit(pool, dep.id, "compose_up", json!({})).await?;
-    compose_up(version).await.context("docker compose up")?;
+    compose_up(env, version)
+        .await
+        .context("docker compose up")?;
 
     // 4. Wait for healthchecks
     wait_healthy(docker, compose_project(env))
@@ -230,22 +236,31 @@ async fn run_deploy(
     Ok(Vec::new())
 }
 
-async fn compose_up(version: &str) -> Result<()> {
+async fn compose_up(env: &str, version: &str) -> Result<()> {
+    let (compose_file, env_file, version_var) = match env {
+        "prod" => ("docker-compose.prod.yml", ".env.prod", "SIGNAPPS_VERSION"),
+        "dev" => (
+            "docker-compose.staging.yml",
+            ".env.dev",
+            "SIGNAPPS_STAGING_VERSION",
+        ),
+        _ => anyhow::bail!("unknown env: {env}"),
+    };
     let status = tokio::process::Command::new("docker")
         .args([
             "compose",
             "-f",
-            "docker-compose.prod.yml",
+            compose_file,
             "--env-file",
-            ".env.prod",
+            env_file,
             "up",
             "-d",
         ])
-        .env("SIGNAPPS_VERSION", version)
+        .env(version_var, version)
         .status()
         .await
         .context("spawn docker compose up")?;
-    anyhow::ensure!(status.success(), "docker compose up failed");
+    anyhow::ensure!(status.success(), "docker compose up failed on env={env}");
     Ok(())
 }
 
@@ -308,7 +323,7 @@ async fn run_rollback(
     version: &str,
 ) -> Result<()> {
     maintenance::enable(cache, env).await?;
-    compose_up(version).await?;
+    compose_up(env, version).await?;
     maintenance::disable(cache, env).await?;
     Ok(())
 }
@@ -324,4 +339,16 @@ pub async fn status(env: &str) -> Result<()> {
         None => println!("{env}: no successful deployment yet"),
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn compose_project_maps_known_envs() {
+        assert_eq!(compose_project("prod"), "signapps-prod");
+        assert_eq!(compose_project("dev"), "signapps-staging");
+        assert_eq!(compose_project("unknown"), DEFAULT_COMPOSE_PROJECT);
+    }
 }
