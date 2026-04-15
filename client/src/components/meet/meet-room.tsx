@@ -323,7 +323,10 @@ function BottomBar({
     "rounded-full h-10 w-10 md:h-11 md:w-11 transition-colors";
 
   return (
-    <footer className="h-14 md:h-16 px-2 md:px-4 flex items-center justify-center gap-1.5 md:gap-2 bg-card border-t border-border shrink-0">
+    <footer
+      data-testid="meet-bottom-bar"
+      className="h-14 md:h-16 px-2 md:px-4 flex items-center justify-center gap-1.5 md:gap-2 bg-card border-t border-border shrink-0"
+    >
       {/* Mic */}
       <Button
         variant="ghost"
