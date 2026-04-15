@@ -332,6 +332,35 @@ pub async fn status(env: &str) -> Result<()> {
     Ok(())
 }
 
+/// Resolve the default strategy from `DEPLOY_STRATEGY`.
+///
+/// Returns a boxed trait object so the orchestrator dispatches uniformly.
+/// `blue_green` is NOT selectable from env alone — it requires explicit
+/// construction with hosts + image_repo (see `BlueGreenStrategy::new`).
+/// Passing `DEPLOY_STRATEGY=blue_green` without that construction is a
+/// configuration error and panics fast.
+///
+/// # Panics
+///
+/// - If `DEPLOY_STRATEGY` is `blue_green` (use explicit strategy construction
+///   for BG deploys).
+/// - If `DEPLOY_STRATEGY` is an unknown value.
+pub fn resolve_strategy() -> Box<dyn crate::strategies::DeploymentStrategy> {
+    let name = std::env::var("DEPLOY_STRATEGY")
+        .unwrap_or_else(|_| "maintenance_window".into());
+    match name.as_str() {
+        "maintenance_window" => Box::new(
+            crate::strategies::maintenance_window::MaintenanceWindowStrategy,
+        ),
+        "blue_green" => panic!(
+            "blue_green strategy requires explicit construction with DockerHosts + image_repo. \
+             Build a BlueGreenStrategy and call its deploy/rollback directly, or wire the \
+             factory in the server binary."
+        ),
+        other => panic!("unknown DEPLOY_STRATEGY: {other}"),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
