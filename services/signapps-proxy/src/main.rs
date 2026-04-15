@@ -15,10 +15,12 @@ use tower::ServiceBuilder;
 use tower_http::compression::CompressionLayer;
 use tower_http::cors::{AllowOrigin, CorsLayer};
 
+mod app_middleware;
 mod handlers;
 mod proxy;
 mod shield;
 
+use app_middleware::maintenance::{maintenance_middleware, MaintenanceState};
 use handlers::{
     certificates, config, health, openapi, proxy_status, routes, shield as shield_handlers,
     vault_browse,
@@ -29,6 +31,7 @@ use proxy::forwarder::HttpForwarder;
 use proxy::tls::TlsCertResolver;
 use proxy::RouteCache;
 use shield::ShieldService;
+use std::sync::Arc;
 
 /// Application state shared across handlers.
 #[derive(Clone)]
@@ -175,15 +178,21 @@ async fn main() -> anyhow::Result<()> {
         tracing::info!("Integrated proxy disabled (PROXY_ENABLED=false)");
     }
 
+    // Maintenance middleware state (reads "deploy:maintenance:{env}" from cache)
+    let maintenance_state = MaintenanceState {
+        cache: Arc::new(signapps_cache::CacheService::default_config()),
+        env: env_or("SIGNAPPS_ENV", "prod"),
+    };
+
     // Build management API router
-    let app = create_router(state);
+    let app = create_router(state, maintenance_state);
 
     // Start management API server using bootstrap helper
     signapps_common::bootstrap::run_server(app, &config).await
 }
 
 /// Create the application router with all routes.
-fn create_router(state: AppState) -> Router {
+fn create_router(state: AppState, maintenance_state: MaintenanceState) -> Router {
     // Public routes (health check)
     let public_routes = Router::new().route("/health", get(health::health_check));
 
@@ -325,6 +334,11 @@ fn create_router(state: AppState) -> Router {
                 .layer(CompressionLayer::new())
                 .layer(cors),
         )
+        // Maintenance mode: intercepts traffic when `deploy:maintenance:{env}` = "1"
+        .layer(middleware::from_fn_with_state(
+            maintenance_state,
+            maintenance_middleware,
+        ))
         .with_state(state)
 }
 

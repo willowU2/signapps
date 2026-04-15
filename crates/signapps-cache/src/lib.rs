@@ -193,6 +193,11 @@ impl CacheService {
         self.cache.invalidate(key).await;
     }
 
+    /// Remove a key from the cache. Safe to call on missing keys.
+    pub async fn delete(&self, key: &str) {
+        self.cache.invalidate(key).await;
+    }
+
     /// Check if a key exists (and is not expired).
     pub async fn exists(&self, key: &str) -> bool {
         self.get_checked(key).await.is_some()
