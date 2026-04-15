@@ -71,3 +71,109 @@ pub struct FontVariant {
     /// File size in bytes.
     pub size_bytes: u64,
 }
+
+/// Storage bucket holding the universal fonts catalog.
+const FONTS_BUCKET: &str = "system-fonts";
+
+/// Key of the manifest JSON inside the `FONTS_BUCKET`.
+const MANIFEST_KEY: &str = "manifest.json";
+
+/// Default internal URL of the `signapps-storage` service.
+const DEFAULT_STORAGE_URL: &str = "http://localhost:3004";
+
+/// Returns the internal base URL of the storage service.
+///
+/// Reads `STORAGE_INTERNAL_URL`, falling back to `DEFAULT_STORAGE_URL`.
+/// Trailing slashes are trimmed for clean URL concatenation.
+fn storage_base_url() -> String {
+    std::env::var("STORAGE_INTERNAL_URL")
+        .unwrap_or_else(|_| DEFAULT_STORAGE_URL.to_string())
+        .trim_end_matches('/')
+        .to_string()
+}
+
+/// Fetches the raw bytes for a key inside the fonts bucket from storage.
+///
+/// Returns an `(status, message)` error tuple on any transport error or
+/// non-2xx response. The upstream status is preserved for logging but the
+/// caller decides how to map it to its own response code.
+async fn fetch_from_storage(key: &str) -> Result<(Vec<u8>, String), (StatusCode, String)> {
+    let url = format!("{}/api/v1/files/{}/{}", storage_base_url(), FONTS_BUCKET, key);
+    let client = reqwest::Client::new();
+
+    let resp = client.get(&url).send().await.map_err(|err| {
+        tracing::warn!(?err, key, "failed to reach storage service");
+        (
+            StatusCode::SERVICE_UNAVAILABLE,
+            "storage unreachable".to_string(),
+        )
+    })?;
+
+    let status = resp.status();
+    if !status.is_success() {
+        tracing::warn!(key, %status, "storage returned non-success for fonts asset");
+        return Err((
+            StatusCode::SERVICE_UNAVAILABLE,
+            format!("storage returned {status}"),
+        ));
+    }
+
+    let content_type = resp
+        .headers()
+        .get(reqwest::header::CONTENT_TYPE)
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream")
+        .to_string();
+
+    let bytes = resp.bytes().await.map_err(|err| {
+        tracing::warn!(?err, key, "failed to read storage response body");
+        (
+            StatusCode::SERVICE_UNAVAILABLE,
+            "failed to read storage body".to_string(),
+        )
+    })?;
+
+    Ok((bytes.to_vec(), content_type))
+}
+
+/// Returns the JSON manifest for the universal fonts catalog.
+///
+/// # Errors
+///
+/// Returns `503 Service Unavailable` if the manifest is not yet synced,
+/// the storage service is unreachable, or its response cannot be read.
+///
+/// # Panics
+///
+/// Aucun panic possible — toutes les erreurs sont propagées via `Result`.
+#[utoipa::path(
+    get,
+    path = "/api/v1/fonts/manifest",
+    responses(
+        (status = 200, description = "Fonts catalog", body = FontsManifest),
+        (status = 503, description = "Catalog not synced yet"),
+    ),
+    tag = "fonts"
+)]
+#[tracing::instrument(skip(state))]
+pub async fn get_manifest(
+    State(state): State<AppState>,
+) -> Result<Response, (StatusCode, String)> {
+    let _ = state; // State kept for future caching / DB-backed lookups.
+
+    let (bytes, _content_type) = fetch_from_storage(MANIFEST_KEY).await?;
+
+    Response::builder()
+        .status(StatusCode::OK)
+        .header(header::CONTENT_TYPE, "application/json")
+        .header(header::CACHE_CONTROL, "public, max-age=86400")
+        .header(header::ACCESS_CONTROL_ALLOW_ORIGIN, "*")
+        .body(Body::from(bytes))
+        .map_err(|err| {
+            tracing::error!(?err, "failed to build manifest response");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "failed to build response".to_string(),
+            )
+        })
+}
