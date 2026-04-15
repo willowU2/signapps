@@ -64,7 +64,9 @@ import {
 } from "./extensions/suggestion-mode";
 import { useCommentsStore } from "@/stores/comments-store";
 import { v4 as uuidv4 } from "uuid";
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef, useCallback, useMemo } from "react";
+import { useFontsCatalog } from "@/lib/fonts/use-fonts-catalog";
+import { useDynamicFont } from "@/lib/fonts/use-dynamic-font";
 import { fetchAndParseDocument } from "@/lib/file-parsers";
 import { GenericFeatureModal } from "@/components/editor/generic-feature-modal";
 import { driveApi } from "@/lib/api";
@@ -1190,42 +1192,24 @@ const Editor = ({
   // Footer status bar collapsed by default
   const [footerOpen, setFooterOpen] = useState(false);
 
-  // Google Fonts API Integration Hook
-  const [availableFonts, setAvailableFonts] = useState<string[]>([
-    "Inter",
-    "Arial",
-    "Times New Roman",
-    "Georgia",
-    "Verdana",
-    "Courier New",
-    "Comic Sans MS",
-  ]);
-
-  useEffect(() => {
-    const fetchGoogleFonts = async () => {
-      const apiKey = process.env.NEXT_PUBLIC_GOOGLE_FONTS_API_KEY;
-      if (!apiKey) return; // Silent fallback to system fonts if no key
-
-      try {
-        // Get the top 100 most popular fonts
-        const res = await fetch(
-          `https://www.googleapis.com/webfonts/v1/webfonts?sort=popularity&key=${apiKey}`,
-        );
-        const data = await res.json();
-        if (data.items) {
-          const fetchedFonts = data.items
-            .slice(0, 100)
-            .map((item: any) => item.family);
-          setAvailableFonts([
-            ...new Set(["Inter", "Arial", ...fetchedFonts]),
-          ] as string[]);
-        }
-      } catch (error) {
-        console.error("Failed to fetch Google Fonts", error);
-      }
-    };
-    fetchGoogleFonts();
-  }, []);
+  // Font catalog — backed by signapps-docs /fonts/manifest.
+  // Falls back to the system font list when the catalog isn't synced yet.
+  const { data: fontsCatalog } = useFontsCatalog();
+  const availableFonts = useMemo<string[]>(() => {
+    const fallback = [
+      "Inter",
+      "Arial",
+      "Times New Roman",
+      "Georgia",
+      "Verdana",
+      "Courier New",
+      "Comic Sans MS",
+    ];
+    if (!fontsCatalog) return fallback;
+    const cataloged = fontsCatalog.families.map((f) => f.name);
+    return Array.from(new Set(["Inter", "Arial", ...cataloged]));
+  }, [fontsCatalog]);
+  useDynamicFont(currentFont);
 
   const editor = useEditor(
     {

@@ -39,26 +39,41 @@ function injectFontFace(family: FontFamily) {
   document.head.appendChild(styleEl);
 }
 
-export function useDynamicFont(familyId: string | undefined) {
+function findFamily(
+  catalog: { families: FontFamily[] } | undefined,
+  idOrName: string,
+): FontFamily | undefined {
+  if (!catalog) return undefined;
+  return (
+    catalog.families.find((f) => f.id === idOrName) ??
+    catalog.families.find((f) => f.name === idOrName)
+  );
+}
+
+export function useDynamicFont(idOrName: string | undefined) {
   const { data: catalog } = useFontsCatalog();
   useEffect(() => {
-    if (!familyId || !catalog) return;
-    if (loadedFonts.has(familyId)) return;
-    const fam = catalog.families.find((f) => f.id === familyId);
+    if (!idOrName || !catalog) return;
+    if (loadedFonts.has(idOrName)) return;
+    const fam = findFamily(catalog, idOrName);
     if (!fam) return;
     injectFontFace(fam);
-    loadedFonts.add(familyId);
-  }, [familyId, catalog]);
+    loadedFonts.add(idOrName);
+    loadedFonts.add(fam.id);
+    loadedFonts.add(fam.name);
+  }, [idOrName, catalog]);
 }
 
 /** Imperative variant for hover/scroll triggers (no hook). */
 export function ensureFontLoaded(
-  familyId: string,
+  idOrName: string,
   catalog: { families: FontFamily[] } | undefined,
 ) {
-  if (!catalog || loadedFonts.has(familyId)) return;
-  const fam = catalog.families.find((f) => f.id === familyId);
+  if (!catalog || loadedFonts.has(idOrName)) return;
+  const fam = findFamily(catalog, idOrName);
   if (!fam) return;
   injectFontFace(fam);
-  loadedFonts.add(familyId);
+  loadedFonts.add(idOrName);
+  loadedFonts.add(fam.id);
+  loadedFonts.add(fam.name);
 }
