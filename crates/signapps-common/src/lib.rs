@@ -86,6 +86,8 @@ pub mod healthz;
 pub use signapps_indexer as indexer;
 // marketplace module extracted to signapps-marketplace crate
 pub use signapps_marketplace as marketplace;
+/// Shared DB-backed maintenance flag (used by signapps-deploy + signapps-proxy).
+pub mod maintenance_flag;
 pub mod middleware;
 pub mod openapi;
 pub mod pg_events;

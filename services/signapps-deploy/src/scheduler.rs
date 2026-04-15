@@ -10,20 +10,13 @@
 //! a long-lived process — typically a systemd service or a supervisor job
 //! separate from the deploy CLI.
 //!
-//! ## Phase 2 POC limitation
-//!
-//! The cache backend is in-process via [`CacheService::default_config`]. For
-//! the maintenance flag written here to reach the proxy middleware, a shared
-//! cache backend is required (Redis, DB row, or a small HTTP endpoint on the
-//! proxy). Until that's in place, the scheduler can drive state transitions
-//! correctly but won't effectively hide traffic from end-users.
+//! Since P3c.3, the maintenance flag is stored in the shared `maintenance_flags`
+//! table (migration 309) and is therefore visible to the proxy on every request.
 
 use crate::maintenance;
 use anyhow::{Context, Result};
 use chrono::{DateTime, Duration as ChronoDuration, Utc};
-use signapps_cache::CacheService;
 use sqlx::PgPool;
-use std::sync::Arc;
 use std::time::Duration;
 use tokio::time::sleep;
 use uuid::Uuid;
@@ -32,8 +25,9 @@ const POLL_INTERVAL: Duration = Duration::from_secs(30);
 
 /// Runtime dependencies for the scheduler loop.
 pub struct SchedulerDeps {
+    /// Shared Postgres pool used for both the `scheduled_maintenance` table
+    /// and the `maintenance_flags` row that the proxy reads.
     pub pool: PgPool,
-    pub cache: Arc<CacheService>,
 }
 
 #[derive(Debug)]
@@ -69,8 +63,8 @@ async fn fetch_active_or_due_windows(pool: &PgPool) -> Result<Vec<Window>> {
         .collect())
 }
 
-async fn start_window(pool: &PgPool, cache: &Arc<CacheService>, w: &Window) -> Result<()> {
-    maintenance::enable(cache, &w.env).await?;
+async fn start_window(pool: &PgPool, w: &Window) -> Result<()> {
+    maintenance::enable(pool, &w.env).await?;
     sqlx::query(
         "UPDATE scheduled_maintenance SET status = 'active', started_at = now() WHERE id = $1",
     )
@@ -82,8 +76,8 @@ async fn start_window(pool: &PgPool, cache: &Arc<CacheService>, w: &Window) -> R
     Ok(())
 }
 
-async fn end_window(pool: &PgPool, cache: &Arc<CacheService>, w: &Window) -> Result<()> {
-    maintenance::disable(cache, &w.env).await?;
+async fn end_window(pool: &PgPool, w: &Window) -> Result<()> {
+    maintenance::disable(pool, &w.env).await?;
     sqlx::query(
         "UPDATE scheduled_maintenance SET status = 'completed', completed_at = now() WHERE id = $1",
     )
@@ -101,10 +95,10 @@ async fn tick(deps: &SchedulerDeps) -> Result<()> {
         let end = w.scheduled_at + ChronoDuration::minutes(w.duration_minutes as i64);
         match w.status.as_str() {
             "scheduled" if w.scheduled_at <= now => {
-                start_window(&deps.pool, &deps.cache, &w).await?;
+                start_window(&deps.pool, &w).await?;
             },
             "active" if end <= now => {
-                end_window(&deps.pool, &deps.cache, &w).await?;
+                end_window(&deps.pool, &w).await?;
             },
             _ => { /* not time yet or already handled */ },
         }

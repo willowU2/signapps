@@ -22,10 +22,8 @@
 use crate::{docker::DockerClient, maintenance, migrate, persistence};
 use anyhow::{Context, Result};
 use serde_json::json;
-use signapps_cache::CacheService;
 use sqlx::PgPool;
 use std::path::PathBuf;
-use std::sync::Arc;
 use std::time::Duration;
 use tokio::time::{sleep, timeout};
 
@@ -52,10 +50,6 @@ fn migrations_dir() -> PathBuf {
 async fn connect_pool() -> Result<PgPool> {
     let url = std::env::var("DATABASE_URL").context("DATABASE_URL not set")?;
     Ok(PgPool::connect(&url).await?)
-}
-
-fn make_cache() -> Arc<CacheService> {
-    Arc::new(CacheService::default_config())
 }
 
 /// Resolve the image repo from the `DEPLOY_IMAGE_REPO` env var.
@@ -122,7 +116,6 @@ pub async fn deploy(env: &str, version: &str) -> Result<()> {
 }
 
 async fn deploy_inner(pool: &PgPool, env: &str, version: &str) -> Result<()> {
-    let cache = make_cache();
     let docker = DockerClient::connect()?;
 
     let git_sha = std::env::var("GIT_SHA").unwrap_or_else(|_| "unknown".to_string());
@@ -135,11 +128,11 @@ async fn deploy_inner(pool: &PgPool, env: &str, version: &str) -> Result<()> {
     )
     .await?;
 
-    let result = run_deploy(&docker, &cache, pool, env, version, &dep).await;
+    let result = run_deploy(&docker, pool, env, version, &dep).await;
 
     match result {
         Ok(migrations) => {
-            maintenance::disable(&cache, env).await.ok();
+            maintenance::disable(pool, env).await.ok();
             persistence::mark_success(pool, dep.id, &migrations).await?;
             persistence::audit(pool, dep.id, "deploy_succeeded", json!({})).await?;
             tracing::info!(%env, %version, "deployment succeeded");
@@ -159,13 +152,13 @@ async fn deploy_inner(pool: &PgPool, env: &str, version: &str) -> Result<()> {
 
             if let Some(prev) = dep.previous_version.clone() {
                 tracing::warn!(%prev, "attempting auto-rollback");
-                if let Err(re) = run_rollback(&docker, &cache, env, &prev).await {
+                if let Err(re) = run_rollback(&docker, pool, env, &prev).await {
                     tracing::error!(error = %re, "auto-rollback also failed; maintenance stays ON");
                 } else {
                     persistence::mark_rolled_back(pool, dep.id).await.ok();
                     persistence::audit(pool, dep.id, "auto_rolled_back", json!({ "to": prev }))
                         .await?;
-                    maintenance::disable(&cache, env).await.ok();
+                    maintenance::disable(pool, env).await.ok();
                 }
             } else {
                 tracing::warn!("no previous version to roll back to; maintenance stays ON");
@@ -177,7 +170,6 @@ async fn deploy_inner(pool: &PgPool, env: &str, version: &str) -> Result<()> {
 
 async fn run_deploy(
     docker: &DockerClient,
-    cache: &Arc<CacheService>,
     pool: &PgPool,
     env: &str,
     version: &str,
@@ -197,7 +189,7 @@ async fn run_deploy(
     docker.pull_image(&image_ref).await.context("pull image")?;
 
     // 2. Enable maintenance
-    maintenance::enable(cache, env).await?;
+    maintenance::enable(pool, env).await?;
     persistence::audit(pool, dep.id, "maintenance_on", json!({})).await?;
 
     // 3. Compose up -d
@@ -305,7 +297,6 @@ pub async fn rollback(env: &str) -> Result<()> {
 }
 
 async fn rollback_inner(pool: &PgPool, env: &str) -> Result<()> {
-    let cache = make_cache();
     let docker = DockerClient::connect()?;
 
     let (prev_version, _when) = persistence::last_successful(pool, env)
@@ -313,18 +304,18 @@ async fn rollback_inner(pool: &PgPool, env: &str) -> Result<()> {
         .ok_or_else(|| anyhow::anyhow!("no successful deployment to roll back to"))?;
 
     tracing::warn!(%env, version = %prev_version, "manual rollback requested");
-    run_rollback(&docker, &cache, env, &prev_version).await
+    run_rollback(&docker, pool, env, &prev_version).await
 }
 
 async fn run_rollback(
     _docker: &DockerClient,
-    cache: &Arc<CacheService>,
+    pool: &PgPool,
     env: &str,
     version: &str,
 ) -> Result<()> {
-    maintenance::enable(cache, env).await?;
+    maintenance::enable(pool, env).await?;
     compose_up(env, version).await?;
-    maintenance::disable(cache, env).await?;
+    maintenance::disable(pool, env).await?;
     Ok(())
 }
 

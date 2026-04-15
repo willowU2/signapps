@@ -1,73 +1,41 @@
-//! Toggle the maintenance flag in the shared cache.
+//! Toggle the maintenance flag via the shared DB-backed storage.
 //!
-//! The cache key `deploy:maintenance:{env}` is consumed by the proxy's
-//! maintenance middleware (see `services/signapps-proxy/src/app_middleware/maintenance.rs`).
-//! A value of `"1"` means maintenance is ON; absence means OFF.
-//!
-//! A safety TTL of 30 minutes is applied so the flag self-clears if the
-//! deploy process is killed before it reaches the disable step.
+//! Previously this module wrote to an in-process cache which did NOT reach the
+//! proxy. Since P3c.3, reads and writes go through
+//! `signapps_common::maintenance_flag` (backed by the `maintenance_flags`
+//! table), so the deploy server's writes are visible to the proxy immediately.
 
 use anyhow::Result;
-use signapps_cache::CacheService;
-use std::sync::Arc;
-use std::time::Duration;
+use signapps_common::maintenance_flag;
+use sqlx::PgPool;
 
-const MAINTENANCE_TTL: Duration = Duration::from_secs(30 * 60);
-const MAINTENANCE_KEY_PREFIX: &str = "deploy:maintenance:";
-
-fn key(env: &str) -> String {
-    format!("{MAINTENANCE_KEY_PREFIX}{env}")
-}
+const MAINTENANCE_TTL_SECONDS: i64 = 30 * 60;
 
 /// Enable maintenance mode for the given env. Idempotent.
-pub async fn enable(cache: &Arc<CacheService>, env: &str) -> Result<()> {
-    cache.set(&key(env), "1", MAINTENANCE_TTL).await;
-    tracing::warn!(%env, "maintenance mode ENABLED");
-    Ok(())
+///
+/// # Errors
+///
+/// Returns an error if the DB write fails.
+pub async fn enable(pool: &PgPool, env: &str) -> Result<()> {
+    maintenance_flag::enable(pool, env, Some(MAINTENANCE_TTL_SECONDS)).await
 }
 
 /// Disable maintenance mode for the given env. Idempotent.
-pub async fn disable(cache: &Arc<CacheService>, env: &str) -> Result<()> {
-    cache.delete(&key(env)).await;
-    tracing::info!(%env, "maintenance mode disabled");
-    Ok(())
+///
+/// # Errors
+///
+/// Returns an error if the DB write fails.
+pub async fn disable(pool: &PgPool, env: &str) -> Result<()> {
+    maintenance_flag::disable(pool, env).await
 }
 
 /// Check whether maintenance mode is currently enabled for the given env.
-pub async fn is_enabled(cache: &Arc<CacheService>, env: &str) -> bool {
-    cache.get(&key(env)).await.as_deref() == Some("1")
+pub async fn is_enabled(pool: &PgPool, env: &str) -> bool {
+    maintenance_flag::is_enabled(pool, env).await.unwrap_or(false)
 }
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-
-    #[tokio::test]
-    async fn enable_then_disable_clears_the_key() {
-        let cache = Arc::new(CacheService::default_config());
-
-        enable(&cache, "test").await.unwrap();
-        assert_eq!(cache.get(&key("test")).await.as_deref(), Some("1"));
-
-        disable(&cache, "test").await.unwrap();
-        assert_eq!(cache.get(&key("test")).await, None);
-    }
-
-    #[tokio::test]
-    async fn enable_is_idempotent() {
-        let cache = Arc::new(CacheService::default_config());
-        enable(&cache, "test").await.unwrap();
-        enable(&cache, "test").await.unwrap();
-        assert_eq!(cache.get(&key("test")).await.as_deref(), Some("1"));
-    }
-
-    #[tokio::test]
-    async fn is_enabled_matches_state() {
-        let cache = Arc::new(CacheService::default_config());
-        assert!(!is_enabled(&cache, "test").await);
-        enable(&cache, "test").await.unwrap();
-        assert!(is_enabled(&cache, "test").await);
-        disable(&cache, "test").await.unwrap();
-        assert!(!is_enabled(&cache, "test").await);
-    }
+    // Integration tests cover this module via tests/scheduled_maintenance_e2e.rs.
+    // Unit tests are omitted because every function wraps a DB call.
 }

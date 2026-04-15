@@ -1,9 +1,7 @@
 //! E2E test: scheduled → active → completed lifecycle via direct persistence.
 
 use chrono::Utc;
-use signapps_cache::CacheService;
 use sqlx::PgPool;
-use std::sync::Arc;
 use uuid::Uuid;
 
 async fn test_pool() -> PgPool {
@@ -17,6 +15,13 @@ async fn cleanup(pool: &PgPool, id: Uuid) {
         .bind(id)
         .execute(pool)
         .await;
+    // Ensure we leave the shared maintenance_flags row disabled so other tests
+    // aren't surprised by lingering state.
+    let _ = sqlx::query(
+        "UPDATE maintenance_flags SET enabled = false, expires_at = NULL WHERE env = 'dev'",
+    )
+    .execute(pool)
+    .await;
 }
 
 #[tokio::test]
@@ -49,8 +54,7 @@ async fn window_transitions_scheduled_active_completed() {
     assert_eq!(status, "scheduled");
 
     // Simulate what scheduler::start_window does
-    let cache = Arc::new(CacheService::default_config());
-    signapps_deploy::maintenance::enable(&cache, env)
+    signapps_deploy::maintenance::enable(&pool, env)
         .await
         .expect("enable");
     sqlx::query(
@@ -61,7 +65,7 @@ async fn window_transitions_scheduled_active_completed() {
     .await
     .expect("mark active");
 
-    assert!(signapps_deploy::maintenance::is_enabled(&cache, env).await);
+    assert!(signapps_deploy::maintenance::is_enabled(&pool, env).await);
 
     let (status_active,): (String,) =
         sqlx::query_as("SELECT status FROM scheduled_maintenance WHERE id = $1")
@@ -72,7 +76,7 @@ async fn window_transitions_scheduled_active_completed() {
     assert_eq!(status_active, "active");
 
     // Simulate end_window
-    signapps_deploy::maintenance::disable(&cache, env)
+    signapps_deploy::maintenance::disable(&pool, env)
         .await
         .expect("disable");
     sqlx::query(
@@ -83,7 +87,7 @@ async fn window_transitions_scheduled_active_completed() {
     .await
     .expect("mark completed");
 
-    assert!(!signapps_deploy::maintenance::is_enabled(&cache, env).await);
+    assert!(!signapps_deploy::maintenance::is_enabled(&pool, env).await);
 
     let (final_status,): (String,) =
         sqlx::query_as("SELECT status FROM scheduled_maintenance WHERE id = $1")

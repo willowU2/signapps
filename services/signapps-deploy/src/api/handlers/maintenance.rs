@@ -40,11 +40,11 @@ pub async fn toggle_maintenance(
         return Err(AppError::BadRequest(format!("unknown env: {env}")));
     }
     if req.enable {
-        mx::enable(&state.cache, &env)
+        mx::enable(&state.pool, &env)
             .await
             .map_err(|e| AppError::Internal(format!("enable: {e:#}")))?;
     } else {
-        mx::disable(&state.cache, &env)
+        mx::disable(&state.pool, &env)
             .await
             .map_err(|e| AppError::Internal(format!("disable: {e:#}")))?;
     }

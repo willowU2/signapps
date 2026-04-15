@@ -32,7 +32,6 @@ use proxy::forwarder::HttpForwarder;
 use proxy::tls::TlsCertResolver;
 use proxy::RouteCache;
 use shield::ShieldService;
-use std::sync::Arc;
 
 /// Application state shared across handlers.
 #[derive(Clone)]
@@ -179,9 +178,10 @@ async fn main() -> anyhow::Result<()> {
         tracing::info!("Integrated proxy disabled (PROXY_ENABLED=false)");
     }
 
-    // Maintenance middleware state (reads "deploy:maintenance:{env}" from cache)
+    // Maintenance middleware state (reads the `maintenance_flags` DB row,
+    // shared with signapps-deploy since P3c.3).
     let maintenance_state = MaintenanceState {
-        cache: Arc::new(signapps_cache::CacheService::default_config()),
+        pool: (*pool).clone(),
         env: env_or("SIGNAPPS_ENV", "prod"),
     };
 
