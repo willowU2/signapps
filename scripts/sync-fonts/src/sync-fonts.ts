@@ -4,7 +4,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { mkdir } from "node:fs/promises";
 import { basename, dirname, resolve } from "node:path";
 import axios from "axios";
-import { glob } from "fast-glob";
+import glob from "fast-glob";
 // wawoff2 has no type definitions on npm; declare a minimal shim below.
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-expect-error — no @types/wawoff2 package exists
