@@ -216,7 +216,6 @@ impl LiveKitClient {
     /// # Errors
     ///
     /// Returns [`LiveKitError::Jwt`] if the JWT cannot be signed.
-    #[allow(dead_code)]
     pub(crate) fn service_token(&self) -> Result<String> {
         let now = chrono::Utc::now().timestamp();
         let exp = now + 600; // 10 min
@@ -239,6 +238,137 @@ impl LiveKitClient {
         let header = jsonwebtoken::Header::new(jsonwebtoken::Algorithm::HS256);
         let key = jsonwebtoken::EncodingKey::from_secret(self.api_secret.as_bytes());
         Ok(jsonwebtoken::encode(&header, &claims, &key)?)
+    }
+
+    // --- Shared HTTP helpers --------------------------------------------------
+
+    async fn twirp<B: Serialize + ?Sized, R: for<'de> Deserialize<'de>>(
+        &self,
+        path: &str,
+        body: &B,
+    ) -> Result<R> {
+        let token = self.service_token()?;
+        let url = format!("{}{}", self.base_url.trim_end_matches('/'), path);
+        let resp = self
+            .http
+            .post(&url)
+            .bearer_auth(token)
+            .json(body)
+            .send()
+            .await?;
+        Self::parse_json(resp).await
+    }
+
+    async fn twirp_no_content<B: Serialize + ?Sized>(&self, path: &str, body: &B) -> Result<()> {
+        let token = self.service_token()?;
+        let url = format!("{}{}", self.base_url.trim_end_matches('/'), path);
+        let resp = self
+            .http
+            .post(&url)
+            .bearer_auth(token)
+            .json(body)
+            .send()
+            .await?;
+        if resp.status().is_success() {
+            let _ = resp.bytes().await?;
+            Ok(())
+        } else {
+            Err(Self::upstream_err(resp).await)
+        }
+    }
+
+    async fn parse_json<R: for<'de> Deserialize<'de>>(resp: reqwest::Response) -> Result<R> {
+        if resp.status().is_success() {
+            let value: R = resp.json().await?;
+            Ok(value)
+        } else {
+            Err(Self::upstream_err(resp).await)
+        }
+    }
+
+    async fn upstream_err(resp: reqwest::Response) -> LiveKitError {
+        let status = resp.status().as_u16();
+        let body = resp.text().await.unwrap_or_default();
+        LiveKitError::Upstream { status, body }
+    }
+}
+
+// --- Room management ----------------------------------------------------------
+
+/// Options used to create a LiveKit room.
+#[derive(Debug, Clone, Default, Serialize)]
+pub struct RoomOptions {
+    /// Seconds to keep an empty room alive.
+    pub empty_timeout: Option<u32>,
+    /// Optional cap on the number of participants.
+    pub max_participants: Option<u32>,
+}
+
+/// Summary of a LiveKit room as returned by RoomService.
+#[derive(Debug, Clone, Deserialize)]
+pub struct RoomInfo {
+    /// Globally unique server-assigned id.
+    #[serde(default)]
+    pub sid: String,
+    /// Room name (the one supplied on create).
+    #[serde(default)]
+    pub name: String,
+    /// Empty-timeout value (seconds) effectively applied by the server.
+    #[serde(default, rename = "emptyTimeout")]
+    pub empty_timeout: u32,
+    /// Current participant count.
+    #[serde(default, rename = "numParticipants")]
+    pub num_participants: u32,
+    /// Creation time (unix seconds).
+    #[serde(default, rename = "creationTime")]
+    pub creation_time: i64,
+}
+
+#[derive(Serialize)]
+struct CreateRoomReq<'a> {
+    name: &'a str,
+    #[serde(rename = "emptyTimeout", skip_serializing_if = "Option::is_none")]
+    empty_timeout: Option<u32>,
+    #[serde(rename = "maxParticipants", skip_serializing_if = "Option::is_none")]
+    max_participants: Option<u32>,
+}
+
+#[derive(Serialize)]
+struct RoomNameReq<'a> {
+    room: &'a str,
+}
+
+impl LiveKitClient {
+    /// Create a LiveKit room.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`LiveKitError::Upstream`] if LiveKit rejects the request,
+    /// or [`LiveKitError::Http`] on transport failure.
+    #[tracing::instrument(skip(self), fields(lk_url = %self.base_url))]
+    pub async fn create_room(&self, name: &str, opts: RoomOptions) -> Result<RoomInfo> {
+        let body = CreateRoomReq {
+            name,
+            empty_timeout: opts.empty_timeout,
+            max_participants: opts.max_participants,
+        };
+        self.twirp::<_, RoomInfo>("/twirp/livekit.RoomService/CreateRoom", &body)
+            .await
+    }
+
+    /// Delete a LiveKit room (disconnects all participants).
+    ///
+    /// # Errors
+    ///
+    /// Returns [`LiveKitError::Upstream`] if the room does not exist or
+    /// LiveKit rejects the request.
+    #[tracing::instrument(skip(self), fields(lk_url = %self.base_url))]
+    pub async fn delete_room(&self, name: &str) -> Result<()> {
+        self.twirp_no_content(
+            "/twirp/livekit.RoomService/DeleteRoom",
+            &RoomNameReq { room: name },
+        )
+        .await
     }
 }
 
