@@ -29,7 +29,9 @@ pub use state::AppState;
 // ---------------------------------------------------------------------------
 
 fn create_router(state: AppState, sharing_engine: SharingEngine) -> Router {
-    let public_routes = Router::new().route("/health", get(handlers::health::health_check));
+    let public_routes = Router::new()
+        .route("/health", get(handlers::health::health_check))
+        .merge(signapps_common::version::router("signapps-chat"));
 
     let protected_routes = Router::new()
         // Channels

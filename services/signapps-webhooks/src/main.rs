@@ -68,6 +68,7 @@ fn create_router(state: AppState) -> Router {
 
     let public_routes = Router::new()
         .route("/health", get(health_check))
+        .merge(signapps_common::version::router("signapps-webhooks"))
         // Unauthenticated public incoming webhooks (e.g. Stripe HMAC-signed)
         .route(
             "/api/v1/webhooks/public/:source",

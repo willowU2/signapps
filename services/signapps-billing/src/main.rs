@@ -131,7 +131,8 @@ fn create_router(state: AppState) -> Router {
         .route(
             "/api/v1/billing/stripe/webhook",
             post(handlers::stripe::stripe_webhook),
-        );
+        )
+        .merge(signapps_common::version::router("signapps-billing"));
 
     let protected_routes = Router::new()
         .route(

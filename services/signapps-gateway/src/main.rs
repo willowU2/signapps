@@ -786,6 +786,7 @@ async fn main() -> anyhow::Result<()> {
         .route("/api/v1/graphql", post(graphql::graphql_handler).with_state(graphql_state.clone()))
         .route("/api/v1/graphql/schema", get(graphql::graphql_schema))
         .merge(openapi::swagger_router())
+        .merge(signapps_common::version::router("signapps-gateway"))
         .layer(discover_cors)
         .fallback(any(proxy_handler))
         .with_state(service_map);

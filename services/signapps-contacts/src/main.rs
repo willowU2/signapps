@@ -757,7 +757,9 @@ fn create_router(state: AppState, sharing_engine: SharingEngine) -> Router {
             axum::http::HeaderName::from_static("x-request-id"),
         ]);
 
-    let public_routes = Router::new().route("/health", get(health_check));
+    let public_routes = Router::new()
+        .route("/health", get(health_check))
+        .merge(signapps_common::version::router("signapps-contacts"));
 
     let protected_routes = Router::new()
         .route("/api/v1/contacts", get(list_contacts).post(create_contact))

@@ -307,6 +307,7 @@ fn create_router(state: AppState) -> Router {
     // Combine all routes
     Router::new()
         .merge(openapi::swagger_router())
+        .merge(signapps_common::version::router("signapps-proxy"))
         .merge(root_health)
         .merge(vault_routes)
         .nest("/api/v1", public_routes)

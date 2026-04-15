@@ -279,6 +279,7 @@ async fn main() {
     // Unauthenticated health route (no auth middleware)
     let public_router = axum::Router::new()
         .merge(openapi_routes)
+        .merge(signapps_common::version::router("signapps-mail"))
         .route(
             "/health",
             axum::routing::get(|| async {

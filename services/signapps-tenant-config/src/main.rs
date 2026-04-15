@@ -68,7 +68,9 @@ fn create_router(state: AppState) -> Router {
         ])
         .allow_credentials(true);
 
-    let public_routes = Router::new().route("/health", get(health_check));
+    let public_routes = Router::new()
+        .route("/health", get(health_check))
+        .merge(signapps_common::version::router("signapps-tenant-config"));
 
     // Tenant-scoped routes (auth + tenant context required)
     let tenant_routes = Router::new()

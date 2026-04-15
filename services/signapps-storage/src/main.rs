@@ -537,6 +537,7 @@ fn create_router(state: AppState, sharing_engine: SharingEngine) -> Router {
 
     Router::new()
         .merge(root_health)
+        .merge(signapps_common::version::router("signapps-storage"))
         .merge(webdav_routes)
         .merge(openapi_routes)
         .merge(files_sharing)

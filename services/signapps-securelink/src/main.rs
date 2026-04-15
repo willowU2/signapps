@@ -370,7 +370,8 @@ fn create_router(state: AppState) -> Router {
     // Public routes (no auth required)
     let public_routes = Router::new()
         .nest("/health", health_routes)
-        .nest("/api/v1/dashboard", dashboard_routes);
+        .nest("/api/v1/dashboard", dashboard_routes)
+        .merge(signapps_common::version::router("signapps-securelink"));
 
     // Protected routes (auth required)
     let protected_routes = Router::new()

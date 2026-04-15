@@ -473,7 +473,9 @@ fn create_router(state: AppState) -> Router {
             axum::http::HeaderName::from_static("x-request-id"),
         ]);
 
-    let public_routes = Router::new().route("/health", get(health));
+    let public_routes = Router::new()
+        .route("/health", get(health))
+        .merge(signapps_common::version::router("signapps-notifications"));
 
     let protected_routes = Router::new()
         .route(

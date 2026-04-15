@@ -127,7 +127,8 @@ fn build_router(state: AppState) -> Router {
         .route("/health", get(meet_health))
         .route("/api/v1/meet/config", get(handlers::get_config))
         // Remote health alias (backward compat — remote merged into this service)
-        .route("/api/v1/remote/health", get(meet_health));
+        .route("/api/v1/remote/health", get(meet_health))
+        .merge(signapps_common::version::router("signapps-meet"));
 
     // Protected routes
     let protected_routes = Router::new()

@@ -532,7 +532,9 @@ fn create_router(state: AppState) -> Router {
             axum::http::HeaderName::from_static("x-request-id"),
         ]);
 
-    let public_routes = Router::new().route("/health", get(health_check));
+    let public_routes = Router::new()
+        .route("/health", get(health_check))
+        .merge(signapps_common::version::router("signapps-gamification"));
 
     let protected_routes = Router::new()
         .route(

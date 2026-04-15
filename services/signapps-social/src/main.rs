@@ -94,7 +94,8 @@ fn create_router(state: AppState) -> Router {
         .route(
             "/api/v1/social/oauth/:platform/callback",
             get(oauth::oauth_callback),
-        );
+        )
+        .merge(signapps_common::version::router("signapps-social"));
 
     let protected_routes = Router::new()
         // OAuth authorize (protected — needs user JWT to store state with user_id)

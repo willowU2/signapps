@@ -66,7 +66,9 @@ fn create_router(state: AppState) -> Router {
         ])
         .allow_credentials(true);
 
-    let public_routes = Router::new().route("/health", get(health_check));
+    let public_routes = Router::new()
+        .route("/health", get(health_check))
+        .merge(signapps_common::version::router("signapps-org"));
 
     let org_routes = Router::new()
         // Org structure — trees

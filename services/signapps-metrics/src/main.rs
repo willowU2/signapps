@@ -145,7 +145,8 @@ fn create_router(state: AppState) -> Router {
     // Public routes (no auth required)
     let public_routes = Router::new()
         .nest("/health", health_routes)
-        .nest("/metrics", prometheus_routes);
+        .nest("/metrics", prometheus_routes)
+        .merge(signapps_common::version::router("signapps-metrics"));
 
     // A/B Testing Experiments routes
     let experiment_routes = Router::new()

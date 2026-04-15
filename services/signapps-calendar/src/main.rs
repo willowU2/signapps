@@ -182,6 +182,7 @@ fn build_router(state: AppState, sharing_engine: SharingEngine) -> Router {
     // Public routes (no auth required)
     let public_routes = Router::new()
         .merge(openapi_routes)
+        .merge(signapps_common::version::router("signapps-calendar"))
         .route("/health", get(health_check))
         .route(
             "/api/v1/notifications/push/vapid-key",

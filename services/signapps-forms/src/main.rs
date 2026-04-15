@@ -706,7 +706,8 @@ fn create_router(state: AppState, sharing_engine: SharingEngine) -> Router {
 
     let public_routes = Router::new()
         .route("/health", get(health_check))
-        .route("/api/v1/forms/:id/respond", post(submit_response));
+        .route("/api/v1/forms/:id/respond", post(submit_response))
+        .merge(signapps_common::version::router("signapps-forms"));
 
     let protected_routes = Router::new()
         .route("/api/v1/forms", get(list_forms).post(create_form))

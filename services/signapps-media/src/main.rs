@@ -225,7 +225,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Build router
 
     // Public routes (no auth required)
-    let public_routes = Router::new().route("/health", get(health_check));
+    let public_routes = Router::new()
+        .route("/health", get(health_check))
+        .merge(signapps_common::version::router("signapps-media"));
 
     // Protected routes (auth required)
     let protected_routes = Router::new()

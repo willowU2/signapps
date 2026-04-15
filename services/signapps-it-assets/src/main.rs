@@ -74,6 +74,7 @@ async fn main() -> anyhow::Result<()> {
             "/api-docs/openapi.json",
             handlers::openapi::ItAssetsApiDoc::openapi(),
         ))
+        .merge(signapps_common::version::router("signapps-it-assets"))
         .merge(routes::public_routes().with_state(state.pool.clone()))
         .nest("/api/v1/it-assets", protected_routes)
         .merge(sharing_sub)

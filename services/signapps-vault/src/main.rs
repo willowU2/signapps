@@ -65,7 +65,9 @@ fn create_router(state: AppState) -> Router {
         ])
         .allow_credentials(true);
 
-    let public_routes = Router::new().route("/health", get(health_check));
+    let public_routes = Router::new()
+        .route("/health", get(health_check))
+        .merge(signapps_common::version::router("signapps-vault"));
 
     let vault_routes = Router::new()
         // Keys (3)

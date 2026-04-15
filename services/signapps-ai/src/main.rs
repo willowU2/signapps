@@ -469,6 +469,7 @@ fn create_router(state: AppState) -> Router {
     Router::new()
         .merge(root_health)
         .merge(openapi_routes)
+        .merge(signapps_common::version::router("signapps-ai"))
         .nest("/api/v1", public_routes)
         .nest("/api/v1/ai", ai_routes)
         .nest("/api/v1/admin/ai", admin_routes)

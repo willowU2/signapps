@@ -551,6 +551,7 @@ fn create_router(state: AppState) -> Router {
     // Combine all routes
     Router::new()
         .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", SchedulerApiDoc::openapi()))
+        .merge(signapps_common::version::router("signapps-scheduler"))
         .nest("/api/v1/jobs", job_routes)
         .nest("/api/v1/runs", run_routes)
         .nest("/api/v1/tenants", tenant_routes)

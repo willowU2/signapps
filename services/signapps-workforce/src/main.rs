@@ -638,6 +638,7 @@ fn create_router(state: AppState) -> Router {
 
     // Combine all routes
     Router::new()
+        .merge(signapps_common::version::router("signapps-workforce"))
         .nest("/api/v1/workforce/ad", ad_routes)
         .nest("/api/v1/workforce/org", org_routes)
         .nest("/api/v1/workforce/employees", employee_routes)

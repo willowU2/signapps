@@ -149,7 +149,9 @@ fn create_router(state: AppState) -> Router {
         ]);
 
     // Public routes
-    let public_routes = Router::new().route("/health", get(handlers::health::health_check));
+    let public_routes = Router::new()
+        .route("/health", get(handlers::health::health_check))
+        .merge(signapps_common::version::router("signapps-containers"));
 
     // Protected routes (auth required)
     let protected_routes = Router::new()
