@@ -65,6 +65,7 @@ export enum ServiceName {
   COMPLIANCE_SVC = "compliance-svc",
   GAMIFICATION_SVC = "gamification-svc",
   COLLABORATION_SVC = "collaboration-svc",
+  DEPLOY = "deploy",
 }
 
 interface ServiceConfig {
@@ -234,6 +235,11 @@ const SERVICE_CONFIG: Record<ServiceName, ServiceConfig> = {
     envVar: "NEXT_PUBLIC_COLLABORATION_URL",
     healthPath: "/health",
   },
+  [ServiceName.DEPLOY]: {
+    port: 3700,
+    envVar: "NEXT_PUBLIC_DEPLOY_URL",
+    healthPath: "/health",
+  },
 };
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -346,6 +352,9 @@ export function getServiceUrl(service: ServiceName): string {
       break;
     case ServiceName.COLLABORATION_SVC:
       envValue = process.env.NEXT_PUBLIC_COLLABORATION_URL || null;
+      break;
+    case ServiceName.DEPLOY:
+      envValue = process.env.NEXT_PUBLIC_DEPLOY_URL || null;
       break;
   }
 
@@ -467,6 +476,9 @@ export function getServiceBaseUrl(service: ServiceName): string {
       break;
     case ServiceName.COLLABORATION_SVC:
       envValue = process.env.NEXT_PUBLIC_COLLABORATION_URL || null;
+      break;
+    case ServiceName.DEPLOY:
+      envValue = process.env.NEXT_PUBLIC_DEPLOY_URL || null;
       break;
   }
 
