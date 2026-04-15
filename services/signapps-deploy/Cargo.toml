@@ -15,6 +15,10 @@ path = "src/main.rs"
 name = "signapps-deploy-scheduler"
 path = "src/bin/scheduler.rs"
 
+[[bin]]
+name = "signapps-deploy-server"
+path = "src/bin/server.rs"
+
 [lib]
 path = "src/lib.rs"
 
@@ -23,9 +27,15 @@ path = "src/lib.rs"
 signapps-cache = { path = "../../crates/signapps-cache" }
 signapps-common = { path = "../../crates/signapps-common" }
 signapps-db = { path = "../../crates/signapps-db" }
+signapps-feature-flags = { path = "../../crates/signapps-feature-flags" }
 
 # Async runtime
 tokio = { workspace = true }
+
+# HTTP framework
+axum = { workspace = true }
+axum-extra = { workspace = true }
+tower-http = { workspace = true }
 
 # CLI parsing
 clap = { version = "4", features = ["derive"] }
@@ -49,6 +59,10 @@ chrono = { workspace = true }
 
 # Observability
 tracing = { workspace = true }
+
+# OpenAPI
+utoipa = { workspace = true }
+utoipa-swagger-ui = { version = "7", features = ["axum"] }
 
 # Error handling
 anyhow = { workspace = true }

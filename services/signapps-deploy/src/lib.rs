@@ -4,6 +4,7 @@
 //! API is dormant in Phase 1; it will be activated in Phase 3 via
 //! `DEPLOY_API_ENABLED=true`.
 
+pub mod api;
 pub mod cli;
 pub mod docker;
 pub mod maintenance;
