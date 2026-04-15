@@ -98,7 +98,7 @@ pub async fn list_rooms(
             settings: room.settings,
             created_at: room.created_at,
             participant_count: participant_count.0 as i32,
-            livekit_url: state.livekit_config.server_url.clone(),
+            livekit_url: state.livekit.base_url.clone(),
         });
     }
 
@@ -171,7 +171,7 @@ pub async fn create_room(
         settings: room.settings,
         created_at: room.created_at,
         participant_count: 0,
-        livekit_url: state.livekit_config.server_url.clone(),
+        livekit_url: state.livekit.base_url.clone(),
     }))
 }
 
@@ -225,7 +225,7 @@ pub async fn get_room(
         settings: room.settings,
         created_at: room.created_at,
         participant_count: participant_count.0 as i32,
-        livekit_url: state.livekit_config.server_url.clone(),
+        livekit_url: state.livekit.base_url.clone(),
     }))
 }
 
@@ -323,7 +323,7 @@ pub async fn update_room(
         settings: updated.settings,
         created_at: updated.created_at,
         participant_count: participant_count.0 as i32,
-        livekit_url: state.livekit_config.server_url.clone(),
+        livekit_url: state.livekit.base_url.clone(),
     }))
 }
 
@@ -485,7 +485,7 @@ pub async fn end_room(
         settings: updated.settings,
         created_at: updated.created_at,
         participant_count: 0,
-        livekit_url: state.livekit_config.server_url.clone(),
+        livekit_url: state.livekit.base_url.clone(),
     }))
 }
 

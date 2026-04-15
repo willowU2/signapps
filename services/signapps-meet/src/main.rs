@@ -1,31 +1,28 @@
 //! SignApps Meet Service
 //! Video conferencing rooms management with LiveKit integration
 
+use std::sync::Arc;
+
 use axum::{middleware, Router};
 use signapps_common::bootstrap::{env_or, init_tracing, load_env};
 use signapps_common::middleware::{auth_middleware, tenant_context_middleware, AuthState};
 use signapps_common::JwtConfig;
+use signapps_livekit_client::LiveKitClient;
 use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
 use tower_http::{cors::CorsLayer, trace::TraceLayer};
 
 mod handlers;
-mod livekit;
 mod models;
 
 #[derive(Clone)]
-/// Application state for  service.
+/// Application state for the Meet service.
 pub struct AppState {
+    /// PostgreSQL connection pool.
     pub pool: Pool<Postgres>,
+    /// JWT configuration used by the auth middleware.
     pub jwt_config: JwtConfig,
-    pub livekit_config: LiveKitConfig,
-}
-
-#[derive(Clone)]
-/// Configuration for LiveKit.
-pub struct LiveKitConfig {
-    pub api_key: String,
-    pub api_secret: String,
-    pub server_url: String,
+    /// Shared LiveKit Server client (token issuance, RoomService, Egress).
+    pub livekit: Arc<LiveKitClient>,
 }
 
 impl AuthState for AppState {
@@ -60,29 +57,31 @@ async fn main() -> anyhow::Result<()> {
     // JWT configuration — auto-detects RS256 or HS256 from environment
     let jwt_config = JwtConfig::from_env();
 
-    // LiveKit configuration
-    let livekit_config = LiveKitConfig {
-        api_key: std::env::var("LIVEKIT_API_KEY").unwrap_or_else(|_| {
-            if cfg!(debug_assertions) {
-                "devkey".to_string()
-            } else {
-                panic!("LIVEKIT_API_KEY must be set in production")
-            }
-        }),
-        api_secret: std::env::var("LIVEKIT_API_SECRET").unwrap_or_else(|_| {
-            if cfg!(debug_assertions) {
-                "secret".to_string()
-            } else {
-                panic!("LIVEKIT_API_SECRET must be set in production")
-            }
-        }),
-        server_url: env_or("LIVEKIT_URL", "ws://localhost:7880"),
+    // LiveKit client — built from LIVEKIT_URL / LIVEKIT_API_KEY /
+    // LIVEKIT_API_SECRET. If any of these is missing we fall back to
+    // placeholder creds so the service can still start (fonts-catalog
+    // pattern) but log a warning: token issuance and RoomService calls
+    // will fail until the real env vars are provided.
+    let livekit = match LiveKitClient::from_env() {
+        Ok(client) => Arc::new(client),
+        Err(err) => {
+            tracing::warn!(
+                ?err,
+                "LIVEKIT_* env vars missing — starting with placeholder credentials; \
+                 token issuance and RoomService calls will fail until configured"
+            );
+            let url = env_or("LIVEKIT_URL", "http://localhost:7880");
+            Arc::new(
+                LiveKitClient::new(url, "placeholder-key", "placeholder-secret")
+                    .expect("placeholder LiveKit client must build"),
+            )
+        }
     };
 
     let state = AppState {
         pool,
         jwt_config,
-        livekit_config,
+        livekit,
     };
 
     let app = build_router(state);

@@ -30,7 +30,7 @@ use crate::{models::ConfigResponse, AppState};
 #[tracing::instrument(skip_all)]
 pub async fn get_config(State(state): State<AppState>) -> Json<ConfigResponse> {
     Json(ConfigResponse {
-        livekit_url: state.livekit_config.server_url.clone(),
+        livekit_url: state.livekit.base_url.clone(),
         max_participants_per_room: 100,
         recording_enabled: true,
     })
