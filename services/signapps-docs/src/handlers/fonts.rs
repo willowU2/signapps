@@ -4,6 +4,13 @@
 //! streaming endpoint (`/fonts/files/:family/:variant`). Both routes are
 //! public — fonts are static assets meant to be loaded by `<link>` and
 //! `@font-face` from any origin.
+//!
+//! `FontsManifest`, `FontFamily`, and `FontVariant` describe the shape
+//! published in the OpenAPI spec via `utoipa::ToSchema`. The handler
+//! streams the JSON straight from storage rather than deserialising,
+//! so the types are not constructed at runtime — silence the dead-code
+//! lint while keeping the schema discoverable.
+#![allow(dead_code)]
 
 use std::sync::OnceLock;
 use std::time::Duration;
