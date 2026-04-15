@@ -3,7 +3,12 @@ import { execSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { mkdir } from "node:fs/promises";
 import { basename, dirname, resolve } from "node:path";
+import axios from "axios";
 import { glob } from "fast-glob";
+// wawoff2 has no type definitions on npm; declare a minimal shim below.
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-expect-error — no @types/wawoff2 package exists
+import wawoff2 from "wawoff2";
 
 const WORK_DIR = resolve(process.cwd(), ".sync-fonts-work");
 const STORAGE_URL = process.env.STORAGE_URL ?? "http://localhost:3004/api/v1";
@@ -22,6 +27,119 @@ interface RawFamily {
   foundry?: string;
   license: string;
   files: { weight: number; style: string; absPath: string }[];
+}
+
+interface FontVariantOut {
+  weight: number;
+  style: string;
+  file: string;
+  size_bytes: number;
+}
+
+interface FontFamilyOut {
+  id: string;
+  name: string;
+  category: string;
+  source: "google" | "nerd" | "awesome";
+  foundry?: string;
+  license: string;
+  variants: FontVariantOut[];
+  popularity?: number;
+  subsets?: string[];
+}
+
+interface FontsManifestOut {
+  generated_at: string;
+  version: string;
+  total: number;
+  families: FontFamilyOut[];
+}
+
+async function compressTtfToWoff2(ttfPath: string): Promise<Buffer> {
+  const ttf = readFileSync(ttfPath);
+  const woff2 = await wawoff2.compress(ttf);
+  return Buffer.from(woff2);
+}
+
+function variantSlug(weight: number, style: string): string {
+  const w = weight === 400 ? "regular"
+          : weight === 700 ? "bold"
+          : `w${weight}`;
+  return style === "italic" ? `${w}-italic` : w;
+}
+
+async function uploadFont(family: string, variant: string, woff2: Buffer): Promise<void> {
+  const key = `${family}/${variant}.woff2`;
+  await axios.put(
+    `${STORAGE_URL}/files/system-fonts/${encodeURIComponent(key)}`,
+    woff2,
+    {
+      headers: {
+        "Content-Type": "font/woff2",
+        Authorization: `Bearer ${ADMIN_TOKEN}`,
+      },
+      maxContentLength: Infinity,
+      maxBodyLength: Infinity,
+    },
+  );
+}
+
+async function processAll(families: RawFamily[]): Promise<FontFamilyOut[]> {
+  const out: FontFamilyOut[] = [];
+  for (const fam of families) {
+    const variants: FontVariantOut[] = [];
+    for (const f of fam.files) {
+      const slug = variantSlug(f.weight, f.style);
+      try {
+        const woff2 = await compressTtfToWoff2(f.absPath);
+        await uploadFont(fam.id, slug, woff2);
+        variants.push({
+          weight: f.weight,
+          style: f.style,
+          file: `${fam.id}/${slug}.woff2`,
+          size_bytes: woff2.length,
+        });
+      } catch (err) {
+        console.warn(`  ⚠ skipped ${fam.id}/${slug}:`, (err as Error).message);
+      }
+    }
+    if (variants.length > 0) {
+      out.push({
+        id: fam.id,
+        name: fam.name,
+        category: fam.category,
+        source: fam.source,
+        foundry: fam.foundry,
+        license: fam.license,
+        variants,
+      });
+      console.log(`  uploaded ${fam.id} (${variants.length} variants)`);
+    } else {
+      console.warn(`  skipped ${fam.id} — no variants succeeded`);
+    }
+  }
+  return out;
+}
+
+async function uploadManifest(families: FontFamilyOut[]): Promise<void> {
+  const manifest: FontsManifestOut = {
+    generated_at: new Date().toISOString(),
+    version: `1.0.${Date.now()}`,
+    total: families.length,
+    families,
+  };
+  const body = Buffer.from(JSON.stringify(manifest, null, 2), "utf8");
+  await axios.put(
+    `${STORAGE_URL}/files/system-fonts/${encodeURIComponent("manifest.json")}`,
+    body,
+    {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${ADMIN_TOKEN}`,
+      },
+    },
+  );
+  console.log(`Manifest uploaded — ${families.length} families`);
 }
 
 function cloneShallow(repo: string, dest: string) {
@@ -118,7 +236,13 @@ async function main() {
   const nerdFamilies = await scanNerdFonts(`${WORK_DIR}/nerd-fonts`);
   console.log(`  nerd: ${nerdFamilies.length} families`);
 
-  // TODO: convert, upload
+  console.log("Step 3/4 — convert + upload (this is the long one)");
+  const allFamilies = [...googleFamilies, ...nerdFamilies];
+  const uploaded = await processAll(allFamilies);
+
+  console.log("Step 4/4 — manifest");
+  await uploadManifest(uploaded);
+  console.log("Done.");
 }
 
 main().catch((err) => {
