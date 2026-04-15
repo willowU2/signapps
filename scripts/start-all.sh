@@ -26,6 +26,10 @@ done
 
 BIN_DIR="$BASE_DIR/target/$(if $RELEASE; then echo release; else echo debug; fi)"
 
+# ── Helpers (colours first — used by .env loading and later) ────────────────
+RED='\033[0;31m'; GREEN='\033[0;32m'; CYAN='\033[0;36m'; YELLOW='\033[1;33m'
+MAGENTA='\033[0;35m'; GRAY='\033[0;90m'; NC='\033[0m'
+
 # ── Load .env ───────────────────────────────────────────────────────────────
 # Source .env so all services inherit the same JWT_SECRET, DATABASE_URL, etc.
 ENV_FILE="$BASE_DIR/.env"
@@ -44,10 +48,6 @@ fi
 # Any port change or new service MUST update scripts/ports.json (not this file).
 # shellcheck disable=SC1091
 source "$BASE_DIR/scripts/ports.sh"
-
-# ── Helpers ──────────────────────────────────────────────────────────────────
-RED='\033[0;31m'; GREEN='\033[0;32m'; CYAN='\033[0;36m'; YELLOW='\033[1;33m'
-MAGENTA='\033[0;35m'; GRAY='\033[0;90m'; NC='\033[0m'
 
 ok()   { echo -e "  ${GREEN}[OK]${NC}   $1"; }
 fail() { echo -e "  ${RED}[FAIL]${NC} $1"; }
@@ -111,10 +111,22 @@ STARTED_DESCS=()
 
 for entry in "${SERVICES[@]}"; do
     IFS=':' read -r name port desc <<< "$entry"
-    bin="$BIN_DIR/signapps-$name"
+
+    # ── Binary selection + per-service env vars ──
+    # Most services share the default "signapps-<name>" binary with no extra env.
+    # `deploy` is special: the default binary is the CLI (exits after printing
+    # --help). The HTTP API lives in `signapps-deploy-server` and is gated by
+    # DEPLOY_API_ENABLED=true.
+    if [[ "$name" == "deploy" ]]; then
+        bin="$BIN_DIR/signapps-deploy-server"
+        extra_env=("DEPLOY_API_ENABLED=true" "DEPLOY_PORT=$port")
+    else
+        bin="$BIN_DIR/signapps-$name"
+        extra_env=()
+    fi
 
     if [[ ! -x "$bin" ]]; then
-        warn "$name — binary not found"
+        warn "$name — binary not found ($bin)"
         continue
     fi
 
@@ -123,7 +135,11 @@ for entry in "${SERVICES[@]}"; do
         continue
     fi
 
-    "$bin" > "$LOG_DIR/signapps-$name.log" 2> "$LOG_DIR/signapps-$name.err.log" &
+    if [[ ${#extra_env[@]} -gt 0 ]]; then
+        env "${extra_env[@]}" "$bin" > "$LOG_DIR/signapps-$name.log" 2> "$LOG_DIR/signapps-$name.err.log" &
+    else
+        "$bin" > "$LOG_DIR/signapps-$name.log" 2> "$LOG_DIR/signapps-$name.err.log" &
+    fi
     pid=$!
     PIDS+=("$pid")
     STARTED_NAMES+=("$name")
