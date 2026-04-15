@@ -1,0 +1,55 @@
+[package]
+name = "signapps-deploy"
+version.workspace = true
+edition = "2021"
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "SignApps deployment orchestrator — multi-environment deploys with rollback, maintenance flag, and migration runner"
+
+[[bin]]
+name = "signapps-deploy"
+path = "src/main.rs"
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
+# Internal crates
+signapps-cache = { path = "../../crates/signapps-cache" }
+signapps-common = { path = "../../crates/signapps-common" }
+signapps-db = { path = "../../crates/signapps-db" }
+
+# Async runtime
+tokio = { workspace = true }
+
+# CLI parsing
+clap = { version = "4", features = ["derive"] }
+
+# Docker API
+bollard = { workspace = true }
+
+# Futures utilities (bollard streams)
+futures-util = { workspace = true }
+
+# Serialization
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+# Database
+sqlx = { workspace = true }
+
+# Utilities
+uuid = { workspace = true }
+chrono = { workspace = true }
+
+# Observability
+tracing = { workspace = true }
+
+# Error handling
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+
+[dev-dependencies]
+tempfile = { workspace = true }
+wiremock = "0.6"

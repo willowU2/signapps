@@ -101,6 +101,7 @@ members = [
     "services/signapps-backup",
     "services/signapps-integrations",
     "services/signapps-compliance",
+    "services/signapps-deploy",
     "services/signapps-gamification",
     "services/signapps-collaboration",
     # signapps-dc merged into signapps-pxe (port 3016) — Refactor 35 Phase 3
