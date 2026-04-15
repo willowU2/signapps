@@ -372,6 +372,126 @@ impl LiveKitClient {
     }
 }
 
+// --- Participants -------------------------------------------------------------
+
+/// Info about a participant as returned by LiveKit.
+#[derive(Debug, Clone, Deserialize)]
+pub struct ParticipantInfo {
+    /// Server-assigned session id.
+    #[serde(default)]
+    pub sid: String,
+    /// Participant identity (client-provided).
+    #[serde(default)]
+    pub identity: String,
+    /// Human-readable name.
+    #[serde(default)]
+    pub name: String,
+    /// Participant state (`JOINING`, `JOINED`, `ACTIVE`, `DISCONNECTED`).
+    #[serde(default)]
+    pub state: String,
+    /// Tracks published by this participant.
+    #[serde(default)]
+    pub tracks: Vec<TrackInfo>,
+    /// Join time in unix seconds.
+    #[serde(default, rename = "joinedAt")]
+    pub joined_at: i64,
+}
+
+/// Info about a published track.
+#[derive(Debug, Clone, Deserialize)]
+pub struct TrackInfo {
+    /// Track session id.
+    #[serde(default)]
+    pub sid: String,
+    /// `AUDIO` / `VIDEO` / `DATA`.
+    #[serde(default, rename = "type")]
+    pub track_type: String,
+    /// Track source (camera, microphone, screen_share, …).
+    #[serde(default)]
+    pub source: String,
+    /// Whether the track is currently muted.
+    #[serde(default)]
+    pub muted: bool,
+}
+
+#[derive(Deserialize)]
+struct ListParticipantsResp {
+    #[serde(default)]
+    participants: Vec<ParticipantInfo>,
+}
+
+#[derive(Serialize)]
+struct RoomIdentityReq<'a> {
+    room: &'a str,
+    identity: &'a str,
+}
+
+#[derive(Serialize)]
+struct MuteTrackReq<'a> {
+    room: &'a str,
+    identity: &'a str,
+    #[serde(rename = "trackSid")]
+    track_sid: &'a str,
+    muted: bool,
+}
+
+impl LiveKitClient {
+    /// List participants currently in a room.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`LiveKitError::Upstream`] on a non-2xx response.
+    #[tracing::instrument(skip(self), fields(lk_url = %self.base_url))]
+    pub async fn list_participants(&self, room: &str) -> Result<Vec<ParticipantInfo>> {
+        let resp: ListParticipantsResp = self
+            .twirp(
+                "/twirp/livekit.RoomService/ListParticipants",
+                &RoomNameReq { room },
+            )
+            .await?;
+        Ok(resp.participants)
+    }
+
+    /// Forcibly remove a participant from a room.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`LiveKitError::Upstream`] if the participant/room is unknown.
+    #[tracing::instrument(skip(self), fields(lk_url = %self.base_url))]
+    pub async fn remove_participant(&self, room: &str, identity: &str) -> Result<()> {
+        self.twirp_no_content(
+            "/twirp/livekit.RoomService/RemoveParticipant",
+            &RoomIdentityReq { room, identity },
+        )
+        .await
+    }
+
+    /// Mute (or unmute) a specific published track.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`LiveKitError::Upstream`] if the track cannot be muted.
+    #[tracing::instrument(skip(self), fields(lk_url = %self.base_url))]
+    pub async fn mute_published_track(
+        &self,
+        room: &str,
+        identity: &str,
+        track_sid: &str,
+        muted: bool,
+    ) -> Result<()> {
+        self.twirp_no_content(
+            "/twirp/livekit.RoomService/MutePublishedTrack",
+            &MuteTrackReq {
+                room,
+                identity,
+                track_sid,
+                muted,
+            },
+        )
+        .await
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
