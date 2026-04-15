@@ -10,8 +10,8 @@ use axum::{
     extract::{Path, State},
     http::{header, StatusCode},
     response::Response,
-    Json,
 };
+use bytes::Bytes;
 use serde::{Deserialize, Serialize};
 
 use crate::AppState;
@@ -94,10 +94,14 @@ fn storage_base_url() -> String {
 
 /// Fetches the raw bytes for a key inside the fonts bucket from storage.
 ///
-/// Returns an `(status, message)` error tuple on any transport error or
-/// non-2xx response. The upstream status is preserved for logging but the
-/// caller decides how to map it to its own response code.
-async fn fetch_from_storage(key: &str) -> Result<(Vec<u8>, String), (StatusCode, String)> {
+/// The returned `StatusCode` in the error tuple is the status the handler
+/// should forward to its client:
+/// - upstream `404` is mapped to `NOT_FOUND` so callers can surface a proper
+///   "font missing" error;
+/// - upstream `401` / `403`, upstream `5xx` and network failures are all
+///   mapped to `SERVICE_UNAVAILABLE` — from the public API's perspective the
+///   catalog is simply not reachable.
+async fn fetch_from_storage(key: &str) -> Result<Bytes, (StatusCode, String)> {
     let url = format!("{}/api/v1/files/{}/{}", storage_base_url(), FONTS_BUCKET, key);
     let client = reqwest::Client::new();
 
@@ -112,18 +116,13 @@ async fn fetch_from_storage(key: &str) -> Result<(Vec<u8>, String), (StatusCode,
     let status = resp.status();
     if !status.is_success() {
         tracing::warn!(key, %status, "storage returned non-success for fonts asset");
-        return Err((
-            StatusCode::SERVICE_UNAVAILABLE,
-            format!("storage returned {status}"),
-        ));
+        let mapped = if status == reqwest::StatusCode::NOT_FOUND {
+            StatusCode::NOT_FOUND
+        } else {
+            StatusCode::SERVICE_UNAVAILABLE
+        };
+        return Err((mapped, format!("storage returned {status}")));
     }
-
-    let content_type = resp
-        .headers()
-        .get(reqwest::header::CONTENT_TYPE)
-        .and_then(|v| v.to_str().ok())
-        .unwrap_or("application/octet-stream")
-        .to_string();
 
     let bytes = resp.bytes().await.map_err(|err| {
         tracing::warn!(?err, key, "failed to read storage response body");
@@ -133,7 +132,7 @@ async fn fetch_from_storage(key: &str) -> Result<(Vec<u8>, String), (StatusCode,
         )
     })?;
 
-    Ok((bytes.to_vec(), content_type))
+    Ok(bytes)
 }
 
 /// Returns the JSON manifest for the universal fonts catalog.
@@ -161,7 +160,12 @@ pub async fn get_manifest(
 ) -> Result<Response, (StatusCode, String)> {
     let _ = state; // State kept for future caching / DB-backed lookups.
 
-    let (bytes, _content_type) = fetch_from_storage(MANIFEST_KEY).await?;
+    // For the manifest, any failure — missing file or storage down — is
+    // reported as 503: from the client's perspective the catalog is simply
+    // not synced yet.
+    let bytes = fetch_from_storage(MANIFEST_KEY)
+        .await
+        .map_err(|(_, msg)| (StatusCode::SERVICE_UNAVAILABLE, msg))?;
 
     Response::builder()
         .status(StatusCode::OK)
@@ -200,7 +204,8 @@ fn is_valid_slug(s: &str) -> bool {
 /// # Errors
 ///
 /// - `400 Bad Request` if either slug is invalid.
-/// - `503 Service Unavailable` if the file is missing or storage is down.
+/// - `404 Not Found` if the font file does not exist in storage.
+/// - `503 Service Unavailable` if storage is down or returns an auth / 5xx error.
 ///
 /// # Panics
 ///
@@ -215,6 +220,7 @@ fn is_valid_slug(s: &str) -> bool {
     responses(
         (status = 200, description = "woff2 font file"),
         (status = 400, description = "Invalid slug"),
+        (status = 404, description = "Font not found"),
         (status = 503, description = "File not available"),
     ),
     tag = "fonts"
@@ -231,17 +237,16 @@ pub async fn get_font_file(
         return Err((StatusCode::BAD_REQUEST, "invalid slug".into()));
     }
 
+    // Propagate the status decided by `fetch_from_storage`: missing file is
+    // reported as 404, other upstream failures as 503.
     let key = format!("{family}/{variant}.woff2");
-    let (bytes, _content_type) = fetch_from_storage(&key).await.map_err(|(_, msg)| {
-        // Upstream errors (missing file, storage down) are surfaced as 503:
-        // the client is supposed to pin the URL via the manifest and we don't
-        // want to leak storage internals.
-        (StatusCode::SERVICE_UNAVAILABLE, msg)
-    })?;
+    let bytes = fetch_from_storage(&key).await?;
+    let content_length = bytes.len();
 
     Response::builder()
         .status(StatusCode::OK)
         .header(header::CONTENT_TYPE, "font/woff2")
+        .header(header::CONTENT_LENGTH, content_length)
         .header(header::CACHE_CONTROL, "public, max-age=2592000, immutable")
         .header(header::ACCESS_CONTROL_ALLOW_ORIGIN, "*")
         .body(Body::from(bytes))
