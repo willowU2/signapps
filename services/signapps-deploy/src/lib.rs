@@ -13,3 +13,4 @@ pub mod orchestrator;
 pub mod persistence;
 pub mod promote;
 pub mod scheduler;
+pub mod strategies;
