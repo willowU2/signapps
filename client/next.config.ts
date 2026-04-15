@@ -97,6 +97,47 @@ const nextConfig = {
       "onnxruntime-web/wasm": "onnxruntime-web/dist/ort.min.js",
     },
   },
+  // Webpack fallback config — only applies when `next dev --webpack` is used
+  // (Turbopack handles node: imports natively, Webpack doesn't).
+  // pptxgenjs (via slides-content.tsx → file-preview-dialog.tsx) does a
+  // conditional `require('node:fs')` for server usage; we need to tell
+  // Webpack to treat those as empty modules in the client bundle.
+  webpack: (
+    config: {
+      resolve?: { fallback?: Record<string, false | string> };
+      plugins?: unknown[];
+    },
+    { isServer }: { isServer: boolean },
+  ) => {
+    if (!isServer) {
+      config.resolve = config.resolve ?? {};
+      config.resolve.fallback = {
+        ...(config.resolve.fallback ?? {}),
+        fs: false,
+        https: false,
+        http: false,
+        path: false,
+        os: false,
+        stream: false,
+        crypto: false,
+        zlib: false,
+      };
+      // Strip the `node:` prefix so imports like `node:fs` resolve to the
+      // fallback above (which is `false` → empty module in the client bundle).
+      // Lazy-require to keep Turbopack path free of webpack imports.
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const webpack = require("next/dist/compiled/webpack/webpack-lib");
+      (config.plugins ?? []).push(
+        new webpack.NormalModuleReplacementPlugin(
+          /^node:/,
+          (resource: { request: string }) => {
+            resource.request = resource.request.replace(/^node:/, "");
+          },
+        ),
+      );
+    }
+    return config;
+  },
   serverExternalPackages: ["onnxruntime-web"],
 };
 
