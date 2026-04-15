@@ -2,7 +2,15 @@
 //!
 //! Dormant by default: exits cleanly with a warning if `DEPLOY_API_ENABLED`
 //! is not `"true"`. Otherwise starts an Axum server on `DEPLOY_PORT`
-//! (default `3035`).
+//! (default `3700`).
+//!
+//! # Port choice
+//!
+//! The default port `3700` sits immediately after the Windows Hyper-V reserved
+//! range (typically `2953-3653` on Windows Desktop hosts with Docker/WSL
+//! installed). Running the server natively on Windows with a port inside that
+//! range fails with `WSAEACCES (os error 10013)`. Docker-bridged deployments
+//! are unaffected because they bind inside the container namespace.
 
 use anyhow::{Context, Result};
 use signapps_cache::CacheService;
@@ -42,7 +50,7 @@ async fn main() -> Result<()> {
     };
 
     let port = std::env::var("DEPLOY_PORT")
-        .unwrap_or_else(|_| "3035".into())
+        .unwrap_or_else(|_| "3700".into())
         .parse::<u16>()
         .context("invalid DEPLOY_PORT")?;
 

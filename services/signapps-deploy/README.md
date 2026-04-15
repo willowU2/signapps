@@ -64,8 +64,15 @@ See `docs/superpowers/specs/2026-04-15-multi-env-deployment-design.md`.
 
 ## Port
 
-`3035` (registered in `scripts/ports.json`). The HTTP server is dormant in
+`3700` (registered in `scripts/ports.json`). The HTTP server is dormant in
 Phase 1 — activated via `DEPLOY_API_ENABLED=true` in Phase 3.
+
+> **Windows note:** `3700` was chosen because the default `3035` slot falls
+> inside the Windows Hyper-V reserved port range (`2953-3653` on most
+> Docker/WSL hosts). Binding there natively fails with `WSAEACCES (os error
+> 10013)`. `3700` is the first port immediately after the reserved block.
+> Override with `DEPLOY_PORT=<n>` if needed; run `netsh interface ipv4 show
+> excludedportrange protocol=tcp` to list reserved ranges on your host.
 
 ## Phase 2 additions
 
@@ -145,7 +152,7 @@ The `CacheService` used for the maintenance flag is in-process. The scheduler wo
 
 ## Phase 3a additions — HTTP API + WebSocket
 
-The orchestrator now ships a dormant HTTP API (port 3035) activated by an env var. When enabled, all endpoints live under `/api/v1/deploy/` and require the `superadmin` JWT role.
+The orchestrator now ships a dormant HTTP API (port 3700 — see "Port" section above for the Windows rationale) activated by an env var. When enabled, all endpoints live under `/api/v1/deploy/` and require the `superadmin` JWT role.
 
 ### Enabling the API
 
@@ -178,7 +185,7 @@ All routes under `/api/v1/deploy/` require a JWT with `role >= 3` (SuperAdmin).
 
 ### OpenAPI + Swagger UI
 
-Interactive docs at `http://<host>:3035/swagger-ui/`. Raw OpenAPI JSON at `/api-docs/openapi.json`.
+Interactive docs at `http://<host>:3700/swagger-ui/`. Raw OpenAPI JSON at `/api-docs/openapi.json`.
 
 ### Feature flags
 

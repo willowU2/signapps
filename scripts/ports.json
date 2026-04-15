@@ -36,7 +36,7 @@
     { "name": "compliance",     "port": 3032, "description": "Compliance, RGPD, data export, retention",     "health_path": "/health" },
     { "name": "gamification",   "port": 3033, "description": "XP, badges, streaks, leaderboard",             "health_path": "/health" },
     { "name": "collaboration",  "port": 3034, "description": "Mind maps, brainstorming boards",              "health_path": "/health" },
-    { "name": "deploy",         "port": 3035, "description": "Deployment orchestrator (CLI + dormant HTTP API, Phase 3)", "health_path": "/health" },
+    { "name": "deploy",         "port": 3700, "description": "Deployment orchestrator (CLI + dormant HTTP API, Phase 3). Windows: 3000-3653 est une plage Hyper-V reservee — 3700 est le premier port libre apres cette plage.", "health_path": "/health" },
     { "name": "notifications",  "port": 8095, "description": "Push notifications",                           "health_path": "/health" },
     { "name": "billing",        "port": 8096, "description": "Billing and invoicing",                        "health_path": "/health" },
     { "name": "gateway",        "port": 3099, "description": "API gateway (aggregator)",                     "health_path": "/health" }
@@ -79,7 +79,7 @@
       { "name": "compliance",     "port": 4032 },
       { "name": "gamification",   "port": 4033 },
       { "name": "collaboration",  "port": 4034 },
-      { "name": "deploy",         "port": 4035 },
+      { "name": "deploy",         "port": 4700 },
       { "name": "notifications",  "port": 9095 },
       { "name": "billing",        "port": 9096 },
       { "name": "gateway",        "port": 4099 }
