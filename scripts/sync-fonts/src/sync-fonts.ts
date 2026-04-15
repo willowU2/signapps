@@ -249,15 +249,25 @@ function parseGoogleMetadata(metadataPath: string): RawFamily | null {
                 : segments.includes("apache") ? "Apache-2.0"
                 : "UFL-1.0";
 
+  // Parse every `fonts { ... }` block and pull filename/style/weight from
+  // wherever they appear inside. The field order changed in newer
+  // METADATA.pb files (name/style/weight first, filename later), so we
+  // can't rely on a single positional regex.
   const files: RawFamily["files"] = [];
-  const fontRegex = /filename:\s*"([^"]+)"\s+post_script_name:\s*"[^"]+"\s+full_name:\s*"[^"]+"\s+style:\s*"([^"]+)"\s+weight:\s*(\d+)/g;
-  let m: RegExpExecArray | null;
-  while ((m = fontRegex.exec(content)) !== null) {
-    files.push({
-      weight: Number(m[3]),
-      style: m[2],
-      absPath: `${dir}/${m[1]}`,
-    });
+  const blockRegex = /fonts\s*\{([^}]*)\}/g;
+  let block: RegExpExecArray | null;
+  while ((block = blockRegex.exec(content)) !== null) {
+    const body = block[1];
+    const filename = /filename:\s*"([^"]+)"/.exec(body)?.[1];
+    const style = /style:\s*"([^"]+)"/.exec(body)?.[1];
+    const weight = /weight:\s*(\d+)/.exec(body)?.[1];
+    if (filename && style && weight) {
+      files.push({
+        weight: Number(weight),
+        style,
+        absPath: `${dir}/${filename}`,
+      });
+    }
   }
 
   return {
