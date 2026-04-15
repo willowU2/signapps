@@ -44,5 +44,45 @@
   "infrastructure": {
     "postgres": { "port": 5432, "container": "signapps-postgres" },
     "livekit":  { "port": 7880, "description": "WebRTC signaling" }
+  },
+  "staging": {
+    "_doc": "Staging environment — all prod ports +1000. Cohabits with prod on the same host.",
+    "frontend": 4000,
+    "services": [
+      { "name": "identity",       "port": 4001 },
+      { "name": "containers",     "port": 4002 },
+      { "name": "proxy",          "port": 4003 },
+      { "name": "storage",        "port": 4004 },
+      { "name": "ai",             "port": 4005 },
+      { "name": "securelink",     "port": 4006 },
+      { "name": "scheduler",      "port": 4007 },
+      { "name": "metrics",        "port": 4008 },
+      { "name": "media",          "port": 4009 },
+      { "name": "docs",           "port": 4010 },
+      { "name": "calendar",       "port": 4011 },
+      { "name": "mail",           "port": 4012 },
+      { "name": "meet",           "port": 4014 },
+      { "name": "forms",          "port": 4015 },
+      { "name": "pxe",            "port": 4016 },
+      { "name": "social",         "port": 4019 },
+      { "name": "chat",           "port": 4020 },
+      { "name": "contacts",       "port": 4021 },
+      { "name": "it-assets",      "port": 4022 },
+      { "name": "workforce",      "port": 4024 },
+      { "name": "vault",          "port": 4025 },
+      { "name": "org",            "port": 4026 },
+      { "name": "webhooks",       "port": 4027 },
+      { "name": "signatures",     "port": 4028 },
+      { "name": "tenant-config",  "port": 4029 },
+      { "name": "integrations",   "port": 4030 },
+      { "name": "backup",         "port": 4031 },
+      { "name": "compliance",     "port": 4032 },
+      { "name": "gamification",   "port": 4033 },
+      { "name": "collaboration",  "port": 4034 },
+      { "name": "deploy",         "port": 4035 },
+      { "name": "notifications",  "port": 9095 },
+      { "name": "billing",        "port": 9096 },
+      { "name": "gateway",        "port": 4099 }
+    ]
   }
 }

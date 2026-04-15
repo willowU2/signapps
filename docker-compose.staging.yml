@@ -1,0 +1,515 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# SignApps Platform — Staging Docker Compose
+#
+# Side-by-side staging stack that cohabits with the prod stack on the same
+# machine. All ports are shifted +1000 from prod (3xxx → 4xxx, 8xxx → 9xxx).
+#
+# Usage:
+#   cp .env.example .env.dev && $EDITOR .env.dev
+#   docker compose -f docker-compose.staging.yml --env-file .env.dev up -d
+#
+# Postgres is NOT part of this stack. Staging reuses the existing
+# signapps-postgres container on the host (port 5432) but targets a separate
+# database `signapps_staging`. The DB itself is created by the staging DB
+# bootstrap script (Task P2.3). On Docker Desktop (Windows/macOS) containers
+# reach the host via `host.docker.internal`. On Linux, enable host-gateway:
+#   extra_hosts:
+#     - "host.docker.internal:host-gateway"
+# (not added here since Docker Desktop resolves it natively).
+#
+# SECURITY: Images are private — push to ghcr.io only, never to Docker Hub.
+# ─────────────────────────────────────────────────────────────────────────────
+
+name: signapps-staging
+
+# ─── Shared defaults ─────────────────────────────────────────────────────────
+
+x-backend: &backend
+  image: ghcr.io/your-org/signapps-platform:${SIGNAPPS_STAGING_VERSION:-latest}
+  restart: unless-stopped
+  networks:
+    - signapps-staging
+  environment: &backend-env
+    SIGNAPPS_ENV: dev
+    DATABASE_URL: postgres://signapps:${POSTGRES_PASSWORD}@host.docker.internal:5432/signapps_staging
+    # RS256 mode (recommended): set both keys on identity, only public on others
+    JWT_PUBLIC_KEY_PEM: ${JWT_PUBLIC_KEY_PEM}
+    RUST_LOG: ${RUST_LOG:-info,signapps=debug}
+    RUST_LOG_FORMAT: json
+    MODELS_DIR: /data/models
+    GPU_BACKEND: ${GPU_BACKEND:-cpu}
+    STORAGE_MODE: ${STORAGE_MODE:-fs}
+    STORAGE_FS_ROOT: /data/storage-staging
+  healthcheck: &healthcheck
+    test: ["CMD-SHELL", "wget -qO- http://localhost:$${SERVER_PORT:-3099}/health || exit 1"]
+    interval: 15s
+    timeout: 5s
+    retries: 5
+    start_period: 10s
+
+# ─── Services ─────────────────────────────────────────────────────────────────
+
+services:
+
+  # ── Backend Services ────────────────────────────────────────────────────────
+  # NOTE: postgres is NOT part of this stack. Staging targets the shared
+  #       signapps-postgres container via host.docker.internal:5432.
+
+  identity:
+    <<: *backend
+    command: ["/app/bin/signapps-identity"]
+    environment:
+      <<: *backend-env
+      SERVER_PORT: "3001"
+      # identity is the only service that needs the private key for JWT signing
+      JWT_PRIVATE_KEY_PEM: ${JWT_PRIVATE_KEY_PEM}
+      JWT_SECRET: ${JWT_SECRET:-}
+      LDAP_URL: ${LDAP_URL:-}
+      LDAP_BIND_DN: ${LDAP_BIND_DN:-}
+      LDAP_BIND_PASSWORD: ${LDAP_BIND_PASSWORD:-}
+      LDAP_BASE_DN: ${LDAP_BASE_DN:-}
+      LDAP_ENCRYPTION_KEY: ${LDAP_ENCRYPTION_KEY:-}
+    ports:
+      - "${STAGING_IDENTITY_PORT:-4001}:3001"
+    healthcheck:
+      <<: *healthcheck
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3001/health || exit 1"]
+
+  containers:
+    <<: *backend
+    command: ["/app/bin/signapps-containers"]
+    environment:
+      <<: *backend-env
+      SERVER_PORT: "3002"
+    ports:
+      - "${STAGING_CONTAINERS_PORT:-4002}:3002"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    healthcheck:
+      <<: *healthcheck
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3002/health || exit 1"]
+
+  proxy:
+    <<: *backend
+    command: ["/app/bin/signapps-proxy"]
+    environment:
+      <<: *backend-env
+      SERVER_PORT: "3003"
+      ACME_EMAIL: ${ACME_EMAIL:-admin@example.com}
+    # NOTE: Staging does NOT bind ports 80/443 — those are owned by the prod
+    # proxy on the same host. Only the admin port is exposed on +1000.
+    ports:
+      - "${STAGING_PROXY_PORT:-4003}:3003"
+    volumes:
+      - proxy_staging_tls:/data/tls
+    healthcheck:
+      <<: *healthcheck
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3003/health || exit 1"]
+
+  storage:
+    <<: *backend
+    command: ["/app/bin/signapps-storage"]
+    environment:
+      <<: *backend-env
+      SERVER_PORT: "3004"
+      STORAGE_MODE: ${STORAGE_MODE:-fs}
+      STORAGE_FS_ROOT: /data/storage-staging
+      STORAGE_S3_ENDPOINT: ${STORAGE_S3_ENDPOINT:-}
+      STORAGE_S3_ACCESS_KEY: ${STORAGE_S3_ACCESS_KEY:-}
+      STORAGE_S3_SECRET_KEY: ${STORAGE_S3_SECRET_KEY:-}
+      STORAGE_S3_REGION: ${STORAGE_S3_REGION:-us-east-1}
+      STORAGE_S3_BUCKET: ${STORAGE_S3_BUCKET:-signapps-staging}
+    ports:
+      - "${STAGING_STORAGE_PORT:-4004}:3004"
+    volumes:
+      - storage_staging_data:/data/storage-staging
+    healthcheck:
+      <<: *healthcheck
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3004/health || exit 1"]
+
+  ai:
+    <<: *backend
+    command: ["/app/bin/signapps-ai"]
+    environment:
+      <<: *backend-env
+      SERVER_PORT: "3005"
+      LLM_PROVIDER: ${LLM_PROVIDER:-ollama}
+      OLLAMA_URL: ${OLLAMA_URL:-}
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3.2:3b}
+      EMBEDDINGS_URL: ${EMBEDDINGS_URL:-}
+      EMBEDDINGS_MODEL: ${EMBEDDINGS_MODEL:-nomic-embed-text}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_MODEL: ${OPENAI_MODEL:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      ANTHROPIC_MODEL: ${ANTHROPIC_MODEL:-}
+      HF_TOKEN: ${HF_TOKEN:-}
+    ports:
+      - "${STAGING_AI_PORT:-4005}:3005"
+    volumes:
+      - models_staging_data:/data/models
+    healthcheck:
+      <<: *healthcheck
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3005/health || exit 1"]
+
+  securelink:
+    <<: *backend
+    command: ["/app/bin/signapps-securelink"]
+    environment:
+      <<: *backend-env
+      SERVER_PORT: "3006"
+    ports:
+      - "${STAGING_SECURELINK_PORT:-4006}:3006"
+    healthcheck:
+      <<: *healthcheck
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3006/health || exit 1"]
+
+  scheduler:
+    <<: *backend
+    command: ["/app/bin/signapps-scheduler"]
+    environment:
+      <<: *backend-env
+      SERVER_PORT: "3007"
+    ports:
+      - "${STAGING_SCHEDULER_PORT:-4007}:3007"
+    healthcheck:
+      <<: *healthcheck
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3007/health || exit 1"]
+
+  metrics:
+    <<: *backend
+    command: ["/app/bin/signapps-metrics"]
+    environment:
+      <<: *backend-env
+      SERVER_PORT: "3008"
+    ports:
+      - "${STAGING_METRICS_PORT:-4008}:3008"
+    healthcheck:
+      <<: *healthcheck
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3008/health || exit 1"]
+
+  media:
+    <<: *backend
+    command: ["/app/bin/signapps-media"]
+    environment:
+      <<: *backend-env
+      SERVER_PORT: "3009"
+      STT_MODEL: ${STT_MODEL:-medium}
+      TTS_VOICE: ${TTS_VOICE:-fr_FR-siwis-medium}
+    ports:
+      - "${STAGING_MEDIA_PORT:-4009}:3009"
+    volumes:
+      - models_staging_data:/data/models
+    healthcheck:
+      <<: *healthcheck
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3009/health || exit 1"]
+
+  docs:
+    <<: *backend
+    command: ["/app/bin/signapps-docs"]
+    environment:
+      <<: *backend-env
+      SERVER_PORT: "3010"
+    ports:
+      - "${STAGING_DOCS_PORT:-4010}:3010"
+    healthcheck:
+      <<: *healthcheck
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3010/health || exit 1"]
+
+  calendar:
+    <<: *backend
+    command: ["/app/bin/signapps-calendar"]
+    environment:
+      <<: *backend-env
+      SERVER_PORT: "3011"
+    ports:
+      - "${STAGING_CALENDAR_PORT:-4011}:3011"
+    healthcheck:
+      <<: *healthcheck
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3011/health || exit 1"]
+
+  mail:
+    <<: *backend
+    command: ["/app/bin/signapps-mail"]
+    environment:
+      <<: *backend-env
+      SERVER_PORT: "3012"
+      MAIL_SERVICE_URL: http://mail:3012
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      MICROSOFT_CLIENT_ID: ${MICROSOFT_CLIENT_ID:-}
+      MICROSOFT_CLIENT_SECRET: ${MICROSOFT_CLIENT_SECRET:-}
+    ports:
+      - "${STAGING_MAIL_PORT:-4012}:3012"
+    healthcheck:
+      <<: *healthcheck
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3012/health || exit 1"]
+
+  meet:
+    <<: *backend
+    command: ["/app/bin/signapps-meet"]
+    environment:
+      <<: *backend-env
+      SERVER_PORT: "3014"
+    ports:
+      - "${STAGING_MEET_PORT:-4014}:3014"
+    healthcheck:
+      <<: *healthcheck
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3014/health || exit 1"]
+
+  forms:
+    <<: *backend
+    command: ["/app/bin/signapps-forms"]
+    environment:
+      <<: *backend-env
+      SERVER_PORT: "3015"
+    ports:
+      - "${STAGING_FORMS_PORT:-4015}:3015"
+    healthcheck:
+      <<: *healthcheck
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3015/health || exit 1"]
+
+  pxe:
+    <<: *backend
+    command: ["/app/bin/signapps-pxe"]
+    environment:
+      <<: *backend-env
+      SERVER_PORT: "3016"
+    # NOTE: Staging does NOT bind UDP/69 (TFTP) — only one TFTP server can run
+    # per host and it belongs to prod. Only the HTTP admin port is exposed.
+    ports:
+      - "${STAGING_PXE_PORT:-4016}:3016"
+    healthcheck:
+      <<: *healthcheck
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3016/health || exit 1"]
+
+  social:
+    <<: *backend
+    command: ["/app/bin/signapps-social"]
+    environment:
+      <<: *backend-env
+      SERVER_PORT: "3019"
+    ports:
+      - "${STAGING_SOCIAL_PORT:-4019}:3019"
+    healthcheck:
+      <<: *healthcheck
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3019/health || exit 1"]
+
+  chat:
+    <<: *backend
+    command: ["/app/bin/signapps-chat"]
+    environment:
+      <<: *backend-env
+      SERVER_PORT: "3020"
+    ports:
+      - "${STAGING_CHAT_PORT:-4020}:3020"
+    healthcheck:
+      <<: *healthcheck
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3020/health || exit 1"]
+
+  contacts:
+    <<: *backend
+    command: ["/app/bin/signapps-contacts"]
+    environment:
+      <<: *backend-env
+      SERVER_PORT: "3021"
+    ports:
+      - "${STAGING_CONTACTS_PORT:-4021}:3021"
+    healthcheck:
+      <<: *healthcheck
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3021/health || exit 1"]
+
+  it-assets:
+    <<: *backend
+    command: ["/app/bin/signapps-it-assets"]
+    environment:
+      <<: *backend-env
+      SERVER_PORT: "3022"
+    ports:
+      - "${STAGING_IT_ASSETS_PORT:-4022}:3022"
+    healthcheck:
+      <<: *healthcheck
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3022/health || exit 1"]
+
+  workforce:
+    <<: *backend
+    command: ["/app/bin/signapps-workforce"]
+    environment:
+      <<: *backend-env
+      SERVER_PORT: "3024"
+    ports:
+      - "${STAGING_WORKFORCE_PORT:-4024}:3024"
+    healthcheck:
+      <<: *healthcheck
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3024/health || exit 1"]
+
+  vault:
+    <<: *backend
+    command: ["/app/bin/signapps-vault"]
+    environment:
+      <<: *backend-env
+      SERVER_PORT: "3025"
+    ports:
+      - "${STAGING_VAULT_PORT:-4025}:3025"
+    healthcheck:
+      <<: *healthcheck
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3025/health || exit 1"]
+
+  org:
+    <<: *backend
+    command: ["/app/bin/signapps-org"]
+    environment:
+      <<: *backend-env
+      SERVER_PORT: "3026"
+    ports:
+      - "${STAGING_ORG_PORT:-4026}:3026"
+    healthcheck:
+      <<: *healthcheck
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3026/health || exit 1"]
+
+  webhooks:
+    <<: *backend
+    command: ["/app/bin/signapps-webhooks"]
+    environment:
+      <<: *backend-env
+      SERVER_PORT: "3027"
+    ports:
+      - "${STAGING_WEBHOOKS_PORT:-4027}:3027"
+    healthcheck:
+      <<: *healthcheck
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3027/health || exit 1"]
+
+  signatures:
+    <<: *backend
+    command: ["/app/bin/signapps-signatures"]
+    environment:
+      <<: *backend-env
+      SERVER_PORT: "3028"
+    ports:
+      - "${STAGING_SIGNATURES_PORT:-4028}:3028"
+    healthcheck:
+      <<: *healthcheck
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3028/health || exit 1"]
+
+  tenant-config:
+    <<: *backend
+    command: ["/app/bin/signapps-tenant-config"]
+    environment:
+      <<: *backend-env
+      SERVER_PORT: "3029"
+    ports:
+      - "${STAGING_TENANT_CONFIG_PORT:-4029}:3029"
+    healthcheck:
+      <<: *healthcheck
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3029/health || exit 1"]
+
+  integrations:
+    <<: *backend
+    command: ["/app/bin/signapps-integrations"]
+    environment:
+      <<: *backend-env
+      SERVER_PORT: "3030"
+    ports:
+      - "${STAGING_INTEGRATIONS_PORT:-4030}:3030"
+    healthcheck:
+      <<: *healthcheck
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3030/health || exit 1"]
+
+  # NOTE: `backup` service is NOT part of staging — staging does not manage
+  # backups (prod owns DB/file backup responsibility).
+
+  compliance:
+    <<: *backend
+    command: ["/app/bin/signapps-compliance"]
+    environment:
+      <<: *backend-env
+      SERVER_PORT: "3032"
+    ports:
+      - "${STAGING_COMPLIANCE_PORT:-4032}:3032"
+    healthcheck:
+      <<: *healthcheck
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3032/health || exit 1"]
+
+  notifications:
+    <<: *backend
+    command: ["/app/bin/signapps-notifications"]
+    environment:
+      <<: *backend-env
+      SERVER_PORT: "8095"
+    ports:
+      - "${STAGING_NOTIFICATIONS_PORT:-9095}:8095"
+    healthcheck:
+      <<: *healthcheck
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8095/health || exit 1"]
+
+  billing:
+    <<: *backend
+    command: ["/app/bin/signapps-billing"]
+    environment:
+      <<: *backend-env
+      SERVER_PORT: "8096"
+    ports:
+      - "${STAGING_BILLING_PORT:-9096}:8096"
+    healthcheck:
+      <<: *healthcheck
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8096/health || exit 1"]
+
+  gateway:
+    <<: *backend
+    command: ["/app/bin/signapps-gateway"]
+    environment:
+      <<: *backend-env
+      SERVER_PORT: "3099"
+    ports:
+      - "${STAGING_GATEWAY_PORT:-4099}:3099"
+    depends_on:
+      identity:
+        condition: service_healthy
+    healthcheck:
+      <<: *healthcheck
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3099/health || exit 1"]
+
+  # ── Frontend ─────────────────────────────────────────────────────────────────
+
+  frontend:
+    image: ghcr.io/your-org/signapps-frontend:${SIGNAPPS_STAGING_VERSION:-latest}
+    restart: unless-stopped
+    networks:
+      - signapps-staging
+    environment:
+      NODE_ENV: production
+      SIGNAPPS_ENV: dev
+      # Public API base URL — must be reachable from the browser
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:4099}
+      NEXT_PUBLIC_DOCS_URL: ${NEXT_PUBLIC_DOCS_URL:-ws://localhost:4010}
+      PORT: "3000"
+      HOSTNAME: "0.0.0.0"
+    ports:
+      - "${STAGING_FRONTEND_PORT:-4000}:3000"
+    depends_on:
+      gateway:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/ || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+# ─── Volumes ──────────────────────────────────────────────────────────────────
+
+volumes:
+  storage_staging_data:
+    driver: local
+  models_staging_data:
+    driver: local
+  proxy_staging_tls:
+    driver: local
+
+# ─── Networks ─────────────────────────────────────────────────────────────────
+
+networks:
+  signapps-staging:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: "172.21.0.0/16"
