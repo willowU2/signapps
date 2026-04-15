@@ -1,5 +1,6 @@
 //! Meet service HTTP handlers
 
+pub mod lobby;
 pub mod openapi;
 pub mod participants;
 pub mod recordings;

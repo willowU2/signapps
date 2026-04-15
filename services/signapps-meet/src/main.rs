@@ -23,6 +23,9 @@ pub struct AppState {
     pub jwt_config: JwtConfig,
     /// Shared LiveKit Server client (token issuance, RoomService, Egress).
     pub livekit: Arc<LiveKitClient>,
+    /// In-memory lobby / knock state (provisional until
+    /// `meet_extensions.sql` lands — see Task 14 STOP-point in the plan).
+    pub lobby: Arc<handlers::lobby::LobbyState>,
 }
 
 impl AuthState for AppState {
@@ -82,6 +85,7 @@ async fn main() -> anyhow::Result<()> {
         pool,
         jwt_config,
         livekit,
+        lobby: Arc::new(handlers::lobby::LobbyState::new()),
     };
 
     let app = build_router(state);
@@ -120,14 +124,17 @@ async fn meet_health() -> axum::Json<serde_json::Value> {
 fn build_router(state: AppState) -> Router {
     use axum::routing::{delete, get, patch, post};
     use handlers::{
-        openapi, participants, recordings, remote, rooms, tokens, transcription, video_messages,
-        voicemails, waiting_room,
+        lobby, openapi, participants, recordings, remote, rooms, tokens, transcription,
+        video_messages, voicemails, waiting_room,
     };
 
     // Public routes
     let public_routes = Router::new()
         .route("/health", get(meet_health))
         .route("/api/v1/meet/config", get(handlers::get_config))
+        // Lobby (public — unauth lookups and knock-to-enter)
+        .route("/api/v1/meet/rooms/:code/lobby", get(lobby::get_lobby))
+        .route("/api/v1/meet/rooms/:code/knock", post(lobby::knock))
         // Remote health alias (backward compat — remote merged into this service)
         .route("/api/v1/remote/health", get(meet_health));
 
@@ -153,7 +160,10 @@ fn build_router(state: AppState) -> Router {
         .route("/api/v1/meet/rooms/:id/recording", get(recordings::get_active_recording))
         .route("/api/v1/meet/rooms/:id/recording/start", post(recordings::start_recording))
         .route("/api/v1/meet/rooms/:id/recording/stop", post(recordings::stop_room_recording))
-        // Waiting room
+        // Lobby admit/deny (host-only)
+        .route("/api/v1/meet/rooms/:code/admit/:identity", post(lobby::admit))
+        .route("/api/v1/meet/rooms/:code/deny/:identity", post(lobby::deny))
+        // Waiting room (legacy DB-backed — retained for Phase 0 compatibility)
         .route("/api/v1/meet/rooms/:id/waiting-room", get(waiting_room::list_waiting).post(waiting_room::join_waiting_room))
         .route("/api/v1/meet/rooms/:id/waiting-room/admit/:user_id", post(waiting_room::admit_user))
         .route("/api/v1/meet/rooms/:id/waiting-room/deny/:user_id", post(waiting_room::deny_user))
