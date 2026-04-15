@@ -258,8 +258,9 @@ update-tools:
 
 # ─────────────────────────── Deploy ──────────────────────────
 
-# Deploy a version to prod (with strict confirmation)
+# Deploy a version to prod (with strict confirmation). Interactive TTY required.
 deploy-prod version:
+    @[ -t 0 ] || { echo "Interactive terminal required (no piped input allowed)." >&2; exit 1; }
     @echo "Type 'DEPLOY PROD {{version}}' to confirm:"
     @read -r input && [ "$input" = "DEPLOY PROD {{version}}" ] || { echo "Aborted."; exit 1; }
     cargo run --release -p signapps-deploy -- deploy --env prod --version {{version}}
@@ -268,8 +269,9 @@ deploy-prod version:
 deploy-dev version:
     cargo run --release -p signapps-deploy -- deploy --env dev --version {{version}}
 
-# Roll back the last successful deployment of prod (with confirmation)
+# Roll back the last successful deployment of prod. Interactive TTY required.
 rollback-prod:
+    @[ -t 0 ] || { echo "Interactive terminal required (no piped input allowed)." >&2; exit 1; }
     @echo "Type 'ROLLBACK PROD' to confirm:"
     @read -r input && [ "$input" = "ROLLBACK PROD" ] || { echo "Aborted."; exit 1; }
     cargo run --release -p signapps-deploy -- rollback --env prod
