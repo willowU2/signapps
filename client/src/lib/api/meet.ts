@@ -102,6 +102,37 @@ export interface MuteRequest {
     video?: boolean;
 }
 
+export interface InstantRoomResponse {
+    id: string;
+    room_code: string;
+    name: string;
+    livekit_url?: string;
+}
+
+export interface LobbyInfo {
+    room_code: string;
+    room_name: string;
+    knock_required?: boolean;
+    host_present?: boolean;
+    participant_count?: number;
+}
+
+export interface KnockRequest {
+    display_name?: string;
+}
+
+export interface KnockResponse {
+    knock_id: string;
+    status: 'pending' | 'admitted' | 'denied';
+}
+
+export interface JoinRoomResponse {
+    token: string;
+    livekit_url: string;
+    room_name: string;
+    room_code: string;
+}
+
 // ============================================================================
 // Meet API
 // ============================================================================
@@ -126,6 +157,26 @@ export const meetApi = {
 
     createRoom: (data: CreateRoomRequest) =>
         meetClient.post<Room>('/meet/rooms', data),
+
+    createInstantRoom: () =>
+        meetClient.post<InstantRoomResponse>('/meet/rooms/instant'),
+
+    getLobby: (code: string) =>
+        meetClient.get<LobbyInfo>(`/meet/rooms/${code}/lobby`),
+
+    knock: (code: string, data?: KnockRequest) =>
+        meetClient.post<KnockResponse>(`/meet/rooms/${code}/knock`, data ?? {}),
+
+    admitKnock: (code: string, knockId: string) =>
+        meetClient.post(`/meet/rooms/${code}/admit`, { knock_id: knockId }),
+
+    denyKnock: (code: string, knockId: string) =>
+        meetClient.post(`/meet/rooms/${code}/deny`, { knock_id: knockId }),
+
+    joinByCode: (code: string, displayName?: string) =>
+        meetClient.post<JoinRoomResponse>(`/meet/rooms/${code}/join`, {
+            display_name: displayName,
+        }),
 
     updateRoom: (id: string, data: UpdateRoomRequest) =>
         meetClient.put<Room>(`/meet/rooms/${id}`, data),
