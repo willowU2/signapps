@@ -30,6 +30,8 @@ pub enum Command {
         #[arg(long, value_parser = ["prod", "dev"])]
         env: String,
     },
+    /// Promote the last successful dev deployment to prod.
+    Promote,
 }
 
 impl Cli {
@@ -45,6 +47,7 @@ impl Cli {
             Command::Deploy { env, version } => crate::orchestrator::deploy(&env, &version).await,
             Command::Rollback { env } => crate::orchestrator::rollback(&env).await,
             Command::Status { env } => crate::orchestrator::status(&env).await,
+            Command::Promote => crate::promote::promote_dev_to_prod().await,
         }
     }
 }
