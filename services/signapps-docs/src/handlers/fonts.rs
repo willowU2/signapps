@@ -5,6 +5,9 @@
 //! public — fonts are static assets meant to be loaded by `<link>` and
 //! `@font-face` from any origin.
 
+use std::sync::OnceLock;
+use std::time::Duration;
+
 use axum::{
     body::Body,
     extract::{Path, State},
@@ -13,6 +16,7 @@ use axum::{
 };
 use bytes::Bytes;
 use serde::{Deserialize, Serialize};
+use url::Url;
 
 use crate::AppState;
 
@@ -81,15 +85,48 @@ const MANIFEST_KEY: &str = "manifest.json";
 /// Default internal URL of the `signapps-storage` service.
 const DEFAULT_STORAGE_URL: &str = "http://localhost:3004";
 
+/// Process-wide `reqwest` client used to talk to `signapps-storage`.
+///
+/// A single client is built lazily and reused across all font requests.
+/// Building a fresh client per call leaks a connection pool on every call
+/// and costs ~1 ms in TLS setup (see `reqwest::Client::new` docs).
+static STORAGE_CLIENT: OnceLock<reqwest::Client> = OnceLock::new();
+
+/// Returns the shared [`reqwest::Client`] used to contact storage.
+///
+/// Configured with:
+/// - `timeout(10s)` so a stuck storage backend cannot hang a font request
+///   forever.
+/// - `redirect::Policy::none()` so an attacker cannot coerce this server-side
+///   fetch into following a redirect to an internal URL (SSRF guard).
+fn storage_client() -> &'static reqwest::Client {
+    STORAGE_CLIENT.get_or_init(|| {
+        reqwest::Client::builder()
+            .redirect(reqwest::redirect::Policy::none())
+            .timeout(Duration::from_secs(10))
+            .build()
+            .unwrap_or_else(|_| reqwest::Client::new())
+    })
+}
+
 /// Returns the internal base URL of the storage service.
 ///
-/// Reads `STORAGE_INTERNAL_URL`, falling back to `DEFAULT_STORAGE_URL`.
+/// Reads `STORAGE_INTERNAL_URL`, falling back to [`DEFAULT_STORAGE_URL`].
+/// The scheme is validated: only `http` and `https` are accepted. Anything
+/// else (`file://`, `gopher://`, `javascript:` …) falls back to the default
+/// to avoid SSRF via env-var injection in shared-host setups.
 /// Trailing slashes are trimmed for clean URL concatenation.
-fn storage_base_url() -> String {
-    std::env::var("STORAGE_INTERNAL_URL")
-        .unwrap_or_else(|_| DEFAULT_STORAGE_URL.to_string())
-        .trim_end_matches('/')
-        .to_string()
+fn validated_storage_base() -> String {
+    let raw = std::env::var("STORAGE_INTERNAL_URL")
+        .unwrap_or_else(|_| DEFAULT_STORAGE_URL.to_string());
+    let trimmed = raw.trim_end_matches('/').to_string();
+    match Url::parse(&trimmed) {
+        Ok(u) if matches!(u.scheme(), "http" | "https") => trimmed,
+        _ => {
+            tracing::warn!(value = %raw, "invalid STORAGE_INTERNAL_URL, using default");
+            DEFAULT_STORAGE_URL.to_string()
+        },
+    }
 }
 
 /// Fetches the raw bytes for a key inside the fonts bucket from storage.
@@ -102,10 +139,14 @@ fn storage_base_url() -> String {
 ///   mapped to `SERVICE_UNAVAILABLE` — from the public API's perspective the
 ///   catalog is simply not reachable.
 async fn fetch_from_storage(key: &str) -> Result<Bytes, (StatusCode, String)> {
-    let url = format!("{}/api/v1/files/{}/{}", storage_base_url(), FONTS_BUCKET, key);
-    let client = reqwest::Client::new();
+    let url = format!(
+        "{}/api/v1/files/{}/{}",
+        validated_storage_base(),
+        FONTS_BUCKET,
+        key
+    );
 
-    let resp = client.get(&url).send().await.map_err(|err| {
+    let resp = storage_client().get(&url).send().await.map_err(|err| {
         tracing::warn!(?err, key, "failed to reach storage service");
         (
             StatusCode::SERVICE_UNAVAILABLE,
@@ -161,11 +202,16 @@ pub async fn get_manifest(
     let _ = state; // State kept for future caching / DB-backed lookups.
 
     // For the manifest, any failure — missing file or storage down — is
-    // reported as 503: from the client's perspective the catalog is simply
-    // not synced yet.
-    let bytes = fetch_from_storage(MANIFEST_KEY)
-        .await
-        .map_err(|(_, msg)| (StatusCode::SERVICE_UNAVAILABLE, msg))?;
+    // reported as 503. We refine the body text based on the upstream status
+    // so operators get a useful hint without leaking internal details.
+    let bytes = fetch_from_storage(MANIFEST_KEY).await.map_err(|(upstream, _)| {
+        let msg = if upstream == StatusCode::NOT_FOUND {
+            "Fonts catalog not yet synced — run scripts/sync-fonts".to_string()
+        } else {
+            "Fonts catalog temporarily unavailable".to_string()
+        };
+        (StatusCode::SERVICE_UNAVAILABLE, msg)
+    })?;
 
     Response::builder()
         .status(StatusCode::OK)
@@ -247,7 +293,9 @@ pub async fn get_font_file(
         .status(StatusCode::OK)
         .header(header::CONTENT_TYPE, "font/woff2")
         .header(header::CONTENT_LENGTH, content_length)
-        .header(header::CACHE_CONTROL, "public, max-age=2592000, immutable")
+        // max-age but NOT immutable: the URL is slug-keyed, not
+        // content-hashed, so allow revalidation on user reload.
+        .header(header::CACHE_CONTROL, "public, max-age=2592000")
         .header(header::ACCESS_CONTROL_ALLOW_ORIGIN, "*")
         .body(Body::from(bytes))
         .map_err(|err| {

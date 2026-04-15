@@ -10743,6 +10743,7 @@ dependencies = [
  "tower-layer 0.1.0",
  "tracing",
  "tracing-subscriber",
+ "url",
  "usvg 0.44.0",
  "utoipa",
  "utoipa-swagger-ui",
