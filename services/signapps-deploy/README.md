@@ -259,3 +259,74 @@ Three gaps identified during Phase 3a/3b review are now closed:
 | Maintenance flag in-process | New `maintenance_flags` table + `signapps_common::maintenance_flag` module. Deploy server writes, proxy reads. |
 
 Migration numbers added : `308_deployment_events_notify.sql`, `309_maintenance_flags.sql`.
+
+## Phase 5 — Blue/Green (2-host, zero-downtime)
+
+Activate via `DEPLOY_STRATEGY=blue_green` + SSH targets for the two hosts.
+
+### Architecture
+
+Two machines (`host_blue`, `host_green`) run identical compose stacks. A DB row `active_stack(env, active_color)` tells the proxy which host is currently serving traffic.
+
+### Deploy flow
+
+1. Deploy server reads `active_stack` → `active = blue`
+2. Runs `docker compose up -d` on **green** (the idle host) with the new version
+3. Polls `docker ps` on green until all containers are healthy
+4. Updates `active_stack` row : `blue → green`
+5. Proxy sees the swap within 5s (middleware cache TTL) and routes new requests to green
+6. Old blue stack stays up — rollback is a single DB swap
+
+### Rollback
+
+Swap the row back. The old stack is still running — zero re-pull, zero re-provision, instantaneous.
+
+### Env vars
+
+```
+DEPLOY_STRATEGY=blue_green
+DEPLOY_BG_BLUE_SSH=deploy@blue.signapps.internal
+DEPLOY_BG_GREEN_SSH=deploy@green.signapps.internal
+DEPLOY_BG_COMPOSE_PATH=/etc/signapps/docker-compose.prod.yml
+DEPLOY_BG_ENV_PATH=/etc/signapps/.env
+DEPLOY_IMAGE_REPO=ghcr.io/myorg/signapps-platform
+```
+
+### Wiring
+
+Phase 5 scaffolds everything but the final wiring of `BlueGreenStrategy` in the deploy server is left as a follow-up (requires operator input for SSH targets + pre-deployed compose files). Construct the strategy manually for now:
+
+```rust
+use signapps_deploy::strategies::blue_green::BlueGreenStrategy;
+use signapps_deploy::docker::remote::RemoteDockerHost;
+use std::sync::Arc;
+
+let blue = Arc::new(RemoteDockerHost::new(
+    "deploy@blue.signapps.internal".into(),
+    "host_blue".into(),
+));
+let green = Arc::new(RemoteDockerHost::new(
+    "deploy@green.signapps.internal".into(),
+    "host_green".into(),
+));
+
+let strategy = BlueGreenStrategy {
+    pool,
+    blue_host: blue,
+    green_host: green,
+    compose_file: "/etc/signapps/docker-compose.prod.yml".into(),
+    env_file: "/etc/signapps/.env".into(),
+    image_repo: "ghcr.io/myorg/signapps-platform".into(),
+    compose_project: "signapps-prod".into(),
+};
+
+strategy.deploy("prod", "v1.2.3").await?;
+```
+
+### Limitations
+
+- **SSH shell-out.** `RemoteDockerHost` uses `ssh user@host docker ...` under the hood. Requires passwordless SSH key on the deploy server.
+- **Compose + env files must be pre-deployed** to both hosts (rsync / ansible / etc.) — not in scope of Phase 5 code.
+- **DB migrations** run only on the shared PG instance. Between-version DB changes must remain backward-compatible during the window both stacks are up.
+- **Proxy forwarder integration.** The `upstream_switcher` middleware injects the active `Color` into request extensions — the *actual* routing of requests to blue vs green upstream hosts is the proxy forwarder's job (not part of this middleware).
+- **No auto-rollback on failed health.** If the target stack fails to become healthy within 5 min, the DB swap doesn't happen and the current active stays up (safe default). An explicit `rollback()` call (single DB swap) is required to return to a known-good state after operator review.
