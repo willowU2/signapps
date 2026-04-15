@@ -18,8 +18,10 @@ import {
   differenceInMinutes,
 } from "date-fns";
 import { fr } from "date-fns/locale";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useDraggable, useDroppable } from "@dnd-kit/core";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import {
   useCalendarStore,
   useCalendarSelection,
@@ -279,8 +281,21 @@ export function WeekCalendar({
   onShareEvent,
 }: WeekCalendarProps) {
   const currentDate = useCalendarStore((state) => state.currentDate);
+  const setCurrentDate = useCalendarStore((state) => state.setCurrentDate);
   const { selectedEventId, selectEvent } = useCalendarSelection();
   const timezones = useCalendarTimezones();
+
+  const handlePrevWeek = useCallback(() => {
+    const d = new Date(currentDate);
+    d.setDate(d.getDate() - 7);
+    setCurrentDate(d);
+  }, [currentDate, setCurrentDate]);
+
+  const handleNextWeek = useCallback(() => {
+    const d = new Date(currentDate);
+    d.setDate(d.getDate() + 7);
+    setCurrentDate(d);
+  }, [currentDate, setCurrentDate]);
 
   const { events, fetchEvents, updateEvent } = useEvents(selectedCalendarId);
   const { handleResizeCommit } = useEventResize(

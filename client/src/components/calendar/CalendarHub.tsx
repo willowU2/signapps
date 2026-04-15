@@ -18,6 +18,15 @@
 
 import React, { Suspense, lazy, useState, useEffect, useCallback } from "react";
 import {
+  format,
+  isToday,
+  startOfWeek,
+  endOfWeek,
+  isSameMonth,
+  isSameYear,
+} from "date-fns";
+import { fr } from "date-fns/locale";
+import {
   Calendar as CalendarIcon,
   CalendarRange,
   Grid3X3,

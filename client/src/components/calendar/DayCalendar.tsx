@@ -275,10 +275,23 @@ export function DayCalendar({
   onShareEvent,
 }: DayCalendarProps) {
   const currentDate = useCalendarStore((state) => state.currentDate);
+  const setCurrentDate = useCalendarStore((state) => state.setCurrentDate);
   const { selectedEventId, selectEvent } = useCalendarSelection();
   const timezones = useCalendarTimezones();
   const { events, fetchEvents, updateEvent } = useEvents(selectedCalendarId);
   const hourHeight = 60;
+
+  const handlePrevDay = useCallback(() => {
+    const d = new Date(currentDate);
+    d.setDate(d.getDate() - 1);
+    setCurrentDate(d);
+  }, [currentDate, setCurrentDate]);
+
+  const handleNextDay = useCallback(() => {
+    const d = new Date(currentDate);
+    d.setDate(d.getDate() + 1);
+    setCurrentDate(d);
+  }, [currentDate, setCurrentDate]);
 
   const { handleResizeCommit } = useEventResize(
     useCallback(
