@@ -48,7 +48,13 @@ pub async fn deploy(env: &str, version: &str) -> Result<()> {
 
     let git_sha = std::env::var("GIT_SHA").unwrap_or_else(|_| "unknown".to_string());
     let dep = persistence::insert_pending(&pool, env, version, &git_sha).await?;
-    persistence::audit(&pool, dep.id, "deploy_requested", json!({"version": version})).await?;
+    persistence::audit(
+        &pool,
+        dep.id,
+        "deploy_requested",
+        json!({"version": version}),
+    )
+    .await?;
 
     let result = run_deploy(&docker, &cache, &pool, env, version, &dep).await;
 
@@ -59,7 +65,7 @@ pub async fn deploy(env: &str, version: &str) -> Result<()> {
             persistence::audit(&pool, dep.id, "deploy_succeeded", json!({})).await?;
             tracing::info!(%env, %version, "deployment succeeded");
             Ok(())
-        }
+        },
         Err(e) => {
             let err_msg = format!("{e:#}");
             persistence::mark_failed(&pool, dep.id, &err_msg).await?;
@@ -78,20 +84,15 @@ pub async fn deploy(env: &str, version: &str) -> Result<()> {
                     tracing::error!(error = %re, "auto-rollback also failed; maintenance stays ON");
                 } else {
                     persistence::mark_rolled_back(&pool, dep.id).await.ok();
-                    persistence::audit(
-                        &pool,
-                        dep.id,
-                        "auto_rolled_back",
-                        json!({ "to": prev }),
-                    )
-                    .await?;
+                    persistence::audit(&pool, dep.id, "auto_rolled_back", json!({ "to": prev }))
+                        .await?;
                     maintenance::disable(&cache, env).await.ok();
                 }
             } else {
                 tracing::warn!("no previous version to roll back to; maintenance stays ON");
             }
             Err(e)
-        }
+        },
     }
 }
 
@@ -107,7 +108,13 @@ async fn run_deploy(
 
     // 1. Pull image
     let image_ref = format!("{IMAGE_REPO}:{version}");
-    persistence::audit(pool, dep.id, "pulling_image", json!({ "image": &image_ref })).await?;
+    persistence::audit(
+        pool,
+        dep.id,
+        "pulling_image",
+        json!({ "image": &image_ref }),
+    )
+    .await?;
     docker.pull_image(&image_ref).await.context("pull image")?;
 
     // 2. Enable maintenance
@@ -204,7 +211,7 @@ pub async fn status(env: &str) -> Result<()> {
     match persistence::last_successful(&pool, env).await? {
         Some((version, when)) => {
             println!("{env}: v{version} (deployed {when})");
-        }
+        },
         None => println!("{env}: no successful deployment yet"),
     }
     Ok(())

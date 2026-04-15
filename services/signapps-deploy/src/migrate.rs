@@ -100,6 +100,9 @@ mod tests {
         assert_eq!(extract_version_prefix("305_deployments.sql"), Some(305));
         assert_eq!(extract_version_prefix("001_initial_schema.sql"), Some(1));
         assert_eq!(extract_version_prefix("no_prefix.sql"), None);
-        assert_eq!(extract_version_prefix("2026032401_weird.sql"), Some(2026032401));
+        assert_eq!(
+            extract_version_prefix("2026032401_weird.sql"),
+            Some(2026032401)
+        );
     }
 }

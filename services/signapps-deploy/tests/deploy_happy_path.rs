@@ -36,13 +36,12 @@ async fn deploy_record_created_and_transitions_to_success() {
         .await
         .expect("mark success");
 
-    let (status, migrations): (String, Vec<String>) = sqlx::query_as(
-        "SELECT status, migrations_applied FROM deployments WHERE id = $1",
-    )
-    .bind(dep.id)
-    .fetch_one(&pool)
-    .await
-    .expect("select");
+    let (status, migrations): (String, Vec<String>) =
+        sqlx::query_as("SELECT status, migrations_applied FROM deployments WHERE id = $1")
+            .bind(dep.id)
+            .fetch_one(&pool)
+            .await
+            .expect("select");
     assert_eq!(status, "success");
     assert_eq!(migrations, vec!["305".to_string()]);
 
