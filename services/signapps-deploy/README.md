@@ -208,3 +208,28 @@ Cache TTL 60s; writes invalidate.
 - The `CacheService` used for maintenance flag is in-process: the deploy-server, deploy-scheduler, and proxy each have their own cache, so toggling via the API doesn't reach the proxy without a shared backend. Redis / a shared DB row / a direct HTTP call to the proxy are candidate solutions.
 - WebSocket events are a heartbeat; no real event forwarding yet.
 - No rate limiting on the API (relies on superadmin-only access).
+
+## Phase 3b additions — Admin UI
+
+Le frontend expose maintenant les pages :
+
+- `/admin/deploy` — Environnements (dashboard : versions en cours, health, actions deploy/rollback/maintenance/promote)
+- `/admin/deploy/versions` — Versions déployables + historique
+- `/admin/deploy/feature-flags` — CRUD feature flags (rollout, targeting)
+- `/admin/deploy/maintenance` — Toggle manuel de maintenance
+- `/admin/deploy/runtime-config` — Placeholder (Phase 3c)
+- `/admin/deploy/on-premise` — Placeholder (Phase 4)
+
+Toutes les actions destructives utilisent la double confirmation textuelle (même token que les recettes justfile) : `DEPLOY PROD v1.2.3`, `ROLLBACK PROD`, `PROMOTE TO PROD`, `DELETE <key>`.
+
+### Variables d'env frontend
+
+Dans `.env` du frontend ou via Next.js runtime config :
+
+```
+NEXT_PUBLIC_DEPLOY_URL=http://localhost:3700
+```
+
+### Auth
+
+Les pages `/admin/deploy/*` sont accessibles uniquement aux utilisateurs avec rôle `3` (SuperAdmin), conformément à la garde backend du Phase 3a. Le middleware existant du `/admin` redirige déjà les non-superadmins.
