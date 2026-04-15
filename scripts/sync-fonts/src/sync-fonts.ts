@@ -43,9 +43,11 @@ const TOP_GOOGLE_NAMES = new Set<string>([
 ]);
 
 // Curated popular Nerd Fonts (programming).
+// Iosevka ships >1000 variants and blew the budget, so skip it in curated
+// mode — operators can still pull it via SYNC_MODE=full if they're patient.
 const TOP_NERD_FOLDER_NAMES = new Set<string>([
   "FiraCode", "JetBrainsMono", "Hack", "CascadiaCode", "SourceCodePro",
-  "Meslo", "Iosevka", "UbuntuMono", "Inconsolata", "RobotoMono",
+  "Meslo", "UbuntuMono", "Inconsolata", "RobotoMono",
 ]);
 
 interface RawFamily {
@@ -132,6 +134,24 @@ function sleep(ms: number): Promise<void> {
   return new Promise((r) => setTimeout(r, ms));
 }
 
+async function fontExists(family: string, variant: string): Promise<number | null> {
+  const key = `${family}/${variant}.woff2`;
+  const token = await getToken();
+  try {
+    const res = await axios.get(
+      `${STORAGE_URL}/files/system-fonts/info/${encodeURIComponent(key)}`,
+      {
+        headers: { Authorization: `Bearer ${token}`, Connection: "close" },
+        timeout: 10000,
+      },
+    );
+    const size = res.data?.size;
+    return typeof size === "number" ? size : null;
+  } catch {
+    return null;
+  }
+}
+
 async function uploadFont(family: string, variant: string, woff2: Buffer): Promise<void> {
   const key = `${family}/${variant}.woff2`;
   const token = await getToken();
@@ -161,6 +181,17 @@ async function processAll(families: RawFamily[]): Promise<FontFamilyOut[]> {
     for (const f of fam.files) {
       const slug = variantSlug(f.weight, f.style);
       try {
+        // Skip compress+upload if the file is already in the bucket.
+        const existingSize = await fontExists(fam.id, slug);
+        if (existingSize !== null) {
+          variants.push({
+            weight: f.weight,
+            style: f.style,
+            file: `${fam.id}/${slug}.woff2`,
+            size_bytes: existingSize,
+          });
+          continue;
+        }
         const woff2 = await compressTtfToWoff2(f.absPath);
         await uploadFont(fam.id, slug, woff2);
         variants.push({
