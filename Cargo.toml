@@ -27,6 +27,7 @@ members = [
     "crates/signapps-approval",
     "crates/signapps-comments",
     "crates/signapps-email-templates",
+    "crates/signapps-feature-flags",
     "crates/signapps-indexer",
     "crates/signapps-pii",
     "crates/signapps-rate-limit",

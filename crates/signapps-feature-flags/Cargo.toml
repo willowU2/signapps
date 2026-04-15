@@ -1,0 +1,28 @@
+[package]
+name = "signapps-feature-flags"
+version.workspace = true
+edition = "2021"
+rust-version = "1.75"
+authors.workspace = true
+license.workspace = true
+description = "Feature flag evaluation (repository + cache + rollout) for SignApps Platform"
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
+anyhow = { workspace = true }
+async-trait = { workspace = true }
+chrono = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+signapps-cache = { path = "../signapps-cache" }
+sqlx = { workspace = true }
+thiserror = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
+utoipa = { workspace = true }
+uuid = { workspace = true }
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["full"] }
