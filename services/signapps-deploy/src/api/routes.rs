@@ -1,8 +1,10 @@
 //! Router assembly. Auth layer added in Task P3a.7.
 
-use crate::api::{auth::require_superadmin, handlers, state::AppState};
+use crate::api::{auth::require_superadmin, handlers, openapi::ApiDoc, state::AppState};
 use axum::{middleware, Router};
 use signapps_common::middleware::auth_middleware;
+use utoipa::OpenApi;
+use utoipa_swagger_ui::SwaggerUi;
 
 /// Build the Phase 3a API router.
 ///
@@ -43,6 +45,10 @@ pub fn build_router(state: AppState) -> Router {
         ));
 
     Router::new()
+        .merge(
+            SwaggerUi::new("/swagger-ui")
+                .url("/api-docs/openapi.json", ApiDoc::openapi()),
+        )
         .nest("/api/v1/deploy", protected)
         .with_state(state)
 }

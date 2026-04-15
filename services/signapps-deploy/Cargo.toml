@@ -62,7 +62,7 @@ tracing = { workspace = true }
 
 # OpenAPI
 utoipa = { workspace = true }
-utoipa-swagger-ui = { version = "7", features = ["axum"] }
+utoipa-swagger-ui = { workspace = true }
 
 # Error handling
 anyhow = { workspace = true }
