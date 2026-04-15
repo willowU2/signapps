@@ -1,32 +1,9 @@
 "use client";
 
-import {
-  Search,
-  SlidersHorizontal,
-  HelpCircle,
-  Settings,
-  Grid,
-} from "lucide-react";
+import { Search, SlidersHorizontal } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useAuthStore } from "@/lib/store";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { UnifiedNotificationCenter } from "@/components/interop/UnifiedNotificationCenter";
 
 export function WorkspaceHeader() {
-  const user = useAuthStore((s) => s.user);
-  const avatarUrl = user?.avatar_url;
-  const initials = (user?.display_name || user?.username || "U")
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
   return (
     <header className="h-16 shrink-0 flex items-center justify-between px-4">
       {/* Left: Logo */}
@@ -77,88 +54,9 @@ export function WorkspaceHeader() {
         </div>
       </div>
 
-      {/* Right action area */}
-      <div className="flex items-center gap-1 shrink-0">
-        {/* Active Status */}
-        <Button
-          variant="outline"
-          size="sm"
-          className="hidden lg:flex h-9 rounded-full border-border font-medium px-4 hover:bg-muted mr-2 gap-2 text-foreground/80"
-        >
-          <div className="w-2 h-2 rounded-full bg-green-600"></div>
-          Actif
-          <svg
-            width="10"
-            height="6"
-            viewBox="0 0 10 6"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            className="ml-1 opacity-60"
-          >
-            <path
-              d="M5 6L0 1.05562L1.07143 0L5 3.88876L8.92857 0L10 1.05562L5 6Z"
-              fill="currentColor"
-            />
-          </svg>
-        </Button>
-
-        {/* Unified notification center */}
-        <UnifiedNotificationCenter className="h-10 w-10 rounded-full text-muted-foreground hover:bg-muted" />
-
-        <Tooltip delayDuration={0}>
-          <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-10 w-10 rounded-full text-muted-foreground hover:bg-muted"
-            >
-              <HelpCircle className="h-5 w-5" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="bottom" className="rounded-lg px-3 py-1.5">
-            Aide
-          </TooltipContent>
-        </Tooltip>
-
-        <Tooltip delayDuration={0}>
-          <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-10 w-10 rounded-full text-muted-foreground hover:bg-muted"
-            >
-              <Settings className="h-5 w-5" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="bottom" className="rounded-lg px-3 py-1.5">
-            Paramètres
-          </TooltipContent>
-        </Tooltip>
-
-        <Tooltip delayDuration={0}>
-          <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-10 w-10 rounded-full text-muted-foreground hover:bg-muted"
-            >
-              <Grid className="h-5 w-5" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="bottom" className="rounded-lg px-3 py-1.5">
-            Applications SignApps
-          </TooltipContent>
-        </Tooltip>
-
-        <div className="mx-2 flex items-center justify-center">
-          <Avatar className="h-8 w-8 hover:ring-4 ring-border cursor-pointer transition-all">
-            {avatarUrl && <AvatarImage src={avatarUrl} />}
-            <AvatarFallback className="bg-primary text-primary-foreground">
-              {initials}
-            </AvatarFallback>
-          </Avatar>
-        </div>
-      </div>
+      {/* Right action area removed — the global AppHeader already provides
+          notifications, help, settings, app grid, and avatar. Keeping them
+          here created visual duplicates on the Mail page. */}
     </header>
   );
 }
