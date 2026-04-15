@@ -76,6 +76,33 @@ async function scanGoogleFonts(root: string): Promise<RawFamily[]> {
     .filter((f): f is RawFamily => f !== null);
 }
 
+async function scanNerdFonts(root: string): Promise<RawFamily[]> {
+  const dirs = await glob(`${root.replace(/\\/g, "/")}/patched-fonts/*`, { onlyDirectories: true });
+  console.log(`  scanning ${dirs.length} nerd families`);
+  const families: RawFamily[] = [];
+  for (const dir of dirs) {
+    const folderName = basename(dir);
+    const displayName = folderName.replace(/([A-Z])/g, " $1").trim();
+    const ttfs = await glob(`${dir}/**/*.ttf`);
+    const files: RawFamily["files"] = ttfs.map((f) => {
+      const filename = basename(f).toLowerCase();
+      const weight = filename.includes("bold") ? 700 : 400;
+      const style = filename.includes("italic") ? "italic" : "normal";
+      return { weight, style, absPath: f };
+    });
+    families.push({
+      id: folderName.toLowerCase().replace(/\s+/g, "-") + "-nerd-font",
+      name: `${displayName} Nerd Font`,
+      category: "programming",
+      source: "nerd",
+      foundry: "Ryanoasis Nerd Fonts",
+      license: "MIT",
+      files,
+    });
+  }
+  return families;
+}
+
 async function main() {
   await mkdir(WORK_DIR, { recursive: true });
   console.log(`Working in ${WORK_DIR}`);
@@ -88,6 +115,8 @@ async function main() {
   console.log("Step 2/4 — scan sources");
   const googleFamilies = await scanGoogleFonts(`${WORK_DIR}/google-fonts`);
   console.log(`  google: ${googleFamilies.length} families`);
+  const nerdFamilies = await scanNerdFonts(`${WORK_DIR}/nerd-fonts`);
+  console.log(`  nerd: ${nerdFamilies.length} families`);
 
   // TODO: convert, upload
 }
