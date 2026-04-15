@@ -255,3 +255,25 @@ quality: check-middleware lint test
 # Mise à jour des outils Cargo
 update-tools:
     cargo binstall -y cargo-nextest bacon cargo-mutants git-cliff just cargo-deny cargo-audit
+
+# ─────────────────────────── Deploy ──────────────────────────
+
+# Deploy a version to prod (with strict confirmation)
+deploy-prod version:
+    @echo "Type 'DEPLOY PROD {{version}}' to confirm:"
+    @read -r input && [ "$input" = "DEPLOY PROD {{version}}" ] || { echo "Aborted."; exit 1; }
+    cargo run --release -p signapps-deploy -- deploy --env prod --version {{version}}
+
+# Deploy a version to dev (no confirmation)
+deploy-dev version:
+    cargo run --release -p signapps-deploy -- deploy --env dev --version {{version}}
+
+# Roll back the last successful deployment of prod (with confirmation)
+rollback-prod:
+    @echo "Type 'ROLLBACK PROD' to confirm:"
+    @read -r input && [ "$input" = "ROLLBACK PROD" ] || { echo "Aborted."; exit 1; }
+    cargo run --release -p signapps-deploy -- rollback --env prod
+
+# Show deployment status
+deploy-status env="prod":
+    cargo run --release -p signapps-deploy -- status --env {{env}}
