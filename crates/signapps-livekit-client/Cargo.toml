@@ -1,0 +1,18 @@
+[package]
+name = "signapps-livekit-client"
+version.workspace = true
+edition = "2021"
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Thin HTTP client for the LiveKit Server REST (Twirp) API — token issuance, room lifecycle, participants, egress"
+
+[dependencies]
+tokio = { workspace = true }
+reqwest = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+jsonwebtoken = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+chrono = { workspace = true }

@@ -5,6 +5,7 @@ members = [
     "crates/signapps-ad-core",
     "crates/signapps-smb-sysvol",
     "crates/signapps-ldap-server",
+    "crates/signapps-livekit-client",
     "crates/signapps-kerberos-kdc",
     "crates/signapps-cache",
     "crates/signapps-audit",
