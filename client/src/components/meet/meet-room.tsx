@@ -479,8 +479,9 @@ function VideoGrid() {
   }
 
   // Determine grid columns based on participant count
+  // 1 → 1 col, 2 → 2 cols, 3-4 → 2 cols, 5-9 → 3 cols, 10+ → 4 cols
   const count = tracks.length;
-  let colsClass = "grid-cols-1";
+  let colsClass = "grid-cols-1 place-items-center";
   if (count === 2) colsClass = "grid-cols-1 sm:grid-cols-2";
   else if (count >= 3 && count <= 4)
     colsClass = "grid-cols-1 sm:grid-cols-2";
