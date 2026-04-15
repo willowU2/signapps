@@ -142,3 +142,62 @@ The maintenance middleware reads the selected cluster from the request extension
 ### Phase 1 POC limitation still applies
 
 The `CacheService` used for the maintenance flag is in-process. The scheduler worker writes to its own cache; the proxy reads from its own cache; they don't share state. A shared cache backend (Redis or similar) is planned for Phase 3+ — until then, the scheduler drives DB state correctly but cannot actually serve the maintenance page to end-users at the proxy level.
+
+## Phase 3a additions — HTTP API + WebSocket
+
+The orchestrator now ships a dormant HTTP API (port 3035) activated by an env var. When enabled, all endpoints live under `/api/v1/deploy/` and require the `superadmin` JWT role.
+
+### Enabling the API
+
+```bash
+export DEPLOY_API_ENABLED=true
+export DATABASE_URL=postgres://signapps:signapps_dev@localhost:5432/signapps
+export JWT_SECRET=<same as identity>
+cargo run --release --bin signapps-deploy-server
+```
+
+### Endpoints (v1)
+
+| Method | Path | Purpose |
+|---|---|---|
+| GET | `/envs` | List environments + current versions |
+| GET | `/envs/{env}/health` | Container health (prod/dev) |
+| GET | `/versions` | Distinct versions ever deployed |
+| GET | `/history?env=&limit=` | Deployment history |
+| POST | `/envs/{env}/deploy` | Kick off a deployment (confirm required on prod) |
+| POST | `/envs/{env}/rollback` | Rollback (confirm required on prod) |
+| POST | `/envs/{env}/maintenance` | Toggle maintenance flag |
+| POST | `/promote` | Promote last dev success to prod |
+| GET | `/feature-flags?env=` | List flags |
+| GET | `/feature-flags/{key}?env=` | Single flag |
+| PUT | `/feature-flags/{key}` | Upsert flag (env in body) |
+| DELETE | `/feature-flags/{key}?env=` | Delete flag |
+| GET | `/events` | WebSocket stream of deploy events |
+
+All routes under `/api/v1/deploy/` require a JWT with `role >= 3` (SuperAdmin).
+
+### OpenAPI + Swagger UI
+
+Interactive docs at `http://<host>:3035/swagger-ui/`. Raw OpenAPI JSON at `/api-docs/openapi.json`.
+
+### Feature flags
+
+Flags live in `feature_flags` (one row per `(key, env)` pair). The evaluator applies rules in order:
+1. `enabled == false` -> false
+2. `target_users` contains user -> true
+3. `target_orgs` contains org -> true
+4. `rollout_percent >= 100` -> true
+5. `rollout_percent <= 0` -> false
+6. Stable hash bucket of seed (user/org id) + flag key mod 100 < percent
+
+Cache TTL 60s; writes invalidate.
+
+### WebSocket
+
+`GET /api/v1/deploy/events` upgrades to a WebSocket. Phase 3a emits a `deploy.connected` startup frame and keeps the connection alive with 30-second pings. Real `deployment.*` event streaming from `PgEventBus` is a documented follow-up.
+
+### Phase limitations (still POC)
+
+- The `CacheService` used for maintenance flag is in-process: the deploy-server, deploy-scheduler, and proxy each have their own cache, so toggling via the API doesn't reach the proxy without a shared backend. Redis / a shared DB row / a direct HTTP call to the proxy are candidate solutions.
+- WebSocket events are a heartbeat; no real event forwarding yet.
+- No rate limiting on the API (relies on superadmin-only access).
