@@ -22,6 +22,7 @@ mod shield;
 
 use app_middleware::hostname_router::{hostname_router_middleware, HostnameRouterState};
 use app_middleware::maintenance::{maintenance_middleware, MaintenanceState};
+use app_middleware::upstream_switcher::{upstream_switcher_middleware, UpstreamSwitcherState};
 use handlers::{
     certificates, config, health, openapi, proxy_status, routes, shield as shield_handlers,
     vault_browse,
@@ -188,15 +189,23 @@ async fn main() -> anyhow::Result<()> {
         env: env_or("SIGNAPPS_ENV", "prod"),
     };
 
+    // Upstream switcher state (reads `active_stack` with a 5s in-process
+    // cache). Shared with signapps-deploy since P5.
+    let upstream_state = UpstreamSwitcherState::new((*pool).clone());
+
     // Build management API router
-    let app = create_router(state, maintenance_state);
+    let app = create_router(state, maintenance_state, upstream_state);
 
     // Start management API server using bootstrap helper
     signapps_common::bootstrap::run_server(app, &config).await
 }
 
 /// Create the application router with all routes.
-fn create_router(state: AppState, maintenance_state: MaintenanceState) -> Router {
+fn create_router(
+    state: AppState,
+    maintenance_state: MaintenanceState,
+    upstream_state: UpstreamSwitcherState,
+) -> Router {
     // Public routes (health check)
     let public_routes = Router::new().route("/health", get(health::health_check));
 
@@ -345,6 +354,14 @@ fn create_router(state: AppState, maintenance_state: MaintenanceState) -> Router
         .layer(middleware::from_fn_with_state(
             maintenance_state,
             maintenance_middleware,
+        ))
+        // Upstream switcher: reads `active_stack` and injects the current
+        // Color into request extensions. Runs AFTER hostname_router (which
+        // provides BackendCluster → env) and BEFORE maintenance.
+        // Request flow: hostname_router → upstream_switcher → maintenance → handler.
+        .layer(middleware::from_fn_with_state(
+            upstream_state,
+            upstream_switcher_middleware,
         ))
         // Hostname-based routing: inspects Host header and inserts
         // BackendCluster into request extensions. Runs BEFORE maintenance
