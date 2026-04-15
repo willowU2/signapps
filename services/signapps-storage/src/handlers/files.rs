@@ -477,14 +477,12 @@ pub const PUBLIC_READ_BUCKETS: &[&str] = &["system-fonts"];
 ///   backend failure (typically mapped to 404 / 503 by the error layer).
 #[utoipa::path(
     get,
-    path = "/api/v1/files/{bucket}/{key}",
+    path = "/api/v1/files/system-fonts/{key}",
     params(
-        ("bucket" = String, Path, description = "Public bucket name (must be whitelisted)"),
-        ("key" = String, Path, description = "Object key"),
+        ("key" = String, Path, description = "Object key inside system-fonts"),
     ),
     responses(
         (status = 200, description = "File content (binary download)"),
-        (status = 403, description = "Bucket is not public"),
         (status = 404, description = "File not found"),
     ),
     tag = "files"
@@ -492,16 +490,20 @@ pub const PUBLIC_READ_BUCKETS: &[&str] = &["system-fonts"];
 #[tracing::instrument(skip_all)]
 pub async fn download_public(
     State(state): State<AppState>,
-    Path((bucket, key)): Path<(String, String)>,
+    Path(key): Path<String>,
 ) -> Result<Response> {
-    if !PUBLIC_READ_BUCKETS.contains(&bucket.as_str()) {
+    // The route wildcard `/files/system-fonts/*key` pins the bucket at the
+    // router level, so only the object key arrives here. We still check the
+    // allowlist as a belt-and-suspenders guard.
+    let bucket = "system-fonts";
+    if !PUBLIC_READ_BUCKETS.contains(&bucket) {
         return Err(Error::Forbidden(format!(
             "bucket {} is not publicly readable",
             bucket
         )));
     }
 
-    let object = state.storage.get_object(&bucket, &key).await?;
+    let object = state.storage.get_object(bucket, &key).await?;
 
     let content_type = object.content_type;
     let content_length = object.content_length;
