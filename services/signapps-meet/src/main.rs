@@ -135,6 +135,7 @@ fn build_router(state: AppState) -> Router {
     let protected_routes = Router::new()
         // Room management
         .route("/api/v1/meet/rooms", get(rooms::list_rooms).post(rooms::create_room))
+        .route("/api/v1/meet/rooms/instant", post(rooms::create_instant_room))
         .route("/api/v1/meet/rooms/:id", get(rooms::get_room).put(rooms::update_room).delete(rooms::delete_room))
         .route("/api/v1/meet/rooms/:id/end", post(rooms::end_room))
         // Token generation

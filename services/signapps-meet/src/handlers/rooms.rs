@@ -5,7 +5,9 @@ use axum::{
     http::StatusCode,
     Extension, Json,
 };
+use serde::Serialize;
 use signapps_common::Claims;
+use signapps_livekit_client::{RoomOptions, TokenGrants};
 use uuid::Uuid;
 
 use crate::{
@@ -24,6 +26,13 @@ fn generate_room_code() -> String {
             CHARSET[idx] as char
         })
         .collect()
+}
+
+/// Generate a random 6-digit numeric code (used by instant rooms).
+fn generate_numeric_code() -> String {
+    use rand::Rng;
+    let mut rng = rand::thread_rng();
+    format!("{:06}", rng.gen_range(0..1_000_000u32))
 }
 
 /// Hash password using bcrypt
@@ -536,15 +545,114 @@ pub async fn list_history(
     ))
 }
 
+/// Response payload for the instant-room endpoint.
+#[derive(Debug, Serialize, utoipa::ToSchema)]
+pub struct InstantRoomResponse {
+    /// 6-digit numeric code, also used as the LiveKit room name.
+    pub code: String,
+    /// LiveKit access token (host grants — `roomAdmin=true`).
+    pub token: String,
+    /// Base URL of the LiveKit Server.
+    pub url: String,
+}
+
+/// Create an instant (ad-hoc) room.
+///
+/// Generates a 6-digit numeric code, asks LiveKit Server to materialise
+/// the room with a 10-minute empty-timeout, persists a row in
+/// `meet.rooms` (host = authenticated user), then issues a host token.
+///
+/// # Errors
+///
+/// Returns 500 if LiveKit rejects the CreateRoom request or the DB
+/// insert fails. Returns 500 if token issuance fails.
+#[utoipa::path(
+    post,
+    path = "/api/v1/meet/rooms/instant",
+    responses(
+        (status = 200, description = "Instant room created", body = InstantRoomResponse),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "LiveKit or DB failure"),
+    ),
+    security(("bearer" = [])),
+    tag = "Meet"
+)]
+#[tracing::instrument(skip(state), fields(user_id = %claims.sub))]
+pub async fn create_instant_room(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+) -> Result<Json<InstantRoomResponse>, (StatusCode, String)> {
+    let code = generate_numeric_code();
+
+    // Ask LiveKit to create the room up-front so we fail fast on
+    // configuration errors (rather than at first join).
+    state
+        .livekit
+        .create_room(
+            &code,
+            RoomOptions {
+                empty_timeout: Some(600),
+                max_participants: None,
+            },
+        )
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, format!("livekit: {e}")))?;
+
+    // Persist a `meet.rooms` row so existing endpoints (token lookup,
+    // participants, recordings…) can resolve the room.
+    let default_name = format!("Instant #{code}");
+    sqlx::query(
+        r#"
+        INSERT INTO meet.rooms (
+            name, created_by, room_code, status, is_private,
+            max_participants, settings
+        ) VALUES ($1, $2, $3, 'active', false, NULL, NULL)
+        "#,
+    )
+    .bind(&default_name)
+    .bind(claims.sub)
+    .bind(&code)
+    .execute(&state.pool)
+    .await
+    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+    // Host token — roomAdmin=true so kick/mute work immediately.
+    let token = state
+        .livekit
+        .generate_token(TokenGrants {
+            room: code.clone(),
+            identity: claims.sub.to_string(),
+            name: Some(claims.username.clone()),
+            can_publish: true,
+            can_subscribe: true,
+            can_publish_data: true,
+            room_admin: true,
+        })
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+    Ok(Json(InstantRoomResponse {
+        code,
+        token,
+        url: state.livekit.base_url.clone(),
+    }))
+}
+
 #[cfg(test)]
 mod tests {
     #[allow(unused_imports)]
     use super::*;
 
     #[test]
+    fn numeric_code_is_six_digits() {
+        for _ in 0..50 {
+            let code = generate_numeric_code();
+            assert_eq!(code.len(), 6, "code {code} must be 6 chars");
+            assert!(code.chars().all(|c| c.is_ascii_digit()), "digits only");
+        }
+    }
+
+    #[test]
     fn module_compiles() {
-        // Verify this handler module compiles correctly.
-        // Integration tests require a running database and service.
         assert!(true, "{} handler module loaded", module_path!());
     }
 }
