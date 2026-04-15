@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useMemo, useRef } from "react";
+import { useState, useCallback, useMemo, useRef, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AppLayout } from "@/components/layout/app-layout";
 import { Button } from "@/components/ui/button";
@@ -255,6 +255,22 @@ export default function GlobalDrivePage() {
     }
   };
 
+  useEffect(() => {
+    const handleReset = (e: CustomEvent) => {
+      if (e.detail?.path === "/storage") {
+        // Reset to base root exactly like clicking Mon Drive
+        handleBreadcrumbClick(-1);
+      }
+    };
+    window.addEventListener("reset-navigation", handleReset as EventListener);
+    return () =>
+      window.removeEventListener(
+        "reset-navigation",
+        handleReset as EventListener,
+      );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [path]);
+
   const handleCreateFolder = () => {
     setFolderName("");
     setShowFolderPrompt(true);
@@ -504,6 +520,7 @@ export default function GlobalDrivePage() {
           <div className="flex-1 space-y-0.5 overflow-y-auto w-full px-2">
             <Button
               variant="ghost"
+              onClick={() => handleBreadcrumbClick(-1)}
               className="w-full justify-start gap-3 font-medium bg-[#e8f0fe] text-[#1967d2] dark:bg-[#3c4043] dark:text-[#e8eaed] rounded-r-full"
             >
               <Home className="h-5 w-5" /> Mon Drive

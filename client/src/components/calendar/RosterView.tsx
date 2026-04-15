@@ -1,6 +1,5 @@
-'use client';
-import { SpinnerInfinity } from 'spinners-react';
-
+"use client";
+import { SpinnerInfinity } from "spinners-react";
 
 /**
  * RosterView Component
@@ -10,41 +9,42 @@ import { SpinnerInfinity } from 'spinners-react';
  * Shows employees vs days with shift blocks.
  */
 
-import * as React from 'react';
+import * as React from "react";
 import {
   format,
   startOfWeek,
   endOfWeek,
   eachDayOfInterval,
   addDays,
-  addWeeks,
   isSameDay,
   parseISO,
   differenceInMinutes,
-} from 'date-fns';
-import { fr } from 'date-fns/locale';
-import { cn } from '@/lib/utils';
-import { useCalendarStore } from '@/stores/calendar-store';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+} from "date-fns";
+import { fr } from "date-fns/locale";
+import { cn } from "@/lib/utils";
+import { useCalendarStore } from "@/stores/calendar-store";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from "@/components/ui/select";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from "@/components/ui/dropdown-menu";
 import {
-  ChevronLeft,
-  ChevronRight,
   Plus,
   Copy,
   Trash2,
@@ -54,8 +54,8 @@ import {
   Moon,
   Sunset,
   Coffee,
-} from 'lucide-react';
-import type { TimeItem } from '@/lib/scheduling/types';
+} from "lucide-react";
+import type { TimeItem } from "@/lib/scheduling/types";
 
 // ============================================================================
 // Types
@@ -92,43 +92,46 @@ interface RosterRow {
 
 const SHIFT_TYPES: ShiftType[] = [
   {
-    id: 'morning',
-    name: 'Matin',
+    id: "morning",
+    name: "Matin",
     startHour: 6,
     endHour: 14,
-    color: 'bg-yellow-200 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
+    color:
+      "bg-yellow-200 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
     icon: <Sun className="h-3 w-3" />,
   },
   {
-    id: 'afternoon',
-    name: 'Après-midi',
+    id: "afternoon",
+    name: "Après-midi",
     startHour: 14,
     endHour: 22,
-    color: 'bg-orange-200 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
+    color:
+      "bg-orange-200 text-orange-800 dark:bg-orange-900 dark:text-orange-200",
     icon: <Sunset className="h-3 w-3" />,
   },
   {
-    id: 'night',
-    name: 'Nuit',
+    id: "night",
+    name: "Nuit",
     startHour: 22,
     endHour: 6,
-    color: 'bg-indigo-200 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200',
+    color:
+      "bg-indigo-200 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200",
     icon: <Moon className="h-3 w-3" />,
   },
   {
-    id: 'full',
-    name: 'Journée',
+    id: "full",
+    name: "Journée",
     startHour: 9,
     endHour: 17,
-    color: 'bg-blue-200 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
+    color: "bg-blue-200 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
     icon: <Clock className="h-3 w-3" />,
   },
   {
-    id: 'break',
-    name: 'Repos',
+    id: "break",
+    name: "Repos",
     startHour: 0,
     endHour: 0,
-    color: 'bg-gray-200 text-gray-800 dark:bg-gray-800 dark:text-gray-200',
+    color: "bg-gray-200 text-gray-800 dark:bg-gray-800 dark:text-gray-200",
     icon: <Coffee className="h-3 w-3" />,
   },
 ];
@@ -145,12 +148,14 @@ function getShiftType(item: TimeItem): ShiftType | undefined {
   if (!item.startTime) return undefined;
 
   const start =
-    typeof item.startTime === 'string' ? parseISO(item.startTime) : item.startTime;
+    typeof item.startTime === "string"
+      ? parseISO(item.startTime)
+      : item.startTime;
   const hour = start.getHours();
 
   // Match by tags or time (shift type stored in tags)
   const shiftTypeTag = item.tags?.find((t) =>
-    SHIFT_TYPES.some((s) => s.id === t)
+    SHIFT_TYPES.some((s) => s.id === t),
   );
   if (shiftTypeTag) {
     return SHIFT_TYPES.find((s) => s.id === shiftTypeTag);
@@ -164,31 +169,35 @@ function getShiftType(item: TimeItem): ShiftType | undefined {
 }
 
 function formatShiftTime(item: TimeItem): string {
-  if (!item.startTime) return '';
+  if (!item.startTime) return "";
 
   const start =
-    typeof item.startTime === 'string' ? parseISO(item.startTime) : item.startTime;
+    typeof item.startTime === "string"
+      ? parseISO(item.startTime)
+      : item.startTime;
   const end = item.endTime
-    ? typeof item.endTime === 'string'
+    ? typeof item.endTime === "string"
       ? parseISO(item.endTime)
       : item.endTime
     : null;
 
   if (end) {
-    return `${format(start, 'HH:mm')} - ${format(end, 'HH:mm')}`;
+    return `${format(start, "HH:mm")} - ${format(end, "HH:mm")}`;
   }
-  return format(start, 'HH:mm');
+  return format(start, "HH:mm");
 }
 
 function calculateShiftHours(item: TimeItem): number {
   if (!item.startTime || !item.endTime) return 0;
 
   const start =
-    typeof item.startTime === 'string' ? parseISO(item.startTime) : item.startTime;
+    typeof item.startTime === "string"
+      ? parseISO(item.startTime)
+      : item.startTime;
   const end =
-    typeof item.endTime === 'string' ? parseISO(item.endTime) : item.endTime;
+    typeof item.endTime === "string" ? parseISO(item.endTime) : item.endTime;
 
-  return Math.round(differenceInMinutes(end, start) / 60 * 10) / 10;
+  return Math.round((differenceInMinutes(end, start) / 60) * 10) / 10;
 }
 
 // ============================================================================
@@ -204,7 +213,6 @@ export function RosterView({
   onCopyWeek,
 }: RosterViewProps) {
   const currentDate = useCalendarStore((state) => state.currentDate);
-  const setCurrentDate = useCalendarStore((state) => state.setCurrentDate);
   const weekStartsOn = useCalendarStore((state) => state.weekStartsOn);
 
   const storeItems = useCalendarStore((state) => state.timeItems);
@@ -215,8 +223,8 @@ export function RosterView({
 
   // Filter to only shifts
   const shifts = React.useMemo(
-    () => items.filter((item) => item.type === 'shift'),
-    [items]
+    () => items.filter((item) => item.type === "shift"),
+    [items],
   );
 
   // Calculate date range (1 week)
@@ -234,7 +242,7 @@ export function RosterView({
     if (!propItems) {
       fetchTimeItems(dateRange);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [propItems, rangeStartISO, rangeEndISO]);
 
   // Generate days of week
@@ -260,14 +268,14 @@ export function RosterView({
       let totalHours = 0;
 
       days.forEach((day) => {
-        const dateKey = format(day, 'yyyy-MM-dd');
+        const dateKey = format(day, "yyyy-MM-dd");
         const dayShifts = shifts.filter((shift) => {
           const shiftOwnerId = shift.ownerId || shift.users?.[0]?.userId;
           if (shiftOwnerId !== employeeId) return false;
 
           if (!shift.startTime) return false;
           const shiftDate =
-            typeof shift.startTime === 'string'
+            typeof shift.startTime === "string"
               ? parseISO(shift.startTime)
               : shift.startTime;
 
@@ -275,7 +283,10 @@ export function RosterView({
         });
 
         employeeShifts.set(dateKey, dayShifts);
-        totalHours += dayShifts.reduce((sum, s) => sum + calculateShiftHours(s), 0);
+        totalHours += dayShifts.reduce(
+          (sum, s) => sum + calculateShiftHours(s),
+          0,
+        );
       });
 
       return {
@@ -287,15 +298,16 @@ export function RosterView({
     });
   }, [employeeIds, days, shifts]);
 
-  // Navigation
-  const handlePrevWeek = () => setCurrentDate(addWeeks(currentDate, -1));
-  const handleNextWeek = () => setCurrentDate(addWeeks(currentDate, 1));
-
   if (isLoading && shifts.length === 0) {
     return (
-      <div className={cn('flex h-full items-center justify-center', className)}>
+      <div className={cn("flex h-full items-center justify-center", className)}>
         <div className="flex flex-col items-center gap-2">
-          <SpinnerInfinity size={32} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} />
+          <SpinnerInfinity
+            size={32}
+            secondaryColor="rgba(128,128,128,0.2)"
+            color="currentColor"
+            speed={120}
+          />
           <p className="text-sm text-muted-foreground">Chargement...</p>
         </div>
       </div>
@@ -303,20 +315,12 @@ export function RosterView({
   }
 
   return (
-    <div className={cn('flex h-full flex-col', className)}>
+    <div className={cn("flex h-full flex-col", className)}>
       {/* Toolbar */}
       <div className="flex items-center justify-between border-b p-3">
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="icon" onClick={handlePrevWeek}>
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <Button variant="outline" size="icon" onClick={handleNextWeek}>
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-          <span className="text-sm font-medium">
-            Semaine du {format(dateRange.start, 'd MMMM yyyy', { locale: fr })}
-          </span>
-        </div>
+        <span className="text-sm font-medium">
+          Semaine du {format(dateRange.start, "d MMMM yyyy", { locale: fr })}
+        </span>
 
         <div className="flex items-center gap-2">
           <Button
@@ -334,7 +338,12 @@ export function RosterView({
       <div className="flex items-center gap-4 border-b p-2 text-xs">
         {SHIFT_TYPES.map((type) => (
           <div key={type.id} className="flex items-center gap-1">
-            <div className={cn('flex items-center gap-1 px-2 py-0.5 rounded', type.color)}>
+            <div
+              className={cn(
+                "flex items-center gap-1 px-2 py-0.5 rounded",
+                type.color,
+              )}
+            >
               {type.icon}
               <span>{type.name}</span>
             </div>
@@ -389,16 +398,16 @@ export function RosterView({
                 <div
                   key={i}
                   className={cn(
-                    'flex flex-col items-center justify-center border-r text-sm',
-                    isSameDay(day, new Date()) && 'bg-primary/10'
+                    "flex flex-col items-center justify-center border-r text-sm",
+                    isSameDay(day, new Date()) && "bg-primary/10",
                   )}
                   style={{ width: CELL_WIDTH, height: 48 }}
                 >
                   <span className="font-medium">
-                    {format(day, 'EEEE', { locale: fr })}
+                    {format(day, "EEEE", { locale: fr })}
                   </span>
                   <span className="text-xs text-muted-foreground">
-                    {format(day, 'd MMM', { locale: fr })}
+                    {format(day, "d MMM", { locale: fr })}
                   </span>
                 </div>
               ))}
@@ -412,15 +421,15 @@ export function RosterView({
                 style={{ height: ROW_HEIGHT }}
               >
                 {days.map((day, dayIdx) => {
-                  const dateKey = format(day, 'yyyy-MM-dd');
+                  const dateKey = format(day, "yyyy-MM-dd");
                   const dayShifts = row.shifts.get(dateKey) || [];
 
                   return (
                     <div
                       key={dayIdx}
                       className={cn(
-                        'relative border-r p-1',
-                        isSameDay(day, new Date()) && 'bg-primary/5'
+                        "relative border-r p-1",
+                        isSameDay(day, new Date()) && "bg-primary/5",
                       )}
                       style={{ width: CELL_WIDTH }}
                     >
@@ -434,9 +443,9 @@ export function RosterView({
                                 <TooltipTrigger asChild>
                                   <button
                                     className={cn(
-                                      'flex items-center gap-1 w-full px-2 py-1 rounded text-xs',
-                                      'hover:ring-1 hover:ring-primary transition-all',
-                                      shiftType?.color || 'bg-gray-200'
+                                      "flex items-center gap-1 w-full px-2 py-1 rounded text-xs",
+                                      "hover:ring-1 hover:ring-primary transition-all",
+                                      shiftType?.color || "bg-gray-200",
                                     )}
                                     onClick={() => onShiftClick?.(shift)}
                                   >

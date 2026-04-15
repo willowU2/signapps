@@ -146,6 +146,9 @@ moka = { version = "0.12", features = ["future"] }
 # Used by signapps-scheduler for job queue (TODO: evaluate migration to moka for consistency)
 redis = { version = "0.25", features = ["tokio-comp"] }
 
+# Memory Allocator optimization
+mimalloc = { version = "0.1", default-features = false }
+
 # Authentication
 jsonwebtoken = "9"
 argon2 = "0.5"
@@ -259,6 +262,7 @@ strip = true
 
 [profile.dev]
 opt-level = 0
+debug = 1
 
 [profile.dev.package."*"]
 opt-level = 3

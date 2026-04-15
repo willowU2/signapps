@@ -1,13 +1,22 @@
-import { ChevronDown, ChevronRight, Plus, Search, LayoutGrid, List as ListIcon, Database, AlignLeft } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuSeparator, 
-  DropdownMenuTrigger 
-} from '@/components/ui/dropdown-menu';
+import {
+  ChevronDown,
+  ChevronRight,
+  Plus,
+  Search,
+  LayoutGrid,
+  List as ListIcon,
+  Database,
+  AlignLeft,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export interface Bucket {
   name: string;
@@ -20,11 +29,11 @@ export interface StorageHeaderProps {
   buckets: Bucket[];
   currentPath: string[];
   search: string;
-  viewMode: 'grid' | 'list' | 'tree';
+  viewMode: "grid" | "list" | "tree";
   onBucketSelect: (bucket: string) => void;
   onPathClick: (index: number) => void;
   onSearchChange: (search: string) => void;
-  onViewModeChange: (mode: 'grid' | 'list' | 'tree') => void;
+  onViewModeChange: (mode: "grid" | "list" | "tree") => void;
   onCreateBucket: () => void;
 }
 
@@ -39,9 +48,9 @@ export function StorageHeader({
   onPathClick,
   onSearchChange,
   onViewModeChange,
-  onCreateBucket
+  onCreateBucket,
 }: StorageHeaderProps) {
-  if (driveView === 'home') return null;
+  if (driveView === "home") return null;
 
   return (
     <div className="flex justify-between items-center px-6 py-3 bg-background dark:bg-[#202124]">
@@ -49,16 +58,33 @@ export function StorageHeader({
         <div className="flex items-center text-[22px] font-normal text-[#1f1f1f] dark:text-[#e3e3e3] overflow-hidden">
           {currentBucket ? (
             <>
+              <div className="flex items-center shrink-0">
+                <Button
+                  variant="ghost"
+                  className="h-auto font-normal text-[22px] px-3 py-1.5 hover:bg-[#f1f3f4] dark:hover:bg-[#303134] rounded-full"
+                  onClick={() => onPathClick(-1)}
+                  title="Retourner à la racine du Drive"
+                >
+                  Mon Drive
+                </Button>
+                <ChevronRight className="h-5 w-5 mx-1 text-[#5f6368] dark:text-[#9aa0a6]" />
+              </div>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="h-auto font-normal text-[22px] px-3 py-1.5 hover:bg-[#f1f3f4] dark:hover:bg-[#303134] rounded-full gap-1">
+                  <Button
+                    variant="ghost"
+                    className="h-auto font-normal text-[22px] px-3 py-1.5 hover:bg-[#f1f3f4] dark:hover:bg-[#303134] rounded-full gap-1"
+                  >
                     {currentBucket}
                     <ChevronDown className="h-5 w-5 opacity-70" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-56" align="start">
-                  {buckets.map(b => (
-                    <DropdownMenuItem key={b.name} onClick={() => onBucketSelect(b.name)}>
+                  {buckets.map((b) => (
+                    <DropdownMenuItem
+                      key={b.name}
+                      onClick={() => onBucketSelect(b.name)}
+                    >
                       <Database className="mr-2 h-4 w-4 text-muted-foreground" />
                       {b.name}
                     </DropdownMenuItem>
@@ -70,7 +96,7 @@ export function StorageHeader({
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-              
+
               {currentPath.map((path, i) => (
                 <div key={i} className="flex items-center shrink-0">
                   <ChevronRight className="h-5 w-5 mx-1 text-[#5f6368] dark:text-[#9aa0a6]" />
@@ -86,10 +112,15 @@ export function StorageHeader({
             </>
           ) : (
             <h1 className="px-3 py-1.5">
-               {driveView === 'my-drive' ? 'Mon Drive' : 
-                driveView === 'shared' ? 'Partagés avec moi' : 
-                driveView === 'recent' ? 'Récents' : 
-                driveView === 'starred' ? 'Suivis' : 'Corbeille'}
+              {driveView === "my-drive"
+                ? "Mon Drive"
+                : driveView === "shared"
+                  ? "Partagés avec moi"
+                  : driveView === "recent"
+                    ? "Récents"
+                    : driveView === "starred"
+                      ? "Suivis"
+                      : "Corbeille"}
             </h1>
           )}
         </div>
@@ -109,19 +140,19 @@ export function StorageHeader({
         </div>
         <div className="flex items-center gap-1 border border-[#dadce0] dark:border-[#5f6368] rounded-full p-1 bg-background dark:bg-[#202124]">
           <Button
-            variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
+            variant={viewMode === "grid" ? "secondary" : "ghost"}
             size="icon"
             className="h-8 w-8 rounded-full text-[#5f6368] dark:text-[#9aa0a6]"
-            onClick={() => onViewModeChange('grid')}
+            onClick={() => onViewModeChange("grid")}
             title="Vue Grille"
           >
             <LayoutGrid className="h-[18px] w-[18px]" />
           </Button>
           <Button
-            variant={viewMode === 'list' ? 'secondary' : 'ghost'}
+            variant={viewMode === "list" ? "secondary" : "ghost"}
             size="icon"
             className="h-8 w-8 rounded-full text-[#5f6368] dark:text-[#9aa0a6]"
-            onClick={() => onViewModeChange('list')}
+            onClick={() => onViewModeChange("list")}
             title="Vue Liste"
           >
             <ListIcon className="h-[18px] w-[18px]" />

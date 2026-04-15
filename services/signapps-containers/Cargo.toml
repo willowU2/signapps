@@ -12,6 +12,7 @@ name = "signapps-containers"
 path = "src/main.rs"
 
 [dependencies]
+mimalloc = { workspace = true }
 signapps-common = { path = "../../crates/signapps-common" }
 signapps-db = { path = "../../crates/signapps-db", features = ["openapi"] }
 axum = { workspace = true }

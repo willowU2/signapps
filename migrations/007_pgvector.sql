@@ -16,6 +16,6 @@ CREATE TABLE IF NOT EXISTS ai.document_vectors (
     UNIQUE(document_id, chunk_index)
 );
 -- HNSW index bypassed since column is TEXT
--- CREATE INDEX IF NOT EXISTS idx_document_vectors_embedding ON ai.document_vectors USING hnsw (embedding vector_cosine_ops) WITH (m = 16, ef_construction = 64);
+-- CREATE INDEX IF NOT EXISTS idx_document_vectors_embedding ON ai.document_vectors USING hnsw (embedding vector_cosine_ops) WITH (m = 24, ef_construction = 100);
 -- Index for lookup by document
 CREATE INDEX IF NOT EXISTS idx_document_vectors_document_id ON ai.document_vectors(document_id);

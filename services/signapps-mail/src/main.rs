@@ -48,6 +48,9 @@ impl AuthState for AppState {
     }
 }
 
+#[global_allocator]
+static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
+
 #[tokio::main]
 async fn main() {
     // Install rustls crypto provider before any TLS operation

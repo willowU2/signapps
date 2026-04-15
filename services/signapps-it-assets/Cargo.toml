@@ -8,6 +8,7 @@ license.workspace = true
 repository.workspace = true
 
 [dependencies]
+mimalloc = { workspace = true }
 tokio.workspace = true
 axum.workspace = true
 serde.workspace = true

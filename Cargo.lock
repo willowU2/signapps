@@ -301,6 +301,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "assert_cmd"
+version = "2.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9a686bbee5efb88a82df0621b236e74d925f470e5445d3220a5648b892ec99c9"
+dependencies = [
+ "anstyle",
+ "bstr",
+ "libc",
+ "predicates",
+ "predicates-core",
+ "predicates-tree",
+ "wait-timeout",
+]
+
+[[package]]
 name = "async-channel"
 version = "1.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2619,6 +2634,12 @@ name = "deunicode"
 version = "1.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "abd57806937c9cc163efc8ea3910e00a62e2aeb0b8119f1793a978088f8f6b04"
+
+[[package]]
+name = "difflib"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6184e33543162437515c2e2b48714794e37845ec9851711914eec9d308f6ebe8"
 
 [[package]]
 name = "digest"
@@ -5742,6 +5763,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b6d2cec3eae94f9f509c767b45932f1ada8350c4bdb85af2fcab4a3c14807981"
 
 [[package]]
+name = "libmimalloc-sys"
+version = "0.1.44"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "667f4fec20f29dfc6bc7357c582d91796c169ad7e2fce709468aefeb2c099870"
+dependencies = [
+ "cc",
+ "libc",
+]
+
+[[package]]
 name = "libredox"
 version = "0.1.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6153,6 +6184,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "488016bfae457b036d996092f6cb448677611ce4449e970ceaf42695203f218a"
 dependencies = [
  "autocfg",
+]
+
+[[package]]
+name = "mimalloc"
+version = "0.1.48"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e1ee66a4b64c74f4ef288bcbb9192ad9c3feaad75193129ac8509af543894fd8"
+dependencies = [
+ "libmimalloc-sys",
 ]
 
 [[package]]
@@ -7760,6 +7800,33 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "925383efa346730478fb4838dbe9137d2a47675ad789c546d150a6e1dd4ab31c"
 
 [[package]]
+name = "predicates"
+version = "3.1.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ada8f2932f28a27ee7b70dd6c1c39ea0675c55a36879ab92f3a715eaa1e63cfe"
+dependencies = [
+ "anstyle",
+ "difflib",
+ "predicates-core",
+]
+
+[[package]]
+name = "predicates-core"
+version = "1.0.10"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cad38746f3166b4031b1a0d39ad9f954dd291e7854fcc0eed52ee41a0b50d144"
+
+[[package]]
+name = "predicates-tree"
+version = "1.0.13"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d0de1b847b39c8131db0467e9df1ff60e6d0562ab8e9a16e568ad0fdb372e2f2"
+dependencies = [
+ "predicates-core",
+ "termtree",
+]
+
+[[package]]
 name = "prettyplease"
 version = "0.2.37"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -8665,7 +8732,6 @@ dependencies = [
  "base64 0.22.1",
  "bytes",
  "encoding_rs",
- "futures-channel",
  "futures-core",
  "futures-util",
  "h2 0.4.13",
@@ -10033,6 +10099,7 @@ dependencies = [
  "clap",
  "dirs 5.0.1",
  "futures-util",
+ "mimalloc",
  "reqwest 0.12.28",
  "serde",
  "serde_json",
@@ -10041,8 +10108,8 @@ dependencies = [
  "tokio-tungstenite 0.24.0",
  "tracing",
  "tracing-subscriber",
- "utoipa 5.4.0",
- "utoipa-swagger-ui 8.1.0",
+ "utoipa",
+ "utoipa-swagger-ui",
  "uuid",
 ]
 
@@ -10068,6 +10135,7 @@ dependencies = [
  "hf-hub",
  "image 0.25.9",
  "llama-cpp-2",
+ "mimalloc",
  "mime_guess",
  "opendal",
  "ort",
@@ -10087,8 +10155,8 @@ dependencies = [
  "tower-http 0.5.2",
  "tracing",
  "tracing-subscriber",
- "utoipa 5.4.0",
- "utoipa-swagger-ui 8.1.0",
+ "utoipa",
+ "utoipa-swagger-ui",
  "uuid",
 ]
 
@@ -10130,7 +10198,7 @@ dependencies = [
  "chrono",
  "serde",
  "serde_json",
- "utoipa 5.4.0",
+ "utoipa",
  "uuid",
 ]
 
@@ -10141,6 +10209,7 @@ dependencies = [
  "anyhow",
  "axum 0.7.9",
  "chrono",
+ "mimalloc",
  "serde",
  "serde_json",
  "signapps-common",
@@ -10162,6 +10231,7 @@ dependencies = [
  "dotenvy",
  "hex",
  "hmac",
+ "mimalloc",
  "reqwest 0.12.28",
  "serde",
  "serde_json",
@@ -10174,7 +10244,7 @@ dependencies = [
  "tower-http 0.5.2",
  "tracing",
  "tracing-subscriber",
- "utoipa 5.4.0",
+ "utoipa",
  "uuid",
 ]
 
@@ -10213,6 +10283,7 @@ dependencies = [
  "dashmap 5.5.3",
  "dotenvy",
  "futures 0.3.31",
+ "mimalloc",
  "minijinja",
  "petgraph",
  "reqwest 0.12.28",
@@ -10234,8 +10305,8 @@ dependencies = [
  "tracing",
  "tracing-subscriber",
  "urlencoding",
- "utoipa 5.4.0",
- "utoipa-swagger-ui 8.1.0",
+ "utoipa",
+ "utoipa-swagger-ui",
  "uuid",
  "yrs",
 ]
@@ -10250,6 +10321,7 @@ dependencies = [
  "dashmap 6.1.0",
  "dotenvy",
  "futures-util",
+ "mimalloc",
  "serde",
  "serde_json",
  "signapps-cache",
@@ -10273,6 +10345,7 @@ dependencies = [
  "axum 0.7.9",
  "chrono",
  "dotenvy",
+ "mimalloc",
  "serde",
  "serde_json",
  "signapps-common",
@@ -10282,8 +10355,8 @@ dependencies = [
  "tower-http 0.5.2",
  "tracing",
  "tracing-subscriber",
- "utoipa 5.4.0",
- "utoipa-swagger-ui 8.1.0",
+ "utoipa",
+ "utoipa-swagger-ui",
  "uuid",
 ]
 
@@ -10352,8 +10425,8 @@ dependencies = [
  "tracing",
  "tracing-opentelemetry",
  "tracing-subscriber",
- "utoipa 5.4.0",
- "utoipa-swagger-ui 8.1.0",
+ "utoipa",
+ "utoipa-swagger-ui",
  "uuid",
  "validator",
  "vergen",
@@ -10366,6 +10439,7 @@ dependencies = [
  "anyhow",
  "axum 0.7.9",
  "chrono",
+ "mimalloc",
  "serde",
  "serde_json",
  "signapps-common",
@@ -10377,8 +10451,8 @@ dependencies = [
  "tower-http 0.5.2",
  "tracing",
  "tracing-subscriber",
- "utoipa 5.4.0",
- "utoipa-swagger-ui 8.1.0",
+ "utoipa",
+ "utoipa-swagger-ui",
  "uuid",
 ]
 
@@ -10390,6 +10464,7 @@ dependencies = [
  "axum 0.7.9",
  "chrono",
  "dotenvy",
+ "mimalloc",
  "reqwest 0.12.28",
  "serde",
  "serde_json",
@@ -10403,8 +10478,8 @@ dependencies = [
  "tower-http 0.5.2",
  "tracing",
  "tracing-subscriber",
- "utoipa 5.4.0",
- "utoipa-swagger-ui 8.1.0",
+ "utoipa",
+ "utoipa-swagger-ui",
  "uuid",
 ]
 
@@ -10422,6 +10497,7 @@ dependencies = [
  "futures 0.3.31",
  "futures-util",
  "jsonwebtoken",
+ "mimalloc",
  "rand 0.8.5",
  "regex",
  "reqwest 0.12.28",
@@ -10436,8 +10512,8 @@ dependencies = [
  "tower-http 0.5.2",
  "tracing",
  "tracing-subscriber",
- "utoipa 5.4.0",
- "utoipa-swagger-ui 8.1.0",
+ "utoipa",
+ "utoipa-swagger-ui",
  "uuid",
 ]
 
@@ -10491,7 +10567,7 @@ dependencies = [
  "tokio",
  "tokio-test",
  "tracing",
- "utoipa 5.4.0",
+ "utoipa",
  "uuid",
 ]
 
@@ -10508,7 +10584,7 @@ dependencies = [
  "sqlx",
  "tokio",
  "tracing",
- "utoipa 5.4.0",
+ "utoipa",
  "uuid",
 ]
 
@@ -10524,7 +10600,7 @@ dependencies = [
  "sqlx",
  "tokio",
  "tracing",
- "utoipa 5.4.0",
+ "utoipa",
  "uuid",
 ]
 
@@ -10540,7 +10616,7 @@ dependencies = [
  "sqlx",
  "tokio",
  "tracing",
- "utoipa 5.4.0",
+ "utoipa",
  "uuid",
 ]
 
@@ -10556,7 +10632,7 @@ dependencies = [
  "sqlx",
  "tokio",
  "tracing",
- "utoipa 5.4.0",
+ "utoipa",
  "uuid",
 ]
 
@@ -10572,7 +10648,7 @@ dependencies = [
  "sqlx",
  "tokio",
  "tracing",
- "utoipa 5.4.0",
+ "utoipa",
  "uuid",
 ]
 
@@ -10588,7 +10664,7 @@ dependencies = [
  "sqlx",
  "tokio",
  "tracing",
- "utoipa 5.4.0",
+ "utoipa",
  "uuid",
 ]
 
@@ -10604,7 +10680,7 @@ dependencies = [
  "sqlx",
  "tokio",
  "tracing",
- "utoipa 5.4.0",
+ "utoipa",
  "uuid",
 ]
 
@@ -10620,7 +10696,7 @@ dependencies = [
  "sqlx",
  "tokio",
  "tracing",
- "utoipa 5.4.0",
+ "utoipa",
  "uuid",
 ]
 
@@ -10636,7 +10712,7 @@ dependencies = [
  "sqlx",
  "tokio",
  "tracing",
- "utoipa 5.4.0",
+ "utoipa",
  "uuid",
 ]
 
@@ -10652,7 +10728,7 @@ dependencies = [
  "sqlx",
  "tokio",
  "tracing",
- "utoipa 5.4.0",
+ "utoipa",
  "uuid",
 ]
 
@@ -10667,7 +10743,7 @@ dependencies = [
  "sqlx",
  "tokio",
  "tracing",
- "utoipa 5.4.0",
+ "utoipa",
  "uuid",
 ]
 
@@ -10683,7 +10759,7 @@ dependencies = [
  "sqlx",
  "tokio",
  "tracing",
- "utoipa 5.4.0",
+ "utoipa",
  "uuid",
 ]
 
@@ -10700,7 +10776,7 @@ dependencies = [
  "sqlx",
  "tokio",
  "tracing",
- "utoipa 5.4.0",
+ "utoipa",
  "uuid",
 ]
 
@@ -10715,6 +10791,7 @@ dependencies = [
  "chrono",
  "clap",
  "futures-util",
+ "reqwest 0.12.28",
  "serde",
  "serde_json",
  "signapps-cache",
@@ -10727,8 +10804,8 @@ dependencies = [
  "tokio",
  "tower-http 0.5.2",
  "tracing",
- "utoipa 5.4.0",
- "utoipa-swagger-ui 7.1.0",
+ "utoipa",
+ "utoipa-swagger-ui",
  "uuid",
  "wiremock",
 ]
@@ -10795,10 +10872,12 @@ dependencies = [
  "futures 0.3.31",
  "lib0",
  "lopdf 0.33.0",
+ "mimalloc",
  "mime_guess",
  "moka",
  "printpdf",
  "rbook",
+ "reqwest 0.12.28",
  "resvg 0.44.0",
  "rust_xlsxwriter 0.79.4",
  "scraper 0.20.0",
@@ -10821,9 +10900,10 @@ dependencies = [
  "tower-layer 0.1.0",
  "tracing",
  "tracing-subscriber",
+ "url",
  "usvg 0.44.0",
- "utoipa 5.4.0",
- "utoipa-swagger-ui 8.1.0",
+ "utoipa",
+ "utoipa-swagger-ui",
  "uuid",
  "yrs",
  "zip 2.4.2",
@@ -10858,7 +10938,7 @@ dependencies = [
  "thiserror 1.0.69",
  "tokio",
  "tracing",
- "utoipa 5.4.0",
+ "utoipa",
  "uuid",
 ]
 
@@ -10870,6 +10950,7 @@ dependencies = [
  "axum 0.7.9",
  "chrono",
  "dotenvy",
+ "mimalloc",
  "reqwest 0.12.28",
  "serde",
  "serde_json",
@@ -10883,8 +10964,8 @@ dependencies = [
  "tower-http 0.5.2",
  "tracing",
  "tracing-subscriber",
- "utoipa 5.4.0",
- "utoipa-swagger-ui 8.1.0",
+ "utoipa",
+ "utoipa-swagger-ui",
  "uuid",
 ]
 
@@ -10896,6 +10977,7 @@ dependencies = [
  "axum 0.7.9",
  "chrono",
  "dotenvy",
+ "mimalloc",
  "serde",
  "serde_json",
  "signapps-common",
@@ -10905,8 +10987,8 @@ dependencies = [
  "tower-http 0.5.2",
  "tracing",
  "tracing-subscriber",
- "utoipa 5.4.0",
- "utoipa-swagger-ui 8.1.0",
+ "utoipa",
+ "utoipa-swagger-ui",
  "uuid",
 ]
 
@@ -10920,6 +11002,7 @@ dependencies = [
  "chrono",
  "dotenvy",
  "futures 0.3.31",
+ "mimalloc",
  "reqwest 0.12.28",
  "serde",
  "serde_json",
@@ -10932,8 +11015,8 @@ dependencies = [
  "tower-http 0.5.2",
  "tracing",
  "tracing-subscriber",
- "utoipa 5.4.0",
- "utoipa-swagger-ui 8.1.0",
+ "utoipa",
+ "utoipa-swagger-ui",
  "uuid",
 ]
 
@@ -10964,6 +11047,7 @@ dependencies = [
  "hmac",
  "jsonwebtoken",
  "ldap3",
+ "mimalloc",
  "oauth2",
  "rand 0.8.5",
  "reqwest 0.12.28",
@@ -10985,8 +11069,8 @@ dependencies = [
  "tracing-subscriber",
  "url",
  "urlencoding",
- "utoipa 5.4.0",
- "utoipa-swagger-ui 8.1.0",
+ "utoipa",
+ "utoipa-swagger-ui",
  "uuid",
  "validator",
 ]
@@ -11010,11 +11094,34 @@ dependencies = [
 ]
 
 [[package]]
+name = "signapps-installer"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "assert_cmd",
+ "bollard",
+ "chrono",
+ "clap",
+ "dirs 5.0.1",
+ "futures-util",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "tokio",
+ "toml 0.8.2",
+ "tracing",
+ "tracing-subscriber",
+ "uuid",
+ "vergen",
+]
+
+[[package]]
 name = "signapps-integrations"
 version = "0.1.0"
 dependencies = [
  "anyhow",
  "axum 0.7.9",
+ "mimalloc",
  "reqwest 0.12.28",
  "serde",
  "serde_json",
@@ -11040,6 +11147,7 @@ dependencies = [
  "dotenvy",
  "futures 0.3.31",
  "ipnetwork",
+ "mimalloc",
  "reqwest 0.12.28",
  "serde",
  "serde_json",
@@ -11052,8 +11160,8 @@ dependencies = [
  "tower-http 0.5.2",
  "tracing",
  "tracing-subscriber",
- "utoipa 5.4.0",
- "utoipa-swagger-ui 8.1.0",
+ "utoipa",
+ "utoipa-swagger-ui",
  "uuid",
  "validator",
 ]
@@ -11157,6 +11265,7 @@ dependencies = [
  "imap",
  "lettre",
  "mailparse",
+ "mimalloc",
  "native-tls",
  "oauth2",
  "reqwest 0.12.28",
@@ -11187,8 +11296,8 @@ dependencies = [
  "tracing",
  "tracing-subscriber",
  "trust-dns-resolver",
- "utoipa 5.4.0",
- "utoipa-swagger-ui 8.1.0",
+ "utoipa",
+ "utoipa-swagger-ui",
  "uuid",
 ]
 
@@ -11218,6 +11327,7 @@ dependencies = [
  "futures-util",
  "hound",
  "image 0.25.9",
+ "mimalloc",
  "mime_guess",
  "ocrs",
  "piper-rs",
@@ -11241,8 +11351,8 @@ dependencies = [
  "tracing",
  "tracing-subscriber",
  "urlencoding",
- "utoipa 5.4.0",
- "utoipa-swagger-ui 8.1.0",
+ "utoipa",
+ "utoipa-swagger-ui",
  "uuid",
  "whisper-rs",
 ]
@@ -11259,6 +11369,7 @@ dependencies = [
  "dotenvy",
  "futures 0.3.31",
  "jsonwebtoken",
+ "mimalloc",
  "rand 0.8.5",
  "reqwest 0.12.28",
  "serde",
@@ -11271,8 +11382,8 @@ dependencies = [
  "tower-http 0.5.2",
  "tracing",
  "tracing-subscriber",
- "utoipa 5.4.0",
- "utoipa-swagger-ui 8.1.0",
+ "utoipa",
+ "utoipa-swagger-ui",
  "uuid",
 ]
 
@@ -11287,6 +11398,7 @@ dependencies = [
  "dotenvy",
  "futures 0.3.31",
  "futures-util",
+ "mimalloc",
  "once_cell",
  "prometheus",
  "reqwest 0.12.28",
@@ -11300,8 +11412,8 @@ dependencies = [
  "tower-http 0.5.2",
  "tracing",
  "tracing-subscriber",
- "utoipa 5.4.0",
- "utoipa-swagger-ui 8.1.0",
+ "utoipa",
+ "utoipa-swagger-ui",
  "uuid",
 ]
 
@@ -11325,6 +11437,7 @@ dependencies = [
  "axum 0.7.9",
  "chrono",
  "dotenvy",
+ "mimalloc",
  "serde",
  "serde_json",
  "signapps-common",
@@ -11335,8 +11448,8 @@ dependencies = [
  "tower-http 0.5.2",
  "tracing",
  "tracing-subscriber",
- "utoipa 5.4.0",
- "utoipa-swagger-ui 8.1.0",
+ "utoipa",
+ "utoipa-swagger-ui",
  "uuid",
 ]
 
@@ -11376,6 +11489,7 @@ dependencies = [
  "anyhow",
  "axum 0.7.9",
  "chrono",
+ "mimalloc",
  "serde",
  "serde_json",
  "signapps-common",
@@ -11387,8 +11501,8 @@ dependencies = [
  "tower-http 0.5.2",
  "tracing",
  "tracing-subscriber",
- "utoipa 5.4.0",
- "utoipa-swagger-ui 8.1.0",
+ "utoipa",
+ "utoipa-swagger-ui",
  "uuid",
 ]
 
@@ -11431,6 +11545,7 @@ dependencies = [
  "hyper 1.8.1",
  "hyper-util",
  "instant-acme",
+ "mimalloc",
  "rcgen",
  "reqwest 0.12.28",
  "rustls 0.23.36",
@@ -11450,8 +11565,8 @@ dependencies = [
  "tracing",
  "tracing-subscriber",
  "url",
- "utoipa 5.4.0",
- "utoipa-swagger-ui 8.1.0",
+ "utoipa",
+ "utoipa-swagger-ui",
  "uuid",
 ]
 
@@ -11467,6 +11582,7 @@ dependencies = [
  "dotenvy",
  "futures-util",
  "ipnetwork",
+ "mimalloc",
  "reqwest 0.12.28",
  "serde",
  "serde_json",
@@ -11484,8 +11600,8 @@ dependencies = [
  "tower-http 0.5.2",
  "tracing",
  "tracing-subscriber",
- "utoipa 5.4.0",
- "utoipa-swagger-ui 8.1.0",
+ "utoipa",
+ "utoipa-swagger-ui",
  "uuid",
 ]
 
@@ -11543,6 +11659,7 @@ dependencies = [
  "chrono",
  "dotenvy",
  "futures 0.3.31",
+ "mimalloc",
  "redis",
  "reqwest 0.11.27",
  "serde",
@@ -11555,8 +11672,8 @@ dependencies = [
  "tower-http 0.5.2",
  "tracing",
  "tracing-subscriber",
- "utoipa 5.4.0",
- "utoipa-swagger-ui 8.1.0",
+ "utoipa",
+ "utoipa-swagger-ui",
  "uuid",
 ]
 
@@ -11579,6 +11696,7 @@ dependencies = [
  "dotenvy",
  "futures-util",
  "hickory-resolver",
+ "mimalloc",
  "reqwest 0.12.28",
  "serde",
  "serde_json",
@@ -11592,8 +11710,8 @@ dependencies = [
  "tower-http 0.5.2",
  "tracing",
  "tracing-subscriber",
- "utoipa 5.4.0",
- "utoipa-swagger-ui 8.1.0",
+ "utoipa",
+ "utoipa-swagger-ui",
  "uuid",
 ]
 
@@ -11643,7 +11761,7 @@ dependencies = [
  "tokio",
  "tower 0.4.13",
  "tracing",
- "utoipa 5.4.0",
+ "utoipa",
  "uuid",
 ]
 
@@ -11663,6 +11781,7 @@ dependencies = [
  "anyhow",
  "axum 0.7.9",
  "chrono",
+ "mimalloc",
  "serde",
  "serde_json",
  "signapps-common",
@@ -11717,6 +11836,7 @@ dependencies = [
  "chrono",
  "dotenvy",
  "hex",
+ "mimalloc",
  "rand 0.8.5",
  "reqwest 0.12.28",
  "serde",
@@ -11732,8 +11852,8 @@ dependencies = [
  "tracing",
  "tracing-subscriber",
  "urlencoding",
- "utoipa 5.4.0",
- "utoipa-swagger-ui 8.1.0",
+ "utoipa",
+ "utoipa-swagger-ui",
  "uuid",
 ]
 
@@ -11783,6 +11903,7 @@ dependencies = [
  "hex",
  "image 0.25.9",
  "lopdf 0.33.0",
+ "mimalloc",
  "mime_guess",
  "once_cell",
  "opendal",
@@ -11805,8 +11926,8 @@ dependencies = [
  "tracing",
  "tracing-subscriber",
  "urlencoding",
- "utoipa 5.4.0",
- "utoipa-swagger-ui 8.1.0",
+ "utoipa",
+ "utoipa-swagger-ui",
  "uuid",
  "zip 2.4.2",
 ]
@@ -11835,6 +11956,7 @@ dependencies = [
  "anyhow",
  "axum 0.7.9",
  "chrono",
+ "mimalloc",
  "serde",
  "serde_json",
  "signapps-common",
@@ -11898,6 +12020,7 @@ dependencies = [
  "chrono",
  "hex",
  "hmac",
+ "mimalloc",
  "rand 0.8.5",
  "serde",
  "serde_json",
@@ -11913,8 +12036,8 @@ dependencies = [
  "tower-http 0.5.2",
  "tracing",
  "tracing-subscriber",
- "utoipa 5.4.0",
- "utoipa-swagger-ui 8.1.0",
+ "utoipa",
+ "utoipa-swagger-ui",
  "uuid",
 ]
 
@@ -11953,6 +12076,7 @@ dependencies = [
  "axum 0.7.9",
  "chrono",
  "hmac",
+ "mimalloc",
  "reqwest 0.12.28",
  "serde",
  "serde_json",
@@ -11991,6 +12115,7 @@ dependencies = [
  "axum 0.7.9",
  "chrono",
  "dotenvy",
+ "mimalloc",
  "reqwest 0.12.28",
  "serde",
  "serde_json",
@@ -12003,8 +12128,8 @@ dependencies = [
  "tower-http 0.5.2",
  "tracing",
  "tracing-subscriber",
- "utoipa 5.4.0",
- "utoipa-swagger-ui 8.1.0",
+ "utoipa",
+ "utoipa-swagger-ui",
  "uuid",
  "validator",
 ]
@@ -13449,6 +13574,12 @@ dependencies = [
  "rustix 1.1.3",
  "windows-sys 0.60.2",
 ]
+
+[[package]]
+name = "termtree"
+version = "0.5.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8f50febec83f5ee1df3015341d8bd429f2d1cc62bcba7ea2076759d315084683"
 
 [[package]]
 name = "thin-slice"
@@ -14906,18 +15037,6 @@ checksum = "133bf74f01486773317ddfcde8e2e20d2933cc3b68ab797e5d718bef996a81de"
 
 [[package]]
 name = "utoipa"
-version = "4.2.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c5afb1a60e207dca502682537fefcfd9921e71d0b83e9576060f09abc6efab23"
-dependencies = [
- "indexmap 2.13.0",
- "serde",
- "serde_json",
- "utoipa-gen 4.3.1",
-]
-
-[[package]]
-name = "utoipa"
 version = "5.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2fcc29c80c21c31608227e0912b2d7fddba57ad76b606890627ba8ee7964e993"
@@ -14925,19 +15044,7 @@ dependencies = [
  "indexmap 2.13.0",
  "serde",
  "serde_json",
- "utoipa-gen 5.4.0",
-]
-
-[[package]]
-name = "utoipa-gen"
-version = "4.3.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "20c24e8ab68ff9ee746aad22d39b5535601e6416d1b0feeabf78be986a5c4392"
-dependencies = [
- "proc-macro-error",
- "proc-macro2",
- "quote",
- "syn 2.0.114",
+ "utoipa-gen",
 ]
 
 [[package]]
@@ -14955,24 +15062,6 @@ dependencies = [
 
 [[package]]
 name = "utoipa-swagger-ui"
-version = "7.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "943e0ff606c6d57d410fd5663a4d7c074ab2c5f14ab903b9514565e59fa1189e"
-dependencies = [
- "axum 0.7.9",
- "mime_guess",
- "regex",
- "reqwest 0.12.28",
- "rust-embed",
- "serde",
- "serde_json",
- "url",
- "utoipa 4.2.3",
- "zip 1.1.4",
-]
-
-[[package]]
-name = "utoipa-swagger-ui"
 version = "8.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "db4b5ac679cc6dfc5ea3f2823b0291c777750ffd5e13b21137e0f7ac0e8f9617"
@@ -14985,7 +15074,7 @@ dependencies = [
  "serde",
  "serde_json",
  "url",
- "utoipa 5.4.0",
+ "utoipa",
  "zip 2.4.2",
 ]
 
@@ -15120,6 +15209,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fb067e4cbd1ff067d1df46c9194b5de0e98efd2810bbc95c5d5e5f25a3231150"
 dependencies = [
  "cc",
+ "libc",
+]
+
+[[package]]
+name = "wait-timeout"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "09ac3b126d3914f9849036f826e054cbabdc8519970b8998ddaf3b5bd3c65f11"
+dependencies = [
  "libc",
 ]
 
@@ -16573,22 +16671,6 @@ dependencies = [
  "sha1",
  "time",
  "zstd 0.11.2+zstd.1.5.2",
-]
-
-[[package]]
-name = "zip"
-version = "1.1.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9cc23c04387f4da0374be4533ad1208cbb091d5c11d070dfef13676ad6497164"
-dependencies = [
- "arbitrary",
- "crc32fast",
- "crossbeam-utils",
- "displaydoc",
- "flate2",
- "indexmap 2.13.0",
- "num_enum",
- "thiserror 1.0.69",
 ]
 
 [[package]]

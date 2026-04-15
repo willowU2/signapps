@@ -1,13 +1,18 @@
 "use client";
 
-import React, { useEffect, useMemo, useRef, useCallback, useState } from "react";
+import React, {
+  useEffect,
+  useMemo,
+  useRef,
+  useCallback,
+  useState,
+} from "react";
 import {
   format,
   startOfWeek,
   endOfWeek,
   eachDayOfInterval,
   isToday,
-  addDays,
   getHours,
   getMinutes,
   differenceInMinutes,
@@ -22,8 +27,6 @@ import {
 } from "@/stores/calendar-store";
 import { useEvents } from "@/hooks/use-events";
 import { Event } from "@/types/calendar";
-import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -37,10 +40,7 @@ import {
   ContextMenuSeparator,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
-import {
-  DragCreateLayer,
-  useDragCreate,
-} from "./drag-create-event";
+import { DragCreateLayer, useDragCreate } from "./drag-create-event";
 import { MultiDayEventBars, isMultiDay } from "./multi-day-events";
 import { ResizeHandle, useEventResize } from "./resize-event";
 
@@ -173,10 +173,13 @@ function DraggableEventCard({
           <TooltipContent side="top" align="start" className="max-w-xs">
             <div className="font-semibold">{event.title}</div>
             <div className="text-[11px] opacity-80">
-              {format(start, "EEEE d MMM", { locale: fr })} · {format(start, "HH:mm")} → {format(end, "HH:mm")}
+              {format(start, "EEEE d MMM", { locale: fr })} ·{" "}
+              {format(start, "HH:mm")} → {format(end, "HH:mm")}
             </div>
             {event.location && (
-              <div className="text-[11px] mt-1 opacity-80">{event.location}</div>
+              <div className="text-[11px] mt-1 opacity-80">
+                {event.location}
+              </div>
             )}
             {event.description && (
               <div className="text-[11px] mt-1 opacity-80 line-clamp-3">
@@ -276,7 +279,6 @@ export function WeekCalendar({
   onShareEvent,
 }: WeekCalendarProps) {
   const currentDate = useCalendarStore((state) => state.currentDate);
-  const setCurrentDate = useCalendarStore((state) => state.setCurrentDate);
   const { selectedEventId, selectEvent } = useCalendarSelection();
   const timezones = useCalendarTimezones();
 
@@ -329,14 +331,6 @@ export function WeekCalendar({
     });
     return grouped;
   }, [singleDayEvents]);
-
-  const handlePrevWeek = () => {
-    setCurrentDate(addDays(currentDate, -7));
-  };
-
-  const handleNextWeek = () => {
-    setCurrentDate(addDays(currentDate, 7));
-  };
 
   // Drag-create handler: converts DragSelection to Date pair → opens EventForm
   const { handleCreate } = useDragCreate(

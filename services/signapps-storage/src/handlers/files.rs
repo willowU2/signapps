@@ -452,6 +452,81 @@ pub async fn download(
     Ok(response)
 }
 
+/// Buckets whitelisted for unauthenticated GET.
+///
+/// Used for static public assets like the fonts catalog, which must be
+/// reachable by the frontend and by downstream services (e.g. `signapps-docs`
+/// fonts proxy) without a service token.
+///
+/// NEVER add user-content buckets here — only buckets that hold
+/// non-sensitive, read-only, global-scope assets managed by platform admins.
+pub const PUBLIC_READ_BUCKETS: &[&str] = &["system-fonts"];
+
+/// Public, unauthenticated download handler for whitelisted buckets.
+///
+/// Behaves like [`download`] but:
+/// - does NOT require a [`Claims`] extractor (no JWT),
+/// - does NOT call [`check_file_permission`] (no ACL check),
+/// - refuses any bucket that is not listed in [`PUBLIC_READ_BUCKETS`].
+///
+/// # Errors
+///
+/// - [`Error::Forbidden`] if the requested bucket is not whitelisted.
+/// - [`Error::Internal`] if the response cannot be built.
+/// - Whatever the underlying `storage.get_object` returns on missing file /
+///   backend failure (typically mapped to 404 / 503 by the error layer).
+#[utoipa::path(
+    get,
+    path = "/api/v1/files/system-fonts/{key}",
+    params(
+        ("key" = String, Path, description = "Object key inside system-fonts"),
+    ),
+    responses(
+        (status = 200, description = "File content (binary download)"),
+        (status = 404, description = "File not found"),
+    ),
+    tag = "files"
+)]
+#[tracing::instrument(skip_all)]
+pub async fn download_public(
+    State(state): State<AppState>,
+    Path(key): Path<String>,
+) -> Result<Response> {
+    // The route wildcard `/files/system-fonts/*key` pins the bucket at the
+    // router level, so only the object key arrives here. We still check the
+    // allowlist as a belt-and-suspenders guard.
+    let bucket = "system-fonts";
+    if !PUBLIC_READ_BUCKETS.contains(&bucket) {
+        return Err(Error::Forbidden(format!(
+            "bucket {} is not publicly readable",
+            bucket
+        )));
+    }
+
+    let object = state.storage.get_object(bucket, &key).await?;
+
+    let content_type = object.content_type;
+    let content_length = object.content_length;
+
+    // Get filename from key
+    let filename = key.split('/').next_back().unwrap_or(&key);
+
+    let body = Body::from(object.data);
+
+    let response = Response::builder()
+        .status(StatusCode::OK)
+        .header(header::CONTENT_TYPE, content_type)
+        .header(header::CONTENT_LENGTH, content_length)
+        .header(
+            header::CONTENT_DISPOSITION,
+            format!("attachment; filename=\"{}\"", filename),
+        )
+        .body(body)
+        .map_err(|e| Error::Internal(e.to_string()))?;
+
+    Ok(response)
+}
+
 /// Maximum upload size per file (500 MB).
 const MAX_UPLOAD_SIZE: usize = 500 * 1024 * 1024;
 

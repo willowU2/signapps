@@ -57,7 +57,15 @@ export function AppLayout({ children, portalMode }: AppLayoutProps) {
           ref={mainRef}
           id="main-content"
           className={cn(
-            "flex-1 min-w-0 overflow-y-auto rounded-tl-2xl border-l border-t border-border bg-card p-4 md:p-6 pb-28 transition-all duration-200 smooth-scroll",
+            "flex-1 min-w-0 overflow-y-auto transition-all duration-200 smooth-scroll",
+            pathname.startsWith("/mail") ||
+              pathname.startsWith("/calendar") ||
+              pathname.startsWith("/drive") ||
+              pathname.startsWith("/storage") ||
+              pathname.startsWith("/tasks") ||
+              pathname.startsWith("/whiteboard")
+              ? "p-0 bg-background" // Flush layout for full-screen apps
+              : "rounded-tl-2xl border-l border-t border-border bg-card p-4 md:p-6 pb-28", // Standard dashboard layout
           )}
         >
           <ErrorBoundary>

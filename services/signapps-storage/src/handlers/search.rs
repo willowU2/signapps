@@ -782,3 +782,93 @@ pub async fn omni_search(
 
     Ok(Json(OmniSearchResponse { results, took_ms }))
 }
+
+// ─── Content Search ─────────────────────────────────────────────────────────
+
+/// Result item for content search.
+#[derive(Debug, Serialize)]
+pub struct ContentSearchResult {
+    pub file_id: Uuid,
+    pub bucket: String,
+    pub key: String,
+    pub name: String,
+    pub snippet: String,
+    pub score: f32,
+    pub last_modified: DateTime<Utc>,
+}
+
+/// Query parameters for content search.
+#[derive(Debug, Deserialize)]
+pub struct ContentSearchQuery {
+    pub q: String,
+    pub bucket: Option<String>,
+    pub limit: Option<i32>,
+}
+
+/// Search files by matching text in file metadata (name/key).
+///
+/// Full-text search over file bodies is not yet available; this endpoint
+/// currently falls back to matching the `key` column so the content-search
+/// dialog returns sensible hits instead of 404. When an FTS index lands,
+/// upgrade the query here to search the extracted text column.
+#[utoipa::path(
+    get,
+    path = "/api/v1/search/content",
+    responses(
+        (status = 200, description = "Files whose metadata match the query"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "search"
+)]
+#[tracing::instrument(skip(state))]
+pub async fn search_content(
+    State(state): State<AppState>,
+    Extension(user_id): Extension<Uuid>,
+    Query(query): Query<ContentSearchQuery>,
+) -> Result<Json<Vec<ContentSearchResult>>> {
+    if query.q.trim().is_empty() {
+        return Ok(Json(vec![]));
+    }
+
+    let limit = query.limit.unwrap_or(50).clamp(1, 200) as i64;
+    let pattern = format!("%{}%", query.q);
+
+    let rows = sqlx::query(
+        r#"
+        SELECT id, bucket, key, updated_at
+        FROM storage.files
+        WHERE user_id = $1
+          AND ($2::text IS NULL OR bucket = $2)
+          AND key ILIKE $3
+        ORDER BY updated_at DESC
+        LIMIT $4
+        "#,
+    )
+    .bind(user_id)
+    .bind(query.bucket.as_deref())
+    .bind(&pattern)
+    .bind(limit)
+    .fetch_all(state.pool.inner())
+    .await
+    .map_err(|e| signapps_common::Error::Database(e.to_string()))?;
+
+    let results = rows
+        .into_iter()
+        .map(|r| {
+            let key: String = r.get("key");
+            let name = filename_from_key(&key);
+            ContentSearchResult {
+                file_id: r.get("id"),
+                bucket: r.get("bucket"),
+                snippet: name.clone(),
+                name,
+                key,
+                score: 1.0,
+                last_modified: r.get("updated_at"),
+            }
+        })
+        .collect();
+
+    Ok(Json(results))
+}

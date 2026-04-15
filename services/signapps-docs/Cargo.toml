@@ -5,6 +5,7 @@ edition = "2021"
 license.workspace = true
 
 [dependencies]
+mimalloc = { workspace = true }
 # Web framework
 axum = { version = "0.7", features = ["macros", "ws"] }
 tokio = { version = "1.36", features = ["full"] }
@@ -71,6 +72,8 @@ signapps-db = { path = "../../crates/signapps-db" }
 signapps-cache = { path = "../../crates/signapps-cache" }
 signapps-sharing = { path = "../../crates/signapps-sharing" }
 dotenvy.workspace = true
+reqwest = { workspace = true }
+url = "2"
 utoipa = { workspace = true }
 utoipa-swagger-ui = { workspace = true }
 

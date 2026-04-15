@@ -5,7 +5,6 @@ import {
   format,
   startOfDay,
   endOfDay,
-  addDays,
   getHours,
   getMinutes,
   differenceInMinutes,
@@ -170,10 +169,13 @@ function DraggableEventCard({
           <TooltipContent side="top" align="start" className="max-w-xs">
             <div className="font-semibold">{event.title}</div>
             <div className="text-[11px] opacity-80">
-              {format(start, "EEEE d MMM", { locale: fr })} · {format(start, "HH:mm")} → {format(end, "HH:mm")}
+              {format(start, "EEEE d MMM", { locale: fr })} ·{" "}
+              {format(start, "HH:mm")} → {format(end, "HH:mm")}
             </div>
             {event.location && (
-              <div className="text-[11px] mt-1 opacity-80">{event.location}</div>
+              <div className="text-[11px] mt-1 opacity-80">
+                {event.location}
+              </div>
             )}
             {event.description && (
               <div className="text-[11px] mt-1 opacity-80 line-clamp-3">
@@ -273,7 +275,6 @@ export function DayCalendar({
   onShareEvent,
 }: DayCalendarProps) {
   const currentDate = useCalendarStore((state) => state.currentDate);
-  const setCurrentDate = useCalendarStore((state) => state.setCurrentDate);
   const { selectedEventId, selectEvent } = useCalendarSelection();
   const timezones = useCalendarTimezones();
   const { events, fetchEvents, updateEvent } = useEvents(selectedCalendarId);
@@ -298,9 +299,6 @@ export function DayCalendar({
     end.setDate(end.getDate() + 1);
     fetchEvents(start, end);
   }, [selectedCalendarId, currentDate, fetchEvents]);
-
-  const handlePrevDay = () => setCurrentDate(addDays(currentDate, -1));
-  const handleNextDay = () => setCurrentDate(addDays(currentDate, 1));
 
   const hours = Array.from({ length: 24 }, (_, i) => i);
 

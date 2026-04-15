@@ -610,6 +610,18 @@ export default function StoragePage() {
     }
   };
 
+  useEffect(() => {
+    const handleReset = (e: any) => {
+      if (e.detail?.path === "/storage") {
+        setCurrentBucket("");
+        setCurrentPath([]);
+        setDriveView("my-drive");
+      }
+    };
+    window.addEventListener("reset-navigation", handleReset);
+    return () => window.removeEventListener("reset-navigation", handleReset);
+  }, []);
+
   const handleDownload = async (item: FileItem) => {
     try {
       const key =
@@ -854,10 +866,16 @@ export default function StoragePage() {
     <AppLayout>
       <>
         {activeTab === "files" ? (
-          <div className="flex h-[calc(100vh-4rem)] -m-4 overflow-hidden bg-background dark:bg-[#1a1a1a]">
+          <div className="flex h-[calc(100vh-4rem)] overflow-hidden bg-background dark:bg-[#1a1a1a]">
             <DriveSidebar
               currentView={driveView}
-              onViewChange={setDriveView}
+              onViewChange={(view) => {
+                setDriveView(view);
+                if (view === "my-drive") {
+                  setCurrentBucket("");
+                  setCurrentPath([]);
+                }
+              }}
               quota={
                 storageStats.stats
                   ? {

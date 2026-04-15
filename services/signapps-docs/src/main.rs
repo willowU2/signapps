@@ -101,6 +101,9 @@ impl AuthState for AppState {
     }
 }
 
+#[global_allocator]
+static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
+
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     // Initialize using bootstrap helpers
@@ -137,7 +140,14 @@ async fn main() -> anyhow::Result<()> {
     // Public routes (no auth required)
     let public_routes = Router::new()
         .route("/health", get(health_handler))
-        .merge(signapps_common::version::router("signapps-docs"));
+        .merge(signapps_common::version::router("signapps-docs"))
+        // Universal fonts catalog — static assets meant to be loaded from
+        // any origin via <link> and @font-face. No auth.
+        .route("/api/v1/fonts/manifest", get(handlers::fonts::get_manifest))
+        .route(
+            "/api/v1/fonts/files/:family/:variant",
+            get(handlers::fonts::get_font_file),
+        );
 
     // Protected routes (auth required)
     let protected_routes = Router::new()

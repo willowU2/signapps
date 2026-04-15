@@ -54,6 +54,9 @@ impl AuthState for AppState {
     }
 }
 
+#[global_allocator]
+static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
+
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     // Initialize using bootstrap helpers
@@ -106,8 +109,7 @@ async fn main() -> anyhow::Result<()> {
     let cache_service = signapps_cache::CacheService::default_config();
 
     // Initialize sharing engine — unified permission system replacing drive.acl
-    let sharing_engine =
-        SharingEngine::new(pool.inner().clone(), cache_service.clone());
+    let sharing_engine = SharingEngine::new(pool.inner().clone(), cache_service.clone());
     tracing::info!("Sharing engine initialized");
 
     // Create application state
@@ -179,6 +181,7 @@ fn create_router(state: AppState, sharing_engine: SharingEngine) -> Router {
         .route("/drive/nodes/root", get(drive::list_nodes))
         .route("/drive/nodes/:id/children", get(drive::list_nodes))
         .route("/drive/nodes/:id/download", get(drive::download_node))
+        .route("/drive/nodes/:id/share", post(drive::create_node_share))
         .route("/drive/nodes/:id", put(drive::update_node))
         .route("/drive/nodes/:id", delete(drive::delete_node));
 
@@ -272,7 +275,8 @@ fn create_router(state: AppState, sharing_engine: SharingEngine) -> Router {
         .route("/search/quick", get(search::quick_search))
         .route("/search/recent", get(search::recent_files))
         .route("/search/suggest", get(search::suggest))
-        .route("/search/omni", get(search::omni_search));
+        .route("/search/omni", get(search::omni_search))
+        .route("/search/content", get(search::search_content));
 
     // Quota routes (user - accessible to authenticated users)
     let user_quota_routes = Router::new()
@@ -351,6 +355,10 @@ fn create_router(state: AppState, sharing_engine: SharingEngine) -> Router {
         .route(
             "/files/:file_id/versions/:version_id/restore",
             post(handlers::versions::restore_version),
+        )
+        .route(
+            "/files/:file_id/versions/:version_id/download",
+            get(handlers::versions::download_version),
         );
 
     // Mount management routes
@@ -504,8 +512,18 @@ fn create_router(state: AppState, sharing_engine: SharingEngine) -> Router {
             auth_middleware::<AppState>,
         ));
 
-    // Combine all routes into a single v1 router to prevent path shadowing
+    // PUBLIC: read-only access to whitelisted system buckets (e.g. system-fonts).
+    // Defined separately so no JWT middleware is applied. Static-prefix
+    // (`system-fonts`) wins over the param route (`:bucket`) on the protected
+    // router thanks to axum/matchit's specificity rules — verified at startup.
+    let public_files_routes =
+        Router::new().route("/files/system-fonts/*key", get(files::download_public));
+
+    // Combine all routes into a single v1 router to prevent path shadowing.
+    // public_files_routes is merged BEFORE the protected ones so the static
+    // bucket route wins for `/files/system-fonts/*`.
     let v1_routes = public_routes
+        .merge(public_files_routes)
         .merge(public_share_routes)
         .merge(admin_routes)
         .merge(protected_routes)
@@ -529,10 +547,10 @@ fn create_router(state: AppState, sharing_engine: SharingEngine) -> Router {
 
     // Sharing sub-routers for files and folders (unified ACL via SharingEngine).
     // Routes produced by sharing_routes() already include the /api/v1/ prefix.
-    let files_sharing = sharing_routes("files", ResourceType::File)
-        .with_state(sharing_engine.clone());
-    let folders_sharing = sharing_routes("folders", ResourceType::Folder)
-        .with_state(sharing_engine.clone());
+    let files_sharing =
+        sharing_routes("files", ResourceType::File).with_state(sharing_engine.clone());
+    let folders_sharing =
+        sharing_routes("folders", ResourceType::Folder).with_state(sharing_engine.clone());
     let global_sharing = sharing_global_routes().with_state(sharing_engine);
 
     Router::new()

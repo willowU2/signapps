@@ -1,13 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useMemo } from "react";
-import {
-  addDays,
-  format,
-  startOfDay,
-  endOfDay,
-  parseISO,
-} from "date-fns";
+import { addDays, format, startOfDay, endOfDay, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
 import {
   Users,
@@ -16,8 +10,6 @@ import {
   AlertTriangle,
   CheckCircle,
   RefreshCw,
-  ChevronLeft,
-  ChevronRight,
   Calendar,
   Info,
 } from "lucide-react";
@@ -143,15 +135,17 @@ function TimeAxis({ className }: { className?: string }) {
       style={{ width: TIME_AXIS_WIDTH }}
     >
       <div className="h-14 border-b border-border" />
-      {Array.from({ length: TOTAL_HOURS + 1 }, (_, i) => HOUR_START + i).map((hour) => (
-        <div
-          key={hour}
-          className="relative shrink-0 flex items-start justify-end pr-2 text-xs text-muted-foreground"
-          style={{ height: SLOT_HEIGHT_PX }}
-        >
-          <span className="-mt-2 font-medium">{`${String(hour).padStart(2, "0")}:00`}</span>
-        </div>
-      ))}
+      {Array.from({ length: TOTAL_HOURS + 1 }, (_, i) => HOUR_START + i).map(
+        (hour) => (
+          <div
+            key={hour}
+            className="relative shrink-0 flex items-start justify-end pr-2 text-xs text-muted-foreground"
+            style={{ height: SLOT_HEIGHT_PX }}
+          >
+            <span className="-mt-2 font-medium">{`${String(hour).padStart(2, "0")}:00`}</span>
+          </div>
+        ),
+      )}
     </div>
   );
 }
@@ -168,7 +162,12 @@ interface EntityColumnProps {
   onSlotClick?: (startMinutes: number) => void;
 }
 
-function EntityColumn({ entity, busySlots, freeSlots, onSlotClick }: EntityColumnProps) {
+function EntityColumn({
+  entity,
+  busySlots,
+  freeSlots,
+  onSlotClick,
+}: EntityColumnProps) {
   return (
     <div
       className="flex flex-col shrink-0 border-r border-border"
@@ -195,13 +194,16 @@ function EntityColumn({ entity, busySlots, freeSlots, onSlotClick }: EntityColum
       </div>
 
       {/* Time grid */}
-      <div className="relative" style={{ height: TOTAL_HOURS * SLOT_HEIGHT_PX }}>
+      <div
+        className="relative"
+        style={{ height: TOTAL_HOURS * SLOT_HEIGHT_PX }}
+      >
         {Array.from({ length: TOTAL_HOURS }, (_, i) => (
           <div
             key={i}
             className={cn(
               "absolute w-full border-b border-border/50",
-              i % 2 === 0 ? "bg-background" : "bg-muted/20"
+              i % 2 === 0 ? "bg-background" : "bg-muted/20",
             )}
             style={{ top: i * SLOT_HEIGHT_PX, height: SLOT_HEIGHT_PX }}
           />
@@ -234,7 +236,9 @@ function EntityColumn({ entity, busySlots, freeSlots, onSlotClick }: EntityColum
                     {formatMinutesAsTime(slot.startMinutes)} &ndash;{" "}
                     {formatMinutesAsTime(slot.endMinutes)}
                   </p>
-                  <p className="text-muted-foreground">Durée : {slot.durationMinutes} min</p>
+                  <p className="text-muted-foreground">
+                    Durée : {slot.durationMinutes} min
+                  </p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -338,12 +342,18 @@ function computeFreeSlots(
   busySlots: BusySlot[],
   rangeStart: number,
   rangeEnd: number,
-  minDuration = 30
+  minDuration = 30,
 ): FreeSlot[] {
   if (busySlots.length === 0) {
     const duration = rangeEnd - rangeStart;
     if (duration >= minDuration) {
-      return [{ startMinutes: rangeStart, endMinutes: rangeEnd, durationMinutes: duration }];
+      return [
+        {
+          startMinutes: rangeStart,
+          endMinutes: rangeEnd,
+          durationMinutes: duration,
+        },
+      ];
     }
     return [];
   }
@@ -366,7 +376,11 @@ function computeFreeSlots(
     if (start > cursor) {
       const dur = start - cursor;
       if (dur >= minDuration) {
-        free.push({ startMinutes: cursor, endMinutes: start, durationMinutes: dur });
+        free.push({
+          startMinutes: cursor,
+          endMinutes: start,
+          durationMinutes: dur,
+        });
       }
     }
     cursor = Math.max(cursor, end);
@@ -375,7 +389,11 @@ function computeFreeSlots(
   if (cursor < rangeEnd) {
     const dur = rangeEnd - cursor;
     if (dur >= minDuration) {
-      free.push({ startMinutes: cursor, endMinutes: rangeEnd, durationMinutes: dur });
+      free.push({
+        startMinutes: cursor,
+        endMinutes: rangeEnd,
+        durationMinutes: dur,
+      });
     }
   }
 
@@ -386,7 +404,7 @@ function computeCommonFreeSlots(
   entityBusy: Map<string, BusySlot[]>,
   rangeStart: number,
   rangeEnd: number,
-  minDuration = 30
+  minDuration = 30,
 ): FreeSlot[] {
   if (entityBusy.size === 0) return [];
 
@@ -401,7 +419,7 @@ function computeCommonFreeSlots(
 function computeConflicts(
   entityBusy: Map<string, BusySlot[]>,
   rangeStart: number,
-  rangeEnd: number
+  rangeEnd: number,
 ): ConflictSlot[] {
   if (entityBusy.size < 2) return [];
 
@@ -463,7 +481,9 @@ function CommonFreeSlotsPanel({
   minDuration,
   onMinDurationChange,
 }: CommonFreeSlotsPanelProps) {
-  const filtered = commonFreeSlots.filter((s) => s.durationMinutes >= minDuration);
+  const filtered = commonFreeSlots.filter(
+    (s) => s.durationMinutes >= minDuration,
+  );
 
   return (
     <div className="border-t border-border bg-card px-4 py-3">
@@ -482,7 +502,7 @@ function CommonFreeSlotsPanel({
                 "px-2 py-0.5 rounded border text-xs transition-colors",
                 minDuration === d
                   ? "bg-primary text-primary-foreground border-primary"
-                  : "border-border hover:bg-muted"
+                  : "border-border hover:bg-muted",
               )}
             >
               {d < 60 ? `${d}min` : `${d / 60}h`}
@@ -506,7 +526,9 @@ function CommonFreeSlotsPanel({
               <Clock className="w-3 h-3 mr-1" />
               {formatMinutesAsTime(slot.startMinutes)} &ndash;{" "}
               {formatMinutesAsTime(slot.endMinutes)}{" "}
-              <span className="ml-1 text-muted-foreground">({slot.durationMinutes} min)</span>
+              <span className="ml-1 text-muted-foreground">
+                ({slot.durationMinutes} min)
+              </span>
             </Badge>
           ))}
         </div>
@@ -523,7 +545,9 @@ export default function AvailabilityView() {
   const { selectedColleagues, selectedResources, currentDate, setCurrentDate } =
     useCalendarStore();
 
-  const [entityEvents, setEntityEvents] = useState<Map<string, Event[]>>(new Map());
+  const [entityEvents, setEntityEvents] = useState<Map<string, Event[]>>(
+    new Map(),
+  );
   const [loading, setLoading] = useState(false);
   const [minDuration, setMinDuration] = useState(30);
   const [showConflicts, setShowConflicts] = useState(true);
@@ -570,7 +594,7 @@ export default function AvailabilityView() {
         } catch {
           newMap.set(entity.id, []);
         }
-      })
+      }),
     );
 
     setEntityEvents(new Map(newMap));
@@ -625,7 +649,10 @@ export default function AvailabilityView() {
 
     for (const entity of entities) {
       const busy = entityBusySlots.get(entity.id) ?? [];
-      map.set(entity.id, computeFreeSlots(busy, rangeStart, rangeEnd, minDuration));
+      map.set(
+        entity.id,
+        computeFreeSlots(busy, rangeStart, rangeEnd, minDuration),
+      );
     }
 
     return map;
@@ -634,7 +661,12 @@ export default function AvailabilityView() {
   const commonFreeSlots = useMemo(() => {
     const rangeStart = HOUR_START * 60;
     const rangeEnd = HOUR_END * 60;
-    return computeCommonFreeSlots(entityBusySlots, rangeStart, rangeEnd, minDuration);
+    return computeCommonFreeSlots(
+      entityBusySlots,
+      rangeStart,
+      rangeEnd,
+      minDuration,
+    );
   }, [entityBusySlots, minDuration]);
 
   const conflictSlots = useMemo(() => {
@@ -644,10 +676,6 @@ export default function AvailabilityView() {
     return computeConflicts(entityBusySlots, rangeStart, rangeEnd);
   }, [entityBusySlots, showConflicts]);
 
-  const goPrev = () => setCurrentDate(addDays(selectedDay, -1));
-  const goNext = () => setCurrentDate(addDays(selectedDay, 1));
-  const goToday = () => setCurrentDate(new Date());
-
   // Empty state
   if (entities.length === 0) {
     return (
@@ -656,18 +684,22 @@ export default function AvailabilityView() {
           <Users className="w-10 h-10 text-muted-foreground" />
         </div>
         <div>
-          <h3 className="text-lg font-semibold mb-1">Aucune entité sélectionnée</h3>
+          <h3 className="text-lg font-semibold mb-1">
+            Aucune entité sélectionnée
+          </h3>
           <p className="text-sm text-muted-foreground max-w-sm">
-            Sélectionnez des collègues ou des ressources dans le panneau des layers
-            pour visualiser leurs disponibilités.
+            Sélectionnez des collègues ou des ressources dans le panneau des
+            layers pour visualiser leurs disponibilités.
           </p>
         </div>
         <div className="flex gap-2 text-xs text-muted-foreground border border-border rounded-lg p-3 max-w-sm">
           <Info className="w-4 h-4 shrink-0 mt-0.5 text-blue-500" />
           <span>
-            Les zones <span className="text-emerald-600 font-medium">vertes</span> indiquent
-            les créneaux libres, les zones{" "}
-            <span className="text-red-500 font-medium">rouges</span> les conflits.
+            Les zones{" "}
+            <span className="text-emerald-600 font-medium">vertes</span>{" "}
+            indiquent les créneaux libres, les zones{" "}
+            <span className="text-red-500 font-medium">rouges</span> les
+            conflits.
           </span>
         </div>
       </div>
@@ -680,18 +712,7 @@ export default function AvailabilityView() {
     <div className="flex flex-col h-full bg-background">
       {/* Toolbar */}
       <div className="flex items-center justify-between px-4 py-2 border-b border-border bg-card shrink-0 flex-wrap gap-2">
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={goPrev}>
-            <ChevronLeft className="w-4 h-4" />
-          </Button>
-          <Button variant="outline" size="sm" onClick={goToday}>
-            Aujourd&apos;hui
-          </Button>
-          <Button variant="outline" size="sm" onClick={goNext}>
-            <ChevronRight className="w-4 h-4" />
-          </Button>
-          <span className="text-sm font-medium capitalize ml-2">{formattedDate}</span>
-        </div>
+        <span className="text-sm font-medium capitalize">{formattedDate}</span>
 
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -718,7 +739,9 @@ export default function AvailabilityView() {
             onClick={fetchEvents}
             disabled={loading}
           >
-            <RefreshCw className={cn("w-3 h-3 mr-1", loading && "animate-spin")} />
+            <RefreshCw
+              className={cn("w-3 h-3 mr-1", loading && "animate-spin")}
+            />
             Actualiser
           </Button>
         </div>
@@ -743,7 +766,9 @@ export default function AvailabilityView() {
           </Badge>
         ))}
         {loading && (
-          <span className="text-xs text-muted-foreground ml-2 italic">Chargement...</span>
+          <span className="text-xs text-muted-foreground ml-2 italic">
+            Chargement...
+          </span>
         )}
       </div>
 
@@ -758,7 +783,10 @@ export default function AvailabilityView() {
                 className="absolute top-14 left-0 right-0 pointer-events-none z-10"
                 style={{ height: TOTAL_HOURS * SLOT_HEIGHT_PX }}
               >
-                <ConflictOverlay conflictSlots={conflictSlots} entities={entities} />
+                <ConflictOverlay
+                  conflictSlots={conflictSlots}
+                  entities={entities}
+                />
               </div>
             )}
 

@@ -286,7 +286,10 @@ impl ServiceConfig {
     /// Note: This requires the signapps_db crate to be available.
     pub async fn create_pool(&self) -> anyhow::Result<sqlx::PgPool> {
         let pool = sqlx::postgres::PgPoolOptions::new()
-            .max_connections(10)
+            .min_connections(2)
+            .max_connections(15)
+            .acquire_timeout(std::time::Duration::from_secs(5))
+            .idle_timeout(std::time::Duration::from_secs(600))
             .connect(&self.database_url)
             .await?;
         tracing::info!("Database connection established");
@@ -351,6 +354,7 @@ pub fn middleware_stack(router: Router) -> Router {
         ))
         .layer(middleware::from_fn(crate::middleware::logging_middleware))
         .layer(cors)
+        .layer(tower_http::compression::CompressionLayer::new())
 }
 
 // ═══════════════════════════════════════════════════════════════════════════

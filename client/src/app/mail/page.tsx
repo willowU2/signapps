@@ -49,7 +49,6 @@ import { MailAddons } from "@/components/mail/mail-addons";
 import { AccountSwitcher } from "@/components/mail/account-switcher";
 import { EmailToEventDialog } from "@/components/interop/EmailToEventDialog";
 
-import { WorkspaceHeader } from "@/components/mail/workspace-header";
 import { UnifiedInbox } from "@/components/mail/unified-inbox";
 import type { Mail } from "@/lib/data/mail";
 import {
@@ -1196,8 +1195,10 @@ export default function MailPage() {
     <div data-testid="mail-root">
       <TooltipProvider delayDuration={0}>
         <WorkspaceShell
-          className="bg-muted dark:bg-[#111111] text-foreground font-sans"
-          header={<WorkspaceHeader />}
+          hideGlobalSidebar={true}
+          hideRightSidebar={true}
+          className="bg-background text-foreground font-sans"
+          header={null}
           sidebar={
             <nav
               role="navigation"
@@ -1260,43 +1261,43 @@ export default function MailPage() {
 
               {/* Compose Buttons */}
               {!sidebarCollapsed ? (
-                <div className="flex flex-col gap-2">
+                <div className="flex flex-col gap-1 mx-2 mb-2">
                   <Button
-                    className="w-fit gap-4 rounded-2xl h-14 shadow-lg font-medium bg-primary/10 hover:bg-primary/20 hover:shadow-xl text-primary transition-all duration-200 justify-start px-6 text-[15px] border-0"
+                    className="w-[calc(100%-8px)] mx-auto gap-2 rounded-[8px] h-10 font-medium justify-start px-3 text-[13px] border shadow-sm"
                     onClick={() => setComposeRichOpen(true)}
                     data-testid="mail-compose-button"
                   >
-                    <Pencil className="h-6 w-6 text-primary" />
-                    Nouveau message
+                    <Pencil className="h-4 w-4" />
+                    ÉCRIRE UN MAIL
                   </Button>
                   <Button
                     variant="ghost"
-                    className="w-fit gap-2 rounded-xl h-9 text-sm text-muted-foreground hover:text-foreground justify-start px-4"
+                    className="w-[calc(100%-8px)] mx-auto gap-2 rounded-[8px] h-8 text-[13px] text-muted-foreground hover:text-foreground justify-start px-3"
                     onClick={() => setComposeAiOpen(true)}
                     data-testid="mail-compose-ai-button"
                   >
-                    <Sparkles className="h-4 w-4 text-purple-500" />
+                    <Sparkles className="h-3.5 w-3.5 text-purple-500" />
                     Rédiger avec l&apos;IA
                   </Button>
                 </div>
               ) : (
-                <div className="flex flex-col items-center gap-1">
+                <div className="flex flex-col items-center gap-1 mx-1 mb-2">
                   <Button
                     size="icon"
-                    className="h-10 w-10 rounded-2xl shadow-md bg-primary/10 hover:bg-primary/20 text-primary border-0"
+                    className="h-9 w-9 rounded-md border shadow-sm"
                     onClick={() => setComposeRichOpen(true)}
                     title="Nouveau message"
                   >
-                    <Pencil className="h-5 w-5" />
+                    <Pencil className="h-4 w-4" />
                   </Button>
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-9 w-9 rounded-xl text-purple-500 hover:bg-purple-50 dark:hover:bg-purple-900/20"
+                    className="h-8 w-8 rounded-md text-purple-500 hover:bg-accent"
                     onClick={() => setComposeAiOpen(true)}
                     title="Rédiger avec l'IA"
                   >
-                    <Sparkles className="h-4 w-4" />
+                    <Sparkles className="h-3.5 w-3.5" />
                   </Button>
                 </div>
               )}
@@ -1309,8 +1310,8 @@ export default function MailPage() {
                 <div className="px-2 py-1">
                   <Collapsible>
                     <CollapsibleTrigger asChild>
-                      <button className="flex items-center gap-3 text-[14px] text-muted-foreground hover:bg-muted dark:hover:bg-gray-800 rounded-r-full px-4 py-2 w-full transition-colors">
-                        <ChevronDown className="h-5 w-5" />
+                      <button className="flex items-center gap-3 text-[13px] text-muted-foreground hover:bg-muted dark:hover:bg-gray-800 rounded-md mx-2 px-3 py-1.5 w-[calc(100%-16px)] transition-colors">
+                        <ChevronDown className="h-4 w-4" />
                         Plus
                       </button>
                     </CollapsibleTrigger>
@@ -1342,9 +1343,14 @@ export default function MailPage() {
                         <button
                           key={key}
                           onClick={() => handleFolderChange(key)}
-                          className={`flex items-center gap-3 text-[14px] rounded-r-full px-4 py-2 w-full transition-colors ${activeFolder === key ? "bg-primary text-primary-foreground font-medium" : "text-muted-foreground hover:bg-muted dark:hover:bg-gray-800"}`}
+                          className={cn(
+                            "flex items-center gap-3 text-[13px] rounded-md mx-2 px-3 py-1.5 w-[calc(100%-16px)] transition-colors",
+                            activeFolder === key
+                              ? "bg-accent text-accent-foreground font-medium"
+                              : "text-muted-foreground hover:bg-muted dark:hover:bg-gray-800",
+                          )}
                         >
-                          <Icon className="h-5 w-5" />
+                          <Icon className="h-4 w-4" />
                           {label}
                         </button>
                       ))}
@@ -1377,10 +1383,10 @@ export default function MailPage() {
                           clearSelection();
                         }}
                         className={cn(
-                          "flex items-center gap-3 px-6 py-2 text-[13px] rounded-r-full transition-colors text-left",
+                          "flex items-center gap-3 px-3 py-1.5 mx-2 text-[13px] rounded-md transition-colors text-left",
                           smartFolderFilter === key
-                            ? "bg-primary/10 text-primary font-semibold"
-                            : "text-foreground/80 hover:bg-muted dark:hover:bg-gray-800",
+                            ? "bg-accent text-accent-foreground font-medium"
+                            : "text-muted-foreground hover:bg-muted dark:hover:bg-gray-800",
                         )}
                       >
                         <Icon className="h-4 w-4 shrink-0" />
@@ -1419,10 +1425,10 @@ export default function MailPage() {
                           <button
                             onClick={() => handleMailingListClick(ml)}
                             className={cn(
-                              "flex flex-1 items-center gap-3 px-6 py-2 text-[13px] rounded-r-full transition-colors text-left min-w-0",
+                              "flex flex-1 items-center gap-3 px-3 py-1.5 mx-2 text-[13px] rounded-md transition-colors text-left min-w-0",
                               activeMailingList === ml.list_id
-                                ? "bg-primary/10 text-primary font-semibold"
-                                : "text-foreground/80 hover:bg-muted dark:hover:bg-gray-800",
+                                ? "bg-accent text-accent-foreground font-medium"
+                                : "text-muted-foreground hover:bg-muted dark:hover:bg-gray-800",
                             )}
                           >
                             <MailIcon className="h-4 w-4 shrink-0" />
@@ -1504,10 +1510,10 @@ export default function MailPage() {
                                 clearSelection();
                               }}
                               className={cn(
-                                "flex flex-1 items-center gap-3 px-6 py-2 text-[13px] rounded-r-full transition-colors text-left",
+                                "flex flex-1 items-center gap-3 px-3 py-1.5 mx-2 text-[13px] rounded-md transition-colors text-left",
                                 activeLabelFilter === label.name
-                                  ? "bg-primary/10 text-primary font-semibold"
-                                  : "text-foreground/80 hover:bg-muted dark:hover:bg-gray-800",
+                                  ? "bg-accent text-accent-foreground font-medium"
+                                  : "text-muted-foreground hover:bg-muted dark:hover:bg-gray-800",
                               )}
                             >
                               {/* Idea 29: Colored dot next to label */}
@@ -1648,7 +1654,7 @@ export default function MailPage() {
 
           {/* Unified inbox panel (when unified view is active) */}
           {unifiedView && accounts.length > 1 && (
-            <div className="flex-1 bg-background dark:bg-[#1f1f1f] rounded-3xl shadow-[0_1px_3px_0_rgba(60,64,67,0.3),_0_4px_8px_3px_rgba(60,64,67,0.15)] overflow-hidden mr-1 mb-3 ml-0">
+            <div className="flex-1 bg-background border-l border-border overflow-hidden relative">
               <UnifiedInbox />
             </div>
           )}
@@ -1658,7 +1664,7 @@ export default function MailPage() {
             <div
               ref={splitContainerRef}
               className={cn(
-                "flex-1 flex bg-background dark:bg-[#1f1f1f] rounded-3xl shadow-[0_1px_3px_0_rgba(60,64,67,0.3),_0_4px_8px_3px_rgba(60,64,67,0.15)] overflow-hidden mr-1 mb-3 ml-0 relative",
+                "flex-1 flex bg-background border-l border-border overflow-hidden relative",
                 // Idea 15: split-pane on wide screens when email is selected
                 isWide && selectedId ? "flex-row" : "flex-col",
               )}

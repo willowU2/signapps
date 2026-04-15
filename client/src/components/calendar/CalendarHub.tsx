@@ -18,15 +18,6 @@
 
 import React, { Suspense, lazy, useState, useEffect, useCallback } from "react";
 import {
-  format,
-  startOfWeek,
-  endOfWeek,
-  isSameMonth,
-  isSameYear,
-  isToday,
-} from "date-fns";
-import { fr } from "date-fns/locale";
-import {
   Calendar as CalendarIcon,
   CalendarRange,
   Grid3X3,
@@ -434,9 +425,10 @@ export function CalendarHub() {
 
   // Clipboard for Ctrl+C / Ctrl+X / Ctrl+V on events.
   // When `cut` is true, the original event is deleted after a successful paste.
-  const [clipboardEvent, setClipboardEvent] = useState<
-    { event: Event; cut: boolean } | null
-  >(null);
+  const [clipboardEvent, setClipboardEvent] = useState<{
+    event: Event;
+    cut: boolean;
+  } | null>(null);
 
   /** Open form to create a new event (optionally with a preselected time slot) */
   const handleCreateEvent = useCallback(
@@ -480,21 +472,18 @@ export function CalendarHub() {
   // Close form — clears `selectedEventId` so clicking the same event again
   // re-fires the open-form useEffect (otherwise a null→A→A transition would
   // not trigger the dep change and the form would stay closed).
-  const handleFormOpenChange = useCallback(
-    (open: boolean) => {
-      setFormOpen(open);
-      if (!open) {
-        setEditingEvent(undefined);
-        setFormDefaultStart(undefined);
-        setFormDefaultEnd(undefined);
-        // Note: keep selectedEventId set after closing the form so that:
-        // - Pressing Delete still works on the just-viewed event (with confirm)
-        // - Re-clicking the same event reopens the form (we use a useEffect
-        //   that tracks selectedEventId changes, see below)
-      }
-    },
-    [],
-  );
+  const handleFormOpenChange = useCallback((open: boolean) => {
+    setFormOpen(open);
+    if (!open) {
+      setEditingEvent(undefined);
+      setFormDefaultStart(undefined);
+      setFormDefaultEnd(undefined);
+      // Note: keep selectedEventId set after closing the form so that:
+      // - Pressing Delete still works on the just-viewed event (with confirm)
+      // - Re-clicking the same event reopens the form (we use a useEffect
+      //   that tracks selectedEventId changes, see below)
+    }
+  }, []);
 
   // ── Drag-and-drop ────────────────────────────────────────────────────────
   // Handles drops from multiple drag sources:
@@ -626,10 +615,9 @@ export function CalendarHub() {
       if (overData?.type === "calendar" && overData.calendarId) {
         if (overData.calendarId === ev.calendar_id) return;
         try {
-          await updateEvent(
-            eventId,
-            { calendar_id: overData.calendarId } as unknown as UpdateEvent,
-          );
+          await updateEvent(eventId, {
+            calendar_id: overData.calendarId,
+          } as unknown as UpdateEvent);
           toast.success("Événement déplacé vers l'agenda");
         } catch {
           toast.error("Impossible de déplacer l'événement");
@@ -744,7 +732,9 @@ export function CalendarHub() {
       originalEnd.getTime() - originalStart.getTime(),
     );
     const newStart = new Date(Date.now() + 60 * 60 * 1000);
-    const newEnd = new Date(newStart.getTime() + (durationMs || 60 * 60 * 1000));
+    const newEnd = new Date(
+      newStart.getTime() + (durationMs || 60 * 60 * 1000),
+    );
     try {
       await createEvent({
         title: clipboardEvent.cut ? src.title : `${src.title} (copie)`,
@@ -1003,7 +993,6 @@ export function CalendarHub() {
   ]);
 
   const ViewComponent = VIEW_MAP[view];
-  const dateTitle = getDateTitle(view, currentDate);
 
   return (
     <div
@@ -1081,14 +1070,6 @@ export function CalendarHub() {
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
-
-        {/* Date title */}
-        <span
-          data-testid="calendar-period-label"
-          className="text-sm font-semibold text-foreground min-w-0 truncate capitalize"
-        >
-          {dateTitle}
-        </span>
 
         {/* Spacer */}
         <div className="flex-1" />
@@ -1322,112 +1303,112 @@ export function CalendarHub() {
         }}
         onDragCancel={() => setActiveEventId(null)}
       >
-      <div className="flex flex-1 min-h-0 overflow-hidden">
-        {/* Left sidebar */}
-        {sidebarOpen && (
-          <aside className="shrink-0 w-56 border-r border-border bg-card flex flex-col overflow-y-auto">
-            {/* Mini calendar */}
-            <div className="p-3 border-b border-border">
-              <MiniCalendar
-                selectedDate={currentDate}
-                onSelectDate={(date) =>
-                  useCalendarStore.getState().setCurrentDate(date)
-                }
-              />
-            </div>
-
-            {/* Calendar list in sidebar */}
-            <div className="p-3 border-b border-border">
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">
-                  Mes agendas
-                </p>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-5 w-5"
-                  onClick={handleCreateDefaultCalendar}
-                  aria-label="Créer un agenda"
-                >
-                  <Plus className="h-3 w-3" />
-                </Button>
+        <div className="flex flex-1 min-h-0 overflow-hidden">
+          {/* Left sidebar */}
+          {sidebarOpen && (
+            <aside className="shrink-0 w-56 border-r border-border bg-card flex flex-col overflow-y-auto">
+              {/* Mini calendar */}
+              <div className="p-3 border-b border-border">
+                <MiniCalendar
+                  selectedDate={currentDate}
+                  onSelectDate={(date) =>
+                    useCalendarStore.getState().setCurrentDate(date)
+                  }
+                />
               </div>
 
-              {calendars.length > 0 ? (
-                <div className="space-y-1">
-                  {calendars.map((cal) => (
-                    <DroppableCalendarEntry
-                      key={cal.id}
-                      calendar={cal}
-                      isSelected={selectedCalendarId === cal.id}
-                      onSelect={() => setSelectedCalendarId(cal.id)}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-4 bg-muted/30 rounded-md border border-dashed flex flex-col items-center justify-center gap-2">
-                  <p className="text-[10px] text-muted-foreground italic px-2">
-                    Aucun agenda trouvé.
+              {/* Calendar list in sidebar */}
+              <div className="p-3 border-b border-border">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">
+                    Mes agendas
                   </p>
                   <Button
-                    variant="default"
-                    size="sm"
-                    className="h-7 text-xs px-2"
+                    variant="ghost"
+                    size="icon"
+                    className="h-5 w-5"
                     onClick={handleCreateDefaultCalendar}
+                    aria-label="Créer un agenda"
                   >
-                    Créer mon agenda
+                    <Plus className="h-3 w-3" />
                   </Button>
                 </div>
-              )}
-            </div>
 
-            {/* Layer panel */}
-            <div className="flex-1 min-h-0 overflow-y-auto">
-              <LayerPanel />
-            </div>
-          </aside>
-        )}
+                {calendars.length > 0 ? (
+                  <div className="space-y-1">
+                    {calendars.map((cal) => (
+                      <DroppableCalendarEntry
+                        key={cal.id}
+                        calendar={cal}
+                        isSelected={selectedCalendarId === cal.id}
+                        onSelect={() => setSelectedCalendarId(cal.id)}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-4 bg-muted/30 rounded-md border border-dashed flex flex-col items-center justify-center gap-2">
+                    <p className="text-[10px] text-muted-foreground italic px-2">
+                      Aucun agenda trouvé.
+                    </p>
+                    <Button
+                      variant="default"
+                      size="sm"
+                      className="h-7 text-xs px-2"
+                      onClick={handleCreateDefaultCalendar}
+                    >
+                      Créer mon agenda
+                    </Button>
+                  </div>
+                )}
+              </div>
 
-        {/* Main view area — inherits the outer DndContext, so drop targets
+              {/* Layer panel */}
+              <div className="flex-1 min-h-0 overflow-y-auto">
+                <LayerPanel />
+              </div>
+            </aside>
+          )}
+
+          {/* Main view area — inherits the outer DndContext, so drop targets
             include both the date grid and the sidebar calendar list. */}
-        <main className="flex-1 min-w-0 flex flex-col overflow-hidden">
-          <Suspense fallback={<ViewSkeleton />}>
-            {/* Cast to accept shared calendar props — views that don't use them simply ignore them */}
-            {React.createElement(
-              ViewComponent as React.ComponentType<{
-                selectedCalendarId?: string;
-                onCreateEvent?: (startTime?: Date, endTime?: Date) => void;
-                onEditEvent?: (id: string) => void;
-                onDeleteEvent?: (id: string) => void;
-                onDuplicateEvent?: (id: string) => void;
-                onShareEvent?: (id: string) => void;
-              }>,
-              {
-                selectedCalendarId,
-                onCreateEvent: handleCreateEvent,
-                onEditEvent: handleEditEvent,
-                onDeleteEvent: handleDeleteEventById,
-                onDuplicateEvent: handleDuplicateEventById,
-                onShareEvent: handleShareEventById,
-              },
-            )}
-          </Suspense>
-        </main>
+          <main className="flex-1 min-w-0 flex flex-col overflow-hidden">
+            <Suspense fallback={<ViewSkeleton />}>
+              {/* Cast to accept shared calendar props — views that don't use them simply ignore them */}
+              {React.createElement(
+                ViewComponent as React.ComponentType<{
+                  selectedCalendarId?: string;
+                  onCreateEvent?: (startTime?: Date, endTime?: Date) => void;
+                  onEditEvent?: (id: string) => void;
+                  onDeleteEvent?: (id: string) => void;
+                  onDuplicateEvent?: (id: string) => void;
+                  onShareEvent?: (id: string) => void;
+                }>,
+                {
+                  selectedCalendarId,
+                  onCreateEvent: handleCreateEvent,
+                  onEditEvent: handleEditEvent,
+                  onDeleteEvent: handleDeleteEventById,
+                  onDuplicateEvent: handleDuplicateEventById,
+                  onShareEvent: handleShareEventById,
+                },
+              )}
+            </Suspense>
+          </main>
 
-        {/* Layer panel (overlay when sidebar is closed) */}
-        {!sidebarOpen && layerPanelOpen && (
-          <aside className="shrink-0 w-56 border-l border-border bg-card overflow-y-auto">
-            <LayerPanel />
-          </aside>
-        )}
-      </div>
-      <DragOverlay>
-        {activeEvent && (
-          <div className="rounded-md bg-primary text-primary-foreground px-2 py-1 text-xs font-medium shadow-lg opacity-90">
-            {activeEvent.title}
-          </div>
-        )}
-      </DragOverlay>
+          {/* Layer panel (overlay when sidebar is closed) */}
+          {!sidebarOpen && layerPanelOpen && (
+            <aside className="shrink-0 w-56 border-l border-border bg-card overflow-y-auto">
+              <LayerPanel />
+            </aside>
+          )}
+        </div>
+        <DragOverlay>
+          {activeEvent && (
+            <div className="rounded-md bg-primary text-primary-foreground px-2 py-1 text-xs font-medium shadow-lg opacity-90">
+              {activeEvent.title}
+            </div>
+          )}
+        </DragOverlay>
       </DndContext>
 
       {/* ── EventForm dialog ─────────────────────────────────────────────── */}
