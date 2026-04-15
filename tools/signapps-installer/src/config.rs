@@ -59,8 +59,7 @@ pub fn backups_dir(config_dir: &Path) -> PathBuf {
 
 pub fn read_config(config_dir: &Path) -> Result<InstallerConfig> {
     let path = config_file_path(config_dir);
-    let raw = std::fs::read_to_string(&path)
-        .with_context(|| format!("read {}", path.display()))?;
+    let raw = std::fs::read_to_string(&path).with_context(|| format!("read {}", path.display()))?;
     let cfg: InstallerConfig = toml::from_str(&raw).context("parse installer config.toml")?;
     Ok(cfg)
 }

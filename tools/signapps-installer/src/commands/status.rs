@@ -10,8 +10,7 @@ use std::path::PathBuf;
 pub async fn run(config_dir: Option<PathBuf>) -> Result<()> {
     let dir = config::resolve_config_dir(config_dir);
 
-    let cfg = config::read_config(&dir)
-        .context("read installer config — did you run `init`?")?;
+    let cfg = config::read_config(&dir).context("read installer config — did you run `init`?")?;
 
     #[allow(clippy::print_stdout)]
     {

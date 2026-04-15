@@ -20,7 +20,9 @@ pub async fn run(config_dir: Option<PathBuf>) -> Result<()> {
         .args([
             "compose",
             "-f",
-            compose.to_str().context("config dir path has non-UTF8 bytes")?,
+            compose
+                .to_str()
+                .context("config dir path has non-UTF8 bytes")?,
             "--env-file",
             env.to_str().context("env file path has non-UTF8 bytes")?,
             "up",

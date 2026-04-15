@@ -20,8 +20,7 @@ pub async fn run(config_dir: Option<PathBuf>, force: bool) -> Result<()> {
         }
     }
 
-    fs::create_dir_all(&dir)
-        .with_context(|| format!("create config dir {}", dir.display()))?;
+    fs::create_dir_all(&dir).with_context(|| format!("create config dir {}", dir.display()))?;
     fs::create_dir_all(config::backups_dir(&dir)).context("create backups dir")?;
     fs::create_dir_all(dir.join("data")).context("create data dir")?;
 
