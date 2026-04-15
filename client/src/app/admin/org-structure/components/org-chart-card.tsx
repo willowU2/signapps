@@ -380,9 +380,9 @@ function OrgChartFlow({
           if (border.includes("fuchsia")) return "#e879f9";
           return "#e5e7eb";
         }}
-        maskColor="rgba(var(--background), 0.7)"
-        pannable
-        zoomable
+        maskColor="rgba(0, 0, 0, 0.2)"
+        pannable={false}
+        zoomable={false}
       />
       <Panel position="top-right">
         <FitViewButton />
