@@ -125,7 +125,7 @@ fn build_router(state: AppState) -> Router {
     use axum::routing::{delete, get, patch, post};
     use handlers::{
         lobby, openapi, participants, recordings, remote, rooms, tokens, transcription,
-        video_messages, voicemails, waiting_room,
+        video_messages, voicemails, waiting_room, webhooks,
     };
 
     // Public routes
@@ -135,6 +135,9 @@ fn build_router(state: AppState) -> Router {
         // Lobby (public — unauth lookups and knock-to-enter)
         .route("/api/v1/meet/rooms/:code/lobby", get(lobby::get_lobby))
         .route("/api/v1/meet/rooms/:code/knock", post(lobby::knock))
+        // LiveKit webhook receiver (authenticated via LiveKit-signed JWT,
+        // not the app JWT).
+        .route("/api/v1/meet/webhooks/livekit", post(webhooks::receive_webhook))
         // Remote health alias (backward compat — remote merged into this service)
         .route("/api/v1/remote/health", get(meet_health));
 

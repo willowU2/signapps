@@ -11,6 +11,7 @@ pub mod transcription;
 pub mod video_messages;
 pub mod voicemails;
 pub mod waiting_room;
+pub mod webhooks;
 
 use axum::{extract::State, Json};
 
