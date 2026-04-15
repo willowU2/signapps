@@ -1,0 +1,141 @@
+# syntax=docker/dockerfile:1.7
+# ─────────────────────────────────────────────────────────────────────────────
+# SignApps Platform — Backend multi-service image (CI-friendly)
+#
+# This Dockerfile is consumed by .github/workflows/build-and-push.yml and
+# produces one image containing every `signapps-*` service binary. The per-
+# service container in docker-compose.prod.yml overrides CMD via:
+#     command: ["/app/bin/signapps-<name>"]
+#
+# Build locally (BuildKit required for --mount=type=cache):
+#   DOCKER_BUILDKIT=1 docker build -f Dockerfile.backend -t signapps-backend .
+#
+# Stages:
+#   builder — Rust toolchain, pre-installed system deps, compiles the workspace
+#   runtime — minimal Debian slim with TLS + libpq runtime libraries
+# ─────────────────────────────────────────────────────────────────────────────
+
+# ─── Stage 1 — Build ─────────────────────────────────────────────────────────
+# Workspace MSRV is 1.75 (see Cargo.toml), but we pin to a newer stable to
+# match the existing Dockerfile (1.82) and pick up recent toolchain fixes.
+FROM rust:1.82-bookworm AS builder
+
+WORKDIR /build
+
+# Build-time system dependencies:
+#   - protobuf-compiler : required by tonic (gRPC) codegen
+#   - pkg-config + libssl-dev : native-tls / openssl-sys
+#   - libpq-dev : sqlx postgres driver linking
+#   - cmake : some transitive C deps (e.g. aws-lc-sys, zstd-sys)
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        protobuf-compiler \
+        pkg-config \
+        libssl-dev \
+        libpq-dev \
+        cmake \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy the full workspace. We deliberately keep this simple instead of the
+# dummy-source trick: the GHA cache (cache-from=type=gha) plus the BuildKit
+# cache mounts below already give us solid incremental builds, and the dummy
+# trick is error-prone to maintain across 40 workspace members.
+COPY Cargo.toml Cargo.lock ./
+COPY crates/ ./crates/
+COPY services/ ./services/
+COPY tools/ ./tools/
+COPY migrations/ ./migrations/
+
+# src-tauri is a workspace member (desktop app) excluded from the server
+# image by `.dockerignore`. Cargo still needs to parse its manifest to
+# resolve the workspace, so we synthesise a minimal stub Cargo.toml +
+# empty main.rs; the `--exclude src-tauri` flag below keeps it from being
+# compiled.
+RUN mkdir -p src-tauri/src \
+    && printf '[package]\nname = "src-tauri"\nversion = "0.0.0"\nedition = "2021"\n\n[[bin]]\nname = "src-tauri"\npath = "src/main.rs"\n' \
+        > src-tauri/Cargo.toml \
+    && printf 'fn main() {}\n' > src-tauri/src/main.rs
+
+# Optional sqlx offline metadata directory.
+#   The workspace uses `sqlx::query!` / `sqlx::query_as!` macros in several
+#   handlers (signapps-it-assets agent/patches/security, signapps-db storage
+#   repos, etc.). With SQLX_OFFLINE=true these macros require the `.sqlx/`
+#   directory produced by `cargo sqlx prepare --workspace`.
+#
+#   The COPY below pairs Cargo.lock (always present) as an anchor with the
+#   `.sqlx` glob so the instruction never fails on an absent directory. When
+#   `.sqlx/` is missing the build will still error at cargo-build time with
+#   a clear sqlx message — regenerate it with `cargo sqlx prepare --workspace`
+#   and commit the resulting files.
+COPY Cargo.lock .sqlx* ./sqlx-stage/
+RUN if [ -d ./sqlx-stage/.sqlx ]; then mv ./sqlx-stage/.sqlx ./.sqlx; fi \
+    && rm -rf ./sqlx-stage
+
+# Enable offline sqlx macro verification. Harmless if .sqlx/ is missing for
+# projects that do not use compile-time query macros.
+ENV SQLX_OFFLINE=true
+# Keep the toolchain quiet about incremental artefacts in release builds.
+ENV CARGO_INCREMENTAL=0
+
+# Build every binary in the workspace. Using `--workspace --bins` is faster
+# than looping `cargo build --bin <name>` because dependency compilation is
+# shared across all members.
+#
+# The cache mounts require BuildKit (enabled automatically by
+# docker/build-push-action@v6 in CI). For local builds without BuildKit,
+# drop the `--mount=...` lines.
+RUN --mount=type=cache,target=/usr/local/cargo/registry \
+    --mount=type=cache,target=/usr/local/cargo/git \
+    --mount=type=cache,target=/build/target \
+    cargo build --release --workspace --bins --locked \
+        --exclude src-tauri \
+    && mkdir -p /app/bin \
+    && find target/release -maxdepth 1 -type f -executable -name 'signapps-*' \
+        ! -name '*.d' ! -name '*.pdb' \
+        -exec cp {} /app/bin/ \; \
+    && ls -lh /app/bin/
+
+# ─── Stage 2 — Runtime ───────────────────────────────────────────────────────
+FROM debian:bookworm-slim AS runtime
+
+# Runtime dependencies:
+#   - ca-certificates : HTTPS trust anchors
+#   - libssl3         : dynamic TLS (native-tls)
+#   - libpq5          : PostgreSQL client library (sqlx postgres)
+#   - wget            : used by healthchecks in docker-compose.prod.yml
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        ca-certificates \
+        libssl3 \
+        libpq5 \
+        wget \
+    && rm -rf /var/lib/apt/lists/* \
+    && groupadd --system --gid 10001 signapps \
+    && useradd --system --uid 10001 --gid signapps --create-home --home-dir /app signapps
+
+# OCI labels — org.opencontainers.image.* is the canonical namespace.
+LABEL org.opencontainers.image.title="SignApps Platform Backend" \
+      org.opencontainers.image.description="Rust microservices image (all signapps-* binaries)" \
+      org.opencontainers.image.vendor="SignApps" \
+      org.opencontainers.image.licenses="Proprietary" \
+      org.opencontainers.image.source="https://github.com/signapps/signapps-platform"
+
+# Copy all built binaries with correct ownership.
+COPY --from=builder --chown=signapps:signapps /app/bin/ /app/bin/
+
+# Default writable data directories expected by the services at runtime.
+RUN mkdir -p /data/storage /data/models /data/backups \
+    && chown -R signapps:signapps /data
+
+USER signapps
+WORKDIR /app
+
+# Expose the full port ranges used by SignApps services:
+#   3001-3099  — HTTP API ports (identity, calendar, gateway, etc.)
+#   8095-8099  — auxiliary services (notifications, billing)
+#   3700       — reserved for future AI inference sidecar
+EXPOSE 3001-3099 8095-8099 3700
+
+# No default CMD — docker-compose.prod.yml selects a binary per service.
+# For ad-hoc testing:
+#     docker run --rm signapps-backend /app/bin/signapps-gateway
