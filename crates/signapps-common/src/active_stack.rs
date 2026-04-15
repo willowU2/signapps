@@ -49,12 +49,11 @@ impl Color {
 /// Returns an error if the DB query fails or the stored value is neither
 /// `"blue"` nor `"green"`.
 pub async fn get_active(pool: &PgPool, env: &str) -> Result<Color> {
-    let raw: String =
-        sqlx::query_scalar("SELECT active_color FROM active_stack WHERE env = $1")
-            .bind(env)
-            .fetch_one(pool)
-            .await
-            .with_context(|| format!("fetch active_stack for env={env}"))?;
+    let raw: String = sqlx::query_scalar("SELECT active_color FROM active_stack WHERE env = $1")
+        .bind(env)
+        .fetch_one(pool)
+        .await
+        .with_context(|| format!("fetch active_stack for env={env}"))?;
     Color::from_str(&raw)
 }
 

@@ -346,12 +346,11 @@ pub async fn status(env: &str) -> Result<()> {
 ///   for BG deploys).
 /// - If `DEPLOY_STRATEGY` is an unknown value.
 pub fn resolve_strategy() -> Box<dyn crate::strategies::DeploymentStrategy> {
-    let name = std::env::var("DEPLOY_STRATEGY")
-        .unwrap_or_else(|_| "maintenance_window".into());
+    let name = std::env::var("DEPLOY_STRATEGY").unwrap_or_else(|_| "maintenance_window".into());
     match name.as_str() {
-        "maintenance_window" => Box::new(
-            crate::strategies::maintenance_window::MaintenanceWindowStrategy,
-        ),
+        "maintenance_window" => {
+            Box::new(crate::strategies::maintenance_window::MaintenanceWindowStrategy)
+        },
         "blue_green" => panic!(
             "blue_green strategy requires explicit construction with DockerHosts + image_repo. \
              Build a BlueGreenStrategy and call its deploy/rollback directly, or wire the \

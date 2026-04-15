@@ -142,7 +142,10 @@ pub use comments::{extract_mentions, Comment, CommentStore};
 pub use data_connectors::{DataConnectors, DataSource, SourceType};
 pub use dlp::{DlpFinding, DlpPattern, DlpRule, DlpScanner, Severity};
 pub use e2e_crypto::{E2eChannel, E2eChannelManager};
-pub use email_templates::{notification_template, signature_request_template, welcome_template, EmailTemplate, RenderedEmail};
+pub use email_templates::{
+    notification_template, signature_request_template, welcome_template, EmailTemplate,
+    RenderedEmail,
+};
 pub use error::{Error, ProblemDetails, Result};
 pub use events::{DomainEvent, EventBus, EventEnvelope};
 pub use graphql_layer::GraphQlConfig;
