@@ -20,6 +20,7 @@ mod handlers;
 mod proxy;
 mod shield;
 
+use app_middleware::hostname_router::{hostname_router_middleware, HostnameRouterState};
 use app_middleware::maintenance::{maintenance_middleware, MaintenanceState};
 use handlers::{
     certificates, config, health, openapi, proxy_status, routes, shield as shield_handlers,
@@ -335,9 +336,19 @@ fn create_router(state: AppState, maintenance_state: MaintenanceState) -> Router
                 .layer(cors),
         )
         // Maintenance mode: intercepts traffic when `deploy:maintenance:{env}` = "1"
+        // (added before hostname_router so it runs CLOSER to the handler;
+        // hostname_router runs FIRST on the request and injects BackendCluster
+        // into extensions, which maintenance then reads).
         .layer(middleware::from_fn_with_state(
             maintenance_state,
             maintenance_middleware,
+        ))
+        // Hostname-based routing: inspects Host header and inserts
+        // BackendCluster into request extensions. Runs BEFORE maintenance
+        // on the request path (axum layer order: last-added runs first).
+        .layer(middleware::from_fn_with_state(
+            HostnameRouterState::default(),
+            hostname_router_middleware,
         ))
         .with_state(state)
 }
