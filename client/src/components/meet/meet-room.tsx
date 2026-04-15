@@ -5,48 +5,72 @@ import { LIVEKIT_URL } from "@/lib/api/core";
 import { useState } from "react";
 import {
   LiveKitRoom,
-  GridLayout,
   ParticipantTile,
   RoomAudioRenderer,
   useTracks,
-  TrackReferenceOrPlaceholder,
   useLocalParticipant,
   useConnectionState,
+  useParticipants,
+  useIsSpeaking,
+  useParticipantInfo,
+  ParticipantContext,
+  TrackRefContext,
+  isTrackReference,
 } from "@livekit/components-react";
+import type { TrackReferenceOrPlaceholder } from "@livekit/components-react";
 import "@livekit/components-styles";
 import { Track, ConnectionState } from "livekit-client";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Mic,
   MicOff,
   Video,
   VideoOff,
   PhoneOff,
-  MessageSquare,
   Users,
-  Settings,
   MonitorUp,
   Hand,
-  Smile,
-  Subtitles,
   MoreVertical,
+  ArrowLeft,
+  Link2,
+  Settings,
   Info,
-  Shield,
+  Sparkles,
+  Radio,
+  Captions,
+  Circle,
 } from "lucide-react";
 
-import { MeetInfoCard } from "./meet-info-card";
-import { MeetAiCard } from "./meet-ai-card";
+import { MeetSidebar } from "./meet-sidebar";
 
 interface MeetRoomProps {
   roomId: string;
+  roomName?: string;
   token: string;
   serverUrl: string;
   onLeave: () => void;
 }
 
-export function MeetRoom({ roomId, token, serverUrl, onLeave }: MeetRoomProps) {
+export function MeetRoom({
+  roomId,
+  roomName,
+  token,
+  serverUrl,
+  onLeave,
+}: MeetRoomProps) {
   if (!token) return null;
 
   return (
@@ -56,19 +80,18 @@ export function MeetRoom({ roomId, token, serverUrl, onLeave }: MeetRoomProps) {
       token={token}
       serverUrl={serverUrl}
       data-lk-theme="default"
-      style={{
-        height: "100%",
-        width: "100%",
-        display: "flex",
-        flexDirection: "column",
-      }}
+      className="h-full w-full"
       onError={(err) => {
         console.warn("LiveKitRoom Error:", err);
         toast.error("Une erreur critique est survenue dans la salle.");
       }}
     >
       <RoomAudioRenderer />
-      <MeetUiContent onLeave={onLeave} roomId={roomId} />
+      <MeetUiContent
+        onLeave={onLeave}
+        roomId={roomId}
+        roomName={roomName ?? roomId}
+      />
     </LiveKitRoom>
   );
 }
@@ -76,20 +99,15 @@ export function MeetRoom({ roomId, token, serverUrl, onLeave }: MeetRoomProps) {
 function MeetUiContent({
   onLeave,
   roomId,
+  roomName,
 }: {
   onLeave: () => void;
   roomId: string;
+  roomName: string;
 }) {
-  const [showInfo, setShowInfo] = useState(true);
-
-  // Current time for the bottom left
-  const [currentTime, setCurrentTime] = useState(() => {
-    const now = new Date();
-    return now.toLocaleTimeString("fr-FR", {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  });
+  const router = useRouter();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [mobileSheetOpen, setMobileSheetOpen] = useState(false);
 
   const {
     isMicrophoneEnabled,
@@ -99,23 +117,19 @@ function MeetUiContent({
   } = useLocalParticipant();
   const connectionState = useConnectionState();
   const isConnected = connectionState === ConnectionState.Connected;
+  const participants = useParticipants();
+  const participantCount = participants.length;
 
   const toggleMic = async () => {
     if (!isConnected) return;
     try {
       await localParticipant.setMicrophoneEnabled(!isMicrophoneEnabled);
     } catch (err: unknown) {
-      console.warn("Mic toggle error:", err);
-      const e = err as { name?: string; message?: string };
-      if (
-        e.name === "NotAllowedError" ||
-        e.message?.includes("Permission refusée")
-      ) {
-        toast.error(
-          "Accès au micro refusé. Veuillez autoriser l'accès dans les paramètres de votre navigateur.",
-        );
+      const e = err as { name?: string };
+      if (e.name === "NotAllowedError") {
+        toast.error("Accès au micro refusé.");
       } else {
-        toast.error("Impossible d'activer le micro. Erreur inattendue.");
+        toast.error("Impossible d'activer le micro.");
       }
     }
   };
@@ -125,17 +139,11 @@ function MeetUiContent({
     try {
       await localParticipant.setCameraEnabled(!isCameraEnabled);
     } catch (err: unknown) {
-      console.warn("Camera toggle error:", err);
-      const e = err as { name?: string; message?: string };
-      if (
-        e.name === "NotAllowedError" ||
-        e.message?.includes("Permission refusée")
-      ) {
-        toast.error(
-          "Accès à la caméra refusé. Veuillez autoriser l'accès dans les paramètres de votre navigateur.",
-        );
+      const e = err as { name?: string };
+      if (e.name === "NotAllowedError") {
+        toast.error("Accès à la caméra refusé.");
       } else {
-        toast.error("Impossible d'activer la caméra. Erreur inattendue.");
+        toast.error("Impossible d'activer la caméra.");
       }
     }
   };
@@ -144,177 +152,300 @@ function MeetUiContent({
     if (!isConnected) return;
     try {
       await localParticipant.setScreenShareEnabled(!isScreenShareEnabled);
-    } catch (err: unknown) {
-      console.warn("Screen share toggle error:", err);
-      toast.error(
-        "Impossible de partager l'écran. Le serveur de flux (ICE) semble injoignable.",
-      );
+    } catch {
+      toast.error("Impossible de partager l'écran.");
+    }
+  };
+
+  const handleLeave = () => {
+    onLeave();
+    router.back();
+  };
+
+  const copyLink = async () => {
+    try {
+      const url = `${window.location.origin}/meet/${encodeURIComponent(roomId)}/lobby`;
+      await navigator.clipboard.writeText(url);
+      toast.success("Lien copié");
+    } catch {
+      toast.error("Impossible de copier le lien");
+    }
+  };
+
+  const openSidebar = () => {
+    // Mobile: open Sheet. Desktop: toggle fixed panel.
+    if (typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches) {
+      setMobileSheetOpen(true);
+    } else {
+      setSidebarOpen((v) => !v);
     }
   };
 
   return (
-    <div className="flex flex-col h-full w-full bg-[#202124] relative overflow-hidden font-sans rounded-xl border border-border">
-      {/* Main Video Area */}
-      <div className="flex-1 relative p-4 pb-0 flex items-center justify-center">
-        <VideoComponent />
-
-        {/* Floating Overlays */}
-        {showInfo && (
-          <MeetInfoCard roomId={roomId} onClose={() => setShowInfo(false)} />
-        )}
-        <MeetAiCard />
-      </div>
-
-      {/* Bottom Control Bar */}
-      <div className="h-[80px] bg-[#202124] flex items-center justify-between px-6 shrink-0 z-20">
-        {/* Left: Time and Room Code */}
-        <div className="flex items-center gap-4 w-[250px]">
-          <span className="text-white text-[15px] font-medium tracking-wide">
-            {currentTime}
-          </span>
-          <div className="h-4 w-[1px] bg-[#5f6368]"></div>
-          <span className="text-white text-[15px] font-medium tracking-wide">
-            {roomId.substring(0, 12)}
-          </span>
+    <div className="flex h-full w-full flex-col bg-background overflow-hidden">
+      {/* ── Top bar ───────────────────────────────────────────────── */}
+      <header className="h-12 px-3 md:px-4 flex items-center justify-between bg-card border-b border-border shrink-0">
+        {/* Left */}
+        <div className="flex items-center gap-1 min-w-0">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleLeave}
+            className="h-8 text-muted-foreground hover:text-foreground gap-1.5"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            <span className="hidden sm:inline">Quitter</span>
+          </Button>
         </div>
+        {/* Center */}
+        <div className="flex items-center gap-2 min-w-0">
+          <h1 className="text-sm font-semibold text-foreground truncate max-w-[40vw] hidden xs:block sm:block">
+            {roomName}
+          </h1>
+          <Badge
+            variant="outline"
+            className="border-border text-foreground gap-1"
+          >
+            <Circle className="h-2 w-2 fill-primary text-primary" />
+            {participantCount}
+          </Badge>
+        </div>
+        {/* Right */}
+        <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={openSidebar}
+            className="h-8 w-8 text-muted-foreground hover:text-foreground"
+            aria-label="Participants et chat"
+          >
+            <Users className="h-4 w-4" />
+          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                aria-label="Plus d'options"
+              >
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuItem onClick={copyLink} className="gap-2">
+                <Link2 className="h-4 w-4" />
+                Copier le lien
+              </DropdownMenuItem>
+              <DropdownMenuItem className="gap-2">
+                <Settings className="h-4 w-4" />
+                Paramètres
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem className="gap-2">
+                <Info className="h-4 w-4" />
+                Info salle
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </header>
 
-        {/* Center: Controls */}
-        <div className="flex items-center gap-3">
-          <Button
-            variant="secondary"
-            size="icon"
-            onClick={toggleMic}
-            disabled={!isConnected}
-            className={`h-[40px] w-[40px] rounded-full border-none transition-colors ${
-              !isConnected ? "opacity-50 cursor-not-allowed " : ""
-            }${
-              isMicrophoneEnabled
-                ? "bg-[#3c4043] hover:bg-[#4d5156] text-white"
-                : "bg-[#ea4335] hover:bg-[#d93025] text-white"
-            }`}
-          >
-            {isMicrophoneEnabled ? (
-              <Mic className="h-[20px] w-[20px]" />
-            ) : (
-              <MicOff className="h-[20px] w-[20px]" />
-            )}
-          </Button>
-          <Button
-            variant="secondary"
-            size="icon"
-            onClick={toggleCamera}
-            disabled={!isConnected}
-            className={`h-[40px] w-[40px] rounded-full border-none transition-colors ${
-              !isConnected ? "opacity-50 cursor-not-allowed " : ""
-            }${
-              isCameraEnabled
-                ? "bg-[#3c4043] hover:bg-[#4d5156] text-white"
-                : "bg-[#ea4335] hover:bg-[#d93025] text-white"
-            }`}
-          >
-            {isCameraEnabled ? (
-              <Video className="h-[20px] w-[20px]" />
-            ) : (
-              <VideoOff className="h-[20px] w-[20px]" />
-            )}
-          </Button>
-          <Button
-            variant="secondary"
-            size="icon"
-            className="h-[40px] w-[40px] rounded-full bg-[#3c4043] hover:bg-[#4d5156] text-white border-none"
-          >
-            <Subtitles className="h-[20px] w-[20px]" />
-          </Button>
-          <Button
-            variant="secondary"
-            size="icon"
-            className="h-[40px] w-[40px] rounded-full bg-[#3c4043] hover:bg-[#4d5156] text-white border-none"
-          >
-            <Smile className="h-[20px] w-[20px]" />
-          </Button>
-          <Button
-            variant="secondary"
-            size="icon"
-            onClick={toggleScreenShare}
-            disabled={!isConnected}
-            className={`h-[40px] w-[40px] rounded-full border-none transition-colors ${
-              !isConnected ? "opacity-50 cursor-not-allowed " : ""
-            }${
-              isScreenShareEnabled
-                ? "bg-[#8ab4f8] hover:bg-[#aecbfa] text-[#202124]"
-                : "bg-[#3c4043] hover:bg-[#4d5156] text-white"
-            }`}
-          >
-            <MonitorUp className="h-[20px] w-[20px]" />
-          </Button>
-          <Button
-            variant="secondary"
-            size="icon"
-            className="h-[40px] w-[40px] rounded-full bg-[#3c4043] hover:bg-[#4d5156] text-white border-none"
-          >
-            <Hand className="h-[20px] w-[20px]" />
-          </Button>
-          <Button
-            variant="secondary"
-            size="icon"
-            className="h-[40px] w-[40px] rounded-full bg-[#3c4043] hover:bg-[#4d5156] text-white border-none"
-          >
-            <MoreVertical className="h-[20px] w-[20px]" />
-          </Button>
+      {/* ── Body: grid + sidebar ───────────────────────────────── */}
+      <div className="flex-1 flex min-h-0">
+        <main className="flex-1 min-w-0 flex flex-col">
+          <VideoGrid />
+        </main>
 
-          {/* Custom Hangup behavior handling via wrapper */}
-          <div className="px-2">
-            <Button
-              variant="destructive"
-              className="h-[40px] w-[60px] rounded-full bg-[#ea4335] hover:bg-[#d93025] border-none shadow-sm flex items-center justify-center"
-              onClick={onLeave}
-            >
-              <PhoneOff className="h-[20px] w-[20px] text-white" />
-            </Button>
+        {/* Desktop sidebar (fixed) */}
+        {sidebarOpen && (
+          <div className="hidden md:flex">
+            <MeetSidebar onClose={() => setSidebarOpen(false)} />
           </div>
-        </div>
+        )}
 
-        {/* Right: Side panel toggles */}
-        <div className="flex items-center gap-1 w-[250px] justify-end">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-10 w-10 rounded-full text-white hover:bg-[#3c4043]"
-            onClick={() => setShowInfo(!showInfo)}
+        {/* Mobile sidebar (Sheet) */}
+        <Sheet open={mobileSheetOpen} onOpenChange={setMobileSheetOpen}>
+          <SheetContent
+            side="bottom"
+            className="h-[80vh] p-0 bg-card border-border"
           >
-            <Info className="h-5 w-5" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-10 w-10 rounded-full text-white hover:bg-[#3c4043]"
-          >
-            <Users className="h-5 w-5" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-10 w-10 rounded-full text-white hover:bg-[#3c4043]"
-          >
-            <MessageSquare className="h-5 w-5" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-10 w-10 rounded-full text-white hover:bg-[#3c4043]"
-          >
-            <Shield className="h-5 w-5" />
-          </Button>
-        </div>
+            <div className="h-full">
+              <MeetSidebar onClose={() => setMobileSheetOpen(false)} />
+            </div>
+          </SheetContent>
+        </Sheet>
       </div>
+
+      {/* ── Bottom controls ──────────────────────────────────── */}
+      <BottomBar
+        isConnected={isConnected}
+        isMicrophoneEnabled={isMicrophoneEnabled}
+        isCameraEnabled={isCameraEnabled}
+        isScreenShareEnabled={isScreenShareEnabled}
+        onToggleMic={toggleMic}
+        onToggleCamera={toggleCamera}
+        onToggleScreenShare={toggleScreenShare}
+        onLeave={handleLeave}
+      />
     </div>
   );
 }
 
-function VideoComponent() {
+// ─────────────────────────────────────────────────────────────────────────────
+// Bottom bar
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface BottomBarProps {
+  isConnected: boolean;
+  isMicrophoneEnabled: boolean;
+  isCameraEnabled: boolean;
+  isScreenShareEnabled: boolean;
+  onToggleMic: () => void;
+  onToggleCamera: () => void;
+  onToggleScreenShare: () => void;
+  onLeave: () => void;
+}
+
+function BottomBar({
+  isConnected,
+  isMicrophoneEnabled,
+  isCameraEnabled,
+  isScreenShareEnabled,
+  onToggleMic,
+  onToggleCamera,
+  onToggleScreenShare,
+  onLeave,
+}: BottomBarProps) {
+  const [raised, setRaised] = useState(false);
+
+  const round =
+    "rounded-full h-10 w-10 md:h-11 md:w-11 transition-colors";
+
+  return (
+    <footer className="h-14 md:h-16 px-2 md:px-4 flex items-center justify-center gap-1.5 md:gap-2 bg-card border-t border-border shrink-0">
+      {/* Mic */}
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={onToggleMic}
+        disabled={!isConnected}
+        className={`${round} ${
+          isMicrophoneEnabled
+            ? "bg-muted text-foreground hover:bg-muted/80"
+            : "bg-destructive/10 text-destructive hover:bg-destructive/20"
+        }`}
+        aria-label={isMicrophoneEnabled ? "Couper le micro" : "Activer le micro"}
+      >
+        {isMicrophoneEnabled ? (
+          <Mic className="h-4 w-4 md:h-5 md:w-5" />
+        ) : (
+          <MicOff className="h-4 w-4 md:h-5 md:w-5" />
+        )}
+      </Button>
+
+      {/* Camera */}
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={onToggleCamera}
+        disabled={!isConnected}
+        className={`${round} ${
+          isCameraEnabled
+            ? "bg-muted text-foreground hover:bg-muted/80"
+            : "bg-destructive/10 text-destructive hover:bg-destructive/20"
+        }`}
+        aria-label={isCameraEnabled ? "Couper la caméra" : "Activer la caméra"}
+      >
+        {isCameraEnabled ? (
+          <Video className="h-4 w-4 md:h-5 md:w-5" />
+        ) : (
+          <VideoOff className="h-4 w-4 md:h-5 md:w-5" />
+        )}
+      </Button>
+
+      {/* Screen share */}
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={onToggleScreenShare}
+        disabled={!isConnected}
+        className={`${round} ${
+          isScreenShareEnabled
+            ? "bg-primary/15 text-primary hover:bg-primary/20"
+            : "bg-muted text-foreground hover:bg-muted/80"
+        }`}
+        aria-label="Partager l'écran"
+      >
+        <MonitorUp className="h-4 w-4 md:h-5 md:w-5" />
+      </Button>
+
+      {/* Raise hand */}
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={() => setRaised((v) => !v)}
+        className={`${round} ${
+          raised
+            ? "bg-primary/15 text-primary hover:bg-primary/20"
+            : "bg-muted text-foreground hover:bg-muted/80"
+        }`}
+        aria-label="Lever la main"
+      >
+        <Hand className="h-4 w-4 md:h-5 md:w-5" />
+      </Button>
+
+      {/* More options */}
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className={`${round} bg-muted text-foreground hover:bg-muted/80`}
+            aria-label="Plus d'options"
+          >
+            <MoreVertical className="h-4 w-4 md:h-5 md:w-5" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="center" side="top" className="w-56">
+          <DropdownMenuItem className="gap-2">
+            <Sparkles className="h-4 w-4" />
+            Flou arrière-plan
+          </DropdownMenuItem>
+          <DropdownMenuItem className="gap-2">
+            <Radio className="h-4 w-4" />
+            Enregistrer
+          </DropdownMenuItem>
+          <DropdownMenuItem className="gap-2">
+            <Captions className="h-4 w-4" />
+            Transcription
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      {/* Separator */}
+      <div className="w-px h-8 bg-border mx-1 md:mx-2" />
+
+      {/* End call */}
+      <Button
+        onClick={onLeave}
+        className="bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-full h-10 md:h-11 px-4 md:px-5 gap-2"
+        aria-label="Quitter la réunion"
+      >
+        <PhoneOff className="h-4 w-4 md:h-5 md:w-5" />
+        <span className="hidden sm:inline">Quitter</span>
+      </Button>
+    </footer>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Video grid
+// ─────────────────────────────────────────────────────────────────────────────
+
+function VideoGrid() {
   const connectionState = useConnectionState();
 
-  // Collect all camera tracks and screen share tracks from the room
   const tracks = useTracks(
     [
       { source: Track.Source.Camera, withPlaceholder: true },
@@ -325,9 +456,9 @@ function VideoComponent() {
 
   if (connectionState === ConnectionState.Connecting) {
     return (
-      <div className="w-full h-full bg-[#3c4043] rounded-xl flex items-center justify-center flex-col gap-4">
-        <div className="w-8 h-8 rounded-full border-4 border-[#8ab4f8] border-t-transparent animate-spin"></div>
-        <span className="text-white text-lg font-medium">
+      <div className="flex-1 flex flex-col items-center justify-center gap-4 bg-background">
+        <div className="h-8 w-8 rounded-full border-4 border-primary border-t-transparent animate-spin" />
+        <span className="text-sm text-muted-foreground">
           Connexion au serveur...
         </span>
       </div>
@@ -336,20 +467,110 @@ function VideoComponent() {
 
   if (connectionState === ConnectionState.Disconnected) {
     return (
-      <div className="w-full h-full bg-[#3c4043] rounded-xl flex items-center justify-center flex-col gap-2">
-        <span className="text-[#ea4335] text-lg font-medium">
+      <div className="flex-1 flex flex-col items-center justify-center gap-2 bg-background p-6 text-center">
+        <span className="text-base font-medium text-destructive">
           Impossible de se connecter au serveur
         </span>
-        <span className="text-gray-300 text-sm">
-          Vérifiez que LiveKit tourne sur {LIVEKIT_URL}
+        <span className="text-xs text-muted-foreground">
+          Vérifie que LiveKit tourne sur {LIVEKIT_URL}
         </span>
       </div>
     );
   }
 
+  // Determine grid columns based on participant count
+  const count = tracks.length;
+  let colsClass = "grid-cols-1";
+  if (count === 2) colsClass = "grid-cols-1 sm:grid-cols-2";
+  else if (count >= 3 && count <= 4)
+    colsClass = "grid-cols-1 sm:grid-cols-2";
+  else if (count >= 5 && count <= 9)
+    colsClass = "grid-cols-2 md:grid-cols-3";
+  else if (count > 9)
+    colsClass = "grid-cols-2 md:grid-cols-3 lg:grid-cols-4";
+
   return (
-    <GridLayout tracks={tracks} style={{ height: "100%", width: "100%" }}>
-      <ParticipantTile />
-    </GridLayout>
+    <div
+      className={`flex-1 p-3 md:p-4 bg-background grid ${colsClass} auto-rows-fr gap-2 md:gap-3 min-h-0`}
+    >
+      {tracks.map((trackRef) => (
+        <ParticipantTileCard key={tileKey(trackRef)} trackRef={trackRef} />
+      ))}
+    </div>
+  );
+}
+
+function tileKey(t: TrackReferenceOrPlaceholder): string {
+  const p = t.participant;
+  if (isTrackReference(t)) {
+    return `${p.identity}-${t.publication.trackSid}`;
+  }
+  return `${p.identity}-placeholder-${t.source}`;
+}
+
+function initials(name: string): string {
+  const parts = (name || "?").trim().split(/\s+/);
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+function ParticipantTileCard({
+  trackRef,
+}: {
+  trackRef: TrackReferenceOrPlaceholder;
+}) {
+  const participant = trackRef.participant;
+
+  return (
+    <ParticipantContext.Provider value={participant}>
+      <TrackRefContext.Provider value={trackRef}>
+        <ParticipantTileInner trackRef={trackRef} />
+      </TrackRefContext.Provider>
+    </ParticipantContext.Provider>
+  );
+}
+
+function ParticipantTileInner({
+  trackRef,
+}: {
+  trackRef: TrackReferenceOrPlaceholder;
+}) {
+  const participant = trackRef.participant;
+  const isSpeaking = useIsSpeaking(participant);
+  const { name, identity } = useParticipantInfo({ participant });
+  const displayName = name || identity || "Anonyme";
+  const isMuted = !participant.isMicrophoneEnabled;
+  const hasVideo = isTrackReference(trackRef) && !trackRef.publication.isMuted;
+
+  return (
+    <div
+      className={`relative bg-card border rounded-lg overflow-hidden aspect-video min-h-0 ${
+        isSpeaking
+          ? "border-primary ring-2 ring-primary ring-offset-2 ring-offset-background"
+          : "border-border"
+      }`}
+    >
+      {hasVideo ? (
+        <ParticipantTile
+          trackRef={trackRef}
+          disableSpeakingIndicator
+          className="!bg-transparent h-full w-full"
+        />
+      ) : (
+        <div className="absolute inset-0 flex items-center justify-center bg-muted">
+          <Avatar className="h-16 w-16">
+            <AvatarFallback className="bg-primary/10 text-primary text-xl font-semibold">
+              {initials(displayName)}
+            </AvatarFallback>
+          </Avatar>
+        </div>
+      )}
+
+      {/* Name + mute overlay */}
+      <div className="pointer-events-none absolute bottom-2 left-2 flex items-center gap-1 bg-background/80 backdrop-blur-sm px-2 py-1 rounded text-xs text-foreground">
+        {isMuted && <MicOff className="h-3 w-3 text-destructive" />}
+        <span className="truncate max-w-[180px]">{displayName}</span>
+      </div>
+    </div>
   );
 }
