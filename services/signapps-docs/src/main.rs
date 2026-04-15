@@ -138,7 +138,15 @@ async fn main() -> anyhow::Result<()> {
 
     // Build router with document type endpoints
     // Public routes (no auth required)
-    let public_routes = Router::new().route("/health", get(health_handler));
+    let public_routes = Router::new()
+        .route("/health", get(health_handler))
+        // Universal fonts catalog — static assets meant to be loaded from
+        // any origin via <link> and @font-face. No auth.
+        .route("/api/v1/fonts/manifest", get(handlers::fonts::get_manifest))
+        .route(
+            "/api/v1/fonts/files/:family/:variant",
+            get(handlers::fonts::get_font_file),
+        );
 
     // Protected routes (auth required)
     let protected_routes = Router::new()
