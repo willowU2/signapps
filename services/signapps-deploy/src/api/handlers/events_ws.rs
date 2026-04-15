@@ -1,12 +1,26 @@
-//! `GET /events` — WebSocket upgrade that streams deployment events.
+//! `GET /events` — WebSocket streaming of deployment lifecycle events.
 //!
-//! ## Phase 3a scope
+//! ## Wire-up
 //!
-//! This handler establishes the WebSocket upgrade, emits a `deploy.connected`
-//! frame, and keeps the connection alive with a 30-second ping. Real
-//! `deployment.*` event subscription from `PgEventBus` is deferred to a
-//! follow-up — the current implementation gives the UI a working WebSocket
-//! endpoint from day one and gracefully closes when the client disconnects.
+//! Each connection spawns a dedicated [`sqlx::postgres::PgListener`] that
+//! listens on the PostgreSQL `deployment_events` channel. The channel is
+//! populated by the `notify_deployment_event` trigger installed by migration
+//! `308_deployment_events_notify.sql`, which fires on every INSERT into
+//! `deployment_audit_log`. No orchestrator-side change is required — every
+//! `persistence::audit(...)` call is automatically reflected on the socket.
+//!
+//! ## Frame format
+//!
+//! All frames are JSON text of shape:
+//!
+//! ```json
+//! { "channel": "deployment.<action>", "payload": { ... } }
+//! ```
+//!
+//! The first frame emitted after the upgrade is
+//! `{ "channel": "deploy.connected", "payload": { "version": "<crate>" } }`.
+//! A WebSocket ping is sent every 30s to keep intermediaries from idling
+//! the connection.
 
 use crate::api::state::AppState;
 use axum::{
@@ -19,30 +33,32 @@ use axum::{
     Router,
 };
 use serde::Serialize;
+use sqlx::postgres::PgListener;
 use std::time::Duration;
 use tokio::time::interval;
 
 const KEEPALIVE_INTERVAL: Duration = Duration::from_secs(30);
+const NOTIFY_CHANNEL: &str = "deployment_events";
 
+/// JSON envelope sent to WebSocket clients.
 #[derive(Serialize)]
 struct Frame {
     channel: String,
     payload: serde_json::Value,
 }
 
-#[tracing::instrument(skip(ws, _state))]
+#[tracing::instrument(skip(ws, state))]
 async fn events_ws_handler(
     ws: WebSocketUpgrade,
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
 ) -> impl IntoResponse {
-    ws.on_upgrade(handle_socket)
+    ws.on_upgrade(move |socket| handle_socket(socket, state))
 }
 
-async fn handle_socket(mut socket: WebSocket) {
+async fn handle_socket(mut socket: WebSocket, state: AppState) {
     tracing::info!("events websocket opened");
-    let mut keepalive = interval(KEEPALIVE_INTERVAL);
 
-    // Emit a startup frame so clients see something immediately.
+    // Startup frame so clients have something to display immediately.
     let startup = Frame {
         channel: "deploy.connected".into(),
         payload: serde_json::json!({ "version": env!("CARGO_PKG_VERSION") }),
@@ -53,11 +69,69 @@ async fn handle_socket(mut socket: WebSocket) {
         }
     }
 
+    // Connect a dedicated PgListener for this WS client. A failure here is
+    // not fatal for the UI — the socket degrades to keepalive-only so the
+    // operator still sees the connected indicator.
+    let mut listener = match PgListener::connect_with(&state.pool).await {
+        Ok(l) => Some(l),
+        Err(e) => {
+            tracing::error!(error = %e, "failed to connect PgListener; events disabled for this socket");
+            None
+        },
+    };
+    if let Some(l) = listener.as_mut() {
+        if let Err(e) = l.listen(NOTIFY_CHANNEL).await {
+            tracing::error!(error = %e, channel = NOTIFY_CHANNEL, "PgListener LISTEN failed");
+            listener = None;
+        }
+    }
+
+    let mut keepalive = interval(KEEPALIVE_INTERVAL);
+
     loop {
+        // Two run modes: with an active listener or without. We keep the loop
+        // shape identical by building a future that resolves to `None` when
+        // there is no listener.
         tokio::select! {
             _ = keepalive.tick() => {
                 if socket.send(Message::Ping(Vec::new())).await.is_err() {
                     break;
+                }
+            }
+            maybe_notification = async {
+                match listener.as_mut() {
+                    Some(l) => Some(l.recv().await),
+                    None    => std::future::pending().await,
+                }
+            } => {
+                match maybe_notification {
+                    Some(Ok(notif)) => {
+                        let payload_str = notif.payload();
+                        let parsed: serde_json::Value = serde_json::from_str(payload_str)
+                            .unwrap_or_else(|_| serde_json::Value::String(payload_str.to_string()));
+
+                        let action = parsed
+                            .get("action")
+                            .and_then(|a| a.as_str())
+                            .unwrap_or("unknown");
+
+                        let frame = Frame {
+                            channel: format!("deployment.{action}"),
+                            payload: parsed,
+                        };
+                        if let Ok(txt) = serde_json::to_string(&frame) {
+                            if socket.send(Message::Text(txt)).await.is_err() {
+                                break;
+                            }
+                        }
+                    }
+                    Some(Err(e)) => {
+                        tracing::error!(error = %e, "PgListener recv error; dropping listener for this socket");
+                        listener = None;
+                    }
+                    None => {
+                        // Unreachable — future::pending never resolves.
+                    }
                 }
             }
             incoming = socket.recv() => {
@@ -69,6 +143,7 @@ async fn handle_socket(mut socket: WebSocket) {
             }
         }
     }
+
     tracing::info!("events websocket closed");
 }
 
