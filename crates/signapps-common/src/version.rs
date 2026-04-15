@@ -40,7 +40,13 @@ impl VersionInfo {
 }
 
 /// Returns a pre-built router with `GET /version` mounted.
-pub fn router(service_name: &'static str) -> Router {
+///
+/// Generic over the service's application state `S` so the router can be merged
+/// into any service's typed `Router<S>`. The handler itself does not read state.
+pub fn router<S>(service_name: &'static str) -> Router<S>
+where
+    S: Clone + Send + Sync + 'static,
+{
     let info = VersionInfo::from_env(service_name);
     Router::new().route(
         "/version",

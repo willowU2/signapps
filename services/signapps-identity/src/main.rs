@@ -310,6 +310,7 @@ fn create_router(state: AppState) -> Router {
     let public_routes = Router::new()
         .merge(openapi_routes)
         .merge(oauth_routes)
+        .merge(signapps_common::version::router("signapps-identity"))
         .route("/health", get(handlers::health::health_check))
         // JWKS endpoint — public, no auth required.
         // Exposes the RS256 public key(s) so other services can validate tokens
