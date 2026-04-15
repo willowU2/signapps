@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE it.available_patches SET status = 'rollback_pending' WHERE id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "0c1c228d8af4f9dcf51c2cab76fd61df5b849db3bd90d5cfd48b5dfde0c55131"
+}

@@ -1,0 +1,26 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT COALESCE(os_type, 'unknown') as \"os_type!\", COUNT(*) as \"count!\" FROM it.hardware GROUP BY os_type ORDER BY COUNT(*) DESC",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "os_type!",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 1,
+        "name": "count!",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      null,
+      null
+    ]
+  },
+  "hash": "da422797beed6b9c8825432992aaab0846c38fda9ca9fa8b4fa2fdd0fb02a23b"
+}

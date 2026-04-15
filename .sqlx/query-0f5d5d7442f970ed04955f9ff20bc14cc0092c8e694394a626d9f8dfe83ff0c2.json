@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE it.hardware SET last_heartbeat = now(), updated_at = now() WHERE id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "0f5d5d7442f970ed04955f9ff20bc14cc0092c8e694394a626d9f8dfe83ff0c2"
+}

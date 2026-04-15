@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE it.available_patches SET status = 'rejected' WHERE id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "ba74a6dc7e48e766798d885a4358bd1af995a2f9bf8806e19ce989c11e1d06d3"
+}

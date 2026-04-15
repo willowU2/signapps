@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            INSERT INTO it.components (hardware_id, type, model, capacity)\n            VALUES ($1, 'cpu', $2, $3)\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Varchar",
+        "Varchar"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "46a3babb4af442f163e1b4d9d8aee143afdd76a7185cf134fe74e7318347c0a6"
+}

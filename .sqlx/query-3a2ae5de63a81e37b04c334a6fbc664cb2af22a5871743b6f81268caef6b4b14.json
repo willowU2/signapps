@@ -1,0 +1,18 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        UPDATE it.script_queue\n        SET status = CASE WHEN $3 = 0 THEN 'completed' ELSE 'failed' END,\n            stdout = $1,\n            stderr = $2,\n            exit_code = $3,\n            completed_at = now()\n        WHERE id = $4 AND hardware_id = $5\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text",
+        "Int4",
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "3a2ae5de63a81e37b04c334a6fbc664cb2af22a5871743b6f81268caef6b4b14"
+}

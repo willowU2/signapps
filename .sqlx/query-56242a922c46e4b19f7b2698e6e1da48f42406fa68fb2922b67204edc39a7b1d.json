@@ -1,0 +1,26 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT COALESCE(severity, 'unknown') as \"severity!\", COUNT(*) as \"count!\"\n        FROM it.available_patches\n        WHERE status IN ('pending', 'approved', 'deployed')\n        GROUP BY severity\n        ORDER BY COUNT(*) DESC\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "severity!",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 1,
+        "name": "count!",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      null,
+      null
+    ]
+  },
+  "hash": "56242a922c46e4b19f7b2698e6e1da48f42406fa68fb2922b67204edc39a7b1d"
+}

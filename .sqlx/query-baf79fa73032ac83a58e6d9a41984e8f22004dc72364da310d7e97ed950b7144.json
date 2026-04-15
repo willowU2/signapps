@@ -1,0 +1,19 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            INSERT INTO it.software_inventory (hardware_id, name, version, publisher, install_date, size_bytes, updated_at)\n            VALUES ($1, $2, $3, $4, $5, $6, now())\n            ON CONFLICT (hardware_id, name, version) DO UPDATE SET\n                publisher = EXCLUDED.publisher,\n                install_date = EXCLUDED.install_date,\n                size_bytes = EXCLUDED.size_bytes,\n                updated_at = now()\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Varchar",
+        "Varchar",
+        "Varchar",
+        "Date",
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "baf79fa73032ac83a58e6d9a41984e8f22004dc72364da310d7e97ed950b7144"
+}

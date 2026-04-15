@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        INSERT INTO it.script_queue (hardware_id, script_type, script_content, timeout_seconds)\n        VALUES ($1, $2, $3, 600)\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Varchar",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "7a52bd78527d63c9a9127b630047941a88b799351d2560d4e6795c4d662974d8"
+}

@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE it.enrollment_tokens SET used_at = now(), hardware_id = $1 WHERE id = $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "3046a05a8c247a4a05e3b0876924a570f371495d6aa6caaf1af759e9265b7c79"
+}

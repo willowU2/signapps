@@ -1,0 +1,32 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        INSERT INTO it.hardware (name, type, os_type, os_version, agent_id, agent_version, last_heartbeat)\n        VALUES ($1, 'workstation', $2, $3, $4, $5, now())\n        ON CONFLICT (agent_id) DO UPDATE SET\n            os_type = EXCLUDED.os_type,\n            os_version = EXCLUDED.os_version,\n            agent_version = EXCLUDED.agent_version,\n            last_heartbeat = now(),\n            updated_at = now()\n        RETURNING id, agent_id\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "agent_id",
+        "type_info": "Uuid"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Varchar",
+        "Varchar",
+        "Varchar",
+        "Uuid",
+        "Varchar"
+      ]
+    },
+    "nullable": [
+      false,
+      true
+    ]
+  },
+  "hash": "721a9fc5dc5cb75264ba020d809779eafaf68cbfe2f68706e9b4820b68c91c4a"
+}

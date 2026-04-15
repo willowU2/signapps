@@ -1,0 +1,94 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT\n            d.id AS deployment_id,\n            d.scheduled_at,\n            p.id AS pkg_id,\n            p.name AS pkg_name,\n            p.version,\n            p.publisher,\n            p.platform,\n            p.installer_type,\n            p.silent_args,\n            p.file_path,\n            p.file_hash,\n            p.file_size,\n            p.created_at AS pkg_created_at\n        FROM it.deployments d\n        JOIN it.software_packages p ON p.id = d.package_id\n        WHERE d.hardware_id = $1\n          AND d.status = 'pending'\n          AND (d.scheduled_at IS NULL OR d.scheduled_at <= NOW())\n        ORDER BY d.scheduled_at ASC NULLS FIRST\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "deployment_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "scheduled_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 2,
+        "name": "pkg_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 3,
+        "name": "pkg_name",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 4,
+        "name": "version",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 5,
+        "name": "publisher",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 6,
+        "name": "platform",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 7,
+        "name": "installer_type",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 8,
+        "name": "silent_args",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 9,
+        "name": "file_path",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 10,
+        "name": "file_hash",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 11,
+        "name": "file_size",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 12,
+        "name": "pkg_created_at",
+        "type_info": "Timestamptz"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      true,
+      false,
+      false,
+      false,
+      true,
+      false,
+      false,
+      true,
+      true,
+      true,
+      true,
+      false
+    ]
+  },
+  "hash": "020eeb2b1408e55ee7768c53d480970641cce02e5ac73846011ea82e9a6294df"
+}

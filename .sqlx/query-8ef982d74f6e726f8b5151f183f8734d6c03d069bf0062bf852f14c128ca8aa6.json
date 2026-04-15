@@ -1,0 +1,20 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            INSERT INTO it.available_patches\n                (hardware_id, patch_id, title, severity, kb_number, category, size_bytes)\n            VALUES ($1, $2, $3, $4, $5, $6, $7)\n            ON CONFLICT DO NOTHING\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Varchar",
+        "Varchar",
+        "Varchar",
+        "Varchar",
+        "Varchar",
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "8ef982d74f6e726f8b5151f183f8734d6c03d069bf0062bf852f14c128ca8aa6"
+}

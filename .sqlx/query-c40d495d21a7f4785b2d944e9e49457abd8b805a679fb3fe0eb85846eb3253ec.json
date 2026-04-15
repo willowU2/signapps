@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE it.available_patches SET status = 'deployed', deployed_at = now() WHERE id = $1 AND status = 'approved'",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "c40d495d21a7f4785b2d944e9e49457abd8b805a679fb3fe0eb85846eb3253ec"
+}

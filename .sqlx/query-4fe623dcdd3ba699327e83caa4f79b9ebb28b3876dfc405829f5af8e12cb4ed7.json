@@ -1,0 +1,46 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT hardware_id, kb_number, patch_id, title, category\n        FROM it.available_patches\n        WHERE id = $1 AND status = 'installed'\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "hardware_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "kb_number",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 2,
+        "name": "patch_id",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 3,
+        "name": "title",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 4,
+        "name": "category",
+        "type_info": "Varchar"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      true,
+      false,
+      false,
+      true
+    ]
+  },
+  "hash": "4fe623dcdd3ba699327e83caa4f79b9ebb28b3876dfc405829f5af8e12cb4ed7"
+}
