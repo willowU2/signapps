@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { memo, useState, useRef, useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,7 +27,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ChatToTaskDialog } from "./chat-to-task-dialog";
 import { cn } from "@/lib/utils";
-import { useUsersMap } from "@/lib/store/chat-store";
+import { useUser } from "@/lib/store/chat-store";
 import { ChatAttachment as Attachment, chatApi } from "@/lib/api/chat";
 import { ChatMarkdown } from "./chat-markdown";
 import { AttachmentPreview } from "./file-attachment";
@@ -63,7 +63,7 @@ interface MessageItemProps {
 
 const QUICK_REACTIONS = ["👍", "❤️", "😂", "🎉"];
 
-export function MessageItem({
+function MessageItemInner({
   message,
   isMe,
   showAvatar,
@@ -76,7 +76,7 @@ export function MessageItem({
   onMessageEdited,
   onMessageDeleted,
 }: MessageItemProps) {
-  const usersMap = useUsersMap();
+  const targetUserFromStore = useUser(message.senderId, message.senderName);
   const [isHovered, setIsHovered] = useState(false);
   const [taskDialogOpen, setTaskDialogOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -130,9 +130,7 @@ export function MessageItem({
     minute: "2-digit",
   });
 
-  const targetUser =
-    usersMap[message.senderId] ||
-    Object.values(usersMap).find((u) => u.username === message.senderName);
+  const targetUser = targetUserFromStore;
   const resolvedAvatar =
     message.avatar ||
     targetUser?.avatar_url ||
@@ -419,3 +417,11 @@ export function MessageItem({
     </>
   );
 }
+
+/**
+ * Memoized export — re-renders only when props change, not on every
+ * parent render. Combined with the `useUser` selector (one user per
+ * message, shallow equality at store level), this lets chat lists
+ * avoid re-rendering all messages on unrelated state changes.
+ */
+export const MessageItem = memo(MessageItemInner);

@@ -87,6 +87,29 @@ export const useSelectedChannelName = () =>
   useChatStore((state) => state.selectedChannelName);
 export const useIsDm = () => useChatStore((state) => state.isDm);
 export const useUsersMap = () => useChatStore((state) => state.usersMap);
+
+/**
+ * Return a single user from usersMap keyed by `userId` with a `username`
+ * fallback. Unlike `useUsersMap`, the returned selector depends only on
+ * the specific user — consumers re-render only when THIS user changes,
+ * not on any modification of the map.
+ *
+ * Prefer this over `useUsersMap()` for per-message usage where you only
+ * need one user (e.g. MessageItem rendering a single sender).
+ */
+export const useUser = (
+  userId: string | undefined,
+  username?: string,
+): User | undefined =>
+  useChatStore((state) => {
+    if (!userId && !username) return undefined;
+    if (userId && state.usersMap[userId]) return state.usersMap[userId];
+    if (username) {
+      return Object.values(state.usersMap).find((u) => u.username === username);
+    }
+    return undefined;
+  });
+
 export const useHiddenDms = () => useChatStore((state) => state.hiddenDms);
 
 export const useChatActions = () =>
