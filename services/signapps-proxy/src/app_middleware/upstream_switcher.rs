@@ -78,3 +78,79 @@ pub async fn upstream_switcher_middleware(
     req.extensions_mut().insert(color);
     next.run(req).await
 }
+
+#[cfg(test)]
+mod tests {
+    //! Regression tests for the Phase A P0 fix (commit 32219f6f).
+    //!
+    //! Before the fix, `get_color` used `self.cache.lock().unwrap()` on
+    //! a hot path. Any prior thread panic while holding the mutex would
+    //! poison it and every subsequent proxy request would crash. The
+    //! fix replaced `.unwrap()` with a `match` that recovers via
+    //! `PoisonError::into_inner()`.
+    //!
+    //! These tests verify the recovery pattern directly (without
+    //! instantiating `UpstreamSwitcherState` — that would require a
+    //! PgPool). The pattern mirrors the production code.
+    use std::sync::{Arc, Mutex};
+    use std::thread;
+
+    /// Baseline — an un-poisoned mutex yields a readable guard.
+    #[test]
+    fn test_mutex_non_poisoned_access() {
+        let m: Arc<Mutex<Option<u32>>> = Arc::new(Mutex::new(Some(42)));
+        let guard = match m.lock() {
+            Ok(g) => g,
+            Err(poisoned) => poisoned.into_inner(),
+        };
+        assert_eq!(*guard, Some(42));
+    }
+
+    /// Core regression — a mutex poisoned by a panic on another thread
+    /// must still be accessible via `PoisonError::into_inner()`. This
+    /// is the behaviour that protects the proxy tier from cascading
+    /// crashes.
+    #[test]
+    fn test_mutex_recovers_from_poisoning() {
+        let m: Arc<Mutex<Option<u32>>> = Arc::new(Mutex::new(Some(7)));
+
+        // Panic while holding the lock — poisons the mutex.
+        let m_clone = Arc::clone(&m);
+        let _ = thread::spawn(move || {
+            let _g = m_clone.lock().unwrap();
+            panic!("intentional panic to poison the mutex");
+        })
+        .join();
+
+        // Lock now returns Err(PoisonError) — but the pattern used in
+        // upstream_switcher must still extract the inner value.
+        let res = m.lock();
+        assert!(res.is_err(), "mutex must be poisoned after panicking holder");
+        let guard = match res {
+            Ok(g) => g,
+            Err(poisoned) => poisoned.into_inner(),
+        };
+        assert_eq!(
+            *guard,
+            Some(7),
+            "recovered guard must expose the pre-panic value",
+        );
+    }
+
+    /// Mutation test — the bug variant (`.unwrap()`) must panic on a
+    /// poisoned mutex, proving the production `match` is actually what
+    /// saves us.
+    #[test]
+    #[should_panic]
+    fn test_unwrap_panics_on_poisoned_mutex() {
+        let m: Arc<Mutex<Option<u32>>> = Arc::new(Mutex::new(Some(7)));
+        let m_clone = Arc::clone(&m);
+        let _ = thread::spawn(move || {
+            let _g = m_clone.lock().unwrap();
+            panic!("intentional panic to poison the mutex");
+        })
+        .join();
+        // This is the pre-fix pattern — must panic.
+        let _guard = m.lock().unwrap();
+    }
+}
