@@ -23,15 +23,10 @@ import {
   Plus,
   Loader2,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { TooltipIconButton } from "@/components/ui/tooltip-icon-button";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -466,123 +461,81 @@ function ItemRow({
         <div className="flex items-center justify-end gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
           {/* Copy password */}
           {item.item_type === "login" && data?.password && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7"
-                  onClick={() => copyToClipboard(data.password, "Mot de passe")}
-                >
-                  <Copy className="h-3.5 w-3.5" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Copier le mot de passe</TooltipContent>
-            </Tooltip>
+            <TooltipIconButton
+              label="Copier le mot de passe"
+              className="h-7 w-7"
+              onClick={() => copyToClipboard(data.password, "Mot de passe")}
+            >
+              <Copy className="h-3.5 w-3.5" />
+            </TooltipIconButton>
           )}
 
           {/* Copy username */}
           {item.item_type === "login" && data?.username && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7"
-                  onClick={() => copyToClipboard(data.username, "Identifiant")}
-                >
-                  <User className="h-3.5 w-3.5" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Copier l&apos;identifiant</TooltipContent>
-            </Tooltip>
+            <TooltipIconButton
+              label="Copier l'identifiant"
+              className="h-7 w-7"
+              onClick={() => copyToClipboard(data.username, "Identifiant")}
+            >
+              <User className="h-3.5 w-3.5" />
+            </TooltipIconButton>
           )}
 
           {/* Open URI */}
           {item.uri && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7"
-                  onClick={() =>
-                    window.open(item.uri, "_blank", "noopener,noreferrer")
-                  }
-                >
-                  <ExternalLink className="h-3.5 w-3.5" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Ouvrir le site</TooltipContent>
-            </Tooltip>
+            <TooltipIconButton
+              label="Ouvrir le site"
+              className="h-7 w-7"
+              onClick={() =>
+                window.open(item.uri, "_blank", "noopener,noreferrer")
+              }
+            >
+              <ExternalLink className="h-3.5 w-3.5" />
+            </TooltipIconButton>
           )}
 
           {/* Browse (use_only) */}
           {item.uri && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7"
-                  onClick={onBrowse}
-                  disabled={isBrowsing}
-                >
-                  {isBrowsing ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  ) : (
-                    <Monitor className="h-3.5 w-3.5" />
-                  )}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Navigation sécurisée</TooltipContent>
-            </Tooltip>
+            <TooltipIconButton
+              label="Navigation sécurisée"
+              className="h-7 w-7"
+              onClick={onBrowse}
+              disabled={isBrowsing}
+            >
+              {isBrowsing ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Monitor className="h-3.5 w-3.5" />
+              )}
+            </TooltipIconButton>
           )}
 
           {/* Share */}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7"
-                onClick={onShare}
-              >
-                <Share2 className="h-3.5 w-3.5" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Partager</TooltipContent>
-          </Tooltip>
+          <TooltipIconButton
+            label="Partager"
+            className="h-7 w-7"
+            onClick={onShare}
+          >
+            <Share2 className="h-3.5 w-3.5" />
+          </TooltipIconButton>
 
           {/* Edit */}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7"
-                onClick={onEdit}
-              >
-                <Pencil className="h-3.5 w-3.5" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Modifier</TooltipContent>
-          </Tooltip>
+          <TooltipIconButton
+            label="Modifier"
+            className="h-7 w-7"
+            onClick={onEdit}
+          >
+            <Pencil className="h-3.5 w-3.5" />
+          </TooltipIconButton>
 
           {/* Delete */}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7 text-destructive hover:text-destructive"
-                onClick={onDelete}
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Supprimer</TooltipContent>
-          </Tooltip>
+          <TooltipIconButton
+            label="Supprimer"
+            className="h-7 w-7 text-destructive hover:text-destructive"
+            onClick={onDelete}
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </TooltipIconButton>
         </div>
       </td>
     </tr>

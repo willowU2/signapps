@@ -8,25 +8,23 @@
  * fires when it should and stays quiet when it shouldn't.
  */
 import { render } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Button } from "./button";
 
 describe("<Button> a11y dev-warn", () => {
-  const originalEnv = process.env.NODE_ENV;
   let warnSpy: ReturnType<typeof vi.spyOn>;
 
-  afterEach(() => {
-    process.env.NODE_ENV = originalEnv;
-    warnSpy?.mockRestore();
+  beforeEach(() => {
+    vi.stubEnv("NODE_ENV", "development");
+    warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
   });
 
-  function spyWarn() {
-    warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
-  }
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    warnSpy.mockRestore();
+  });
 
   it("warns when size='icon' has no aria-label and only an icon child", () => {
-    process.env.NODE_ENV = "development";
-    spyWarn();
     render(
       <Button size="icon">
         <svg />
@@ -38,22 +36,18 @@ describe("<Button> a11y dev-warn", () => {
   });
 
   it("warns for icon-sm / icon-xs / icon-lg sizes", () => {
-    process.env.NODE_ENV = "development";
     for (const size of ["icon-sm", "icon-xs", "icon-lg"] as const) {
-      spyWarn();
+      warnSpy.mockClear();
       render(
         <Button size={size}>
           <svg />
         </Button>,
       );
       expect(warnSpy).toHaveBeenCalled();
-      warnSpy.mockRestore();
     }
   });
 
   it("stays quiet when aria-label is present", () => {
-    process.env.NODE_ENV = "development";
-    spyWarn();
     render(
       <Button size="icon" aria-label="Close">
         <svg />
@@ -63,8 +57,6 @@ describe("<Button> a11y dev-warn", () => {
   });
 
   it("stays quiet when aria-labelledby is present", () => {
-    process.env.NODE_ENV = "development";
-    spyWarn();
     render(
       <>
         <span id="lbl">Close</span>
@@ -77,18 +69,15 @@ describe("<Button> a11y dev-warn", () => {
   });
 
   it("stays quiet for non-icon sizes (default, sm, lg)", () => {
-    process.env.NODE_ENV = "development";
     for (const size of ["default", "sm", "lg"] as const) {
-      spyWarn();
+      warnSpy.mockClear();
       render(<Button size={size}>Click me</Button>);
       expect(warnSpy).not.toHaveBeenCalled();
-      warnSpy.mockRestore();
     }
   });
 
   it("stays quiet in production mode even for icon-only buttons", () => {
-    process.env.NODE_ENV = "production";
-    spyWarn();
+    vi.stubEnv("NODE_ENV", "production");
     render(
       <Button size="icon">
         <svg />
@@ -98,8 +87,6 @@ describe("<Button> a11y dev-warn", () => {
   });
 
   it("stays quiet when asChild is true (Slot — consumer owns the button)", () => {
-    process.env.NODE_ENV = "development";
-    spyWarn();
     render(
       <Button size="icon" asChild>
         <span aria-label="External link">
