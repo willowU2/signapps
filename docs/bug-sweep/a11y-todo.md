@@ -101,6 +101,17 @@ Fix work starts in Phase E2.
 - `/admin/feature-flags` custom switch-style button : now carries `aria-label` + sr-only text describing the on/off action per flag. The per-tenant reset button (`RotateCcw` icon) similarly gained an `aria-label`.
 - Expected impact : -44 `button-name` on `/admin/feature-flags` plus downstream landmark / skip-link violations on any auth-protected route that was falling back to `/login` during the audit.
 
+### Wave 2b — Landmarks on public / callback pages (done 2026-04-16)
+
+Five additional pages that bypass `AppLayout` now wrap their shell in
+`<main id="main-content">` so the skip-link has a target and axe's
+`landmark-one-main` stops firing:
+
+- `/maintenance`, `/bio/[username]`, `/poll/[id]`, `/f/[id]` (4 render
+  branches), `/settings/calendar/callback`.
+- The `/poll/[id]` title bar is now a `<header>` and its decorative "S"
+  badge is `aria-hidden`.
+
 ### Pending (requires fresh axe run)
 
 - Delta measurement : rerun `e2e/a11y-audit.spec.ts` with services up and regenerate `a11y-axe-baseline.json` / `a11y-axe-summary.md`. This is the gate for prioritising the next wave — per-route vs. layout-level.
