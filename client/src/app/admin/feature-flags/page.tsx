@@ -94,6 +94,7 @@ export default function FeatureFlagsPage() {
                           effective ? "bg-green-500" : "bg-muted-foreground/30"
                         }`}
                         aria-checked={effective}
+                        aria-label={`Feature flag ${key}: ${effective ? "activé" : "désactivé"}`}
                         role="switch"
                       >
                         <span
@@ -101,14 +102,22 @@ export default function FeatureFlagsPage() {
                             effective ? "translate-x-4.5" : "translate-x-0.5"
                           }`}
                         />
+                        <span className="sr-only">
+                          {effective ? `Désactiver ${key}` : `Activer ${key}`}
+                        </span>
                       </button>
                       {hasOverride && (
                         <button
                           onClick={() => handleClearOverride(key)}
                           className="text-muted-foreground hover:text-foreground transition-colors"
                           title="Reset to default"
+                          aria-label={`Réinitialiser ${key} à la valeur par défaut`}
                         >
-                          <RotateCcw className="h-3.5 w-3.5" />
+                          <RotateCcw
+                            className="h-3.5 w-3.5"
+                            aria-hidden="true"
+                          />
+                          <span className="sr-only">Réinitialiser {key}</span>
                         </button>
                       )}
                     </div>

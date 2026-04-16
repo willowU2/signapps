@@ -22,7 +22,10 @@ export default function Home() {
   }, [isAuthenticated, isLoading, router]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center">
+    <main
+      id="main-content"
+      className="flex min-h-screen items-center justify-center"
+    >
       <div className="flex items-center gap-2">
         <SpinnerInfinity
           size={32}
@@ -32,6 +35,6 @@ export default function Home() {
         />
         <span>Chargement...</span>
       </div>
-    </div>
+    </main>
   );
 }

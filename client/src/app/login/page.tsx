@@ -364,18 +364,22 @@ export default function LoginPage() {
   // Show context picker when login returned requires_context
   if (pendingContexts) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background p-4">
+      <main
+        id="main-content"
+        className="flex min-h-screen items-center justify-center bg-background p-4"
+      >
         <ContextPicker
           contexts={pendingContexts}
           onSelect={handleContextSelect}
           isLoading={contextSelecting}
         />
-      </div>
+      </main>
     );
   }
 
   return (
-    <div
+    <main
+      id="main-content"
       className="flex min-h-screen items-center justify-center bg-background p-4"
       suppressHydrationWarning
     >
@@ -545,6 +549,6 @@ export default function LoginPage() {
       </Card>
 
       <LdapLoginDialog open={showLdapDialog} onOpenChange={setShowLdapDialog} />
-    </div>
+    </main>
   );
 }
