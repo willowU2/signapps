@@ -120,7 +120,7 @@ export function OcrImage({ onTextExtracted }: OcrImageProps) {
         {imageUrl ? (
           <img
             src={imageUrl}
-            alt="Image à analyser"
+            alt="Document à analyser"
             className="max-h-40 mx-auto rounded object-contain"
           />
         ) : (

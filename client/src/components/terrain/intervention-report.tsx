@@ -204,7 +204,7 @@ export function InterventionReport({
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={photo.url}
-                  alt="Intervention photo"
+                  alt="Intervention attachment"
                   className="w-full h-full object-cover"
                 />
                 <button

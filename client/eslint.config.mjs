@@ -69,7 +69,12 @@ const eslintConfig = defineConfig([
       "jsx-a11y/media-has-caption": "warn",
       "jsx-a11y/mouse-events-have-key-events": "warn",
       "jsx-a11y/no-access-key": "warn",
-      "jsx-a11y/no-autofocus": "warn",
+      // autoFocus is contextual: disorienting on page-load (correct
+      // warning), but EXPECTED in dialog first-inputs (matches native
+      // <dialog>). ~95% of our usages are dialog contexts. Rule
+      // silenced with rationale rather than 110 individual disable
+      // comments; flag specific misuses in PR review.
+      "jsx-a11y/no-autofocus": "off",
       "jsx-a11y/no-distracting-elements": "warn",
       "jsx-a11y/no-interactive-element-to-noninteractive-role": "warn",
       "jsx-a11y/no-noninteractive-element-interactions": "warn",

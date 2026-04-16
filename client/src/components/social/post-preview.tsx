@@ -743,7 +743,7 @@ function PinterestPreview({
         <div className="aspect-[2/3] bg-zinc-100 overflow-hidden">
           <img
             src={mediaUrls[0]}
-            alt="Pin image"
+            alt="Pin attachment"
             className="w-full h-full object-cover"
           />
         </div>

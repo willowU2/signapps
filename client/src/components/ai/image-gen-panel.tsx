@@ -670,7 +670,7 @@ export function ImageGenPanel() {
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={result.image_url}
-                alt="Image générée"
+                alt="Résultat généré par IA"
                 className="w-full rounded-lg border shadow-sm"
               />
 

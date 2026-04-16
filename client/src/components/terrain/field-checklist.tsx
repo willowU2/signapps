@@ -183,7 +183,7 @@ export function FieldChecklist({
                               {/* eslint-disable-next-line @next/next/no-img-element */}
                               <img
                                 src={photo}
-                                alt={`Photo ${idx + 1}`}
+                                alt={`Checklist attachment ${idx + 1}`}
                                 className="w-full h-full object-cover"
                               />
                             </div>

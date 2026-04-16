@@ -203,7 +203,7 @@ export default function DesignStockPhotos({
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={img.url}
-              alt={`Stock photo ${img.id}`}
+              alt={`Stock asset ${img.id}`}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
               loading="lazy"
             />
