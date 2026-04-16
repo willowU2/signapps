@@ -213,7 +213,10 @@ export function useCollaborativeComments({
         if (foundPos !== null) return false;
 
         node.marks.forEach((mark) => {
-          if (mark.type.name === "comment" && mark.attrs.id === commentId) {
+          if (
+            mark.type.name === "comment" &&
+            mark.attrs.commentId === commentId
+          ) {
             foundPos = pos;
           }
         });
@@ -240,7 +243,7 @@ export function useCollaborativeComments({
       const commentMark = marks.find((mark) => mark.type.name === "comment");
 
       if (commentMark) {
-        setActiveComment(commentMark.attrs.id);
+        setActiveComment(commentMark.attrs.commentId);
       }
     };
 

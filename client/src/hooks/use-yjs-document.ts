@@ -89,7 +89,6 @@ export function useYjsDocument(
           if (onOfflineLoad) {
             onOfflineLoad();
           }
-          console.warn(`[useYjsDocument] Loaded offline data for ${docId}`);
         });
       }
 
@@ -120,15 +119,9 @@ export function useYjsDocument(
             wsProvider?.connect();
           })
           .catch(() => {
-            console.warn(
-              `[useYjsDocument] Collaboration server at ${wsUrl} is offline. Running in offline mode.`,
-            );
             setConnectionStatus("disconnected");
           });
       } else {
-        console.warn(
-          "[useYjsDocument] Running in offline mode (NEXT_PUBLIC_COLLAB_ENABLED not set)",
-        );
         setConnectionStatus("disconnected");
       }
 

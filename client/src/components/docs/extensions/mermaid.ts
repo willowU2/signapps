@@ -1,6 +1,31 @@
 // IDEA-005: Mermaid diagram extension — renders ```mermaid code blocks as SVG
 import { Node, mergeAttributes } from "@tiptap/core";
 
+/** Create a text-only fallback node (never interprets HTML in `code`). */
+const buildFallbackNode = (code: string): HTMLElement => {
+  const pre = document.createElement("pre");
+  pre.className =
+    "mermaid-fallback text-xs text-gray-500 p-2 bg-gray-50 dark:bg-gray-900 rounded";
+  pre.textContent = code;
+  return pre;
+};
+
+/** Create a text-only error node (err + original code both escaped). */
+const buildErrorNode = (err: unknown, code: string): HTMLElement => {
+  const box = document.createElement("div");
+  box.className =
+    "text-red-500 text-xs p-2 bg-red-50 dark:bg-red-900/20 rounded border border-red-200";
+  const strong = document.createElement("strong");
+  strong.textContent = "Mermaid error: ";
+  box.appendChild(strong);
+  box.appendChild(document.createTextNode(String(err)));
+  const pre = document.createElement("pre");
+  pre.className = "mt-1 text-gray-500";
+  pre.textContent = code;
+  box.appendChild(pre);
+  return box;
+};
+
 declare module "@tiptap/core" {
   interface Commands<ReturnType> {
     mermaidDiagram: { insertMermaid: (code: string) => ReturnType };
@@ -16,22 +41,23 @@ const renderMermaid = async (code: string, dom: HTMLElement): Promise<void> => {
       "mermaid",
     ).catch(() => null);
     if (!mermaid) {
-      dom.innerHTML = `<pre class="mermaid-fallback text-xs text-gray-500 p-2 bg-gray-50 dark:bg-gray-900 rounded">${code}</pre>`;
+      dom.replaceChildren(buildFallbackNode(code));
       return;
     }
     mermaid.default.initialize({
       startOnLoad: false,
       theme: "neutral",
-      securityLevel: "loose",
+      // "strict" sandboxes the rendered SVG; untrusted Yjs collaborators
+      // must not be able to inject scripts via a Mermaid node.
+      securityLevel: "strict",
     });
     const id = `mermaid-${Math.random().toString(36).slice(2)}`;
     const { svg } = await mermaid.default.render(id, code);
+    // Mermaid's render output is SVG markup generated under securityLevel:
+    // "strict" — safe to set as innerHTML in this one place.
     dom.innerHTML = svg;
   } catch (err) {
-    dom.innerHTML = `<div class="text-red-500 text-xs p-2 bg-red-50 dark:bg-red-900/20 rounded border border-red-200">
-            <strong>Mermaid error:</strong> ${String(err)}
-            <pre class="mt-1 text-gray-500">${code}</pre>
-        </div>`;
+    dom.replaceChildren(buildErrorNode(err, code));
   }
 };
 

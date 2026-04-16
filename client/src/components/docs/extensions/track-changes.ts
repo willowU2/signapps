@@ -231,77 +231,123 @@ export const TrackChanges = TiptapMark.create<TrackChangesOptions>({
         (changeId: string) =>
         ({ tr, state, dispatch }) => {
           const { doc } = state;
-          let modified = false;
+
+          // Collect matching spans FIRST, then apply in reverse order. Applying
+          // tr.delete inside the descendants traversal would invalidate
+          // subsequent positions (step-map shifts them by -nodeSize).
+          const hits: Array<{
+            pos: number;
+            size: number;
+            type: "insertion" | "deletion";
+            mark: PMMark;
+          }> = [];
 
           doc.descendants((node, pos) => {
             if (!node.isText) return;
 
-            // Find insertion marks to keep
             const insertionMark = node.marks.find(
               (mark) =>
                 mark.type.name === "insertion" &&
                 mark.attrs.changeId === changeId,
             );
             if (insertionMark) {
-              tr.removeMark(pos, pos + node.nodeSize, insertionMark);
-              modified = true;
+              hits.push({
+                pos,
+                size: node.nodeSize,
+                type: "insertion",
+                mark: insertionMark,
+              });
             }
 
-            // Find deletion marks to remove content
             const deletionMark = node.marks.find(
               (mark) =>
                 mark.type.name === "deletion" &&
                 mark.attrs.changeId === changeId,
             );
             if (deletionMark) {
-              tr.delete(pos, pos + node.nodeSize);
-              modified = true;
+              hits.push({
+                pos,
+                size: node.nodeSize,
+                type: "deletion",
+                mark: deletionMark,
+              });
             }
           });
 
-          if (dispatch && modified) {
+          hits.sort((a, b) => b.pos - a.pos);
+          for (const h of hits) {
+            if (h.type === "insertion") {
+              tr.removeMark(h.pos, h.pos + h.size, h.mark);
+            } else {
+              tr.delete(h.pos, h.pos + h.size);
+            }
+          }
+
+          if (dispatch && hits.length > 0) {
             dispatch(tr);
           }
 
-          return modified;
+          return hits.length > 0;
         },
       rejectChange:
         (changeId: string) =>
         ({ tr, state, dispatch }) => {
           const { doc } = state;
-          let modified = false;
+
+          // Same collect-then-reverse pattern as acceptChange.
+          const hits: Array<{
+            pos: number;
+            size: number;
+            type: "insertion" | "deletion";
+            mark: PMMark;
+          }> = [];
 
           doc.descendants((node, pos) => {
             if (!node.isText) return;
 
-            // Find insertion marks to remove content
             const insertionMark = node.marks.find(
               (mark) =>
                 mark.type.name === "insertion" &&
                 mark.attrs.changeId === changeId,
             );
             if (insertionMark) {
-              tr.delete(pos, pos + node.nodeSize);
-              modified = true;
+              hits.push({
+                pos,
+                size: node.nodeSize,
+                type: "insertion",
+                mark: insertionMark,
+              });
             }
 
-            // Find deletion marks to keep content (just remove mark)
             const deletionMark = node.marks.find(
               (mark) =>
                 mark.type.name === "deletion" &&
                 mark.attrs.changeId === changeId,
             );
             if (deletionMark) {
-              tr.removeMark(pos, pos + node.nodeSize, deletionMark);
-              modified = true;
+              hits.push({
+                pos,
+                size: node.nodeSize,
+                type: "deletion",
+                mark: deletionMark,
+              });
             }
           });
 
-          if (dispatch && modified) {
+          hits.sort((a, b) => b.pos - a.pos);
+          for (const h of hits) {
+            if (h.type === "insertion") {
+              tr.delete(h.pos, h.pos + h.size);
+            } else {
+              tr.removeMark(h.pos, h.pos + h.size, h.mark);
+            }
+          }
+
+          if (dispatch && hits.length > 0) {
             dispatch(tr);
           }
 
-          return modified;
+          return hits.length > 0;
         },
       acceptAllChanges:
         () =>
