@@ -10,4 +10,5 @@ pub mod presence;
 pub mod reactions;
 pub mod read_status;
 pub mod search;
+pub mod video_call;
 pub mod websocket;

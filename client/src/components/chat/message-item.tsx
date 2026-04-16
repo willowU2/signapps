@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { MessageSquare, Smile, MoreHorizontal, Forward, Edit2, Trash2, Pin, PinOff, CheckSquare } from "lucide-react";
+import { MessageSquare, Smile, MoreHorizontal, Forward, Edit2, Trash2, Pin, PinOff, CheckSquare, Video } from "lucide-react";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -116,6 +116,7 @@ export function MessageItem({
     const resolvedAvatar = message.avatar || targetUser?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${message.senderId}`;
 
     const isVoice = message.attachment?.content_type?.startsWith("audio/");
+    const isSystemVideoCall = message.attachment?.message_type === "system_video_call";
 
     return (
         <>
@@ -284,8 +285,30 @@ export function MessageItem({
                     </div>
                 )}
 
+                {/* Phase 4b: system message — video call started */}
+                {isSystemVideoCall && message.attachment?.room_code && (
+                    <div className="mt-1 inline-flex items-center gap-3 rounded-xl border border-green-500/30 bg-green-500/5 px-3 py-2 max-w-md">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-green-500/15 text-green-600 shrink-0">
+                            <Video className="h-5 w-5" />
+                        </div>
+                        <div className="flex flex-col min-w-0 flex-1">
+                            <span className="text-sm font-semibold text-foreground">Appel vidéo démarré</span>
+                            <span className="text-xs text-muted-foreground truncate">
+                                Code {message.attachment.room_code}
+                            </span>
+                        </div>
+                        <Button
+                            size="sm"
+                            className="h-8 gap-1.5 bg-green-600 hover:bg-green-700 text-white shrink-0"
+                            onClick={() => window.open(`/meet/${message.attachment!.room_code}`, "_blank")}
+                        >
+                            <Video className="h-3.5 w-3.5" /> Rejoindre
+                        </Button>
+                    </div>
+                )}
+
                 {/* Content — IDEA-143: render markdown / inline edit */}
-                {!isVoice && (
+                {!isVoice && !isSystemVideoCall && (
                     isEditing ? (
                         <div className="flex flex-col gap-2 mt-1">
                             <textarea
@@ -326,7 +349,7 @@ export function MessageItem({
                 )}
 
                 {/* File attachment (IDEA-134) */}
-                {message.attachment && !isVoice && (
+                {message.attachment && !isVoice && !isSystemVideoCall && message.attachment.filename && (
                     <AttachmentPreview attachment={message.attachment} />
                 )}
 

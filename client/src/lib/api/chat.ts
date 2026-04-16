@@ -50,9 +50,17 @@ export interface AddMemberRequest {
 
 export interface ChatAttachment {
   url: string;
-  filename: string;
-  content_type: string;
-  size: number;
+  filename?: string;
+  content_type?: string;
+  size?: number;
+  /** System-message marker (e.g. `system_video_call`) rendered as a card. */
+  message_type?: string;
+  /** Meet room code — populated when `message_type === "system_video_call"`. */
+  room_code?: string;
+  /** Initiator UUID — populated for system video-call messages. */
+  initiator_id?: string;
+  /** Initiator display name — populated for system video-call messages. */
+  initiator_name?: string;
 }
 
 export interface DirectMessage {
@@ -256,6 +264,16 @@ export const chatApi = {
 
   getAllUnreadCounts: () =>
     chatClient.get<ChannelReadStatus[]>("/unread-counts"),
+
+  // ========================================================================
+  // Meet integration (Phase 4b)
+  // ========================================================================
+
+  startVideoCall: (threadId: string) =>
+    chatClient.post<{ code: string; url: string; message_id: string }>(
+      `/chat/threads/${threadId}/start-video-call`,
+      {},
+    ),
 
   // ========================================================================
   // Export (IDEA-142)
