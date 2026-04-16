@@ -638,15 +638,19 @@ export default function GlobalDrivePage() {
                 variant={viewMode === "list" ? "secondary" : "ghost"}
                 size="icon"
                 onClick={() => setViewMode("list")}
+                aria-label="Vue liste"
+                aria-pressed={viewMode === "list"}
               >
-                <ListIcon className="h-5 w-5" />
+                <ListIcon className="h-5 w-5" aria-hidden="true" />
               </Button>
               <Button
                 variant={viewMode === "grid" ? "secondary" : "ghost"}
                 size="icon"
                 onClick={() => setViewMode("grid")}
+                aria-label="Vue grille"
+                aria-pressed={viewMode === "grid"}
               >
-                <LayoutGrid className="h-5 w-5" />
+                <LayoutGrid className="h-5 w-5" aria-hidden="true" />
               </Button>
             </div>
           </div>
@@ -733,8 +737,12 @@ export default function GlobalDrivePage() {
                                 variant="ghost"
                                 size="icon"
                                 className="opacity-0 group-hover:opacity-100 h-8 w-8"
+                                aria-label={`Actions pour ${node.name}`}
                               >
-                                <MoreVertical className="h-4 w-4" />
+                                <MoreVertical
+                                  className="h-4 w-4"
+                                  aria-hidden="true"
+                                />
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-56">
@@ -892,8 +900,12 @@ export default function GlobalDrivePage() {
                               variant="ghost"
                               size="icon"
                               className="h-8 w-8 bg-black/5 hover:bg-black/10 dark:bg-background/10 dark:hover:bg-background/20 rounded-full"
+                              aria-label={`Actions pour ${node.name}`}
                             >
-                              <MoreVertical className="h-4 w-4" />
+                              <MoreVertical
+                                className="h-4 w-4"
+                                aria-hidden="true"
+                              />
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
