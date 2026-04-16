@@ -11,6 +11,7 @@ import {
   ChevronDown,
   ShieldCheck,
   Loader2,
+  Video,
 } from "lucide-react";
 import { CalendarContactSuggestions } from "@/components/interop/CalendarContactSuggestions";
 import { interopStore } from "@/lib/interop/store";
@@ -32,7 +33,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { EmailComposer } from "./email-editor";
-import { mailApi } from "@/lib/api-mail";
+import { mailApi, SendEmailRequest } from "@/lib/api-mail";
+type SendEmailRequestMeet = NonNullable<SendEmailRequest["meet_invitation"]>;
 import { aiMailApi } from "@/lib/api/ai-mail";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -98,6 +100,18 @@ export function ComposeRichDialog({
   // Bug 7: Attachment state
   const [attachments, setAttachments] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Phase 4b: Meet invitation
+  const [meetInviteEnabled, setMeetInviteEnabled] = useState(false);
+  const [meetInviteDate, setMeetInviteDate] = useState(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    return d.toISOString().slice(0, 10);
+  });
+  const [meetInviteTime, setMeetInviteTime] = useState("10:00");
+  const [meetInviteDuration, setMeetInviteDuration] = useState<30 | 60 | 120>(
+    30,
+  );
 
   // Idea 44: Calendar availability
   const [showAvailability, setShowAvailability] = useState(false);
@@ -419,6 +433,20 @@ export function ComposeRichDialog({
           );
         }
 
+        // Phase 4b: build Meet invitation payload if enabled.
+        let meet_invitation: SendEmailRequestMeet | undefined;
+        if (meetInviteEnabled) {
+          const start = new Date(`${meetInviteDate}T${meetInviteTime}:00`);
+          const end = new Date(
+            start.getTime() + meetInviteDuration * 60 * 1000,
+          );
+          meet_invitation = {
+            title: subject.trim() || "Réunion SignApps Meet",
+            start_time: start.toISOString(),
+            end_time: end.toISOString(),
+          };
+        }
+
         await mailApi.send({
           account_id: accountId,
           recipient: recipient.trim(),
@@ -430,9 +458,14 @@ export function ComposeRichDialog({
             attachmentData.length > 0
               ? JSON.stringify({ attachments: attachmentData })
               : undefined,
+          meet_invitation,
         });
         toast.success(
-          encryptEnabled ? "Encrypted email sent!" : "Email envoyé !",
+          encryptEnabled
+            ? "Encrypted email sent!"
+            : meet_invitation
+              ? "Email envoyé avec l'invitation SignApps Meet"
+              : "Email envoyé !",
           {
             action: {
               label: "Voir",
@@ -485,6 +518,7 @@ export function ComposeRichDialog({
     setRewrittenBody(null);
     setOriginalBodyBeforeRewrite(null);
     setCoachingResult(null);
+    setMeetInviteEnabled(false);
     currentBodyRef.current = "";
   };
 
@@ -677,6 +711,25 @@ export function ComposeRichDialog({
                 )}
                 Verifier
               </Button>
+              {/* Phase 4b: Meet invitation toggle */}
+              <Button
+                type="button"
+                variant={meetInviteEnabled ? "default" : "ghost"}
+                size="sm"
+                className={cn(
+                  "text-xs gap-1.5 px-2 h-7",
+                  meetInviteEnabled
+                    ? "bg-green-600 hover:bg-green-700 text-white"
+                    : "text-green-600 dark:text-green-400",
+                )}
+                onClick={() => setMeetInviteEnabled((v) => !v)}
+              >
+                <Video className="h-3.5 w-3.5" />
+                {meetInviteEnabled
+                  ? "Invitation ajoutée"
+                  : "Joindre une invitation réunion"}
+              </Button>
+
               {/* Idea 44: Insert availability */}
               <div className="relative">
                 <Button
@@ -751,6 +804,44 @@ export function ComposeRichDialog({
                 </span>
               ))}
             </div>
+
+            {/* Phase 4b: Meet invitation inline form */}
+            {meetInviteEnabled && (
+              <div className="mt-1.5 p-2.5 rounded-lg border border-green-500/30 bg-green-500/5 flex flex-wrap items-center gap-2">
+                <Video className="h-4 w-4 text-green-600 shrink-0" />
+                <span className="text-xs font-semibold text-foreground">
+                  Invitation SignApps Meet
+                </span>
+                <Input
+                  type="date"
+                  value={meetInviteDate}
+                  onChange={(e) => setMeetInviteDate(e.target.value)}
+                  className="h-7 text-xs w-36"
+                />
+                <Input
+                  type="time"
+                  value={meetInviteTime}
+                  onChange={(e) => setMeetInviteTime(e.target.value)}
+                  className="h-7 text-xs w-24"
+                />
+                <select
+                  value={meetInviteDuration}
+                  onChange={(e) =>
+                    setMeetInviteDuration(
+                      Number(e.target.value) as 30 | 60 | 120,
+                    )
+                  }
+                  className="h-7 text-xs rounded border bg-background px-1.5"
+                >
+                  <option value={30}>30 min</option>
+                  <option value={60}>1 h</option>
+                  <option value={120}>2 h</option>
+                </select>
+                <span className="text-[10px] text-muted-foreground">
+                  Un lien Meet sera inséré dans le message à l'envoi.
+                </span>
+              </div>
+            )}
 
             {/* A6: Coaching result badges */}
             {coachingResult && (

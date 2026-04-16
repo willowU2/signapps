@@ -86,6 +86,7 @@ pub async fn send_newsletter(
             in_reply_to: None,
             is_draft: Some(false),
             scheduled_send_at: None,
+            meet_invitation: None,
         };
 
         match send_via_smtp(&account, &smtp_payload, None).await {

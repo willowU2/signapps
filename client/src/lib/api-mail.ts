@@ -441,6 +441,12 @@ export interface SendEmailRequest {
   is_draft?: boolean;
   scheduled_send_at?: string;
   metadata?: string;
+  /** Optional SignApps Meet invitation (Phase 4b). */
+  meet_invitation?: {
+    title: string;
+    start_time: string;
+    end_time: string;
+  };
 }
 
 export interface UpdateEmailRequest {

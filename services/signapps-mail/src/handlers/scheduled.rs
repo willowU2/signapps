@@ -46,6 +46,7 @@ pub async fn process_scheduled_emails(
                 in_reply_to: email.in_reply_to.clone(),
                 is_draft: Some(false),
                 scheduled_send_at: None,
+                meet_invitation: None,
             };
 
             match send_via_smtp(&account, &payload, None).await {
