@@ -2,7 +2,7 @@
 
 import { LIVEKIT_URL } from "@/lib/api/core";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   LiveKitRoom,
   GridLayout,
@@ -82,7 +82,8 @@ function MeetUiContent({
 }) {
   const [showInfo, setShowInfo] = useState(true);
 
-  // Current time for the bottom left
+  // Current time for the bottom left — ticks every minute so the bottom
+  // bar stays accurate during long meetings.
   const [currentTime, setCurrentTime] = useState(() => {
     const now = new Date();
     return now.toLocaleTimeString("fr-FR", {
@@ -90,6 +91,18 @@ function MeetUiContent({
       minute: "2-digit",
     });
   });
+  useEffect(() => {
+    const tick = () => {
+      setCurrentTime(
+        new Date().toLocaleTimeString("fr-FR", {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+      );
+    };
+    const id = setInterval(tick, 30_000);
+    return () => clearInterval(id);
+  }, []);
 
   const {
     isMicrophoneEnabled,

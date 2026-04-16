@@ -147,8 +147,12 @@ pub async fn get_room_token(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    Json(req): Json<Option<JoinRoomRequest>>,
+    // `Option<Json<T>>` makes the body optional (no-body GET returns None)
+    // whereas `Json<Option<T>>` *requires* a body. The route is GET, so the
+    // body is optional.
+    req: Option<Json<JoinRoomRequest>>,
 ) -> Result<Json<TokenResponse>, (StatusCode, String)> {
+    let req = req.map(|Json(r)| r);
     let room = sqlx::query_as::<_, Room>("SELECT * FROM meet.rooms WHERE id = $1")
         .bind(id)
         .fetch_optional(&state.pool)

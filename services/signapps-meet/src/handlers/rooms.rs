@@ -72,34 +72,48 @@ pub async fn list_rooms(
     .await
     .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
-    let mut responses = Vec::new();
-    for room in rooms {
-        let participant_count: (i64,) = sqlx::query_as(
-            "SELECT COUNT(*) FROM meet.room_participants WHERE room_id = $1 AND left_at IS NULL",
+    // Fetch participant counts for the listed rooms in a single round-trip
+    // (previously N+1: one COUNT(*) per room inside the loop).
+    let room_ids: Vec<Uuid> = rooms.iter().map(|r| r.id).collect();
+    let counts_rows: Vec<(Uuid, i64)> = if room_ids.is_empty() {
+        Vec::new()
+    } else {
+        sqlx::query_as(
+            "SELECT room_id, COUNT(*)::bigint \
+             FROM meet.room_participants \
+             WHERE left_at IS NULL AND room_id = ANY($1) \
+             GROUP BY room_id",
         )
-        .bind(room.id)
-        .fetch_one(&state.pool)
+        .bind(&room_ids)
+        .fetch_all(&state.pool)
         .await
-        .unwrap_or((0,));
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
+    };
+    let counts: std::collections::HashMap<Uuid, i64> = counts_rows.into_iter().collect();
 
-        responses.push(RoomResponse {
-            id: room.id,
-            name: room.name,
-            description: room.description,
-            room_code: room.room_code,
-            status: room.status,
-            is_private: room.is_private,
-            max_participants: room.max_participants,
-            scheduled_start: room.scheduled_start,
-            scheduled_end: room.scheduled_end,
-            actual_start: room.actual_start,
-            actual_end: room.actual_end,
-            settings: room.settings,
-            created_at: room.created_at,
-            participant_count: participant_count.0 as i32,
-            livekit_url: state.livekit_config.server_url.clone(),
-        });
-    }
+    let responses: Vec<RoomResponse> = rooms
+        .into_iter()
+        .map(|room| {
+            let participant_count = counts.get(&room.id).copied().unwrap_or(0) as i32;
+            RoomResponse {
+                id: room.id,
+                name: room.name,
+                description: room.description,
+                room_code: room.room_code,
+                status: room.status,
+                is_private: room.is_private,
+                max_participants: room.max_participants,
+                scheduled_start: room.scheduled_start,
+                scheduled_end: room.scheduled_end,
+                actual_start: room.actual_start,
+                actual_end: room.actual_end,
+                settings: room.settings,
+                created_at: room.created_at,
+                participant_count,
+                livekit_url: state.livekit_config.server_url.clone(),
+            }
+        })
+        .collect();
 
     Ok(Json(responses))
 }
