@@ -758,6 +758,7 @@ export function Sidebar({ portalMode }: SidebarProps = {}) {
               <button
                 onClick={toggleSidebar}
                 className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                aria-label={sidebarCollapsed ? "Développer" : "Réduire"}
                 title={sidebarCollapsed ? "Développer" : "Réduire"}
               >
                 {sidebarCollapsed ? (
@@ -765,6 +766,9 @@ export function Sidebar({ portalMode }: SidebarProps = {}) {
                 ) : (
                   <LucideIcons.PanelLeftClose className="h-4 w-4" />
                 )}
+                <span className="sr-only">
+                  {sidebarCollapsed ? "Développer" : "Réduire"}
+                </span>
               </button>
             </TooltipTrigger>
             <TooltipContent side="right">
@@ -781,6 +785,9 @@ export function Sidebar({ portalMode }: SidebarProps = {}) {
                     ? "text-primary"
                     : "text-muted-foreground hover:text-foreground",
                 )}
+                aria-label={
+                  sidebarPinned ? "Désépingler la barre" : "Épingler la barre"
+                }
                 title={
                   sidebarPinned ? "Désépingler la barre" : "Épingler la barre"
                 }
@@ -788,6 +795,9 @@ export function Sidebar({ portalMode }: SidebarProps = {}) {
                 <Pin
                   className={cn("h-4 w-4", sidebarPinned && "fill-primary")}
                 />
+                <span className="sr-only">
+                  {sidebarPinned ? "Désépingler" : "Épingler"}
+                </span>
               </button>
             </TooltipTrigger>
             <TooltipContent side="right">
