@@ -159,7 +159,7 @@ export function ChatWindow({
       try {
         const res = await chatApi.searchMessages(channelId, q);
         setSearchResults(
-          (res.data || []).map((m: any) => ({
+          (res.data || []).map((m) => ({
             id: m.id,
             content: m.content,
             senderId: m.user_id,

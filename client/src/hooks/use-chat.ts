@@ -284,9 +284,14 @@ export function useChat(
         // Preserve attachment in confirmed message if backend doesn't return it
         if (attachment && !confirmed.attachment)
           confirmed.attachment = attachment;
-        setMessages((prev) =>
-          prev.map((m) => (m.id === optimisticId ? confirmed : m)),
-        );
+        setMessages((prev) => {
+          // If the WS `new_message` event already landed and inserted the
+          // confirmed message (by its real id), just drop the optimistic copy.
+          if (prev.some((m) => m.id === confirmed.id)) {
+            return prev.filter((m) => m.id !== optimisticId);
+          }
+          return prev.map((m) => (m.id === optimisticId ? confirmed : m));
+        });
       } catch (e) {
         console.error("Failed to send message", e);
         setMessages((prev) => prev.filter((m) => m.id !== optimisticId));

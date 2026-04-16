@@ -23,7 +23,7 @@ async fn handle_ws(socket: WebSocket, state: AppState) {
     let (mut ws_tx, mut ws_rx) = socket.split();
     let mut broadcast_rx = state.broadcast_tx.subscribe();
 
-    let send_task = tokio::spawn(async move {
+    let mut send_task = tokio::spawn(async move {
         while let Ok(event_json) = broadcast_rx.recv().await {
             if ws_tx.send(Message::Text(event_json)).await.is_err() {
                 break;
@@ -32,7 +32,7 @@ async fn handle_ws(socket: WebSocket, state: AppState) {
     });
 
     let tx = state.broadcast_tx.clone();
-    let recv_task = tokio::spawn(async move {
+    let mut recv_task = tokio::spawn(async move {
         while let Some(Ok(msg)) = ws_rx.next().await {
             match msg {
                 Message::Text(text) => {
@@ -44,9 +44,12 @@ async fn handle_ws(socket: WebSocket, state: AppState) {
         }
     });
 
+    // On the first task completion, abort the other so we do not leak a
+    // zombie task holding a live broadcast::Receiver slot for the rest of
+    // the process lifetime.
     tokio::select! {
-        _ = send_task => {},
-        _ = recv_task => {},
+        _ = &mut send_task => recv_task.abort(),
+        _ = &mut recv_task => send_task.abort(),
     }
 
     tracing::info!(session = %session_id, "WebSocket disconnected");

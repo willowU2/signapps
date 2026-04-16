@@ -14,15 +14,28 @@ use signapps_common::Claims;
 use uuid::Uuid;
 
 /// List all messages in a channel.
+///
+/// Requires the caller to be the channel creator or a member — previously
+/// any authenticated user could read any channel's history.
 pub async fn list_messages(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(channel_id): Path<Uuid>,
 ) -> impl IntoResponse {
-    // Verify channel exists
-    match sqlx::query_scalar::<_, bool>("SELECT EXISTS(SELECT 1 FROM chat.channels WHERE id = $1)")
-        .bind(channel_id)
-        .fetch_one(&state.pool)
-        .await
+    // Verify channel exists AND caller is creator-or-member (same visibility
+    // rule as get_channel).
+    match sqlx::query_scalar::<_, bool>(
+        "SELECT EXISTS( \
+            SELECT 1 FROM chat.channels \
+            WHERE id = $1 \
+              AND (created_by = $2 \
+                   OR id IN (SELECT channel_id FROM chat.channel_members WHERE user_id = $2)) \
+         )",
+    )
+    .bind(channel_id)
+    .bind(claims.sub)
+    .fetch_one(&state.pool)
+    .await
     {
         Ok(false) => {
             return (
