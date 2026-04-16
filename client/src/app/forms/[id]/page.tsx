@@ -142,8 +142,9 @@ function SortableField({
           size="icon"
           className="h-6 w-6 text-destructive/50 hover:text-destructive"
           onClick={() => removeField(field.id)}
+          aria-label={`Supprimer le champ ${field.label || "sans titre"}`}
         >
-          <Trash2 className="h-3 w-3" />
+          <Trash2 className="h-3 w-3" aria-hidden="true" />
         </Button>
       </div>
     );
@@ -189,8 +190,9 @@ function SortableField({
             className="text-destructive/70 hover:text-destructive hover:bg-destructive/10"
             onClick={() => removeField(field.id)}
             data-testid={`form-field-delete-${index}`}
+            aria-label={`Supprimer le champ ${field.label || "sans titre"}`}
           >
-            <Trash2 className="h-4 w-4" />
+            <Trash2 className="h-4 w-4" aria-hidden="true" />
           </Button>
         </div>
 
@@ -280,8 +282,9 @@ function SortableField({
                           updateField(field.id, { options: newOpts });
                         }}
                         className="h-9 w-7 rounded-none rounded-l-md hover:bg-muted"
+                        aria-label="Monter cette option"
                       >
-                        <ChevronUp className="h-4 w-4" />
+                        <ChevronUp className="h-4 w-4" aria-hidden="true" />
                       </Button>
                       <Button
                         variant="ghost"
@@ -296,8 +299,9 @@ function SortableField({
                           updateField(field.id, { options: newOpts });
                         }}
                         className="h-9 w-7 rounded-none border-l hover:bg-muted"
+                        aria-label="Descendre cette option"
                       >
-                        <ChevronDown className="h-4 w-4" />
+                        <ChevronDown className="h-4 w-4" aria-hidden="true" />
                       </Button>
                     </div>
                     <Button
@@ -309,8 +313,9 @@ function SortableField({
                         updateField(field.id, { options: newOpts });
                       }}
                       className="h-9 w-9 text-destructive/70 hover:text-destructive hover:bg-destructive/10 ml-1"
+                      aria-label="Supprimer cette option"
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Trash2 className="h-4 w-4" aria-hidden="true" />
                     </Button>
                   </div>
                 ))}
@@ -540,9 +545,14 @@ export default function FormBuilderPage() {
         {/* Header Navbar */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-card p-4 rounded-xl border shadow-sm">
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              asChild
+              aria-label="Retour aux formulaires"
+            >
               <Link href="/forms">
-                <ArrowLeft className="h-5 w-5" />
+                <ArrowLeft className="h-5 w-5" aria-hidden="true" />
               </Link>
             </Button>
             <div>
