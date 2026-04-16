@@ -240,9 +240,10 @@ export function TemplateManager({ accountId, onUse }: TemplateManagerProps) {
                         size="icon"
                         className="h-7 w-7"
                         title="Utiliser"
+                        aria-label={`Utiliser ${t.name}`}
                         onClick={() => onUse(t)}
                       >
-                        <Copy className="h-4 w-4" />
+                        <Copy className="h-4 w-4" aria-hidden="true" />
                       </Button>
                     )}
                     <Button
@@ -250,36 +251,43 @@ export function TemplateManager({ accountId, onUse }: TemplateManagerProps) {
                       size="icon"
                       className="h-7 w-7"
                       title="Aperçu"
+                      aria-label={`Aperçu de ${t.name}`}
                       onClick={() => setPreviewing(t)}
                     >
-                      <Eye className="h-4 w-4" />
+                      <Eye className="h-4 w-4" aria-hidden="true" />
                     </Button>
                     <Button
                       variant="ghost"
                       size="icon"
                       className="h-7 w-7"
                       title="Dupliquer"
+                      aria-label={`Dupliquer ${t.name}`}
                       onClick={() => duplicate(t)}
                     >
-                      <Copy className="h-4 w-4 text-muted-foreground" />
+                      <Copy
+                        className="h-4 w-4 text-muted-foreground"
+                        aria-hidden="true"
+                      />
                     </Button>
                     <Button
                       variant="ghost"
                       size="icon"
                       className="h-7 w-7"
                       title="Modifier"
+                      aria-label={`Modifier ${t.name}`}
                       onClick={() => openEdit(t)}
                     >
-                      <Edit3 className="h-4 w-4" />
+                      <Edit3 className="h-4 w-4" aria-hidden="true" />
                     </Button>
                     <Button
                       variant="ghost"
                       size="icon"
                       className="h-7 w-7 text-destructive"
                       title="Supprimer"
+                      aria-label={`Supprimer ${t.name}`}
                       onClick={() => deleteTemplate(t.id)}
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Trash2 className="h-4 w-4" aria-hidden="true" />
                     </Button>
                   </div>
                 </TableCell>

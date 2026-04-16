@@ -194,8 +194,9 @@ export function RemoteFileBrowser({
           disabled={isRoot}
           onClick={goUp}
           title="Go up"
+          aria-label="Dossier parent"
         >
-          <ArrowLeft className="h-3.5 w-3.5" />
+          <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
         </Button>
         <Button
           variant="ghost"
@@ -203,8 +204,9 @@ export function RemoteFileBrowser({
           className="h-7 w-7"
           onClick={() => navigateTo("/")}
           title="Home"
+          aria-label="Racine"
         >
-          <Home className="h-3.5 w-3.5" />
+          <Home className="h-3.5 w-3.5" aria-hidden="true" />
         </Button>
 
         {/* Breadcrumb */}
@@ -228,9 +230,11 @@ export function RemoteFileBrowser({
           className="h-7 w-7"
           onClick={() => refetch()}
           title="Refresh"
+          aria-label="Actualiser"
         >
           <RefreshCw
             className={cn("h-3.5 w-3.5", isLoading && "animate-spin")}
+            aria-hidden="true"
           />
         </Button>
 
@@ -240,8 +244,9 @@ export function RemoteFileBrowser({
           className="h-7 w-7"
           onClick={() => setShowNewFolder(!showNewFolder)}
           title="New folder"
+          aria-label="Nouveau dossier"
         >
-          <FolderPlus className="h-3.5 w-3.5" />
+          <FolderPlus className="h-3.5 w-3.5" aria-hidden="true" />
         </Button>
 
         <label
@@ -349,8 +354,9 @@ export function RemoteFileBrowser({
                         downloadMut.mutate(entry);
                       }}
                       title="Download"
+                      aria-label={`Télécharger ${entry.name}`}
                     >
-                      <Download className="h-3 w-3" />
+                      <Download className="h-3 w-3" aria-hidden="true" />
                     </Button>
                     <Button
                       variant="ghost"
@@ -361,8 +367,9 @@ export function RemoteFileBrowser({
                         deleteMut.mutate(entry);
                       }}
                       title="Delete"
+                      aria-label={`Supprimer ${entry.name}`}
                     >
-                      <Trash2 className="h-3 w-3" />
+                      <Trash2 className="h-3 w-3" aria-hidden="true" />
                     </Button>
                   </div>
                 )}
