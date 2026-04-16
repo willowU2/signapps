@@ -11,6 +11,7 @@ use signapps_livekit_client::LiveKitClient;
 use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
 use tower_http::{cors::CorsLayer, trace::TraceLayer};
 
+mod events;
 mod handlers;
 mod models;
 
@@ -79,10 +80,14 @@ async fn main() -> anyhow::Result<()> {
     };
 
     let state = AppState {
-        pool,
+        pool: pool.clone(),
         jwt_config,
-        livekit,
+        livekit: livekit.clone(),
     };
+
+    // Spawn the PgEventBus consumer — reacts to calendar.event.deleted
+    // by cleaning up the associated LiveKit room + meet.rooms row.
+    tokio::spawn(events::run_consumer(pool, livekit));
 
     let app = build_router(state);
 
