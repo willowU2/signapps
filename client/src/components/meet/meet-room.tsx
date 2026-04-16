@@ -2,7 +2,10 @@
 
 import { LIVEKIT_URL } from "@/lib/api/core";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { toast as sonnerToast } from "sonner";
+import { meetApi } from "@/lib/api/meet";
+import { useAuthStore } from "@/lib/store";
 import {
   LiveKitRoom,
   ParticipantTile,
@@ -108,6 +111,71 @@ function useIsMobile(breakpoint = 767) {
   return isMobile;
 }
 
+/**
+ * Poll `/meet/rooms/by-code/:code/recording` every 5 seconds so every
+ * participant (not just the host) can see the "recording on" badge.
+ */
+function useRecordingPolling(code: string) {
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingId, setRecordingId] = useState<string | null>(null);
+
+  const refresh = useCallback(async () => {
+    try {
+      const res = await meetApi.recordings.getActiveByCode(code);
+      setIsRecording(res.data.is_recording);
+      setRecordingId(res.data.recording_id ?? null);
+    } catch {
+      // Silent — polling keeps retrying.
+    }
+  }, [code]);
+
+  useEffect(() => {
+    let active = true;
+    refresh();
+    const id = setInterval(() => {
+      if (!active) return;
+      refresh();
+    }, 5000);
+    return () => {
+      active = false;
+      clearInterval(id);
+    };
+  }, [refresh]);
+
+  return { isRecording, recordingId, refresh };
+}
+
+/**
+ * Resolve whether the current user is the room's host by scanning
+ * `listRooms()` (which only returns rooms the caller created).
+ */
+function useIsRoomHost(code: string): boolean {
+  const { user } = useAuthStore();
+  const [isHost, setIsHost] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    if (!user) {
+      setIsHost(false);
+      return;
+    }
+    meetApi
+      .listRooms()
+      .then((res) => {
+        if (!active) return;
+        setIsHost(res.data.some((r) => r.room_code === code));
+      })
+      .catch(() => {
+        if (active) setIsHost(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [code, user]);
+
+  return isHost;
+}
+
 function MeetUiContent({
   onLeave,
   roomId,
@@ -120,6 +188,9 @@ function MeetUiContent({
   const router = useRouter();
   const isMobile = useIsMobile();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const isHost = useIsRoomHost(roomId);
+  const { isRecording, refresh: refreshRecording } = useRecordingPolling(roomId);
+  const [recordingBusy, setRecordingBusy] = useState(false);
 
   const {
     isMicrophoneEnabled,
@@ -188,6 +259,32 @@ function MeetUiContent({
     setSidebarOpen((v) => !v);
   };
 
+  const startRecording = async () => {
+    setRecordingBusy(true);
+    try {
+      await meetApi.recordings.startByCode(roomId);
+      sonnerToast.success("Enregistrement démarré");
+      await refreshRecording();
+    } catch {
+      sonnerToast.error("Impossible de démarrer l'enregistrement");
+    } finally {
+      setRecordingBusy(false);
+    }
+  };
+
+  const stopRecording = async () => {
+    setRecordingBusy(true);
+    try {
+      await meetApi.recordings.stopByCode(roomId);
+      sonnerToast.success("Enregistrement arrêté");
+      await refreshRecording();
+    } catch {
+      sonnerToast.error("Impossible d'arrêter l'enregistrement");
+    } finally {
+      setRecordingBusy(false);
+    }
+  };
+
   return (
     <div className="flex h-full w-full flex-col bg-background overflow-hidden">
       {/* ── Top bar ───────────────────────────────────────────────── */}
@@ -216,6 +313,15 @@ function MeetUiContent({
             <Circle className="h-2 w-2 fill-primary text-primary" />
             {participantCount}
           </Badge>
+          {isRecording && (
+            <Badge
+              className="bg-destructive text-destructive-foreground gap-1 animate-pulse"
+              aria-label="Enregistrement en cours"
+            >
+              <Circle className="h-2 w-2 fill-current" />
+              <span className="hidden sm:inline">Enregistrement</span>
+            </Badge>
+          )}
         </div>
         {/* Right */}
         <div className="flex items-center gap-1">
@@ -244,6 +350,30 @@ function MeetUiContent({
                 <Link2 className="h-4 w-4" />
                 Copier le lien
               </DropdownMenuItem>
+              {isHost && (
+                <>
+                  <DropdownMenuSeparator />
+                  {isRecording ? (
+                    <DropdownMenuItem
+                      onClick={stopRecording}
+                      disabled={recordingBusy}
+                      className="gap-2 text-destructive focus:text-destructive"
+                    >
+                      <Radio className="h-4 w-4" />
+                      Arrêter l&apos;enregistrement
+                    </DropdownMenuItem>
+                  ) : (
+                    <DropdownMenuItem
+                      onClick={startRecording}
+                      disabled={recordingBusy}
+                      className="gap-2"
+                    >
+                      <Radio className="h-4 w-4" />
+                      Démarrer l&apos;enregistrement
+                    </DropdownMenuItem>
+                  )}
+                </>
+              )}
               <DropdownMenuItem className="gap-2">
                 <Settings className="h-4 w-4" />
                 Paramètres

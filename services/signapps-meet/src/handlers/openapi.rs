@@ -50,7 +50,10 @@ impl Modify for SecurityAddon {
         crate::handlers::recordings::get_recording,
         crate::handlers::recordings::stop_recording,
         crate::handlers::recordings::get_active_recording,
+        crate::handlers::recordings::get_active_recording_by_code,
         crate::handlers::recordings::stop_room_recording,
+        crate::handlers::recordings::start_room_recording_by_code,
+        crate::handlers::recordings::stop_room_recording_by_code,
         crate::handlers::recordings::delete_recording,
         // Waiting room
         crate::handlers::waiting_room::list_waiting,

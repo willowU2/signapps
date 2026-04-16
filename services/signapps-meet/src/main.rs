@@ -135,6 +135,12 @@ fn build_router(state: AppState) -> Router {
         // Lobby (public — unauth lookups and knock-to-enter)
         .route("/api/v1/meet/rooms/:code/lobby", get(lobby::get_lobby))
         .route("/api/v1/meet/rooms/:code/knock", post(lobby::knock))
+        // Recording visibility — lets every participant (not just the
+        // host) poll whether the room is being recorded.
+        .route(
+            "/api/v1/meet/rooms/by-code/:code/recording",
+            get(recordings::get_active_recording_by_code),
+        )
         // LiveKit webhook receiver (authenticated via LiveKit-signed JWT,
         // not the app JWT).
         .route("/api/v1/meet/webhooks/livekit", post(webhooks::receive_webhook))
@@ -163,6 +169,16 @@ fn build_router(state: AppState) -> Router {
         .route("/api/v1/meet/rooms/:id/recording", get(recordings::get_active_recording))
         .route("/api/v1/meet/rooms/:id/recording/start", post(recordings::start_recording))
         .route("/api/v1/meet/rooms/:id/recording/stop", post(recordings::stop_room_recording))
+        // Host-friendly code-addressed endpoints (avoid a code → UUID
+        // round-trip on the client).
+        .route(
+            "/api/v1/meet/rooms/by-code/:code/recording/start",
+            post(recordings::start_room_recording_by_code),
+        )
+        .route(
+            "/api/v1/meet/rooms/by-code/:code/recording/stop",
+            post(recordings::stop_room_recording_by_code),
+        )
         // Lobby admit/deny (host-only)
         .route("/api/v1/meet/rooms/:code/admit/:identity", post(lobby::admit))
         .route("/api/v1/meet/rooms/:code/deny/:identity", post(lobby::deny))

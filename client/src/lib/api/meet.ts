@@ -81,6 +81,14 @@ export interface Recording {
     download_url?: string;
 }
 
+/** Response of `GET /meet/rooms/by-code/:code/recording` (public). */
+export interface ActiveRecordingByCode {
+    is_recording: boolean;
+    recording_id?: string;
+    started_at?: string;
+    room_id: string;
+}
+
 export interface MeetingHistory {
     id: string;
     room_name: string;
@@ -228,6 +236,27 @@ export const meetApi = {
 
     deleteRecording: (recordingId: string) =>
         meetClient.delete(`/meet/recordings/${recordingId}`),
+
+    // Code-addressed convenience endpoints (host-only except the first).
+    recordings: {
+        /** Public. Returns `{ is_recording, recording_id?, started_at?, room_id }`. */
+        getActiveByCode: (code: string) =>
+            meetClient.get<ActiveRecordingByCode>(
+                `/meet/rooms/by-code/${encodeURIComponent(code)}/recording`,
+            ),
+        /** Host-only. Starts a DB-tracked recording for the given room code. */
+        startByCode: (code: string) =>
+            meetClient.post<Recording>(
+                `/meet/rooms/by-code/${encodeURIComponent(code)}/recording/start`,
+            ),
+        /** Host-only. Stops the active recording (if any) for the given room code. */
+        stopByCode: (code: string) =>
+            meetClient.post<Recording>(
+                `/meet/rooms/by-code/${encodeURIComponent(code)}/recording/stop`,
+            ),
+        listByRoom: (roomId: string) =>
+            meetClient.get<Recording[]>(`/meet/rooms/${roomId}/recordings`),
+    },
 
     // ========================================================================
     // History

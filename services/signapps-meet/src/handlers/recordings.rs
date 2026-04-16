@@ -342,6 +342,63 @@ async fn finalize_recording(
     Ok(updated)
 }
 
+/// Get the active recording status by room CODE (public, no auth).
+///
+/// Used by the in-meeting UI so every participant (not just the host)
+/// can display the "recording in progress" badge without needing to
+/// call authenticated endpoints.
+///
+/// Returns `{ is_recording: bool, recording_id?: Uuid, started_at?: ... }`.
+///
+/// # Errors
+///
+/// Returns `404` if the room code does not exist, `500` on DB failure.
+#[utoipa::path(
+    get,
+    path = "/api/v1/meet/rooms/by-code/{code}/recording",
+    params(("code" = String, Path, description = "Room code")),
+    responses(
+        (status = 200, description = "Active recording status (may be empty)"),
+        (status = 404, description = "Room not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    tag = "Meet"
+)]
+#[tracing::instrument(skip(state))]
+pub async fn get_active_recording_by_code(
+    State(state): State<AppState>,
+    Path(code): Path<String>,
+) -> Result<Json<serde_json::Value>, (StatusCode, String)> {
+    let room = sqlx::query_as::<_, Room>("SELECT * FROM meet.rooms WHERE room_code = $1")
+        .bind(&code)
+        .fetch_optional(&state.pool)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
+        .ok_or((StatusCode::NOT_FOUND, "Room not found".to_string()))?;
+
+    let recording: Option<Recording> = sqlx::query_as(
+        "SELECT * FROM meet.recordings WHERE room_id = $1 AND status = 'recording' ORDER BY started_at DESC LIMIT 1",
+    )
+    .bind(room.id)
+    .fetch_optional(&state.pool)
+    .await
+    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+    let body = match recording {
+        Some(r) => serde_json::json!({
+            "is_recording": true,
+            "recording_id": r.id,
+            "started_at": r.started_at,
+            "room_id": r.room_id,
+        }),
+        None => serde_json::json!({
+            "is_recording": false,
+            "room_id": room.id,
+        }),
+    };
+    Ok(Json(body))
+}
+
 /// Get the active (in-progress) recording for a room, if any.
 ///
 /// # Errors
@@ -383,6 +440,80 @@ pub async fn get_active_recording(
     .ok_or((StatusCode::NOT_FOUND, "No active recording for this room".to_string()))?;
 
     Ok(Json(to_response(recording)))
+}
+
+/// Start a recording addressed by room CODE (host-only convenience endpoint).
+///
+/// # Errors
+///
+/// Same contract as [`start_recording`] but resolves the room via
+/// `room_code`.
+#[utoipa::path(
+    post,
+    path = "/api/v1/meet/rooms/by-code/{code}/recording/start",
+    params(("code" = String, Path, description = "Room code")),
+    responses(
+        (status = 200, description = "Recording started", body = RecordingResponse),
+        (status = 400, description = "Room not active"),
+        (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Forbidden"),
+        (status = 404, description = "Room not found"),
+        (status = 409, description = "Recording already in progress"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Meet"
+)]
+#[tracing::instrument(skip(state, claims), fields(user_id = %claims.sub))]
+pub async fn start_room_recording_by_code(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(code): Path<String>,
+) -> Result<Json<RecordingResponse>, (StatusCode, String)> {
+    let room = sqlx::query_as::<_, Room>("SELECT * FROM meet.rooms WHERE room_code = $1")
+        .bind(&code)
+        .fetch_optional(&state.pool)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
+        .ok_or((StatusCode::NOT_FOUND, "Room not found".to_string()))?;
+
+    start_recording(State(state), Extension(claims), Path(room.id)).await
+}
+
+/// Stop the active recording addressed by room CODE (host-only).
+///
+/// # Errors
+///
+/// Same contract as [`stop_room_recording`] but resolves the room via
+/// `room_code`.
+#[utoipa::path(
+    post,
+    path = "/api/v1/meet/rooms/by-code/{code}/recording/stop",
+    params(("code" = String, Path, description = "Room code")),
+    responses(
+        (status = 200, description = "Recording stopped", body = RecordingResponse),
+        (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Forbidden"),
+        (status = 404, description = "Room or active recording not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Meet"
+)]
+#[tracing::instrument(skip(state, claims), fields(user_id = %claims.sub))]
+pub async fn stop_room_recording_by_code(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(code): Path<String>,
+) -> Result<Json<RecordingResponse>, (StatusCode, String)> {
+    let room = sqlx::query_as::<_, Room>("SELECT * FROM meet.rooms WHERE room_code = $1")
+        .bind(&code)
+        .fetch_optional(&state.pool)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
+        .ok_or((StatusCode::NOT_FOUND, "Room not found".to_string()))?;
+
+    stop_room_recording(State(state), Extension(claims), Path(room.id)).await
 }
 
 /// Stop the active recording for a room (host convenience endpoint).

@@ -20,9 +20,17 @@ import {
   CalendarClock,
   DoorOpen,
   Sparkles,
+  Download,
+  Radio,
 } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { toast } from "sonner";
-import { meetApi, Room, MeetingHistory } from "@/lib/api/meet";
+import { meetApi, Room, MeetingHistory, Recording } from "@/lib/api/meet";
 import { calendarApi } from "@/lib/api/calendar";
 import type { Event as CalendarEvent } from "@/types/calendar";
 
@@ -68,6 +76,9 @@ function fmtRelative(iso?: string): string {
   return `Il y a ${days}j`;
 }
 
+/** Recording + the room it belongs to, useful for dashboard listing. */
+type RecordingWithRoom = Recording & { room_name: string; room_code: string };
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Main page
 // ─────────────────────────────────────────────────────────────────────────────
@@ -79,9 +90,11 @@ export default function MeetPage() {
 
   const [rooms, setRooms] = useState<Room[]>([]);
   const [history, setHistory] = useState<MeetingHistory[]>([]);
+  const [recordings, setRecordings] = useState<RecordingWithRoom[]>([]);
   const [upcomingEvents, setUpcomingEvents] = useState<CalendarEvent[]>([]);
   const [loadingRooms, setLoadingRooms] = useState(true);
   const [loadingHistory, setLoadingHistory] = useState(true);
+  const [loadingRecordings, setLoadingRecordings] = useState(true);
   const [loadingEvents, setLoadingEvents] = useState(true);
 
   const [joinCode, setJoinCode] = useState("");
@@ -89,14 +102,16 @@ export default function MeetPage() {
   const [joiningCode, setJoiningCode] = useState(false);
 
   // Load rooms
-  const loadRooms = useCallback(async () => {
+  const loadRooms = useCallback(async (): Promise<Room[]> => {
     setLoadingRooms(true);
     try {
       const res = await meetApi.listRooms();
       setRooms(res.data);
+      return res.data;
     } catch {
       // silently fail — dashboard still usable
       setRooms([]);
+      return [];
     } finally {
       setLoadingRooms(false);
     }
@@ -116,6 +131,45 @@ export default function MeetPage() {
       setHistory([]);
     } finally {
       setLoadingHistory(false);
+    }
+  }, []);
+
+  const loadRecordings = useCallback(async (roomList: Room[]) => {
+    setLoadingRecordings(true);
+    try {
+      if (roomList.length === 0) {
+        setRecordings([]);
+        return;
+      }
+      const sevenDaysAgo = Date.now() - 7 * 24 * 3600 * 1000;
+      // Aggregate in parallel across the user's rooms, filter to last 7d.
+      const lists = await Promise.all(
+        roomList.map((room) =>
+          meetApi.recordings
+            .listByRoom(room.id)
+            .then((res) =>
+              res.data.map<RecordingWithRoom>((r) => ({
+                ...r,
+                room_name: room.name,
+                room_code: room.room_code,
+              })),
+            )
+            .catch(() => [] as RecordingWithRoom[]),
+        ),
+      );
+      const flat = lists.flat();
+      const recent = flat.filter(
+        (r) => new Date(r.started_at).getTime() >= sevenDaysAgo,
+      );
+      recent.sort(
+        (a, b) =>
+          new Date(b.started_at).getTime() - new Date(a.started_at).getTime(),
+      );
+      setRecordings(recent.slice(0, 20));
+    } catch {
+      setRecordings([]);
+    } finally {
+      setLoadingRecordings(false);
     }
   }, []);
 
@@ -158,10 +212,12 @@ export default function MeetPage() {
   }, []);
 
   useEffect(() => {
-    loadRooms();
+    loadRooms().then((roomList) => {
+      loadRecordings(roomList);
+    });
     loadHistory();
     loadUpcomingEvents();
-  }, [loadRooms, loadHistory, loadUpcomingEvents]);
+  }, [loadRooms, loadHistory, loadRecordings, loadUpcomingEvents]);
 
   // Support legacy ?room=XXX autoload
   useEffect(() => {
@@ -437,7 +493,7 @@ export default function MeetPage() {
           )}
         </section>
 
-        {/* Recent (7 days) */}
+        {/* Recent (7 days) — meeting history */}
         <section className="flex flex-col gap-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -500,6 +556,37 @@ export default function MeetPage() {
             </div>
           )}
         </section>
+
+        {/* Recordings (7 days) */}
+        <section className="flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Radio className="h-4 w-4 text-muted-foreground" />
+              <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                Enregistrements (7 jours)
+              </h2>
+            </div>
+          </div>
+          {loadingRecordings ? (
+            <div className="flex flex-col gap-2">
+              {[0, 1, 2].map((i) => (
+                <Skeleton key={i} className="h-14 rounded-lg" />
+              ))}
+            </div>
+          ) : recordings.length === 0 ? (
+            <EmptyCard
+              icon={Radio}
+              title="Aucun enregistrement récent"
+              description="Les enregistrements de tes réunions apparaîtront ici une fois arrêtés."
+            />
+          ) : (
+            <div className="flex flex-col gap-2">
+              {recordings.map((r) => (
+                <RecordingRow key={r.id} recording={r} />
+              ))}
+            </div>
+          )}
+        </section>
       </div>
     </AppLayout>
   );
@@ -555,6 +642,70 @@ function UpcomingSkeleton() {
       {[0, 1].map((i) => (
         <Skeleton key={i} className="h-14 rounded-lg" />
       ))}
+    </div>
+  );
+}
+
+function RecordingRow({ recording }: { recording: RecordingWithRoom }) {
+  const statusLabel =
+    recording.status === "recording"
+      ? "En cours"
+      : recording.status === "processing"
+        ? "Traitement"
+        : recording.status === "ready"
+          ? "Prêt"
+          : "Échec";
+  const statusClass =
+    recording.status === "recording"
+      ? "bg-destructive/10 text-destructive border-destructive/40"
+      : recording.status === "ready"
+        ? "bg-primary/10 text-primary border-primary/40"
+        : recording.status === "failed"
+          ? "bg-destructive/10 text-destructive border-destructive/40"
+          : "bg-muted text-muted-foreground border-border";
+
+  return (
+    <div className="flex items-center gap-4 rounded-lg border border-border bg-card px-4 py-3">
+      <div className="flex h-10 w-10 items-center justify-center rounded-md bg-muted text-muted-foreground shrink-0">
+        <Radio className="h-4 w-4" />
+      </div>
+      <div className="min-w-0 flex-1">
+        <div className="truncate text-sm font-medium text-foreground">
+          {recording.room_name}
+        </div>
+        <div className="text-xs text-muted-foreground">
+          {fmtDateTime(recording.started_at)} ·{" "}
+          {fmtDuration(recording.duration_seconds)}
+        </div>
+      </div>
+      <div className="flex items-center gap-2 shrink-0">
+        <Badge
+          variant="outline"
+          className={`gap-1 ${statusClass}`}
+        >
+          {statusLabel}
+        </Badge>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span tabIndex={0}>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled
+                  className="border-border text-foreground gap-1"
+                >
+                  <Download className="h-3.5 w-3.5" />
+                  Télécharger
+                </Button>
+              </span>
+            </TooltipTrigger>
+            <TooltipContent>
+              Téléchargement disponible après intégration du stockage
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      </div>
     </div>
   );
 }
