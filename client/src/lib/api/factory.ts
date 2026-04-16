@@ -17,6 +17,7 @@
 import axios, {
   AxiosInstance,
   AxiosError,
+  AxiosResponse,
   InternalAxiosRequestConfig,
 } from "axios";
 import { toast } from "sonner";
@@ -620,7 +621,7 @@ function addAuthHeader(
 async function handleAuthError(
   error: AxiosError,
   client: AxiosInstance,
-): Promise<any> {
+): Promise<AxiosResponse> {
   const originalRequest = error.config as InternalAxiosRequestConfig & {
     _retry?: boolean;
   };

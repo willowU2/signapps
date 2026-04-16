@@ -468,11 +468,37 @@ export interface InstallEvent {
   progress?: number;
 }
 
+/**
+ * Body for POST /networks (Docker network creation).
+ * Mirrors Docker Engine API's NetworkCreateRequest with the minimal fields
+ * used by the frontend. Add more fields here if needed rather than falling
+ * back to `any`.
+ */
+export interface CreateNetworkRequest {
+  Name: string;
+  Driver?: string;
+  Internal?: boolean;
+  Attachable?: boolean;
+  Labels?: Record<string, string>;
+}
+
+/**
+ * Body for POST /volumes (Docker volume creation).
+ * Mirrors Docker Engine API's VolumeCreateRequest.
+ */
+export interface CreateVolumeRequest {
+  Name: string;
+  Driver?: string;
+  DriverOpts?: Record<string, string>;
+  Labels?: Record<string, string>;
+}
+
 // Networks API
 export const networksApi = {
   list: () => containersClient.get("/networks"),
   get: (id: string) => containersClient.get(`/networks/${id}`),
-  create: (data: any) => containersClient.post("/networks", data),
+  create: (data: CreateNetworkRequest) =>
+    containersClient.post("/networks", data),
   delete: (id: string) => containersClient.delete(`/networks/${id}`),
   connect: (id: string, containerId: string) =>
     containersClient.post(`/networks/${id}/connect`, {
@@ -488,7 +514,8 @@ export const networksApi = {
 export const volumesApi = {
   list: () => containersClient.get("/volumes"),
   get: (id: string) => containersClient.get(`/volumes/${id}`),
-  create: (data: any) => containersClient.post("/volumes", data),
+  create: (data: CreateVolumeRequest) =>
+    containersClient.post("/volumes", data),
   delete: (id: string) => containersClient.delete(`/volumes/${id}`),
   prune: () => containersClient.post("/volumes/prune"),
 };

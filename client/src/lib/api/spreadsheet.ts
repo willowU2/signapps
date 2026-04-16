@@ -258,10 +258,29 @@ export async function checkSpreadsheetHealth(): Promise<boolean> {
 // ═══════════════════════════════════════════════════════════════════════════
 
 /**
+ * Cell style attributes that can be serialized alongside a cell value.
+ * All fields optional — a cell with no explicit style uses defaults.
+ * Extend this interface rather than falling back to `any` when new style
+ * attributes are required.
+ */
+export interface CellStyle {
+  bold?: boolean;
+  italic?: boolean;
+  underline?: boolean;
+  color?: string;
+  backgroundColor?: string;
+  fontSize?: number;
+  fontFamily?: string;
+  alignment?: "left" | "center" | "right";
+  verticalAlignment?: "top" | "middle" | "bottom";
+  numberFormat?: string;
+}
+
+/**
  * Convert frontend sheet data to API format
  */
 export function convertToApiFormat(
-  data: Record<string, { value: string; formula?: string; style?: any }>,
+  data: Record<string, { value: string; formula?: string; style?: CellStyle }>,
   rows: number,
   cols: number,
 ): (string | number | boolean | null)[][] {

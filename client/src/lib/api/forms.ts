@@ -87,11 +87,24 @@ const formsClient = () => getClient(ServiceName.FORMS);
 // Forms API
 // ============================================================================
 
+/**
+ * Possible value types for a form answer:
+ * - text/long-text → string
+ * - number/rating → number
+ * - boolean/checkbox → boolean
+ * - multiselect/checkbox-group → string[]
+ * - date/datetime → string (ISO 8601)
+ * - file → File (browser File object)
+ * - empty/skipped → null
+ *
+ * Extend this union rather than falling back to `any` when a new field
+ * type requires a new value shape.
+ */
+export type FormFieldValue = string | number | boolean | string[] | File | null;
+
 export interface FormAnswer {
   field_id: string;
-  // Intentionally permissive: form answers can be string, number, string[], File, etc.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  value: any; // noqa
+  value: FormFieldValue;
 }
 
 export const formsApi = {

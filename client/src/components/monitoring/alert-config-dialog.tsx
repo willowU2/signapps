@@ -339,7 +339,11 @@ export function AlertConfigDialog({
                     {action.type === "email" && (
                       <Input
                         placeholder="Email address"
-                        value={action.config.email || ""}
+                        value={
+                          typeof action.config.email === "string"
+                            ? action.config.email
+                            : ""
+                        }
                         onChange={(e) =>
                           updateActionConfig(index, "email", e.target.value)
                         }
@@ -349,7 +353,11 @@ export function AlertConfigDialog({
                     {action.type === "webhook" && (
                       <Input
                         placeholder="https://your-webhook-url.com"
-                        value={action.config.webhook_url || ""}
+                        value={
+                          typeof action.config.webhook_url === "string"
+                            ? action.config.webhook_url
+                            : ""
+                        }
                         onChange={(e) =>
                           updateActionConfig(
                             index,

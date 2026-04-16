@@ -166,9 +166,17 @@ export interface AlertConfig {
   actions?: AlertAction[];
 }
 
+/**
+ * Configuration payload for an alert action. Shape varies by action type
+ * (email, webhook, slack, etc.); callers must narrow via the `type` field.
+ * Use `Record<string, unknown>` rather than `any` so narrowing is required
+ * before accessing specific fields.
+ */
+export type AlertActionConfig = Record<string, unknown>;
+
 export interface AlertAction {
   type: string;
-  config: any;
+  config: AlertActionConfig;
 }
 
 // Request to create an alert configuration

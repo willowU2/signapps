@@ -37,12 +37,12 @@ export const schedulerMetricsApi = {
   getWorkload: (params?: MetricsQuery) =>
     schedulerClient
       .get<WorkloadMetrics>("/metrics/workload", { params })
-      .then((res: any) => res.data),
+      .then((res) => res.data),
 
   getResources: () =>
     schedulerClient
       .get<ResourceMetrics>("/metrics/resources")
-      .then((res: any) => res.data),
+      .then((res) => res.data),
 };
 
 // ============================================================================

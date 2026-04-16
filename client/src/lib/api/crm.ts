@@ -95,9 +95,41 @@ export interface PipelineStage {
 
 // ─── Backend ↔ frontend mappers ───────────────────────────────────────────────
 
+/** Raw shape returned by the backend for a CRM deal (crm.deals table). */
+interface ApiDeal {
+  id: string;
+  title: string;
+  contact_name?: string | null;
+  contact_id?: string | null;
+  contact_email?: string | null;
+  amount?: number | null;
+  probability?: number | null;
+  stage?: string | null;
+  close_date?: string | null;
+  owner_id: string;
+  created_at: string;
+  updated_at: string;
+}
+
+/** Raw shape returned by the backend for a CRM lead (crm.leads table). */
+interface ApiLead {
+  id: string;
+  name: string;
+  email?: string | null;
+  phone?: string | null;
+  company?: string | null;
+  source?: string | null;
+  status?: string | null;
+  score?: number | null;
+  owner_id: string;
+  tenant_id?: string | null;
+  notes?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 // Backend returns snake_case; map to the camelCase Deal interface.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function mapDeal(d: any): Deal {
+function mapDeal(d: ApiDeal): Deal {
   return {
     id: d.id,
     title: d.title,
@@ -131,8 +163,7 @@ function dealToPayload(data: Partial<Deal>) {
   };
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function mapLead(l: any): Lead {
+function mapLead(l: ApiLead): Lead {
   return {
     id: l.id,
     name: l.name,
@@ -156,9 +187,10 @@ export const dealsApi = {
   list: async (stage?: string): Promise<Deal[]> => {
     try {
       const params = stage ? { stage } : {};
-      const res = await contactsClient().get("/crm/deals", { params });
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return (res.data as any[]).map(mapDeal);
+      const res = await contactsClient().get<ApiDeal[]>("/crm/deals", {
+        params,
+      });
+      return (res.data ?? []).map(mapDeal);
     } catch {
       return [];
     }
@@ -166,7 +198,7 @@ export const dealsApi = {
 
   get: async (id: string): Promise<Deal | undefined> => {
     try {
-      const res = await contactsClient().get(`/crm/deals/${id}`);
+      const res = await contactsClient().get<ApiDeal>(`/crm/deals/${id}`);
       return mapDeal(res.data);
     } catch {
       return undefined;
@@ -176,7 +208,10 @@ export const dealsApi = {
   create: async (
     data: Omit<Deal, "id" | "createdAt" | "updatedAt">,
   ): Promise<Deal> => {
-    const res = await contactsClient().post("/crm/deals", dealToPayload(data));
+    const res = await contactsClient().post<ApiDeal>(
+      "/crm/deals",
+      dealToPayload(data),
+    );
     return mapDeal(res.data);
   },
 
@@ -185,7 +220,7 @@ export const dealsApi = {
     data: Partial<Deal>,
   ): Promise<Deal | undefined> => {
     try {
-      const res = await contactsClient().put(
+      const res = await contactsClient().put<ApiDeal>(
         `/crm/deals/${id}`,
         dealToPayload(data),
       );
@@ -220,9 +255,10 @@ export const leadsApi = {
   list: async (status?: string): Promise<Lead[]> => {
     try {
       const params = status ? { status } : {};
-      const res = await contactsClient().get("/crm/leads", { params });
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return (res.data as any[]).map(mapLead);
+      const res = await contactsClient().get<ApiLead[]>("/crm/leads", {
+        params,
+      });
+      return (res.data ?? []).map(mapLead);
     } catch {
       return [];
     }
@@ -230,7 +266,7 @@ export const leadsApi = {
 
   get: async (id: string): Promise<Lead | undefined> => {
     try {
-      const res = await contactsClient().get(`/crm/leads/${id}`);
+      const res = await contactsClient().get<ApiLead>(`/crm/leads/${id}`);
       return mapLead(res.data);
     } catch {
       return undefined;
@@ -240,7 +276,7 @@ export const leadsApi = {
   create: async (
     data: Omit<Lead, "id" | "createdAt" | "updatedAt" | "ownerId">,
   ): Promise<Lead> => {
-    const res = await contactsClient().post("/crm/leads", {
+    const res = await contactsClient().post<ApiLead>("/crm/leads", {
       name: data.name,
       email: data.email,
       phone: data.phone,
@@ -258,7 +294,7 @@ export const leadsApi = {
     data: Partial<Lead>,
   ): Promise<Lead | undefined> => {
     try {
-      const res = await contactsClient().put(`/crm/leads/${id}`, {
+      const res = await contactsClient().put<ApiLead>(`/crm/leads/${id}`, {
         ...(data.name !== undefined && { name: data.name }),
         ...(data.email !== undefined && { email: data.email }),
         ...(data.phone !== undefined && { phone: data.phone }),

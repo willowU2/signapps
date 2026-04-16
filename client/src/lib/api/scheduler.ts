@@ -201,6 +201,34 @@ export interface TimeItemsResponse {
   offset: number;
 }
 
+/**
+ * Shape of the body accepted by POST /time_items (TimeItem creation).
+ * Mirrors the backend CreateTimeItemRequest in signapps-scheduler.
+ */
+export interface CreateTimeItemRequest {
+  item_type: string;
+  title: string;
+  description?: string;
+  start_time?: string;
+  end_time?: string;
+  deadline?: string;
+  duration_minutes?: number;
+  all_day?: boolean;
+  timezone?: string;
+  project_id?: string;
+  status?: string;
+  priority?: string;
+  location_name?: string;
+  location_address?: string;
+  location_url?: string;
+}
+
+/**
+ * Shape of the body accepted by PUT /time_items/:id. All fields optional —
+ * only provided keys are updated (backend uses partial update semantics).
+ */
+export type UpdateTimeItemRequest = Partial<CreateTimeItemRequest>;
+
 export const timeItemsApi = {
   list: (query?: TimeItemsQuery) => {
     // Axios serializes arrays as types[]=a&types[]=b. We can pass params normally
@@ -211,8 +239,9 @@ export const timeItemsApi = {
     });
   },
   get: (id: string) => schedulerClient.get<TimeItem>(`/time_items/${id}`),
-  create: (data: any) => schedulerClient.post<TimeItem>("/time_items", data),
-  update: (id: string, data: any) =>
+  create: (data: CreateTimeItemRequest) =>
+    schedulerClient.post<TimeItem>("/time_items", data),
+  update: (id: string, data: UpdateTimeItemRequest) =>
     schedulerClient.put<TimeItem>(`/time_items/${id}`, data),
   move: (
     id: string,
