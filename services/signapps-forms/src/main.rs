@@ -537,6 +537,56 @@ async fn list_responses(State(state): State<AppState>, Path(id): Path<Uuid>) -> 
     }
 }
 
+/// GET /api/v1/forms/response-counts
+///
+/// Bulk response-count endpoint for the forms dashboard. Replaces the
+/// N+1 pattern where the frontend fetched `/forms/:id/responses` once
+/// per form just to count the length.
+#[utoipa::path(
+    get,
+    path = "/api/v1/forms/response-counts",
+    responses(
+        (status = 200, description = "Map of form_id -> response count"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "forms"
+)]
+async fn list_response_counts(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+) -> impl IntoResponse {
+    // Fetch the caller's owned forms first so we only count responses
+    // for forms they can see.
+    let forms = match FormRepository::list_by_owner(&state.pool, claims.sub).await {
+        Ok(f) => f,
+        Err(e) => {
+            tracing::error!("Failed to list forms for response-counts: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({ "error": "Internal Error" })),
+            );
+        },
+    };
+    let form_ids: Vec<Uuid> = forms.iter().map(|f| f.id).collect();
+
+    match FormRepository::list_response_counts(&state.pool, &form_ids).await {
+        Ok(rows) => {
+            let map: serde_json::Map<String, serde_json::Value> = rows
+                .into_iter()
+                .map(|(id, count)| (id.to_string(), serde_json::json!(count)))
+                .collect();
+            (StatusCode::OK, Json(serde_json::Value::Object(map)))
+        },
+        Err(e) => {
+            tracing::error!("Failed to list response counts: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({ "error": "Internal Error" })),
+            )
+        },
+    }
+}
+
 // ---------------------------------------------------------------------------
 // FM3 — Webhook handlers
 // ---------------------------------------------------------------------------
@@ -719,6 +769,12 @@ fn create_router(state: AppState, sharing_engine: SharingEngine) -> Router {
         .route(
             "/api/v1/forms/:id/unpublish",
             axum::routing::patch(unpublish_form),
+        )
+        // Bulk aggregate — MUST come before `:id/responses` so the fixed
+        // path is matched first (otherwise :id would capture "response-counts").
+        .route(
+            "/api/v1/forms/response-counts",
+            get(list_response_counts),
         )
         .route("/api/v1/forms/:id/responses", get(list_responses))
         // FM3: Webhook management

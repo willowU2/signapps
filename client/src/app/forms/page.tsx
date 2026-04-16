@@ -190,29 +190,29 @@ export default function FormsPage() {
   const { data: forms = [], isLoading: formsLoading } = useQuery<Form[]>({
     queryKey: ["forms"],
     queryFn: async () => {
-      const res = await formsApi.list();
-      return Promise.all(
-        res.data.map(async (f: any) => {
-          let response_count = 0;
-          try {
-            const rr = await formsApi.responses(f.id);
-            response_count = Array.isArray(rr.data) ? rr.data.length : 0;
-          } catch {}
-          return {
-            id: f.id,
-            title: f.title,
-            description: f.description || "",
-            status: (f.is_published ? "published" : "draft") as
-              | "published"
-              | "draft",
-            response_count,
-            created_at: f.created_at,
-            public_url: f.is_published
-              ? `${window.location.origin}/f/${f.id}`
-              : undefined,
-          };
-        }),
-      );
+      // 2 parallel requests instead of 1 + N (was: list + N× responses(f.id)).
+      // The bulk endpoint returns { form_id: count } for all owned forms.
+      // Graceful fallback to empty counts if the bulk endpoint fails.
+      const [listRes, countsRes] = await Promise.all([
+        formsApi.list(),
+        formsApi
+          .responseCounts()
+          .catch(() => ({ data: {} as Record<string, number> })),
+      ]);
+      const counts = countsRes.data ?? {};
+      return listRes.data.map((f) => ({
+        id: f.id,
+        title: f.title,
+        description: f.description || "",
+        status: (f.is_published ? "published" : "draft") as
+          | "published"
+          | "draft",
+        response_count: counts[f.id] ?? 0,
+        created_at: f.created_at,
+        public_url: f.is_published
+          ? `${window.location.origin}/f/${f.id}`
+          : undefined,
+      }));
     },
   });
 

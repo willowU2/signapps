@@ -122,6 +122,31 @@ impl FormRepository {
         Ok(responses)
     }
 
+    /// Return a mapping `form_id → response count` for the given form IDs.
+    ///
+    /// Unlike `list_responses` which fetches every response per form, this
+    /// aggregates counts server-side so the frontend can hydrate a forms
+    /// list in a single request instead of N+1.
+    pub async fn list_response_counts(
+        pool: &PgPool,
+        form_ids: &[Uuid],
+    ) -> Result<Vec<(Uuid, i64)>> {
+        if form_ids.is_empty() {
+            return Ok(Vec::new());
+        }
+        let rows: Vec<(Uuid, i64)> = sqlx::query_as(
+            "SELECT form_id, COUNT(*)::bigint \
+             FROM forms.form_responses \
+             WHERE form_id = ANY($1) \
+             GROUP BY form_id",
+        )
+        .bind(form_ids)
+        .fetch_all(pool)
+        .await
+        .map_err(|e| Error::Database(e.to_string()))?;
+        Ok(rows)
+    }
+
     pub async fn submit_response(pool: &PgPool, data: SubmitResponse) -> Result<FormResponse> {
         let created = sqlx::query_as::<_, FormResponse>(
             r#"

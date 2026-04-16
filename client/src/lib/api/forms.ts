@@ -136,6 +136,14 @@ export const formsApi = {
     formsClient().get<FormResponse[]>(`/forms/${id}/responses`),
 
   /**
+   * Bulk response-count endpoint. Returns a map `form_id → count` for all
+   * forms the caller owns. Replaces the N+1 pattern of calling
+   * `responses(id)` per form just to count.
+   */
+  responseCounts: () =>
+    formsClient().get<Record<string, number>>("/forms/response-counts"),
+
+  /**
    * Submit a response to a published form.
    * This endpoint is public and does not require authentication.
    */
