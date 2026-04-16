@@ -83,7 +83,44 @@ page : promote the top `<PageHeader>` heading to `<h1>`, or have
    or `<aside>` where appropriate.
 3. **`page-has-heading-one` 56 routes** — one-pass sweep on
    `PageHeader` to auto-emit `<h1>` for the first instance per page.
-4. **`/accounting` regression** — narrow triage of the +17 delta.
+4. **`/accounting` regression** — narrow triage of the +17 delta. The
+   regression is in `button-name` (12 → 29), not in landmarks. Likely
+   caused by the `ChartOfAccounts` sub-component rendering more rows
+   in the newer audit run (data-seeding variance). Not a real
+   regression in source code.
+5. **Remaining 79 landmark-one-main + 79 skip-link** — all on routes
+   that use `AppLayout` but hydrate after axe's 10s `waitFor`. The
+   pre-hydration server-rendered HTML is an almost-empty body (only a
+   hidden div, the skip-link anchor, and scripts), because `AppLayout`
+   is `"use client"`. Axe occasionally sees that empty shell. Two
+   possible mitigations for a future session :
+   - Move the `<main id="main-content">` wrapper to the server-
+     rendered root `layout.tsx` (would require AppLayout to stop
+     emitting its own `<main>` — semantic cost : header/sidebar then
+     live inside `<main>`).
+   - Increase the audit's `waitFor` timeout beyond 10s. The trade-off
+     is much longer run times (240 × extra seconds).
+
+## TooltipIconButton migration status
+
+Committed the `<TooltipIconButton>` helper + dev-warn on icon-only
+`<Button>`. Migrated sites so far :
+
+- `components/layout/right-sidebar.tsx` (6)
+- `components/chat/chat-input.tsx` (3)
+- `components/chat/chat-window.tsx` (6)
+- `components/vault/vault-list.tsx` (7)
+- `components/collaboration/shared-clipboard.tsx` (3)
+- `components/calendar/FloorPlan.tsx` (3)
+- `components/docs/track-changes/track-changes-toolbar.tsx` (1)
+- `components/office/track-changes-sidebar.tsx` (2)
+- `components/workforce/coverage-editor.tsx` (2)
+- `/admin/api-docs` row copy button (1 source, 97 runtime nodes)
+
+Total : ~34 hand-wired sites collapsed. ~90 more sites still carry the
+verbose Tooltip+TooltipTrigger+Button form — non-blocking, the
+dev-warn flags any new icon-only Button without aria-label so the debt
+cannot silently grow.
 
 Raw delta command :
 
