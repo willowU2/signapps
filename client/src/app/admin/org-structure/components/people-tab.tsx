@@ -111,7 +111,7 @@ export function PeopleTab({ nodeId, nodeName, persons }: PeopleTabProps) {
       setAssignResponsibility("hierarchical");
       setAssignFte("1.0");
       setAssignStartDate("");
-      loadAssignments();
+      await loadAssignments();
     } catch {
       toast.error("Erreur lors de la creation");
     } finally {
@@ -124,7 +124,7 @@ export function PeopleTab({ nodeId, nodeName, persons }: PeopleTabProps) {
     try {
       await orgApi.assignments.end(assignmentId, "Fin d'affectation");
       toast.success("Affectation terminee");
-      loadAssignments();
+      await loadAssignments();
     } catch {
       toast.error("Erreur lors de la cloture");
     } finally {

@@ -93,7 +93,7 @@ export function DelegationsTab({ nodeId, persons }: DelegationsTabProps) {
         manage_policies: false,
         delegate: false,
       });
-      loadDelegations();
+      await loadDelegations();
     } catch {
       toast.error("Erreur lors de la creation");
     } finally {
@@ -106,7 +106,7 @@ export function DelegationsTab({ nodeId, persons }: DelegationsTabProps) {
     try {
       await orgApi.delegations.revoke(id);
       toast.success("Delegation revoquee");
-      loadDelegations();
+      await loadDelegations();
     } catch {
       toast.error("Erreur lors de la revocation");
     } finally {
@@ -158,7 +158,14 @@ export function DelegationsTab({ nodeId, persons }: DelegationsTabProps) {
                 <UserCheck className="h-4 w-4 mt-0.5 shrink-0 text-muted-foreground" />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium">
-                    {d.delegate_id.slice(0, 8)}...
+                    {(() => {
+                      const person = persons.find(
+                        (p) => p.id === d.delegate_id,
+                      );
+                      return person
+                        ? `${person.first_name} ${person.last_name}`
+                        : `${d.delegate_id.slice(0, 8)}...`;
+                    })()}
                     <span className="text-xs text-muted-foreground ml-2">
                       ({d.delegate_type})
                     </span>

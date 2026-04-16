@@ -188,12 +188,18 @@ export default function OrgStructurePage() {
     fetchPolicies();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Board indicators via listBoards
+  // Board indicators — single batched request with version-guard against
+  // stale overwrites when `nodes` changes while a fetch is in flight.
   useEffect(() => {
-    if (nodes.length === 0) return;
+    if (nodes.length === 0) {
+      setBoardMap({});
+      return;
+    }
+    const version = ++boardFetchVersionRef.current;
     orgApi.nodes
       .listBoards()
       .then((res) => {
+        if (boardFetchVersionRef.current !== version) return;
         const summaries = res.data;
         const map: Record<string, BoardInfo> = {};
         const boardNodeIds = new Set(
@@ -259,43 +265,6 @@ export default function OrgStructurePage() {
       setDetailOpen(false);
     }
   }, [nodes]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Batch-fetch boards for governance indicators
-  useEffect(() => {
-    if (nodes.length === 0) {
-      setBoardMap({});
-      return;
-    }
-    if (typeof orgApi.nodes.board !== "function") return;
-    const version = ++boardFetchVersionRef.current;
-    Promise.allSettled(
-      nodes.map((n) =>
-        orgApi.nodes
-          .board(n.id)
-          .then((res) => ({ nodeId: n.id, data: res.data })),
-      ),
-    ).then((results) => {
-      if (boardFetchVersionRef.current !== version) return;
-      const map: Record<string, BoardInfo> = {};
-      for (const result of results) {
-        if (result.status !== "fulfilled" || !result.value.data) continue;
-        const { nodeId, data } = result.value;
-        const dm = data.members?.find(
-          (m: { is_decision_maker: boolean }) => m.is_decision_maker,
-        );
-        const person = dm
-          ? persons.find((p: Person) => p.id === dm.person_id)
-          : undefined;
-        map[nodeId] = {
-          decisionMakerName: person
-            ? `${person.first_name} ${person.last_name}`
-            : undefined,
-          isInherited: !!data.inherited_from_node_id,
-        };
-      }
-      setBoardMap(map);
-    });
-  }, [nodes, persons]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {

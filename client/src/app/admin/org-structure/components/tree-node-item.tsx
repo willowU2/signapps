@@ -300,5 +300,12 @@ export const TreeNodeItem = React.memo(
     prev.expanded === next.expanded &&
     prev.searchQuery === next.searchQuery &&
     prev.draggedId === next.draggedId &&
-    prev.boardMap === next.boardMap,
+    prev.boardMap === next.boardMap &&
+    // onDrop closes over `nodes` / `currentTree`; skipping it causes stale
+    // drop handlers when siblings are added between renders.
+    prev.onDrop === next.onDrop &&
+    prev.onDragStart === next.onDragStart &&
+    prev.onDragEnd === next.onDragEnd &&
+    prev.onContextAction === next.onContextAction &&
+    prev.onDoubleClick === next.onDoubleClick,
 );

@@ -247,9 +247,11 @@ export const useOrgStore = create<OrgState>()(
     }),
     {
       name: "org-storage",
+      // Do NOT persist selectedNode: a stale node from a previous session
+      // would load pre-mount and trigger sub-fetches against the wrong tree
+      // before the cleanup effect runs.
       partialize: (state) => ({
         currentTree: state.currentTree,
-        selectedNode: state.selectedNode,
         activeNavTab: state.activeNavTab,
       }),
     },
