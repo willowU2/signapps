@@ -43,6 +43,8 @@ pub struct AppState {
     pub presence_manager: Arc<PresenceManager>,
     /// Client for pushing indexing requests to signapps-ai
     pub ai_client: Arc<crate::services::ai_service::AiServiceClient>,
+    /// Client for creating Meet rooms linked to calendar events
+    pub meet_client: Arc<crate::services::meet_service::MeetServiceClient>,
     /// PostgreSQL-backed event bus for cross-service events
     pub event_bus: PgEventBus,
     /// Unified sharing / permission engine
@@ -86,6 +88,7 @@ async fn main() -> anyhow::Result<()> {
         calendar_broadcasts: Arc::new(DashMap::new()),
         presence_manager: Arc::new(PresenceManager::new()),
         ai_client: Arc::new(crate::services::ai_service::AiServiceClient::new()),
+        meet_client: Arc::new(crate::services::meet_service::MeetServiceClient::new()),
         event_bus,
         sharing: sharing_engine.clone(),
     };

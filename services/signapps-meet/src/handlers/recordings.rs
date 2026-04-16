@@ -1,10 +1,29 @@
-//! Recording management handlers
+//! Recording management handlers.
+//!
+//! ## Current status — Phase 3a
+//!
+//! Real LiveKit egress is **deferred**. The signapps-storage service does
+//! not yet expose an S3-compatible endpoint, so the LiveKit egress pipeline
+//! cannot write artifacts anywhere this platform can serve. Until either
+//! (a) signapps-storage gains an S3 proxy or (b) the LiveKit container
+//! mounts a shared volume, these handlers implement **DB-only lifecycle
+//! tracking** (Option C in the design):
+//!
+//! - `start_recording` creates a row with `status='recording'`.
+//! - `stop_recording` / `stop_room_recording` updates it to `status='ready'`
+//!   (instead of the real `'processing'` → webhook → `'ready'` dance).
+//! - `webhooks::receive_webhook` still projects `egress_ended` events to
+//!   the DB for the day real egress lands.
+//!
+//! The frontend uses this solely for the "recording on" badge + history
+//! listing. The `download_url` stays `None` until real egress is wired.
 
 use axum::{
     extract::{Path, State},
     http::StatusCode,
     Extension, Json,
 };
+use signapps_common::pg_events::NewEvent;
 use signapps_common::Claims;
 use uuid::Uuid;
 
@@ -13,7 +32,29 @@ use crate::{
     AppState,
 };
 
-/// List recordings for a room
+/// Transform a [`Recording`] DB row into the API response DTO.
+fn to_response(r: Recording) -> RecordingResponse {
+    RecordingResponse {
+        id: r.id,
+        room_id: r.room_id,
+        status: r.status,
+        started_at: r.started_at,
+        ended_at: r.ended_at,
+        duration_seconds: r.duration_seconds,
+        file_size_bytes: r.file_size_bytes,
+        // download_url intentionally None — see module docs.
+        download_url: r
+            .storage_path
+            .filter(|p| !p.is_empty())
+            .map(|p| format!("/api/v1/storage/files/{}", p)),
+    }
+}
+
+/// List recordings for a room.
+///
+/// # Errors
+///
+/// Returns `404` if the room does not exist, `500` on DB failure.
 #[utoipa::path(
     get,
     path = "/api/v1/meet/rooms/{id}/recordings",
@@ -27,7 +68,7 @@ use crate::{
     security(("bearer" = [])),
     tag = "Meet"
 )]
-#[tracing::instrument(skip_all)]
+#[tracing::instrument(skip(state))]
 pub async fn list_recordings(
     State(state): State<AppState>,
     Path(room_id): Path<Uuid>,
@@ -52,26 +93,18 @@ pub async fn list_recordings(
     .await
     .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
-    Ok(Json(
-        recordings
-            .into_iter()
-            .map(|r| RecordingResponse {
-                id: r.id,
-                room_id: r.room_id,
-                status: r.status,
-                started_at: r.started_at,
-                ended_at: r.ended_at,
-                duration_seconds: r.duration_seconds,
-                file_size_bytes: r.file_size_bytes,
-                download_url: r
-                    .storage_path
-                    .map(|p| format!("/api/v1/storage/files/{}", p)),
-            })
-            .collect(),
-    ))
+    Ok(Json(recordings.into_iter().map(to_response).collect()))
 }
 
-/// Start a recording
+/// Start a recording (host only, DB-only — see module docs).
+///
+/// # Errors
+///
+/// - `400` if the room is not active.
+/// - `403` if the caller is not the host.
+/// - `404` if the room does not exist.
+/// - `409` if a recording is already in progress.
+/// - `500` on DB failure.
 #[utoipa::path(
     post,
     path = "/api/v1/meet/rooms/{id}/recordings",
@@ -80,13 +113,15 @@ pub async fn list_recordings(
         (status = 200, description = "Recording started", body = RecordingResponse),
         (status = 400, description = "Room not active or recording already in progress"),
         (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Forbidden — only host can start recording"),
         (status = 404, description = "Room not found"),
+        (status = 409, description = "Recording already in progress"),
         (status = 500, description = "Internal server error"),
     ),
     security(("bearer" = [])),
     tag = "Meet"
 )]
-#[tracing::instrument(skip_all)]
+#[tracing::instrument(skip(state, claims), fields(user_id = %claims.sub))]
 pub async fn start_recording(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -107,7 +142,7 @@ pub async fn start_recording(
         ));
     }
 
-    // Check if user is host
+    // Only host can start a recording
     if room.created_by != claims.sub {
         return Err((
             StatusCode::FORBIDDEN,
@@ -122,7 +157,7 @@ pub async fn start_recording(
     .bind(room_id)
     .fetch_one(&state.pool)
     .await
-    .unwrap_or((0,));
+    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
     if active.0 > 0 {
         return Err((
@@ -131,7 +166,9 @@ pub async fn start_recording(
         ));
     }
 
-    // Create recording entry
+    // Create recording entry. Real LiveKit egress is deferred (see module
+    // docs) — we persist a DB-only marker that the UI uses for the
+    // "recording on" badge.
     let recording = sqlx::query_as::<_, Recording>(
         r#"
         INSERT INTO meet.recordings (room_id, started_by, status)
@@ -145,22 +182,20 @@ pub async fn start_recording(
     .await
     .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
-    // In a real implementation, we would start the LiveKit egress here
-    // using the LiveKit server SDK
+    tracing::info!(
+        recording_id = %recording.id,
+        room_id = %room_id,
+        "recording started (DB-only; real egress deferred)"
+    );
 
-    Ok(Json(RecordingResponse {
-        id: recording.id,
-        room_id: recording.room_id,
-        status: recording.status,
-        started_at: recording.started_at,
-        ended_at: recording.ended_at,
-        duration_seconds: recording.duration_seconds,
-        file_size_bytes: recording.file_size_bytes,
-        download_url: None,
-    }))
+    Ok(Json(to_response(recording)))
 }
 
-/// Get a specific recording
+/// Get a specific recording by ID.
+///
+/// # Errors
+///
+/// Returns `404` if no recording with that id exists, `500` on DB failure.
 #[utoipa::path(
     get,
     path = "/api/v1/meet/recordings/{id}",
@@ -174,7 +209,7 @@ pub async fn start_recording(
     security(("bearer" = [])),
     tag = "Meet"
 )]
-#[tracing::instrument(skip_all)]
+#[tracing::instrument(skip(state))]
 pub async fn get_recording(
     State(state): State<AppState>,
     Path(recording_id): Path<Uuid>,
@@ -186,21 +221,17 @@ pub async fn get_recording(
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
         .ok_or((StatusCode::NOT_FOUND, "Recording not found".to_string()))?;
 
-    Ok(Json(RecordingResponse {
-        id: recording.id,
-        room_id: recording.room_id,
-        status: recording.status,
-        started_at: recording.started_at,
-        ended_at: recording.ended_at,
-        duration_seconds: recording.duration_seconds,
-        file_size_bytes: recording.file_size_bytes,
-        download_url: recording
-            .storage_path
-            .map(|p| format!("/api/v1/storage/files/{}", p)),
-    }))
+    Ok(Json(to_response(recording)))
 }
 
-/// Stop a recording
+/// Stop a recording by id (host or the original starter).
+///
+/// # Errors
+///
+/// - `400` if the recording is not currently running.
+/// - `403` if the caller did not start it.
+/// - `404` if the recording does not exist.
+/// - `500` on DB failure.
 #[utoipa::path(
     post,
     path = "/api/v1/meet/recordings/{id}/stop",
@@ -216,7 +247,7 @@ pub async fn get_recording(
     security(("bearer" = [])),
     tag = "Meet"
 )]
-#[tracing::instrument(skip_all)]
+#[tracing::instrument(skip(state, claims), fields(user_id = %claims.sub))]
 pub async fn stop_recording(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -244,14 +275,31 @@ pub async fn stop_recording(
         ));
     }
 
-    // Calculate duration
-    let duration = (chrono::Utc::now() - recording.started_at).num_seconds() as i32;
+    let updated = finalize_recording(&state, recording.id, recording.started_at).await?;
+    Ok(Json(to_response(updated)))
+}
 
-    // Update recording status
+/// Finalize a recording row: compute duration, flip status to `ready`,
+/// publish `meet.recording.ready` on the platform event bus.
+///
+/// # Errors
+///
+/// Returns a 500 tuple on DB failure. Event-bus publish errors are logged
+/// and not surfaced — recording state is the source of truth.
+async fn finalize_recording(
+    state: &AppState,
+    recording_id: Uuid,
+    started_at: chrono::DateTime<chrono::Utc>,
+) -> Result<Recording, (StatusCode, String)> {
+    let duration = (chrono::Utc::now() - started_at).num_seconds() as i32;
+
+    // With real egress we'd move from 'recording' → 'processing' and wait
+    // for the webhook to flip to 'ready'. Under Option C we jump directly
+    // to 'ready' since no artifact is produced.
     let updated = sqlx::query_as::<_, Recording>(
         r#"
         UPDATE meet.recordings SET
-            status = 'processing',
+            status = 'ready',
             ended_at = NOW(),
             duration_seconds = $1
         WHERE id = $2
@@ -264,22 +312,99 @@ pub async fn stop_recording(
     .await
     .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
-    // In a real implementation, we would stop the LiveKit egress here
-    // and wait for the file to be processed
+    // Publish event for Phase 4 notifications.
+    let bus = signapps_common::pg_events::PgEventBus::new(
+        state.pool.clone(),
+        "signapps-meet".to_string(),
+    );
+    let payload = serde_json::json!({
+        "recording_id": updated.id,
+        "room_id": updated.room_id,
+        "started_by": updated.started_by,
+        "duration_seconds": updated.duration_seconds,
+    });
+    if let Err(err) = bus
+        .publish(NewEvent {
+            event_type: "meet.recording.ready".to_string(),
+            aggregate_id: Some(updated.id),
+            payload,
+        })
+        .await
+    {
+        tracing::warn!(?err, recording_id = %updated.id, "failed to publish meet.recording.ready");
+    }
 
-    Ok(Json(RecordingResponse {
-        id: updated.id,
-        room_id: updated.room_id,
-        status: updated.status,
-        started_at: updated.started_at,
-        ended_at: updated.ended_at,
-        duration_seconds: updated.duration_seconds,
-        file_size_bytes: updated.file_size_bytes,
-        download_url: None,
-    }))
+    tracing::info!(
+        recording_id = %updated.id,
+        duration_seconds = duration,
+        "recording finalized"
+    );
+    Ok(updated)
 }
 
-/// Get the active (in-progress) recording for a room
+/// Get the active recording status by room CODE (public, no auth).
+///
+/// Used by the in-meeting UI so every participant (not just the host)
+/// can display the "recording in progress" badge without needing to
+/// call authenticated endpoints.
+///
+/// Returns `{ is_recording: bool, recording_id?: Uuid, started_at?: ... }`.
+///
+/// # Errors
+///
+/// Returns `404` if the room code does not exist, `500` on DB failure.
+#[utoipa::path(
+    get,
+    path = "/api/v1/meet/rooms/by-code/{code}/recording",
+    params(("code" = String, Path, description = "Room code")),
+    responses(
+        (status = 200, description = "Active recording status (may be empty)"),
+        (status = 404, description = "Room not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    tag = "Meet"
+)]
+#[tracing::instrument(skip(state))]
+pub async fn get_active_recording_by_code(
+    State(state): State<AppState>,
+    Path(code): Path<String>,
+) -> Result<Json<serde_json::Value>, (StatusCode, String)> {
+    let room = sqlx::query_as::<_, Room>("SELECT * FROM meet.rooms WHERE room_code = $1")
+        .bind(&code)
+        .fetch_optional(&state.pool)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
+        .ok_or((StatusCode::NOT_FOUND, "Room not found".to_string()))?;
+
+    let recording: Option<Recording> = sqlx::query_as(
+        "SELECT * FROM meet.recordings WHERE room_id = $1 AND status = 'recording' ORDER BY started_at DESC LIMIT 1",
+    )
+    .bind(room.id)
+    .fetch_optional(&state.pool)
+    .await
+    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+    let body = match recording {
+        Some(r) => serde_json::json!({
+            "is_recording": true,
+            "recording_id": r.id,
+            "started_at": r.started_at,
+            "room_id": r.room_id,
+        }),
+        None => serde_json::json!({
+            "is_recording": false,
+            "room_id": room.id,
+        }),
+    };
+    Ok(Json(body))
+}
+
+/// Get the active (in-progress) recording for a room, if any.
+///
+/// # Errors
+///
+/// Returns `404` if the room does not exist or has no active recording,
+/// `500` on DB failure.
 #[utoipa::path(
     get,
     path = "/api/v1/meet/rooms/{id}/recordings/active",
@@ -293,7 +418,7 @@ pub async fn stop_recording(
     security(("bearer" = [])),
     tag = "Meet"
 )]
-#[tracing::instrument(skip_all)]
+#[tracing::instrument(skip(state))]
 pub async fn get_active_recording(
     State(state): State<AppState>,
     Path(room_id): Path<Uuid>,
@@ -314,21 +439,90 @@ pub async fn get_active_recording(
     .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
     .ok_or((StatusCode::NOT_FOUND, "No active recording for this room".to_string()))?;
 
-    Ok(Json(RecordingResponse {
-        id: recording.id,
-        room_id: recording.room_id,
-        status: recording.status,
-        started_at: recording.started_at,
-        ended_at: recording.ended_at,
-        duration_seconds: recording.duration_seconds,
-        file_size_bytes: recording.file_size_bytes,
-        download_url: recording
-            .storage_path
-            .map(|p| format!("/api/v1/storage/files/{}", p)),
-    }))
+    Ok(Json(to_response(recording)))
 }
 
-/// Stop the active recording for a room (host convenience endpoint)
+/// Start a recording addressed by room CODE (host-only convenience endpoint).
+///
+/// # Errors
+///
+/// Same contract as [`start_recording`] but resolves the room via
+/// `room_code`.
+#[utoipa::path(
+    post,
+    path = "/api/v1/meet/rooms/by-code/{code}/recording/start",
+    params(("code" = String, Path, description = "Room code")),
+    responses(
+        (status = 200, description = "Recording started", body = RecordingResponse),
+        (status = 400, description = "Room not active"),
+        (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Forbidden"),
+        (status = 404, description = "Room not found"),
+        (status = 409, description = "Recording already in progress"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Meet"
+)]
+#[tracing::instrument(skip(state, claims), fields(user_id = %claims.sub))]
+pub async fn start_room_recording_by_code(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(code): Path<String>,
+) -> Result<Json<RecordingResponse>, (StatusCode, String)> {
+    let room = sqlx::query_as::<_, Room>("SELECT * FROM meet.rooms WHERE room_code = $1")
+        .bind(&code)
+        .fetch_optional(&state.pool)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
+        .ok_or((StatusCode::NOT_FOUND, "Room not found".to_string()))?;
+
+    start_recording(State(state), Extension(claims), Path(room.id)).await
+}
+
+/// Stop the active recording addressed by room CODE (host-only).
+///
+/// # Errors
+///
+/// Same contract as [`stop_room_recording`] but resolves the room via
+/// `room_code`.
+#[utoipa::path(
+    post,
+    path = "/api/v1/meet/rooms/by-code/{code}/recording/stop",
+    params(("code" = String, Path, description = "Room code")),
+    responses(
+        (status = 200, description = "Recording stopped", body = RecordingResponse),
+        (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Forbidden"),
+        (status = 404, description = "Room or active recording not found"),
+        (status = 500, description = "Internal server error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Meet"
+)]
+#[tracing::instrument(skip(state, claims), fields(user_id = %claims.sub))]
+pub async fn stop_room_recording_by_code(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(code): Path<String>,
+) -> Result<Json<RecordingResponse>, (StatusCode, String)> {
+    let room = sqlx::query_as::<_, Room>("SELECT * FROM meet.rooms WHERE room_code = $1")
+        .bind(&code)
+        .fetch_optional(&state.pool)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
+        .ok_or((StatusCode::NOT_FOUND, "Room not found".to_string()))?;
+
+    stop_room_recording(State(state), Extension(claims), Path(room.id)).await
+}
+
+/// Stop the active recording for a room (host convenience endpoint).
+///
+/// # Errors
+///
+/// - `403` if the caller is not the host.
+/// - `404` if the room has no active recording.
+/// - `500` on DB failure.
 #[utoipa::path(
     post,
     path = "/api/v1/meet/rooms/{id}/recordings/stop",
@@ -343,7 +537,7 @@ pub async fn get_active_recording(
     security(("bearer" = [])),
     tag = "Meet"
 )]
-#[tracing::instrument(skip_all)]
+#[tracing::instrument(skip(state, claims), fields(user_id = %claims.sub))]
 pub async fn stop_room_recording(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -372,37 +566,18 @@ pub async fn stop_room_recording(
     .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
     .ok_or((StatusCode::NOT_FOUND, "No active recording for this room".to_string()))?;
 
-    let duration = (chrono::Utc::now() - recording.started_at).num_seconds() as i32;
-
-    let updated = sqlx::query_as::<_, Recording>(
-        r#"
-        UPDATE meet.recordings SET
-            status = 'processing',
-            ended_at = NOW(),
-            duration_seconds = $1
-        WHERE id = $2
-        RETURNING *
-        "#,
-    )
-    .bind(duration)
-    .bind(recording.id)
-    .fetch_one(&state.pool)
-    .await
-    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
-
-    Ok(Json(RecordingResponse {
-        id: updated.id,
-        room_id: updated.room_id,
-        status: updated.status,
-        started_at: updated.started_at,
-        ended_at: updated.ended_at,
-        duration_seconds: updated.duration_seconds,
-        file_size_bytes: updated.file_size_bytes,
-        download_url: None,
-    }))
+    let updated = finalize_recording(&state, recording.id, recording.started_at).await?;
+    Ok(Json(to_response(updated)))
 }
 
-/// Delete a recording
+/// Delete a recording (only the original starter, and only if not running).
+///
+/// # Errors
+///
+/// - `400` if the recording is still active.
+/// - `403` if the caller did not start it.
+/// - `404` if the recording does not exist.
+/// - `500` on DB failure.
 #[utoipa::path(
     delete,
     path = "/api/v1/meet/recordings/{id}",
@@ -418,7 +593,7 @@ pub async fn stop_room_recording(
     security(("bearer" = [])),
     tag = "Meet"
 )]
-#[tracing::instrument(skip_all)]
+#[tracing::instrument(skip(state, claims), fields(user_id = %claims.sub))]
 pub async fn delete_recording(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -447,10 +622,7 @@ pub async fn delete_recording(
         ));
     }
 
-    // Delete file from storage if exists
-    // In a real implementation, we would call the storage service here
-
-    // Delete recording entry
+    // File storage clean-up is a no-op under Option C (no artifact exists).
     sqlx::query("DELETE FROM meet.recordings WHERE id = $1")
         .bind(recording_id)
         .execute(&state.pool)

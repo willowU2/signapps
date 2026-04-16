@@ -7,13 +7,26 @@ use axum::{
 };
 use serde::Deserialize;
 use signapps_common::Claims;
+use signapps_livekit_client::TokenGrants;
 use uuid::Uuid;
 
 use crate::{
-    livekit::generate_participant_token,
     models::{JoinRoomRequest, Room, TokenResponse},
     AppState,
 };
+
+/// Build LiveKit token grants for a given participant role.
+fn grants_for(room: &str, identity: &str, display_name: &str, is_host: bool) -> TokenGrants {
+    TokenGrants {
+        room: room.to_string(),
+        identity: identity.to_string(),
+        name: Some(display_name.to_string()),
+        can_publish: true,
+        can_subscribe: true,
+        can_publish_data: true,
+        room_admin: is_host,
+    }
+}
 
 #[derive(Debug, Deserialize, utoipa::ToSchema)]
 /// Query parameters for filtering results.
@@ -80,15 +93,16 @@ pub async fn get_token(
         .display_name
         .unwrap_or_else(|| claims.username.clone());
 
-    // Generate LiveKit token
-    let token = generate_participant_token(
-        &state.livekit_config,
-        &room.room_code,
-        &claims.sub.to_string(),
-        &display_name,
-        is_host,
-    )
-    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    // Generate LiveKit token via shared client
+    let token = state
+        .livekit
+        .generate_token(grants_for(
+            &room.room_code,
+            &claims.sub.to_string(),
+            &display_name,
+            is_host,
+        ))
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
     // Update room status to active if it was scheduled
     if room.status == "scheduled" {
@@ -120,7 +134,7 @@ pub async fn get_token(
 
     Ok(Json(TokenResponse {
         token,
-        livekit_url: state.livekit_config.server_url.clone(),
+        livekit_url: state.livekit.base_url.clone(),
         room_name: room.room_code,
     }))
 }
@@ -206,15 +220,16 @@ pub async fn get_room_token(
     // Determine if user is host
     let is_host = room.created_by == claims.sub;
 
-    // Generate LiveKit token
-    let token = generate_participant_token(
-        &state.livekit_config,
-        &room.room_code,
-        &claims.sub.to_string(),
-        &display_name,
-        is_host,
-    )
-    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    // Generate LiveKit token via shared client
+    let token = state
+        .livekit
+        .generate_token(grants_for(
+            &room.room_code,
+            &claims.sub.to_string(),
+            &display_name,
+            is_host,
+        ))
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
     // Update room status to active if it was scheduled
     if room.status == "scheduled" {
@@ -246,7 +261,7 @@ pub async fn get_room_token(
 
     Ok(Json(TokenResponse {
         token,
-        livekit_url: state.livekit_config.server_url.clone(),
+        livekit_url: state.livekit.base_url.clone(),
         room_name: room.room_code,
     }))
 }

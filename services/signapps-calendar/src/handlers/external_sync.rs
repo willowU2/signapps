@@ -566,6 +566,7 @@ async fn run_calendar_sync(
                     assigned_to: None,
                     project_id: None,
                     tags: None,
+                    has_meet_room: None,
                 },
                 config.user_id,
             )

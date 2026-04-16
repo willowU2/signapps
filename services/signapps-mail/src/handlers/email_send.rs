@@ -1,4 +1,9 @@
-use axum::{extract::State, http::StatusCode, response::IntoResponse, Extension, Json};
+use axum::{
+    extract::State,
+    http::{header::AUTHORIZATION, HeaderMap, StatusCode},
+    response::IntoResponse,
+    Extension, Json,
+};
 use chrono::Utc;
 use lettre::{
     address::Envelope,
@@ -28,6 +33,20 @@ pub struct SendEmailRequest {
     pub in_reply_to: Option<String>,
     pub is_draft: Option<bool>,
     pub scheduled_send_at: Option<chrono::DateTime<Utc>>,
+    /// Optional Meet invitation — creates a scheduled Meet room and injects
+    /// the join link in the body plus an ICS stub in metadata.
+    pub meet_invitation: Option<MeetInvitationInput>,
+}
+
+/// Inputs describing a Meet invitation to attach to the outgoing email.
+#[derive(Debug, Clone, Deserialize, utoipa::ToSchema)]
+pub struct MeetInvitationInput {
+    /// Meeting title (also used as calendar SUMMARY).
+    pub title: String,
+    /// ISO-8601 start time.
+    pub start_time: chrono::DateTime<Utc>,
+    /// ISO-8601 end time.
+    pub end_time: chrono::DateTime<Utc>,
 }
 
 /// Send an email or save it as a draft.
@@ -47,7 +66,8 @@ pub struct SendEmailRequest {
 pub async fn send_email(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-    Json(payload): Json<SendEmailRequest>,
+    headers: HeaderMap,
+    Json(mut payload): Json<SendEmailRequest>,
 ) -> impl IntoResponse {
     if payload.recipient.trim().is_empty() {
         return (
@@ -87,6 +107,57 @@ pub async fn send_email(
             Json(serde_json::json!({ "error": "Subject too long (max 998 chars per RFC 5322)" })),
         )
             .into_response();
+    }
+
+    // ── Meet invitation branch ───────────────────────────────────────
+    // If the caller asked us to embed a Meet invitation, create the
+    // scheduled Meet room now, inject the join link in the body, and
+    // generate an ICS stub. Actual `.ics` file attachment in the SMTP
+    // multipart is left as future work (requires extending
+    // `send_via_smtp` to accept a custom `text/calendar` part). Per the
+    // Phase 4b STOP condition we fall back to inline link + code.
+    if let Some(inv) = payload.meet_invitation.clone() {
+        let bearer = headers
+            .get(AUTHORIZATION)
+            .and_then(|v| v.to_str().ok())
+            .map(String::from);
+        match create_meet_room_for_invitation(bearer.as_deref(), &inv).await {
+            Ok(meet_code) => {
+                let room_url = format!("/meet/{}", meet_code);
+                let ics = build_ics_body(&meet_code, &inv);
+                tracing::debug!(ics_bytes = ics.len(), meet_code = %meet_code,
+                    "generated Meet ICS stub (attach-to-SMTP not wired yet)");
+
+                let injection_text = format!(
+                    "\n\n---\n📹 Réunion SignApps Meet\nTitre : {title}\nDébut : {start}\nFin : {end}\nLien : {url}\nCode : {code}\n",
+                    title = inv.title,
+                    start = inv.start_time.to_rfc3339(),
+                    end = inv.end_time.to_rfc3339(),
+                    url = room_url,
+                    code = meet_code,
+                );
+                let injection_html = format!(
+                    r#"<hr><div style="font-family:sans-serif;border-left:3px solid #16a34a;padding:8px 12px;margin-top:16px"><strong>📹 Réunion SignApps Meet</strong><br><em>{title}</em><br>Début&nbsp;: {start}<br>Fin&nbsp;: {end}<br><a href="{url}">Rejoindre la réunion</a> — code <code>{code}</code></div>"#,
+                    title = html_escape(&inv.title),
+                    start = inv.start_time.to_rfc3339(),
+                    end = inv.end_time.to_rfc3339(),
+                    url = room_url,
+                    code = meet_code,
+                );
+
+                payload.body_text = Some(match payload.body_text.clone() {
+                    Some(t) => format!("{t}{injection_text}"),
+                    None => injection_text,
+                });
+                payload.body_html = Some(match payload.body_html.clone() {
+                    Some(h) => format!("{h}{injection_html}"),
+                    None => format!("<p></p>{injection_html}"),
+                });
+            },
+            Err(e) => {
+                tracing::warn!(?e, "meet room creation failed — sending mail without invitation");
+            },
+        }
     }
 
     // Get account
@@ -368,4 +439,107 @@ pub async fn send_via_smtp(
     mailer.send(email).await?;
 
     Ok(())
+}
+
+/// Create a scheduled Meet room via signapps-meet (for mail invitations).
+///
+/// Forwards the caller's bearer token so the room is owned by the same
+/// user. Returns the 6-digit room code on success.
+///
+/// # Errors
+///
+/// Returns an error string if the Meet service is unreachable or
+/// responds with a non-success status.
+async fn create_meet_room_for_invitation(
+    bearer: Option<&str>,
+    inv: &MeetInvitationInput,
+) -> Result<String, String> {
+    let meet_base = std::env::var("MEET_SERVICE_URL")
+        .unwrap_or_else(|_| "http://localhost:3014".to_string());
+    let url = format!(
+        "{}/api/v1/meet/rooms",
+        meet_base.trim_end_matches('/')
+    );
+
+    let body = serde_json::json!({
+        "name": inv.title,
+        "scheduled_start": inv.start_time,
+        "scheduled_end": inv.end_time,
+        "is_private": false,
+    });
+
+    let mut req = reqwest::Client::new().post(&url).json(&body);
+    if let Some(b) = bearer {
+        req = req.header(AUTHORIZATION, b);
+    }
+    let resp = req
+        .send()
+        .await
+        .map_err(|e| format!("meet unreachable: {e}"))?;
+    if !resp.status().is_success() {
+        return Err(format!("meet http {}", resp.status()));
+    }
+    let json: serde_json::Value = resp
+        .json()
+        .await
+        .map_err(|e| format!("meet bad json: {e}"))?;
+    json.get("room_code")
+        .and_then(|v| v.as_str())
+        .map(String::from)
+        .or_else(|| json.get("code").and_then(|v| v.as_str()).map(String::from))
+        .ok_or_else(|| "meet response missing room_code".to_string())
+}
+
+/// Build a minimal RFC 5545 VCALENDAR / VEVENT body for a Meet
+/// invitation.
+///
+/// Callers are expected to attach the resulting string as a
+/// `text/calendar; method=REQUEST` part in the outgoing message. See
+/// <https://datatracker.ietf.org/doc/html/rfc5545> for the spec.
+///
+/// # Errors
+///
+/// Infallible — returns a `String`.
+fn build_ics_body(meet_code: &str, inv: &MeetInvitationInput) -> String {
+    let now = Utc::now().format("%Y%m%dT%H%M%SZ").to_string();
+    let dtstart = inv.start_time.format("%Y%m%dT%H%M%SZ").to_string();
+    let dtend = inv.end_time.format("%Y%m%dT%H%M%SZ").to_string();
+    let uid = format!("{}@signapps.local", Uuid::new_v4());
+    let url = format!("/meet/{}", meet_code);
+    let summary = ics_escape(&inv.title);
+    format!(
+        "BEGIN:VCALENDAR\r\n\
+VERSION:2.0\r\n\
+PRODID:-//SignApps//Meet//FR\r\n\
+METHOD:REQUEST\r\n\
+BEGIN:VEVENT\r\n\
+UID:{uid}\r\n\
+DTSTAMP:{now}\r\n\
+DTSTART:{dtstart}\r\n\
+DTEND:{dtend}\r\n\
+SUMMARY:{summary}\r\n\
+DESCRIPTION:Rejoignez la reunion SignApps Meet : {url}\r\n\
+URL:{url}\r\n\
+X-SIGNAPPS-MEET-CODE:{meet_code}\r\n\
+END:VEVENT\r\n\
+END:VCALENDAR\r\n"
+    )
+}
+
+/// Escape a string for safe inclusion in an ICS TEXT field (RFC 5545
+/// section 3.3.11).
+fn ics_escape(s: &str) -> String {
+    s.replace('\\', "\\\\")
+        .replace(',', "\\,")
+        .replace(';', "\\;")
+        .replace('\n', "\\n")
+}
+
+/// Minimal HTML escape for strings embedded in the generated invitation
+/// HTML block.
+fn html_escape(s: &str) -> String {
+    s.replace('&', "&amp;")
+        .replace('<', "&lt;")
+        .replace('>', "&gt;")
+        .replace('"', "&quot;")
 }

@@ -205,6 +205,7 @@ pub async fn import_calendar(
             assigned_to: None,
             project_id: None,
             tags: None,
+            has_meet_room: None,
         };
 
         // Insert event

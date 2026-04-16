@@ -1,31 +1,29 @@
 //! SignApps Meet Service
 //! Video conferencing rooms management with LiveKit integration
 
+use std::sync::Arc;
+
 use axum::{middleware, Router};
 use signapps_common::bootstrap::{env_or, init_tracing, load_env};
 use signapps_common::middleware::{auth_middleware, tenant_context_middleware, AuthState};
 use signapps_common::JwtConfig;
+use signapps_livekit_client::LiveKitClient;
 use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
 use tower_http::{cors::CorsLayer, trace::TraceLayer};
 
+mod events;
 mod handlers;
-mod livekit;
 mod models;
 
 #[derive(Clone)]
-/// Application state for  service.
+/// Application state for the Meet service.
 pub struct AppState {
+    /// PostgreSQL connection pool.
     pub pool: Pool<Postgres>,
+    /// JWT configuration used by the auth middleware.
     pub jwt_config: JwtConfig,
-    pub livekit_config: LiveKitConfig,
-}
-
-#[derive(Clone)]
-/// Configuration for LiveKit.
-pub struct LiveKitConfig {
-    pub api_key: String,
-    pub api_secret: String,
-    pub server_url: String,
+    /// Shared LiveKit Server client (token issuance, RoomService, Egress).
+    pub livekit: Arc<LiveKitClient>,
 }
 
 impl AuthState for AppState {
@@ -60,30 +58,36 @@ async fn main() -> anyhow::Result<()> {
     // JWT configuration — auto-detects RS256 or HS256 from environment
     let jwt_config = JwtConfig::from_env();
 
-    // LiveKit configuration
-    let livekit_config = LiveKitConfig {
-        api_key: std::env::var("LIVEKIT_API_KEY").unwrap_or_else(|_| {
-            if cfg!(debug_assertions) {
-                "devkey".to_string()
-            } else {
-                panic!("LIVEKIT_API_KEY must be set in production")
-            }
-        }),
-        api_secret: std::env::var("LIVEKIT_API_SECRET").unwrap_or_else(|_| {
-            if cfg!(debug_assertions) {
-                "secret".to_string()
-            } else {
-                panic!("LIVEKIT_API_SECRET must be set in production")
-            }
-        }),
-        server_url: env_or("LIVEKIT_URL", "ws://localhost:7880"),
+    // LiveKit client — built from LIVEKIT_URL / LIVEKIT_API_KEY /
+    // LIVEKIT_API_SECRET. If any of these is missing we fall back to
+    // placeholder creds so the service can still start (fonts-catalog
+    // pattern) but log a warning: token issuance and RoomService calls
+    // will fail until the real env vars are provided.
+    let livekit = match LiveKitClient::from_env() {
+        Ok(client) => Arc::new(client),
+        Err(err) => {
+            tracing::warn!(
+                ?err,
+                "LIVEKIT_* env vars missing — starting with placeholder credentials; \
+                 token issuance and RoomService calls will fail until configured"
+            );
+            let url = env_or("LIVEKIT_URL", "http://localhost:7880");
+            Arc::new(
+                LiveKitClient::new(url, "placeholder-key", "placeholder-secret")
+                    .expect("placeholder LiveKit client must build"),
+            )
+        }
     };
 
     let state = AppState {
-        pool,
+        pool: pool.clone(),
         jwt_config,
-        livekit_config,
+        livekit: livekit.clone(),
     };
+
+    // Spawn the PgEventBus consumer — reacts to calendar.event.deleted
+    // by cleaning up the associated LiveKit room + meet.rooms row.
+    tokio::spawn(events::run_consumer(pool, livekit));
 
     let app = build_router(state);
 
@@ -121,14 +125,27 @@ async fn meet_health() -> axum::Json<serde_json::Value> {
 fn build_router(state: AppState) -> Router {
     use axum::routing::{delete, get, patch, post};
     use handlers::{
-        openapi, participants, recordings, remote, rooms, tokens, transcription, video_messages,
-        voicemails, waiting_room,
+        lobby, openapi, participants, polls, questions, raised_hands, recordings, remote, rooms,
+        tokens, transcription, video_messages, voicemails, waiting_room, webhooks,
     };
 
     // Public routes
     let public_routes = Router::new()
         .route("/health", get(meet_health))
         .route("/api/v1/meet/config", get(handlers::get_config))
+        // Lobby (public — unauth lookups and knock-to-enter)
+        .route("/api/v1/meet/rooms/:code/lobby", get(lobby::get_lobby))
+        .route("/api/v1/meet/rooms/:code/knock", post(lobby::knock))
+        .route("/api/v1/meet/rooms/:code/knock-status", get(lobby::knock_status))
+        // Recording visibility — lets every participant (not just the
+        // host) poll whether the room is being recorded.
+        .route(
+            "/api/v1/meet/rooms/by-code/:code/recording",
+            get(recordings::get_active_recording_by_code),
+        )
+        // LiveKit webhook receiver (authenticated via LiveKit-signed JWT,
+        // not the app JWT).
+        .route("/api/v1/meet/webhooks/livekit", post(webhooks::receive_webhook))
         // Remote health alias (backward compat — remote merged into this service)
         .route("/api/v1/remote/health", get(meet_health))
         .merge(signapps_common::version::router("signapps-meet"));
@@ -137,6 +154,7 @@ fn build_router(state: AppState) -> Router {
     let protected_routes = Router::new()
         // Room management
         .route("/api/v1/meet/rooms", get(rooms::list_rooms).post(rooms::create_room))
+        .route("/api/v1/meet/rooms/instant", post(rooms::create_instant_room))
         .route("/api/v1/meet/rooms/:id", get(rooms::get_room).put(rooms::update_room).delete(rooms::delete_room))
         .route("/api/v1/meet/rooms/:id/end", post(rooms::end_room))
         // Token generation
@@ -154,7 +172,21 @@ fn build_router(state: AppState) -> Router {
         .route("/api/v1/meet/rooms/:id/recording", get(recordings::get_active_recording))
         .route("/api/v1/meet/rooms/:id/recording/start", post(recordings::start_recording))
         .route("/api/v1/meet/rooms/:id/recording/stop", post(recordings::stop_room_recording))
-        // Waiting room
+        // Host-friendly code-addressed endpoints (avoid a code → UUID
+        // round-trip on the client).
+        .route(
+            "/api/v1/meet/rooms/by-code/:code/recording/start",
+            post(recordings::start_room_recording_by_code),
+        )
+        .route(
+            "/api/v1/meet/rooms/by-code/:code/recording/stop",
+            post(recordings::stop_room_recording_by_code),
+        )
+        // Lobby admit/deny + pending list (host-only)
+        .route("/api/v1/meet/rooms/:code/knocks", get(lobby::list_knocks))
+        .route("/api/v1/meet/rooms/:code/admit/:identity", post(lobby::admit))
+        .route("/api/v1/meet/rooms/:code/deny/:identity", post(lobby::deny))
+        // Waiting room (legacy DB-backed — retained for Phase 0 compatibility)
         .route("/api/v1/meet/rooms/:id/waiting-room", get(waiting_room::list_waiting).post(waiting_room::join_waiting_room))
         .route("/api/v1/meet/rooms/:id/waiting-room/admit/:user_id", post(waiting_room::admit_user))
         .route("/api/v1/meet/rooms/:id/waiting-room/deny/:user_id", post(waiting_room::deny_user))
@@ -169,6 +201,20 @@ fn build_router(state: AppState) -> Router {
             "/api/v1/meet/events/session-ended",
             post(transcription::handle_session_ended),
         )
+        // Live transcription (Phase 3b) — browser STT loop persists & shares
+        // utterances through the server; peers receive via LiveKit data channel.
+        .route(
+            "/api/v1/meet/rooms/:code/transcription/ingest",
+            post(transcription::ingest_transcription),
+        )
+        .route(
+            "/api/v1/meet/rooms/:code/transcription/history",
+            get(transcription::list_transcription_history),
+        )
+        .route(
+            "/api/v1/meet/rooms/:code/transcription/export",
+            get(transcription::export_transcription),
+        )
         // Video messages
         .route(
             "/api/v1/meet/video-messages",
@@ -178,6 +224,47 @@ fn build_router(state: AppState) -> Router {
         .route(
             "/api/v1/meet/video-messages/:id/read",
             patch(video_messages::mark_video_message_read),
+        )
+        // Raise hand (Phase 3c)
+        .route(
+            "/api/v1/meet/rooms/:code/hands",
+            get(raised_hands::list_raised_hands),
+        )
+        .route(
+            "/api/v1/meet/rooms/:code/hands/raise",
+            post(raised_hands::raise_hand),
+        )
+        .route(
+            "/api/v1/meet/rooms/:code/hands/lower",
+            post(raised_hands::lower_hand),
+        )
+        .route(
+            "/api/v1/meet/rooms/:code/hands/lower/:identity",
+            post(raised_hands::lower_other_hand),
+        )
+        // Polls (Phase 3c)
+        .route(
+            "/api/v1/meet/rooms/:code/polls",
+            get(polls::list_polls).post(polls::create_poll),
+        )
+        .route("/api/v1/meet/polls/:id/vote", post(polls::vote_poll))
+        .route("/api/v1/meet/polls/:id/close", post(polls::close_poll))
+        // Q&A (Phase 3c)
+        .route(
+            "/api/v1/meet/rooms/:code/questions",
+            get(questions::list_questions).post(questions::ask_question),
+        )
+        .route(
+            "/api/v1/meet/questions/:id/upvote",
+            post(questions::upvote_question),
+        )
+        .route(
+            "/api/v1/meet/questions/:id/answer",
+            post(questions::answer_question),
+        )
+        .route(
+            "/api/v1/meet/questions/:id",
+            delete(questions::delete_question),
         )
         // Remote desktop connections (absorbed from signapps-remote, port 3017)
         .route(

@@ -37,6 +37,7 @@ import { useChatNotifications } from "@/hooks/use-chat-notifications";
 import { chatApi, ChatAttachment as Attachment } from "@/lib/api/chat";
 import { FEATURES } from "@/lib/features";
 import { notify as sendNotification } from "@/lib/notify";
+import { toast } from "sonner";
 import {
   Tooltip,
   TooltipContent,
@@ -451,11 +452,21 @@ export function ChatWindow({
                       variant="ghost"
                       size="icon"
                       className="h-8 w-8 hover:text-foreground hidden sm:flex"
+                      onClick={async () => {
+                        try {
+                          const res = await chatApi.startVideoCall(channelId);
+                          const { code, url } = res.data;
+                          toast.success(`Appel vidéo démarré (code ${code})`);
+                          window.open(url, "_blank");
+                        } catch {
+                          toast.error("Impossible de démarrer l'appel vidéo");
+                        }
+                      }}
                     >
                       <Video className="h-4 w-4" />
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent>Video call</TooltipContent>
+                  <TooltipContent>Démarrer un appel vidéo</TooltipContent>
                 </Tooltip>
 
                 {/* IDEA-138: search */}

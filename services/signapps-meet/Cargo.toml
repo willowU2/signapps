@@ -27,6 +27,9 @@ signapps-transcription = { path = "../../crates/signapps-transcription" }
 # HTTP client (storage, media, docs inter-service calls)
 reqwest = { workspace = true }
 
+# LiveKit Server (token issuance + RoomService/Egress)
+signapps-livekit-client = { path = "../../crates/signapps-livekit-client" }
+
 # UUID and time
 uuid = { version = "1.0", features = ["v4", "serde"] }
 chrono = { version = "0.4", features = ["serde"] }
@@ -48,6 +51,9 @@ anyhow = "1.0"
 
 # Async streams (used by remote WebSocket handler)
 futures = { workspace = true }
+
+# In-memory concurrent maps (used by Q&A upvote dedup)
+dashmap = { workspace = true }
 
 # Password hashing
 bcrypt = "0.15"

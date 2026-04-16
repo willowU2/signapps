@@ -318,6 +318,7 @@ pub async fn put_event_ics(
             assigned_to: None,
             project_id: None,
             tags: None,
+            has_meet_room: None,
         };
         event_repo
             .update(event_id, update)
@@ -363,6 +364,7 @@ pub async fn put_event_ics(
             assigned_to: None,
             project_id: None,
             tags: None,
+            has_meet_room: None,
         };
         event_repo
             .create(calendar_id, create, claims.sub)

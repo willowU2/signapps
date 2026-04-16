@@ -199,6 +199,7 @@ import { saveAs } from "file-saver";
 import VerEx from "verbal-expressions";
 import { htmlToMarkdown, markdownToHtml, isMarkdown } from "@/lib/markdown";
 import { useAutosave } from "@/hooks/use-autosave";
+import ContextMenuStandard7 from "@/components/context-menu-standard-7";
 
 const lowlight = createLowlight(common);
 
@@ -4396,7 +4397,9 @@ ${html}
               </FloatingMenu>
             )}
 
-            <EditorContent editor={editor} />
+            <ContextMenuStandard7 editor={editor}>
+              <EditorContent editor={editor} />
+            </ContextMenuStandard7>
           </div>
         </div>
 

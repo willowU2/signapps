@@ -211,7 +211,10 @@ function formatBytes(bytes: number): string {
 }
 
 export function AttachmentPreview({ attachment }: AttachmentPreviewProps) {
-  const isImage = attachment.content_type.startsWith("image/");
+  const contentType = attachment.content_type ?? "application/octet-stream";
+  const filename = attachment.filename ?? "fichier";
+  const size = attachment.size ?? 0;
+  const isImage = contentType.startsWith("image/");
 
   if (isImage) {
     return (
@@ -219,12 +222,12 @@ export function AttachmentPreview({ attachment }: AttachmentPreviewProps) {
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={attachment.url}
-          alt={attachment.filename}
+          alt={filename}
           className="max-w-full max-h-64 object-contain"
           loading="lazy"
         />
         <div className="px-2 py-1 text-[10px] text-muted-foreground truncate border-t">
-          {attachment.filename} · {formatBytes(attachment.size)}
+          {filename} · {formatBytes(size)}
         </div>
       </div>
     );
@@ -237,16 +240,12 @@ export function AttachmentPreview({ attachment }: AttachmentPreviewProps) {
       rel="noopener noreferrer"
       className="mt-2 flex items-center gap-2 rounded-lg border bg-muted/30 hover:bg-muted/60 transition-colors px-3 py-2 max-w-xs group"
     >
-      <div className="text-primary shrink-0">
-        {getFileIcon(attachment.content_type)}
-      </div>
+      <div className="text-primary shrink-0">{getFileIcon(contentType)}</div>
       <div className="flex-1 min-w-0">
         <p className="text-xs font-medium truncate group-hover:underline">
-          {attachment.filename}
+          {filename}
         </p>
-        <p className="text-[10px] text-muted-foreground">
-          {formatBytes(attachment.size)}
-        </p>
+        <p className="text-[10px] text-muted-foreground">{formatBytes(size)}</p>
       </div>
     </a>
   );
@@ -268,9 +267,11 @@ export function PendingAttachment({
   return (
     <div className="flex items-center gap-1.5 rounded-full border bg-muted/40 pl-2 pr-1 py-0.5 max-w-[180px]">
       <div className="text-primary shrink-0">
-        {getFileIcon(attachment.content_type)}
+        {getFileIcon(attachment.content_type ?? "application/octet-stream")}
       </div>
-      <span className="text-xs truncate">{attachment.filename}</span>
+      <span className="text-xs truncate">
+        {attachment.filename ?? "fichier"}
+      </span>
       <Button
         type="button"
         variant="ghost"

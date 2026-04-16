@@ -11,6 +11,7 @@ pub mod task_tree;
 pub mod timezone;
 // pub mod email_service;  // NOTE: email_service disabled — OpenSSL not available on Windows build
 pub mod ai_service;
+pub mod meet_service;
 pub mod notification_scheduler;
 
 pub use notification_scheduler::{NotificationScheduler, SchedulerConfig};

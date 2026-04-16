@@ -6,6 +6,7 @@
 mod backup;
 mod docker;
 mod handlers;
+mod presets;
 mod store;
 
 use axum::{

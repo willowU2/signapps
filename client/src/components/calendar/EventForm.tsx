@@ -26,6 +26,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { ResourceSelector } from "./ResourceSelector";
 import { AttendeeList } from "./AttendeeList";
@@ -40,6 +41,7 @@ import {
   UserX,
   Info,
   Loader2,
+  Video,
 } from "lucide-react";
 import { EntityLinks } from "@/components/crosslinks/EntityLinks";
 import { CrossLinks, crossLinkHelpers } from "@/components/interop/cross-links";
@@ -537,6 +539,7 @@ export function EventForm({
         is_all_day: initialEvent.is_all_day,
         rrule: initialEvent.rrule,
         timezone: initialEvent.timezone,
+        has_meet_room: initialEvent.has_meet_room,
       };
     }
 
@@ -557,6 +560,7 @@ export function EventForm({
       end_time: end.toISOString(),
       is_all_day: false,
       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
+      has_meet_room: false,
     };
   }, [initialEvent, defaultStartDate, defaultEndDate]);
 
@@ -628,6 +632,7 @@ export function EventForm({
       rrule: formData.rrule || undefined,
       timezone: formData.timezone || initialEvent.timezone,
       event_type: initialEvent.event_type,
+      has_meet_room: formData.has_meet_room,
     };
     await updateEvent(initialEvent.id, updateData);
     if (scope && scope !== "all") {
@@ -676,6 +681,7 @@ export function EventForm({
           is_all_day: formData.is_all_day,
           timezone: formData.timezone,
           rrule: formData.rrule || undefined,
+          has_meet_room: formData.has_meet_room,
         };
         await createEvent(createData);
         toast.success(
@@ -892,6 +898,51 @@ export function EventForm({
                 >
                   Toute la journée
                 </Label>
+              </div>
+            )}
+
+            {/* Meet room toggle — shown for meeting-like event types */}
+            {!isLeave && (
+              <div className="flex items-center justify-between rounded-lg border border-border bg-card px-3 py-2">
+                <div className="flex items-center gap-2">
+                  <Video className="h-4 w-4 text-muted-foreground" />
+                  <Label
+                    htmlFor="has_meet_room"
+                    className="cursor-pointer text-sm font-normal"
+                  >
+                    Ajouter une visio Meet
+                  </Label>
+                </div>
+                <Switch
+                  id="has_meet_room"
+                  checked={Boolean(formData.has_meet_room)}
+                  onCheckedChange={(checked) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      has_meet_room: checked,
+                    }))
+                  }
+                />
+              </div>
+            )}
+
+            {/* Rejoindre CTA when event already has a Meet room */}
+            {initialEvent?.has_meet_room && initialEvent?.meet_room_code && (
+              <div className="flex items-center justify-between rounded-lg border border-border bg-muted/30 px-3 py-2">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Video className="h-4 w-4" />
+                  Salle Meet : <span className="font-mono">{initialEvent.meet_room_code}</span>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    window.location.href = `/meet/${initialEvent.meet_room_code}`;
+                  }}
+                >
+                  Rejoindre
+                </Button>
               </div>
             )}
 

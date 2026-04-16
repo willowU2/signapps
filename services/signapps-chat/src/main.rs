@@ -94,6 +94,11 @@ fn create_router(state: AppState, sharing_engine: SharingEngine) -> Router {
             "/api/v1/presence",
             get(handlers::presence::get_presence).post(handlers::presence::set_presence),
         )
+        // Meet integration: start a video call from a thread (Phase 4b)
+        .route(
+            "/api/v1/chat/threads/:thread_id/start-video-call",
+            post(handlers::video_call::start_video_call),
+        )
         // WebSocket
         .route("/api/v1/ws", get(handlers::websocket::ws_upgrade))
         .route_layer(middleware::from_fn(tenant_context_middleware))

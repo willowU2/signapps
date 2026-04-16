@@ -142,8 +142,21 @@ pub async fn kick_participant(
         return Err((StatusCode::NOT_FOUND, "Participant not found".to_string()));
     }
 
-    // In a real implementation, we would also send a signal to LiveKit
-    // to remove the participant from the room
+    // Forward the kick to LiveKit so the participant is actually
+    // disconnected from the SFU. Failures are logged but not fatal —
+    // the DB row is already marked "left" so the UI reflects reality.
+    if let Err(err) = state
+        .livekit
+        .remove_participant(&room.room_code, &user_id.to_string())
+        .await
+    {
+        tracing::warn!(
+            ?err,
+            room = %room.room_code,
+            identity = %user_id,
+            "LiveKit remove_participant failed — DB state is authoritative"
+        );
+    }
 
     Ok(StatusCode::NO_CONTENT)
 }
@@ -225,8 +238,52 @@ pub async fn mute_participant(
     .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
     .ok_or((StatusCode::NOT_FOUND, "Participant not found".to_string()))?;
 
-    // In a real implementation, we would also send a signal to LiveKit
-    // to mute the participant's tracks
+    // Forward the mute to LiveKit for each matching audio/video track.
+    // We look up the participant's published tracks via RoomService so we
+    // can mute them at the SFU level (MutePublishedTrack needs a track_sid
+    // — we iterate all tracks and filter by type).
+    if req.audio.is_some() || req.video.is_some() {
+        match state.livekit.list_participants(&room.room_code).await {
+            Ok(participants) => {
+                if let Some(p) = participants.into_iter().find(|p| p.identity == user_id.to_string()) {
+                    for track in &p.tracks {
+                        let desired = match track.track_type.as_str() {
+                            "AUDIO" => req.audio,
+                            "VIDEO" => req.video,
+                            _ => None,
+                        };
+                        if let Some(muted) = desired {
+                            if let Err(err) = state
+                                .livekit
+                                .mute_published_track(
+                                    &room.room_code,
+                                    &user_id.to_string(),
+                                    &track.sid,
+                                    muted,
+                                )
+                                .await
+                            {
+                                tracing::warn!(
+                                    ?err,
+                                    room = %room.room_code,
+                                    identity = %user_id,
+                                    track = %track.sid,
+                                    "LiveKit mute_published_track failed"
+                                );
+                            }
+                        }
+                    }
+                }
+            }
+            Err(err) => {
+                tracing::warn!(
+                    ?err,
+                    room = %room.room_code,
+                    "LiveKit list_participants failed — skipping SFU mute"
+                );
+            }
+        }
+    }
 
     Ok(Json(ParticipantResponse {
         id: updated.id,

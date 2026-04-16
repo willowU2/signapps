@@ -82,6 +82,10 @@ export interface Event {
   assigned_to?: string;
   project_id?: string;
   tags?: string[];
+  /** True when the event has a linked Meet room. */
+  has_meet_room?: boolean;
+  /** Room code of the linked Meet room (6-char/6-digit). */
+  meet_room_code?: string | null;
 }
 
 export interface CreateEvent {
@@ -111,6 +115,8 @@ export interface CreateEvent {
   assigned_to?: string;
   project_id?: string;
   tags?: string[];
+  /** Request creation of a linked Meet room for this event. */
+  has_meet_room?: boolean;
 }
 
 export interface UpdateEvent {
@@ -140,6 +146,8 @@ export interface UpdateEvent {
   assigned_to?: string;
   project_id?: string;
   tags?: string[];
+  /** Toggle the linked Meet room on/off. */
+  has_meet_room?: boolean;
 }
 
 export interface EventAttendee {

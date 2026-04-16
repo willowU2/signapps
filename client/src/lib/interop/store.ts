@@ -36,13 +36,22 @@ export interface ActivityEntry {
 
 export interface UnifiedNotification {
   id: string;
-  sourceModule: "mail" | "task" | "calendar";
+  sourceModule: "mail" | "task" | "calendar" | "meet";
+  /**
+   * Notification type. For Meet, one of:
+   * `meet.invited`, `meet.knock_received`, `meet.starting_soon`,
+   * `meet.recording_ready`.
+   */
   type: string;
   title: string;
   body: string;
   entityId?: string;
   read: boolean;
   createdAt: string;
+  /** Deep-link to the related resource (e.g. `/meet/<code>`). */
+  link?: string;
+  /** Arbitrary extra payload (`room_code`, `identity`, …). */
+  metadata?: Record<string, unknown>;
 }
 
 const LINKS_KEY = "interop:crosslinks";

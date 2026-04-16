@@ -1,358 +1,216 @@
-"use client";
+'use client';
 
-// IDEA-129: Real-time transcription overlay — whisper-rs via media service, live meeting
+// Phase 3b: Real-time transcription overlay.
+// Subscribes to the "transcription" LiveKit data-channel topic, hydrates
+// on mount from `GET /meet/rooms/:code/transcription/history`, and renders
+// the last few captions with a 10-second fade-out. A floating overlay
+// sitting on top of the video grid — the semi-transparent black/white
+// styling is intentional (tokens like `bg-card`/`text-foreground` would
+// be unreadable over video; plan explicitly allows this exception).
 
-import { useState, useEffect, useRef, useCallback } from "react";
-import { Button } from "@/components/ui/button";
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useRoomContext } from '@livekit/components-react';
+import { RoomEvent, type RemoteParticipant } from 'livekit-client';
+import { Download, Subtitles } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import {
-  Mic,
-  MicOff,
-  Subtitles,
-  X,
-  ChevronDown,
-  ChevronUp,
-  Download,
-} from "lucide-react";
-import { cn } from "@/lib/utils";
-import { getClient, ServiceName } from "@/lib/api/factory";
-import { toast } from "sonner";
+    meetApi,
+    type TranscriptionChunk,
+    type TranscriptionExportFormat,
+} from '@/lib/api/meet';
 
-interface TranscriptLine {
-  id: string;
-  text: string;
-  timestamp: number;
-  isFinal: boolean;
+/** Max number of captions kept in memory / rendered simultaneously. */
+const MAX_CAPTIONS = 6;
+/** How long a caption stays visible after its `timestamp_ms`. */
+const FADE_OUT_MS = 10_000;
+/** LiveKit data-channel topic used to broadcast transcription chunks. */
+export const TRANSCRIPTION_TOPIC = 'transcription';
+
+export interface RenderedCaption extends TranscriptionChunk {
+    /** Synthetic unique key for React lists. */
+    key: string;
+    /** Human-readable display name (falls back to identity). */
+    displayName: string;
 }
 
 interface LiveTranscriptionOverlayProps {
-  /** Whether to show the overlay */
-  visible: boolean;
-  onClose: () => void;
-  /** Use whisper-rs backend (via signapps-ai) instead of Web Speech API */
-  useWhisper?: boolean;
-  className?: string;
+    /** Room code — used to hydrate history and to build the export URL. */
+    roomCode: string;
+    /** Whether the overlay is rendered. Parent controls this toggle. */
+    visible: boolean;
+    className?: string;
 }
 
 export function LiveTranscriptionOverlay({
-  visible,
-  onClose,
-  useWhisper = false,
-  className,
+    roomCode,
+    visible,
+    className,
 }: LiveTranscriptionOverlayProps) {
-  const [isRecording, setIsRecording] = useState(false);
-  const [lines, setLines] = useState<TranscriptLine[]>([]);
-  const [interim, setInterim] = useState("");
-  const [collapsed, setCollapsed] = useState(false);
-  const startTimeRef = useRef<number>(Date.now());
-  const recognitionRef = useRef<unknown>(null);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const scrollRef = useRef<HTMLDivElement>(null);
+    const room = useRoomContext();
+    const [captions, setCaptions] = useState<RenderedCaption[]>([]);
+    const [, forceTick] = useState(0);
+    const hydratedRef = useRef(false);
 
-  useEffect(() => {
-    scrollRef.current?.scrollTo({
-      top: scrollRef.current.scrollHeight,
-      behavior: "smooth",
-    });
-  }, [lines, interim]);
+    // ── Helpers ────────────────────────────────────────────────────────────
 
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      stopRecording();
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    const identityToName = useCallback(
+        (identity: string): string => {
+            if (!room) return identity;
+            if (room.localParticipant?.identity === identity) {
+                return room.localParticipant.name || identity;
+            }
+            const remote = room.remoteParticipants?.get(identity);
+            return remote?.name || identity;
+        },
+        [room],
+    );
 
-  const formatTs = (ms: number) => {
-    const s = Math.floor(ms / 1000);
-    return `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
-  };
+    const pushCaption = useCallback(
+        (chunk: TranscriptionChunk) => {
+            const key = `${chunk.speaker_identity}-${chunk.timestamp_ms}-${Math.random()
+                .toString(36)
+                .slice(2, 8)}`;
+            const displayName = identityToName(chunk.speaker_identity);
+            setCaptions((prev) =>
+                [...prev, { ...chunk, key, displayName }].slice(-MAX_CAPTIONS),
+            );
+        },
+        [identityToName],
+    );
 
-  const addFinalLine = useCallback((text: string) => {
-    const ts = Date.now() - startTimeRef.current;
-    setLines((prev) => [
-      ...prev,
-      {
-        id: `line_${Date.now()}_${Math.random()}`,
-        text: text.trim(),
-        timestamp: ts,
-        isFinal: true,
-      },
-    ]);
-    setInterim("");
-  }, []);
+    // ── 1. Hydrate history on open ────────────────────────────────────────
 
-  // ─── Whisper backend ──────────────────────────────────────────────────────
-  const startWhisper = async () => {
-    if (!navigator.mediaDevices?.getUserMedia) {
-      toast.error("Microphone non disponible");
-      return;
-    }
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const recorder = new MediaRecorder(stream, { mimeType: "audio/webm" });
-      const chunks: Blob[] = [];
+    useEffect(() => {
+        if (!visible || !roomCode || hydratedRef.current) return;
+        hydratedRef.current = true;
+        meetApi.transcription
+            .history(roomCode, MAX_CAPTIONS)
+            .then((res) => {
+                // Only keep the tail — recent entries.
+                const recent = res.data.slice(-MAX_CAPTIONS);
+                setCaptions(
+                    recent.map((e) => ({
+                        speaker_identity: e.speaker_identity,
+                        text: e.text,
+                        timestamp_ms: e.timestamp_ms,
+                        language: e.language,
+                        key: e.id,
+                        displayName: identityToName(e.speaker_identity),
+                    })),
+                );
+            })
+            .catch(() => {
+                // Silent — the overlay keeps working from the live stream only.
+            });
+    }, [visible, roomCode, identityToName]);
 
-      recorder.ondataavailable = (e) => {
-        if (e.data.size > 0) chunks.push(e.data);
-      };
+    // ── 2. Subscribe to the LiveKit data-channel topic ───────────────────
 
-      recorder.onstop = async () => {
-        const blob = new Blob(chunks, { type: "audio/webm" });
-        chunks.length = 0;
-        if (blob.size < 1000) return;
-        const fd = new FormData();
-        fd.append("audio", blob, "audio.webm");
-        fd.append("language", navigator.language?.split("-")[0] ?? "fr");
-        try {
-          const client = getClient(ServiceName.AI);
-          const res = await client.post<{ text: string }>("/transcribe", fd, {
-            headers: { "Content-Type": "multipart/form-data" },
-          });
-          const text = res.data?.text?.trim();
-          if (text) addFinalLine(text);
-        } catch {
-          // Silently skip failed chunk
+    useEffect(() => {
+        if (!room) return;
+        const decoder = new TextDecoder();
+        const onData = (
+            payload: Uint8Array,
+            participant?: RemoteParticipant,
+            _kind?: unknown,
+            topic?: string,
+        ) => {
+            if (topic !== TRANSCRIPTION_TOPIC) return;
+            try {
+                const json = JSON.parse(decoder.decode(payload)) as TranscriptionChunk;
+                // The broadcaster already posted its own chunk through
+                // `ingest`, but other peers might broadcast without
+                // ingesting (e.g. a guest). Trust the payload for the
+                // overlay and keep the persistence server-side.
+                if (!json.text || !json.speaker_identity) return;
+                // Skip echoes from ourselves — we've already rendered them
+                // when we broadcast. `participant` is undefined for local.
+                if (participant && participant.identity === room.localParticipant?.identity) {
+                    return;
+                }
+                pushCaption(json);
+            } catch {
+                // Bad payload — ignore.
+            }
+        };
+        room.on(RoomEvent.DataReceived, onData);
+        return () => {
+            room.off(RoomEvent.DataReceived, onData);
+        };
+    }, [room, pushCaption]);
+
+    // ── 3. Fade-out ticker ───────────────────────────────────────────────
+
+    useEffect(() => {
+        if (!visible) return;
+        const id = window.setInterval(() => forceTick((n) => n + 1), 1000);
+        return () => window.clearInterval(id);
+    }, [visible]);
+
+    // Drop captions older than FADE_OUT_MS so the DOM stays small.
+    useEffect(() => {
+        if (captions.length === 0) return;
+        const now = Date.now();
+        const oldest = captions[0];
+        if (now - oldest.timestamp_ms > FADE_OUT_MS + 2000) {
+            setCaptions((prev) =>
+                prev.filter((c) => now - c.timestamp_ms <= FADE_OUT_MS + 2000),
+            );
         }
-      };
+    }, [captions]);
 
-      recorder.start();
-      const interval = setInterval(() => {
-        if (recorder.state === "recording") {
-          recorder.stop();
-          recorder.start();
-        } else {
-          clearInterval(interval);
-        }
-      }, 8000);
+    const exportHref = useMemo(
+        () => (format: TranscriptionExportFormat) =>
+            meetApi.transcription.exportUrl(roomCode, format),
+        [roomCode],
+    );
 
-      mediaRecorderRef.current = recorder;
-      setIsRecording(true);
-      startTimeRef.current = Date.now();
-    } catch {
-      toast.error("Impossible d'accéder au microphone");
-    }
-  };
+    if (!visible) return null;
 
-  const stopWhisper = () => {
-    mediaRecorderRef.current?.stop();
-    mediaRecorderRef.current?.stream?.getTracks().forEach((t) => t.stop());
-    mediaRecorderRef.current = null;
-    setIsRecording(false);
-  };
+    const now = Date.now();
 
-  // ─── Web Speech API fallback ──────────────────────────────────────────────
-  const startSpeechApi = () => {
-    const SR =
-      (
-        window as unknown as {
-          SpeechRecognition?: unknown;
-          webkitSpeechRecognition?: unknown;
-        }
-      ).SpeechRecognition ||
-      (window as unknown as { webkitSpeechRecognition?: unknown })
-        .webkitSpeechRecognition;
-    if (!SR) {
-      toast.error("Speech Recognition non supporté dans ce navigateur");
-      return;
-    }
-
-    // Third-party Web Speech API — use unknown cast since SpeechRecognition global can conflict
-    const rec = new (SR as unknown as new () => {
-      continuous: boolean;
-      interimResults: boolean;
-      lang: string;
-      onstart: (() => void) | null;
-      onresult: unknown;
-      onerror: unknown;
-      onend: (() => void) | null;
-      start: () => void;
-      stop: () => void;
-    })();
-    rec.continuous = true;
-    rec.interimResults = true;
-    rec.lang = navigator.language || "fr-FR";
-
-    rec.onstart = () => {
-      setIsRecording(true);
-      startTimeRef.current = Date.now();
-    };
-
-    rec.onresult = (event: {
-      resultIndex: number;
-      results: SpeechRecognitionResultList;
-    }) => {
-      let interimText = "";
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        const r = event.results[i];
-        if (r.isFinal) {
-          addFinalLine(r[0].transcript);
-        } else {
-          interimText += r[0].transcript;
-        }
-      }
-      setInterim(interimText);
-    };
-
-    rec.onerror = (e: { error: string }) => {
-      if (e.error !== "no-speech" && e.error !== "aborted") {
-        toast.error(`Erreur transcription: ${e.error}`);
-      }
-    };
-
-    rec.onend = () => {
-      if (isRecording) {
-        try {
-          rec.start();
-        } catch {
-          setIsRecording(false);
-        }
-      }
-    };
-
-    recognitionRef.current = rec;
-    rec.start();
-  };
-
-  const stopSpeechApi = () => {
-    const rec = recognitionRef.current as { stop?: () => void } | null;
-    rec?.stop?.();
-    recognitionRef.current = null;
-    setIsRecording(false);
-    setInterim("");
-  };
-
-  const startRecording = () => (useWhisper ? startWhisper() : startSpeechApi());
-  const stopRecording = () => (useWhisper ? stopWhisper() : stopSpeechApi());
-  const toggleRecording = () =>
-    isRecording ? stopRecording() : startRecording();
-
-  const handleExport = () => {
-    const text = lines
-      .map((l) => `[${formatTs(l.timestamp)}] ${l.text}`)
-      .join("\n");
-    const blob = new Blob([text], { type: "text/plain" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `transcript-${new Date().toISOString().slice(0, 10)}.txt`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
-  if (!visible) return null;
-
-  return (
-    <div
-      className={cn(
-        "absolute bottom-20 left-1/2 -translate-x-1/2 z-30 w-full max-w-xl rounded-xl border bg-black/80 text-white backdrop-blur-sm shadow-2xl",
-        className,
-      )}
-    >
-      {/* Header */}
-      <div className="flex items-center justify-between px-3 py-2 border-b border-white/10">
-        <div className="flex items-center gap-2">
-          <Subtitles className="h-4 w-4 text-blue-400" />
-          <span className="text-sm font-medium">Transcription live</span>
-          {isRecording && (
-            <span className="flex items-center gap-1 text-xs text-red-400">
-              <span className="h-1.5 w-1.5 rounded-full bg-red-500 animate-pulse" />
-              Enregistrement
-            </span>
-          )}
-        </div>
-        <div className="flex items-center gap-1">
-          <Button
-            size="icon"
-            variant="ghost"
-            className="h-6 w-6 text-white hover:bg-card/10"
-            onClick={() => setCollapsed(!collapsed)}
-          >
-            {collapsed ? (
-              <ChevronUp className="h-3.5 w-3.5" />
-            ) : (
-              <ChevronDown className="h-3.5 w-3.5" />
-            )}
-          </Button>
-          {lines.length > 0 && (
-            <Button
-              size="icon"
-              variant="ghost"
-              className="h-6 w-6 text-white hover:bg-card/10"
-              onClick={handleExport}
-              title="Exporter"
-            >
-              <Download className="h-3.5 w-3.5" />
-            </Button>
-          )}
-          <Button
-            size="icon"
-            variant="ghost"
-            className="h-6 w-6 text-white hover:bg-card/10"
-            onClick={() => {
-              stopRecording();
-              onClose();
-            }}
-          >
-            <X className="h-3.5 w-3.5" />
-          </Button>
-        </div>
-      </div>
-
-      {/* Transcript area */}
-      {!collapsed && (
+    return (
         <div
-          ref={scrollRef}
-          className="max-h-40 overflow-y-auto p-3 space-y-1 custom-scrollbar"
+            data-testid="live-transcription-overlay"
+            className={cn(
+                'pointer-events-none absolute inset-x-0 bottom-24 z-30 flex flex-col items-center gap-1 px-4',
+                className,
+            )}
         >
-          {lines.length === 0 && !interim && !isRecording && (
-            <p className="text-xs text-white/40 text-center py-2">
-              Cliquez sur le micro pour démarrer la transcription
-            </p>
-          )}
-          {lines.map((line) => (
-            <div key={line.id} className="flex gap-2 text-sm">
-              <span className="text-white/40 text-xs font-mono shrink-0 mt-0.5">
-                {formatTs(line.timestamp)}
-              </span>
-              <span>{line.text}</span>
+            <div className="pointer-events-auto flex items-center gap-2 rounded-full bg-black/60 px-3 py-1 text-xs text-white backdrop-blur-sm">
+                <Subtitles className="h-3.5 w-3.5" aria-hidden />
+                <span>Transcription live</span>
+                <a
+                    href={exportHref('txt')}
+                    download
+                    className="ml-1 inline-flex h-6 w-6 items-center justify-center rounded-full hover:bg-white/10"
+                    title="Télécharger (TXT)"
+                    aria-label="Télécharger la transcription au format texte"
+                >
+                    <Download className="h-3 w-3" />
+                </a>
             </div>
-          ))}
-          {interim && (
-            <div className="flex gap-2 text-sm text-white/60 italic">
-              <span className="text-white/30 text-xs font-mono shrink-0 mt-0.5">
-                ...
-              </span>
-              <span>{interim}</span>
+            <div className="flex max-w-3xl flex-col items-center gap-1">
+                {captions.map((c) => {
+                    const age = now - c.timestamp_ms;
+                    const opacity = Math.max(
+                        0,
+                        Math.min(1, 1 - (age - (FADE_OUT_MS - 2000)) / 2000),
+                    );
+                    return (
+                        <div
+                            key={c.key}
+                            className="rounded-lg bg-black/60 px-3 py-1.5 text-center text-sm text-white shadow-lg backdrop-blur-sm"
+                            style={{ opacity }}
+                        >
+                            <span className="font-semibold">{c.displayName}</span>
+                            <span className="mx-1 text-white/60">·</span>
+                            <span>{c.text}</span>
+                        </div>
+                    );
+                })}
             </div>
-          )}
         </div>
-      )}
-
-      {/* Controls */}
-      <div className="flex items-center gap-2 px-3 py-2 border-t border-white/10">
-        <Button
-          size="sm"
-          variant={isRecording ? "destructive" : "default"}
-          className="gap-2 h-7 text-xs"
-          onClick={toggleRecording}
-        >
-          {isRecording ? (
-            <>
-              <MicOff className="h-3.5 w-3.5" />
-              Arrêter
-            </>
-          ) : (
-            <>
-              <Mic className="h-3.5 w-3.5" />
-              Démarrer
-            </>
-          )}
-        </Button>
-        <span className="text-xs text-white/40 ml-auto">
-          {lines.length} segment(s)
-        </span>
-      </div>
-    </div>
-  );
+    );
 }
