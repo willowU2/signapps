@@ -3,9 +3,13 @@
 //! LiveKit Server signs webhook deliveries with a JWT (HS256 using the
 //! same `LIVEKIT_API_SECRET`) placed in the `Authorization: Bearer`
 //! header. The body is JSON with a `sha256` claim matching the body
-//! digest. For Phase 1 we do the signature check and log the event —
-//! DB projections (updating `meet.room_participants`, `meet.recordings`)
-//! are flagged as incremental follow-up.
+//! digest.
+//!
+//! We verify the signature, then project interesting events into the DB:
+//! - `egress_ended` → locate `meet.recordings` by `egress_id` (stored in
+//!   `storage_bucket` as `livekit:<egress_id>`) and update status/file
+//!   size. Under Phase 3a (Option C) no real egress is ever started, so
+//!   the lookup will usually miss — we log a warning and move on.
 
 use axum::{
     body::Bytes,
@@ -39,7 +43,27 @@ struct WebhookEvent {
     #[serde(default)]
     participant: Option<serde_json::Value>,
     #[serde(default, rename = "egressInfo")]
-    egress_info: Option<serde_json::Value>,
+    egress_info: Option<EgressInfo>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct EgressInfo {
+    #[serde(default)]
+    egress_id: String,
+    #[serde(default)]
+    status: Option<String>,
+    #[serde(default)]
+    file: Option<EgressFileInfo>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct EgressFileInfo {
+    #[serde(default)]
+    filename: Option<String>,
+    #[serde(default)]
+    size: Option<i64>,
 }
 
 /// Receive a LiveKit webhook.
@@ -73,7 +97,6 @@ pub async fn receive_webhook(
         .map_err(|e| (StatusCode::UNAUTHORIZED, format!("invalid JWT: {e}")))?
         .claims;
 
-    // Body parse — we don't yet project into Postgres, just log.
     match serde_json::from_slice::<WebhookEvent>(&body) {
         Ok(evt) => {
             tracing::info!(
@@ -84,6 +107,11 @@ pub async fn receive_webhook(
                 has_egress = evt.egress_info.is_some(),
                 "livekit webhook received"
             );
+
+            // Project egress lifecycle into meet.recordings.
+            if let Some(egress) = evt.egress_info.as_ref() {
+                project_egress_event(&state, &evt.event, egress).await;
+            }
         }
         Err(err) => {
             tracing::warn!(?err, raw_len = body.len(), "failed to parse livekit webhook");
@@ -92,6 +120,117 @@ pub async fn receive_webhook(
     }
 
     Ok(StatusCode::OK)
+}
+
+/// Update `meet.recordings` based on an `EgressInfo` payload. Non-fatal —
+/// failures are logged and dropped.
+async fn project_egress_event(state: &AppState, event: &str, egress: &EgressInfo) {
+    if egress.egress_id.is_empty() {
+        return;
+    }
+
+    // Our egress marker lives in storage_bucket as "livekit:<egress_id>"
+    // (once real egress is wired — see recordings.rs module docs).
+    let marker = format!("livekit:{}", egress.egress_id);
+
+    let row: Option<(uuid::Uuid,)> = match sqlx::query_as(
+        "SELECT id FROM meet.recordings WHERE storage_bucket = $1 LIMIT 1",
+    )
+    .bind(&marker)
+    .fetch_optional(&state.pool)
+    .await
+    {
+        Ok(r) => r,
+        Err(err) => {
+            tracing::warn!(?err, egress_id = %egress.egress_id, "lookup failed");
+            return;
+        }
+    };
+
+    let Some((recording_id,)) = row else {
+        tracing::warn!(
+            event,
+            egress_id = %egress.egress_id,
+            "no recording matched egress — ignoring (expected under Phase 3a Option C)"
+        );
+        return;
+    };
+
+    let new_status = match event {
+        "egress_ended" => "ready",
+        "egress_updated" => "processing",
+        "egress_failed" => "failed",
+        _ => return,
+    };
+
+    let file_size = egress.file.as_ref().and_then(|f| f.size);
+    let storage_path = egress
+        .file
+        .as_ref()
+        .and_then(|f| f.filename.clone())
+        .unwrap_or_default();
+
+    let update = sqlx::query(
+        r#"
+        UPDATE meet.recordings SET
+            status = $1,
+            ended_at = COALESCE(ended_at, NOW()),
+            file_size_bytes = COALESCE($2, file_size_bytes),
+            storage_path = CASE WHEN $3 = '' THEN storage_path ELSE $3 END
+        WHERE id = $4
+        "#,
+    )
+    .bind(new_status)
+    .bind(file_size)
+    .bind(&storage_path)
+    .bind(recording_id)
+    .execute(&state.pool)
+    .await;
+
+    match update {
+        Ok(_) => {
+            tracing::info!(
+                %recording_id,
+                event,
+                new_status,
+                "recording projected from egress webhook"
+            );
+        }
+        Err(err) => {
+            tracing::warn!(?err, %recording_id, "failed to project egress event");
+        }
+    }
+
+    // Fire meet.recording.ready / failed event bus notification for Phase 4.
+    if matches!(
+        egress.status.as_deref(),
+        Some("EGRESS_COMPLETE") | Some("EGRESS_FAILED")
+    ) {
+        let bus = signapps_common::pg_events::PgEventBus::new(
+            state.pool.clone(),
+            "signapps-meet".to_string(),
+        );
+        let payload = serde_json::json!({
+            "recording_id": recording_id,
+            "egress_id": egress.egress_id,
+            "status": new_status,
+        });
+        let event_type = if new_status == "ready" {
+            "meet.recording.ready"
+        } else {
+            "meet.recording.failed"
+        };
+        if let Err(err) = bus
+            .publish(signapps_common::pg_events::NewEvent {
+                event_type: event_type.to_string(),
+                aggregate_id: Some(recording_id),
+                payload,
+            })
+            .await
+        {
+            tracing::warn!(?err, "failed to publish recording event");
+        }
+    }
 }
 
 #[cfg(test)]
