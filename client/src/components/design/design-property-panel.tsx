@@ -229,8 +229,9 @@ export default function DesignPropertyPanel({
           className="h-7 w-7"
           onClick={handleDuplicate}
           title="Dupliquer"
+          aria-label="Dupliquer"
         >
-          <Copy className="h-3.5 w-3.5" />
+          <Copy className="h-3.5 w-3.5" aria-hidden="true" />
         </Button>
         <Button
           variant="ghost"
@@ -238,8 +239,9 @@ export default function DesignPropertyPanel({
           className="h-7 w-7"
           onClick={handleDelete}
           title="Supprimer"
+          aria-label="Supprimer"
         >
-          <Trash2 className="h-3.5 w-3.5 text-destructive" />
+          <Trash2 className="h-3.5 w-3.5 text-destructive" aria-hidden="true" />
         </Button>
         <div className="flex-1" />
         <Button
@@ -248,8 +250,9 @@ export default function DesignPropertyPanel({
           className="h-7 w-7"
           onClick={handleBringForward}
           title="Avancer"
+          aria-label="Avancer"
         >
-          <MoveUp className="h-3.5 w-3.5" />
+          <MoveUp className="h-3.5 w-3.5" aria-hidden="true" />
         </Button>
         <Button
           variant="ghost"
@@ -257,8 +260,9 @@ export default function DesignPropertyPanel({
           className="h-7 w-7"
           onClick={handleSendBackward}
           title="Reculer"
+          aria-label="Reculer"
         >
-          <MoveDown className="h-3.5 w-3.5" />
+          <MoveDown className="h-3.5 w-3.5" aria-hidden="true" />
         </Button>
         <Button
           variant="ghost"
@@ -266,8 +270,9 @@ export default function DesignPropertyPanel({
           className="h-7 w-7"
           onClick={handleFlipH}
           title="Flip Horizontal"
+          aria-label="Retourner horizontalement"
         >
-          <FlipHorizontal className="h-3.5 w-3.5" />
+          <FlipHorizontal className="h-3.5 w-3.5" aria-hidden="true" />
         </Button>
         <Button
           variant="ghost"
@@ -275,8 +280,9 @@ export default function DesignPropertyPanel({
           className="h-7 w-7"
           onClick={handleFlipV}
           title="Flip Vertical"
+          aria-label="Retourner verticalement"
         >
-          <FlipVertical className="h-3.5 w-3.5" />
+          <FlipVertical className="h-3.5 w-3.5" aria-hidden="true" />
         </Button>
       </div>
 
@@ -500,6 +506,8 @@ export default function DesignPropertyPanel({
                 variant={props.fontWeight === "bold" ? "secondary" : "ghost"}
                 size="icon"
                 className="h-7 w-7"
+                aria-label="Gras"
+                aria-pressed={props.fontWeight === "bold"}
                 onClick={() =>
                   setProp(
                     "fontWeight",
@@ -507,12 +515,14 @@ export default function DesignPropertyPanel({
                   )
                 }
               >
-                <Bold className="h-3.5 w-3.5" />
+                <Bold className="h-3.5 w-3.5" aria-hidden="true" />
               </Button>
               <Button
                 variant={props.fontStyle === "italic" ? "secondary" : "ghost"}
                 size="icon"
                 className="h-7 w-7"
+                aria-label="Italique"
+                aria-pressed={props.fontStyle === "italic"}
                 onClick={() =>
                   setProp(
                     "fontStyle",
@@ -520,48 +530,58 @@ export default function DesignPropertyPanel({
                   )
                 }
               >
-                <Italic className="h-3.5 w-3.5" />
+                <Italic className="h-3.5 w-3.5" aria-hidden="true" />
               </Button>
               <Button
                 variant={props.underline ? "secondary" : "ghost"}
                 size="icon"
                 className="h-7 w-7"
+                aria-label="Souligné"
+                aria-pressed={!!props.underline}
                 onClick={() => setProp("underline", !props.underline)}
               >
-                <Underline className="h-3.5 w-3.5" />
+                <Underline className="h-3.5 w-3.5" aria-hidden="true" />
               </Button>
               <div className="w-px h-5 bg-border mx-1" />
               <Button
                 variant={props.textAlign === "left" ? "secondary" : "ghost"}
                 size="icon"
                 className="h-7 w-7"
+                aria-label="Aligner à gauche"
+                aria-pressed={props.textAlign === "left"}
                 onClick={() => setProp("textAlign", "left")}
               >
-                <AlignLeft className="h-3.5 w-3.5" />
+                <AlignLeft className="h-3.5 w-3.5" aria-hidden="true" />
               </Button>
               <Button
                 variant={props.textAlign === "center" ? "secondary" : "ghost"}
                 size="icon"
                 className="h-7 w-7"
+                aria-label="Centrer"
+                aria-pressed={props.textAlign === "center"}
                 onClick={() => setProp("textAlign", "center")}
               >
-                <AlignCenter className="h-3.5 w-3.5" />
+                <AlignCenter className="h-3.5 w-3.5" aria-hidden="true" />
               </Button>
               <Button
                 variant={props.textAlign === "right" ? "secondary" : "ghost"}
                 size="icon"
                 className="h-7 w-7"
+                aria-label="Aligner à droite"
+                aria-pressed={props.textAlign === "right"}
                 onClick={() => setProp("textAlign", "right")}
               >
-                <AlignRight className="h-3.5 w-3.5" />
+                <AlignRight className="h-3.5 w-3.5" aria-hidden="true" />
               </Button>
               <Button
                 variant={props.textAlign === "justify" ? "secondary" : "ghost"}
                 size="icon"
                 className="h-7 w-7"
+                aria-label="Justifier"
+                aria-pressed={props.textAlign === "justify"}
                 onClick={() => setProp("textAlign", "justify")}
               >
-                <AlignJustify className="h-3.5 w-3.5" />
+                <AlignJustify className="h-3.5 w-3.5" aria-hidden="true" />
               </Button>
             </div>
 
