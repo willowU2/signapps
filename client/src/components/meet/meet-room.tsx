@@ -2,7 +2,15 @@
 
 import { LIVEKIT_URL } from "@/lib/api/core";
 
-import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { toast as sonnerToast } from "sonner";
 import { meetApi } from "@/lib/api/meet";
 import { useAuthStore } from "@/lib/store";
@@ -27,6 +35,7 @@ import {
   Track,
   ConnectionState,
   RoomEvent,
+  LocalVideoTrack,
   type RemoteParticipant,
 } from "livekit-client";
 import { toast } from "sonner";
@@ -79,6 +88,15 @@ import {
 } from "./live-transcription-overlay";
 import type { TranscriptionChunk } from "@/lib/api/meet";
 import { MEDIA_URL } from "@/lib/api/core";
+import {
+  applyVirtualBackground,
+  type BackgroundMode,
+  type VirtualBackgroundHandle,
+} from "@/lib/video/virtual-background";
+import {
+  VIRTUAL_BG_PRESETS,
+  VIRTUAL_BG_STORAGE_KEY,
+} from "@/app/meet/[code]/lobby/page";
 
 /**
  * LiveKit data channel topic used to broadcast raise-hand state changes
@@ -402,6 +420,129 @@ function useTranscriptionPipeline(enabled: boolean, roomCode: string) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Virtual background pipeline (in-meeting)
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface VirtualBgPrefs {
+  mode: BackgroundMode;
+  imageId: string;
+}
+
+function readVirtualBgPrefs(): VirtualBgPrefs {
+  if (typeof window === "undefined")
+    return { mode: "none", imageId: VIRTUAL_BG_PRESETS[0].id };
+  try {
+    const raw = window.sessionStorage.getItem(VIRTUAL_BG_STORAGE_KEY);
+    if (!raw) return { mode: "none", imageId: VIRTUAL_BG_PRESETS[0].id };
+    const parsed = JSON.parse(raw) as Partial<VirtualBgPrefs>;
+    const mode: BackgroundMode =
+      parsed.mode === "blur" || parsed.mode === "image" || parsed.mode === "none"
+        ? parsed.mode
+        : "none";
+    const imageId = parsed.imageId || VIRTUAL_BG_PRESETS[0].id;
+    return { mode, imageId };
+  } catch {
+    return { mode: "none", imageId: VIRTUAL_BG_PRESETS[0].id };
+  }
+}
+
+/**
+ * Swap the currently published camera track with one processed by the
+ * virtual background pipeline. When `mode === "none"` the original
+ * track is restored via `restartTrack()`.
+ */
+function useLiveVirtualBackground(
+  prefs: VirtualBgPrefs,
+  enabled: boolean,
+  onDegrade: (to: BackgroundMode) => void,
+) {
+  const room = useRoomContext();
+  const handleRef = useRef<VirtualBackgroundHandle | null>(null);
+  const rawStreamRef = useRef<MediaStream | null>(null);
+
+  useEffect(() => {
+    if (!room || !enabled) return;
+    const lp = room.localParticipant;
+    if (!lp) return;
+
+    let cancelled = false;
+
+    const apply = async () => {
+      // Find the currently published camera publication.
+      const pub = Array.from(lp.trackPublications.values()).find(
+        (p) => p.source === Track.Source.Camera,
+      );
+      const track = pub?.track;
+      if (!track || !(track instanceof LocalVideoTrack)) return;
+
+      // Stop any previous pipeline.
+      handleRef.current?.stop();
+      handleRef.current = null;
+
+      if (prefs.mode === "none") {
+        // Restore to a fresh raw camera capture.
+        try {
+          await track.restartTrack();
+        } catch {
+          // Non-fatal — keep whatever is currently published.
+        }
+        return;
+      }
+
+      // Get a raw camera MediaStream we can feed into the pipeline.
+      let rawStream = rawStreamRef.current;
+      if (!rawStream) {
+        try {
+          rawStream = await navigator.mediaDevices.getUserMedia({
+            video: true,
+          });
+          rawStreamRef.current = rawStream;
+        } catch {
+          return;
+        }
+      }
+      if (cancelled) return;
+
+      const preset = VIRTUAL_BG_PRESETS.find((p) => p.id === prefs.imageId);
+      const handle = applyVirtualBackground(rawStream, {
+        mode: prefs.mode,
+        imageUrl: preset?.url || undefined,
+        onDegrade: (_from, to) => onDegrade(to),
+      });
+      handleRef.current = handle;
+
+      const processedTrack = handle.output.getVideoTracks()[0];
+      if (!processedTrack) return;
+      try {
+        await track.replaceTrack(processedTrack);
+      } catch {
+        // Degrade silently to the raw track.
+        handle.stop();
+        handleRef.current = null;
+      }
+    };
+
+    void apply();
+
+    return () => {
+      cancelled = true;
+    };
+    // Intentionally not depending on `onDegrade` (callers must pass stable refs).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [room, enabled, prefs.mode, prefs.imageId]);
+
+  // Final cleanup on unmount — release camera + canvas.
+  useEffect(() => {
+    return () => {
+      handleRef.current?.stop();
+      handleRef.current = null;
+      rawStreamRef.current?.getTracks().forEach((t) => t.stop());
+      rawStreamRef.current = null;
+    };
+  }, []);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Raised hands
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -609,6 +750,30 @@ function MeetUiContent({
       sonnerToast.error("Action impossible");
     }
   };
+
+  // ── Virtual background state (hydrated from the lobby choice) ────────
+  const [bgPrefs, setBgPrefs] = useState<VirtualBgPrefs>(() =>
+    readVirtualBgPrefs(),
+  );
+  useEffect(() => {
+    try {
+      window.sessionStorage.setItem(
+        VIRTUAL_BG_STORAGE_KEY,
+        JSON.stringify(bgPrefs),
+      );
+    } catch {
+      // storage unavailable — in-memory only.
+    }
+  }, [bgPrefs]);
+  const onBgDegrade = useCallback((to: BackgroundMode) => {
+    if (to === "none") {
+      sonnerToast.warning("Flou désactivé — trop lent");
+    } else {
+      sonnerToast.warning("Arrière-plan simplifié — performance insuffisante");
+    }
+    setBgPrefs((prev) => ({ ...prev, mode: to }));
+  }, []);
+  useLiveVirtualBackground(bgPrefs, true, onBgDegrade);
 
   // ── Live transcription toggle ────────────────────────────────────────
   const [transcriptionEnabled, setTranscriptionEnabled] = useState<boolean>(
@@ -998,6 +1163,8 @@ function MeetUiContent({
         onToggleTranscription={toggleTranscription}
         handRaised={isLocalRaised}
         onToggleRaiseHand={toggleRaiseHand}
+        bgPrefs={bgPrefs}
+        onChangeBgPrefs={setBgPrefs}
       />
     </div>
     </RaisedHandsContext.Provider>
@@ -1021,6 +1188,8 @@ interface BottomBarProps {
   onToggleTranscription: () => void;
   handRaised: boolean;
   onToggleRaiseHand: () => void;
+  bgPrefs: VirtualBgPrefs;
+  onChangeBgPrefs: (updater: VirtualBgPrefs | ((prev: VirtualBgPrefs) => VirtualBgPrefs)) => void;
 }
 
 function BottomBar({
@@ -1036,6 +1205,8 @@ function BottomBar({
   onToggleTranscription,
   handRaised,
   onToggleRaiseHand,
+  bgPrefs,
+  onChangeBgPrefs,
 }: BottomBarProps) {
   const round =
     "rounded-full h-10 w-10 md:h-11 md:w-11 transition-colors";
@@ -1130,14 +1301,67 @@ function BottomBar({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="center" side="top" className="w-56">
-          <DropdownMenuItem className="gap-2">
-            <Sparkles className="h-4 w-4" />
-            Flou arrière-plan
+          <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
+            <Sparkles className="h-3.5 w-3.5" />
+            Arrière-plan
+          </div>
+          <DropdownMenuItem
+            onClick={(e) => {
+              e.preventDefault();
+              onChangeBgPrefs((prev) => ({ ...prev, mode: "none" }));
+            }}
+            className="gap-2"
+          >
+            <span className="ml-5 flex-1">Aucun</span>
+            {bgPrefs.mode === "none" && <Check className="h-3.5 w-3.5" />}
           </DropdownMenuItem>
-          <DropdownMenuItem className="gap-2">
-            <Radio className="h-4 w-4" />
-            Enregistrer
+          <DropdownMenuItem
+            onClick={(e) => {
+              e.preventDefault();
+              onChangeBgPrefs((prev) => ({ ...prev, mode: "blur" }));
+            }}
+            className="gap-2"
+          >
+            <span className="ml-5 flex-1">Flou</span>
+            {bgPrefs.mode === "blur" && <Check className="h-3.5 w-3.5" />}
           </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={(e) => {
+              e.preventDefault();
+              onChangeBgPrefs((prev) => ({ ...prev, mode: "image" }));
+            }}
+            className="gap-2"
+          >
+            <span className="ml-5 flex-1">Image</span>
+            {bgPrefs.mode === "image" && <Check className="h-3.5 w-3.5" />}
+          </DropdownMenuItem>
+          {bgPrefs.mode === "image" && (
+            <div className="grid grid-cols-4 gap-1 p-2">
+              {VIRTUAL_BG_PRESETS.map((p) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onChangeBgPrefs((prev) => ({ ...prev, imageId: p.id }));
+                  }}
+                  aria-pressed={bgPrefs.imageId === p.id}
+                  aria-label={p.label}
+                  className={`aspect-video rounded-md border ${
+                    bgPrefs.imageId === p.id
+                      ? "border-primary ring-2 ring-primary/40"
+                      : "border-border hover:border-primary/60"
+                  }`}
+                  style={{
+                    background: p.url
+                      ? `center/cover url(${p.url})`
+                      : "linear-gradient(135deg, #0f172a 0%, #1e293b 100%)",
+                  }}
+                />
+              ))}
+            </div>
+          )}
+          <DropdownMenuSeparator />
           <DropdownMenuItem
             onClick={onToggleTranscription}
             className="gap-2"

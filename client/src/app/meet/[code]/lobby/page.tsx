@@ -15,12 +15,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import {
   Camera,
   CameraOff,
   Mic,
@@ -35,6 +29,20 @@ import { toast } from "sonner";
 import { meetApi } from "@/lib/api/meet";
 import { useAuthStore } from "@/lib/store";
 import { usePageTitle } from "@/hooks/use-page-title";
+import { useVirtualBackground } from "@/lib/video/use-virtual-background";
+import type { BackgroundMode } from "@/lib/video/virtual-background";
+
+/** sessionStorage key — lobby → in-meeting carries the chosen background. */
+export const VIRTUAL_BG_STORAGE_KEY = "signapps.meet.virtualBg";
+
+/** Presets exposed in the lobby + ⋯ menu. Empty = gradient fallback. */
+export const VIRTUAL_BG_PRESETS: { id: string; label: string; url: string }[] =
+  [
+    { id: "gradient", label: "Dégradé", url: "" },
+    { id: "office", label: "Bureau", url: "/meet-backgrounds/office.jpg" },
+    { id: "library", label: "Bibliothèque", url: "/meet-backgrounds/library.jpg" },
+    { id: "outdoor", label: "Extérieur", url: "/meet-backgrounds/outdoor.jpg" },
+  ];
 
 interface DeviceOption {
   deviceId: string;
@@ -65,7 +73,74 @@ export default function MeetLobbyPage() {
 
   const [cameraOn, setCameraOn] = useState(true);
   const [micOn, setMicOn] = useState(true);
-  const [blurBg] = useState(false);
+
+  // ── Virtual background state ──────────────────────────────────────
+  // Persisted across lobby → in-meeting via sessionStorage.
+  const [bgMode, setBgMode] = useState<BackgroundMode>("none");
+  const [bgImageId, setBgImageId] = useState<string>(
+    VIRTUAL_BG_PRESETS[0].id,
+  );
+  // Restore saved selection (if any) on mount.
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem(VIRTUAL_BG_STORAGE_KEY);
+      if (!raw) return;
+      const saved = JSON.parse(raw) as {
+        mode?: BackgroundMode;
+        imageId?: string;
+      };
+      if (saved.mode === "none" || saved.mode === "blur" || saved.mode === "image") {
+        setBgMode(saved.mode);
+      }
+      if (saved.imageId) setBgImageId(saved.imageId);
+    } catch {
+      // Invalid or absent — keep defaults.
+    }
+  }, []);
+  // Persist selection any time it changes.
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(
+        VIRTUAL_BG_STORAGE_KEY,
+        JSON.stringify({ mode: bgMode, imageId: bgImageId }),
+      );
+    } catch {
+      // Quota / private-mode — ignore.
+    }
+  }, [bgMode, bgImageId]);
+  const bgImageUrl = useMemo(() => {
+    const preset = VIRTUAL_BG_PRESETS.find((p) => p.id === bgImageId);
+    return preset?.url || undefined;
+  }, [bgImageId]);
+
+  // Raw camera stream (state so the virtual-bg hook can react to it).
+  const [rawStream, setRawStream] = useState<MediaStream | null>(null);
+  const degradeToastOnce = useRef(false);
+  const virtualBgOpts = useMemo(
+    () => ({
+      mode: bgMode,
+      imageUrl: bgImageUrl,
+      onDegrade: (_from: BackgroundMode, to: BackgroundMode) => {
+        if (degradeToastOnce.current) return;
+        degradeToastOnce.current = true;
+        if (to === "none") {
+          toast.warning("Arrière-plan désactivé — trop lent");
+        } else {
+          toast.warning("Arrière-plan simplifié — performance insuffisante");
+        }
+        setBgMode(to);
+      },
+    }),
+    [bgMode, bgImageUrl],
+  );
+  const processedStream = useVirtualBackground(rawStream, virtualBgOpts);
+
+  // Whichever stream is available feeds the preview element.
+  useEffect(() => {
+    if (!videoRef.current) return;
+    const out = processedStream ?? rawStream;
+    videoRef.current.srcObject = out;
+  }, [processedStream, rawStream]);
 
   const [displayName, setDisplayName] = useState("");
   const [micLevel, setMicLevel] = useState(0);
@@ -171,6 +246,7 @@ export default function MeetLobbyPage() {
 
         const stream = await navigator.mediaDevices.getUserMedia(constraints);
         streamRef.current = stream;
+        setRawStream(stream);
         setPermissionError(null);
 
         // Apply mic enabled state
@@ -178,9 +254,8 @@ export default function MeetLobbyPage() {
           t.enabled = micOn;
         });
 
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-        }
+        // The preview element is fed by the effect that swaps between
+        // the raw and processed streams — no direct assignment here.
 
         // Setup analyser for audio level meter
         if (stream.getAudioTracks().length > 0) {
@@ -620,27 +695,65 @@ export default function MeetLobbyPage() {
                     onCheckedChange={setMicOn}
                   />
                 </div>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <div className="flex items-center justify-between opacity-60">
-                        <Label
-                          htmlFor="blur-toggle"
-                          className="text-sm text-foreground flex items-center gap-1.5"
-                        >
-                          <Sparkles className="h-3.5 w-3.5" />
-                          Flou arrière-plan
-                        </Label>
-                        <Switch
-                          id="blur-toggle"
-                          checked={blurBg}
-                          disabled
-                        />
-                      </div>
-                    </TooltipTrigger>
-                    <TooltipContent>Bientôt disponible</TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
+                <div className="flex items-center justify-between">
+                  <Label
+                    htmlFor="bg-mode"
+                    className="text-sm text-foreground flex items-center gap-1.5"
+                  >
+                    <Sparkles className="h-3.5 w-3.5" />
+                    Arrière-plan
+                  </Label>
+                  <Select
+                    value={bgMode}
+                    onValueChange={(v) => {
+                      degradeToastOnce.current = false;
+                      setBgMode(v as BackgroundMode);
+                    }}
+                  >
+                    <SelectTrigger id="bg-mode" className="w-32 bg-background">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Aucun</SelectItem>
+                      <SelectItem value="blur">Flou</SelectItem>
+                      <SelectItem value="image">Image</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                {bgMode === "image" && (
+                  <div
+                    className="grid grid-cols-4 gap-2"
+                    aria-label="Sélection de l'arrière-plan"
+                  >
+                    {VIRTUAL_BG_PRESETS.map((p) => (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => setBgImageId(p.id)}
+                        aria-pressed={bgImageId === p.id}
+                        aria-label={p.label}
+                        className={`relative aspect-video overflow-hidden rounded-md border transition-colors ${
+                          bgImageId === p.id
+                            ? "border-primary ring-2 ring-primary/40"
+                            : "border-border hover:border-primary/60"
+                        }`}
+                        style={{
+                          backgroundImage: p.url ? `url(${p.url})` : undefined,
+                          backgroundSize: "cover",
+                          backgroundPosition: "center",
+                          backgroundColor: p.url
+                            ? undefined
+                            : "linear-gradient(135deg, #0f172a, #1e293b)",
+                          background: p.url
+                            ? `center/cover url(${p.url})`
+                            : "linear-gradient(135deg, #0f172a 0%, #1e293b 100%)",
+                        }}
+                      >
+                        <span className="sr-only">{p.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Display name */}
