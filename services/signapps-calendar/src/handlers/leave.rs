@@ -141,6 +141,7 @@ pub async fn approve_leave(
                 assigned_to: None,
                 project_id: None,
                 tags: None,
+                has_meet_room: None,
             },
         )
         .await
@@ -227,6 +228,7 @@ pub async fn reject_leave(
                 assigned_to: None,
                 project_id: None,
                 tags: None,
+                has_meet_room: None,
             },
         )
         .await
@@ -405,6 +407,7 @@ pub async fn delegate_tasks(
                     cron_target: None,
                     project_id: None,
                     tags: None,
+                    has_meet_room: None,
                 },
             )
             .await;

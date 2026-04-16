@@ -2,7 +2,7 @@
 
 use axum::{
     extract::{Extension, Path, Query, State},
-    http::StatusCode,
+    http::{HeaderMap, StatusCode},
     Json,
 };
 use chrono::{DateTime, TimeZone, Utc};
@@ -63,6 +63,84 @@ async fn verify_calendar_access(
     Err(CalendarError::NotFound)
 }
 
+/// Extract the raw bearer token from the `Authorization` header.
+///
+/// Returns the token string **without** the `Bearer ` prefix, or `None` if
+/// the header is missing/malformed. The calendar service uses this to
+/// forward the caller's identity to `signapps-meet`.
+fn extract_bearer_token(headers: &HeaderMap) -> Option<String> {
+    let value = headers.get(axum::http::header::AUTHORIZATION)?;
+    let s = value.to_str().ok()?;
+    s.strip_prefix("Bearer ").map(|t| t.to_string())
+}
+
+/// If `has_meet_room` is requested and no code is set yet, call
+/// `signapps-meet` and stamp the event with the new `meet_room_code`.
+///
+/// On `Some(false)`, toggle the flag off but keep the existing
+/// `meet_room_code` so the event can be revived later.
+///
+/// Failure to contact `signapps-meet` is non-fatal — we log the error and
+/// reset `has_meet_room = false` so the UI can retry.
+async fn sync_meet_room(
+    state: &AppState,
+    event: Event,
+    requested: Option<bool>,
+    bearer: Option<&str>,
+) -> Event {
+    use signapps_db::EventRepository;
+
+    match requested {
+        Some(true) if !event.has_meet_room && event.meet_room_code.is_none() => {
+            let Some(token) = bearer else {
+                tracing::warn!("meet sync requested but no bearer token on request");
+                return event;
+            };
+
+            let req = crate::services::meet_service::CreateMeetRoomRequest {
+                name: event.title.clone(),
+                description: event.description.clone(),
+                is_private: Some(false),
+                scheduled_start: Some(event.start_time),
+                scheduled_end: Some(event.end_time),
+            };
+
+            match state.meet_client.create_room(token, req).await {
+                Ok(code) => {
+                    let repo = EventRepository::new(&state.pool);
+                    match repo.set_meet_room(event.id, &code).await {
+                        Ok(updated) => {
+                            tracing::info!(
+                                event_id = %event.id,
+                                meet_room_code = %code,
+                                "linked calendar event to Meet room"
+                            );
+                            updated
+                        }
+                        Err(e) => {
+                            tracing::error!(?e, "failed to persist meet_room_code, rolling back");
+                            // Best-effort rollback of the has_meet_room flag
+                            let _ = repo.clear_meet_room_flag(event.id).await;
+                            event
+                        }
+                    }
+                }
+                Err(e) => {
+                    tracing::error!(?e, "signapps-meet call failed — rolling back has_meet_room");
+                    let repo = EventRepository::new(&state.pool);
+                    let _ = repo.clear_meet_room_flag(event.id).await;
+                    event
+                }
+            }
+        }
+        Some(false) if event.has_meet_room => {
+            let repo = EventRepository::new(&state.pool);
+            repo.clear_meet_room_flag(event.id).await.unwrap_or(event)
+        }
+        _ => event,
+    }
+}
+
 /// Append a row to `platform.activities` — fire-and-forget, never fails the request.
 async fn log_event_activity(
     pool: &sqlx::PgPool,
@@ -105,11 +183,12 @@ pub struct DateRangeQuery {
         (status = 401, description = "Not authenticated"),
     )
 )]
-#[instrument(skip(state, payload), fields(user_id = %claims.sub, calendar_id = %calendar_id))]
+#[instrument(skip(state, payload, headers), fields(user_id = %claims.sub, calendar_id = %calendar_id))]
 pub async fn create_event(
     State(state): State<AppState>,
     Path(calendar_id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     Json(payload): Json<CreateEvent>,
 ) -> Result<(StatusCode, Json<Event>), CalendarError> {
     let tenant_id = claims.tenant_id.ok_or(CalendarError::Unauthorized)?;
@@ -123,11 +202,17 @@ pub async fn create_event(
         ));
     }
 
+    let want_meet = payload.has_meet_room;
+    let bearer = extract_bearer_token(&headers);
+
     let repo = EventRepository::new(&state.pool);
     let event = repo
         .create(calendar_id, payload, claims.sub)
         .await
         .map_err(|_| CalendarError::InternalError)?;
+
+    // Sync Meet room if requested — non-fatal on failure.
+    let event = sync_meet_room(&state, event, want_meet, bearer.as_deref()).await;
 
     // Index event in AI RAG
     let ai_client = state.ai_client.clone();
@@ -272,11 +357,12 @@ pub async fn get_event(
         (status = 404, description = "Event not found"),
     )
 )]
-#[instrument(skip(state, payload), fields(user_id = %claims.sub, event_id = %id))]
+#[instrument(skip(state, payload, headers), fields(user_id = %claims.sub, event_id = %id))]
 pub async fn update_event(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     Json(payload): Json<UpdateEvent>,
 ) -> Result<Json<Event>, CalendarError> {
     let tenant_id = claims.tenant_id.ok_or(CalendarError::Unauthorized)?;
@@ -300,11 +386,17 @@ pub async fn update_event(
         }
     }
 
+    let want_meet = payload.has_meet_room;
+    let bearer = extract_bearer_token(&headers);
+
     let repo = EventRepository::new(&state.pool);
     let event = repo
         .update(id, payload)
         .await
         .map_err(|_| CalendarError::InternalError)?;
+
+    // Sync Meet room if requested — non-fatal on failure.
+    let event = sync_meet_room(&state, event, want_meet, bearer.as_deref()).await;
 
     // Update event in AI RAG
     let ai_client = state.ai_client.clone();
@@ -352,8 +444,10 @@ pub async fn delete_event(
     Extension(claims): Extension<Claims>,
 ) -> Result<StatusCode, CalendarError> {
     let tenant_id = claims.tenant_id.ok_or(CalendarError::Unauthorized)?;
-    // Verify the caller owns or is a member of the event's calendar
-    {
+    // Verify the caller owns or is a member of the event's calendar, and
+    // capture the (optional) Meet room code so we can propagate it on the
+    // event bus for downstream consumers (signapps-meet deletes the room).
+    let (meet_room_code, had_meet_room) = {
         let repo = EventRepository::new(&state.pool);
         let existing = repo
             .find_by_id(id, tenant_id)
@@ -361,7 +455,8 @@ pub async fn delete_event(
             .map_err(|_| CalendarError::InternalError)?
             .ok_or(CalendarError::NotFound)?;
         verify_calendar_access(&state, existing.calendar_id, claims.sub, tenant_id).await?;
-    }
+        (existing.meet_room_code.clone(), existing.has_meet_room)
+    };
 
     let repo = EventRepository::new(&state.pool);
     repo.delete(id)
@@ -377,6 +472,23 @@ pub async fn delete_event(
     });
 
     log_event_activity(state.pool.inner(), claims.sub, "deleted", id, "").await;
+
+    // Publish `calendar.event.deleted` so downstream services (e.g. signapps-meet)
+    // can clean up linked resources. The payload carries the meet_room_code
+    // when the event had a Meet room so the consumer doesn't need a DB round-trip.
+    let _ = state
+        .event_bus
+        .publish(NewEvent {
+            event_type: "calendar.event.deleted".into(),
+            aggregate_id: Some(id),
+            payload: serde_json::json!({
+                "event_id": id,
+                "user_id": claims.sub,
+                "has_meet_room": had_meet_room,
+                "meet_room_code": meet_room_code,
+            }),
+        })
+        .await;
 
     Ok(StatusCode::NO_CONTENT)
 }

@@ -92,6 +92,10 @@ pub struct Event {
     pub assigned_to: Option<Uuid>,
     pub project_id: Option<Uuid>,
     pub tags: Option<Vec<String>>,
+    /// True when the event has a linked Meet room (see `signapps-meet`).
+    pub has_meet_room: bool,
+    /// Room code of the linked Meet room, or `None` if none exists yet.
+    pub meet_room_code: Option<String>,
 }
 
 /// Request to create a new calendar event.
@@ -124,6 +128,8 @@ pub struct CreateEvent {
     pub assigned_to: Option<Uuid>,
     pub project_id: Option<Uuid>,
     pub tags: Option<Vec<String>>,
+    /// Request a linked Meet room for this event.
+    pub has_meet_room: Option<bool>,
 }
 
 /// Request to update an existing calendar event.
@@ -156,6 +162,8 @@ pub struct UpdateEvent {
     pub assigned_to: Option<Uuid>,
     pub project_id: Option<Uuid>,
     pub tags: Option<Vec<String>>,
+    /// Toggle the linked Meet room on/off.
+    pub has_meet_room: Option<bool>,
 }
 
 // ============================================================================

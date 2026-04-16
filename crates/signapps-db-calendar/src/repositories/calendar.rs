@@ -348,6 +348,53 @@ impl<'a> EventRepository<'a> {
 
         Ok(())
     }
+
+    /// Attach a Meet room code to an event (sets `has_meet_room = true`).
+    ///
+    /// # Errors
+    ///
+    /// Returns any underlying sqlx error if the UPDATE fails.
+    pub async fn set_meet_room(&self, id: Uuid, code: &str) -> Result<Event> {
+        let updated = sqlx::query_as::<_, Event>(
+            r#"
+            UPDATE calendar.events
+            SET has_meet_room = true,
+                meet_room_code = $2,
+                updated_at = NOW()
+            WHERE id = $1
+            RETURNING *
+            "#,
+        )
+        .bind(id)
+        .bind(code)
+        .fetch_one(self.pool.inner())
+        .await?;
+
+        Ok(updated)
+    }
+
+    /// Detach the Meet room flag from an event (keeps `meet_room_code` so the
+    /// event can be re-enabled later).
+    ///
+    /// # Errors
+    ///
+    /// Returns any underlying sqlx error if the UPDATE fails.
+    pub async fn clear_meet_room_flag(&self, id: Uuid) -> Result<Event> {
+        let updated = sqlx::query_as::<_, Event>(
+            r#"
+            UPDATE calendar.events
+            SET has_meet_room = false,
+                updated_at = NOW()
+            WHERE id = $1
+            RETURNING *
+            "#,
+        )
+        .bind(id)
+        .fetch_one(self.pool.inner())
+        .await?;
+
+        Ok(updated)
+    }
 }
 
 // ============================================================================
