@@ -12,12 +12,8 @@ import {
   Code,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { TooltipIconButton } from "@/components/ui/tooltip-icon-button";
 import { VoiceInput } from "@/components/ui/voice-input";
 import {
   Popover,
@@ -255,54 +251,33 @@ export function ChatInput({
         {!compact && (isFocused || inputValue) && !showCommands && (
           <div className="flex items-center gap-0.5 px-2 py-1.5 border-b bg-muted/20 animate-in fade-in slide-in-from-top-1 duration-200">
             <TooltipProvider delayDuration={300}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="text-muted-foreground w-7 h-7"
-                    onClick={() => insertFormatting("**", "**")}
-                  >
-                    <Bold className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="top" className="text-xs">
-                  Bold (**text**)
-                </TooltipContent>
-              </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="text-muted-foreground w-7 h-7"
-                    onClick={() => insertFormatting("*", "*")}
-                  >
-                    <Italic className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="top" className="text-xs">
-                  Italic (*text*)
-                </TooltipContent>
-              </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="text-muted-foreground w-7 h-7"
-                    onClick={() => insertFormatting("`", "`")}
-                  >
-                    <Code className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="top" className="text-xs">
-                  Inline code
-                </TooltipContent>
-              </Tooltip>
+              <TooltipIconButton
+                type="button"
+                label="Gras"
+                tooltipText="Bold (**text**)"
+                className="text-muted-foreground w-7 h-7"
+                onClick={() => insertFormatting("**", "**")}
+              >
+                <Bold className="h-4 w-4" />
+              </TooltipIconButton>
+              <TooltipIconButton
+                type="button"
+                label="Italique"
+                tooltipText="Italic (*text*)"
+                className="text-muted-foreground w-7 h-7"
+                onClick={() => insertFormatting("*", "*")}
+              >
+                <Italic className="h-4 w-4" />
+              </TooltipIconButton>
+              <TooltipIconButton
+                type="button"
+                label="Code inline"
+                tooltipText="Inline code"
+                className="text-muted-foreground w-7 h-7"
+                onClick={() => insertFormatting("`", "`")}
+              >
+                <Code className="h-4 w-4" />
+              </TooltipIconButton>
             </TooltipProvider>
           </div>
         )}
