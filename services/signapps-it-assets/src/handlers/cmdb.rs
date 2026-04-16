@@ -573,17 +573,12 @@ pub async fn import_ldap(
     let host = payload.host.clone();
     let host_reachable = tokio::task::spawn_blocking(move || {
         let addr_str = format!("{}:{}", host, port);
-        if let Ok(addr) = SocketAddr::from_str(&addr_str) {
-            TcpStream::connect_timeout(&addr, Duration::from_millis(2000)).is_ok()
-        } else {
-            // Try as hostname:port
-            std::net::TcpStream::connect_timeout(
-                &format!("{}:{}", host, port)
-                    .parse()
-                    .unwrap_or_else(|_| SocketAddr::from_str("127.0.0.1:389").unwrap()),
-                Duration::from_millis(2000),
-            )
-            .is_ok()
+        match SocketAddr::from_str(&addr_str) {
+            Ok(addr) => TcpStream::connect_timeout(&addr, Duration::from_millis(2000)).is_ok(),
+            // Previously: fallback to 127.0.0.1:389 when parse failed,
+            // which produced false-positive host_reachable=true for any
+            // unparsable hostname if LDAP happened to run locally.
+            Err(_) => false,
         }
     })
     .await

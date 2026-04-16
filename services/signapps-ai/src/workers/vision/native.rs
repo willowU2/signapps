@@ -196,15 +196,8 @@ impl VisionWorker for NativeVision {
 
     async fn batch_describe(&self, images: Vec<Bytes>) -> Result<Vec<VisionResult>> {
         // Fail fast on the first image so callers get a clear 501.
-        if !images.is_empty() {
-            self.describe(
-                images
-                    .into_iter()
-                    .next()
-                    .expect("images non-empty checked above"),
-                None,
-            )
-            .await?;
+        if let Some(first) = images.into_iter().next() {
+            self.describe(first, None).await?;
         }
         Ok(vec![])
     }

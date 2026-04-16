@@ -37,7 +37,13 @@ impl UpstreamSwitcherState {
 
     async fn get_color(&self, env: &str) -> Color {
         {
-            let guard = self.cache.lock().unwrap();
+            // Recover from poisoning — this is hot-path middleware and a
+            // prior panic on another thread must not cascade into every
+            // subsequent request crashing the proxy tier.
+            let guard = match self.cache.lock() {
+                Ok(g) => g,
+                Err(poisoned) => poisoned.into_inner(),
+            };
             if let Some((when, color)) = *guard {
                 if when.elapsed() < CACHE_TTL {
                     return color;

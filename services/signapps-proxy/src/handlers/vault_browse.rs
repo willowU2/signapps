@@ -44,7 +44,7 @@ fn compute_totp(secret_base32: &str) -> Result<String> {
 
     let counter = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
-        .unwrap()
+        .map_err(|_| Error::Internal("System clock before UNIX epoch".into()))?
         .as_secs()
         / 30;
     let counter_bytes = counter.to_be_bytes();

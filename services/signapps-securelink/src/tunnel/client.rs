@@ -385,8 +385,13 @@ impl TunnelClient {
                 // Handle outgoing messages
                 msg = response_rx.recv() => {
                     if let Some(msg) = msg {
-                        let json = serde_json::to_string(&msg)
-                            .expect("Failed to serialize message");
+                        let json = match serde_json::to_string(&msg) {
+                            Ok(j) => j,
+                            Err(e) => {
+                                error!("Failed to serialize tunnel message: {}", e);
+                                break;
+                            }
+                        };
                         if let Err(e) = write.send(Message::Text(json)).await {
                             error!("Failed to send message: {}", e);
                             break;
