@@ -44,6 +44,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { TooltipIconButton } from "@/components/ui/tooltip-icon-button";
 
 interface ChatWindowProps {
   channelId: string;
@@ -433,140 +434,103 @@ export function ChatWindow({
               <div className="w-px h-5 bg-border mx-2 hidden sm:block" />
 
               <TooltipProvider delayDuration={300}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 hover:text-foreground hidden sm:flex"
-                    >
-                      <Phone className="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>Call</TooltipContent>
-                </Tooltip>
+                <TooltipIconButton
+                  label="Appel"
+                  className="h-8 w-8 hover:text-foreground hidden sm:flex"
+                >
+                  <Phone className="h-4 w-4" />
+                </TooltipIconButton>
 
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 hover:text-foreground hidden sm:flex"
-                      onClick={async () => {
-                        try {
-                          const res = await chatApi.startVideoCall(channelId);
-                          const { code, url } = res.data;
-                          toast.success(`Appel vidéo démarré (code ${code})`);
-                          window.open(url, "_blank");
-                        } catch {
-                          toast.error("Impossible de démarrer l'appel vidéo");
-                        }
-                      }}
-                    >
-                      <Video className="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>Démarrer un appel vidéo</TooltipContent>
-                </Tooltip>
+                <TooltipIconButton
+                  label="Démarrer un appel vidéo"
+                  className="h-8 w-8 hover:text-foreground hidden sm:flex"
+                  onClick={async () => {
+                    try {
+                      const res = await chatApi.startVideoCall(channelId);
+                      const { code, url } = res.data;
+                      toast.success(`Appel vidéo démarré (code ${code})`);
+                      window.open(url, "_blank");
+                    } catch {
+                      toast.error("Impossible de démarrer l'appel vidéo");
+                    }
+                  }}
+                >
+                  <Video className="h-4 w-4" />
+                </TooltipIconButton>
 
                 {/* IDEA-138: search */}
                 {FEATURES.CHAT_SEARCH && (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className={cn(
-                          "h-8 w-8 hover:text-foreground",
-                          searchOpen && "text-primary bg-primary/10",
-                        )}
-                        onClick={() => {
-                          setSearchOpen(!searchOpen);
-                          if (!searchOpen) setSearchQuery("");
-                        }}
-                      >
-                        <Search className="h-4 w-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>Search messages</TooltipContent>
-                  </Tooltip>
+                  <TooltipIconButton
+                    label="Rechercher dans les messages"
+                    className={cn(
+                      "h-8 w-8 hover:text-foreground",
+                      searchOpen && "text-primary bg-primary/10",
+                    )}
+                    onClick={() => {
+                      setSearchOpen(!searchOpen);
+                      if (!searchOpen) setSearchQuery("");
+                    }}
+                  >
+                    <Search className="h-4 w-4" />
+                  </TooltipIconButton>
                 )}
 
                 {/* IDEA-132: pinned panel */}
                 {FEATURES.CHAT_PINS && (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className={cn(
-                          "h-8 w-8 hover:text-foreground relative",
-                          showPinned && "text-primary bg-primary/10",
-                        )}
-                        onClick={() => setShowPinned(!showPinned)}
-                      >
-                        <Pin className="h-4 w-4" />
-                        {pinnedCount > 0 && (
-                          <span className="absolute -top-0.5 -right-0.5 h-3.5 w-3.5 rounded-full bg-primary text-[9px] text-primary-foreground flex items-center justify-center font-bold">
-                            {pinnedCount}
-                          </span>
-                        )}
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>Pinned messages</TooltipContent>
-                  </Tooltip>
+                  <TooltipIconButton
+                    label="Messages épinglés"
+                    className={cn(
+                      "h-8 w-8 hover:text-foreground relative",
+                      showPinned && "text-primary bg-primary/10",
+                    )}
+                    onClick={() => setShowPinned(!showPinned)}
+                  >
+                    <Pin className="h-4 w-4" />
+                    {pinnedCount > 0 && (
+                      <span className="absolute -top-0.5 -right-0.5 h-3.5 w-3.5 rounded-full bg-primary text-[9px] text-primary-foreground flex items-center justify-center font-bold">
+                        {pinnedCount}
+                      </span>
+                    )}
+                  </TooltipIconButton>
                 )}
 
                 {/* IDEA-142: export */}
                 {FEATURES.CHAT_EXPORT && !isDm && (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 hover:text-foreground"
-                        onClick={() => handleExport("json")}
-                        onContextMenu={(e) => {
-                          e.preventDefault();
-                          handleExport("csv");
-                        }}
-                      >
-                        <Download className="h-4 w-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      Export history (left-click: JSON, right-click: CSV)
-                    </TooltipContent>
-                  </Tooltip>
+                  <TooltipIconButton
+                    label="Exporter l'historique"
+                    tooltipText="Export history (left-click: JSON, right-click: CSV)"
+                    className="h-8 w-8 hover:text-foreground"
+                    onClick={() => handleExport("json")}
+                    onContextMenu={(e) => {
+                      e.preventDefault();
+                      handleExport("csv");
+                    }}
+                  >
+                    <Download className="h-4 w-4" />
+                  </TooltipIconButton>
                 )}
 
                 {/* IDEA-139: notifications toggle */}
                 {FEATURES.CHAT_NOTIFICATIONS && (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 hover:text-foreground"
-                        onClick={async () => {
-                          if (currentPermission() !== "granted")
-                            await requestPermission();
-                          setNotificationsEnabled(!notificationsEnabled);
-                        }}
-                      >
-                        {notificationsEnabled ? (
-                          <Bell className="h-4 w-4" />
-                        ) : (
-                          <BellOff className="h-4 w-4" />
-                        )}
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      {notificationsEnabled
-                        ? "Mute notifications"
-                        : "Enable notifications"}
-                    </TooltipContent>
-                  </Tooltip>
+                  <TooltipIconButton
+                    label={
+                      notificationsEnabled
+                        ? "Désactiver les notifications"
+                        : "Activer les notifications"
+                    }
+                    className="h-8 w-8 hover:text-foreground"
+                    onClick={async () => {
+                      if (currentPermission() !== "granted")
+                        await requestPermission();
+                      setNotificationsEnabled(!notificationsEnabled);
+                    }}
+                  >
+                    {notificationsEnabled ? (
+                      <Bell className="h-4 w-4" />
+                    ) : (
+                      <BellOff className="h-4 w-4" />
+                    )}
+                  </TooltipIconButton>
                 )}
 
                 <Tooltip>
