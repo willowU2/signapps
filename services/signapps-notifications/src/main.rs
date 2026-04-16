@@ -310,10 +310,215 @@ async fn mark_all_read(
 // Platform event → notification mapping
 // ---------------------------------------------------------------------------
 
+/// Insert a Meet-related notification row into `notifications.notifications`.
+///
+/// Centralises the metadata shape so `UnifiedNotificationCenter` can
+/// render the right icon + CTA without re-parsing the event type.
+async fn insert_meet_notification(
+    pool: &sqlx::PgPool,
+    user_id: Uuid,
+    notif_type: &str,
+    title: &str,
+    body: &str,
+    metadata: serde_json::Value,
+) -> Result<(), sqlx::Error> {
+    sqlx::query(
+        "INSERT INTO notifications.notifications \
+         (user_id, type, title, body, source, priority, metadata) \
+         VALUES ($1, $2, $3, $4, 'meet', 'normal', $5)",
+    )
+    .bind(user_id)
+    .bind(notif_type)
+    .bind(title)
+    .bind(body)
+    .bind(metadata)
+    .execute(pool)
+    .await
+    .map(|_| ())
+}
+
+/// Handle `chat.video_call.started` — emit `meet.invited` to all channel
+/// members except the initiator.
+async fn handle_chat_video_call_started(
+    pool: &sqlx::PgPool,
+    event: &PlatformEvent,
+) -> Result<(), sqlx::Error> {
+    let thread_id: Option<Uuid> = event.payload.get("thread_id")
+        .and_then(|v| v.as_str())
+        .and_then(|s| Uuid::parse_str(s).ok());
+    let Some(thread_id) = thread_id else { return Ok(()); };
+
+    let room_code = event.payload.get("room_code").and_then(|v| v.as_str()).unwrap_or("");
+    let initiator_id: Option<Uuid> = event.payload.get("initiator_id")
+        .and_then(|v| v.as_str())
+        .and_then(|s| Uuid::parse_str(s).ok());
+    let initiator_name = event.payload.get("initiator_name").and_then(|v| v.as_str()).unwrap_or("Un collegue");
+    let link = event.payload.get("link").and_then(|v| v.as_str())
+        .map(String::from)
+        .unwrap_or_else(|| format!("/meet/{}", room_code));
+
+    // Pull every channel member + creator (deduped).
+    let rows: Vec<(Uuid,)> = sqlx::query_as(
+        "SELECT DISTINCT user_id FROM ( \
+             SELECT created_by AS user_id FROM chat.channels WHERE id = $1 \
+             UNION \
+             SELECT user_id FROM chat.channel_members WHERE channel_id = $1 \
+         ) t",
+    )
+    .bind(thread_id)
+    .fetch_all(pool)
+    .await?;
+
+    let title = format!("Appel video demarre par {initiator_name}");
+    let body = format!("Rejoignez l'appel : {link}");
+    let metadata = serde_json::json!({
+        "event_type": "meet.invited",
+        "room_code": room_code,
+        "link": link,
+        "initiator_id": initiator_id,
+        "initiator_name": initiator_name,
+        "thread_id": thread_id,
+    });
+    for (uid,) in rows {
+        if Some(uid) == initiator_id { continue; }
+        if let Err(e) = insert_meet_notification(pool, uid, "meet.invited", &title, &body, metadata.clone()).await {
+            tracing::warn!(?e, user_id = %uid, "failed to insert meet.invited");
+        }
+    }
+    Ok(())
+}
+
+/// Handle `meet.knock.requested` — notify the room host that someone
+/// is waiting in the lobby.
+async fn handle_meet_knock_requested(
+    pool: &sqlx::PgPool,
+    event: &PlatformEvent,
+) -> Result<(), sqlx::Error> {
+    let room_id: Option<Uuid> = event.payload.get("room_id")
+        .and_then(|v| v.as_str())
+        .and_then(|s| Uuid::parse_str(s).ok());
+    let Some(room_id) = room_id else { return Ok(()); };
+
+    let room_code = event.payload.get("room_code").and_then(|v| v.as_str()).unwrap_or("");
+    let identity = event.payload.get("identity").and_then(|v| v.as_str()).unwrap_or("");
+    let display_name = event.payload.get("display_name").and_then(|v| v.as_str()).unwrap_or("Invite");
+
+    // Look up the host.
+    let host: Option<(Uuid,)> = sqlx::query_as(
+        "SELECT created_by FROM meet.rooms WHERE id = $1",
+    )
+    .bind(room_id)
+    .fetch_optional(pool)
+    .await?;
+    let Some((host_id,)) = host else { return Ok(()); };
+
+    let title = format!("{display_name} attend dans la salle");
+    let body = format!("{display_name} demande a rejoindre votre reunion {room_code}.");
+    let metadata = serde_json::json!({
+        "event_type": "meet.knock_received",
+        "room_code": room_code,
+        "identity": identity,
+        "display_name": display_name,
+        "link": format!("/meet/{}", room_code),
+    });
+    insert_meet_notification(pool, host_id, "meet.knock_received", &title, &body, metadata).await
+}
+
+/// Handle `meet.recording.ready` — notify the host that the recording
+/// of their room finished processing.
+async fn handle_meet_recording_ready(
+    pool: &sqlx::PgPool,
+    event: &PlatformEvent,
+) -> Result<(), sqlx::Error> {
+    let room_id: Option<Uuid> = event.payload.get("room_id")
+        .and_then(|v| v.as_str())
+        .and_then(|s| Uuid::parse_str(s).ok());
+    let Some(room_id) = room_id else { return Ok(()); };
+
+    let recording_id = event.payload.get("recording_id").and_then(|v| v.as_str()).unwrap_or("");
+
+    // Host + room_code.
+    let row: Option<(Uuid, String)> = sqlx::query_as(
+        "SELECT created_by, room_code FROM meet.rooms WHERE id = $1",
+    )
+    .bind(room_id)
+    .fetch_optional(pool)
+    .await?;
+    let Some((host_id, room_code)) = row else { return Ok(()); };
+
+    let title = "Enregistrement disponible".to_string();
+    let body = format!("Votre enregistrement de la reunion {room_code} est pret.");
+    let metadata = serde_json::json!({
+        "event_type": "meet.recording_ready",
+        "room_code": room_code,
+        "recording_id": recording_id,
+        "link": format!("/meet/recordings/{}", recording_id),
+    });
+    insert_meet_notification(pool, host_id, "meet.recording_ready", &title, &body, metadata).await
+}
+
+/// Fan-out `meet.invited` notifications for calendar events with
+/// `has_meet_room=true`. Guests come from the payload's `guest_ids`
+/// field; if absent we fall back to querying the calendar DB.
+async fn fanout_calendar_meet_invite(
+    pool: &sqlx::PgPool,
+    event: &PlatformEvent,
+) -> Result<(), sqlx::Error> {
+    let title_str = event.payload["title"].as_str().unwrap_or("Reunion");
+    let room_code = event.payload.get("meet_room_code").and_then(|v| v.as_str()).unwrap_or("");
+    let organizer_id: Option<Uuid> = event.payload.get("organizer_id")
+        .and_then(|v| v.as_str())
+        .and_then(|s| Uuid::parse_str(s).ok());
+    let link = format!("/meet/{}", room_code);
+
+    let guest_ids: Vec<Uuid> = event.payload.get("guest_ids")
+        .and_then(|v| v.as_array())
+        .map(|arr| arr.iter().filter_map(|v| v.as_str().and_then(|s| Uuid::parse_str(s).ok())).collect())
+        .unwrap_or_default();
+
+    if guest_ids.is_empty() {
+        tracing::debug!("calendar.event.created has_meet_room=true with no guest_ids, skipping fanout");
+        return Ok(());
+    }
+
+    let body = format!("Rejoignez la reunion : {link}");
+    let metadata = serde_json::json!({
+        "event_type": "meet.invited",
+        "room_code": room_code,
+        "link": link,
+        "source": "calendar",
+    });
+    for uid in guest_ids {
+        if Some(uid) == organizer_id { continue; }
+        let title = format!("Invitation : {title_str}");
+        if let Err(e) = insert_meet_notification(pool, uid, "meet.invited", &title, &body, metadata.clone()).await {
+            tracing::warn!(?e, user_id = %uid, "failed to insert calendar meet.invited");
+        }
+    }
+    Ok(())
+}
+
 async fn handle_platform_event(
     pool: &sqlx::PgPool,
     event: PlatformEvent,
 ) -> Result<(), sqlx::Error> {
+    // ── Meet fan-out events (Phase 4b) ─────────────────────────────────
+    // These require looking up additional context (room host,
+    // thread members) so they are handled in dedicated branches before
+    // the simple mapping below.
+    match event.event_type.as_str() {
+        "chat.video_call.started" => {
+            return handle_chat_video_call_started(pool, &event).await;
+        },
+        "meet.knock.requested" => {
+            return handle_meet_knock_requested(pool, &event).await;
+        },
+        "meet.recording.ready" => {
+            return handle_meet_recording_ready(pool, &event).await;
+        },
+        _ => {},
+    }
+
     let (user_id, title, body, link) = match event.event_type.as_str() {
         "mail.received" => {
             let from = event.payload["from"].as_str().unwrap_or("inconnu");
@@ -327,6 +532,16 @@ async fn handle_platform_event(
         },
         "calendar.event.created" => {
             let title_str = event.payload["title"].as_str().unwrap_or("evenement");
+            // If the calendar event created a Meet room, fan-out a
+            // `meet.invited` notification to every guest.
+            if event.payload.get("has_meet_room")
+                .and_then(|v| v.as_bool())
+                .unwrap_or(false)
+            {
+                if let Err(e) = fanout_calendar_meet_invite(pool, &event).await {
+                    tracing::warn!(?e, "meet.invited fanout failed");
+                }
+            }
             (
                 event.aggregate_id,
                 "Nouvel evenement".to_string(),
