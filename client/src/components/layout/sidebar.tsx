@@ -1201,6 +1201,8 @@ export function Sidebar({ portalMode }: SidebarProps = {}) {
                         <button
                           key={c}
                           onClick={() => setNewLabelColor(c)}
+                          aria-label={`Couleur ${c}`}
+                          aria-pressed={newLabelColor === c}
                           className={cn(
                             "h-5 w-5 rounded-full transition-all",
                             newLabelColor === c
@@ -1233,9 +1235,13 @@ export function Sidebar({ portalMode }: SidebarProps = {}) {
                   <span className="flex-1 truncate">{label.name}</span>
                   <button
                     onClick={() => removeLabel(label.id)}
+                    aria-label={`Supprimer le label ${label.name}`}
                     className="shrink-0 rounded p-0.5 text-muted-foreground opacity-0 transition-all hover:bg-destructive/10 hover:text-destructive group-hover:opacity-100"
                   >
                     <X className="h-3 w-3" />
+                    <span className="sr-only">
+                      Supprimer le label {label.name}
+                    </span>
                   </button>
                 </div>
               ))}
