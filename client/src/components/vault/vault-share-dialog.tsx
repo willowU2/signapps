@@ -122,20 +122,42 @@ export function VaultShareDialog({
         groupsApi.list().catch(() => ({ data: [] })),
       ])
         .then(([usersRes, groupsRes]) => {
-          // Handle axios responses structure (sometimes data is nested in .data)
-          const userList =
-            (usersRes as any).data?.users || (usersRes as any).users || [];
-          const groupList = (groupsRes as any).data || groupsRes || [];
+          // Shape of the API returns — backend mixes nested / flat
+          // responses; both are tolerated.
+          type ApiUser = {
+            id: string;
+            display_name?: string;
+            username: string;
+            email?: string;
+          };
+          type ApiGroup = {
+            id: string;
+            name: string;
+            member_count?: number;
+          };
+          const usersResTyped = usersRes as {
+            data?: { users?: ApiUser[] };
+            users?: ApiUser[];
+          };
+          const groupsResTyped = groupsRes as {
+            data?: ApiGroup[];
+          } & { [K in keyof ApiGroup[]]?: ApiGroup[][K] };
+
+          const userList: ApiUser[] =
+            usersResTyped.data?.users ?? usersResTyped.users ?? [];
+          const groupList: ApiGroup[] =
+            groupsResTyped.data ??
+            (Array.isArray(groupsRes) ? (groupsRes as ApiGroup[]) : []);
 
           setPersons(
-            userList.map((u: any) => ({
+            userList.map((u) => ({
               id: u.id,
               name: u.display_name || u.username,
               email: u.email || "",
             })),
           );
           setGroups(
-            groupList.map((g: any) => ({
+            groupList.map((g) => ({
               id: g.id,
               name: g.name,
               memberCount: g.member_count || 0,
