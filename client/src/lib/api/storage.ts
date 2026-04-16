@@ -19,6 +19,28 @@ export interface UploadResponse {
   content_type: string;
 }
 
+export interface Tag {
+  id: string;
+  name: string;
+  color: string;
+}
+
+export interface FileVersion {
+  id: string;
+  file_id: string;
+  version_number: number;
+  size: number;
+  content_type: string;
+  storage_key: string;
+  created_at: string;
+}
+
+export interface ArchiveEntry {
+  name: string;
+  size: number;
+  compressed_size: number;
+}
+
 // Storage API
 // Backend routes: /files/:bucket, /files/:bucket/*key, /permissions/:bucket/*key, /buckets
 export const storageApi = {
@@ -173,7 +195,7 @@ export const storageApi = {
   // File Tags
 
   getFileTags: (fileId: string) =>
-    storageClient.get<any[]>(`/files/${fileId}/tags`),
+    storageClient.get<Tag[]>(`/files/${fileId}/tags`),
   addFileTag: (fileId: string, tagId: string) =>
     storageClient.post(`/files/${fileId}/tags/${tagId}`),
   removeFileTag: (fileId: string, tagId: string) =>
@@ -182,7 +204,7 @@ export const storageApi = {
   // Versions
 
   getFileVersions: (fileId: string) =>
-    storageClient.get<any[]>(`/files/${fileId}/versions`),
+    storageClient.get<FileVersion[]>(`/files/${fileId}/versions`),
   restoreFileVersion: (fileId: string, versionId: string) =>
     storageClient.post(`/files/${fileId}/versions/${versionId}/restore`),
   downloadFileVersion: (fileId: string, versionId: string) =>
@@ -608,7 +630,7 @@ export const previewApi = {
     `${STORAGE_URL}/api/v1/preview/view/${bucket}/${encodeURIComponent(key)}`,
 
   getArchiveListing: (bucket: string, key: string) =>
-    storageClient.get<any[]>(
+    storageClient.get<ArchiveEntry[]>(
       `/preview/archive/${bucket}/${encodeURIComponent(key)}`,
     ),
   getDocumentMetadata: (bucket: string, key: string) =>

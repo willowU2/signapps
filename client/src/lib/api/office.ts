@@ -215,7 +215,7 @@ export interface SlideElement {
   width: number;
   height: number;
   content?: string;
-  style?: Record<string, any>;
+  style?: Record<string, unknown>;
 }
 
 export interface PresentationSlide {

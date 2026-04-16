@@ -55,6 +55,18 @@ const eslintConfig = defineConfig([
       "no-console": "off",
     },
   },
+
+  // Phase C — lib/api + stores any elimination.
+  // These directories have been audited and typed; re-introducing `any`
+  // is an ERROR (not warning), blocking the build. The rest of the
+  // codebase stays on the global 'warn' level until Phase C-UI is done.
+  // See docs/superpowers/specs/2026-04-16-phase-c-api-stores-design.md
+  {
+    files: ["src/lib/api/**/*.ts", "src/stores/**/*.ts"],
+    rules: {
+      "@typescript-eslint/no-explicit-any": "error",
+    },
+  },
 ]);
 
 export default eslintConfig;

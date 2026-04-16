@@ -26,12 +26,13 @@ interface ApiDesign {
   id: string;
   name?: string;
   title?: string;
-  format?: {
-    width: number;
-    height: number;
-    label?: string;
-    unit?: string;
-  };
+  /**
+   * Design format — typed as `DesignFormat` to match what the rest of the
+   * codebase uses. The backend may return a partial shape or the full
+   * `DesignFormat` object; `loadDesign` falls back to a default if any
+   * required field is missing.
+   */
+  format?: DesignFormat;
   pages?: DesignPage[];
   created_at?: string;
   createdAt?: string;
@@ -282,12 +283,7 @@ export const useDesignStore = create<DesignState>()(
             const design: Design = {
               id: res.data.id,
               name: res.data.name ?? res.data.title ?? "Untitled",
-              format: res.data.format ?? {
-                width: 1920,
-                height: 1080,
-                label: "Présentation",
-                unit: "px",
-              },
+              format: res.data.format ?? DESIGN_FORMATS[0],
               pages: res.data.pages ?? [createDefaultPage()],
               createdAt:
                 res.data.created_at ??

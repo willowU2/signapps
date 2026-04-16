@@ -17,22 +17,6 @@ import type {
   TreeType,
 } from "@/types/org";
 
-/**
- * Raw shape returned by GET /workforce/org/tree. The backend applies
- * serde(flatten) on OrgTreeNode, so each item carries all OrgNode fields
- * directly plus children/depth/employee_count for the hierarchy.
- */
-interface ApiOrgTreeNode {
-  id: string;
-  parent_id: string | null;
-  tenant_id?: string;
-  node_type: string;
-  name: string;
-  children?: ApiOrgTreeNode[];
-  depth?: number;
-  employee_count?: number;
-}
-
 interface OrgState {
   // Data
   trees: OrgTree[];
@@ -126,11 +110,11 @@ export const useOrgStore = create<OrgState>()(
           const res = await orgApi.trees.list();
           // The backend returns OrgTreeNode[] (full hierarchy).
           // We extract root nodes (parent_id = null) and map them to OrgTree shape.
-          const raw = res.data ?? [];
-          const allNodes: ApiOrgTreeNode[] = Array.isArray(raw) ? raw : [];
           // GET /workforce/org/tree returns OrgTreeNode[] with serde(flatten),
-          // so each item has all OrgNode fields directly (id, parent_id, node_type, name, ...)
-          // plus children, depth, employee_count. Root nodes are the top-level items (parent_id = null).
+          // so each item has all OrgNode fields directly. The frontend typing
+          // narrows to OrgNode[]; the extra flatten fields (children, depth,
+          // employee_count) are unused here. Root nodes have parent_id unset.
+          const allNodes: OrgNode[] = Array.isArray(res.data) ? res.data : [];
           const roots: OrgTree[] = allNodes
             .filter((n) => !n.parent_id)
             .map((n) => {
