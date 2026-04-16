@@ -1188,8 +1188,9 @@ export function CalendarHub() {
                   setSearchExpanded(false);
                   setSearchQuery("");
                 }}
+                aria-label="Fermer la recherche"
               >
-                <X className="h-4 w-4" />
+                <X className="h-4 w-4" aria-hidden="true" />
               </Button>
             </div>
           ) : (
