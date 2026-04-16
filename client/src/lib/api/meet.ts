@@ -383,6 +383,30 @@ export const meetApi = {
             ),
     },
 
+    // ========================================================================
+    // Polls (Phase 3c)
+    // ========================================================================
+
+    polls: {
+        list: (code: string) =>
+            meetClient.get<MeetPoll[]>(
+                `/meet/rooms/${encodeURIComponent(code)}/polls`,
+            ),
+        create: (code: string, data: CreateMeetPollRequest) =>
+            meetClient.post<MeetPoll>(
+                `/meet/rooms/${encodeURIComponent(code)}/polls`,
+                data,
+            ),
+        vote: (pollId: string, data: VoteMeetPollRequest) =>
+            meetClient.post<MeetPoll>(
+                `/meet/polls/${encodeURIComponent(pollId)}/vote`,
+                data,
+            ),
+        close: (pollId: string) =>
+            meetClient.post<MeetPoll>(
+                `/meet/polls/${encodeURIComponent(pollId)}/close`,
+            ),
+    },
 };
 
 // ============================================================================
@@ -466,4 +490,32 @@ export interface RaiseHandResponse {
 
 export interface LowerHandResponse {
     identity: string;
+}
+
+// ============================================================================
+// Polls (Phase 3c)
+// ============================================================================
+
+/** A live poll inside a meet room. Named `MeetPoll` to avoid a name
+ * collision with the calendar module's `Poll` type. */
+export interface MeetPoll {
+    id: string;
+    room_id: string;
+    created_by: string;
+    question: string;
+    /** Options is a JSON array of strings. */
+    options: string[];
+    /** Vote map keyed by identity. */
+    votes: Record<string, number>;
+    created_at: string;
+    closed_at?: string | null;
+}
+
+export interface CreateMeetPollRequest {
+    question: string;
+    options: string[];
+}
+
+export interface VoteMeetPollRequest {
+    option_index: number;
 }

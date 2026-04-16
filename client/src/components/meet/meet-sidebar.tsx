@@ -1,18 +1,32 @@
 "use client";
 
-import { lazy, Suspense, useMemo, useState } from "react";
-import { useParticipants } from "@livekit/components-react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import {
+  useParticipants,
+  useRoomContext,
+} from "@livekit/components-react";
+import { RoomEvent, type RemoteParticipant } from "livekit-client";
 import { toast } from "sonner";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import {
   MessageSquare,
   Users,
@@ -23,14 +37,26 @@ import {
   MicOff,
   VideoOff,
   Hand,
+  Lock,
+  Plus,
+  Trash2,
+  Trophy,
 } from "lucide-react";
 
-// Lazy placeholders — Polls/Q&A wired in Phase 3c follow-up commits
+import { meetApi } from "@/lib/api/meet";
+import type { MeetPoll } from "@/lib/api/meet";
+
+/** LiveKit data channel topic — polls create/vote/close broadcasts. */
+export const POLL_TOPIC = "poll";
+
+interface PollBroadcast {
+  type: "created" | "voted" | "closed";
+  poll_id?: string;
+}
+
+// Lazy placeholders — Q&A wired in Phase 3c follow-up commit
 const ChatPanel = lazy(() =>
   Promise.resolve({ default: () => <Placeholder label="Chat" /> }),
-);
-const PollsPanel = lazy(() =>
-  Promise.resolve({ default: () => <Placeholder label="Polls" /> }),
 );
 const QAPanel = lazy(() =>
   Promise.resolve({ default: () => <Placeholder label="Q&A" /> }),
@@ -211,6 +237,414 @@ function ParticipantsTab({
   );
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Polls tab
+// ─────────────────────────────────────────────────────────────────────────────
+
+function CreatePollDialog({
+  roomCode,
+  onCreated,
+}: {
+  roomCode: string;
+  onCreated: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [question, setQuestion] = useState("");
+  const [options, setOptions] = useState<string[]>(["", ""]);
+  const [submitting, setSubmitting] = useState(false);
+  const canAdd = options.length < 6;
+
+  const reset = () => {
+    setQuestion("");
+    setOptions(["", ""]);
+  };
+
+  const submit = async () => {
+    const trimmedQuestion = question.trim();
+    const trimmedOptions = options.map((o) => o.trim()).filter(Boolean);
+    if (!trimmedQuestion) {
+      toast.error("La question ne peut pas être vide");
+      return;
+    }
+    if (trimmedOptions.length < 2) {
+      toast.error("Au moins 2 options sont requises");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await meetApi.polls.create(roomCode, {
+        question: trimmedQuestion,
+        options: trimmedOptions,
+      });
+      toast.success("Sondage créé");
+      setOpen(false);
+      reset();
+      onCreated();
+    } catch {
+      toast.error("Création impossible");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button size="sm" className="gap-1.5">
+          <Plus className="h-3.5 w-3.5" />
+          Créer un sondage
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="bg-card border-border">
+        <DialogHeader>
+          <DialogTitle>Nouveau sondage</DialogTitle>
+          <DialogDescription>
+            2 à 6 options maximum. Les résultats s&apos;actualisent en
+            direct.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="flex flex-col gap-3">
+          <label className="flex flex-col gap-1.5 text-sm">
+            <span className="text-muted-foreground">Question</span>
+            <Input
+              value={question}
+              onChange={(e) => setQuestion(e.target.value)}
+              placeholder="Ex: Quand se retrouve-t-on ?"
+              maxLength={200}
+            />
+          </label>
+          <div className="flex flex-col gap-2">
+            {options.map((opt, idx) => (
+              <div key={idx} className="flex items-center gap-2">
+                <Input
+                  value={opt}
+                  onChange={(e) => {
+                    const next = [...options];
+                    next[idx] = e.target.value;
+                    setOptions(next);
+                  }}
+                  placeholder={`Option ${idx + 1}`}
+                  maxLength={120}
+                />
+                {options.length > 2 && (
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    onClick={() =>
+                      setOptions(options.filter((_, i) => i !== idx))
+                    }
+                    aria-label="Supprimer l'option"
+                    className="shrink-0"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+            ))}
+            {canAdd && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setOptions([...options, ""])}
+                className="gap-1.5 self-start"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                Ajouter une option
+              </Button>
+            )}
+          </div>
+        </div>
+        <DialogFooter>
+          <Button
+            variant="ghost"
+            onClick={() => setOpen(false)}
+            disabled={submitting}
+          >
+            Annuler
+          </Button>
+          <Button onClick={submit} disabled={submitting}>
+            {submitting ? "Création…" : "Créer"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function PollCard({
+  poll,
+  localIdentity,
+  isHost,
+  onMutated,
+}: {
+  poll: MeetPoll;
+  localIdentity: string;
+  isHost: boolean;
+  onMutated: () => void;
+}) {
+  const closed = !!poll.closed_at;
+  const options: string[] = Array.isArray(poll.options)
+    ? (poll.options as string[])
+    : [];
+  const votes = poll.votes || {};
+  const voteValues = Object.values(votes);
+  const totalVotes = voteValues.length;
+  const counts = options.map(
+    (_, idx) => voteValues.filter((v) => Number(v) === idx).length,
+  );
+  const myVote =
+    localIdentity && localIdentity in votes
+      ? Number(votes[localIdentity])
+      : -1;
+  const [voting, setVoting] = useState(false);
+
+  const handleVote = async (idx: number) => {
+    if (closed || voting) return;
+    setVoting(true);
+    try {
+      await meetApi.polls.vote(poll.id, { option_index: idx });
+      onMutated();
+    } catch {
+      toast.error("Vote impossible");
+    } finally {
+      setVoting(false);
+    }
+  };
+
+  const handleClose = async () => {
+    if (!confirm("Clôturer ce sondage ? Cette action est définitive.")) return;
+    try {
+      await meetApi.polls.close(poll.id);
+      toast.success("Sondage clôturé");
+      onMutated();
+    } catch {
+      toast.error("Clôture impossible");
+    }
+  };
+
+  const maxCount = Math.max(1, ...counts);
+  const winnerIdx = closed
+    ? counts.findIndex((c) => c === maxCount && c > 0)
+    : -1;
+
+  return (
+    <article
+      className={`rounded-lg border bg-card p-3 shadow-sm ${
+        closed ? "opacity-80" : ""
+      } border-border`}
+      data-testid="poll-card"
+    >
+      <header className="flex items-start justify-between gap-2 pb-2">
+        <div className="min-w-0 flex-1">
+          <h4 className="text-sm font-semibold text-foreground">
+            {poll.question}
+          </h4>
+          <p className="text-[11px] text-muted-foreground">
+            {totalVotes} vote{totalVotes > 1 ? "s" : ""}
+            {closed && <> · clôturé</>}
+          </p>
+        </div>
+        {closed && (
+          <Badge variant="outline" className="border-border gap-1">
+            <Lock className="h-3 w-3" />
+            <span className="text-[11px]">clos</span>
+          </Badge>
+        )}
+      </header>
+      <ul className="flex flex-col gap-1.5">
+        {options.map((opt, idx) => {
+          const pct = totalVotes
+            ? Math.round((counts[idx] / totalVotes) * 100)
+            : 0;
+          const selected = myVote === idx;
+          const isWinner = winnerIdx === idx;
+          return (
+            <li key={idx}>
+              <button
+                type="button"
+                disabled={closed || voting}
+                onClick={() => handleVote(idx)}
+                className={`relative block w-full overflow-hidden rounded-md border px-3 py-1.5 text-left text-xs transition-colors ${
+                  selected
+                    ? "border-primary bg-primary/5"
+                    : "border-border bg-background hover:bg-muted/40"
+                } ${closed ? "cursor-default" : "cursor-pointer"}`}
+                aria-pressed={selected}
+              >
+                <span
+                  className={`absolute inset-y-0 left-0 -z-0 ${
+                    selected ? "bg-primary/15" : "bg-muted"
+                  }`}
+                  style={{ width: `${pct}%` }}
+                  aria-hidden
+                />
+                <span className="relative z-10 flex items-center justify-between gap-2">
+                  <span className="flex items-center gap-1.5 min-w-0 truncate font-medium text-foreground">
+                    {isWinner && (
+                      <Trophy
+                        className="h-3 w-3 text-primary shrink-0"
+                        aria-label="gagnant"
+                      />
+                    )}
+                    <span className="truncate">{opt}</span>
+                  </span>
+                  <span className="text-muted-foreground shrink-0">
+                    {counts[idx]} · {pct}%
+                  </span>
+                </span>
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+      {isHost && !closed && (
+        <footer className="mt-2 flex justify-end">
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={handleClose}
+            className="h-7 text-xs text-muted-foreground hover:text-foreground"
+          >
+            Clôturer
+          </Button>
+        </footer>
+      )}
+    </article>
+  );
+}
+
+function PollsTab({
+  roomCode,
+  isHost,
+  localIdentity,
+}: {
+  roomCode: string;
+  isHost: boolean;
+  localIdentity: string;
+}) {
+  const room = useRoomContext();
+  const [polls, setPolls] = useState<MeetPoll[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const refresh = useCallback(async () => {
+    try {
+      const res = await meetApi.polls.list(roomCode);
+      setPolls(res.data);
+    } catch {
+      // keep previous state
+    } finally {
+      setLoading(false);
+    }
+  }, [roomCode]);
+
+  useEffect(() => {
+    refresh();
+    const id = window.setInterval(refresh, 10_000);
+    return () => window.clearInterval(id);
+  }, [refresh]);
+
+  useEffect(() => {
+    if (!room) return;
+    const decoder = new TextDecoder();
+    const onData = (
+      payload: Uint8Array,
+      _participant?: RemoteParticipant,
+      _kind?: unknown,
+      topic?: string,
+    ) => {
+      if (topic !== POLL_TOPIC) return;
+      try {
+        const json = JSON.parse(decoder.decode(payload)) as PollBroadcast;
+        if (json?.type) refresh();
+      } catch {
+        // ignore
+      }
+    };
+    room.on(RoomEvent.DataReceived, onData);
+    return () => {
+      room.off(RoomEvent.DataReceived, onData);
+    };
+  }, [room, refresh]);
+
+  const broadcastRefresh = useCallback(
+    async (payload: PollBroadcast) => {
+      if (!room?.localParticipant) return;
+      try {
+        const encoder = new TextEncoder();
+        await room.localParticipant.publishData(
+          encoder.encode(JSON.stringify(payload)),
+          { reliable: true, topic: POLL_TOPIC },
+        );
+      } catch {
+        // non-fatal
+      }
+    },
+    [room],
+  );
+
+  const handleMutated = useCallback(() => {
+    refresh();
+    void broadcastRefresh({ type: "voted" });
+  }, [broadcastRefresh, refresh]);
+
+  const handleCreated = useCallback(() => {
+    refresh();
+    void broadcastRefresh({ type: "created" });
+  }, [broadcastRefresh, refresh]);
+
+  const open = polls.filter((p) => !p.closed_at);
+  const closed = polls.filter((p) => !!p.closed_at);
+
+  return (
+    <div className="flex flex-col gap-3 p-3">
+      {isHost && (
+        <div className="flex items-center justify-between">
+          <span className="text-[11px] uppercase tracking-wide text-muted-foreground">
+            Hôte
+          </span>
+          <CreatePollDialog roomCode={roomCode} onCreated={handleCreated} />
+        </div>
+      )}
+      {loading && polls.length === 0 && (
+        <div className="p-6 text-center text-sm text-muted-foreground">
+          Chargement…
+        </div>
+      )}
+      {!loading && polls.length === 0 && (
+        <div className="rounded-lg border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+          Aucun sondage pour l&apos;instant
+          {isHost && <div className="text-[11px]">Lancez-en un ci-dessus.</div>}
+        </div>
+      )}
+      {open.map((p) => (
+        <PollCard
+          key={p.id}
+          poll={p}
+          localIdentity={localIdentity}
+          isHost={isHost}
+          onMutated={handleMutated}
+        />
+      ))}
+      {closed.length > 0 && (
+        <div className="flex flex-col gap-2 pt-1">
+          <span className="text-[11px] uppercase tracking-wide text-muted-foreground">
+            Clôturés
+          </span>
+          {closed.map((p) => (
+            <PollCard
+              key={p.id}
+              poll={p}
+              localIdentity={localIdentity}
+              isHost={isHost}
+              onMutated={handleMutated}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 interface MeetSidebarProps {
   onClose: () => void;
   defaultTab?: string;
@@ -223,11 +657,14 @@ interface MeetSidebarProps {
 export function MeetSidebar({
   onClose,
   defaultTab = "participants",
+  roomCode,
   isHost,
   raisedSet,
   onLowerOther,
 }: MeetSidebarProps) {
   const participants = useParticipants();
+  const room = useRoomContext();
+  const localIdentity = room?.localParticipant?.identity ?? "";
 
   return (
     <aside className="w-full md:w-[360px] shrink-0 bg-card border-l border-border flex flex-col h-full">
@@ -299,7 +736,11 @@ export function MeetSidebar({
               />
             </TabsContent>
             <TabsContent value="polls" className="m-0">
-              <PollsPanel />
+              <PollsTab
+                roomCode={roomCode}
+                isHost={isHost}
+                localIdentity={localIdentity}
+              />
             </TabsContent>
             <TabsContent value="qa" className="m-0">
               <QAPanel />

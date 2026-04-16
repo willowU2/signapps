@@ -72,6 +72,11 @@ impl Modify for SecurityAddon {
         crate::handlers::raised_hands::lower_hand,
         crate::handlers::raised_hands::lower_other_hand,
         crate::handlers::raised_hands::list_raised_hands,
+        // Polls (Phase 3c)
+        crate::handlers::polls::create_poll,
+        crate::handlers::polls::list_polls,
+        crate::handlers::polls::vote_poll,
+        crate::handlers::polls::close_poll,
         // Transcription
         crate::handlers::transcription::handle_session_ended,
         crate::handlers::transcription::ingest_transcription,
@@ -117,6 +122,9 @@ impl Modify for SecurityAddon {
         crate::handlers::raised_hands::RaisedHand,
         crate::handlers::raised_hands::RaiseHandResponse,
         crate::handlers::raised_hands::LowerHandResponse,
+        crate::handlers::polls::Poll,
+        crate::handlers::polls::CreatePollRequest,
+        crate::handlers::polls::VotePollRequest,
         crate::handlers::transcription::SessionEndedEvent,
         crate::handlers::transcription::IngestTranscriptionRequest,
         crate::handlers::transcription::IngestTranscriptionResponse,
