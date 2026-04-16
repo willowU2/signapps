@@ -134,6 +134,37 @@ Five additional pages that bypass `AppLayout` now wrap their shell in
 - Per-route fix : `/containers` list row "more actions" trigger gained
   an aria-label tying the dropdown to the container name.
 
+### Attempted re-audit on 2026-04-16 — blocked by stale dev server
+
+Ran `e2e/a11y-audit.spec.ts` at 21:47 after wave 2/2b/2c/3a fixes. The
+resulting baseline showed **-2 total violations** (2914 → 2912), which
+contradicts the source changes. Root cause verified by direct inspection :
+
+- `client/.next/server/app/maintenance/page.js` mtime : 16:17
+- `client/src/app/maintenance/page.tsx` mtime : 17:13
+- `curl -sL http://localhost:3000/login` returns HTML with the
+  skip-link anchor but **no `<main>` element** despite the source
+  having been edited to emit one.
+
+Conclusion : the Next.js dev server (started earlier in the session)
+stopped recompiling on file changes — likely the file watcher dropped
+out. The 24-minute audit measured pre-wave-2 compiled output, so the
+delta is not meaningful. The original `a11y-axe-baseline.json` from
+16:45 has been restored as the canonical baseline ; the 22:11 re-run
+was discarded.
+
+**To measure the real wave-2/3 delta** :
+
+```bash
+# Terminate the stale dev server, then :
+cd client && npm run dev       # fresh dev server with working HMR
+# — and separately, once /login compiled:
+npx playwright test e2e/a11y-audit.spec.ts --project=chromium
+```
+
+Alternatively, run against a production build :
+`cd client && npm run build && npm run start` (no HMR, fully baked).
+
 ### Pending (requires fresh axe run)
 
 - Delta measurement : rerun `e2e/a11y-audit.spec.ts` with services up and regenerate `a11y-axe-baseline.json` / `a11y-axe-summary.md`. This is the gate for prioritising the next wave — per-route vs. layout-level.
