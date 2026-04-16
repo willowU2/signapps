@@ -41,6 +41,7 @@ once_cell = { workspace = true }
 bcrypt = "0.18.0"
 reqwest = { version = "0.11", features = ["json", "multipart"] }
 tokio-cron-scheduler = "0.13.0"
+futures = { workspace = true }
 utoipa = { workspace = true }
 utoipa-swagger-ui = { workspace = true }
 

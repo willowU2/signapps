@@ -8,6 +8,7 @@ use axum::{
     Extension, Json,
 };
 use bytes::Bytes;
+use futures::stream::{self, StreamExt, TryStreamExt};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use signapps_common::auth::Claims;
@@ -924,26 +925,42 @@ pub async fn delete_many(
     Json(payload): Json<DeleteFilesRequest>,
 ) -> Result<StatusCode> {
     let user_id = claims.sub;
-    for key in &payload.keys {
-        // Authorization must be checked per key — batch endpoints cannot
-        // rely on the single-file handler's check.
-        check_file_permission(&state, &claims, &bucket, key, Action::delete()).await?;
 
-        // Get info first to know size for quota update
-        let info = state.storage.get_object_info(&bucket, key).await.ok();
+    // Parallelize per-key work with a bounded concurrency (8 in flight).
+    // Semantics preserved:
+    //  - per-key authorization check (no batch bypass)
+    //  - first error short-circuits the batch via try_collect (matches the
+    //    previous `?` propagation in the for-loop)
+    //  - quota errors are logged but do not fail the batch (unchanged)
+    const CONCURRENCY: usize = 8;
+    let count = payload.keys.len();
+    stream::iter(payload.keys)
+        .map(|key| {
+            let state = state.clone();
+            let claims = claims.clone();
+            let bucket = bucket.clone();
+            async move {
+                check_file_permission(&state, &claims, &bucket, &key, Action::delete()).await?;
 
-        // Even if delete fails, we might want to continue, but here we propagate error as typically requested
-        // Or we could try best effort. Using ? implies we stop on error.
-        state.storage.delete_object(&bucket, key).await?;
+                let info = state.storage.get_object_info(&bucket, &key).await.ok();
 
-        if let Some(info) = info {
-            if let Err(e) = quotas::record_delete(&state, user_id, &bucket, key, info.size).await {
-                tracing::error!(error = %e, "Failed to record delete quota");
+                state.storage.delete_object(&bucket, &key).await?;
+
+                if let Some(info) = info {
+                    if let Err(e) =
+                        quotas::record_delete(&state, user_id, &bucket, &key, info.size).await
+                    {
+                        tracing::error!(error = %e, "Failed to record delete quota");
+                    }
+                }
+                Ok::<_, Error>(())
             }
-        }
-    }
+        })
+        .buffer_unordered(CONCURRENCY)
+        .try_collect::<Vec<_>>()
+        .await?;
 
-    tracing::info!(bucket = %bucket, count = payload.keys.len(), "Files deleted");
+    tracing::info!(bucket = %bucket, count = count, "Files deleted");
 
     Ok(StatusCode::NO_CONTENT)
 }

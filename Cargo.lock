@@ -11901,6 +11901,7 @@ dependencies = [
  "bytes",
  "chrono",
  "dotenvy",
+ "futures 0.3.31",
  "hex",
  "image 0.25.9",
  "lopdf 0.33.0",
