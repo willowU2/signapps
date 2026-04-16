@@ -430,8 +430,11 @@ export default function KeepPage() {
               size="icon"
               className="h-12 w-12 rounded-full text-[#9aa0a6] hover:bg-[#3c4043] mr-1"
               onClick={() => setSidebarExpanded(!sidebarExpanded)}
+              aria-label={
+                sidebarExpanded ? "Réduire le menu" : "Ouvrir le menu"
+              }
             >
-              <Menu className="h-6 w-6" />
+              <Menu className="h-6 w-6" aria-hidden="true" />
             </Button>
 
             {/* Logo */}
