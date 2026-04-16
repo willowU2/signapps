@@ -213,5 +213,3 @@ export const useCommentsStore = create<CommentsState & CommentsActions>()(
     },
   ),
 );
-
-export default useCommentsStore;

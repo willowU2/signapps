@@ -274,5 +274,3 @@ export function ComposeEncryptToggle({
     </div>
   );
 }
-
-export default PgpStatusBadges;

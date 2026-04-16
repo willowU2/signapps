@@ -270,5 +270,3 @@ export function NotificationPreferencesForm() {
     </Card>
   );
 }
-
-export default NotificationPreferencesForm;

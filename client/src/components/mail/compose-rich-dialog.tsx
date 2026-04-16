@@ -862,5 +862,3 @@ export function ComposeRichDialog({
     </Dialog>
   );
 }
-
-export default ComposeRichDialog;

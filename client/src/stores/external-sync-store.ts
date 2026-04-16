@@ -544,5 +544,3 @@ export const selectMicrosoftConnection = (state: ExternalSyncState) =>
 export const selectHasUnresolvedConflicts = (state: ExternalSyncState) =>
   state.unresolvedConflictCount > 0;
 export const selectIsSyncing = (state: ExternalSyncState) => state.isSyncing;
-
-export default useExternalSyncStore;

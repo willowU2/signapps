@@ -177,5 +177,3 @@ export const Comment = Mark.create<CommentOptions>({
     ];
   },
 });
-
-export default Comment;

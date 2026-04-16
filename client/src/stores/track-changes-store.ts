@@ -220,5 +220,3 @@ export const useTrackChangesStore = create<
     },
   ),
 );
-
-export default useTrackChangesStore;

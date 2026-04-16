@@ -190,5 +190,3 @@ export const UniqueID = Extension.create<UniqueIDOptions>({
     }
   },
 });
-
-export default UniqueID;

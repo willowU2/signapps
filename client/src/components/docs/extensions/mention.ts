@@ -183,5 +183,3 @@ export const Mention = Node.create<MentionOptions>({
     ];
   },
 });
-
-export default Mention;

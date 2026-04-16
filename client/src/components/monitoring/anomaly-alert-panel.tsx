@@ -232,5 +232,3 @@ export function AnomalyAlertPanel() {
     </Card>
   );
 }
-
-export default AnomalyAlertPanel;

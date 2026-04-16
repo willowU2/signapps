@@ -131,5 +131,3 @@ export function useHistoryEntries(maxEntries = 50) {
 
   return { entries, addEntry };
 }
-
-export default HistoryPanel;

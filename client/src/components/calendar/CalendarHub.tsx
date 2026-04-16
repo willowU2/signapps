@@ -1476,5 +1476,3 @@ export function CalendarHub() {
     </div>
   );
 }
-
-export default CalendarHub;

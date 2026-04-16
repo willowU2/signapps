@@ -109,5 +109,3 @@ export function AddCommentButton({
     </Popover>
   );
 }
-
-export default AddCommentButton;

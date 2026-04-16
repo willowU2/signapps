@@ -298,5 +298,3 @@ export function useTrackChanges({
     deletionCount,
   };
 }
-
-export default useTrackChanges;

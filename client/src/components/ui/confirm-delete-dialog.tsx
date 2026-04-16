@@ -76,5 +76,3 @@ export function ConfirmDeleteDialog({
     </AlertDialog>
   );
 }
-
-export default ConfirmDeleteDialog;

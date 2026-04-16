@@ -232,5 +232,3 @@ export function useYjsComments({
     deleteReply,
   };
 }
-
-export default useYjsComments;

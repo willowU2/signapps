@@ -272,5 +272,3 @@ export function EmailComposer({
     </div>
   );
 }
-
-export default EmailComposer;

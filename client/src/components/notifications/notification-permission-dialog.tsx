@@ -165,5 +165,3 @@ export function NotificationPermissionDialog({
     </Dialog>
   );
 }
-
-export default NotificationPermissionDialog;

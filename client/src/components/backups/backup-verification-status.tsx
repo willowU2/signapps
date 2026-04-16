@@ -178,5 +178,3 @@ export function BackupVerificationStatus() {
     </Card>
   );
 }
-
-export default BackupVerificationStatus;

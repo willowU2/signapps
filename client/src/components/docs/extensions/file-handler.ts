@@ -219,5 +219,3 @@ export const insertImageFromFile = async (
     editor.chain().focus().setImage(imageAttrs).run();
   }
 };
-
-export default FileHandler;

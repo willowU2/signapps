@@ -252,5 +252,3 @@ export function TrackChangesToolbar({
     </TooltipProvider>
   );
 }
-
-export default TrackChangesToolbar;

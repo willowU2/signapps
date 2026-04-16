@@ -113,5 +113,3 @@ export function createMentionSuggestion(): Omit<
     },
   };
 }
-
-export default createMentionSuggestion;

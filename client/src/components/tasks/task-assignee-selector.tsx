@@ -213,5 +213,3 @@ export function TaskAssigneeSelector({
     </Popover>
   );
 }
-
-export default TaskAssigneeSelector;

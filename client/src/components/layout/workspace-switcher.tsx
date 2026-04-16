@@ -95,5 +95,3 @@ export function WorkspaceSwitcher() {
     </DropdownMenu>
   );
 }
-
-export default WorkspaceSwitcher;

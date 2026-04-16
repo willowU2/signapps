@@ -613,5 +613,3 @@ export const TrackChanges = TiptapMark.create<TrackChangesOptions>({
     ];
   },
 });
-
-export default TrackChanges;

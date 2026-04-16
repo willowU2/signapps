@@ -439,5 +439,3 @@ export function ProviderConnector({
     </div>
   );
 }
-
-export default ProviderConnector;

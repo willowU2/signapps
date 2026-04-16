@@ -638,5 +638,3 @@ export function SyncConfigPanel({ className }: SyncConfigPanelProps) {
     </div>
   );
 }
-
-export default SyncConfigPanel;

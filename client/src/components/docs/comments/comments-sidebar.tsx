@@ -370,5 +370,3 @@ function ReplyItem({ reply }: { reply: CommentReply }) {
     </div>
   );
 }
-
-export default CommentsSidebar;

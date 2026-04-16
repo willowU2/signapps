@@ -737,5 +737,3 @@ export function isEncryptedMessage(body: string | null | undefined): boolean {
 export function getPgpConfig(accountId: string): PgpAccountConfig {
   return getAccountConfig(accountId);
 }
-
-export default PgpSettings;

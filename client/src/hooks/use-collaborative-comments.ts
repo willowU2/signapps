@@ -280,5 +280,3 @@ export function useCollaborativeComments({
     goToComment,
   };
 }
-
-export default useCollaborativeComments;

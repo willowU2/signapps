@@ -865,5 +865,3 @@ export function WhiteboardPage() {
     </div>
   );
 }
-
-export default WhiteboardPage;

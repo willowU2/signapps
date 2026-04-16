@@ -341,5 +341,3 @@ export function SpamBadge({ confidence }: SpamBadgeProps) {
     </Badge>
   );
 }
-
-export default SpamFilterSettings;

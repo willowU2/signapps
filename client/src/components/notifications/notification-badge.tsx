@@ -31,5 +31,3 @@ export function NotificationBadge({ className = "" }: NotificationBadgeProps) {
     </div>
   );
 }
-
-export default NotificationBadge;

@@ -415,5 +415,3 @@ export function TrackChangesSidebar({
     </div>
   );
 }
-
-export default TrackChangesSidebar;
