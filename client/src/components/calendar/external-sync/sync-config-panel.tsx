@@ -157,6 +157,7 @@ function SyncConfigItem({
               size="icon"
               onClick={onSync}
               disabled={!config.is_enabled || isSyncing}
+              aria-label="Actualiser"
             >
               <RefreshCw
                 className={`h-4 w-4 ${isSyncing ? "animate-spin" : ""}`}
@@ -167,6 +168,7 @@ function SyncConfigItem({
               variant="ghost"
               size="icon"
               onClick={() => onToggle(!config.is_enabled)}
+              aria-label="Pause"
             >
               {config.is_enabled ? (
                 <Pause className="h-4 w-4" />
@@ -184,6 +186,7 @@ function SyncConfigItem({
               size="icon"
               onClick={onDelete}
               className="text-red-600 hover:text-red-700"
+              aria-label="Supprimer"
             >
               <Trash2 className="h-4 w-4" />
             </Button>

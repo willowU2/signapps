@@ -275,6 +275,7 @@ export function DateNavigatorCompact({ className }: { className?: string }) {
         size="icon"
         onClick={() => navigateRelative("prev")}
         className="h-7 w-7"
+        aria-label="Précédent"
       >
         <ChevronLeft className="h-4 w-4" />
       </Button>
@@ -293,6 +294,7 @@ export function DateNavigatorCompact({ className }: { className?: string }) {
         size="icon"
         onClick={() => navigateRelative("next")}
         className="h-7 w-7"
+        aria-label="Suivant"
       >
         <ChevronRight className="h-4 w-4" />
       </Button>

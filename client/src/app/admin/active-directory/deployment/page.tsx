@@ -595,6 +595,7 @@ export default function DeploymentPage() {
                                   className="h-7 w-7 text-muted-foreground hover:text-foreground"
                                   onClick={(e) => openEditDialog(e, profile)}
                                   title="Modifier ce profil"
+                                  aria-label="Modifier ce profil"
                                 >
                                   <Pencil className="h-3.5 w-3.5" />
                                 </Button>
@@ -606,6 +607,7 @@ export default function DeploymentPage() {
                                     handleDeleteProfile(e, profile)
                                   }
                                   title="Supprimer ce profil"
+                                  aria-label="Supprimer ce profil"
                                 >
                                   <Trash2 className="h-3.5 w-3.5" />
                                 </Button>

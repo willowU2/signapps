@@ -374,6 +374,7 @@ export function TaskSheet({
                 variant="outline"
                 size="icon"
                 onClick={handleAddTag}
+                aria-label="Ajouter"
               >
                 <Plus className="h-4 w-4" />
               </Button>
@@ -407,6 +408,7 @@ export function TaskSheet({
                     size="icon"
                     className="h-6 w-6"
                     onClick={() => handleRemoveSubtask(subtask.id)}
+                    aria-label="Fermer"
                   >
                     <X className="h-3 w-3" />
                   </Button>
@@ -427,6 +429,7 @@ export function TaskSheet({
                 variant="outline"
                 size="icon"
                 onClick={handleAddSubtask}
+                aria-label="Ajouter"
               >
                 <Plus className="h-4 w-4" />
               </Button>

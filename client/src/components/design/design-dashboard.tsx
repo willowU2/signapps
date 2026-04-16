@@ -300,6 +300,7 @@ export default function DesignDashboard() {
                           variant="ghost"
                           size="icon"
                           className="h-6 w-6 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                          aria-label="Plus d'actions"
                         >
                           <MoreVertical className="h-3.5 w-3.5 text-muted-foreground" />
                         </Button>

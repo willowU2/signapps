@@ -172,6 +172,7 @@ export function ChannelSidebar({
             size="icon"
             className="h-7 w-7 shrink-0"
             onClick={() => setCollapsed((prev) => !prev)}
+            aria-label="Suivant"
           >
             {collapsed ? (
               <ChevronRight className="h-4 w-4" />
@@ -290,6 +291,7 @@ export function ChannelSidebar({
                   size="icon"
                   className="w-full h-9"
                   asChild
+                  aria-label="Ajouter"
                 >
                   <Link href="/social/accounts">
                     <Plus className="h-4 w-4" />

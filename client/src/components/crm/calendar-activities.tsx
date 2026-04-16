@@ -98,6 +98,7 @@ export function CalendarActivities({ dealId }: Props) {
           size="icon"
           className="h-7 w-7"
           onClick={() => refetch()}
+          aria-label="Actualiser"
         >
           <RefreshCw
             className={`h-3.5 w-3.5 ${isLoading ? "animate-spin" : ""}`}

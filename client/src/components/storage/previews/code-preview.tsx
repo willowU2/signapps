@@ -156,6 +156,7 @@ export function CodePreview({
           size="icon"
           className="h-8 w-8"
           onClick={copyToClipboard}
+          aria-label="Copier"
         >
           <Copy className="h-4 w-4 text-slate-400" />
         </Button>

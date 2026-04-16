@@ -165,6 +165,7 @@ export function ImportDialog({
                     e.stopPropagation();
                     reset();
                   }}
+                  aria-label="Fermer"
                 >
                   <X className="h-4 w-4" />
                 </Button>

@@ -371,6 +371,7 @@ export default function AdGpoPage() {
                                   size="icon"
                                   title="Supprimer"
                                   onClick={() => setDeleteTarget(gpo)}
+                                  aria-label="Supprimer"
                                 >
                                   <Trash2 className="h-4 w-4 text-destructive" />
                                 </Button>

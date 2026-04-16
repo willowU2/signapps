@@ -247,6 +247,7 @@ export function TimeTracker({ tasks = SAMPLE_TASKS }: TimeTrackerProps) {
                 variant="ghost"
                 className="size-5"
                 onClick={() => handleDelete(e.id)}
+                aria-label="Supprimer"
               >
                 <Trash2 className="size-3" />
               </Button>

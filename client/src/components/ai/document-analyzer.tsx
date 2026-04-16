@@ -435,6 +435,7 @@ Réponds en français de manière concise et précise.`;
                   size="icon"
                   onClick={handleChat}
                   disabled={chatLoading || !chatInput.trim()}
+                  aria-label="Envoyer"
                 >
                   <Send className="w-4 h-4" />
                 </Button>

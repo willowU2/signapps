@@ -451,6 +451,7 @@ export function WebhookManager() {
                               variant="ghost"
                               size="icon"
                               onClick={() => openEdit(webhook)}
+                              aria-label="Modifier"
                             >
                               <Edit className="h-4 w-4" />
                             </Button>
@@ -464,6 +465,7 @@ export function WebhookManager() {
                               size="icon"
                               className="text-destructive hover:text-destructive"
                               onClick={() => setDeleteId(webhook.id)}
+                              aria-label="Supprimer"
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>

@@ -145,6 +145,7 @@ export function ScheduledMessage({
                   size="icon"
                   onClick={() => onCancel?.(msg.id)}
                   className="h-8 w-8 text-destructive hover:bg-destructive/10"
+                  aria-label="Fermer"
                 >
                   <X className="h-4 w-4" />
                 </Button>

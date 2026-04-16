@@ -396,6 +396,7 @@ export function MetricsDashboard({ className }: MetricsDashboardProps) {
             size="icon"
             onClick={handleRefresh}
             disabled={isLoadingSummary}
+            aria-label="Actualiser"
           >
             <RefreshCw
               className={cn("h-4 w-4", isLoadingSummary && "animate-spin")}

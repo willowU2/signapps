@@ -281,6 +281,7 @@ export function CustomMetricDashboard() {
                       variant="ghost"
                       className="h-6 w-6"
                       onClick={() => removeWidget(widget.id)}
+                      aria-label="Fermer"
                     >
                       <X className="h-3 w-3" />
                     </Button>

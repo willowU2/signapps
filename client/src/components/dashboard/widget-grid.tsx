@@ -284,6 +284,7 @@ export function WidgetGrid() {
                     size="icon"
                     className="absolute -right-2 -top-2 z-20 h-6 w-6 rounded-full shadow-md"
                     onClick={() => removeWidget(widget.id)}
+                    aria-label="Fermer"
                   >
                     <X className="h-3 w-3" />
                   </Button>

@@ -180,6 +180,7 @@ function StoryCard({
           className="size-6"
           disabled={colIndex === 0}
           onClick={() => onMove(story.id, STATUS_COLUMNS[colIndex - 1].id)}
+          aria-label="Précédent"
         >
           <ChevronLeft className="size-3" />
         </Button>
@@ -189,6 +190,7 @@ function StoryCard({
           className="size-6"
           disabled={colIndex === STATUS_COLUMNS.length - 1}
           onClick={() => onMove(story.id, STATUS_COLUMNS[colIndex + 1].id)}
+          aria-label="Suivant"
         >
           <ChevronRight className="size-3" />
         </Button>

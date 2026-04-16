@@ -76,7 +76,12 @@ export function ConversationSidebar({
     <>
       <div className="flex items-center justify-between p-3 border-b">
         <h2 className="font-semibold text-sm">Historique</h2>
-        <Button variant="ghost" size="icon" onClick={onCreateNewChat}>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onCreateNewChat}
+          aria-label="Ajouter"
+        >
           <Plus className="h-4 w-4" />
         </Button>
       </div>
@@ -118,6 +123,7 @@ export function ConversationSidebar({
                       variant="ghost"
                       size="icon"
                       className="h-6 w-6 opacity-0 group-hover:opacity-100"
+                      aria-label="Plus d'actions"
                     >
                       <MoreVertical className="h-3 w-3" />
                     </Button>

@@ -297,6 +297,7 @@ export function KanbanView({
                   size="icon"
                   className="h-6 w-6"
                   onClick={() => onCreateItem?.(column.id)}
+                  aria-label="Ajouter"
                 >
                   <Plus className="h-4 w-4" />
                 </Button>

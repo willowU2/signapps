@@ -49,6 +49,7 @@ export function ScreenMagnifier({ zoom = 1.25 }: MagnifierProps) {
             size="icon"
             className="h-8 w-8 rounded-sm hover:bg-background"
             onClick={() => setCurrentZoom((z) => Math.max(1.1, z - 0.1))}
+            aria-label="Dézoomer"
           >
             <ZoomOut className="h-4 w-4" />
           </Button>
@@ -62,6 +63,7 @@ export function ScreenMagnifier({ zoom = 1.25 }: MagnifierProps) {
             size="icon"
             className="h-8 w-8 rounded-sm hover:bg-background"
             onClick={() => setCurrentZoom((z) => Math.min(3, z + 0.1))}
+            aria-label="Zoomer"
           >
             <ZoomIn className="h-4 w-4" />
           </Button>
@@ -73,6 +75,7 @@ export function ScreenMagnifier({ zoom = 1.25 }: MagnifierProps) {
             size="icon"
             className="h-8 w-8 rounded-sm text-destructive hover:bg-destructive/10 hover:text-destructive"
             onClick={() => setEnabled(false)}
+            aria-label="Fermer"
           >
             <X className="h-4 w-4" />
           </Button>

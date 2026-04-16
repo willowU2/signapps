@@ -301,6 +301,7 @@ export function CreatePollDialog({
                 size="icon"
                 variant="outline"
                 onClick={addSlot}
+                aria-label="Ajouter"
               >
                 <Plus className="h-4 w-4" />
               </Button>
@@ -330,6 +331,7 @@ export function CreatePollDialog({
                     variant="ghost"
                     className="h-7 w-7"
                     onClick={() => removeSlot(slot.id)}
+                    aria-label="Supprimer"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                   </Button>

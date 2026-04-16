@@ -305,6 +305,7 @@ function PolicyTreeNode({
             variant="ghost"
             className="h-6 w-6"
             onClick={() => onEdit(node)}
+            aria-label="Modifier"
           >
             <Edit className="h-3 w-3" />
           </Button>
@@ -313,6 +314,7 @@ function PolicyTreeNode({
             variant="ghost"
             className="h-6 w-6 text-destructive"
             onClick={() => onDelete(node.id)}
+            aria-label="Supprimer"
           >
             <Trash2 className="h-3 w-3" />
           </Button>

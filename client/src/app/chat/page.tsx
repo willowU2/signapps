@@ -76,6 +76,7 @@ export default function ChatPage() {
               variant="ghost"
               size="icon"
               className="text-muted-foreground hover:bg-muted rounded-full"
+              aria-label="Menu"
             >
               <Menu className="h-6 w-6" />
             </Button>
@@ -110,6 +111,7 @@ export default function ChatPage() {
               variant="ghost"
               size="icon"
               className="text-muted-foreground hover:bg-muted rounded-full"
+              aria-label="Paramètres"
             >
               <Settings className="h-6 w-6" />
             </Button>

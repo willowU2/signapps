@@ -179,7 +179,12 @@ function CacheEntryItem({
       {/* Actions */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-          <Button variant="ghost" size="icon" className="h-8 w-8">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            aria-label="Plus d'actions"
+          >
             <MoreHorizontal className="h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>
@@ -417,6 +422,7 @@ export function CacheManager({ className }: CacheManagerProps) {
           className="h-8 w-8"
           onClick={refreshEntries}
           disabled={isLoading}
+          aria-label="Actualiser"
         >
           <RefreshCw className={cn("h-4 w-4", isLoading && "animate-spin")} />
         </Button>

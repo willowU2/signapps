@@ -128,6 +128,7 @@ export function TasksHeader({
                 variant="outline"
                 size="icon"
                 className="h-9 w-9 rounded-full border-dashed shadow-sm"
+                aria-label="Plus d'actions"
               >
                 <MoreVertical className="h-4 w-4 text-muted-foreground" />
               </Button>
@@ -164,6 +165,7 @@ export function TasksHeader({
             onClick={onAddTask}
             size="icon"
             className="h-9 w-9 rounded-full bg-blue-600 hover:bg-blue-700 text-white sm:hidden shadow-md cursor-pointer"
+            aria-label="Ajouter"
           >
             <Plus className="h-4 w-4" />
           </Button>

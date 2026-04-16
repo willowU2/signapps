@@ -381,6 +381,7 @@ export function UserSheet({
                                 className="h-9 w-9 text-destructive hover:text-destructive hover:bg-destructive/10"
                                 disabled={isLoading}
                                 onClick={() => field.onChange("")}
+                                aria-label="Supprimer"
                               >
                                 <Trash2 className="h-4 w-4" />
                               </Button>

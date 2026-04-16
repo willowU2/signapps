@@ -439,6 +439,7 @@ export default function WorkflowsPage() {
                         e.stopPropagation();
                         handleDeleteWorkflow(wf.id);
                       }}
+                      aria-label="Supprimer"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </Button>
@@ -641,6 +642,7 @@ export default function WorkflowsPage() {
                     onClick={() =>
                       setNewStates((ns) => ns.filter((_, j) => j !== i))
                     }
+                    aria-label="Supprimer"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                   </Button>

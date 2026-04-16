@@ -154,7 +154,12 @@ export function AudioToTask() {
             className="text-sm"
             onKeyDown={(e) => e.key === "Enter" && addManual()}
           />
-          <Button variant="outline" size="icon" onClick={addManual}>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={addManual}
+            aria-label="Ajouter"
+          >
             <Plus className="h-4 w-4" />
           </Button>
         </div>
@@ -206,6 +211,7 @@ export function AudioToTask() {
                   size="icon"
                   className="h-6 w-6 text-destructive shrink-0"
                   onClick={() => remove(task.id)}
+                  aria-label="Supprimer"
                 >
                   <Trash2 className="h-3 w-3" />
                 </Button>

@@ -66,6 +66,7 @@ export function WidgetQuickNotes({ widget }: WidgetRenderProps) {
                 className="h-6 w-6"
                 onClick={handleReset}
                 title="Annuler les modifications"
+                aria-label="Annuler les modifications"
               >
                 <RotateCcw className="h-3 w-3" />
               </Button>
@@ -77,6 +78,7 @@ export function WidgetQuickNotes({ widget }: WidgetRenderProps) {
               onClick={handleSave}
               disabled={!dirty}
               title="Sauvegarder"
+              aria-label="Sauvegarder"
             >
               <Save className="h-3 w-3" />
             </Button>

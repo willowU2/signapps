@@ -268,6 +268,7 @@ export function MockServer() {
                 size="icon"
                 className="h-6 w-6 text-destructive"
                 onClick={() => remove(r.id)}
+                aria-label="Supprimer"
               >
                 <Trash2 className="h-3 w-3" />
               </Button>

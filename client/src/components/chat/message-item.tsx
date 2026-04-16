@@ -263,6 +263,7 @@ function MessageItemInner({
                     variant="ghost"
                     size="icon"
                     className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                    aria-label="Plus d'actions"
                   >
                     <MoreHorizontal className="h-4 w-4" />
                   </Button>

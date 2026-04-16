@@ -319,6 +319,7 @@ export function GanttChart({
               )
             }
             title="Zoom in"
+            aria-label="Zoom in"
           >
             <ZoomIn className="size-4" />
           </Button>
@@ -331,6 +332,7 @@ export function GanttChart({
               )
             }
             title="Zoom out"
+            aria-label="Zoom out"
           >
             <ZoomOut className="size-4" />
           </Button>

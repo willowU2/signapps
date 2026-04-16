@@ -512,6 +512,7 @@ function AlertsTab() {
                           variant="ghost"
                           size="icon"
                           onClick={() => openEdit(cfg)}
+                          aria-label="Paramètres"
                         >
                           <Settings className="h-4 w-4" />
                         </Button>
@@ -519,6 +520,7 @@ function AlertsTab() {
                           variant="ghost"
                           size="icon"
                           onClick={() => setDeleteId(cfg.id)}
+                          aria-label="Supprimer"
                         >
                           <Trash2 className="h-4 w-4 text-destructive" />
                         </Button>

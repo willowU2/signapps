@@ -145,6 +145,7 @@ export function StorageHeader({
             className="h-8 w-8 rounded-full text-[#5f6368] dark:text-[#9aa0a6]"
             onClick={() => onViewModeChange("grid")}
             title="Vue Grille"
+            aria-label="Vue Grille"
           >
             <LayoutGrid className="h-[18px] w-[18px]" />
           </Button>
@@ -154,6 +155,7 @@ export function StorageHeader({
             className="h-8 w-8 rounded-full text-[#5f6368] dark:text-[#9aa0a6]"
             onClick={() => onViewModeChange("list")}
             title="Vue Liste"
+            aria-label="Vue Liste"
           >
             <ListIcon className="h-[18px] w-[18px]" />
           </Button>

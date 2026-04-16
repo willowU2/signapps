@@ -529,6 +529,7 @@ export default function MdmPage() {
                           onClick={() =>
                             setPendingAction({ device: d, action: "lock" })
                           }
+                          aria-label="Remote Lock"
                         >
                           <Shield className="h-3.5 w-3.5" />
                         </Button>
@@ -539,6 +540,7 @@ export default function MdmPage() {
                           onClick={() =>
                             setPendingAction({ device: d, action: "profile" })
                           }
+                          aria-label="Install Profile"
                         >
                           <Settings className="h-3.5 w-3.5" />
                         </Button>
@@ -550,6 +552,7 @@ export default function MdmPage() {
                             setPendingAction({ device: d, action: "wipe" })
                           }
                           className="text-destructive hover:text-destructive"
+                          aria-label="Remote Wipe"
                         >
                           <ShieldOff className="h-3.5 w-3.5" />
                         </Button>
@@ -559,6 +562,7 @@ export default function MdmPage() {
                           title="Remove"
                           onClick={() => removeDevice(d.id)}
                           className="text-muted-foreground hover:text-destructive"
+                          aria-label="Remove"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
                         </Button>

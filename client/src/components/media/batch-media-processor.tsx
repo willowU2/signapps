@@ -229,6 +229,7 @@ export function BatchMediaProcessor() {
                       variant="ghost"
                       className="h-6 w-6"
                       onClick={() => downloadFile(item)}
+                      aria-label="Télécharger"
                     >
                       <Download className="h-3 w-3" />
                     </Button>
@@ -238,6 +239,7 @@ export function BatchMediaProcessor() {
                     variant="ghost"
                     className="h-6 w-6"
                     onClick={() => remove(item.id)}
+                    aria-label="Fermer"
                   >
                     <X className="h-3 w-3" />
                   </Button>

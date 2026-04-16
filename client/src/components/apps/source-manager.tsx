@@ -280,6 +280,7 @@ export function SourceManager({
                   size="icon"
                   onClick={() => handleRefresh(source.id)}
                   disabled={refreshingId === source.id}
+                  aria-label="Actualiser"
                 >
                   <RefreshCw
                     className={`h-4 w-4 ${refreshingId === source.id ? "animate-spin" : ""}`}
@@ -289,6 +290,7 @@ export function SourceManager({
                   variant="ghost"
                   size="icon"
                   onClick={() => handleDelete(source.id, source.name)}
+                  aria-label="Supprimer"
                 >
                   <Trash2 className="h-4 w-4 text-destructive" />
                 </Button>

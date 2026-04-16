@@ -139,6 +139,7 @@ function PasswordField({
           type="button"
           onClick={copyPassword}
           title="Copier"
+          aria-label="Copier"
         >
           <Copy className="h-4 w-4" />
         </Button>
@@ -146,7 +147,13 @@ function PasswordField({
         {/* Generator popover */}
         <Popover>
           <PopoverTrigger asChild>
-            <Button variant="outline" size="icon" type="button" title="Générer">
+            <Button
+              variant="outline"
+              size="icon"
+              type="button"
+              title="Générer"
+              aria-label="Générer"
+            >
               <Wand2 className="h-4 w-4" />
             </Button>
           </PopoverTrigger>
@@ -435,6 +442,7 @@ export function VaultItemForm({
                           onClick={() =>
                             setUris(uris.filter((_, j) => j !== i))
                           }
+                          aria-label="Supprimer"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>

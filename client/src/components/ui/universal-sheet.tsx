@@ -216,7 +216,7 @@ function HeaderActionsMenu({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="icon">
+        <Button variant="outline" size="icon" aria-label="Plus d'actions">
           <MoreVertical className="h-4 w-4" />
         </Button>
       </DropdownMenuTrigger>
@@ -388,6 +388,7 @@ export function UniversalSheet({
                   size="icon"
                   className="h-8 w-8 shrink-0"
                   onClick={onBack ?? (() => onOpenChange(false))}
+                  aria-label="Précédent"
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
@@ -425,6 +426,7 @@ export function UniversalSheet({
                 size="icon"
                 className="h-8 w-8"
                 onClick={() => onOpenChange(false)}
+                aria-label="Fermer"
               >
                 <X className="h-4 w-4" />
               </Button>

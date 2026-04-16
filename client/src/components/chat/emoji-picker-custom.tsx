@@ -149,6 +149,7 @@ export function EmojiPickerCustom({
           size="icon"
           className="h-9 w-9 text-muted-foreground hover:text-foreground"
           title="Add emoji reaction"
+          aria-label="Add emoji reaction"
         >
           😊
         </Button>

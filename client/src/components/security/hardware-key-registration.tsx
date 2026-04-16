@@ -179,6 +179,7 @@ export function HardwareKeyRegistration() {
                     variant="ghost"
                     className="text-destructive"
                     onClick={() => removeKey(key.id)}
+                    aria-label="Supprimer"
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>

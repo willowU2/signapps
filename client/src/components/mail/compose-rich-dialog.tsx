@@ -556,6 +556,7 @@ export function ComposeRichDialog({
               size="icon"
               className="h-8 w-8"
               onClick={() => setIsFullscreen(!isFullscreen)}
+              aria-label="Quitter le plein écran"
             >
               {isFullscreen ? (
                 <Minimize2 className="h-4 w-4" />
@@ -568,6 +569,7 @@ export function ComposeRichDialog({
               size="icon"
               className="h-8 w-8"
               onClick={() => onOpenChange(false)}
+              aria-label="Fermer"
             >
               <X className="h-4 w-4" />
             </Button>

@@ -36,10 +36,20 @@ export function FeatureFlagRow({ flag, onEdit, onDelete }: Props) {
         {flag.description ?? "—"}
       </TableCell>
       <TableCell className="text-right">
-        <Button size="icon" variant="ghost" onClick={() => onEdit(flag)}>
+        <Button
+          size="icon"
+          variant="ghost"
+          onClick={() => onEdit(flag)}
+          aria-label="Modifier"
+        >
           <Pencil className="h-4 w-4" />
         </Button>
-        <Button size="icon" variant="ghost" onClick={() => onDelete(flag)}>
+        <Button
+          size="icon"
+          variant="ghost"
+          onClick={() => onDelete(flag)}
+          aria-label="Supprimer"
+        >
           <Trash2 className="h-4 w-4" />
         </Button>
       </TableCell>

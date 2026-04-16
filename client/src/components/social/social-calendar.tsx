@@ -624,13 +624,23 @@ export function SocialCalendar() {
         {/* Header */}
         <div className="flex items-center justify-between flex-wrap gap-2">
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="icon" onClick={handlePrev}>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={handlePrev}
+              aria-label="Précédent"
+            >
               <ChevronLeft className="h-4 w-4" />
             </Button>
             <h2 className="text-lg font-semibold min-w-[200px] text-center">
               {headerLabel}
             </h2>
-            <Button variant="outline" size="icon" onClick={handleNext}>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={handleNext}
+              aria-label="Suivant"
+            >
               <ChevronRight className="h-4 w-4" />
             </Button>
             <Button
@@ -1007,6 +1017,7 @@ export function SocialCalendar() {
                               variant="ghost"
                               size="icon"
                               className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
+                              aria-label="Plus d'actions"
                             >
                               <MoreHorizontal className="h-4 w-4" />
                             </Button>

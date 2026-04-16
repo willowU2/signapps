@@ -214,6 +214,7 @@ function GrantRow({ grant, onRoleChange, onDelete, loading }: GrantRowProps) {
           onClick={() => onDelete(grant.id)}
           disabled={loading}
           title="Supprimer"
+          aria-label="Supprimer"
         >
           <X className="h-3.5 w-3.5" />
         </Button>

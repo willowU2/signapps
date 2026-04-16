@@ -5,7 +5,18 @@
  */
 
 import { useState } from "react";
-import { Bell, Mail, CheckSquare, CalendarDays, Check, X, Video, Hand, Clock, Film } from "lucide-react";
+import {
+  Bell,
+  Mail,
+  CheckSquare,
+  CalendarDays,
+  Check,
+  X,
+  Video,
+  Hand,
+  Clock,
+  Film,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
@@ -68,8 +79,9 @@ function NotificationItem({
 }) {
   const meetIcon =
     n.sourceModule === "meet" ? MEET_TYPE_ICON[n.type] : undefined;
-  const icon =
-    meetIcon ?? MODULE_ICON[n.sourceModule] ?? <Bell className="h-4 w-4" />;
+  const icon = meetIcon ?? MODULE_ICON[n.sourceModule] ?? (
+    <Bell className="h-4 w-4" />
+  );
   const cta = meetCta(n);
 
   return (
@@ -94,7 +106,11 @@ function NotificationItem({
         {cta && (
           <a
             href={cta.href}
-            target={n.type === "meet.invited" || n.type === "meet.starting_soon" ? "_blank" : undefined}
+            target={
+              n.type === "meet.invited" || n.type === "meet.starting_soon"
+                ? "_blank"
+                : undefined
+            }
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1 mt-1.5 text-xs font-semibold text-green-700 dark:text-green-400 hover:underline"
             onClick={() => onMarkRead(n.id)}
@@ -134,6 +150,7 @@ export function UnifiedNotificationCenter({
           variant="ghost"
           size="icon"
           className={cn("relative", className)}
+          aria-label="Notifications"
         >
           <Bell className="h-5 w-5" />
           {unreadCount > 0 && (
@@ -162,6 +179,7 @@ export function UnifiedNotificationCenter({
               size="icon"
               className="h-7 w-7"
               onClick={() => setOpen(false)}
+              aria-label="Fermer"
             >
               <X className="h-4 w-4" />
             </Button>

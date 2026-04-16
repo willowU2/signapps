@@ -535,6 +535,7 @@ export function InstallDialog({
                         portValues: next,
                       });
                     }}
+                    aria-label="Supprimer"
                   >
                     <Trash2 className="h-3 w-3" />
                   </Button>
@@ -656,6 +657,7 @@ export function InstallDialog({
                         customEnvValues: next,
                       });
                     }}
+                    aria-label="Supprimer"
                   >
                     <Trash2 className="h-3 w-3" />
                   </Button>
@@ -743,6 +745,7 @@ export function InstallDialog({
                         volumeValues: next,
                       });
                     }}
+                    aria-label="Supprimer"
                   >
                     <Trash2 className="h-3 w-3" />
                   </Button>
@@ -823,6 +826,7 @@ export function InstallDialog({
                         labelValues: next,
                       });
                     }}
+                    aria-label="Supprimer"
                   >
                     <Trash2 className="h-3 w-3" />
                   </Button>

@@ -230,6 +230,7 @@ export function VideoPlayerWithChapters() {
                     e.stopPropagation();
                     setChapters((chs) => chs.filter((x) => x.id !== c.id));
                   }}
+                  aria-label="Supprimer"
                 >
                   <Trash2 className="h-3 w-3" />
                 </Button>

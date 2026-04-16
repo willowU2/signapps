@@ -579,6 +579,7 @@ export function ChatWindow({
                     setSearchQuery("");
                     setSearchResults([]);
                   }}
+                  aria-label="Fermer"
                 >
                   <X className="h-3 w-3" />
                 </Button>
@@ -678,6 +679,7 @@ export function ChatWindow({
                           if (aiCard.status === "generating") stop();
                           setAiCard(null);
                         }}
+                        aria-label="Fermer"
                       >
                         <X className="h-3.5 w-3.5" />
                       </Button>

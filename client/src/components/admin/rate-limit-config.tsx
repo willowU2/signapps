@@ -317,6 +317,7 @@ export function RateLimitConfig() {
                         variant="ghost"
                         className="h-8 w-8 text-green-600"
                         onClick={handleSave}
+                        aria-label="Sauvegarder"
                       >
                         <Save className="h-4 w-4" />
                       </Button>
@@ -325,6 +326,7 @@ export function RateLimitConfig() {
                         variant="ghost"
                         className="h-8 w-8 text-destructive"
                         onClick={() => setEditingId(null)}
+                        aria-label="Fermer"
                       >
                         <X className="h-4 w-4" />
                       </Button>

@@ -121,6 +121,7 @@ export function PushSubscriptionManager() {
                 onClick={() => handleDelete(sub.id)}
                 disabled={deletingId === sub.id}
                 className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                aria-label="Supprimer"
               >
                 {deletingId === sub.id ? (
                   <SpinnerInfinity

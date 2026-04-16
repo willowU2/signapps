@@ -377,6 +377,7 @@ export function ChatInput({
                   : "bg-muted text-muted-foreground",
               )}
               disabled={!canSend}
+              aria-label="Envoyer"
             >
               <Send className="h-4 w-4" />
             </Button>

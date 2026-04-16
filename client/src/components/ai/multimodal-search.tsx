@@ -208,6 +208,7 @@ export function MultimodalSearch({ onSearch }: MultimodalSearchProps) {
               size="icon"
               onClick={() => fileInputRef.current?.click()}
               title="Recherche visuelle"
+              aria-label="Recherche visuelle"
             >
               <Upload className="h-4 w-4" />
             </Button>
@@ -270,7 +271,12 @@ export function MultimodalSearch({ onSearch }: MultimodalSearchProps) {
                   {((uploadedImage?.size ?? 0) / 1024).toFixed(0)} KB)
                 </p>
               </div>
-              <Button variant="ghost" size="icon" onClick={removeImage}>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={removeImage}
+                aria-label="Fermer"
+              >
                 <X className="h-4 w-4" />
               </Button>
             </div>

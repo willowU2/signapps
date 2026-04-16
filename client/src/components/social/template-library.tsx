@@ -307,6 +307,7 @@ export function TemplateLibrary() {
                     size="icon"
                     className="text-destructive hover:text-destructive shrink-0"
                     onClick={() => deleteTemplate(template.id)}
+                    aria-label="Supprimer"
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>

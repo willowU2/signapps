@@ -325,6 +325,7 @@ function ReservationsPanel({
                           size="icon"
                           className="h-7 w-7 text-muted-foreground hover:text-destructive"
                           onClick={() => handleDelete(r)}
+                          aria-label="Supprimer"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
                         </Button>
@@ -822,6 +823,7 @@ export default function DhcpPage() {
                                     e.stopPropagation();
                                     setSelectedReservationScope(scope);
                                   }}
+                                  aria-label="Réservations"
                                 >
                                   <Bookmark className="h-3.5 w-3.5" />
                                 </Button>
@@ -831,6 +833,7 @@ export default function DhcpPage() {
                                   className="h-7 w-7 text-muted-foreground hover:text-primary"
                                   title="Modifier l'étendue"
                                   onClick={(e) => handleOpenEditScope(scope, e)}
+                                  aria-label="Modifier l"
                                 >
                                   <Pencil className="h-3.5 w-3.5" />
                                 </Button>
@@ -839,6 +842,7 @@ export default function DhcpPage() {
                                   size="icon"
                                   className="h-7 w-7 text-muted-foreground hover:text-destructive"
                                   onClick={(e) => handleDeleteScope(scope, e)}
+                                  aria-label="Supprimer"
                                 >
                                   <Trash2 className="h-3.5 w-3.5" />
                                 </Button>

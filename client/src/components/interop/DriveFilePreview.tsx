@@ -67,6 +67,7 @@ export function DriveFilePreview({ node, fileUrl }: DriveFilePreviewProps) {
         className="h-7 w-7"
         onClick={() => setOpen(true)}
         title="Aperçu"
+        aria-label="Aperçu"
       >
         <Eye className="h-3.5 w-3.5" />
       </Button>

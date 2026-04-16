@@ -274,6 +274,7 @@ export function ContentSetManager() {
                               size="icon"
                               className="h-8 w-8"
                               onClick={() => handleUse(set)}
+                              aria-label="Envoyer"
                             >
                               <Send className="h-3.5 w-3.5" />
                             </Button>
@@ -287,6 +288,7 @@ export function ContentSetManager() {
                               size="icon"
                               className="h-8 w-8"
                               onClick={() => openEdit(set)}
+                              aria-label="Modifier"
                             >
                               <Edit className="h-3.5 w-3.5" />
                             </Button>
@@ -300,6 +302,7 @@ export function ContentSetManager() {
                               size="icon"
                               className="h-8 w-8 text-destructive hover:text-destructive"
                               onClick={() => setDeleteId(set.id)}
+                              aria-label="Supprimer"
                             >
                               <Trash2 className="h-3.5 w-3.5" />
                             </Button>

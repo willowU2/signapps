@@ -200,6 +200,7 @@ export function VpnDnsTab({
                       variant="ghost"
                       size="icon"
                       onClick={() => onDeleteBlocklist(blocklist)}
+                      aria-label="Supprimer"
                     >
                       <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>
@@ -271,6 +272,7 @@ export function VpnDnsTab({
                         variant="ghost"
                         size="icon"
                         onClick={() => onOpenDnsRecordDialog(record)}
+                        aria-label="Modifier"
                       >
                         <Pencil className="h-4 w-4" />
                       </Button>
@@ -278,6 +280,7 @@ export function VpnDnsTab({
                         variant="ghost"
                         size="icon"
                         onClick={() => onDeleteDnsRecord(record)}
+                        aria-label="Supprimer"
                       >
                         <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>

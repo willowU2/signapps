@@ -255,6 +255,7 @@ function DiffNavigation({
         className="h-8 w-8"
         onClick={onPrevious}
         disabled={currentChange <= 1}
+        aria-label="Précédent"
       >
         <ChevronLeft className="h-4 w-4" />
       </Button>
@@ -267,6 +268,7 @@ function DiffNavigation({
         className="h-8 w-8"
         onClick={onNext}
         disabled={currentChange >= totalChanges}
+        aria-label="Suivant"
       >
         <ChevronRight className="h-4 w-4" />
       </Button>

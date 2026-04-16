@@ -337,6 +337,7 @@ export function ContainerTerminal({
                 size="icon"
                 onClick={() => setIsFullscreen(!isFullscreen)}
                 className="text-gray-300 hover:text-white hover:bg-gray-700"
+                aria-label="Quitter le plein écran"
               >
                 {isFullscreen ? (
                   <Minimize2 className="h-4 w-4" />

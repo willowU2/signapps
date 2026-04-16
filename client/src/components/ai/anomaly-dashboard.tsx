@@ -246,6 +246,7 @@ Format as a clear, actionable report.`,
             disabled={isLoading}
             size="icon"
             title="Refresh anomalies"
+            aria-label="Refresh anomalies"
           >
             <RefreshCw
               className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`}
@@ -383,7 +384,7 @@ Format as a clear, actionable report.`,
                       </div>
                     </div>
                   </div>
-                  <Button variant="ghost" size="icon-xs">
+                  <Button variant="ghost" size="icon-xs" aria-label="Monter">
                     {expandedId === anomaly.id ? (
                       <ChevronUp className="h-4 w-4" />
                     ) : (

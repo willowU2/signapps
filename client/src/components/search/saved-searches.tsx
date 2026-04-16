@@ -190,6 +190,7 @@ export function SavedSearches({
                     s.alertEnabled ? "Désactiver alerte" : "Activer alerte"
                   }
                   onClick={() => handleToggleAlert(s.id)}
+                  aria-label="Notifications"
                 >
                   {s.alertEnabled ? (
                     <Bell className="h-3.5 w-3.5" />
@@ -203,6 +204,7 @@ export function SavedSearches({
                   className="h-7 w-7 text-muted-foreground"
                   title="Lancer la recherche"
                   onClick={() => handleRun(s)}
+                  aria-label="Lancer la recherche"
                 >
                   <Play className="h-3.5 w-3.5" />
                 </Button>
@@ -211,6 +213,7 @@ export function SavedSearches({
                   size="icon"
                   className="h-7 w-7 text-muted-foreground hover:text-destructive"
                   onClick={() => handleDelete(s.id)}
+                  aria-label="Supprimer"
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                 </Button>

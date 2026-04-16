@@ -186,6 +186,7 @@ function KanbanColumnComponent({
               variant="ghost"
               className="h-5 w-5"
               onClick={() => setEditing(false)}
+              aria-label="Fermer"
             >
               <X className="h-3 w-3" />
             </Button>
@@ -203,6 +204,7 @@ function KanbanColumnComponent({
               variant="ghost"
               className="h-5 w-5 opacity-0 group-hover:opacity-100 hover:opacity-100"
               onClick={() => setEditing(true)}
+              aria-label="Modifier"
             >
               <Pencil className="h-3 w-3" />
             </Button>
@@ -212,6 +214,7 @@ function KanbanColumnComponent({
                 variant="ghost"
                 className="h-5 w-5 text-destructive opacity-0 group-hover:opacity-100 hover:opacity-100"
                 onClick={() => onDeleteColumn(column.id)}
+                aria-label="Supprimer"
               >
                 <Trash2 className="h-3 w-3" />
               </Button>

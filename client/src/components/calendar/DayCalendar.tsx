@@ -348,7 +348,12 @@ export function DayCalendar({
               : format(currentDate, "EEEE d MMMM yyyy", { locale: fr })}
           </h2>
           <div className="flex gap-2">
-            <Button variant="outline" size="icon" onClick={handlePrevDay}>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={handlePrevDay}
+              aria-label="Précédent"
+            >
               <ChevronLeft className="h-4 w-4" />
             </Button>
             <Button
@@ -358,7 +363,12 @@ export function DayCalendar({
             >
               Aujourd'hui
             </Button>
-            <Button variant="outline" size="icon" onClick={handleNextDay}>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={handleNextDay}
+              aria-label="Suivant"
+            >
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>

@@ -283,6 +283,7 @@ export default function NewsletterPage() {
                                 size="icon"
                                 className="h-6 w-6"
                                 onClick={() => removeSection(s.id)}
+                                aria-label="Supprimer"
                               >
                                 <Trash2 className="h-3 w-3" />
                               </Button>

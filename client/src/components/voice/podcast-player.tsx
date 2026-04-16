@@ -156,6 +156,7 @@ export function PodcastPlayer() {
                   size="icon"
                   className="h-10 w-10 rounded-full"
                   onClick={togglePlay}
+                  aria-label="Pause"
                 >
                   {playing ? (
                     <Pause className="h-5 w-5" />

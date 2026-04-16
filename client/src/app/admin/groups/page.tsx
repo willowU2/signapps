@@ -149,6 +149,7 @@ export default function GroupsPage() {
                         onClick={() => handleManageMembers(group)}
                         className="h-8 w-8 text-green-500 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-950/50"
                         title="Gérer les membres"
+                        aria-label="Gérer les membres"
                       >
                         <UserPlus className="h-4 w-4" />
                       </Button>
@@ -165,6 +166,7 @@ export default function GroupsPage() {
                         size="icon"
                         onClick={() => handleDelete(group)}
                         className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/50"
+                        aria-label="Supprimer"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>

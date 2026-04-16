@@ -385,6 +385,7 @@ export default function OnboardingPage() {
                         size="icon"
                         className="h-8 w-8 text-destructive hover:text-destructive"
                         onClick={() => deleteTemplate(t.id)}
+                        aria-label="Supprimer"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -532,6 +533,7 @@ export default function OnboardingPage() {
                               steps.filter((_, i) => i !== idx),
                             )
                           }
+                          aria-label="Supprimer"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
                         </Button>

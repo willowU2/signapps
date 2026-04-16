@@ -176,13 +176,23 @@ export function AvailabilityCalendar({
       {/* Header with navigation */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="icon" onClick={goToPreviousWeek}>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={goToPreviousWeek}
+            aria-label="Précédent"
+          >
             <ChevronLeft className="h-4 w-4" />
           </Button>
           <Button variant="outline" size="sm" onClick={goToToday}>
             Aujourd'hui
           </Button>
-          <Button variant="outline" size="icon" onClick={goToNextWeek}>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={goToNextWeek}
+            aria-label="Suivant"
+          >
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>

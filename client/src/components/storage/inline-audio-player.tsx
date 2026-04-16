@@ -87,6 +87,7 @@ export function InlineAudioPlayer({
         className="h-7 w-7 shrink-0"
         onClick={togglePlay}
         disabled={!blobUrl}
+        aria-label="Pause"
       >
         {playing ? (
           <Pause className="h-3.5 w-3.5" />
@@ -121,6 +122,7 @@ export function InlineAudioPlayer({
         size="icon"
         className="h-6 w-6 shrink-0"
         onClick={onClose}
+        aria-label="Fermer"
       >
         <X className="h-3 w-3" />
       </Button>

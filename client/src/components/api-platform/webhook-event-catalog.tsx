@@ -228,6 +228,7 @@ export function WebhookEventCatalog() {
                           );
                           toast.success("Payload copied");
                         }}
+                        aria-label="Copier"
                       >
                         <Copy className="h-3 w-3" />
                       </Button>

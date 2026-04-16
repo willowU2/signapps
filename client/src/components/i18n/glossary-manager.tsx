@@ -205,6 +205,7 @@ export function GlossaryManager() {
                   variant="ghost"
                   className="text-destructive h-7 w-7 shrink-0"
                   onClick={() => remove(t.id)}
+                  aria-label="Supprimer"
                 >
                   <Trash2 className="h-3 w-3" />
                 </Button>

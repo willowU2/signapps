@@ -265,6 +265,7 @@ export function EnvelopeWizard({
                     className="h-7 w-7 text-muted-foreground hover:text-red-600"
                     onClick={() => removeSigner(signer.id)}
                     disabled={signers.length <= 1}
+                    aria-label="Supprimer"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                   </Button>

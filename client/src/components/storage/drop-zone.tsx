@@ -401,6 +401,7 @@ export function DropZone({
                           size="icon"
                           className="h-5 w-5"
                           onClick={() => cancelUpload(upload.id)}
+                          aria-label="Fermer"
                         >
                           <X className="h-3 w-3" />
                         </Button>

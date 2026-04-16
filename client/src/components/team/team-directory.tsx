@@ -286,6 +286,7 @@ export function TeamDirectory({ members }: TeamDirectoryProps) {
             className="h-7 w-7"
             onClick={() => setViewMode("grid")}
             title="Vue grille"
+            aria-label="Vue grille"
           >
             <LayoutGrid className="h-4 w-4" />
           </Button>
@@ -295,6 +296,7 @@ export function TeamDirectory({ members }: TeamDirectoryProps) {
             className="h-7 w-7"
             onClick={() => setViewMode("list")}
             title="Vue liste"
+            aria-label="Vue liste"
           >
             <List className="h-4 w-4" />
           </Button>

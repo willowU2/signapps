@@ -437,6 +437,7 @@ export function MediaLibrary() {
                             handleCopyUrl(item);
                           }}
                           title="Copy URL"
+                          aria-label="Copy URL"
                         >
                           <Copy className="h-4 w-4" />
                         </Button>
@@ -449,6 +450,7 @@ export function MediaLibrary() {
                             window.open(item.url, "_blank");
                           }}
                           title="Open in new tab"
+                          aria-label="Open in new tab"
                         >
                           <ExternalLink className="h-4 w-4" />
                         </Button>
@@ -461,6 +463,7 @@ export function MediaLibrary() {
                             handleDelete(item.id);
                           }}
                           title="Supprimer"
+                          aria-label="Supprimer"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>

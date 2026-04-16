@@ -224,6 +224,7 @@ export function UptimeChecker() {
                       size="icon"
                       onClick={() => removeMonitor(m.id)}
                       className="h-7 w-7 text-destructive"
+                      aria-label="Supprimer"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </Button>

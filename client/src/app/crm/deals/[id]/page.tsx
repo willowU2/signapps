@@ -132,7 +132,7 @@ export default function DealDetailPage() {
       >
         {/* Header */}
         <div className="flex items-center gap-3 flex-wrap">
-          <Button variant="ghost" size="icon" asChild>
+          <Button variant="ghost" size="icon" asChild aria-label="Retour">
             <Link href="/crm">
               <ArrowLeft className="h-5 w-5" />
             </Link>
@@ -158,6 +158,7 @@ export default function DealDetailPage() {
             size="icon"
             className="text-destructive hover:bg-destructive/10"
             onClick={() => setDeleteOpen(true)}
+            aria-label="Supprimer"
           >
             <Trash2 className="h-4 w-4" />
           </Button>
@@ -223,6 +224,7 @@ export default function DealDetailPage() {
                 size="icon"
                 className="h-7 w-7"
                 onClick={cancelEdit}
+                aria-label="Fermer"
               >
                 <X className="h-4 w-4" />
               </Button>

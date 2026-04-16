@@ -50,6 +50,7 @@ function OsInstruction({ icon, title, command }: OsInstructionProps) {
           className="h-6 w-6 shrink-0"
           onClick={handleCopy}
           title="Copy command"
+          aria-label="Copy command"
         >
           <Copy className="h-3.5 w-3.5" />
         </Button>
@@ -149,6 +150,7 @@ export function WebDavConfig() {
                 className="h-7 w-7 shrink-0"
                 onClick={handleCopyUrl}
                 title="Copy URL"
+                aria-label="Copy URL"
               >
                 <Copy className="h-4 w-4" />
               </Button>

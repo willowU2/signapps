@@ -383,6 +383,7 @@ export default function SearchPage() {
                   setDebouncedQuery("");
                   setSelectedIndex(-1);
                 }}
+                aria-label="Fermer"
               >
                 <X className="h-4 w-4" />
               </Button>
@@ -518,6 +519,7 @@ export default function SearchPage() {
                             size="icon"
                             className="h-7 w-7 opacity-0 group-hover:opacity-100 shrink-0"
                             onClick={() => deleteSavedMutation.mutate(s.id)}
+                            aria-label="Supprimer"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
                           </Button>

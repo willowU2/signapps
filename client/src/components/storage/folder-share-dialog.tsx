@@ -179,6 +179,7 @@ export function FolderShareDialog({
                   size="icon"
                   className="h-7 w-7 text-destructive hover:text-destructive"
                   onClick={() => handleRemove(s.email)}
+                  aria-label="Supprimer"
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                 </Button>

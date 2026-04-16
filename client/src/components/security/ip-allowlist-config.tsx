@@ -225,6 +225,7 @@ export function IpAllowlistConfig() {
                       size="icon"
                       className="h-7 w-7 text-red-600 hover:bg-red-50"
                       onClick={() => handleRemove(idx)}
+                      aria-label="Supprimer"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </Button>

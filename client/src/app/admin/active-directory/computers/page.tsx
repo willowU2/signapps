@@ -337,6 +337,7 @@ export default function AdComputersPage() {
                               variant="ghost"
                               size="icon"
                               title="Reinitialiser le mot de passe"
+                              aria-label="Reinitialiser le mot de passe"
                             >
                               <KeyRound className="h-4 w-4 text-muted-foreground" />
                             </Button>
@@ -345,6 +346,7 @@ export default function AdComputersPage() {
                               size="icon"
                               title="Supprimer"
                               onClick={() => setDeleteTarget(computer)}
+                              aria-label="Supprimer"
                             >
                               <Trash2 className="h-4 w-4 text-destructive" />
                             </Button>

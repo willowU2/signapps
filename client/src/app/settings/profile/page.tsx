@@ -350,7 +350,7 @@ export default function ProfilePage() {
       <div className="space-y-6 max-w-2xl">
         <div className="flex items-center gap-4">
           <Link href="/settings">
-            <Button variant="ghost" size="icon">
+            <Button variant="ghost" size="icon" aria-label="Retour">
               <ArrowLeft className="h-5 w-5" />
             </Button>
           </Link>
@@ -769,6 +769,7 @@ export default function ProfilePage() {
                       navigator.clipboard.writeText(mfaSetupData.secret);
                       toast.success("Secret copied");
                     }}
+                    aria-label="Copier"
                   >
                     <Copy className="h-4 w-4" />
                   </Button>

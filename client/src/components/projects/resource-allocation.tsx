@@ -264,6 +264,7 @@ export function ResourceAllocation() {
                 variant="ghost"
                 className="size-7 text-muted-foreground hover:text-destructive"
                 onClick={() => handleRemoveMember(m.id)}
+                aria-label="Supprimer"
               >
                 <Trash2 className="size-3" />
               </Button>

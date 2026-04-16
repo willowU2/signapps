@@ -117,6 +117,7 @@ function StepEditor({
             e.stopPropagation();
             onRemove();
           }}
+          aria-label="Supprimer"
         >
           <Trash2 className="size-3" />
         </Button>
@@ -447,6 +448,7 @@ export function EmailSequenceBuilder() {
                     variant="ghost"
                     className="size-7 text-destructive shrink-0"
                     onClick={() => deleteSequence(seq.id)}
+                    aria-label="Supprimer"
                   >
                     <Trash2 className="size-3" />
                   </Button>

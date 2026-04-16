@@ -615,6 +615,7 @@ export default function DriveAuditPage() {
                   className="h-7 w-7"
                   onClick={() => setPage((p) => Math.max(0, p - 1))}
                   disabled={page === 0}
+                  aria-label="Précédent"
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
@@ -624,6 +625,7 @@ export default function DriveAuditPage() {
                   className="h-7 w-7"
                   onClick={() => setPage((p) => p + 1)}
                   disabled={page >= totalPages - 1}
+                  aria-label="Suivant"
                 >
                   <ChevronRight className="h-4 w-4" />
                 </Button>

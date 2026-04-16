@@ -168,6 +168,7 @@ export function NotificationSounds() {
                 onClick={() => playTone(current)}
                 disabled={current === "none"}
                 title="Prévisualiser"
+                aria-label="Prévisualiser"
               >
                 <Play className="h-3.5 w-3.5" />
               </Button>

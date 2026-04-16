@@ -1222,6 +1222,7 @@ export default function MailPage() {
                     className="h-7 w-7 shrink-0 text-muted-foreground hover:text-foreground"
                     onClick={() => setSidebarCollapsed((v) => !v)}
                     title="Réduire le menu"
+                    aria-label="Réduire le menu"
                   >
                     <PanelLeftClose className="h-4 w-4" />
                   </Button>
@@ -1234,6 +1235,7 @@ export default function MailPage() {
                     className="h-8 w-8 text-muted-foreground hover:text-foreground"
                     onClick={() => setSidebarCollapsed((v) => !v)}
                     title="Développer le menu"
+                    aria-label="Développer le menu"
                   >
                     <PanelLeftOpen className="h-4 w-4" />
                   </Button>
@@ -1287,6 +1289,7 @@ export default function MailPage() {
                     className="h-9 w-9 rounded-md border shadow-sm"
                     onClick={() => setComposeRichOpen(true)}
                     title="Nouveau message"
+                    aria-label="Nouveau message"
                   >
                     <Pencil className="h-4 w-4" />
                   </Button>
@@ -1296,6 +1299,7 @@ export default function MailPage() {
                     className="h-8 w-8 rounded-md text-purple-500 hover:bg-accent"
                     onClick={() => setComposeAiOpen(true)}
                     title="Rédiger avec l'IA"
+                    aria-label="Rédiger avec l"
                   >
                     <Sparkles className="h-3.5 w-3.5" />
                   </Button>

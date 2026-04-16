@@ -190,6 +190,7 @@ export function ProjectTemplateHRRoles() {
                 size="icon"
                 className="size-6 text-destructive"
                 onClick={() => removeRole(role.id)}
+                aria-label="Supprimer"
               >
                 <Trash2 className="size-3" />
               </Button>

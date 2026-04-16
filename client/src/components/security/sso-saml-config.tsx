@@ -115,6 +115,7 @@ export function SsoSamlConfig() {
                     variant="ghost"
                     className="h-7 w-7"
                     onClick={() => copy(value)}
+                    aria-label="Copier"
                   >
                     <Copy className="h-3 w-3" />
                   </Button>

@@ -181,6 +181,7 @@ export function LabelPrinting() {
                   size="icon"
                   className="h-6 w-6 text-destructive"
                   onClick={() => remove(i)}
+                  aria-label="Supprimer"
                 >
                   <Trash2 className="h-3 w-3" />
                 </Button>

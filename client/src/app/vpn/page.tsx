@@ -723,6 +723,7 @@ export default function VpnPage() {
                               size="icon"
                               className="h-6 w-6"
                               onClick={() => copyPublicUrl(tunnel.public_url)}
+                              aria-label="Copier"
                             >
                               <Copy className="h-3 w-3" />
                             </Button>
@@ -748,7 +749,11 @@ export default function VpnPage() {
                         <TableCell>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                aria-label="Plus d'actions"
+                              >
                                 <MoreVertical className="h-4 w-4" />
                               </Button>
                             </DropdownMenuTrigger>
@@ -877,7 +882,11 @@ export default function VpnPage() {
                         <TableCell>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                aria-label="Plus d'actions"
+                              >
                                 <MoreVertical className="h-4 w-4" />
                               </Button>
                             </DropdownMenuTrigger>

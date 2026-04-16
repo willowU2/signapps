@@ -149,6 +149,7 @@ export function PhotoGalleryLightbox() {
                       variant="ghost"
                       className="absolute top-1 right-1 h-6 w-6 bg-black/40 text-white hover:bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity"
                       onClick={(e) => remove(img.id, e)}
+                      aria-label="Fermer"
                     >
                       <X className="h-3 w-3" />
                     </Button>
@@ -174,6 +175,7 @@ export function PhotoGalleryLightbox() {
             size="icon"
             className="absolute top-4 right-4 text-white hover:bg-card/20"
             onClick={closeLightbox}
+            aria-label="Fermer"
           >
             <X className="h-5 w-5" />
           </Button>
@@ -185,6 +187,7 @@ export function PhotoGalleryLightbox() {
               e.stopPropagation();
               prev();
             }}
+            aria-label="Précédent"
           >
             <ChevronLeft className="h-6 w-6" />
           </Button>
@@ -196,6 +199,7 @@ export function PhotoGalleryLightbox() {
               e.stopPropagation();
               next();
             }}
+            aria-label="Suivant"
           >
             <ChevronRight className="h-6 w-6" />
           </Button>

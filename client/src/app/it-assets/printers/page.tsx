@@ -346,6 +346,7 @@ export default function PrintersPage() {
                           size="icon"
                           className="h-6 w-6"
                           onClick={() => openEdit(p)}
+                          aria-label="Modifier"
                         >
                           <Edit className="h-3 w-3" />
                         </Button>
@@ -354,6 +355,7 @@ export default function PrintersPage() {
                           size="icon"
                           className="h-6 w-6 text-destructive hover:text-destructive"
                           onClick={() => remove(p.id)}
+                          aria-label="Supprimer"
                         >
                           <Trash2 className="h-3 w-3" />
                         </Button>

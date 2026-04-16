@@ -220,6 +220,7 @@ export function MindMapEditor() {
               size="icon"
               className="h-8 w-8"
               onClick={() => setZoom((z) => Math.max(0.4, z - 0.1))}
+              aria-label="Dézoomer"
             >
               <ZoomOut className="h-4 w-4" />
             </Button>
@@ -231,6 +232,7 @@ export function MindMapEditor() {
               size="icon"
               className="h-8 w-8"
               onClick={() => setZoom((z) => Math.min(2, z + 0.1))}
+              aria-label="Zoomer"
             >
               <ZoomIn className="h-4 w-4" />
             </Button>
@@ -240,6 +242,7 @@ export function MindMapEditor() {
                 size="icon"
                 className="h-8 w-8 text-destructive"
                 onClick={() => deleteNode(selected)}
+                aria-label="Supprimer"
               >
                 <Trash2 className="h-4 w-4" />
               </Button>
