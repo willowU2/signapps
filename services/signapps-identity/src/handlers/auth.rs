@@ -17,6 +17,40 @@ use crate::handlers::admin_security::ActiveSession;
 use crate::ldap::LdapService;
 use crate::AppState;
 
+/// Validate a password against the minimum policy required by
+/// `password_reset_confirm` and `register` flows.
+///
+/// Rules (enforced since Phase A — commit 840eb32c):
+/// - length >= 8
+/// - at least one ASCII uppercase letter
+/// - at least one ASCII lowercase letter
+/// - at least one ASCII digit
+///
+/// # Errors
+///
+/// Returns [`Error::Validation`] with a user-facing message if any rule
+/// is violated. Callers surface this to the API response.
+///
+/// # Examples
+///
+/// ```ignore
+/// check_password_policy("Strong1Pass").unwrap();
+/// assert!(check_password_policy("weak").is_err());
+/// ```
+fn check_password_policy(pw: &str) -> Result<()> {
+    let has_upper = pw.chars().any(|c| c.is_ascii_uppercase());
+    let has_lower = pw.chars().any(|c| c.is_ascii_lowercase());
+    let has_digit = pw.chars().any(|c| c.is_ascii_digit());
+    if pw.len() < 8 || !has_upper || !has_lower || !has_digit {
+        return Err(Error::Validation(
+            "Password must be at least 8 characters and include uppercase, \
+             lowercase, and a digit"
+                .to_string(),
+        ));
+    }
+    Ok(())
+}
+
 /// Append a row to `platform.audit_log` — fire-and-forget, never fails the request.
 async fn audit_auth_event(
     pool: &sqlx::PgPool,
@@ -912,17 +946,7 @@ pub async fn password_reset_confirm(
     // `len < 8`. Previously `password_reset_confirm` let users downgrade
     // to an all-lowercase password that the tenant's password policy
     // would have rejected.
-    let pw = &payload.new_password;
-    let has_upper = pw.chars().any(|c| c.is_ascii_uppercase());
-    let has_lower = pw.chars().any(|c| c.is_ascii_lowercase());
-    let has_digit = pw.chars().any(|c| c.is_ascii_digit());
-    if pw.len() < 8 || !has_upper || !has_lower || !has_digit {
-        return Err(Error::Validation(
-            "Password must be at least 8 characters and include uppercase, \
-             lowercase, and a digit"
-                .to_string(),
-        ));
-    }
+    check_password_policy(&payload.new_password)?;
 
     // Fetch the token record
     let row = sqlx::query_as::<_, (Uuid, chrono::DateTime<chrono::Utc>, bool)>(
@@ -1292,6 +1316,48 @@ fn decrypt_ldap_password(encrypted: &str) -> Result<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    // -----------------------------------------------------------------------
+    // check_password_policy — Phase A P1 regression (commit 840eb32c)
+    //
+    // Before the Phase A fix, password_reset_confirm used only `len < 8`,
+    // so an all-lowercase 8-character password was accepted. These tests
+    // lock in the uppercase + lowercase + digit + length>=8 rules.
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn test_password_policy_accepts_valid_password() {
+        check_password_policy("Strong1Pass").expect("valid password must pass");
+    }
+
+    #[test]
+    fn test_password_policy_rejects_too_short() {
+        let err = check_password_policy("Ab1")
+            .expect_err("< 8 chars must fail");
+        assert!(matches!(err, Error::Validation(_)));
+    }
+
+    #[test]
+    fn test_password_policy_rejects_all_lowercase() {
+        // Previously (pre-Phase A), this would have been accepted.
+        let err = check_password_policy("lowercaseonly1")
+            .expect_err("all-lowercase must fail");
+        assert!(matches!(err, Error::Validation(_)));
+    }
+
+    #[test]
+    fn test_password_policy_rejects_no_digit() {
+        let err = check_password_policy("NoDigitPassword")
+            .expect_err("no digit must fail");
+        assert!(matches!(err, Error::Validation(_)));
+    }
+
+    #[test]
+    fn test_password_policy_rejects_no_uppercase() {
+        let err = check_password_policy("nouppercase1")
+            .expect_err("no uppercase must fail");
+        assert!(matches!(err, Error::Validation(_)));
+    }
 
     // -----------------------------------------------------------------------
     // decrypt_ldap_password
