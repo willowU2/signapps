@@ -72,12 +72,14 @@ interface QaBroadcast {
   question_id?: string;
 }
 
-// Lazy placeholders — Chat / Whiteboard remain placeholders for now
+// Lazy placeholders — Chat is still a stub; Whiteboard is wired to
+// tldraw + Yjs. Lazy-loading keeps the tldraw bundle out of the
+// critical path when participants never open the tab.
 const ChatPanel = lazy(() =>
   Promise.resolve({ default: () => <Placeholder label="Chat" /> }),
 );
 const WhiteboardPanel = lazy(() =>
-  Promise.resolve({ default: () => <Placeholder label="Whiteboard" /> }),
+  import("./meet-whiteboard").then((m) => ({ default: m.MeetWhiteboard })),
 );
 
 function Placeholder({ label }: { label: string }) {
@@ -1150,8 +1152,11 @@ export function MeetSidebar({
                 localIdentity={localIdentity}
               />
             </TabsContent>
-            <TabsContent value="whiteboard" className="m-0">
-              <WhiteboardPanel />
+            <TabsContent
+              value="whiteboard"
+              className="m-0 h-[70vh] md:h-[600px]"
+            >
+              <WhiteboardPanel roomCode={roomCode} />
             </TabsContent>
           </Suspense>
         </div>
