@@ -17,6 +17,28 @@ import { getClient, ServiceName } from "@/lib/api/factory";
 
 const docsClient = getClient(ServiceName.DOCS);
 
+/**
+ * Raw shape returned by signapps-docs for GET /designs and /designs/:id.
+ * All fields are optional because the backend progressively rolled out
+ * snake_case and some older records still use camelCase.
+ */
+interface ApiDesign {
+  id: string;
+  name?: string;
+  title?: string;
+  format?: {
+    width: number;
+    height: number;
+    label?: string;
+    unit?: string;
+  };
+  pages?: DesignPage[];
+  created_at?: string;
+  createdAt?: string;
+  updated_at?: string;
+  updatedAt?: string;
+}
+
 interface DesignState {
   // Dashboard
   designs: DesignMeta[];
@@ -113,8 +135,8 @@ export const useDesignStore = create<DesignState>()(
       // Dashboard actions
       loadDesigns: async () => {
         try {
-          const res = await docsClient.get<any[]>("/designs");
-          const metas: DesignMeta[] = (res.data ?? []).map((d: any) => ({
+          const res = await docsClient.get<ApiDesign[]>("/designs");
+          const metas: DesignMeta[] = (res.data ?? []).map((d) => ({
             id: d.id,
             name: d.name ?? d.title ?? "Untitled",
             format: d.format ?? DESIGN_FORMATS[0],
@@ -255,7 +277,7 @@ export const useDesignStore = create<DesignState>()(
         if (typeof window === "undefined") return;
         // DW1: Try Drive API first, fallback to localStorage
         try {
-          const res = await docsClient.get<any>(`/designs/${id}`);
+          const res = await docsClient.get<ApiDesign>(`/designs/${id}`);
           if (res.data) {
             const design: Design = {
               id: res.data.id,
