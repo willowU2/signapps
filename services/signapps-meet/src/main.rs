@@ -120,8 +120,8 @@ async fn meet_health() -> axum::Json<serde_json::Value> {
 fn build_router(state: AppState) -> Router {
     use axum::routing::{delete, get, patch, post};
     use handlers::{
-        lobby, openapi, participants, recordings, remote, rooms, tokens, transcription,
-        video_messages, voicemails, waiting_room, webhooks,
+        lobby, openapi, participants, raised_hands, recordings, remote, rooms, tokens,
+        transcription, video_messages, voicemails, waiting_room, webhooks,
     };
 
     // Public routes
@@ -218,6 +218,23 @@ fn build_router(state: AppState) -> Router {
         .route(
             "/api/v1/meet/video-messages/:id/read",
             patch(video_messages::mark_video_message_read),
+        )
+        // Raise hand (Phase 3c)
+        .route(
+            "/api/v1/meet/rooms/:code/hands",
+            get(raised_hands::list_raised_hands),
+        )
+        .route(
+            "/api/v1/meet/rooms/:code/hands/raise",
+            post(raised_hands::raise_hand),
+        )
+        .route(
+            "/api/v1/meet/rooms/:code/hands/lower",
+            post(raised_hands::lower_hand),
+        )
+        .route(
+            "/api/v1/meet/rooms/:code/hands/lower/:identity",
+            post(raised_hands::lower_other_hand),
         )
         // Remote desktop connections (absorbed from signapps-remote, port 3017)
         .route(

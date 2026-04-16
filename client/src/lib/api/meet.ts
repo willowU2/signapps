@@ -357,6 +357,32 @@ export const meetApi = {
                 code,
             )}/transcription/export?format=${format}`,
     },
+
+    // ========================================================================
+    // Raise hand (Phase 3c)
+    // ========================================================================
+
+    hands: {
+        list: (code: string) =>
+            meetClient.get<RaisedHand[]>(
+                `/meet/rooms/${encodeURIComponent(code)}/hands`,
+            ),
+        raise: (code: string) =>
+            meetClient.post<RaiseHandResponse>(
+                `/meet/rooms/${encodeURIComponent(code)}/hands/raise`,
+            ),
+        lower: (code: string) =>
+            meetClient.post<LowerHandResponse>(
+                `/meet/rooms/${encodeURIComponent(code)}/hands/lower`,
+            ),
+        lowerOther: (code: string, identity: string) =>
+            meetClient.post<LowerHandResponse>(
+                `/meet/rooms/${encodeURIComponent(code)}/hands/lower/${encodeURIComponent(
+                    identity,
+                )}`,
+            ),
+    },
+
 };
 
 // ============================================================================
@@ -423,3 +449,21 @@ export interface TranscriptionEntry {
 }
 
 export type TranscriptionExportFormat = 'md' | 'srt' | 'txt';
+
+// ============================================================================
+// Raise hand (Phase 3c)
+// ============================================================================
+
+export interface RaisedHand {
+    identity: string;
+    raised_at: string;
+}
+
+export interface RaiseHandResponse {
+    identity: string;
+    raised_at: string;
+}
+
+export interface LowerHandResponse {
+    identity: string;
+}

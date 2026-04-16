@@ -67,6 +67,11 @@ impl Modify for SecurityAddon {
         crate::handlers::lobby::list_knocks,
         crate::handlers::lobby::admit,
         crate::handlers::lobby::deny,
+        // Raise hand (Phase 3c)
+        crate::handlers::raised_hands::raise_hand,
+        crate::handlers::raised_hands::lower_hand,
+        crate::handlers::raised_hands::lower_other_hand,
+        crate::handlers::raised_hands::list_raised_hands,
         // Transcription
         crate::handlers::transcription::handle_session_ended,
         crate::handlers::transcription::ingest_transcription,
@@ -109,6 +114,9 @@ impl Modify for SecurityAddon {
         crate::handlers::lobby::KnockEntry,
         crate::handlers::lobby::KnockStatus,
         crate::handlers::lobby::KnockStatusResponse,
+        crate::handlers::raised_hands::RaisedHand,
+        crate::handlers::raised_hands::RaiseHandResponse,
+        crate::handlers::raised_hands::LowerHandResponse,
         crate::handlers::transcription::SessionEndedEvent,
         crate::handlers::transcription::IngestTranscriptionRequest,
         crate::handlers::transcription::IngestTranscriptionResponse,

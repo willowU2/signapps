@@ -2,7 +2,7 @@
 
 import { LIVEKIT_URL } from "@/lib/api/core";
 
-import { useCallback, useEffect, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { toast as sonnerToast } from "sonner";
 import { meetApi } from "@/lib/api/meet";
 import { useAuthStore } from "@/lib/store";
@@ -23,7 +23,12 @@ import {
 } from "@livekit/components-react";
 import type { TrackReferenceOrPlaceholder } from "@livekit/components-react";
 import "@livekit/components-styles";
-import { Track, ConnectionState } from "livekit-client";
+import {
+  Track,
+  ConnectionState,
+  RoomEvent,
+  type RemoteParticipant,
+} from "livekit-client";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
@@ -65,7 +70,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import type { KnockEntry } from "@/lib/api/meet";
+import type { KnockEntry, RaisedHand } from "@/lib/api/meet";
 
 import { MeetSidebar } from "./meet-sidebar";
 import {
@@ -74,6 +79,32 @@ import {
 } from "./live-transcription-overlay";
 import type { TranscriptionChunk } from "@/lib/api/meet";
 import { MEDIA_URL } from "@/lib/api/core";
+
+/**
+ * LiveKit data channel topic used to broadcast raise-hand state changes
+ * `{ type: 'raise' | 'lower', identity: string }`. Every participant
+ * subscribes so the ✋ overlay shows up instantly, the DB row is the
+ * source of truth for hydrate-on-join.
+ */
+export const HAND_TOPIC = "hand";
+
+interface HandPayload {
+  type: "raise" | "lower";
+  identity: string;
+}
+
+/** React context exposing the set of currently-raised identities plus a
+ * host-only lowerer. Consumed by `ParticipantTileInner` (for the ✋
+ * overlay) and the sidebar participants tab. */
+const RaisedHandsContext = createContext<{
+  raisedSet: Set<string>;
+  isHost: boolean;
+  lowerOther: (identity: string) => Promise<void>;
+}>({ raisedSet: new Set(), isHost: false, lowerOther: async () => {} });
+
+export function useRaisedHandsContext() {
+  return useContext(RaisedHandsContext);
+}
 
 interface MeetRoomProps {
   roomId: string;
@@ -370,6 +401,143 @@ function useTranscriptionPipeline(enabled: boolean, roomCode: string) {
   return { error };
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Raised hands
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Track raised hands for the given room.
+ * - Hydrates once via `GET /hands` on mount.
+ * - Subscribes to the `HAND_TOPIC` LiveKit data channel for instant updates.
+ * - Polls `GET /hands` every 15s as a safety net.
+ *
+ * Returns a stable `Set<string>` of identities currently raised plus
+ * helpers to raise/lower.
+ */
+function useRaisedHands(roomCode: string) {
+  const room = useRoomContext();
+  const [raisedSet, setRaisedSet] = useState<Set<string>>(() => new Set());
+
+  const hydrate = useCallback(async () => {
+    try {
+      const res = await meetApi.hands.list(roomCode);
+      setRaisedSet(new Set(res.data.map((h) => h.identity)));
+    } catch {
+      // Silent — data channel updates take over between polls.
+    }
+  }, [roomCode]);
+
+  // Initial hydrate + 15s fallback polling.
+  useEffect(() => {
+    hydrate();
+    const id = window.setInterval(hydrate, 15_000);
+    return () => window.clearInterval(id);
+  }, [hydrate]);
+
+  // Live data-channel subscription.
+  useEffect(() => {
+    if (!room) return;
+    const decoder = new TextDecoder();
+    const onData = (
+      payload: Uint8Array,
+      _participant?: RemoteParticipant,
+      _kind?: unknown,
+      topic?: string,
+    ) => {
+      if (topic !== HAND_TOPIC) return;
+      try {
+        const json = JSON.parse(decoder.decode(payload)) as HandPayload;
+        if (!json.identity) return;
+        setRaisedSet((prev) => {
+          const next = new Set(prev);
+          if (json.type === "raise") next.add(json.identity);
+          else next.delete(json.identity);
+          return next;
+        });
+      } catch {
+        // Bad payload — ignore.
+      }
+    };
+    room.on(RoomEvent.DataReceived, onData);
+    return () => {
+      room.off(RoomEvent.DataReceived, onData);
+    };
+  }, [room]);
+
+  const broadcast = useCallback(
+    async (payload: HandPayload) => {
+      if (!room?.localParticipant) return;
+      try {
+        const encoder = new TextEncoder();
+        await room.localParticipant.publishData(
+          encoder.encode(JSON.stringify(payload)),
+          { reliable: true, topic: HAND_TOPIC },
+        );
+      } catch {
+        // Non-fatal.
+      }
+    },
+    [room],
+  );
+
+  const raise = useCallback(async () => {
+    const identity = room?.localParticipant?.identity ?? "";
+    // Optimistic.
+    setRaisedSet((prev) => {
+      const next = new Set(prev);
+      if (identity) next.add(identity);
+      return next;
+    });
+    try {
+      await meetApi.hands.raise(roomCode);
+      await broadcast({ type: "raise", identity });
+    } catch {
+      // Revert on failure.
+      setRaisedSet((prev) => {
+        const next = new Set(prev);
+        if (identity) next.delete(identity);
+        return next;
+      });
+      throw new Error("raise-failed");
+    }
+  }, [broadcast, room, roomCode]);
+
+  const lower = useCallback(async () => {
+    const identity = room?.localParticipant?.identity ?? "";
+    setRaisedSet((prev) => {
+      const next = new Set(prev);
+      if (identity) next.delete(identity);
+      return next;
+    });
+    try {
+      await meetApi.hands.lower(roomCode);
+      await broadcast({ type: "lower", identity });
+    } catch {
+      throw new Error("lower-failed");
+    }
+  }, [broadcast, room, roomCode]);
+
+  const lowerOther = useCallback(
+    async (identity: string) => {
+      setRaisedSet((prev) => {
+        const next = new Set(prev);
+        next.delete(identity);
+        return next;
+      });
+      try {
+        await meetApi.hands.lowerOther(roomCode, identity);
+        await broadcast({ type: "lower", identity });
+      } catch {
+        await hydrate();
+        throw new Error("lower-other-failed");
+      }
+    },
+    [broadcast, hydrate, roomCode],
+  );
+
+  return { raisedSet, raise, lower, lowerOther, hydrate };
+}
+
 /**
  * Resolve whether the current user is the room's host by scanning
  * `listRooms()` (which only returns rooms the caller created).
@@ -420,6 +588,27 @@ function MeetUiContent({
     isHost,
   );
   const [recordingBusy, setRecordingBusy] = useState(false);
+  const {
+    raisedSet,
+    raise: raiseHand,
+    lower: lowerHand,
+    lowerOther: lowerOtherHand,
+  } = useRaisedHands(roomId);
+  const room = useRoomContext();
+  const localIdentity = room?.localParticipant?.identity ?? "";
+  const isLocalRaised = !!localIdentity && raisedSet.has(localIdentity);
+  const toggleRaiseHand = async () => {
+    try {
+      if (isLocalRaised) {
+        await lowerHand();
+      } else {
+        await raiseHand();
+        sonnerToast.success("Main levée");
+      }
+    } catch {
+      sonnerToast.error("Action impossible");
+    }
+  };
 
   // ── Live transcription toggle ────────────────────────────────────────
   const [transcriptionEnabled, setTranscriptionEnabled] = useState<boolean>(
@@ -562,6 +751,9 @@ function MeetUiContent({
   };
 
   return (
+    <RaisedHandsContext.Provider
+      value={{ raisedSet, isHost, lowerOther: lowerOtherHand }}
+    >
     <div className="flex h-full w-full flex-col bg-background overflow-hidden">
       {/* ── Top bar ───────────────────────────────────────────────── */}
       <header className="h-12 px-3 md:px-4 flex items-center justify-between bg-card border-b border-border shrink-0">
@@ -760,7 +952,13 @@ function MeetUiContent({
         {/* Desktop sidebar (fixed panel, md+) */}
         {sidebarOpen && !isMobile && (
           <div className="hidden md:flex animate-in slide-in-from-right duration-200">
-            <MeetSidebar onClose={() => setSidebarOpen(false)} />
+            <MeetSidebar
+              onClose={() => setSidebarOpen(false)}
+              roomCode={roomId}
+              isHost={isHost}
+              raisedSet={raisedSet}
+              onLowerOther={lowerOtherHand}
+            />
           </div>
         )}
 
@@ -774,7 +972,13 @@ function MeetUiContent({
             className="h-[80vh] p-0 bg-card border-border md:hidden"
           >
             <div className="h-full">
-              <MeetSidebar onClose={() => setSidebarOpen(false)} />
+              <MeetSidebar
+                onClose={() => setSidebarOpen(false)}
+                roomCode={roomId}
+                isHost={isHost}
+                raisedSet={raisedSet}
+                onLowerOther={lowerOtherHand}
+              />
             </div>
           </SheetContent>
         </Sheet>
@@ -792,8 +996,11 @@ function MeetUiContent({
         onLeave={handleLeave}
         transcriptionEnabled={transcriptionEnabled}
         onToggleTranscription={toggleTranscription}
+        handRaised={isLocalRaised}
+        onToggleRaiseHand={toggleRaiseHand}
       />
     </div>
+    </RaisedHandsContext.Provider>
   );
 }
 
@@ -812,6 +1019,8 @@ interface BottomBarProps {
   onLeave: () => void;
   transcriptionEnabled: boolean;
   onToggleTranscription: () => void;
+  handRaised: boolean;
+  onToggleRaiseHand: () => void;
 }
 
 function BottomBar({
@@ -825,9 +1034,9 @@ function BottomBar({
   onLeave,
   transcriptionEnabled,
   onToggleTranscription,
+  handRaised,
+  onToggleRaiseHand,
 }: BottomBarProps) {
-  const [raised, setRaised] = useState(false);
-
   const round =
     "rounded-full h-10 w-10 md:h-11 md:w-11 transition-colors";
 
@@ -896,13 +1105,14 @@ function BottomBar({
       <Button
         variant="ghost"
         size="icon"
-        onClick={() => setRaised((v) => !v)}
+        onClick={onToggleRaiseHand}
         className={`${round} ${
-          raised
+          handRaised
             ? "bg-primary/15 text-primary hover:bg-primary/20"
             : "bg-muted text-foreground hover:bg-muted/80"
         }`}
-        aria-label="Lever la main"
+        aria-label={handRaised ? "Baisser la main" : "Lever la main"}
+        aria-pressed={handRaised}
       >
         <Hand className="h-4 w-4 md:h-5 md:w-5" />
       </Button>
@@ -1063,6 +1273,8 @@ function ParticipantTileInner({
   const displayName = name || identity || "Anonyme";
   const isMuted = !participant.isMicrophoneEnabled;
   const hasVideo = isTrackReference(trackRef) && !trackRef.publication.isMuted;
+  const { raisedSet } = useRaisedHandsContext();
+  const handRaised = !!identity && raisedSet.has(identity);
 
   return (
     <div
@@ -1085,6 +1297,18 @@ function ParticipantTileInner({
               {initials(displayName)}
             </AvatarFallback>
           </Avatar>
+        </div>
+      )}
+
+      {/* Raised hand overlay */}
+      {handRaised && (
+        <div
+          data-testid="raised-hand-overlay"
+          className="pointer-events-none absolute top-2 right-2 flex items-center gap-1 rounded-full bg-primary/90 px-2 py-1 text-xs font-semibold text-primary-foreground shadow animate-pulse"
+          aria-label={`${displayName} a levé la main`}
+        >
+          <Hand className="h-3.5 w-3.5" aria-hidden />
+          <span className="hidden sm:inline">Main levée</span>
         </div>
       )}
 
