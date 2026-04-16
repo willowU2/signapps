@@ -16,6 +16,7 @@ import {
   useParticipants,
   useIsSpeaking,
   useParticipantInfo,
+  useRoomContext,
   ParticipantContext,
   TrackRefContext,
   isTrackReference,
@@ -67,6 +68,12 @@ import {
 import type { KnockEntry } from "@/lib/api/meet";
 
 import { MeetSidebar } from "./meet-sidebar";
+import {
+  LiveTranscriptionOverlay,
+  TRANSCRIPTION_TOPIC,
+} from "./live-transcription-overlay";
+import type { TranscriptionChunk } from "@/lib/api/meet";
+import { MEDIA_URL } from "@/lib/api/core";
 
 interface MeetRoomProps {
   roomId: string;
@@ -189,6 +196,180 @@ function usePendingKnocks(code: string, enabled: boolean) {
   return { entries, refresh };
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Live transcription pipeline
+// ─────────────────────────────────────────────────────────────────────────────
+
+const TRANSCRIPTION_STORAGE_KEY = "meet:transcription:enabled";
+/** 2-second chunks — matches the plan. */
+const CHUNK_MS = 2000;
+
+/**
+ * Pick the first supported MIME type for {@link MediaRecorder}.
+ * Opus in WebM is universally supported by signapps-media (via ffmpeg).
+ */
+function pickMimeType(): string | undefined {
+  if (typeof window === "undefined" || !("MediaRecorder" in window)) {
+    return undefined;
+  }
+  const candidates = [
+    "audio/webm;codecs=opus",
+    "audio/webm",
+    "audio/ogg;codecs=opus",
+    "audio/mp4",
+  ];
+  for (const m of candidates) {
+    try {
+      if (MediaRecorder.isTypeSupported(m)) return m;
+    } catch {
+      // older browsers throw — just skip.
+    }
+  }
+  return undefined;
+}
+
+/**
+ * Capture microphone, cut into 2-second chunks, POST each to
+ * signapps-media STT, broadcast the text via LiveKit data channel, and
+ * persist via the meet backend. Runs only when `enabled` is true.
+ */
+function useTranscriptionPipeline(enabled: boolean, roomCode: string) {
+  const room = useRoomContext();
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!enabled) return;
+    if (typeof window === "undefined" || !navigator.mediaDevices?.getUserMedia) {
+      setError("microphone-unsupported");
+      return;
+    }
+    const mimeType = pickMimeType();
+    if (!mimeType) {
+      setError("mediarecorder-unsupported");
+      return;
+    }
+
+    let cancelled = false;
+    let stream: MediaStream | null = null;
+    let recorder: MediaRecorder | null = null;
+    let cycleTimer: number | null = null;
+    const encoder = new TextEncoder();
+    const mediaLanguage =
+      navigator.language?.toLowerCase().split("-")[0] ?? "fr";
+
+    const processBlob = async (blob: Blob) => {
+      if (cancelled || blob.size < 1_200) return;
+      try {
+        const fd = new FormData();
+        fd.append("file", blob, `chunk-${Date.now()}.webm`);
+        const mediaRes = await fetch(
+          `${MEDIA_URL}/api/v1/stt/transcribe?language=${encodeURIComponent(
+            mediaLanguage,
+          )}`,
+          {
+            method: "POST",
+            credentials: "include",
+            body: fd,
+          },
+        );
+        if (!mediaRes.ok) {
+          throw new Error(`media ${mediaRes.status}`);
+        }
+        const json = (await mediaRes.json()) as {
+          text?: string;
+          language?: string;
+        };
+        const text = (json.text ?? "").trim();
+        if (!text || cancelled) return;
+
+        const identity = room?.localParticipant?.identity ?? "unknown";
+        const chunk: TranscriptionChunk = {
+          speaker_identity: identity,
+          text,
+          timestamp_ms: Date.now(),
+          language: json.language ?? mediaLanguage,
+        };
+
+        // Persist (server-side authoritative copy).
+        void meetApi.transcription
+          .ingest(roomCode, chunk)
+          .catch(() => {
+            // Keep the meeting going even if persistence hiccups.
+          });
+
+        // Broadcast to peers via LiveKit data channel.
+        if (room?.localParticipant) {
+          try {
+            await room.localParticipant.publishData(
+              encoder.encode(JSON.stringify(chunk)),
+              { reliable: true, topic: TRANSCRIPTION_TOPIC },
+            );
+          } catch {
+            // Broadcast failure is non-fatal — persistence still works.
+          }
+        }
+      } catch (err) {
+        if (cancelled) return;
+        // One-shot warning, don't flood.
+        console.warn("[meet] STT chunk failed", err);
+      }
+    };
+
+    (async () => {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+          },
+        });
+        if (cancelled) {
+          stream.getTracks().forEach((t) => t.stop());
+          return;
+        }
+        recorder = new MediaRecorder(stream, { mimeType });
+        const chunks: Blob[] = [];
+        recorder.ondataavailable = (e) => {
+          if (e.data && e.data.size > 0) chunks.push(e.data);
+        };
+        recorder.onstop = () => {
+          if (chunks.length === 0) return;
+          const blob = new Blob(chunks.splice(0), { type: mimeType });
+          void processBlob(blob);
+        };
+        recorder.start();
+        cycleTimer = window.setInterval(() => {
+          if (!recorder) return;
+          if (recorder.state === "recording") {
+            recorder.stop();
+            // Give the blob a tick to be processed before starting the next.
+            try {
+              recorder.start();
+            } catch {
+              // state race — abandon this cycle gracefully.
+            }
+          }
+        }, CHUNK_MS);
+      } catch (err) {
+        setError((err as Error)?.name || "capture-failed");
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+      if (cycleTimer !== null) window.clearInterval(cycleTimer);
+      try {
+        if (recorder && recorder.state !== "inactive") recorder.stop();
+      } catch {
+        /* noop */
+      }
+      stream?.getTracks().forEach((t) => t.stop());
+    };
+  }, [enabled, roomCode, room]);
+
+  return { error };
+}
+
 /**
  * Resolve whether the current user is the room's host by scanning
  * `listRooms()` (which only returns rooms the caller created).
@@ -239,6 +420,33 @@ function MeetUiContent({
     isHost,
   );
   const [recordingBusy, setRecordingBusy] = useState(false);
+
+  // ── Live transcription toggle ────────────────────────────────────────
+  const [transcriptionEnabled, setTranscriptionEnabled] = useState<boolean>(
+    () => {
+      if (typeof window === "undefined") return false;
+      return window.sessionStorage.getItem(TRANSCRIPTION_STORAGE_KEY) === "1";
+    },
+  );
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.sessionStorage.setItem(
+      TRANSCRIPTION_STORAGE_KEY,
+      transcriptionEnabled ? "1" : "0",
+    );
+  }, [transcriptionEnabled]);
+  const { error: transcriptionError } = useTranscriptionPipeline(
+    transcriptionEnabled,
+    roomId,
+  );
+  useEffect(() => {
+    if (transcriptionError && transcriptionEnabled) {
+      sonnerToast.error("Transcription indisponible");
+      setTranscriptionEnabled(false);
+    }
+  }, [transcriptionError, transcriptionEnabled]);
+  const toggleTranscription = () =>
+    setTranscriptionEnabled((v) => !v);
 
   const handleAdmit = async (identity: string) => {
     try {
@@ -518,6 +726,13 @@ function MeetUiContent({
                   )}
                 </>
               )}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={toggleTranscription} className="gap-2">
+                <Captions className="h-4 w-4" />
+                {transcriptionEnabled
+                  ? "Arrêter la transcription"
+                  : "Activer la transcription"}
+              </DropdownMenuItem>
               <DropdownMenuItem className="gap-2">
                 <Settings className="h-4 w-4" />
                 Paramètres
@@ -534,8 +749,12 @@ function MeetUiContent({
 
       {/* ── Body: grid + sidebar ───────────────────────────────── */}
       <div className="flex-1 flex min-h-0">
-        <main className="flex-1 min-w-0 flex flex-col">
+        <main className="relative flex-1 min-w-0 flex flex-col">
           <VideoGrid isMobile={isMobile} />
+          <LiveTranscriptionOverlay
+            roomCode={roomId}
+            visible={transcriptionEnabled}
+          />
         </main>
 
         {/* Desktop sidebar (fixed panel, md+) */}
@@ -571,6 +790,8 @@ function MeetUiContent({
         onToggleCamera={toggleCamera}
         onToggleScreenShare={toggleScreenShare}
         onLeave={handleLeave}
+        transcriptionEnabled={transcriptionEnabled}
+        onToggleTranscription={toggleTranscription}
       />
     </div>
   );
@@ -589,6 +810,8 @@ interface BottomBarProps {
   onToggleCamera: () => void;
   onToggleScreenShare: () => void;
   onLeave: () => void;
+  transcriptionEnabled: boolean;
+  onToggleTranscription: () => void;
 }
 
 function BottomBar({
@@ -600,6 +823,8 @@ function BottomBar({
   onToggleCamera,
   onToggleScreenShare,
   onLeave,
+  transcriptionEnabled,
+  onToggleTranscription,
 }: BottomBarProps) {
   const [raised, setRaised] = useState(false);
 
@@ -703,9 +928,14 @@ function BottomBar({
             <Radio className="h-4 w-4" />
             Enregistrer
           </DropdownMenuItem>
-          <DropdownMenuItem className="gap-2">
+          <DropdownMenuItem
+            onClick={onToggleTranscription}
+            className="gap-2"
+          >
             <Captions className="h-4 w-4" />
-            Transcription
+            {transcriptionEnabled
+              ? "Arrêter la transcription"
+              : "Activer la transcription"}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

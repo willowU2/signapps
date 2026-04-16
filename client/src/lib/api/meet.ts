@@ -4,10 +4,11 @@
  * Migrated to use API Factory pattern.
  * @see factory.ts for client creation details
  */
-import { getClient, ServiceName } from './factory';
+import { getClient, getServiceBaseUrl, ServiceName } from './factory';
 
 // Get the meet service client (cached)
 const meetClient = getClient(ServiceName.MEET);
+const MEET_BASE_URL = getServiceBaseUrl(ServiceName.MEET);
 
 // ============================================================================
 // Types
@@ -329,6 +330,33 @@ export const meetApi = {
         markRead: (id: string) =>
             meetClient.patch(`/meet/video-messages/${id}/read`),
     },
+
+    // ========================================================================
+    // Live transcription (Phase 3b)
+    // ========================================================================
+
+    transcription: {
+        /**
+         * Persist a single utterance. Called by every client with the
+         * transcription toggle enabled, once per audio chunk successfully
+         * transcribed by signapps-media.
+         */
+        ingest: (code: string, data: TranscriptionChunk) =>
+            meetClient.post<TranscriptionIngestResponse>(
+                `/meet/rooms/${encodeURIComponent(code)}/transcription/ingest`,
+                data,
+            ),
+        /** Fetch recent utterances (ordered by `timestamp_ms ASC`). */
+        history: (code: string, limit = 200) =>
+            meetClient.get<TranscriptionEntry[]>(
+                `/meet/rooms/${encodeURIComponent(code)}/transcription/history?limit=${limit}`,
+            ),
+        /** Absolute URL for the export endpoint (for anchor hrefs / `window.open`). */
+        exportUrl: (code: string, format: TranscriptionExportFormat = 'txt') =>
+            `${MEET_BASE_URL}/meet/rooms/${encodeURIComponent(
+                code,
+            )}/transcription/export?format=${format}`,
+    },
 };
 
 // ============================================================================
@@ -364,3 +392,34 @@ export interface CreateVideoMessageRequest {
     thumbnail_url?: string;
     video_storage_key?: string;
 }
+
+// ============================================================================
+// Live transcription (Phase 3b)
+// ============================================================================
+
+/** Payload for `POST /meet/rooms/:code/transcription/ingest` and the
+ * LiveKit data-channel broadcast — identical shape on both sides. */
+export interface TranscriptionChunk {
+    speaker_identity: string;
+    text: string;
+    timestamp_ms: number;
+    language?: string | null;
+}
+
+/** Response of `POST /meet/rooms/:code/transcription/ingest`. */
+export interface TranscriptionIngestResponse {
+    id: string;
+}
+
+/** One persisted utterance returned by the history endpoint. */
+export interface TranscriptionEntry {
+    id: string;
+    room_id: string;
+    speaker_identity: string;
+    text: string;
+    timestamp_ms: number;
+    language?: string | null;
+    created_at: string;
+}
+
+export type TranscriptionExportFormat = 'md' | 'srt' | 'txt';

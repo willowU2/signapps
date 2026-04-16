@@ -11,6 +11,8 @@ import {
     Users,
     Check,
     X,
+    Captions,
+    CaptionsOff,
 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -28,6 +30,10 @@ interface MeetingControlsProps {
     isSharingScreen: boolean
     onRecordingChange: (recording: boolean) => void
     onScreenShareChange: (sharing: boolean) => void
+    /** Whether live transcription is currently active. */
+    transcriptionEnabled?: boolean
+    /** Toggle the live-transcription pipeline on/off. */
+    onToggleTranscription?: () => void
 }
 
 export function MeetingControls({
@@ -37,6 +43,8 @@ export function MeetingControls({
     isSharingScreen,
     onRecordingChange,
     onScreenShareChange,
+    transcriptionEnabled = false,
+    onToggleTranscription,
 }: MeetingControlsProps) {
     const [waitingUsers, setWaitingUsers] = useState<WaitingUser[]>([])
     const [showWaitingRoom, setShowWaitingRoom] = useState(false)
@@ -180,6 +188,27 @@ export function MeetingControls({
                                 {waitingUsers.length}
                             </Badge>
                         )}
+                    </Button>
+                )}
+
+                {/* Live transcription toggle */}
+                {onToggleTranscription && (
+                    <Button
+                        variant={transcriptionEnabled ? "destructive" : "outline"}
+                        size="sm"
+                        onClick={onToggleTranscription}
+                        title={
+                            transcriptionEnabled
+                                ? "Arrêter la transcription"
+                                : "Activer la transcription"
+                        }
+                    >
+                        {transcriptionEnabled ? (
+                            <CaptionsOff className="w-4 h-4 mr-1" />
+                        ) : (
+                            <Captions className="w-4 h-4 mr-1" />
+                        )}
+                        {transcriptionEnabled ? "Arrêter" : "Transcription"}
                     </Button>
                 )}
             </div>
