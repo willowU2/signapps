@@ -84,3 +84,26 @@ Given that Category A and B are empty, **E1c in this session is empty of fixes**
 **Phase E1 deliverable is therefore the TOOLING + BASELINE + TRIAGE** — which is valuable on its own : the codebase now has the guardrail (lint at `"warn"`), the audit infrastructure (Playwright spec ready to run), and the priority-ordered backlog (this file).
 
 Fix work starts in Phase E2.
+
+---
+
+## Phase E2 progress log
+
+### Wave 1 — Sidebar hot spots (done)
+
+- `components/layout/sidebar.tsx` — toggle button, pin button, label color pickers and remove-label button all gained `aria-label` + `sr-only` fallback text.
+- `components/layout/floating-action-button.tsx` — FAB main trigger gained `aria-label`, `aria-expanded`, and `sr-only`.
+- Post-wave axe run : `button-name` 1794 → 1511 (-283).
+
+### Wave 2 — Landmarks on auth surfaces (done 2026-04-16)
+
+- `/login`, `/login/verify`, `/` root splash : outer shell `<div>` promoted to `<main id="main-content">`. Root layout already emits a skip-link anchored on that id ; without a target the anchor itself was reported as a violation.
+- `/admin/feature-flags` custom switch-style button : now carries `aria-label` + sr-only text describing the on/off action per flag. The per-tenant reset button (`RotateCcw` icon) similarly gained an `aria-label`.
+- Expected impact : -44 `button-name` on `/admin/feature-flags` plus downstream landmark / skip-link violations on any auth-protected route that was falling back to `/login` during the audit.
+
+### Pending (requires fresh axe run)
+
+- Delta measurement : rerun `e2e/a11y-audit.spec.ts` with services up and regenerate `a11y-axe-baseline.json` / `a11y-axe-summary.md`. This is the gate for prioritising the next wave — per-route vs. layout-level.
+- Candidates for wave 3 (pending measurement) :
+  - Shared icon-only buttons inside `<TooltipTrigger asChild>` blocks (dominant pattern on `/containers`, `/drive`). Fix by introducing a `TooltipIconButton` helper that requires `aria-label`.
+  - Layout-level main landmark coverage on routes that genuinely don't go through `AppLayout` (portal/client, portal/supplier, onboarding, register). Each of those has its own route layout ; consider adding a minimal `<main id="main-content">` wrapper.
