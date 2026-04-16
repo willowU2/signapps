@@ -325,9 +325,6 @@ test.describe("A11y baseline audit", () => {
           .waitFor({ state: "visible", timeout: 10_000 })
           .catch(() => {});
 
-        // @ts-expect-error @axe-core/playwright bundles its own Page type
-        // that lags behind @playwright/test; the runtime signature is
-        // compatible, the declarations are not.
         const { violations } = await new AxeBuilder({ page })
           .disableRules([
             // color-contrast audit is a dedicated session (Tailwind v4
