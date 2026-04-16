@@ -364,4 +364,61 @@ mod tests {
         assert_eq!(claims.company_id, Some(company_id));
         assert_eq!(claims.company_name.as_deref(), Some("Acme Corp"));
     }
+
+    /// Regression test for Phase A P0 fix (commit 840eb32c).
+    ///
+    /// Before the fix, `verify_token` set `validate_aud = false`, letting
+    /// a token issued for audience "A" verify successfully against a
+    /// JwtConfig declaring audience "B". That was an audience-bypass in
+    /// the refresh / logout flow. After the fix, mismatched audiences
+    /// must be rejected.
+    #[test]
+    fn test_verify_token_rejects_mismatched_audience() {
+        // Issue a token with audience "signapps"
+        let issuer_config = hs256_config();
+        assert_eq!(issuer_config.audience, "signapps");
+        let pair = create_tokens(
+            test_user_id(),
+            "heidi",
+            1,
+            None,
+            None,
+            TokenContext::default(),
+            &issuer_config,
+        )
+        .expect("should succeed");
+
+        // Verify against a config declaring a DIFFERENT audience
+        let wrong_audience_config = JwtConfig {
+            audience: "other-service".to_string(),
+            ..JwtConfig::hs256(TEST_SECRET.to_string())
+        };
+        let result = verify_token(&pair.access_token, &wrong_audience_config);
+        assert!(
+            result.is_err(),
+            "a token issued for 'signapps' must be rejected when verified \
+             against audience 'other-service'"
+        );
+    }
+
+    /// Regression test — matching audience should still succeed.
+    ///
+    /// Guards against an over-aggressive audience check that would
+    /// reject valid tokens.
+    #[test]
+    fn test_verify_token_accepts_matching_audience() {
+        let config = hs256_config();
+        let pair = create_tokens(
+            test_user_id(),
+            "ivan",
+            1,
+            None,
+            None,
+            TokenContext::default(),
+            &config,
+        )
+        .expect("should succeed");
+        // Same config → same audience → must verify.
+        verify_token(&pair.access_token, &config).expect("matching audience must verify");
+    }
 }

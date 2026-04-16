@@ -324,7 +324,8 @@ fn test_mfa_code_format_empty_invalid() {
 fn test_api_key_prefix_is_first_16_chars() {
     let key = "signapps_sk_abcdef0123456789";
     let prefix: String = key.chars().take(16).collect();
-    assert_eq!(prefix, "signapps_sk_abcdef01");
+    // "signapps_sk_" is 12 chars + "abcd" = 16 chars total.
+    assert_eq!(prefix, "signapps_sk_abcd");
     assert_eq!(prefix.len(), 16);
 }
 
