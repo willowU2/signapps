@@ -1196,6 +1196,7 @@ export default function MailPage() {
       <TooltipProvider delayDuration={0}>
         <WorkspaceShell
           hideGlobalSidebar={true}
+          hideMainLandmark={true}
           className="bg-background text-foreground font-sans"
           header={null}
           sidebar={
