@@ -764,7 +764,8 @@ export function AiChatBar() {
   const { sidebarCollapsed, rightSidebarOpen } = useUIStore();
 
   return (
-    <div
+    <aside
+      aria-label="Assistant IA"
       className={cn(
         "fixed bottom-6 left-0 right-0 z-50 flex justify-center pointer-events-none transition-all duration-200",
         sidebarCollapsed ? "md:pl-16" : "md:pl-64",
@@ -1263,6 +1264,6 @@ export function AiChatBar() {
           )}
         </div>
       </div>
-    </div>
+    </aside>
   );
 }

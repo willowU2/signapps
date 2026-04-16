@@ -435,8 +435,9 @@ export function RightSidebar() {
       </div>
 
       {/* Icon Bar (always visible, fixed on far right) */}
-      <div
+      <aside
         ref={iconBarRef}
+        aria-label="Barre d'outils latérale"
         className="hidden md:flex fixed top-0 right-0 bottom-0 w-16 bg-background border-l border-border z-40 flex-col items-center py-4 gap-1"
         style={{ width: "var(--right-sidebar-icon-width)" }}
       >
@@ -526,7 +527,7 @@ export function RightSidebar() {
             </TooltipIconButton>
           </div>
         </TooltipProvider>
-      </div>
+      </aside>
     </>
   );
 }
