@@ -157,4 +157,93 @@ mod tests {
         let pt = decrypt_string(&ct, &dek).unwrap();
         assert_eq!(pt, "");
     }
+
+    // -----------------------------------------------------------------------
+    // Phase F3 — adversarial regression tests for AES-GCM tamper detection.
+    //
+    // The crypto layer MUST reject modified ciphertext, wrong keys, and
+    // malformed inputs. Silent acceptance would be a security bug.
+    // -----------------------------------------------------------------------
+
+    #[tokio::test]
+    async fn decrypt_rejects_tampered_ciphertext() {
+        let dek = test_dek().await;
+        let mut ct = encrypt_string("top-secret-payload", &dek).unwrap();
+
+        // Flip one bit in the middle of the AEAD payload (skip the
+        // version byte at index 0 and nonce bytes 1..13).
+        let flip_idx = 1 + NONCE_LEN + 2;
+        ct[flip_idx] ^= 0x01;
+
+        let result = decrypt_string(&ct, &dek);
+        assert!(
+            result.is_err(),
+            "tampered ciphertext must be rejected by the AEAD tag check"
+        );
+    }
+
+    #[tokio::test]
+    async fn decrypt_rejects_wrong_dek() {
+        // Set up two keystores with DIFFERENT master hex seeds — the
+        // resulting DEKs (even with the same purpose) are independent.
+        let hex_a = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
+        let hex_b = "deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef";
+
+        let var_a = format!(
+            "HELPERS_A_{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        );
+        let var_b = format!("{}B", var_a);
+        std::env::set_var(&var_a, hex_a);
+        std::env::set_var(&var_b, hex_b);
+
+        let ks_a = Keystore::init(KeystoreBackend::EnvVarNamed(var_a.clone()))
+            .await
+            .unwrap();
+        let ks_b = Keystore::init(KeystoreBackend::EnvVarNamed(var_b.clone()))
+            .await
+            .unwrap();
+        std::env::remove_var(&var_a);
+        std::env::remove_var(&var_b);
+
+        let dek_a = ks_a.dek("payload");
+        let dek_b = ks_b.dek("payload");
+
+        let ct = encrypt_string("sensitive", &dek_a).unwrap();
+
+        // Using a DEK from a different master key must fail (AEAD tag).
+        let result = decrypt_string(&ct, &dek_b);
+        assert!(
+            result.is_err(),
+            "ciphertext decrypted with a wrong master-derived DEK must be rejected"
+        );
+    }
+
+    #[tokio::test]
+    async fn decrypt_rejects_too_short_input() {
+        let dek = test_dek().await;
+        // Shorter than version(1) + nonce(12) + tag(16) = 29 bytes
+        let short = vec![0x01, 0x00, 0x01, 0x02];
+        let result = decrypt_string(&short, &dek);
+        assert!(
+            result.is_err(),
+            "ciphertext shorter than min length must be rejected"
+        );
+    }
+
+    #[tokio::test]
+    async fn decrypt_rejects_unknown_version() {
+        let dek = test_dek().await;
+        let mut ct = encrypt_string("payload", &dek).unwrap();
+        // Corrupt the version byte
+        ct[0] = 0xFF;
+        let result = decrypt_string(&ct, &dek);
+        assert!(
+            result.is_err(),
+            "ciphertext with unknown version byte must be rejected"
+        );
+    }
 }
