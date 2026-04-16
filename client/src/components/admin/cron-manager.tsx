@@ -252,16 +252,18 @@ export function CronManager() {
                       variant="ghost"
                       className="h-8 w-8 text-green-600"
                       onClick={handleSave}
+                      aria-label="Sauvegarder"
                     >
-                      <Save className="h-4 w-4" />
+                      <Save className="h-4 w-4" aria-hidden="true" />
                     </Button>
                     <Button
                       size="icon"
                       variant="ghost"
                       className="h-8 w-8 text-destructive"
                       onClick={() => setEditingId(null)}
+                      aria-label="Annuler"
                     >
-                      <X className="h-4 w-4" />
+                      <X className="h-4 w-4" aria-hidden="true" />
                     </Button>
                   </div>
                 </TableCell>
@@ -359,8 +361,9 @@ export function CronManager() {
                         className="h-8 w-8"
                         onClick={() => handleEdit(job)}
                         disabled={editingId !== null}
+                        aria-label={`Modifier ${job.name}`}
                       >
-                        <Pencil className="h-4 w-4" />
+                        <Pencil className="h-4 w-4" aria-hidden="true" />
                       </Button>
                       <Button
                         size="icon"
@@ -368,8 +371,9 @@ export function CronManager() {
                         className="h-8 w-8 text-destructive hover:text-destructive"
                         onClick={() => handleDelete(job.id)}
                         disabled={editingId !== null}
+                        aria-label={`Supprimer ${job.name}`}
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Trash2 className="h-4 w-4" aria-hidden="true" />
                       </Button>
                     </div>
                   </TableCell>

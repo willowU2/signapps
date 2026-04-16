@@ -244,16 +244,18 @@ export function RateLimitConfig() {
                       variant="ghost"
                       className="h-8 w-8 text-green-600"
                       onClick={handleSave}
+                      aria-label="Sauvegarder"
                     >
-                      <Save className="h-4 w-4" />
+                      <Save className="h-4 w-4" aria-hidden="true" />
                     </Button>
                     <Button
                       size="icon"
                       variant="ghost"
                       className="h-8 w-8 text-destructive"
                       onClick={() => setEditingId(null)}
+                      aria-label="Annuler"
                     >
-                      <X className="h-4 w-4" />
+                      <X className="h-4 w-4" aria-hidden="true" />
                     </Button>
                   </div>
                 </TableCell>
@@ -358,8 +360,9 @@ export function RateLimitConfig() {
                         className="h-8 w-8"
                         onClick={() => handleEdit(rule)}
                         disabled={editingId !== null}
+                        aria-label={`Modifier ${rule.endpointPattern}`}
                       >
-                        <Pencil className="h-4 w-4" />
+                        <Pencil className="h-4 w-4" aria-hidden="true" />
                       </Button>
                       <Button
                         size="icon"
@@ -367,8 +370,9 @@ export function RateLimitConfig() {
                         className="h-8 w-8 text-destructive hover:text-destructive"
                         onClick={() => handleDelete(rule.id)}
                         disabled={editingId !== null}
+                        aria-label={`Supprimer ${rule.endpointPattern}`}
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Trash2 className="h-4 w-4" aria-hidden="true" />
                       </Button>
                     </div>
                   </TableCell>
