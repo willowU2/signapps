@@ -224,8 +224,9 @@ export function Header() {
           className="hidden md:inline-flex rounded-full text-muted-foreground"
           onClick={() => router.push("/settings")}
           title="Help"
+          aria-label="Aide"
         >
-          <HelpCircle className="h-5 w-5" />
+          <HelpCircle className="h-5 w-5" aria-hidden="true" />
         </Button>
 
         <Button
@@ -238,8 +239,9 @@ export function Header() {
             )
           }
           title="Paramètres"
+          aria-label="Paramètres"
         >
-          <Settings className="h-5 w-5" />
+          <Settings className="h-5 w-5" aria-hidden="true" />
         </Button>
 
         {/* Theme Toggle */}
@@ -248,11 +250,16 @@ export function Header() {
           size="icon"
           onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
           className="rounded-full text-muted-foreground"
+          aria-label={
+            mounted && theme === "dark"
+              ? "Passer en mode clair"
+              : "Passer en mode sombre"
+          }
         >
           {mounted && theme === "dark" ? (
-            <Sun className="h-5 w-5" />
+            <Sun className="h-5 w-5" aria-hidden="true" />
           ) : (
-            <Moon className="h-5 w-5" />
+            <Moon className="h-5 w-5" aria-hidden="true" />
           )}
         </Button>
 
@@ -261,8 +268,9 @@ export function Header() {
           size="icon"
           className="hidden md:inline-flex rounded-full text-muted-foreground mr-2"
           title="Apps"
+          aria-label="Applications"
         >
-          <LayoutGrid className="h-5 w-5" />
+          <LayoutGrid className="h-5 w-5" aria-hidden="true" />
         </Button>
 
         {/* User avatar */}
@@ -270,6 +278,7 @@ export function Header() {
           onClick={() => router.push("/settings/profile")}
           className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/20 border border-primary/30 text-xs font-semibold text-primary overflow-hidden"
           title={user?.display_name || user?.username || "Profil"}
+          aria-label={user?.display_name || user?.username || "Profil"}
         >
           {user?.avatar_url ? (
             <img
