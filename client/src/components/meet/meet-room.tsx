@@ -2,7 +2,7 @@
 
 import { LIVEKIT_URL } from "@/lib/api/core";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   LiveKitRoom,
   ParticipantTile,
@@ -96,6 +96,18 @@ export function MeetRoom({
   );
 }
 
+function useIsMobile(breakpoint = 767) {
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia(`(max-width: ${breakpoint}px)`);
+    setIsMobile(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, [breakpoint]);
+  return isMobile;
+}
+
 function MeetUiContent({
   onLeave,
   roomId,
@@ -106,8 +118,8 @@ function MeetUiContent({
   roomName: string;
 }) {
   const router = useRouter();
+  const isMobile = useIsMobile();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [mobileSheetOpen, setMobileSheetOpen] = useState(false);
 
   const {
     isMicrophoneEnabled,
@@ -173,12 +185,7 @@ function MeetUiContent({
   };
 
   const openSidebar = () => {
-    // Mobile: open Sheet. Desktop: toggle fixed panel.
-    if (typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches) {
-      setMobileSheetOpen(true);
-    } else {
-      setSidebarOpen((v) => !v);
-    }
+    setSidebarOpen((v) => !v);
   };
 
   return (
@@ -199,7 +206,7 @@ function MeetUiContent({
         </div>
         {/* Center */}
         <div className="flex items-center gap-2 min-w-0">
-          <h1 className="text-sm font-semibold text-foreground truncate max-w-[40vw] hidden xs:block sm:block">
+          <h1 className="hidden sm:block text-sm font-semibold text-foreground truncate max-w-[40vw]">
             {roomName}
           </h1>
           <Badge
@@ -254,24 +261,27 @@ function MeetUiContent({
       {/* ── Body: grid + sidebar ───────────────────────────────── */}
       <div className="flex-1 flex min-h-0">
         <main className="flex-1 min-w-0 flex flex-col">
-          <VideoGrid />
+          <VideoGrid isMobile={isMobile} />
         </main>
 
-        {/* Desktop sidebar (fixed) */}
-        {sidebarOpen && (
-          <div className="hidden md:flex">
+        {/* Desktop sidebar (fixed panel, md+) */}
+        {sidebarOpen && !isMobile && (
+          <div className="hidden md:flex animate-in slide-in-from-right duration-200">
             <MeetSidebar onClose={() => setSidebarOpen(false)} />
           </div>
         )}
 
-        {/* Mobile sidebar (Sheet) */}
-        <Sheet open={mobileSheetOpen} onOpenChange={setMobileSheetOpen}>
+        {/* Mobile sidebar (Sheet drawer, < md) */}
+        <Sheet
+          open={sidebarOpen && isMobile}
+          onOpenChange={(o) => setSidebarOpen(o)}
+        >
           <SheetContent
             side="bottom"
-            className="h-[80vh] p-0 bg-card border-border"
+            className="h-[80vh] p-0 bg-card border-border md:hidden"
           >
             <div className="h-full">
-              <MeetSidebar onClose={() => setMobileSheetOpen(false)} />
+              <MeetSidebar onClose={() => setSidebarOpen(false)} />
             </div>
           </SheetContent>
         </Sheet>
@@ -446,7 +456,7 @@ function BottomBar({
 // Video grid
 // ─────────────────────────────────────────────────────────────────────────────
 
-function VideoGrid() {
+function VideoGrid({ isMobile = false }: { isMobile?: boolean }) {
   const connectionState = useConnectionState();
 
   const tracks = useTracks(
@@ -482,7 +492,8 @@ function VideoGrid() {
   }
 
   // Determine grid columns based on participant count
-  // 1 → 1 col, 2 → 2 cols, 3-4 → 2 cols, 5-9 → 3 cols, 10+ → 4 cols
+  // Mobile (< md): capped at 1-2 cols, scrollable vertically for more tiles.
+  // Desktop: 1 → 1 col, 2-4 → 2 cols, 5-9 → 3 cols, 10+ → 4 cols.
   const count = tracks.length;
   let colsClass = "grid-cols-1 place-items-center";
   if (count === 2) colsClass = "grid-cols-1 sm:grid-cols-2";
@@ -493,9 +504,12 @@ function VideoGrid() {
   else if (count > 9)
     colsClass = "grid-cols-2 md:grid-cols-3 lg:grid-cols-4";
 
+  // On mobile with 2+ tiles, allow vertical scroll so tiles keep a readable aspect.
+  const mobileScroll = isMobile && count >= 2 ? "overflow-y-auto" : "min-h-0";
+
   return (
     <div
-      className={`flex-1 p-3 md:p-4 bg-background grid ${colsClass} auto-rows-fr gap-2 md:gap-3 min-h-0`}
+      className={`flex-1 p-3 md:p-4 bg-background grid ${colsClass} auto-rows-fr gap-2 md:gap-3 ${mobileScroll}`}
     >
       {tracks.map((trackRef) => (
         <ParticipantTileCard key={tileKey(trackRef)} trackRef={trackRef} />

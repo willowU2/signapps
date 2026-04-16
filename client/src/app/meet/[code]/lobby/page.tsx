@@ -321,10 +321,10 @@ export default function MeetLobbyPage() {
           </div>
         </div>
 
-        {/* 2-column layout */}
-        <div className="flex flex-col lg:flex-row gap-6">
+        {/* 2-column layout — stack on mobile (< md), side-by-side on md+ */}
+        <div className="flex flex-col md:flex-row gap-4 md:gap-6">
           {/* Preview */}
-          <div className="flex-1 flex flex-col gap-4">
+          <div className="flex-1 flex flex-col gap-4 min-w-0">
             <div className="relative w-full overflow-hidden rounded-lg border border-border bg-card">
               <div className="aspect-video w-full bg-muted">
                 {cameraOn ? (
@@ -421,8 +421,8 @@ export default function MeetLobbyPage() {
           </div>
 
           {/* Settings panel */}
-          <aside className="w-full lg:w-[360px] shrink-0">
-            <div className="flex flex-col gap-5 rounded-lg border border-border bg-card p-6">
+          <aside className="w-full md:w-[340px] lg:w-[360px] shrink-0">
+            <div className="flex flex-col gap-5 rounded-lg border border-border bg-card p-4 md:p-6">
               {/* Device pickers */}
               <div className="flex flex-col gap-2">
                 <Label className="text-xs font-medium text-muted-foreground">
