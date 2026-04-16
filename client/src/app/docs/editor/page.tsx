@@ -49,6 +49,7 @@ const Editor = dynamic(
 )
 
 import { ChevronDown, ChevronUp, Link2, GitBranch, Sparkles, MessageSquare } from 'lucide-react';
+import ContextMenuStandard7 from '@/components/context-menu-standard-7';
 
 function BottomPanel({ entityId, entityName }: { entityId: string; entityName: string }) {
     const [open, setOpen] = useState(false);
@@ -118,7 +119,7 @@ function EditorContent() {
                         </div>
                     )}
                 </div>
-                <div className="flex-1 overflow-hidden">
+                <div className="flex-1 overflow-hidden h-full flex flex-col w-full">
                     <Editor documentId={id} documentName={name || undefined} className="h-full" bucket={name ? 'drive' : undefined} fileName={name || undefined} userName={userName} />
                 </div>
                 {id !== 'new' && (
