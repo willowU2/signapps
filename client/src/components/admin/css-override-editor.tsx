@@ -186,40 +186,35 @@ export function CSSOverrideEditor() {
                 Live Preview
               </p>
             </div>
-            <div className="h-96 overflow-auto bg-card p-4">
-              <style>{css}</style>
-              <div className="space-y-4">
-                <div>
-                  <h3 className="text-lg font-semibold mb-2">Buttons</h3>
-                  <div className="flex gap-2 flex-wrap">
-                    <button className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
-                      Primary
-                    </button>
-                    <button className="px-4 py-2 border border-border rounded hover:bg-muted">
-                      Secondary
-                    </button>
-                  </div>
-                </div>
-
-                <div>
-                  <h3 className="text-lg font-semibold mb-2">Text</h3>
-                  <p className="text-muted-foreground">
-                    This is sample paragraph text with your custom CSS applied.
-                  </p>
-                </div>
-
-                <div>
-                  <h3 className="text-lg font-semibold mb-2">Form Elements</h3>
-                  <input
-                    type="text"
-                    placeholder="Sample input field"
-                    className="w-full px-3 py-2 border border-border rounded"
-                  />
-                </div>
-              </div>
-
+            <div className="h-96 overflow-auto bg-card">
+              {/*
+                Live preview is rendered in a sandboxed iframe so admin-authored
+                CSS cannot exfiltrate data from the host document (e.g. via
+                background-image URLs on attribute-value selectors matching
+                inputs) nor break the surrounding admin UI.
+              */}
+              <iframe
+                sandbox=""
+                title="CSS preview"
+                className="h-full w-full border-0"
+                srcDoc={`<!doctype html><html><head><meta charset="utf-8"><style>${css}</style></head><body class="tenant-override" style="font-family:sans-serif;padding:1rem;">
+                  <section style="margin-bottom:1rem;">
+                    <h3>Buttons</h3>
+                    <button>Primary</button>
+                    <button>Secondary</button>
+                  </section>
+                  <section style="margin-bottom:1rem;">
+                    <h3>Text</h3>
+                    <p>Sample paragraph text with your custom CSS applied.</p>
+                  </section>
+                  <section>
+                    <h3>Form Elements</h3>
+                    <input type="text" placeholder="Sample input field" />
+                  </section>
+                </body></html>`}
+              />
               {!validateCSS() && (
-                <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded">
+                <div className="mt-4 mx-4 p-3 bg-red-50 border border-red-200 rounded">
                   <p className="text-sm text-red-700">
                     CSS validation warning: Check for syntax errors
                   </p>

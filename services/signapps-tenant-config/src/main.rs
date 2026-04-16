@@ -84,13 +84,9 @@ fn create_router(state: AppState) -> Router {
             "/api/v1/workspace/features",
             get(handlers::workspace_features::get_workspace_features),
         )
-        // PUT /api/v1/workspaces/:id/features — also handled here (gateway routes /api/v1/workspace prefix)
-        // For the PUT under /api/v1/workspaces (plural), the route is duplicated in identity for
-        // backwards-compat since /api/v1/workspaces → identity in the gateway catch-all.
-        .route(
-            "/api/v1/workspaces/:wid/features",
-            put(handlers::workspace_features::update_workspace_features),
-        )
+        // NOTE: PUT /api/v1/workspaces/:wid/features moved to admin_routes below —
+        // without require_admin, any authenticated tenant user could flip feature
+        // flags (enable billing/pxe/containers) on arbitrary workspaces.
         .route_layer(middleware::from_fn(tenant_context_middleware))
         .route_layer(middleware::from_fn_with_state(
             state.clone(),
@@ -133,6 +129,13 @@ fn create_router(state: AppState) -> Router {
         .route(
             "/api/v1/admin/feature-flags/:id",
             put(handlers::feature_flags::update).delete(handlers::feature_flags::delete),
+        )
+        // Per-workspace feature toggle — admin-only write. Read stays in
+        // tenant_routes above so normal users can see which features their
+        // workspace has.
+        .route(
+            "/api/v1/workspaces/:wid/features",
+            put(handlers::workspace_features::update_workspace_features),
         )
         .route_layer(middleware::from_fn(require_admin))
         .route_layer(middleware::from_fn_with_state(

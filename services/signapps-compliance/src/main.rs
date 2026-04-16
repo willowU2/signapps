@@ -14,7 +14,9 @@ use axum::{
     Router,
 };
 use signapps_common::bootstrap::{init_tracing, load_env, ServiceConfig};
-use signapps_common::middleware::{auth_middleware, tenant_context_middleware, AuthState};
+use signapps_common::middleware::{
+    auth_middleware, require_admin, tenant_context_middleware, AuthState,
+};
 use signapps_common::JwtConfig;
 use signapps_db::DatabasePool;
 use tower_http::{
@@ -73,16 +75,29 @@ fn create_router(state: AppState) -> Router {
         .route("/health", get(health_check))
         .merge(signapps_common::version::router("signapps-compliance"));
 
-    let protected_routes = Router::new()
-        // Activity feed (moved from signapps-identity — Refactor 34 Phase 9)
+    // Routes available to any authenticated user (with tenant context).
+    // GDPR export: a user exercising their data-access rights on their OWN
+    // account. Activity feed: user's own cross-module activity.
+    let user_routes = Router::new()
         .route("/api/v1/activities", get(handlers::activities::list_activities))
         .route("/api/v1/activity/cross-module", get(handlers::activities::cross_module_activity))
-        // Audit logs (moved from signapps-identity — Refactor 34 Phase 8)
+        .route("/api/v1/users/me/export", post(handlers::data_export::request_export))
+        .route("/api/v1/users/me/export/status", get(handlers::data_export::export_status))
+        .route("/api/v1/users/me/export/download", get(handlers::data_export::download_export))
+        .route_layer(middleware::from_fn(tenant_context_middleware))
+        .route_layer(middleware::from_fn_with_state(
+            state.clone(),
+            auth_middleware::<AppState>,
+        ));
+
+    // Admin-only compliance routes. Previously these were exposed to every
+    // authenticated user: audit logs (cross-tenant data exposure), DPIA/DSAR
+    // write/list, retention/consent/cookie-banner configuration.
+    let admin_routes = Router::new()
         .route("/api/v1/audit-logs", get(handlers::audit_logs::list_audit_logs))
         .route("/api/v1/audit-logs/export", get(handlers::audit_logs::export_audit_logs))
         .route("/api/v1/audit-logs/:id", get(handlers::audit_logs::get_audit_log))
         .route("/api/v1/audit", post(handlers::audit_logs::query_audit))
-        // CO1/CO2/CO4: Compliance endpoints
         .route("/api/v1/compliance/dpia", post(handlers::compliance::save_dpia))
         .route("/api/v1/compliance/dpia", get(handlers::compliance::list_dpias))
         .route("/api/v1/compliance/dsar", post(handlers::compliance::create_dsar))
@@ -94,10 +109,7 @@ fn create_router(state: AppState) -> Router {
         .route("/api/v1/compliance/consent", get(handlers::compliance::get_consent))
         .route("/api/v1/compliance/cookie-banner", put(handlers::compliance::save_cookie_banner))
         .route("/api/v1/compliance/cookie-banner", get(handlers::compliance::get_cookie_banner))
-        // RGPD data export (V3-02)
-        .route("/api/v1/users/me/export", post(handlers::data_export::request_export))
-        .route("/api/v1/users/me/export/status", get(handlers::data_export::export_status))
-        .route("/api/v1/users/me/export/download", get(handlers::data_export::download_export))
+        .route_layer(middleware::from_fn(require_admin))
         .route_layer(middleware::from_fn(tenant_context_middleware))
         .route_layer(middleware::from_fn_with_state(
             state.clone(),
@@ -105,7 +117,8 @@ fn create_router(state: AppState) -> Router {
         ));
 
     public_routes
-        .merge(protected_routes)
+        .merge(user_routes)
+        .merge(admin_routes)
         .layer(TraceLayer::new_for_http())
         .layer(cors)
         .with_state(state)

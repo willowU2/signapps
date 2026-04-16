@@ -91,7 +91,6 @@ pub struct UpdateFeaturesRequest {
 /// Returns the feature configuration for the current user's active workspace.
 /// Merges tenant-level features with global defaults.
 #[tracing::instrument(skip(state))]
-#[tracing::instrument(skip_all)]
 pub async fn get_workspace_features(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -128,7 +127,6 @@ pub async fn get_workspace_features(
 /// Update the feature flags for a specific workspace (admin only).
 /// Accepts a partial JSON object — only specified keys are updated.
 #[tracing::instrument(skip(state, payload))]
-#[tracing::instrument(skip_all)]
 pub async fn update_workspace_features(
     State(state): State<AppState>,
     Path(workspace_id): Path<Uuid>,

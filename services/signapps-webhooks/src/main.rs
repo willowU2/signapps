@@ -13,7 +13,9 @@ use axum::{
     Router,
 };
 use signapps_common::bootstrap::{init_tracing, load_env, ServiceConfig};
-use signapps_common::middleware::{auth_middleware, tenant_context_middleware, AuthState};
+use signapps_common::middleware::{
+    auth_middleware, require_admin, tenant_context_middleware, AuthState,
+};
 use signapps_common::JwtConfig;
 use signapps_db::DatabasePool;
 use tower_http::{
@@ -75,18 +77,9 @@ fn create_router(state: AppState) -> Router {
             post(handlers::incoming_webhooks::receive_public_webhook),
         );
 
-    let protected_routes = Router::new()
-        // Outbound webhooks management
-        .route("/api/v1/webhooks", get(handlers::webhooks::list))
-        .route("/api/v1/webhooks", post(handlers::webhooks::create))
-        .route("/api/v1/webhooks/:id", get(handlers::webhooks::get))
-        .route("/api/v1/webhooks/:id", put(handlers::webhooks::update))
-        .route("/api/v1/webhooks/:id", delete(handlers::webhooks::delete))
-        .route(
-            "/api/v1/webhooks/:id/test",
-            post(handlers::webhooks::test),
-        )
-        // Authenticated incoming webhooks
+    // Authenticated (non-admin) incoming webhooks — used to receive payloads
+    // FROM external systems on behalf of the current user/tenant.
+    let authenticated_routes = Router::new()
         .route(
             "/api/v1/webhooks/incoming/:source",
             post(handlers::incoming_webhooks::receive_incoming_webhook),
@@ -97,8 +90,29 @@ fn create_router(state: AppState) -> Router {
             auth_middleware::<AppState>,
         ));
 
+    // Outbound webhook CRUD + test-fire — admin-only. Previously any
+    // authenticated user could register/trigger webhooks, enabling SSRF
+    // via the test endpoint.
+    let admin_routes = Router::new()
+        .route("/api/v1/webhooks", get(handlers::webhooks::list))
+        .route("/api/v1/webhooks", post(handlers::webhooks::create))
+        .route("/api/v1/webhooks/:id", get(handlers::webhooks::get))
+        .route("/api/v1/webhooks/:id", put(handlers::webhooks::update))
+        .route("/api/v1/webhooks/:id", delete(handlers::webhooks::delete))
+        .route(
+            "/api/v1/webhooks/:id/test",
+            post(handlers::webhooks::test),
+        )
+        .route_layer(middleware::from_fn(require_admin))
+        .route_layer(middleware::from_fn(tenant_context_middleware))
+        .route_layer(middleware::from_fn_with_state(
+            state.clone(),
+            auth_middleware::<AppState>,
+        ));
+
     public_routes
-        .merge(protected_routes)
+        .merge(authenticated_routes)
+        .merge(admin_routes)
         .layer(TraceLayer::new_for_http())
         .layer(cors)
         .with_state(state)
