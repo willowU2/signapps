@@ -161,10 +161,13 @@ pub fn create_tokens(
 pub fn verify_token(token: &str, config: &JwtConfig) -> Result<Claims> {
     let (algorithm, decoding_key) = build_decoding_key(config)?;
 
+    // Enforce the SAME audience check as the common middleware — this path
+    // is used by refresh/logout flows and must not accept tokens issued for
+    // other audiences. Disabling `validate_aud` made the refresh handler a
+    // bypass for the middleware's audience gate.
     let mut validation = Validation::new(algorithm);
-    // Use lenient audience/issuer validation — the common middleware handles
-    // strict claim validation for incoming requests.
-    validation.validate_aud = false;
+    validation.set_audience(&[&config.audience]);
+    validation.validate_aud = true;
 
     let token_data = decode::<Claims>(token, &decoding_key, &validation)?;
     Ok(token_data.claims)

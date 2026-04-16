@@ -456,6 +456,27 @@ pub async fn logout(State(state): State<AppState>, headers: HeaderMap) -> Result
         tracing::info!("User logged out, token blacklisted");
     }
 
+    // Also blacklist the refresh token cookie if present — otherwise a logged
+    // out client could still mint new access tokens via /auth/refresh.
+    if let Some(cookie_header) = headers.get(header::COOKIE).and_then(|h| h.to_str().ok()) {
+        for cookie in cookie_header.split(';') {
+            let cookie = cookie.trim();
+            if let Some(rt) = cookie.strip_prefix("refresh_token=") {
+                if let Ok(claims) = verify_token(rt, &state.jwt_config) {
+                    let ttl = claims.exp - chrono::Utc::now().timestamp();
+                    if ttl > 0 {
+                        let key = format!("blacklist:{}", rt);
+                        state
+                            .cache
+                            .set(&key, "1", std::time::Duration::from_secs(ttl as u64))
+                            .await;
+                    }
+                }
+                break;
+            }
+        }
+    }
+
     let access_cookie = "access_token=; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=0";
     let refresh_cookie = "refresh_token=; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=0";
 
@@ -574,6 +595,14 @@ pub async fn refresh(
 
     // Ensure it's a refresh token
     if claims.token_type != "refresh" {
+        return Err(Error::InvalidToken);
+    }
+
+    // Reject refresh tokens that were blacklisted by a previous logout or
+    // rotate. Without this check a logged-out client could still mint new
+    // access tokens using the old refresh cookie.
+    let blacklist_key = format!("blacklist:{}", refresh_token);
+    if state.cache.get(&blacklist_key).await.is_some() {
         return Err(Error::InvalidToken);
     }
 
@@ -879,10 +908,19 @@ pub async fn password_reset_confirm(
     State(state): State<AppState>,
     Json(payload): Json<PasswordResetConfirmRequest>,
 ) -> Result<Json<serde_json::Value>> {
-    // Validate new password length
-    if payload.new_password.len() < 8 {
+    // Enforce length + character-class requirements — not just a bare
+    // `len < 8`. Previously `password_reset_confirm` let users downgrade
+    // to an all-lowercase password that the tenant's password policy
+    // would have rejected.
+    let pw = &payload.new_password;
+    let has_upper = pw.chars().any(|c| c.is_ascii_uppercase());
+    let has_lower = pw.chars().any(|c| c.is_ascii_lowercase());
+    let has_digit = pw.chars().any(|c| c.is_ascii_digit());
+    if pw.len() < 8 || !has_upper || !has_lower || !has_digit {
         return Err(Error::Validation(
-            "Password must be at least 8 characters".to_string(),
+            "Password must be at least 8 characters and include uppercase, \
+             lowercase, and a digit"
+                .to_string(),
         ));
     }
 
