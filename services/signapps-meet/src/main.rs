@@ -195,6 +195,20 @@ fn build_router(state: AppState) -> Router {
             "/api/v1/meet/events/session-ended",
             post(transcription::handle_session_ended),
         )
+        // Live transcription (Phase 3b) — browser STT loop persists & shares
+        // utterances through the server; peers receive via LiveKit data channel.
+        .route(
+            "/api/v1/meet/rooms/:code/transcription/ingest",
+            post(transcription::ingest_transcription),
+        )
+        .route(
+            "/api/v1/meet/rooms/:code/transcription/history",
+            get(transcription::list_transcription_history),
+        )
+        .route(
+            "/api/v1/meet/rooms/:code/transcription/export",
+            get(transcription::export_transcription),
+        )
         // Video messages
         .route(
             "/api/v1/meet/video-messages",

@@ -69,6 +69,9 @@ impl Modify for SecurityAddon {
         crate::handlers::lobby::deny,
         // Transcription
         crate::handlers::transcription::handle_session_ended,
+        crate::handlers::transcription::ingest_transcription,
+        crate::handlers::transcription::list_transcription_history,
+        crate::handlers::transcription::export_transcription,
         // Video messages
         crate::handlers::video_messages::list_video_messages,
         crate::handlers::video_messages::create_video_message,
@@ -107,6 +110,9 @@ impl Modify for SecurityAddon {
         crate::handlers::lobby::KnockStatus,
         crate::handlers::lobby::KnockStatusResponse,
         crate::handlers::transcription::SessionEndedEvent,
+        crate::handlers::transcription::IngestTranscriptionRequest,
+        crate::handlers::transcription::IngestTranscriptionResponse,
+        crate::handlers::transcription::TranscriptionEntry,
         crate::handlers::video_messages::VideoMessage,
         crate::handlers::video_messages::CreateVideoMessageRequest,
         crate::handlers::voicemails::Voicemail,

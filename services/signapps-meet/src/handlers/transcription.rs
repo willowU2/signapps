@@ -1,14 +1,26 @@
 //! Auto-transcription handler for meet recordings
 //!
-//! Handles the `meet.session.ended` event: when a session ends with a
-//! recording_id, this module enqueues an AI transcription job and creates
-//! a document in the docs service with the resulting transcript.
+//! Handles two concerns:
+//! 1. Post-session: when a session ends with a recording_id, enqueue an AI
+//!    transcription job and create a document in the docs service with the
+//!    resulting transcript (legacy pipeline).
+//! 2. Live transcription: ingest / history / export of utterances produced
+//!    by each client's browser-side STT loop (see Phase 3b frontend
+//!    pipeline). Persists to `meet.transcriptions` (migration 286).
 
-use axum::{extract::State, http::StatusCode, Json};
+use axum::{
+    extract::{Path, Query, State},
+    http::{header, HeaderMap, HeaderValue, StatusCode},
+    response::{IntoResponse, Response},
+    Extension, Json,
+};
+use chrono::{TimeZone, Utc};
 use serde::{Deserialize, Serialize};
+use signapps_common::Claims;
+use sqlx::FromRow;
 use uuid::Uuid;
 
-use crate::AppState;
+use crate::{models::Room, AppState};
 
 // ── Event payload ─────────────────────────────────────────────────────────────
 
@@ -220,6 +232,374 @@ async fn run_transcription_pipeline(
 //     updated_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
 // );
 
+// ── Live transcription (Phase 3b) ─────────────────────────────────────────────
+
+/// Body for `POST /meet/rooms/:code/transcription/ingest`.
+///
+/// A single utterance produced by the caller's browser-side STT loop (see
+/// `signapps-media /api/v1/stt/transcribe`). The client posts one of these
+/// for every 2-second audio chunk that yields non-empty text.
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
+pub struct IngestTranscriptionRequest {
+    /// LiveKit `identity` of the speaker (same as `room.localParticipant.identity`).
+    pub speaker_identity: String,
+    /// Transcribed text.
+    pub text: String,
+    /// Client-side wall-clock timestamp of the chunk, in milliseconds since epoch.
+    pub timestamp_ms: i64,
+    /// Optional ISO-639-1 language tag detected by the STT model (e.g. `"fr"`, `"en"`).
+    #[serde(default)]
+    pub language: Option<String>,
+}
+
+/// Response body for `POST /meet/rooms/:code/transcription/ingest`.
+#[derive(Debug, Serialize, utoipa::ToSchema)]
+pub struct IngestTranscriptionResponse {
+    /// UUID of the newly-created `meet.transcriptions` row.
+    pub id: Uuid,
+}
+
+/// One persisted utterance from `meet.transcriptions`.
+#[derive(Debug, Clone, Serialize, FromRow, utoipa::ToSchema)]
+pub struct TranscriptionEntry {
+    /// Row UUID.
+    pub id: Uuid,
+    /// Owning room UUID.
+    pub room_id: Uuid,
+    /// LiveKit identity of the speaker.
+    pub speaker_identity: String,
+    /// Transcribed text.
+    pub text: String,
+    /// Client-reported millisecond timestamp of the chunk.
+    pub timestamp_ms: i64,
+    /// Detected language tag, if any.
+    pub language: Option<String>,
+    /// Server-side insertion time.
+    pub created_at: chrono::DateTime<chrono::Utc>,
+}
+
+/// Query params for `GET /meet/rooms/:code/transcription/history`.
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
+pub struct HistoryQuery {
+    /// Maximum number of entries to return. Defaults to 200, capped at 1000.
+    #[serde(default)]
+    pub limit: Option<i64>,
+}
+
+/// Supported export formats for `GET /meet/rooms/:code/transcription/export`.
+#[derive(Debug, Clone, Copy, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum ExportFormat {
+    /// Markdown with timestamp prefix per line.
+    Md,
+    /// SubRip (SRT) with `HH:MM:SS,MMM --> HH:MM:SS,MMM` blocks.
+    Srt,
+    /// Plain text, one line per utterance.
+    Txt,
+}
+
+/// Query params for `GET /meet/rooms/:code/transcription/export`.
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
+pub struct ExportQuery {
+    /// Output format. Defaults to `txt`.
+    #[serde(default)]
+    pub format: Option<String>,
+}
+
+async fn fetch_room_by_code_any(
+    state: &AppState,
+    code: &str,
+) -> Result<Room, (StatusCode, String)> {
+    sqlx::query_as::<_, Room>("SELECT * FROM meet.rooms WHERE room_code = $1")
+        .bind(code)
+        .fetch_optional(&state.pool)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
+        .ok_or((StatusCode::NOT_FOUND, "Room not found".to_string()))
+}
+
+/// Persist a live-transcription utterance.
+///
+/// Called by every client that has the transcription toggle enabled, once
+/// per 2-second audio chunk (after a successful round-trip to
+/// `signapps-media /api/v1/stt/transcribe`). The payload is also broadcast
+/// to peers over a LiveKit data-channel topic — this endpoint only handles
+/// the persistent copy.
+///
+/// # Errors
+///
+/// - `404 Not Found` if the room code does not exist.
+/// - `400 Bad Request` if `text` is empty after trimming.
+/// - `500 Internal Server Error` on database failure.
+#[utoipa::path(
+    post,
+    path = "/api/v1/meet/rooms/{code}/transcription/ingest",
+    request_body = IngestTranscriptionRequest,
+    params(("code" = String, Path, description = "Room code (short human id)")),
+    responses(
+        (status = 200, description = "Utterance persisted", body = IngestTranscriptionResponse),
+        (status = 400, description = "Empty text"),
+        (status = 404, description = "Room not found"),
+        (status = 500, description = "Database error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Meet"
+)]
+#[tracing::instrument(skip(state, claims), fields(user_id = %claims.sub, code = %code))]
+pub async fn ingest_transcription(
+    State(state): State<AppState>,
+    Path(code): Path<String>,
+    Extension(claims): Extension<Claims>,
+    Json(body): Json<IngestTranscriptionRequest>,
+) -> Result<Json<IngestTranscriptionResponse>, (StatusCode, String)> {
+    let trimmed = body.text.trim();
+    if trimmed.is_empty() {
+        return Err((StatusCode::BAD_REQUEST, "text must not be empty".to_string()));
+    }
+    let room = fetch_room_by_code_any(&state, &code).await?;
+
+    let id: Uuid = sqlx::query_scalar(
+        "INSERT INTO meet.transcriptions \
+         (room_id, speaker_identity, text, timestamp_ms, language) \
+         VALUES ($1, $2, $3, $4, $5) \
+         RETURNING id",
+    )
+    .bind(room.id)
+    .bind(&body.speaker_identity)
+    .bind(trimmed)
+    .bind(body.timestamp_ms)
+    .bind(body.language.as_deref())
+    .fetch_one(&state.pool)
+    .await
+    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+    tracing::debug!(
+        %id,
+        room_id = %room.id,
+        speaker = %body.speaker_identity,
+        chars = trimmed.len(),
+        "transcription utterance persisted"
+    );
+
+    Ok(Json(IngestTranscriptionResponse { id }))
+}
+
+/// Return the persisted transcription history for a room.
+///
+/// Entries are ordered by `timestamp_ms ASC` so the client can replay the
+/// meeting in order. The default limit is 200, capped at 1000.
+///
+/// # Errors
+///
+/// - `404 Not Found` if the room code does not exist.
+/// - `500 Internal Server Error` on database failure.
+#[utoipa::path(
+    get,
+    path = "/api/v1/meet/rooms/{code}/transcription/history",
+    params(
+        ("code" = String, Path, description = "Room code"),
+        HistoryQuery,
+    ),
+    responses(
+        (status = 200, description = "Transcription history", body = Vec<TranscriptionEntry>),
+        (status = 404, description = "Room not found"),
+        (status = 500, description = "Database error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Meet"
+)]
+#[tracing::instrument(skip(state, claims), fields(user_id = %claims.sub, code = %code))]
+pub async fn list_transcription_history(
+    State(state): State<AppState>,
+    Path(code): Path<String>,
+    Query(params): Query<HistoryQuery>,
+    Extension(claims): Extension<Claims>,
+) -> Result<Json<Vec<TranscriptionEntry>>, (StatusCode, String)> {
+    let _ = &claims;
+    let room = fetch_room_by_code_any(&state, &code).await?;
+    let limit = params.limit.unwrap_or(200).clamp(1, 1000);
+
+    let rows = sqlx::query_as::<_, TranscriptionEntry>(
+        "SELECT id, room_id, speaker_identity, text, timestamp_ms, language, created_at \
+         FROM meet.transcriptions \
+         WHERE room_id = $1 \
+         ORDER BY timestamp_ms ASC \
+         LIMIT $2",
+    )
+    .bind(room.id)
+    .bind(limit)
+    .fetch_all(&state.pool)
+    .await
+    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+    Ok(Json(rows))
+}
+
+/// Export the persisted transcription as a downloadable document.
+///
+/// Three formats are supported:
+/// - `txt`: plain text, one line per utterance (default).
+/// - `md`: Markdown with `**HH:MM:SS** speaker: text` lines.
+/// - `srt`: SubRip subtitle blocks; each utterance becomes a 2-second cue
+///   starting at `timestamp_ms` relative to the first utterance.
+///
+/// # Errors
+///
+/// - `400 Bad Request` if `format` is unrecognised.
+/// - `404 Not Found` if the room code does not exist.
+/// - `500 Internal Server Error` on database failure.
+#[utoipa::path(
+    get,
+    path = "/api/v1/meet/rooms/{code}/transcription/export",
+    params(
+        ("code" = String, Path, description = "Room code"),
+        ExportQuery,
+    ),
+    responses(
+        (status = 200, description = "Transcript file"),
+        (status = 400, description = "Unsupported format"),
+        (status = 404, description = "Room not found"),
+        (status = 500, description = "Database error"),
+    ),
+    security(("bearer" = [])),
+    tag = "Meet"
+)]
+#[tracing::instrument(skip(state, claims), fields(user_id = %claims.sub, code = %code))]
+pub async fn export_transcription(
+    State(state): State<AppState>,
+    Path(code): Path<String>,
+    Query(params): Query<ExportQuery>,
+    Extension(claims): Extension<Claims>,
+) -> Result<Response, (StatusCode, String)> {
+    let _ = &claims;
+    let format = match params.format.as_deref().unwrap_or("txt") {
+        "md" => ExportFormat::Md,
+        "srt" => ExportFormat::Srt,
+        "txt" => ExportFormat::Txt,
+        other => {
+            return Err((
+                StatusCode::BAD_REQUEST,
+                format!("unsupported format: {other}"),
+            ));
+        },
+    };
+
+    let room = fetch_room_by_code_any(&state, &code).await?;
+
+    let rows: Vec<TranscriptionEntry> = sqlx::query_as::<_, TranscriptionEntry>(
+        "SELECT id, room_id, speaker_identity, text, timestamp_ms, language, created_at \
+         FROM meet.transcriptions \
+         WHERE room_id = $1 \
+         ORDER BY timestamp_ms ASC",
+    )
+    .bind(room.id)
+    .fetch_all(&state.pool)
+    .await
+    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+    let (body, mime, ext) = match format {
+        ExportFormat::Md => (render_md(&rows), "text/markdown; charset=utf-8", "md"),
+        ExportFormat::Srt => (
+            render_srt(&rows),
+            "application/x-subrip; charset=utf-8",
+            "srt",
+        ),
+        ExportFormat::Txt => (render_txt(&rows), "text/plain; charset=utf-8", "txt"),
+    };
+
+    let filename = format!("transcript-{code}.{ext}");
+    let mut headers = HeaderMap::new();
+    headers.insert(
+        header::CONTENT_TYPE,
+        HeaderValue::from_str(mime).map_err(|e| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                format!("bad mime: {e}"),
+            )
+        })?,
+    );
+    headers.insert(
+        header::CONTENT_DISPOSITION,
+        HeaderValue::from_str(&format!("attachment; filename=\"{filename}\"")).map_err(|e| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                format!("bad disposition: {e}"),
+            )
+        })?,
+    );
+
+    Ok((headers, body).into_response())
+}
+
+// ── Formatting helpers ────────────────────────────────────────────────────────
+
+fn render_txt(rows: &[TranscriptionEntry]) -> String {
+    rows.iter()
+        .map(|r| format!("[{}] {}: {}", format_clock(r.timestamp_ms), r.speaker_identity, r.text))
+        .collect::<Vec<_>>()
+        .join("\n")
+}
+
+fn render_md(rows: &[TranscriptionEntry]) -> String {
+    let mut out = String::from("# Transcript\n\n");
+    for r in rows {
+        out.push_str(&format!(
+            "**{}** `{}`: {}\n\n",
+            format_clock(r.timestamp_ms),
+            r.speaker_identity,
+            r.text
+        ));
+    }
+    out
+}
+
+/// Render SRT — one cue per utterance, 2-second default duration, times
+/// relative to the first utterance (so the file plays from zero).
+fn render_srt(rows: &[TranscriptionEntry]) -> String {
+    if rows.is_empty() {
+        return String::new();
+    }
+    let origin = rows[0].timestamp_ms;
+    let mut out = String::new();
+    for (idx, r) in rows.iter().enumerate() {
+        let start_ms = (r.timestamp_ms - origin).max(0);
+        // Use 2s chunk length or gap until next row (capped at 5s).
+        let end_ms = rows
+            .get(idx + 1)
+            .map(|n| (n.timestamp_ms - origin).max(start_ms + 500))
+            .unwrap_or(start_ms + 2000)
+            .min(start_ms + 5000);
+        out.push_str(&format!(
+            "{}\n{} --> {}\n{}: {}\n\n",
+            idx + 1,
+            format_srt(start_ms),
+            format_srt(end_ms),
+            r.speaker_identity,
+            r.text
+        ));
+    }
+    out
+}
+
+/// Format milliseconds-since-epoch as `HH:MM:SS` wall-clock (UTC).
+fn format_clock(ms: i64) -> String {
+    let secs = ms / 1000;
+    match Utc.timestamp_opt(secs, 0) {
+        chrono::LocalResult::Single(dt) => dt.format("%H:%M:%S").to_string(),
+        _ => String::from("00:00:00"),
+    }
+}
+
+/// Format relative millisecond offset as `HH:MM:SS,MMM` (SRT timecode).
+fn format_srt(ms: i64) -> String {
+    let total_ms = ms.max(0);
+    let hours = total_ms / 3_600_000;
+    let minutes = (total_ms / 60_000) % 60;
+    let seconds = (total_ms / 1000) % 60;
+    let millis = total_ms % 1000;
+    format!("{hours:02}:{minutes:02}:{seconds:02},{millis:03}")
+}
+
 #[cfg(test)]
 mod tests {
     #[allow(unused_imports)]
@@ -230,5 +610,17 @@ mod tests {
         // Verify this handler module compiles correctly.
         // Integration tests require a running database and service.
         assert!(true, "{} handler module loaded", module_path!());
+    }
+
+    #[test]
+    fn srt_timecode_format() {
+        assert_eq!(format_srt(0), "00:00:00,000");
+        assert_eq!(format_srt(1_500), "00:00:01,500");
+        assert_eq!(format_srt(3_723_456), "01:02:03,456");
+    }
+
+    #[test]
+    fn srt_empty_yields_empty_string() {
+        assert!(render_srt(&[]).is_empty());
     }
 }
