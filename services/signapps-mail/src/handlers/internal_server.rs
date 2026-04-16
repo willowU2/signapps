@@ -521,9 +521,13 @@ fn parse_domain_list(body: &str) -> Vec<StalwartDomain> {
                         Some(StalwartDomain {
                             name: s.to_string(),
                         })
-                    } else { v.get("name").and_then(|n| n.as_str()).map(|name| StalwartDomain {
-                            name: name.to_string(),
-                        }) }
+                    } else {
+                        v.get("name")
+                            .and_then(|n| n.as_str())
+                            .map(|name| StalwartDomain {
+                                name: name.to_string(),
+                            })
+                    }
                 })
                 .collect();
         }
@@ -569,13 +573,17 @@ fn parse_account_list(body: &str) -> Vec<StalwartAccount> {
                             name: s.to_string(),
                             account_type: None,
                         })
-                    } else { v.get("name").and_then(|n| n.as_str()).map(|name| StalwartAccount {
-                            name: name.to_string(),
-                            account_type: v
-                                .get("type")
-                                .and_then(|t| t.as_str())
-                                .map(|s| s.to_string()),
-                        }) }
+                    } else {
+                        v.get("name")
+                            .and_then(|n| n.as_str())
+                            .map(|name| StalwartAccount {
+                                name: name.to_string(),
+                                account_type: v
+                                    .get("type")
+                                    .and_then(|t| t.as_str())
+                                    .map(|s| s.to_string()),
+                            })
+                    }
                 })
                 .collect();
         }

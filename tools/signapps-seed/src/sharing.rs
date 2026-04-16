@@ -175,12 +175,10 @@ async fn seed_policies(
         let apply_to_existing = rng.gen_bool(0.5);
         let (created_by, _, _) = crate::helpers::pick(user_ids, 0);
 
-        // Only 'user' grantee_type avoids FK issues with groups/org_nodes in seed
-        let effective_grantee_type = if grantee_type == "user" {
-            "user"
-        } else {
-            "user"
-        };
+        // Only 'user' grantee_type avoids FK issues with groups/org_nodes in seed.
+        // (grantee_type is unused here — seeder always emits 'user' grants.)
+        let _ = grantee_type;
+        let effective_grantee_type = "user";
 
         let result = sqlx::query(
             r#"

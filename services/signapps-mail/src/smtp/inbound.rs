@@ -354,9 +354,7 @@ async fn read_line_limited(
             let to_consume = newline_pos + 1;
             if total + to_consume > max_len {
                 reader.consume(to_consume);
-                return Err(std::io::Error::other(
-                    "line too long",
-                ));
+                return Err(std::io::Error::other("line too long"));
             }
             buf.extend_from_slice(&available[..to_consume]);
             reader.consume(to_consume);
@@ -368,9 +366,7 @@ async fn read_line_limited(
         let len = available.len();
         if total + len > max_len {
             reader.consume(len);
-            return Err(std::io::Error::other(
-                "line too long",
-            ));
+            return Err(std::io::Error::other("line too long"));
         }
         buf.extend_from_slice(available);
         reader.consume(len);

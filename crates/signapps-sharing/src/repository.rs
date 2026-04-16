@@ -348,6 +348,7 @@ impl SharingRepository {
     /// # Errors
     ///
     /// Returns [`Error::Database`] if the insert fails.
+    #[allow(clippy::too_many_arguments)]
     pub async fn create_policy(
         pool: &PgPool,
         tenant_id: Uuid,

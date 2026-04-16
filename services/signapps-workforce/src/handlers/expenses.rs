@@ -93,7 +93,11 @@ pub struct UpdateExpenseRequest {
 }
 
 /// Request body for approval/rejection.
+///
+/// `comment` is accepted and persisted via serde but the handler does not
+/// read it back (the approval flow writes the value straight to the DB).
 #[derive(Debug, Deserialize, utoipa::ToSchema)]
+#[allow(dead_code)]
 pub struct ApprovalRequest {
     /// Optional comment from the approver.
     pub comment: Option<String>,

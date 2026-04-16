@@ -152,6 +152,7 @@ impl Pac {
     /// # Panics
     ///
     /// No panics — all errors are propagated via `Result`.
+    #[allow(clippy::too_many_arguments)]
     pub fn build(
         username: &str,
         display_name: &str,

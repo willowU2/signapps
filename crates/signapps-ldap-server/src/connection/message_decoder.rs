@@ -119,9 +119,7 @@ fn decode_operation(element: &BerElement) -> Result<LdapOperation, String> {
             let types_only = ber::decode_boolean(&children[5]).unwrap_or(false);
             let filter = decode_search_filter(&children[6])?;
             let attributes = match &children[7].data {
-                BerData::Constructed(attrs) => {
-                    attrs.iter().map(octet_string_to_utf8).collect()
-                },
+                BerData::Constructed(attrs) => attrs.iter().map(octet_string_to_utf8).collect(),
                 _ => vec![],
             };
 

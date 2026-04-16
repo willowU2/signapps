@@ -14,13 +14,19 @@ pub struct CaptureState {
     pub last_buffer: Mutex<Option<AudioBuffer>>,
 }
 
-impl CaptureState {
-    /// Create a new empty capture state.
-    pub fn new() -> Self {
+impl Default for CaptureState {
+    fn default() -> Self {
         Self {
             backend: Mutex::new(None),
             last_buffer: Mutex::new(None),
         }
+    }
+}
+
+impl CaptureState {
+    /// Create a new empty capture state.
+    pub fn new() -> Self {
+        Self::default()
     }
 }
 

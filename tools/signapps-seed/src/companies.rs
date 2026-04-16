@@ -35,7 +35,8 @@ pub async fn seed_acme(
     let clientco_id = Uuid::new_v4();
     let partnerdesign_id = Uuid::new_v4();
 
-    let companies: &[(Uuid, &str, &str, Option<&str>, Option<&str>, Option<&str>)] = &[
+    type CompanyRow<'a> = (Uuid, &'a str, &'a str, Option<&'a str>, Option<&'a str>, Option<&'a str>);
+    let companies: &[CompanyRow<'_>] = &[
         (
             acme_id,
             "Acme Corp",

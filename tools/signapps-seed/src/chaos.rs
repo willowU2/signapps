@@ -729,9 +729,9 @@ async fn seed_chaos_billing(pool: &sqlx::PgPool) -> Result<(), Box<dyn std::erro
         (0, "Zero amount invoice"),
         (1, "One cent invoice"),
         (2_147_483_647, "Max i32 amount"),
-        (100_00, "Normal invoice EUR 100"),
+        (10_000, "Normal invoice EUR 100"),
         (0, "Second zero amount"),
-        (1_00, "One unit invoice"),
+        (100, "One unit invoice"),
     ];
 
     for (i, (amount_cents, description)) in extreme_amounts.iter().enumerate() {

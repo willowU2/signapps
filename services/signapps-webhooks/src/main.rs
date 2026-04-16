@@ -99,10 +99,7 @@ fn create_router(state: AppState) -> Router {
         .route("/api/v1/webhooks/:id", get(handlers::webhooks::get))
         .route("/api/v1/webhooks/:id", put(handlers::webhooks::update))
         .route("/api/v1/webhooks/:id", delete(handlers::webhooks::delete))
-        .route(
-            "/api/v1/webhooks/:id/test",
-            post(handlers::webhooks::test),
-        )
+        .route("/api/v1/webhooks/:id/test", post(handlers::webhooks::test))
         .route_layer(middleware::from_fn(require_admin))
         .route_layer(middleware::from_fn(tenant_context_middleware))
         .route_layer(middleware::from_fn_with_state(

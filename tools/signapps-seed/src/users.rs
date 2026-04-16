@@ -33,6 +33,7 @@ const SUPPLIER_USER_ID: Uuid = uuid::uuid!("00000000-0000-0000-0000-000000000005
 ///
 /// Both inserts use `ON CONFLICT DO NOTHING` so the function is idempotent
 /// when the same fixed UUID is used across runs.
+#[allow(clippy::too_many_arguments)]
 async fn insert_user_and_person(
     pool: &sqlx::PgPool,
     user_id: Uuid,

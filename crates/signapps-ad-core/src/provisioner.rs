@@ -417,6 +417,9 @@ async fn provision_dns(
 /// Result of CA + child certificate generation.
 struct CertBundle {
     ca_cert_pem: String,
+    // Retained for future CA-rotation / resigning workflows; not currently
+    // persisted by callers.
+    #[allow(dead_code)]
     ca_key_pem: String,
     server_cert_pem: String,
     wildcard_cert_pem: String,
@@ -442,7 +445,6 @@ fn generate_cert_bundle(dns_name: &str) -> std::result::Result<CertBundle, Strin
         BasicConstraints, CertificateParams, DistinguishedName, DnType, IsCa, KeyUsagePurpose,
         SanType,
     };
-    use sha2::Digest;
 
     let now = time::OffsetDateTime::now_utc();
 

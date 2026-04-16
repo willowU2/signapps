@@ -79,11 +79,26 @@ fn create_router(state: AppState) -> Router {
     // GDPR export: a user exercising their data-access rights on their OWN
     // account. Activity feed: user's own cross-module activity.
     let user_routes = Router::new()
-        .route("/api/v1/activities", get(handlers::activities::list_activities))
-        .route("/api/v1/activity/cross-module", get(handlers::activities::cross_module_activity))
-        .route("/api/v1/users/me/export", post(handlers::data_export::request_export))
-        .route("/api/v1/users/me/export/status", get(handlers::data_export::export_status))
-        .route("/api/v1/users/me/export/download", get(handlers::data_export::download_export))
+        .route(
+            "/api/v1/activities",
+            get(handlers::activities::list_activities),
+        )
+        .route(
+            "/api/v1/activity/cross-module",
+            get(handlers::activities::cross_module_activity),
+        )
+        .route(
+            "/api/v1/users/me/export",
+            post(handlers::data_export::request_export),
+        )
+        .route(
+            "/api/v1/users/me/export/status",
+            get(handlers::data_export::export_status),
+        )
+        .route(
+            "/api/v1/users/me/export/download",
+            get(handlers::data_export::download_export),
+        )
         .route_layer(middleware::from_fn(tenant_context_middleware))
         .route_layer(middleware::from_fn_with_state(
             state.clone(),
@@ -94,21 +109,63 @@ fn create_router(state: AppState) -> Router {
     // authenticated user: audit logs (cross-tenant data exposure), DPIA/DSAR
     // write/list, retention/consent/cookie-banner configuration.
     let admin_routes = Router::new()
-        .route("/api/v1/audit-logs", get(handlers::audit_logs::list_audit_logs))
-        .route("/api/v1/audit-logs/export", get(handlers::audit_logs::export_audit_logs))
-        .route("/api/v1/audit-logs/:id", get(handlers::audit_logs::get_audit_log))
+        .route(
+            "/api/v1/audit-logs",
+            get(handlers::audit_logs::list_audit_logs),
+        )
+        .route(
+            "/api/v1/audit-logs/export",
+            get(handlers::audit_logs::export_audit_logs),
+        )
+        .route(
+            "/api/v1/audit-logs/:id",
+            get(handlers::audit_logs::get_audit_log),
+        )
         .route("/api/v1/audit", post(handlers::audit_logs::query_audit))
-        .route("/api/v1/compliance/dpia", post(handlers::compliance::save_dpia))
-        .route("/api/v1/compliance/dpia", get(handlers::compliance::list_dpias))
-        .route("/api/v1/compliance/dsar", post(handlers::compliance::create_dsar))
-        .route("/api/v1/compliance/dsar", get(handlers::compliance::list_dsars))
-        .route("/api/v1/compliance/dsar/:id", patch(handlers::compliance::update_dsar))
-        .route("/api/v1/compliance/retention-policies", put(handlers::compliance::save_retention_policies))
-        .route("/api/v1/compliance/retention-policies", get(handlers::compliance::get_retention_policies))
-        .route("/api/v1/compliance/consent", put(handlers::compliance::save_consent))
-        .route("/api/v1/compliance/consent", get(handlers::compliance::get_consent))
-        .route("/api/v1/compliance/cookie-banner", put(handlers::compliance::save_cookie_banner))
-        .route("/api/v1/compliance/cookie-banner", get(handlers::compliance::get_cookie_banner))
+        .route(
+            "/api/v1/compliance/dpia",
+            post(handlers::compliance::save_dpia),
+        )
+        .route(
+            "/api/v1/compliance/dpia",
+            get(handlers::compliance::list_dpias),
+        )
+        .route(
+            "/api/v1/compliance/dsar",
+            post(handlers::compliance::create_dsar),
+        )
+        .route(
+            "/api/v1/compliance/dsar",
+            get(handlers::compliance::list_dsars),
+        )
+        .route(
+            "/api/v1/compliance/dsar/:id",
+            patch(handlers::compliance::update_dsar),
+        )
+        .route(
+            "/api/v1/compliance/retention-policies",
+            put(handlers::compliance::save_retention_policies),
+        )
+        .route(
+            "/api/v1/compliance/retention-policies",
+            get(handlers::compliance::get_retention_policies),
+        )
+        .route(
+            "/api/v1/compliance/consent",
+            put(handlers::compliance::save_consent),
+        )
+        .route(
+            "/api/v1/compliance/consent",
+            get(handlers::compliance::get_consent),
+        )
+        .route(
+            "/api/v1/compliance/cookie-banner",
+            put(handlers::compliance::save_cookie_banner),
+        )
+        .route(
+            "/api/v1/compliance/cookie-banner",
+            get(handlers::compliance::get_cookie_banner),
+        )
         .route_layer(middleware::from_fn(require_admin))
         .route_layer(middleware::from_fn(tenant_context_middleware))
         .route_layer(middleware::from_fn_with_state(
