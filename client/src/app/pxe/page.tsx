@@ -998,8 +998,12 @@ export default function PXEDashboard() {
                                 size="icon"
                                 className="h-8 w-8 text-destructive"
                                 onClick={() => setDeleteImageId(img.id)}
+                                aria-label={`Supprimer ${img.name}`}
                               >
-                                <Trash2 className="h-4 w-4" />
+                                <Trash2
+                                  className="h-4 w-4"
+                                  aria-hidden="true"
+                                />
                               </Button>
                             </TableCell>
                           </TableRow>
@@ -1245,16 +1249,21 @@ export default function PXEDashboard() {
                                 size="icon"
                                 className="h-8 w-8"
                                 onClick={() => openEditProfile(profile)}
+                                aria-label={`Modifier ${profile.name}`}
                               >
-                                <Edit className="h-4 w-4" />
+                                <Edit className="h-4 w-4" aria-hidden="true" />
                               </Button>
                               <Button
                                 variant="ghost"
                                 size="icon"
                                 className="h-8 w-8 text-destructive"
                                 onClick={() => setDeleteProfileId(profile.id)}
+                                aria-label={`Supprimer ${profile.name}`}
                               >
-                                <Trash2 className="h-4 w-4" />
+                                <Trash2
+                                  className="h-4 w-4"
+                                  aria-hidden="true"
+                                />
                               </Button>
                             </TableCell>
                           </TableRow>
@@ -1362,16 +1371,21 @@ export default function PXEDashboard() {
                                 size="icon"
                                 className="h-8 w-8"
                                 onClick={() => openEditAsset(asset)}
+                                aria-label={`Modifier ${asset.hostname}`}
                               >
-                                <Edit className="h-4 w-4" />
+                                <Edit className="h-4 w-4" aria-hidden="true" />
                               </Button>
                               <Button
                                 variant="ghost"
                                 size="icon"
                                 className="h-8 w-8 text-destructive"
                                 onClick={() => setDeleteAssetId(asset.id)}
+                                aria-label={`Supprimer ${asset.hostname}`}
                               >
-                                <Trash2 className="h-4 w-4" />
+                                <Trash2
+                                  className="h-4 w-4"
+                                  aria-hidden="true"
+                                />
                               </Button>
                             </TableCell>
                           </TableRow>
