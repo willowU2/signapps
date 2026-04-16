@@ -397,7 +397,7 @@ export function HeatmapView({
                           isSameDay(day, new Date()) &&
                             isSameHour(
                               new Date(),
-                              new Date(day.setHours(hour)),
+                              new Date(new Date(day).setHours(hour, 0, 0, 0)),
                             ) &&
                             "bg-primary/10",
                         )}

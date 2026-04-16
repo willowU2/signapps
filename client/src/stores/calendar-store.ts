@@ -282,15 +282,15 @@ export const useCalendarStore = create<CalendarState>()(
       weekStartsOn: 1 as 0 | 1,
       scope: null as Scope | null,
       fetchTimeItems: async (range) => {
-        set({ isLoading: true });
+        set({ isLoadingTimeItems: true });
         try {
           const response = await schedulingApi.getTimeItemsInRange(
             range.start.toISOString(),
             range.end.toISOString(),
           );
-          set({ timeItems: response, isLoading: false });
+          set({ timeItems: response, isLoadingTimeItems: false });
         } catch {
-          set({ isLoading: false });
+          set({ isLoadingTimeItems: false });
         }
       },
       updateTimeItem: async (id, updates) => {

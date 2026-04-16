@@ -422,7 +422,7 @@ export function TimelineView({
 
             {/* Rows with bars */}
             <div className="relative">
-              {rows.map((row, rowIndex) => {
+              {rows.map((row) => {
                 const barPos = getBarPosition(row.item);
 
                 return (

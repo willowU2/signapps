@@ -462,7 +462,7 @@ function KanbanCard({ item, onClick, onDoubleClick }: KanbanCardProps) {
           {/* Assignees */}
           {item.users && item.users.length > 0 && (
             <div className="flex -space-x-2">
-              {item.users.slice(0, 3).map((user, i) => (
+              {item.users.slice(0, 3).map((user) => (
                 <Avatar
                   key={user.userId}
                   className="h-5 w-5 border-2 border-background"
