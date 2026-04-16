@@ -53,26 +53,41 @@ export default function BioPage({
 
   if (notFound) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-900 dark:to-slate-800">
+      <main
+        id="main-content"
+        className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-900 dark:to-slate-800"
+      >
         <div className="text-center">
-          <p className="text-6xl mb-4">🔍</p>
+          <p className="text-6xl mb-4" aria-hidden="true">
+            🔍
+          </p>
           <h1 className="text-2xl font-bold mb-2">Page not found</h1>
           <p className="text-muted-foreground">@{username} does not exist</p>
         </div>
-      </div>
+      </main>
     );
   }
 
   if (!profile) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="w-8 h-8 rounded-full border-4 border-primary border-t-transparent animate-spin" />
-      </div>
+      <main
+        id="main-content"
+        className="min-h-screen flex items-center justify-center"
+      >
+        <div
+          className="w-8 h-8 rounded-full border-4 border-primary border-t-transparent animate-spin"
+          role="status"
+          aria-label="Chargement du profil"
+        />
+      </main>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-900 dark:to-slate-800 p-4">
+    <main
+      id="main-content"
+      className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-900 dark:to-slate-800 p-4"
+    >
       <div className="w-full max-w-sm">
         {/* Avatar & info */}
         <div className="flex flex-col items-center mb-6">
@@ -125,6 +140,6 @@ export default function BioPage({
           </a>
         </p>
       </div>
-    </div>
+    </main>
   );
 }

@@ -17,9 +17,16 @@ export default function MaintenancePage() {
   }, []);
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-background text-foreground">
+    <main
+      id="main-content"
+      className="flex items-center justify-center min-h-screen bg-background text-foreground"
+    >
       <div className="text-center max-w-md p-8">
-        <div className="mx-auto mb-6 h-10 w-10 rounded-full border-4 border-muted border-t-primary animate-spin" />
+        <div
+          className="mx-auto mb-6 h-10 w-10 rounded-full border-4 border-muted border-t-primary animate-spin"
+          role="status"
+          aria-label="Chargement"
+        />
         <h1 className="text-2xl font-semibold mb-4">Mise à jour en cours</h1>
         <p className="text-muted-foreground">
           SignApps sera de retour dans quelques instants.
@@ -27,6 +34,6 @@ export default function MaintenancePage() {
           Cette page se rafraîchit automatiquement.
         </p>
       </div>
-    </div>
+    </main>
   );
 }

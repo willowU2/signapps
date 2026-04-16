@@ -91,7 +91,10 @@ export default function OAuthCallbackPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-muted dark:bg-gray-900 p-4">
+    <main
+      id="main-content"
+      className="min-h-screen flex items-center justify-center bg-muted dark:bg-gray-900 p-4"
+    >
       <Card className="w-full max-w-md">
         <CardContent className="pt-6 text-center">
           {status === "processing" && (
@@ -159,6 +162,6 @@ export default function OAuthCallbackPage() {
           )}
         </CardContent>
       </Card>
-    </div>
+    </main>
   );
 }

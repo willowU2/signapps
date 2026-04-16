@@ -24,18 +24,21 @@ export default function PollPage({ params }: PollPageProps) {
   usePageTitle("Sondage");
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="border-b px-6 py-3">
+    <main id="main-content" className="min-h-screen bg-background">
+      <header className="border-b px-6 py-3">
         <div className="max-w-3xl mx-auto flex items-center gap-2">
-          <div className="flex h-7 w-7 items-center justify-center rounded-md bg-primary shadow-sm">
+          <div
+            className="flex h-7 w-7 items-center justify-center rounded-md bg-primary shadow-sm"
+            aria-hidden="true"
+          >
             <span className="text-sm font-bold text-primary-foreground">S</span>
           </div>
           <span className="text-sm font-semibold text-muted-foreground">
             SignApps Poll
           </span>
         </div>
-      </div>
+      </header>
       <PollVoteView pollId={id} />
-    </div>
+    </main>
   );
 }

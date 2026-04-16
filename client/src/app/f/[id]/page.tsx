@@ -284,29 +284,41 @@ export default function PublicFormPage() {
 
   if (loading)
     return (
-      <div className="min-h-screen flex items-center justify-center bg-muted/20">
-        <div className="text-muted-foreground animate-pulse">
+      <main
+        id="main-content"
+        className="min-h-screen flex items-center justify-center bg-muted/20"
+      >
+        <div className="text-muted-foreground animate-pulse" role="status">
           Chargement du formulaire...
         </div>
-      </div>
+      </main>
     );
 
   if (error && !form)
     return (
-      <div className="min-h-screen flex items-center justify-center bg-muted/20 p-4">
+      <main
+        id="main-content"
+        className="min-h-screen flex items-center justify-center bg-muted/20 p-4"
+      >
         <Card className="max-w-md w-full shadow-lg border-destructive/20">
           <CardContent className="pt-6 flex flex-col items-center text-center">
-            <FileText className="h-12 w-12 text-muted-foreground mb-4 opacity-30" />
+            <FileText
+              className="h-12 w-12 text-muted-foreground mb-4 opacity-30"
+              aria-hidden="true"
+            />
             <h2 className="text-xl font-semibold mb-2">Accès restreint</h2>
             <p className="text-muted-foreground mb-6">{error}</p>
           </CardContent>
         </Card>
-      </div>
+      </main>
     );
 
   if (submitted)
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50/50 via-white to-blue-50/50 dark:from-indigo-950/20 dark:via-background dark:to-blue-950/20 p-4">
+      <main
+        id="main-content"
+        className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50/50 via-white to-blue-50/50 dark:from-indigo-950/20 dark:via-background dark:to-blue-950/20 p-4"
+      >
         <Card className="max-w-md w-full shadow-xl border-t-4 border-t-emerald-500 overflow-hidden">
           <div className="h-1.5 w-full bg-emerald-500" />
           <CardContent className="pt-10 pb-8 flex flex-col items-center text-center">
@@ -335,7 +347,7 @@ export default function PublicFormPage() {
             )}
           </CardContent>
         </Card>
-      </div>
+      </main>
     );
 
   // ─── Field renderer ─────────────────────────────────────────────────────────
@@ -523,7 +535,10 @@ export default function PublicFormPage() {
   const currentPageFields = pages[currentPage] ?? [];
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-4 sm:p-8 py-12">
+    <main
+      id="main-content"
+      className="min-h-screen bg-slate-50 dark:bg-slate-950 p-4 sm:p-8 py-12"
+    >
       <div className="max-w-2xl mx-auto space-y-6">
         <Card className="border-t-4 border-t-primary shadow-md">
           <CardHeader className="pb-6">
@@ -613,6 +628,6 @@ export default function PublicFormPage() {
           )}
         </form>
       </div>
-    </div>
+    </main>
   );
 }
