@@ -52,8 +52,9 @@ export function CalendarHeader({
           variant="ghost"
           size="icon"
           className="h-12 w-12 rounded-full text-[#5f6368] hover:bg-muted"
+          aria-label="Menu"
         >
-          <Menu className="h-6 w-6" />
+          <Menu className="h-6 w-6" aria-hidden="true" />
         </Button>
 
         <div className="flex items-center gap-2 px-1 select-none pr-6 cursor-pointer">
@@ -79,15 +80,17 @@ export function CalendarHeader({
             variant="ghost"
             size="icon"
             className="h-9 w-9 rounded-full text-[#5f6368] hover:bg-muted"
+            aria-label="Période précédente"
           >
-            <ChevronLeft className="h-5 w-5" />
+            <ChevronLeft className="h-5 w-5" aria-hidden="true" />
           </Button>
           <Button
             variant="ghost"
             size="icon"
             className="h-9 w-9 rounded-full text-[#5f6368] hover:bg-muted"
+            aria-label="Période suivante"
           >
-            <ChevronRight className="h-5 w-5" />
+            <ChevronRight className="h-5 w-5" aria-hidden="true" />
           </Button>
         </div>
 
@@ -121,22 +124,25 @@ export function CalendarHeader({
             variant="ghost"
             size="icon"
             className="h-10 w-10 rounded-full text-[#5f6368] hover:bg-muted"
+            aria-label="Rechercher"
           >
-            <Search className="h-5 w-5" />
+            <Search className="h-5 w-5" aria-hidden="true" />
           </Button>
           <Button
             variant="ghost"
             size="icon"
             className="h-10 w-10 rounded-full text-[#5f6368] hover:bg-muted"
+            aria-label="Aide"
           >
-            <HelpCircle className="h-5 w-5" />
+            <HelpCircle className="h-5 w-5" aria-hidden="true" />
           </Button>
           <Button
             variant="ghost"
             size="icon"
             className="h-10 w-10 rounded-full text-[#5f6368] hover:bg-muted"
+            aria-label="Paramètres"
           >
-            <Settings className="h-5 w-5" />
+            <Settings className="h-5 w-5" aria-hidden="true" />
           </Button>
         </div>
 
@@ -156,8 +162,9 @@ export function CalendarHeader({
           variant="ghost"
           size="icon"
           className="h-10 w-10 rounded-full text-[#5f6368] hover:bg-muted ml-4 mr-2"
+          aria-label="Applications"
         >
-          <Grid className="h-5 w-5" />
+          <Grid className="h-5 w-5" aria-hidden="true" />
         </Button>
 
         <Avatar className="h-8 w-8 hover:ring-4 ring-gray-100 cursor-pointer transition-all">
