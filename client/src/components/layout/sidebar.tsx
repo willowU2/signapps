@@ -758,6 +758,7 @@ export function Sidebar({ portalMode }: SidebarProps = {}) {
               <button
                 onClick={toggleSidebar}
                 className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                aria-label={sidebarCollapsed ? "Développer" : "Réduire"}
                 title={sidebarCollapsed ? "Développer" : "Réduire"}
               >
                 {sidebarCollapsed ? (
@@ -765,6 +766,9 @@ export function Sidebar({ portalMode }: SidebarProps = {}) {
                 ) : (
                   <LucideIcons.PanelLeftClose className="h-4 w-4" />
                 )}
+                <span className="sr-only">
+                  {sidebarCollapsed ? "Développer" : "Réduire"}
+                </span>
               </button>
             </TooltipTrigger>
             <TooltipContent side="right">
@@ -781,6 +785,9 @@ export function Sidebar({ portalMode }: SidebarProps = {}) {
                     ? "text-primary"
                     : "text-muted-foreground hover:text-foreground",
                 )}
+                aria-label={
+                  sidebarPinned ? "Désépingler la barre" : "Épingler la barre"
+                }
                 title={
                   sidebarPinned ? "Désépingler la barre" : "Épingler la barre"
                 }
@@ -788,6 +795,9 @@ export function Sidebar({ portalMode }: SidebarProps = {}) {
                 <Pin
                   className={cn("h-4 w-4", sidebarPinned && "fill-primary")}
                 />
+                <span className="sr-only">
+                  {sidebarPinned ? "Désépingler" : "Épingler"}
+                </span>
               </button>
             </TooltipTrigger>
             <TooltipContent side="right">
@@ -1191,6 +1201,8 @@ export function Sidebar({ portalMode }: SidebarProps = {}) {
                         <button
                           key={c}
                           onClick={() => setNewLabelColor(c)}
+                          aria-label={`Couleur ${c}`}
+                          aria-pressed={newLabelColor === c}
                           className={cn(
                             "h-5 w-5 rounded-full transition-all",
                             newLabelColor === c
@@ -1223,9 +1235,13 @@ export function Sidebar({ portalMode }: SidebarProps = {}) {
                   <span className="flex-1 truncate">{label.name}</span>
                   <button
                     onClick={() => removeLabel(label.id)}
+                    aria-label={`Supprimer le label ${label.name}`}
                     className="shrink-0 rounded p-0.5 text-muted-foreground opacity-0 transition-all hover:bg-destructive/10 hover:text-destructive group-hover:opacity-100"
                   >
                     <X className="h-3 w-3" />
+                    <span className="sr-only">
+                      Supprimer le label {label.name}
+                    </span>
                   </button>
                 </div>
               ))}

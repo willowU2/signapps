@@ -146,6 +146,10 @@ export function FloatingActionButton() {
         {/* Main FAB button */}
         <button
           onClick={() => setExpanded(!expanded)}
+          aria-label={
+            expanded ? "Fermer les actions rapides" : "Actions rapides"
+          }
+          aria-expanded={expanded}
           className={cn(
             "flex h-14 w-14 items-center justify-center rounded-full shadow-xl transition-all duration-300 text-white",
             expanded
@@ -162,6 +166,11 @@ export function FloatingActionButton() {
           >
             <Plus className="h-6 w-6" />
           </div>
+          <span className="sr-only">
+            {expanded
+              ? "Fermer les actions rapides"
+              : "Ouvrir les actions rapides"}
+          </span>
         </button>
       </div>
 
