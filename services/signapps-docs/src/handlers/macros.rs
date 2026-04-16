@@ -59,7 +59,6 @@ pub struct UpdateMacroRequest {
     tag = "Macros"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn list_macros(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -97,7 +96,6 @@ pub async fn list_macros(
     security(("bearer" = [])),
     tag = "Macros"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn create_macro(
     State(state): State<AppState>,
@@ -150,7 +148,6 @@ pub async fn create_macro(
     tag = "Macros"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn update_macro(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -197,7 +194,6 @@ pub async fn update_macro(
     security(("bearer" = [])),
     tag = "Macros"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_macro(
     State(state): State<AppState>,

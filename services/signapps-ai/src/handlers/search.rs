@@ -59,7 +59,6 @@ pub struct SearchResponse {
     tag = "search"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn search(
     State(state): State<AppState>,
     Extension(claims): Extension<signapps_common::auth::Claims>,

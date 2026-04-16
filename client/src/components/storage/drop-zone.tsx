@@ -128,26 +128,40 @@ export function DropZone({
       xhr.addEventListener("load", () => {
         if (xhr.status >= 200 && xhr.status < 300) {
           completed = true;
-          setUploads((prev) =>
-            prev.map((u) =>
+          setUploads((prev) => {
+            const next = prev.map((u) =>
               u.id === upload.id
-                ? { ...u, status: "success", progress: 100 }
+                ? { ...u, status: "success" as const, progress: 100 }
                 : u,
-            ),
-          );
+            );
+            // Fire completion callback from within setUploads so we read the
+            // FRESH list rather than a stale closure snapshot from handleFiles.
+            if (
+              next.every((u) => u.status === "success" || u.status === "error")
+            ) {
+              onUploadComplete?.();
+            }
+            return next;
+          });
           toast.success(`Uploaded: ${upload.file.name}`);
         } else {
-          setUploads((prev) =>
-            prev.map((u) =>
+          setUploads((prev) => {
+            const next = prev.map((u) =>
               u.id === upload.id
                 ? {
                     ...u,
-                    status: "error",
+                    status: "error" as const,
                     error: `Échec du téléversement (${xhr.status})`,
                   }
                 : u,
-            ),
-          );
+            );
+            if (
+              next.every((u) => u.status === "success" || u.status === "error")
+            ) {
+              onUploadComplete?.();
+            }
+            return next;
+          });
           toast.error(`Failed to upload: ${upload.file.name}`);
         }
       });
@@ -195,11 +209,9 @@ export function DropZone({
       );
       toast.error(`Error uploading: ${upload.file.name}`);
     }
-
-    // Call completion callback if all uploads are done
-    if (uploads.every((u) => ["success", "error"].includes(u.status))) {
-      onUploadComplete?.();
-    }
+    // Completion callback is fired from inside the XHR load handler against
+    // the fresh `setUploads` snapshot (the local `uploads` variable here is
+    // stale on the first iteration of the caller's for-loop).
   };
 
   const cancelUpload = (id: string) => {

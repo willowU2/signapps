@@ -34,7 +34,6 @@ where
     tag = "tags"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn list_tags(
     State(state): State<AppState>,
     axum::Extension(user_id): axum::Extension<Uuid>,
@@ -56,7 +55,6 @@ pub async fn list_tags(
     security(("bearerAuth" = [])),
     tag = "tags"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn create_tag(
     State(state): State<AppState>,
@@ -81,7 +79,6 @@ pub async fn create_tag(
     security(("bearerAuth" = [])),
     tag = "tags"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn update_tag(
     State(state): State<AppState>,
@@ -108,7 +105,6 @@ pub async fn update_tag(
     security(("bearerAuth" = [])),
     tag = "tags"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_tag(
     State(state): State<AppState>,
@@ -142,7 +138,6 @@ pub async fn delete_tag(
     tag = "tags"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn list_file_tags(
     State(state): State<AppState>,
     Path(file_id): Path<Uuid>,
@@ -170,7 +165,6 @@ pub async fn list_file_tags(
     tag = "tags"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn add_file_tag(
     State(state): State<AppState>,
     Path((file_id, tag_id)): Path<(Uuid, Uuid)>,
@@ -197,7 +191,6 @@ pub async fn add_file_tag(
     security(("bearerAuth" = [])),
     tag = "tags"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn remove_file_tag(
     State(state): State<AppState>,

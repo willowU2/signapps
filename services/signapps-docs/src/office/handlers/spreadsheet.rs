@@ -16,7 +16,6 @@ use crate::office::spreadsheet::{
 
 /// Export spreadsheet JSON data to XLSX
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn export_xlsx(Json(payload): Json<serde_json::Value>) -> Response {
     match json_to_xlsx(&payload) {
         Ok(data) => {
@@ -56,7 +55,6 @@ pub async fn export_xlsx(Json(payload): Json<serde_json::Value>) -> Response {
 }
 
 /// Import XLSX file to JSON
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn import_xlsx(mut multipart: Multipart) -> Response {
     while let Ok(Some(field)) = multipart.next_field().await {
@@ -140,7 +138,6 @@ pub async fn import_xlsx(mut multipart: Multipart) -> Response {
 )]
 /// Get spreadsheet format information
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn spreadsheet_info() -> Json<serde_json::Value> {
     Json(serde_json::json!({
         "service": "SignApps Office - Spreadsheet",
@@ -179,7 +176,6 @@ pub struct ExportParams {
 )]
 /// Export spreadsheet JSON data to specified format (XLSX or CSV)
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn export_spreadsheet(
     Query(params): Query<ExportParams>,
     Json(payload): Json<serde_json::Value>,
@@ -212,7 +208,6 @@ pub async fn export_spreadsheet(
     tag = "Spreadsheet"
 )]
 /// Export spreadsheet JSON data to CSV
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn export_csv_handler(Json(payload): Json<serde_json::Value>) -> Response {
     let delimiter = payload
@@ -266,7 +261,6 @@ pub async fn export_csv_handler(Json(payload): Json<serde_json::Value>) -> Respo
     tag = "Spreadsheet"
 )]
 /// Export spreadsheet JSON data to ODS (OpenDocument Spreadsheet)
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn export_ods_handler(Json(payload): Json<serde_json::Value>) -> Response {
     match json_to_ods(&payload) {
@@ -327,7 +321,6 @@ pub struct CsvImportRequest {
     tag = "Spreadsheet"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn import_csv_text(Json(payload): Json<CsvImportRequest>) -> Response {
     let delimiter = payload.delimiter.as_ref().and_then(|d| d.chars().next());
 
@@ -378,7 +371,6 @@ pub async fn import_csv_text(Json(payload): Json<CsvImportRequest>) -> Response 
     tag = "Spreadsheet"
 )]
 /// Import XLSX or CSV file to JSON (auto-detect format)
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn import_spreadsheet(mut multipart: Multipart) -> Response {
     while let Ok(Some(field)) = multipart.next_field().await {

@@ -10,7 +10,6 @@ use signapps_db::DatabasePool;
 ///
 /// Runs indefinitely — call via `tokio::spawn`.
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn run_daily(pool: DatabasePool) {
     tracing::info!("retention-purge: background job started (runs every 24h)");
     loop {

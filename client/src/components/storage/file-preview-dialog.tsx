@@ -2,7 +2,7 @@
 
 import { SpinnerInfinity } from "spinners-react";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import {
   Dialog,
   DialogContent,
@@ -256,6 +256,11 @@ export function FilePreviewDialog({
 }: FilePreviewDialogProps) {
   const [content, setContent] = useState<string | null>(null);
   const [blobUrl, setBlobUrl] = useState<string | null>(null);
+  // Mirror of blobUrl for use inside loadContent without making blobUrl a
+  // dep (which would re-run loadContent in an infinite loop after each
+  // successful load — the download → setBlobUrl → deps change → re-download
+  // cycle).
+  const blobUrlRef = useRef<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -294,9 +299,10 @@ export function FilePreviewDialog({
     setError(null);
     setZoom(1);
 
-    // Clean up previous blob URL
-    if (blobUrl) {
-      URL.revokeObjectURL(blobUrl);
+    // Clean up previous blob URL via ref to avoid re-triggering this callback
+    if (blobUrlRef.current) {
+      URL.revokeObjectURL(blobUrlRef.current);
+      blobUrlRef.current = null;
       setBlobUrl(null);
     }
 
@@ -329,6 +335,7 @@ export function FilePreviewDialog({
         type === "code"
       ) {
         const url = URL.createObjectURL(blob);
+        blobUrlRef.current = url;
         setBlobUrl(url);
       } else if (type === "markdown") {
         // Pure markdown: render as HTML
@@ -385,7 +392,10 @@ export function FilePreviewDialog({
     } finally {
       setLoading(false);
     }
-  }, [file, bucket, currentPath, blobUrl]);
+    // blobUrl intentionally read via blobUrlRef (not in deps) to break an
+    // infinite loop: setBlobUrl → deps change → loadContent recreated →
+    // useEffect fires → re-download.
+  }, [file, bucket, currentPath]);
 
   useEffect(() => {
     if (open && file) {

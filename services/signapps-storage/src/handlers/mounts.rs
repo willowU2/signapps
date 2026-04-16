@@ -81,7 +81,6 @@ pub struct MountResponse {
     tag = "mounts"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn list_mounts(State(_state): State<AppState>) -> Result<Json<Vec<MountPoint>>> {
     let mounts = get_system_mounts().await?;
     Ok(Json(mounts))
@@ -100,7 +99,6 @@ pub async fn list_mounts(State(_state): State<AppState>) -> Result<Json<Vec<Moun
     security(("bearerAuth" = [])),
     tag = "mounts"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn mount(
     State(_state): State<AppState>,
@@ -221,7 +219,6 @@ pub async fn mount(
     security(("bearerAuth" = [])),
     tag = "mounts"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn unmount(
     State(_state): State<AppState>,

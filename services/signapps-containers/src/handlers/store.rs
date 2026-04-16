@@ -32,7 +32,6 @@ use super::containers::ContainerResponse;
     tag = "store"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn list_apps(
     State(state): State<AppState>,
     Query(query): Query<ListAppsQuery>,
@@ -60,7 +59,6 @@ pub async fn list_apps(
     security(("bearerAuth" = [])),
     tag = "store"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_app_details(
     State(state): State<AppState>,
@@ -95,7 +93,6 @@ pub async fn get_app_details(
     security(("bearerAuth" = [])),
     tag = "store"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn install_app(
     State(state): State<AppState>,
@@ -455,7 +452,6 @@ pub async fn install_app(
     tag = "store"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn install_multi(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -589,7 +585,6 @@ fn validate_db_name(name: &str) -> Result<()> {
 }
 
 /// Provision a dedicated PostgreSQL database for an app, including the vector extension.
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn provision_app_database(
     pool: &signapps_db::DatabasePool,
@@ -1172,7 +1167,6 @@ async fn rollback(docker: &crate::docker::DockerClient, docker_ids: &[String], n
     tag = "store"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn install_progress(
     State(state): State<AppState>,
     Path(install_id): Path<Uuid>,
@@ -1234,7 +1228,6 @@ pub async fn install_progress(
     tag = "store"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn check_ports(
     State(state): State<AppState>,
     Query(query): Query<CheckPortsQuery>,
@@ -1286,7 +1279,6 @@ pub async fn check_ports(
     tag = "store"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn validate_source(
     State(state): State<AppState>,
     Json(req): Json<AddSourceRequest>,
@@ -1306,7 +1298,6 @@ pub async fn validate_source(
     security(("bearerAuth" = [])),
     tag = "store"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_sources(State(state): State<AppState>) -> Result<Json<Vec<AppSource>>> {
     let sources = state
@@ -1331,7 +1322,6 @@ pub async fn list_sources(State(state): State<AppState>) -> Result<Json<Vec<AppS
     security(("bearerAuth" = [])),
     tag = "store"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn add_source(
     State(state): State<AppState>,
@@ -1371,7 +1361,6 @@ pub async fn add_source(
     tag = "store"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn delete_source(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -1400,7 +1389,6 @@ pub async fn delete_source(
     tag = "store"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn refresh_source(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -1427,7 +1415,6 @@ pub async fn refresh_source(
     security(("bearerAuth" = [])),
     tag = "store"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn refresh_all(State(state): State<AppState>) -> Result<Json<serde_json::Value>> {
     state.store.refresh_sources().await;

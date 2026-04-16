@@ -64,7 +64,6 @@ pub struct UpdatesStatusResponse {
     tag = "updates"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn check_update(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -105,7 +104,6 @@ pub async fn check_update(
     security(("bearerAuth" = [])),
     tag = "updates"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn set_auto_update(
     State(state): State<AppState>,
@@ -150,7 +148,6 @@ pub async fn set_auto_update(
     tag = "updates"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn updates_status(State(state): State<AppState>) -> Result<Json<UpdatesStatusResponse>> {
     let repo = ContainerRepository::new(&state.pool);
     let containers = repo.list(100, 0).await?;
@@ -174,7 +171,6 @@ pub async fn updates_status(State(state): State<AppState>) -> Result<Json<Update
 
 /// Background auto-update task. Checks all containers with auto_update=true
 /// and updates them if a newer image is available.
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn run_auto_update_task(
     docker: crate::docker::DockerClient,

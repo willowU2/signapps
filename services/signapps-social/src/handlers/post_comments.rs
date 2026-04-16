@@ -23,7 +23,6 @@ use signapps_common::Claims;
     tag = "Social Post Comments"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn list_comments(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -58,7 +57,6 @@ pub async fn list_comments(
     security(("bearer" = [])),
     tag = "Social Post Comments"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn create_comment(
     State(state): State<AppState>,
@@ -102,7 +100,6 @@ pub async fn create_comment(
     security(("bearer" = [])),
     tag = "Social Post Comments"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_comment(
     State(state): State<AppState>,

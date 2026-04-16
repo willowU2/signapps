@@ -127,7 +127,6 @@ pub struct TriggerBackupRequest {
     tag = "Backups"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn list_backups(State(store): State<SharedBackupStore>) -> Result<Json<Vec<BackupJob>>> {
     let store = store.lock().expect("backup store lock poisoned");
     let mut jobs: Vec<BackupJob> = store.jobs.values().cloned().collect();
@@ -149,7 +148,6 @@ pub async fn list_backups(State(store): State<SharedBackupStore>) -> Result<Json
     security(("bearer" = [])),
     tag = "Backups"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn trigger_backup(
     State(store): State<SharedBackupStore>,
@@ -224,7 +222,6 @@ pub async fn trigger_backup(
     tag = "Backups"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn get_backup(
     State(store): State<SharedBackupStore>,
     Path(id): Path<Uuid>,
@@ -251,7 +248,6 @@ pub async fn get_backup(
     security(("bearer" = [])),
     tag = "Backups"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_backup(
     State(store): State<SharedBackupStore>,
@@ -290,7 +286,6 @@ pub async fn delete_backup(
     security(("bearer" = [])),
     tag = "Backups"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn update_backup_config(
     State(store): State<SharedBackupStore>,
@@ -366,7 +361,6 @@ pub async fn update_backup_config(
     security(("bearer" = [])),
     tag = "Backups"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_backup_config(
     State(store): State<SharedBackupStore>,

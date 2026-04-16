@@ -211,7 +211,6 @@ fn row_to_search_result(row: &PgRow) -> SearchResult {
     tag = "search"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn search(
     State(state): State<AppState>,
     Extension(user_id): Extension<Uuid>,
@@ -479,7 +478,6 @@ fn build_size_range_facets(rows: &[PgRow]) -> Vec<SizeRangeFacet> {
     tag = "search"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn quick_search(
     State(state): State<AppState>,
     Extension(user_id): Extension<Uuid>,
@@ -546,7 +544,6 @@ pub struct RecentFilesQuery {
     tag = "search"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn recent_files(
     State(state): State<AppState>,
     Extension(user_id): Extension<Uuid>,
@@ -603,7 +600,6 @@ pub async fn recent_files(
     security(("bearerAuth" = [])),
     tag = "search"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn suggest(
     State(state): State<AppState>,
@@ -730,7 +726,6 @@ pub struct OmniSearchResponse {
     security(("bearerAuth" = [])),
     tag = "search"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn omni_search(
     State(state): State<AppState>,

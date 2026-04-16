@@ -27,7 +27,6 @@ use super::types::{OrgNode, OrgTreeNode, TreeQueryParams};
     tag = "Workforce Org"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn get_tree(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,

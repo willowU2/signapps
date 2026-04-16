@@ -31,7 +31,6 @@ where
     tag = "versions"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn list_versions(
     State(state): State<AppState>,
     Path(file_id): Path<Uuid>,
@@ -60,7 +59,6 @@ pub async fn list_versions(
     security(("bearerAuth" = [])),
     tag = "versions"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn restore_version(
     State(state): State<AppState>,

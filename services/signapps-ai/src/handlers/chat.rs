@@ -128,7 +128,6 @@ fn extract_jwt(headers: &HeaderMap) -> Option<String> {
     tag = "chat"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn chat(
     State(state): State<AppState>,
     Json(payload): Json<ChatRequest>,
@@ -185,7 +184,6 @@ pub async fn chat(
     security(("bearerAuth" = [])),
     tag = "chat"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn chat_stream(
     State(state): State<AppState>,

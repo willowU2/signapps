@@ -40,7 +40,6 @@ pub struct BucketResponse {
     tag = "buckets"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn list(State(state): State<AppState>) -> Result<Json<Vec<BucketInfo>>> {
     let buckets = state.storage.list_buckets().await?;
     Ok(Json(buckets))
@@ -59,7 +58,6 @@ pub async fn list(State(state): State<AppState>) -> Result<Json<Vec<BucketInfo>>
     security(("bearerAuth" = [])),
     tag = "buckets"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get(
     State(state): State<AppState>,
@@ -93,7 +91,6 @@ pub async fn get(
     security(("bearerAuth" = [])),
     tag = "buckets"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn create(
     State(state): State<AppState>,
@@ -146,7 +143,6 @@ pub async fn create(
     security(("bearerAuth" = [])),
     tag = "buckets"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete(State(state): State<AppState>, Path(name): Path<String>) -> Result<StatusCode> {
     // Check bucket exists

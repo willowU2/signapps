@@ -33,7 +33,6 @@ use super::types::{
     tag = "Workforce Employees"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn get_functions(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -95,7 +94,6 @@ pub async fn get_functions(
     tag = "Workforce Employees"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn update_functions(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -146,7 +144,6 @@ pub async fn update_functions(
     tag = "Workforce Functions"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn list_function_definitions(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -184,7 +181,6 @@ pub async fn list_function_definitions(
     security(("bearer" = [])),
     tag = "Workforce Functions"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn create_function_definition(
     State(state): State<AppState>,
@@ -245,7 +241,6 @@ pub async fn create_function_definition(
     tag = "Workforce Functions"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn update_function_definition(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -305,7 +300,6 @@ pub async fn update_function_definition(
     security(("bearer" = [])),
     tag = "Workforce Functions"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_function_definition(
     State(state): State<AppState>,

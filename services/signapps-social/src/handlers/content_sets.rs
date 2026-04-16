@@ -22,7 +22,6 @@ use signapps_common::Claims;
     tag = "Social Content Sets"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn list_content_sets(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -55,7 +54,6 @@ pub async fn list_content_sets(
     security(("bearer" = [])),
     tag = "Social Content Sets"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn create_content_set(
     State(state): State<AppState>,
@@ -111,7 +109,6 @@ pub async fn create_content_set(
     security(("bearer" = [])),
     tag = "Social Content Sets"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_content_set(
     State(state): State<AppState>,

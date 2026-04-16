@@ -36,7 +36,6 @@ pub struct ProjectListQuery {
     tag = "Projects"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn list(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -64,7 +63,6 @@ pub async fn list(
 }
 
 /// Create a project.
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn create(
     State(state): State<AppState>,
@@ -96,7 +94,6 @@ pub async fn create(
     tag = "Projects"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn get_by_id(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -119,7 +116,6 @@ pub async fn get_by_id(
 }
 
 /// Update a project.
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn update(
     State(state): State<AppState>,
@@ -150,7 +146,6 @@ pub async fn update(
     security(("bearer" = [])),
     tag = "Projects"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete(
     State(state): State<AppState>,

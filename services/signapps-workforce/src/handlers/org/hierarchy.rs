@@ -28,7 +28,6 @@ use super::types::OrgNode;
     tag = "Workforce Org"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn get_descendants(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -68,7 +67,6 @@ pub async fn get_descendants(
     security(("bearer" = [])),
     tag = "Workforce Org"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_ancestors(
     State(state): State<AppState>,

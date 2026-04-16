@@ -29,7 +29,6 @@ use super::types::{CreateNodeTypeRequest, OrgNodeType};
     tag = "Workforce Org"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn list_node_types(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -67,7 +66,6 @@ pub async fn list_node_types(
     security(("bearer" = [])),
     tag = "Workforce Org"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn create_node_type(
     State(state): State<AppState>,
@@ -128,7 +126,6 @@ pub async fn create_node_type(
     security(("bearer" = [])),
     tag = "Workforce Org"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_node_type(
     State(state): State<AppState>,

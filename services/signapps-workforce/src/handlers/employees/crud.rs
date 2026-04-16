@@ -32,7 +32,6 @@ use super::types::{
     tag = "Workforce Employees"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn list_employees(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -99,7 +98,6 @@ pub async fn list_employees(
     security(("bearer" = [])),
     tag = "Workforce Employees"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn create_employee(
     State(state): State<AppState>,
@@ -227,7 +225,6 @@ pub async fn create_employee(
     tag = "Workforce Employees"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn get_employee(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -323,7 +320,6 @@ pub async fn get_employee(
     tag = "Workforce Employees"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn update_employee(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -399,7 +395,6 @@ pub async fn update_employee(
     security(("bearer" = [])),
     tag = "Workforce Employees"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_employee(
     State(state): State<AppState>,

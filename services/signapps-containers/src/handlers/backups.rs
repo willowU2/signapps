@@ -56,7 +56,6 @@ pub struct RestoreRequest {
     tag = "backups"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn list_profiles(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -89,7 +88,6 @@ pub async fn list_profiles(
     tag = "backups"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn get_profile(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -116,7 +114,6 @@ pub async fn get_profile(
     security(("bearerAuth" = [])),
     tag = "backups"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn create_profile(
     State(state): State<AppState>,
@@ -164,7 +161,6 @@ pub async fn create_profile(
     tag = "backups"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn update_profile(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -198,7 +194,6 @@ pub async fn update_profile(
     tag = "backups"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn delete_profile(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -231,7 +226,6 @@ pub async fn delete_profile(
     security(("bearerAuth" = [])),
     tag = "backups"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn run_backup(
     State(state): State<AppState>,
@@ -287,7 +281,6 @@ pub async fn run_backup(
     tag = "backups"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn list_snapshots(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -327,7 +320,6 @@ pub async fn list_snapshots(
     security(("bearerAuth" = [])),
     tag = "backups"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn restore_snapshot(
     State(state): State<AppState>,
@@ -384,7 +376,6 @@ pub async fn restore_snapshot(
     security(("bearerAuth" = [])),
     tag = "backups"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_runs(
     State(state): State<AppState>,

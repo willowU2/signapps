@@ -60,7 +60,6 @@ async fn log_time_item_activity(
     tag = "TimeItems"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn list_time_items(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -93,7 +92,6 @@ pub async fn list_time_items(
     tag = "TimeItems"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn get_time_item(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -113,7 +111,6 @@ pub async fn get_time_item(
 }
 
 /// Create a new time item.
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn create_time_item(
     State(state): State<AppState>,
@@ -148,7 +145,6 @@ pub async fn create_time_item(
 
 /// Update a time item.
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn update_time_item(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -179,7 +175,6 @@ pub async fn update_time_item(
 }
 
 /// Move a time item (change time).
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn move_time_item(
     State(state): State<AppState>,
@@ -215,7 +210,6 @@ pub async fn move_time_item(
     security(("bearer" = [])),
     tag = "TimeItems"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_time_item(
     State(state): State<AppState>,
@@ -267,7 +261,6 @@ pub struct UpdateStatusInput {
     tag = "TimeItems"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn update_time_item_status(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -312,7 +305,6 @@ pub struct QueryUsersEventsInput {
     tag = "TimeItems"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn query_users_events(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -351,7 +343,6 @@ pub async fn query_users_events(
     tag = "TimeItems"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn list_children(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -387,7 +378,6 @@ pub async fn list_children(
     tag = "TimeItems"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn list_time_item_users(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -406,7 +396,6 @@ pub async fn list_time_item_users(
 }
 
 /// Add a user to a time item.
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn add_time_item_user(
     State(state): State<AppState>,
@@ -479,7 +468,6 @@ pub async fn add_time_item_user(
     tag = "TimeItems"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn remove_time_item_user(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -519,7 +507,6 @@ pub struct UpdateRsvpInput {
     tag = "TimeItems"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn update_rsvp(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -556,7 +543,6 @@ pub async fn update_rsvp(
     tag = "TimeItems"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn list_time_item_groups(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -575,7 +561,6 @@ pub async fn list_time_item_groups(
 }
 
 /// Add a group to a time item.
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn add_time_item_group(
     State(state): State<AppState>,
@@ -612,7 +597,6 @@ pub async fn add_time_item_group(
     tag = "TimeItems"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn remove_time_item_group(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -631,7 +615,6 @@ pub async fn remove_time_item_group(
 }
 
 /// Share a time item with multiple users and groups.
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn share_time_item(
     State(state): State<AppState>,
@@ -682,7 +665,6 @@ pub async fn share_time_item(
     tag = "TimeItems"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn list_dependencies(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -701,7 +683,6 @@ pub async fn list_dependencies(
 }
 
 /// Add a dependency.
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn add_dependency(
     State(state): State<AppState>,
@@ -737,7 +718,6 @@ pub async fn add_dependency(
     security(("bearer" = [])),
     tag = "TimeItems"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn remove_dependency(
     State(state): State<AppState>,
@@ -775,7 +755,6 @@ pub async fn remove_dependency(
     tag = "TimeItems"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn get_recurrence(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -807,7 +786,6 @@ pub async fn get_recurrence(
     security(("bearer" = [])),
     tag = "TimeItems"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_recurrence(
     State(state): State<AppState>,
@@ -843,7 +821,6 @@ pub async fn delete_recurrence(
     tag = "Scheduling"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn list_scheduling_resources(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -875,7 +852,6 @@ pub async fn list_scheduling_resources(
     tag = "Scheduling"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn get_scheduling_resource(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -895,7 +871,6 @@ pub async fn get_scheduling_resource(
 }
 
 /// Create a scheduling resource.
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn create_scheduling_resource(
     State(state): State<AppState>,
@@ -927,7 +902,6 @@ pub async fn create_scheduling_resource(
     security(("bearer" = [])),
     tag = "Scheduling"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_scheduling_resource(
     State(state): State<AppState>,
@@ -963,7 +937,6 @@ pub async fn delete_scheduling_resource(
     tag = "Scheduling"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn list_templates(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -995,7 +968,6 @@ pub async fn list_templates(
     tag = "Scheduling"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn get_template(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -1015,7 +987,6 @@ pub async fn get_template(
 }
 
 /// Create a scheduling template.
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn create_template(
     State(state): State<AppState>,
@@ -1047,7 +1018,6 @@ pub async fn create_template(
     security(("bearer" = [])),
     tag = "Scheduling"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_template(
     State(state): State<AppState>,
@@ -1083,7 +1053,6 @@ pub async fn delete_template(
     tag = "Scheduling"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn get_preferences(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1101,7 +1070,6 @@ pub async fn get_preferences(
 }
 
 /// Update user scheduling preferences.
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn update_preferences(
     State(state): State<AppState>,

@@ -144,7 +144,6 @@ const TRASH_RETENTION_DAYS: i64 = 30;
     tag = "trash"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn move_to_trash(
     State(state): State<AppState>,
     axum::Extension(user_id): axum::Extension<Uuid>,
@@ -260,7 +259,6 @@ async fn move_single_to_trash(
     tag = "trash"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn list_trash(
     State(state): State<AppState>,
     axum::Extension(user_id): axum::Extension<Uuid>,
@@ -339,7 +337,6 @@ pub async fn list_trash(
     tag = "trash"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn get_trash_stats(
     State(state): State<AppState>,
     axum::Extension(user_id): axum::Extension<Uuid>,
@@ -379,7 +376,6 @@ pub async fn get_trash_stats(
     security(("bearerAuth" = [])),
     tag = "trash"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn restore_from_trash(
     State(state): State<AppState>,
@@ -521,7 +517,6 @@ async fn restore_single_item(
     tag = "trash"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn empty_trash(
     State(state): State<AppState>,
     axum::Extension(user_id): axum::Extension<Uuid>,
@@ -617,7 +612,6 @@ async fn delete_trash_item(state: &AppState, id: Uuid, user_id: Uuid) -> Result<
     tag = "trash"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn get_trash_item(
     State(state): State<AppState>,
     axum::Extension(user_id): axum::Extension<Uuid>,
@@ -670,7 +664,6 @@ pub async fn get_trash_item(
     security(("bearerAuth" = [])),
     tag = "trash"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_trash_item_handler(
     State(state): State<AppState>,

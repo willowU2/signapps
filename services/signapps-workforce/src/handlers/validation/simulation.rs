@@ -37,7 +37,6 @@ use super::types::{
     tag = "Workforce Validation"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn simulate_leave(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -193,7 +192,6 @@ pub async fn simulate_leave(
     security(("bearer" = [])),
     tag = "Workforce Validation"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn simulate_shift_change(
     State(state): State<AppState>,

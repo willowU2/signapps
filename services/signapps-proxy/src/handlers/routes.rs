@@ -54,7 +54,6 @@ impl From<Route> for RouteResponse {
     tag = "Proxy"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn list_routes(State(state): State<AppState>) -> Result<Json<Vec<RouteResponse>>> {
     let repo = RouteRepository::new(&state.pool);
     let routes = repo.list().await?;
@@ -80,7 +79,6 @@ pub async fn list_routes(State(state): State<AppState>) -> Result<Json<Vec<Route
     security(("bearer" = [])),
     tag = "Proxy"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_route(
     State(state): State<AppState>,
@@ -110,7 +108,6 @@ pub async fn get_route(
     security(("bearer" = [])),
     tag = "Proxy"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn create_route(
     State(state): State<AppState>,
@@ -155,7 +152,6 @@ pub async fn create_route(
     security(("bearer" = [])),
     tag = "Proxy"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn update_route(
     State(state): State<AppState>,
@@ -214,7 +210,6 @@ pub async fn update_route(
     tag = "Proxy"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn delete_route(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -254,7 +249,6 @@ pub async fn delete_route(
     tag = "Proxy"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn enable_route(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -287,7 +281,6 @@ pub async fn enable_route(
     security(("bearer" = [])),
     tag = "Proxy"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn disable_route(
     State(state): State<AppState>,

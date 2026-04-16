@@ -35,7 +35,6 @@ use super::types::ImportResult;
     tag = "Workforce Employees"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn import_employees(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,

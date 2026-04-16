@@ -74,7 +74,6 @@ fn create_docparse_worker() -> Box<dyn DocParseWorker + Send + Sync> {
     tag = "documents"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn parse_document(
     mut multipart: Multipart,
 ) -> Result<Json<ParsedDocument>, (StatusCode, String)> {
@@ -156,7 +155,6 @@ pub async fn parse_document(
     security(("bearerAuth" = [])),
     tag = "documents"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn extract_tables(
     mut multipart: Multipart,

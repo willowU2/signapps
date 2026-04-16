@@ -47,7 +47,6 @@ fn parse_capability(s: &str) -> Result<Capability, (StatusCode, String)> {
     tag = "capabilities"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn list_capabilities(
     State(state): State<AppState>,
 ) -> Result<Json<Vec<CapabilityInfo>>, (StatusCode, String)> {
@@ -77,7 +76,6 @@ pub async fn list_capabilities(
     security(("bearerAuth" = [])),
     tag = "capabilities"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_capability_advice(
     State(state): State<AppState>,

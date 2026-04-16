@@ -50,7 +50,6 @@ fn verify_password(password: &str, hash: &str) -> bool {
     tag = "Meet"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn list_rooms(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -118,7 +117,6 @@ pub async fn list_rooms(
     security(("bearer" = [])),
     tag = "Meet"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn create_room(
     State(state): State<AppState>,
@@ -190,7 +188,6 @@ pub async fn create_room(
     tag = "Meet"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn get_room(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -244,7 +241,6 @@ pub async fn get_room(
     security(("bearer" = [])),
     tag = "Meet"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn update_room(
     State(state): State<AppState>,
@@ -342,7 +338,6 @@ pub async fn update_room(
     tag = "Meet"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn delete_room(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -383,7 +378,6 @@ pub async fn delete_room(
     security(("bearer" = [])),
     tag = "Meet"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn end_room(
     State(state): State<AppState>,
@@ -501,7 +495,6 @@ pub async fn end_room(
     security(("bearer" = [])),
     tag = "Meet"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_history(
     State(state): State<AppState>,

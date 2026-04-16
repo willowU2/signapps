@@ -64,7 +64,6 @@ pub struct UpdateExperimentRequest {
     tag = "Metrics"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn list_experiments(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -97,7 +96,6 @@ pub async fn list_experiments(
     security(("bearer" = [])),
     tag = "Metrics"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn create_experiment(
     State(state): State<AppState>,
@@ -155,7 +153,6 @@ pub async fn create_experiment(
     security(("bearer" = [])),
     tag = "Metrics"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn update_experiment(
     State(state): State<AppState>,
@@ -215,7 +212,6 @@ pub async fn update_experiment(
     security(("bearer" = [])),
     tag = "Metrics"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_experiment(
     State(state): State<AppState>,

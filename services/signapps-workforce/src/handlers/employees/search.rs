@@ -27,7 +27,6 @@ use super::types::{Employee, EmployeeQueryParams, SearchQueryParams};
     tag = "Workforce Employees"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn list_by_org_node(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -88,7 +87,6 @@ pub async fn list_by_org_node(
     security(("bearer" = [])),
     tag = "Workforce Employees"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn search_employees(
     State(state): State<AppState>,

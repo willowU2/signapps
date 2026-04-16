@@ -37,7 +37,6 @@ use super::types::{
     tag = "Workforce Validation"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn validate_coverage(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -173,7 +172,6 @@ pub async fn validate_coverage(
     security(("bearer" = [])),
     tag = "Workforce Validation"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn analyze_gaps(
     State(state): State<AppState>,

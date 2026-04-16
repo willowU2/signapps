@@ -220,7 +220,6 @@ static ALERT_EVENTS: Lazy<RwLock<Vec<AlertEvent>>> = Lazy::new(|| RwLock::new(Ve
     tag = "Metrics"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn list_alerts(
     State(_state): State<AppState>,
     Query(query): Query<ListAlertsQuery>,
@@ -267,7 +266,6 @@ pub async fn list_alerts(
     tag = "Metrics"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn get_alert(
     State(_state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -298,7 +296,6 @@ pub async fn get_alert(
     security(("bearer" = [])),
     tag = "Metrics"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn create_alert(
     State(_state): State<AppState>,
@@ -359,7 +356,6 @@ pub async fn create_alert(
     security(("bearer" = [])),
     tag = "Metrics"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn update_alert(
     State(_state): State<AppState>,
@@ -443,7 +439,6 @@ pub async fn update_alert(
     tag = "Metrics"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn delete_alert(
     State(_state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -477,7 +472,6 @@ pub async fn delete_alert(
     security(("bearer" = [])),
     tag = "Metrics"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_active_alerts(
     State(state): State<AppState>,
@@ -659,7 +653,6 @@ pub async fn get_active_alerts(
     tag = "Metrics"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn list_alert_events(
     State(_state): State<AppState>,
     Query(query): Query<ListEventsQuery>,
@@ -707,7 +700,6 @@ pub async fn list_alert_events(
     security(("bearer" = [])),
     tag = "Metrics"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn acknowledge_alert(
     State(_state): State<AppState>,

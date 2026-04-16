@@ -28,7 +28,6 @@ use crate::{
     tag = "Meet"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn list_participants(
     State(state): State<AppState>,
     Path(room_id): Path<Uuid>,
@@ -87,7 +86,6 @@ pub async fn list_participants(
     security(("bearer" = [])),
     tag = "Meet"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn kick_participant(
     State(state): State<AppState>,
@@ -168,7 +166,6 @@ pub async fn kick_participant(
     security(("bearer" = [])),
     tag = "Meet"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn mute_participant(
     State(state): State<AppState>,

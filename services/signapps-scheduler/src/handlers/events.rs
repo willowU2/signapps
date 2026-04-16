@@ -38,7 +38,6 @@ pub struct DateRangeParams {
     tag = "Events"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn list_events(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -79,7 +78,6 @@ pub async fn list_events(
     tag = "Events"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn get_event(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -98,7 +96,6 @@ pub async fn get_event(
 }
 
 /// Create an event in a calendar.
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn create_event(
     State(state): State<AppState>,
@@ -119,7 +116,6 @@ pub async fn create_event(
 }
 
 /// Update an event.
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn update_event(
     State(state): State<AppState>,
@@ -152,7 +148,6 @@ pub async fn update_event(
     tag = "Events"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn delete_event(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -183,7 +178,6 @@ pub async fn delete_event(
     tag = "Events"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn list_attendees(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -201,7 +195,6 @@ pub async fn list_attendees(
 }
 
 /// Add an attendee to an event.
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn add_attendee(
     State(state): State<AppState>,
@@ -241,7 +234,6 @@ pub struct UpdateRsvpPayload {
     tag = "Events"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn update_rsvp(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -272,7 +264,6 @@ pub async fn update_rsvp(
     security(("bearer" = [])),
     tag = "Events"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn remove_attendee(
     State(state): State<AppState>,

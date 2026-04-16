@@ -25,7 +25,6 @@ use crate::{
     tag = "Social Accounts"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn list_accounts(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -66,7 +65,6 @@ pub async fn list_accounts(
     security(("bearer" = [])),
     tag = "Social Accounts"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn create_account(
     State(state): State<AppState>,
@@ -130,7 +128,6 @@ pub async fn create_account(
     tag = "Social Accounts"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn get_account(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -177,7 +174,6 @@ pub async fn get_account(
     tag = "Social Accounts"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn delete_account(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -216,7 +212,6 @@ pub async fn delete_account(
     security(("bearer" = [])),
     tag = "Social Accounts"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn update_account(
     State(state): State<AppState>,
@@ -302,7 +297,6 @@ pub async fn update_account(
     security(("bearer" = [])),
     tag = "Social Accounts"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn refresh_token(
     State(state): State<AppState>,

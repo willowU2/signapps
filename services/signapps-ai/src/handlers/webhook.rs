@@ -39,7 +39,6 @@ pub struct WebhookResponse {
     tag = "webhooks"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn ingest_webhook(
     State(state): State<AppState>,
     Path(source_type): Path<String>,

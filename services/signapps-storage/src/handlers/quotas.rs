@@ -195,7 +195,6 @@ async fn update_quota_impl(
     tag = "quotas"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn get_my_quota(
     State(state): State<AppState>,
     axum::Extension(user_id): axum::Extension<Uuid>,
@@ -215,7 +214,6 @@ pub async fn get_my_quota(
     security(("bearerAuth" = [])),
     tag = "quotas"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_user_quota(
     State(state): State<AppState>,
@@ -237,7 +235,6 @@ pub async fn get_user_quota(
     security(("bearerAuth" = [])),
     tag = "quotas"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn set_user_quota(
     State(state): State<AppState>,
@@ -273,7 +270,6 @@ pub async fn set_user_quota(
     tag = "quotas"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn delete_user_quota(
     State(state): State<AppState>,
     Path(user_id): Path<Uuid>,
@@ -301,7 +297,6 @@ pub async fn delete_user_quota(
     security(("bearerAuth" = [])),
     tag = "quotas"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_quota_alerts(
     State(state): State<AppState>,
@@ -354,7 +349,6 @@ pub async fn get_quota_alerts(
     tag = "quotas"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn recalculate_usage(
     State(state): State<AppState>,
     Path(user_id): Path<Uuid>,
@@ -376,7 +370,6 @@ pub async fn recalculate_usage(
     tag = "quotas"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn get_users_over_quota(State(state): State<AppState>) -> Result<Json<Vec<QuotaUsage>>> {
     let repo = QuotaRepository::new(&state.pool);
     let rows = repo.list_over_quota().await?;
@@ -387,7 +380,6 @@ pub async fn get_users_over_quota(State(state): State<AppState>) -> Result<Json<
 // ─── Internal helpers called by files.rs ─────────────────────────────────────
 
 /// Check whether an upload of `file_size` bytes would exceed the user's quota.
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn check_quota(state: &AppState, user_id: Uuid, file_size: i64) -> Result<()> {
     let repo = QuotaRepository::new(&state.pool);
@@ -417,7 +409,6 @@ pub async fn check_quota(state: &AppState, user_id: Uuid, file_size: i64) -> Res
 }
 
 /// Record a successful upload: insert file row and atomically increment quota.
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn record_upload(
     state: &AppState,
@@ -484,7 +475,6 @@ pub async fn record_upload(
 
 /// Record a successful upload with SHA-256 hash: insert file row, update
 /// `drive.nodes.sha256_hash`, and atomically increment quota.
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn record_upload_with_hash(
     state: &AppState,
@@ -569,7 +559,6 @@ pub async fn record_upload_with_hash(
 
 /// Record a deletion: remove file row and atomically decrement quota.
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn record_delete(
     state: &AppState,
     user_id: Uuid,
@@ -616,7 +605,6 @@ pub async fn record_delete(
 
 /// Record a move (rename): update the file path without changing quota counters.
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn record_move(
     state: &AppState,
     user_id: Uuid,
@@ -645,7 +633,6 @@ pub async fn record_move(
 }
 
 /// Record a copy: insert destination file row and increment quota by the source size.
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn record_copy(
     state: &AppState,

@@ -49,7 +49,6 @@ pub struct SynthesizeResponse {
     tag = "TTS"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn synthesize(
     State(state): State<Arc<AppState>>,
     Json(request): Json<SynthesizeRequest>,
@@ -118,7 +117,6 @@ pub async fn synthesize(
     tag = "TTS"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn synthesize_stream(
     State(state): State<Arc<AppState>>,
     Json(request): Json<SynthesizeRequest>,
@@ -166,7 +164,6 @@ pub async fn synthesize_stream(
     security(("bearer" = [])),
     tag = "TTS"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_voices(
     State(state): State<Arc<AppState>>,

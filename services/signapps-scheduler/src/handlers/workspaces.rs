@@ -22,7 +22,6 @@ use crate::AppState;
     tag = "Workspaces"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn list_workspaces(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -49,7 +48,6 @@ pub async fn list_workspaces(
     security(("bearer" = [])),
     tag = "Workspaces"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_workspace(
     State(_state): State<AppState>,

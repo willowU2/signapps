@@ -32,7 +32,6 @@ use crate::{
     tag = "Social Automation"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn list_rss_feeds(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -70,7 +69,6 @@ pub async fn list_rss_feeds(
     security(("bearer" = [])),
     tag = "Social Automation"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn create_rss_feed(
     State(state): State<AppState>,
@@ -131,7 +129,6 @@ pub async fn create_rss_feed(
     tag = "Social Automation"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn delete_rss_feed(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -167,7 +164,6 @@ pub async fn delete_rss_feed(
     security(("bearer" = [])),
     tag = "Social Automation"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_templates(
     State(state): State<AppState>,
@@ -205,7 +201,6 @@ pub async fn list_templates(
     security(("bearer" = [])),
     tag = "Social Automation"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn create_template(
     State(state): State<AppState>,
@@ -256,7 +251,6 @@ pub async fn create_template(
     tag = "Social Automation"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn delete_template(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -292,7 +286,6 @@ pub async fn delete_template(
     security(("bearer" = [])),
     tag = "Social Automation"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn update_template(
     State(state): State<AppState>,
@@ -353,7 +346,6 @@ pub async fn update_template(
     tag = "Social Automation"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn check_rss_feed_now(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -402,7 +394,6 @@ pub async fn check_rss_feed_now(
     security(("bearer" = [])),
     tag = "Social Automation"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn ai_smart_replies(
     State(state): State<AppState>,
@@ -486,7 +477,6 @@ pub async fn ai_smart_replies(
     tag = "Social Automation"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn ai_generate(Json(payload): Json<AiGenerateRequest>) -> impl IntoResponse {
     // Delegate to signapps-ai when available; return a scaffold response for now
     let platform = payload.platform.as_deref().unwrap_or("general");
@@ -517,7 +507,6 @@ pub async fn ai_generate(Json(payload): Json<AiGenerateRequest>) -> impl IntoRes
     tag = "Social Automation"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn ai_hashtags(Json(payload): Json<AiHashtagsRequest>) -> impl IntoResponse {
     let platform = payload.platform.as_deref().unwrap_or("general");
     // Placeholder — real implementation would call local LLM via signapps-ai
@@ -545,7 +534,6 @@ pub async fn ai_hashtags(Json(payload): Json<AiHashtagsRequest>) -> impl IntoRes
     security(("bearer" = [])),
     tag = "Social Automation"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn ai_best_time(
     State(state): State<AppState>,

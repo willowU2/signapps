@@ -49,7 +49,6 @@ pub struct ActionResponse {
     tag = "actions"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn execute_action(
     State(state): State<AppState>,
     headers: HeaderMap,

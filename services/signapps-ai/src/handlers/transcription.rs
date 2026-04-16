@@ -52,7 +52,6 @@ pub enum TranscriptionSource {
     tag = "audio"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn transcribe_audio(
     State(_state): State<AppState>,
     mut multipart: Multipart,

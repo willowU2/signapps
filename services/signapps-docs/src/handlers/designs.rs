@@ -80,7 +80,6 @@ fn default_height() -> i32 {
     tag = "Designs"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn list_designs(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -117,7 +116,6 @@ pub async fn list_designs(
     security(("bearer" = [])),
     tag = "Designs"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn create_design(
     State(state): State<AppState>,
@@ -182,7 +180,6 @@ pub async fn create_design(
     tag = "Designs"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn get_design(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -222,7 +219,6 @@ pub async fn get_design(
     security(("bearer" = [])),
     tag = "Designs"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn update_design(
     State(state): State<AppState>,
@@ -274,7 +270,6 @@ pub async fn update_design(
     security(("bearer" = [])),
     tag = "Designs"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_design(
     State(state): State<AppState>,

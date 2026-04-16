@@ -113,7 +113,6 @@ pub struct ConversionInfoResponse {
 )]
 /// Get conversion service info
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn info() -> Json<ConversionInfoResponse> {
     Json(ConversionInfoResponse {
         supported_input_formats: vec!["tiptapjson", "html", "markdown"],
@@ -140,7 +139,6 @@ pub async fn info() -> Json<ConversionInfoResponse> {
     tag = "Conversion"
 )]
 /// Convert document from JSON body
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn convert_json(
     State(state): State<AppState>,
@@ -303,7 +301,6 @@ pub async fn convert_json(
     tag = "Conversion"
 )]
 /// Convert document from multipart upload
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn convert_upload(
     State(state): State<AppState>,
@@ -510,7 +507,6 @@ pub struct BatchConversionResponse {
     tag = "Conversion"
 )]
 /// Convert multiple documents in batch
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn convert_batch(
     State(state): State<AppState>,

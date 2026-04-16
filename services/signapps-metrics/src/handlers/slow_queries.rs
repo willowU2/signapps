@@ -61,7 +61,6 @@ const SLOW_THRESHOLD_SECS: f64 = 1.0;
     tag = "Metrics"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn list_slow_queries(State(state): State<AppState>) -> Result<Json<SlowQueriesResponse>> {
     // First, try to check if pg_stat_statements is available (informational).
     let pg_stat_statements_available = sqlx::query_scalar::<_, bool>(

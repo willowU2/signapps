@@ -30,7 +30,6 @@ pub struct MetricsQuery {
     tag = "Metrics"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn get_workload(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -57,7 +56,6 @@ pub async fn get_workload(
     security(("bearer" = [])),
     tag = "Metrics"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_resources(
     State(state): State<AppState>,

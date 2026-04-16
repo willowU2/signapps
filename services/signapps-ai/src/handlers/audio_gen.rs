@@ -136,7 +136,6 @@ async fn store_audio(state: &AppState, audio_bytes: &[u8]) -> Result<String, (St
     tag = "audio"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn generate_music(
     State(state): State<AppState>,
     Json(body): Json<GenerateMusicRequest>,
@@ -193,7 +192,6 @@ pub async fn generate_music(
     tag = "audio"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn generate_sfx(
     State(state): State<AppState>,
     Json(body): Json<GenerateSfxRequest>,
@@ -241,7 +239,6 @@ pub async fn generate_sfx(
     security(("bearerAuth" = [])),
     tag = "audio"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_models() -> Result<Json<AudioModelsResponse>, (StatusCode, String)> {
     let worker = create_audiogen_worker().map_err(|e| (StatusCode::SERVICE_UNAVAILABLE, e))?;

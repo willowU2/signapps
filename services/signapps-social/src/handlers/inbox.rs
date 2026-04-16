@@ -30,7 +30,6 @@ pub struct InboxQuery {
     tag = "Social Inbox"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn list_inbox(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -84,7 +83,6 @@ pub async fn list_inbox(
     tag = "Social Inbox"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn mark_read(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -133,7 +131,6 @@ pub async fn mark_read(
     security(("bearer" = [])),
     tag = "Social Inbox"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn reply_inbox(
     State(state): State<AppState>,

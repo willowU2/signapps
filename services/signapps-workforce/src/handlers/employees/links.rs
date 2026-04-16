@@ -31,7 +31,6 @@ use super::types::{Employee, LinkUserRequest};
     tag = "Workforce Employees"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn link_user(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -78,7 +77,6 @@ pub async fn link_user(
     security(("bearer" = [])),
     tag = "Workforce Employees"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn unlink_user(
     State(state): State<AppState>,

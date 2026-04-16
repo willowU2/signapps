@@ -81,7 +81,6 @@ pub struct QuotaListQuery {
     tag = "Metrics"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn list_api_quotas(
     State(state): State<AppState>,
     Query(q): Query<QuotaListQuery>,
@@ -171,7 +170,6 @@ pub async fn list_api_quotas(
     security(("bearer" = [])),
     tag = "Metrics"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_user_api_quota(
     State(state): State<AppState>,

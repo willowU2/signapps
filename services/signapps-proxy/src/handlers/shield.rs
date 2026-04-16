@@ -43,7 +43,6 @@ pub struct BlockResponse {
     tag = "Proxy"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn get_stats(State(state): State<AppState>) -> Result<Json<ShieldStats>> {
     let stats = state.shield.get_stats().await?;
     Ok(Json(stats))
@@ -61,7 +60,6 @@ pub async fn get_stats(State(state): State<AppState>) -> Result<Json<ShieldStats
     security(("bearer" = [])),
     tag = "Proxy"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn reset_stats(State(state): State<AppState>) -> Result<StatusCode> {
     state.shield.reset_stats().await?;
@@ -85,7 +83,6 @@ pub async fn reset_stats(State(state): State<AppState>) -> Result<StatusCode> {
     security(("bearer" = [])),
     tag = "Proxy"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn block_ip(
     State(state): State<AppState>,
@@ -124,7 +121,6 @@ pub async fn block_ip(
     tag = "Proxy"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn unblock_ip(
     State(state): State<AppState>,
     Path((route_id, ip)): Path<(Uuid, String)>,
@@ -152,7 +148,6 @@ pub async fn unblock_ip(
     security(("bearer" = [])),
     tag = "Proxy"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn check_blocked(
     State(state): State<AppState>,

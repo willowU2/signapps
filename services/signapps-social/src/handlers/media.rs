@@ -30,7 +30,6 @@ pub struct MediaQuery {
     tag = "Social Media"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn list_media(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -92,7 +91,6 @@ pub async fn list_media(
     tag = "Social Media"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn create_media(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -138,7 +136,6 @@ pub async fn create_media(
     security(("bearer" = [])),
     tag = "Social Media"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_media(
     State(state): State<AppState>,

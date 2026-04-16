@@ -31,7 +31,6 @@ use signapps_common::Result;
     tag = "Metrics"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn get_all_metrics(State(state): State<AppState>) -> Result<Json<SystemMetrics>> {
     let metrics = state.collector.get_all_metrics().await;
     Ok(Json(metrics))
@@ -49,7 +48,6 @@ pub async fn get_all_metrics(State(state): State<AppState>) -> Result<Json<Syste
     security(("bearer" = [])),
     tag = "Metrics"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_cpu_metrics(State(state): State<AppState>) -> Result<Json<CpuMetrics>> {
     let metrics = state.collector.get_cpu_metrics().await;
@@ -69,7 +67,6 @@ pub async fn get_cpu_metrics(State(state): State<AppState>) -> Result<Json<CpuMe
     tag = "Metrics"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn get_memory_metrics(State(state): State<AppState>) -> Result<Json<MemoryMetrics>> {
     let metrics = state.collector.get_memory_metrics().await;
     Ok(Json(metrics))
@@ -87,7 +84,6 @@ pub async fn get_memory_metrics(State(state): State<AppState>) -> Result<Json<Me
     security(("bearer" = [])),
     tag = "Metrics"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_disk_metrics(State(state): State<AppState>) -> Result<Json<Vec<DiskMetrics>>> {
     let metrics = state.collector.get_disk_metrics().await;
@@ -107,7 +103,6 @@ pub async fn get_disk_metrics(State(state): State<AppState>) -> Result<Json<Vec<
     tag = "Metrics"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn get_network_metrics(
     State(state): State<AppState>,
 ) -> Result<Json<Vec<NetworkMetrics>>> {
@@ -116,7 +111,6 @@ pub async fn get_network_metrics(
 }
 
 /// Prometheus metrics endpoint.
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn prometheus_metrics(State(state): State<AppState>) -> impl IntoResponse {
     // Update metrics before export
@@ -143,7 +137,6 @@ pub async fn prometheus_metrics(State(state): State<AppState>) -> impl IntoRespo
     ),
     tag = "Metrics"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn health_check(State(state): State<AppState>) -> Result<Json<HealthResponse>> {
     let metrics = state.collector.get_all_metrics().await;
@@ -205,7 +198,6 @@ pub struct HealthResponse {
     security(("bearer" = [])),
     tag = "Metrics"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_summary(State(state): State<AppState>) -> Result<Json<SummaryMetrics>> {
     let metrics = state.collector.get_all_metrics().await;
@@ -271,7 +263,6 @@ pub struct SummaryMetrics {
 /// SSE stream of system metrics, updated every 2 seconds.
 /// The stream automatically closes after 30 minutes to prevent unbounded connections.
 /// Clients should reconnect when the stream ends.
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn metrics_stream(
     State(state): State<AppState>,

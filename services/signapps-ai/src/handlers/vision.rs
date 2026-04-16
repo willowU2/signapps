@@ -85,7 +85,6 @@ fn create_vision_worker() -> Result<Box<dyn VisionWorker + Send + Sync>, String>
     tag = "vision"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn describe_image(
     mut multipart: Multipart,
 ) -> Result<Json<VisionResult>, (StatusCode, String)> {
@@ -163,7 +162,6 @@ pub async fn describe_image(
     security(("bearerAuth" = [])),
     tag = "vision"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn visual_qa(
     mut multipart: Multipart,
@@ -255,7 +253,6 @@ pub async fn visual_qa(
     security(("bearerAuth" = [])),
     tag = "vision"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn batch_describe(
     mut multipart: Multipart,

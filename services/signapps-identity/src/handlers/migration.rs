@@ -63,7 +63,6 @@ struct ImportCalendarEvent {
 ///  3. POST each item to the respective internal services
 ///  4. Update job progress in the store as work progresses
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn run_google_migration(store: MigrationStore, cfg: MigrationWorkerConfig) {
     let client = reqwest::Client::new();
     let bearer = format!("Bearer {}", cfg.oauth_token);
@@ -334,7 +333,6 @@ fn parse_google_events(body: &serde_json::Value) -> Vec<ImportCalendarEvent> {
 ///  1. Fetch contacts via MS Graph (`/v1.0/me/contacts`)
 ///  2. Fetch calendar events via MS Graph (`/v1.0/me/events`)
 ///  3. POST each item to the respective internal services
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn run_microsoft_migration(store: MigrationStore, cfg: MigrationWorkerConfig) {
     let client = reqwest::Client::new();

@@ -60,7 +60,6 @@ pub struct MetadataResponse {
     tag = "OCR"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn extract_text(
     State(state): State<Arc<AppState>>,
     Query(params): Query<OcrQueryParams>,
@@ -156,7 +155,6 @@ pub async fn extract_text(
     security(("bearer" = [])),
     tag = "OCR"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn process_document(
     State(state): State<Arc<AppState>>,
@@ -256,7 +254,6 @@ pub struct BatchOcrResponse {
     security(("bearer" = [])),
     tag = "OCR"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn batch_process(
     State(state): State<Arc<AppState>>,

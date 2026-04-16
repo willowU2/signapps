@@ -55,7 +55,6 @@ impl From<Certificate> for CertificateResponse {
     tag = "Proxy"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn list_certificates(
     State(state): State<AppState>,
 ) -> Result<Json<Vec<CertificateResponse>>> {
@@ -82,7 +81,6 @@ pub async fn list_certificates(
     security(("bearer" = [])),
     tag = "Proxy"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn upload_certificate(
     State(state): State<AppState>,
@@ -134,7 +132,6 @@ pub struct RequestCertificateBody {
     tag = "Proxy"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn request_certificate(
     State(_state): State<AppState>,
     Json(payload): Json<RequestCertificateBody>,
@@ -178,7 +175,6 @@ pub async fn request_certificate(
     tag = "Proxy"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn renew_certificate(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -219,7 +215,6 @@ pub async fn renew_certificate(
     security(("bearer" = [])),
     tag = "Proxy"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_certificate(
     State(state): State<AppState>,

@@ -52,7 +52,6 @@ pub struct ExportInfo {
     tag = "DataExport"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn export_info() -> Json<ExportInfo> {
     Json(ExportInfo {
         supported_formats: vec![
@@ -82,7 +81,6 @@ pub async fn export_info() -> Json<ExportInfo> {
     tag = "DataExport"
 )]
 /// POST /api/v1/data/export — Export data to a chosen format.
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn export_data(
     Json(payload): Json<ExportRequest>,

@@ -367,7 +367,6 @@ pub struct DeleteFilesRequest {
     tag = "files"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn list(
     State(state): State<AppState>,
     Path(bucket): Path<String>,
@@ -393,7 +392,6 @@ pub async fn list(
     security(("bearerAuth" = [])),
     tag = "files"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_info(
     State(state): State<AppState>,
@@ -421,7 +419,6 @@ pub async fn get_info(
     security(("bearerAuth" = [])),
     tag = "files"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn download(
     State(state): State<AppState>,
@@ -546,7 +543,6 @@ const MAX_UPLOAD_SIZE: usize = 500 * 1024 * 1024;
     tag = "files"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn upload(
     State(state): State<AppState>,
     Extension(user_id): Extension<Uuid>,
@@ -630,9 +626,16 @@ pub async fn upload(
         // Check quota BEFORE writing to storage to avoid orphaned files
         quotas::check_quota(&state, user_id, size as i64).await?;
 
+        // Prefix the storage key with a UUID so concurrent uploads of the
+        // same filename (from different users or in the same bucket) cannot
+        // silently overwrite each other. The display filename is still sent
+        // back in UploadResponse and is recovered from the key tail on
+        // download via `key.split('/').next_back()`.
+        let storage_key = format!("{}/{}", uuid::Uuid::new_v4(), filename);
+
         state
             .storage
-            .put_object(&target_bucket, &filename, data, Some(&content_type))
+            .put_object(&target_bucket, &storage_key, data, Some(&content_type))
             .await?;
 
         // Update quota after successful upload; store hash in drive.nodes via record_upload
@@ -640,7 +643,7 @@ pub async fn upload(
             &state,
             user_id,
             &target_bucket,
-            &filename,
+            &storage_key,
             size as i64,
             Some(&content_type),
             Some(&hash),
@@ -692,7 +695,7 @@ pub async fn upload(
         uploads.push(UploadResponse {
             id: file_id,
             bucket: target_bucket,
-            key: filename,
+            key: storage_key,
             size,
             content_type,
         });
@@ -725,7 +728,6 @@ pub async fn upload(
     security(("bearerAuth" = [])),
     tag = "files"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn upload_with_key(
     State(state): State<AppState>,
@@ -869,7 +871,6 @@ pub async fn upload_with_key(
     tag = "files"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn delete(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -916,14 +917,18 @@ pub async fn delete(
     tag = "files"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn delete_many(
     State(state): State<AppState>,
-    Extension(user_id): Extension<Uuid>,
+    Extension(claims): Extension<Claims>,
     Path(bucket): Path<String>,
     Json(payload): Json<DeleteFilesRequest>,
 ) -> Result<StatusCode> {
+    let user_id = claims.sub;
     for key in &payload.keys {
+        // Authorization must be checked per key — batch endpoints cannot
+        // rely on the single-file handler's check.
+        check_file_permission(&state, &claims, &bucket, key, Action::delete()).await?;
+
         // Get info first to know size for quota update
         let info = state.storage.get_object_info(&bucket, key).await.ok();
 
@@ -956,7 +961,6 @@ pub async fn delete_many(
     security(("bearerAuth" = [])),
     tag = "files"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn copy(
     State(state): State<AppState>,
@@ -1053,7 +1057,6 @@ pub async fn copy(
     security(("bearerAuth" = [])),
     tag = "files"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn move_file(
     State(state): State<AppState>,

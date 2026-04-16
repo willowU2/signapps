@@ -28,7 +28,6 @@ use super::types::{ConflictQueryParams, ConflictType, GapAnalysisParams, Schedul
     tag = "Workforce Validation"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn get_conflicts(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,

@@ -96,7 +96,6 @@ fn hash_token(token: &str) -> String {
 
 /// Create a new guest access token.
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn create_guest_token(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -164,7 +163,6 @@ pub async fn create_guest_token(
 }
 
 /// List active guest tokens owned by the current user.
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_guest_tokens(
     State(state): State<AppState>,
@@ -240,7 +238,6 @@ pub async fn list_guest_tokens(
 
 /// Revoke a guest token.
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn revoke_guest_token(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -265,7 +262,6 @@ pub async fn revoke_guest_token(
 
 /// Public endpoint: validate a guest token and return its claims.
 /// Increments access_count on success.
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn validate_guest_token(
     State(state): State<AppState>,

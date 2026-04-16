@@ -193,7 +193,6 @@ fn classify_by_keywords(title: &str, content: &str) -> Option<(DocumentCategory,
     tag = "Documents"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn classify_document(
     State(_state): State<AppState>,
     Json(req): Json<ClassifyRequest>,

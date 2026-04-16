@@ -20,7 +20,6 @@ pub struct DocsHealthResponse {
     tag = "System"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn health_handler() -> Json<serde_json::Value> {
     Json(json!({
         "status": "ok",

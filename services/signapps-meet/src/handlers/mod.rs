@@ -27,7 +27,6 @@ use crate::{models::ConfigResponse, AppState};
     tag = "Meet"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn get_config(State(state): State<AppState>) -> Json<ConfigResponse> {
     Json(ConfigResponse {
         livekit_url: state.livekit_config.server_url.clone(),

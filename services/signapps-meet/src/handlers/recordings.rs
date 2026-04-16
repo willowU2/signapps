@@ -28,7 +28,6 @@ use crate::{
     tag = "Meet"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn list_recordings(
     State(state): State<AppState>,
     Path(room_id): Path<Uuid>,
@@ -87,7 +86,6 @@ pub async fn list_recordings(
     security(("bearer" = [])),
     tag = "Meet"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn start_recording(
     State(state): State<AppState>,
@@ -177,7 +175,6 @@ pub async fn start_recording(
     tag = "Meet"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn get_recording(
     State(state): State<AppState>,
     Path(recording_id): Path<Uuid>,
@@ -219,7 +216,6 @@ pub async fn get_recording(
     security(("bearer" = [])),
     tag = "Meet"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn stop_recording(
     State(state): State<AppState>,
@@ -298,7 +294,6 @@ pub async fn stop_recording(
     tag = "Meet"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn get_active_recording(
     State(state): State<AppState>,
     Path(room_id): Path<Uuid>,
@@ -348,7 +343,6 @@ pub async fn get_active_recording(
     security(("bearer" = [])),
     tag = "Meet"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn stop_room_recording(
     State(state): State<AppState>,
@@ -424,7 +418,6 @@ pub async fn stop_room_recording(
     security(("bearer" = [])),
     tag = "Meet"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_recording(
     State(state): State<AppState>,

@@ -110,7 +110,6 @@ pub struct CreateDeploymentRequest {
     tag = "DevOps"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn list_changelog(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -145,7 +144,6 @@ pub async fn list_changelog(
     security(("bearer" = [])),
     tag = "DevOps"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn create_changelog(
     State(state): State<AppState>,
@@ -200,7 +198,6 @@ pub async fn create_changelog(
     tag = "DevOps"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn list_pipelines(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -235,7 +232,6 @@ pub async fn list_pipelines(
     security(("bearer" = [])),
     tag = "DevOps"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn create_pipeline(
     State(state): State<AppState>,
@@ -286,7 +282,6 @@ pub async fn create_pipeline(
     tag = "DevOps"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn update_pipeline(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -333,7 +328,6 @@ pub async fn update_pipeline(
     tag = "DevOps"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn list_deployments(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -368,7 +362,6 @@ pub async fn list_deployments(
     security(("bearer" = [])),
     tag = "DevOps"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn create_deployment(
     State(state): State<AppState>,

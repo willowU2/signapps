@@ -45,7 +45,6 @@ pub struct Voicemail {
     tag = "Meet"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn list_voicemails(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -87,7 +86,6 @@ pub async fn list_voicemails(
     security(("bearer" = [])),
     tag = "Meet"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn mark_voicemail_read(
     State(state): State<AppState>,
@@ -132,7 +130,6 @@ pub async fn mark_voicemail_read(
     security(("bearer" = [])),
     tag = "Meet"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_voicemail(
     State(state): State<AppState>,

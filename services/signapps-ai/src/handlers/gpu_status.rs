@@ -37,7 +37,6 @@ pub struct GpuStatusResponse {
     tag = "gpu"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn get_gpu_status(
     State(state): State<AppState>,
 ) -> Result<Json<GpuStatusResponse>, (StatusCode, String)> {
@@ -74,7 +73,6 @@ pub async fn get_gpu_status(
     tag = "gpu"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn list_profiles() -> Json<Vec<LoadProfile>> {
     let tiers = [
         HardwareTier::Cpu,
@@ -100,7 +98,6 @@ pub async fn list_profiles() -> Json<Vec<LoadProfile>> {
     security(("bearerAuth" = [])),
     tag = "gpu"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_recommended_models(
     State(state): State<AppState>,

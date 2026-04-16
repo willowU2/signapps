@@ -110,7 +110,6 @@ pub struct CreateTemplateRequest {
     tag = "Templates"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn list_templates(State(state): State<AppState>) -> Json<Vec<TemplateSummary>> {
     let mut summaries: Vec<TemplateSummary> = DEFAULT_TEMPLATES
         .iter()
@@ -157,7 +156,6 @@ pub async fn list_templates(State(state): State<AppState>) -> Json<Vec<TemplateS
     security(("bearer" = [])),
     tag = "Templates"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_template(
     State(state): State<AppState>,
@@ -234,7 +232,6 @@ pub async fn get_template(
     tag = "Templates"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn create_template(
     State(state): State<AppState>,
     Json(payload): Json<CreateTemplateRequest>,
@@ -304,7 +301,6 @@ pub async fn create_template(
     security(("bearer" = [])),
     tag = "Templates"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_template(
     State(state): State<AppState>,

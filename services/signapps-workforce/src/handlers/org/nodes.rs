@@ -32,7 +32,6 @@ use super::types::{CreateNodeRequest, MoveNodeRequest, OrgNode, UpdateNodeReques
     tag = "Workforce Org"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn create_node(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -152,7 +151,6 @@ pub async fn create_node(
     tag = "Workforce Org"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn get_node(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -193,7 +191,6 @@ pub async fn get_node(
     security(("bearer" = [])),
     tag = "Workforce Org"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn update_node(
     State(state): State<AppState>,
@@ -261,7 +258,6 @@ pub async fn update_node(
     security(("bearer" = [])),
     tag = "Workforce Org"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_node(
     State(state): State<AppState>,
@@ -497,7 +493,6 @@ pub async fn delete_node_recursive(
     tag = "Workforce Org"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn move_node(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -686,7 +681,6 @@ pub async fn move_node(
     security(("bearer" = [])),
     tag = "Workforce Org"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_children(
     State(state): State<AppState>,

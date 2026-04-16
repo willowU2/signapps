@@ -25,7 +25,6 @@ use crate::AppState;
     tag = "Calendars"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn list_calendars(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -57,7 +56,6 @@ pub async fn list_calendars(
     tag = "Calendars"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn get_calendar(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -77,7 +75,6 @@ pub async fn get_calendar(
 
 /// Create a calendar.
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn create_calendar(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -96,7 +93,6 @@ pub async fn create_calendar(
 }
 
 /// Update a calendar.
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn update_calendar(
     State(state): State<AppState>,
@@ -128,7 +124,6 @@ pub async fn update_calendar(
     security(("bearer" = [])),
     tag = "Calendars"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_calendar(
     State(state): State<AppState>,

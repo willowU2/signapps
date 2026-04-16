@@ -174,7 +174,6 @@ async fn store_video(state: &AppState, video_bytes: &[u8]) -> Result<String, (St
     tag = "video"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn generate_video(
     State(state): State<AppState>,
     Json(body): Json<GenerateVideoRequest>,
@@ -238,7 +237,6 @@ pub async fn generate_video(
     security(("bearerAuth" = [])),
     tag = "video"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn img_to_video(
     State(state): State<AppState>,
@@ -347,7 +345,6 @@ pub async fn img_to_video(
     tag = "video"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn analyze_video(
     mut multipart: Multipart,
 ) -> Result<Json<VideoAnalysis>, (StatusCode, String)> {
@@ -432,7 +429,6 @@ pub async fn analyze_video(
     security(("bearerAuth" = [])),
     tag = "video"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn extract_frames(
     mut multipart: Multipart,
@@ -552,7 +548,6 @@ pub async fn extract_frames(
     tag = "video"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn transcribe_video(
     mut multipart: Multipart,
 ) -> Result<Json<VideoTranscript>, (StatusCode, String)> {
@@ -619,7 +614,6 @@ pub async fn transcribe_video(
     security(("bearerAuth" = [])),
     tag = "video"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_models() -> Result<Json<VideoModelsResponse>, (StatusCode, String)> {
     let worker = create_videogen_worker().map_err(|e| (StatusCode::SERVICE_UNAVAILABLE, e))?;

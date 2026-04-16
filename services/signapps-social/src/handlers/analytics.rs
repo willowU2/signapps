@@ -34,7 +34,6 @@ pub struct TopPostsQuery {
     tag = "Social Analytics"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn overview(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -127,7 +126,6 @@ pub async fn overview(
     tag = "Social Analytics"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn followers_timeline(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -183,7 +181,6 @@ pub async fn followers_timeline(
     security(("bearer" = [])),
     tag = "Social Analytics"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn by_platform(
     State(state): State<AppState>,
@@ -241,7 +238,6 @@ pub async fn by_platform(
     tag = "Social Analytics"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn top_posts(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -287,7 +283,6 @@ pub async fn top_posts(
     security(("bearer" = [])),
     tag = "Social Analytics"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn post_analytics(
     State(state): State<AppState>,

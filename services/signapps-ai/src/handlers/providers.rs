@@ -47,7 +47,6 @@ pub struct ProvidersResponse {
     tag = "providers"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn list_providers(State(state): State<AppState>) -> Result<Json<ProvidersResponse>> {
     let entries = state.providers.list_providers();
 

@@ -57,7 +57,6 @@ pub struct UpdateNoteRequest {
     tag = "Notes"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn list_notes(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -92,7 +91,6 @@ pub async fn list_notes(
     security(("bearer" = [])),
     tag = "Notes"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn create_note(
     State(state): State<AppState>,
@@ -135,7 +133,6 @@ pub async fn create_note(
     security(("bearer" = [])),
     tag = "Notes"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn update_note(
     State(state): State<AppState>,
@@ -181,7 +178,6 @@ pub async fn update_note(
     security(("bearer" = [])),
     tag = "Notes"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_note(
     State(state): State<AppState>,

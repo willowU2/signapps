@@ -45,7 +45,6 @@ pub struct ModelsQuery {
     tag = "models"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn list_models(
     State(state): State<AppState>,
     Query(query): Query<ModelsQuery>,

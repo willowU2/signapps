@@ -22,7 +22,6 @@ use signapps_common::Claims;
     tag = "Social Time Slots"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn list_time_slots(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -57,7 +56,6 @@ pub async fn list_time_slots(
     security(("bearer" = [])),
     tag = "Social Time Slots"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn create_time_slot(
     State(state): State<AppState>,
@@ -99,7 +97,6 @@ pub async fn create_time_slot(
     security(("bearer" = [])),
     tag = "Social Time Slots"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_time_slot(
     State(state): State<AppState>,

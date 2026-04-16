@@ -53,7 +53,6 @@ pub struct CreateVideoMessageRequest {
     tag = "Meet"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn list_video_messages(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -94,7 +93,6 @@ pub async fn list_video_messages(
     security(("bearer" = [])),
     tag = "Meet"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn create_video_message(
     State(state): State<AppState>,
@@ -148,7 +146,6 @@ pub async fn create_video_message(
     tag = "Meet"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn mark_video_message_read(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -195,7 +192,6 @@ pub async fn mark_video_message_read(
     security(("bearer" = [])),
     tag = "Meet"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_video_message(
     State(state): State<AppState>,

@@ -32,7 +32,6 @@ use crate::AppState;
     tag = "Voice"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn voice_ws(
     ws: WebSocketUpgrade,
     State(state): State<Arc<AppState>>,

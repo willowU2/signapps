@@ -62,7 +62,6 @@ pub struct ImageSearchResultItem {
     tag = "search"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn search_by_image(
     State(state): State<AppState>,
     mut multipart: Multipart,

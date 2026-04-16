@@ -83,7 +83,6 @@ pub struct AttendanceQueryParams {
     tag = "Workforce Attendance"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn clock_in(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -151,7 +150,6 @@ pub async fn clock_in(
     tag = "Workforce Attendance"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn clock_out(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -201,7 +199,6 @@ pub async fn clock_out(
     security(("bearer" = [])),
     tag = "Workforce Attendance"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_attendance(
     State(state): State<AppState>,

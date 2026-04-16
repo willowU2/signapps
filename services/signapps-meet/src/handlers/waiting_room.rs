@@ -68,7 +68,6 @@ impl From<WaitingRoomEntry> for WaitingRoomResponse {
     tag = "Meet"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn list_waiting(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -122,7 +121,6 @@ pub async fn list_waiting(
     security(("bearer" = [])),
     tag = "Meet"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn admit_user(
     State(state): State<AppState>,
@@ -182,7 +180,6 @@ pub async fn admit_user(
     security(("bearer" = [])),
     tag = "Meet"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn deny_user(
     State(state): State<AppState>,
@@ -246,7 +243,6 @@ pub struct JoinWaitingRoomRequest {
     security(("bearer" = [])),
     tag = "Meet"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn join_waiting_room(
     State(state): State<AppState>,

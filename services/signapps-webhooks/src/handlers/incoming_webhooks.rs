@@ -75,7 +75,6 @@ fn resolve_event_type(source: &str, payload: &Value) -> String {
 /// For unauthenticated public webhooks (e.g. Stripe), a separate signed endpoint
 /// is provided in the billing service.
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn receive_incoming_webhook(
     State(_state): State<AppState>,
     Path(source): Path<String>,
@@ -124,7 +123,6 @@ pub async fn receive_incoming_webhook(
 ///
 /// NOTE: Per-source HMAC signature verification (e.g. Stripe webhook signing secrets) must be
 /// added before this endpoint is enabled in production — tracked in backlog.
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn receive_public_webhook(
     State(_state): State<AppState>,

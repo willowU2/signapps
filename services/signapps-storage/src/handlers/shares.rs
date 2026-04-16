@@ -154,7 +154,6 @@ pub struct AccessShareResponse {
     tag = "shares"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn create_share(
     State(state): State<AppState>,
     axum::Extension(user_id): axum::Extension<Uuid>,
@@ -234,7 +233,6 @@ pub async fn create_share(
     tag = "shares"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn list_shares(
     State(state): State<AppState>,
     axum::Extension(user_id): axum::Extension<Uuid>,
@@ -276,7 +274,6 @@ pub async fn list_shares(
     tag = "shares"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn get_share(
     State(state): State<AppState>,
     axum::Extension(user_id): axum::Extension<Uuid>,
@@ -307,7 +304,6 @@ pub async fn get_share(
     security(("bearerAuth" = [])),
     tag = "shares"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn update_share(
     State(state): State<AppState>,
@@ -360,7 +356,6 @@ pub async fn update_share(
     security(("bearerAuth" = [])),
     tag = "shares"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_share(
     State(state): State<AppState>,
@@ -422,7 +417,6 @@ fn validate_public_share(
     ),
     tag = "shares"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn access_share(
     State(state): State<AppState>,
@@ -500,7 +494,6 @@ pub struct DownloadSharedQuery {
     ),
     tag = "shares"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn download_shared(
     State(state): State<AppState>,

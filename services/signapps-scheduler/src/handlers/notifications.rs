@@ -21,7 +21,6 @@ use crate::AppState;
     tag = "Notifications"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn sse_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

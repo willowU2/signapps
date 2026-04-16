@@ -65,7 +65,6 @@ pub struct ConversationDetail {
     tag = "conversations"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn list_conversations(
     State(state): State<AppState>,
     Extension(claims): Extension<signapps_common::auth::Claims>,
@@ -98,7 +97,6 @@ pub async fn list_conversations(
     security(("bearerAuth" = [])),
     tag = "conversations"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_conversation(
     State(state): State<AppState>,
@@ -134,7 +132,6 @@ pub async fn get_conversation(
     security(("bearerAuth" = [])),
     tag = "conversations"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_conversation(
     State(state): State<AppState>,

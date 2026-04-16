@@ -140,7 +140,6 @@ static EXTERNAL_STORAGES: Lazy<RwLock<Vec<ExternalStorage>>> =
     tag = "external"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn list_external(State(_state): State<AppState>) -> Result<Json<Vec<ExternalStorage>>> {
     let mut storages = Vec::new();
 
@@ -195,7 +194,6 @@ pub async fn list_external(State(_state): State<AppState>) -> Result<Json<Vec<Ex
     security(("bearerAuth" = [])),
     tag = "external"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn connect_external(
     State(_state): State<AppState>,
@@ -316,7 +314,6 @@ pub async fn connect_external(
     security(("bearerAuth" = [])),
     tag = "external"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn disconnect_external(
     State(_state): State<AppState>,

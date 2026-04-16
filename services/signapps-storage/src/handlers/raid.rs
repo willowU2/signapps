@@ -53,7 +53,6 @@ pub struct DiskActionRequest {
     tag = "raid"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn list_arrays(State(state): State<AppState>) -> Result<Json<Vec<ArrayResponse>>> {
     let repo = RaidRepository::new(&state.pool);
     let arrays = repo.list_arrays().await?;
@@ -90,7 +89,6 @@ pub async fn list_arrays(State(state): State<AppState>) -> Result<Json<Vec<Array
     security(("bearerAuth" = [])),
     tag = "raid"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_array(
     State(state): State<AppState>,
@@ -131,7 +129,6 @@ pub async fn get_array(
     tag = "raid"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn get_array_by_name(
     State(state): State<AppState>,
     Path(name): Path<String>,
@@ -171,7 +168,6 @@ pub async fn get_array_by_name(
     tag = "raid"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn delete_array(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -206,7 +202,6 @@ pub async fn delete_array(
     tag = "raid"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn list_disks(State(state): State<AppState>) -> Result<Json<Vec<Disk>>> {
     let repo = RaidRepository::new(&state.pool);
     let disks = repo.list_disks().await?;
@@ -226,7 +221,6 @@ pub async fn list_disks(State(state): State<AppState>) -> Result<Json<Vec<Disk>>
     security(("bearerAuth" = [])),
     tag = "raid"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_disk(State(state): State<AppState>, Path(id): Path<Uuid>) -> Result<Json<Disk>> {
     let repo = RaidRepository::new(&state.pool);
@@ -250,7 +244,6 @@ pub async fn get_disk(State(state): State<AppState>, Path(id): Path<Uuid>) -> Re
     security(("bearerAuth" = [])),
     tag = "raid"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn scan_disks(State(state): State<AppState>) -> Result<Json<Vec<Disk>>> {
     let repo = RaidRepository::new(&state.pool);
@@ -297,7 +290,6 @@ pub async fn scan_disks(State(state): State<AppState>) -> Result<Json<Vec<Disk>>
     tag = "raid"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn list_events(
     State(state): State<AppState>,
     Query(query): Query<ListQuery>,
@@ -324,7 +316,6 @@ pub async fn list_events(
     security(("bearerAuth" = [])),
     tag = "raid"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_array_events(
     State(state): State<AppState>,
@@ -365,7 +356,6 @@ pub async fn get_array_events(
     tag = "raid"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn get_health(State(state): State<AppState>) -> Result<Json<RaidHealth>> {
     let repo = RaidRepository::new(&state.pool);
     let health = repo.get_health().await?;
@@ -389,7 +379,6 @@ pub async fn get_health(State(state): State<AppState>) -> Result<Json<RaidHealth
     security(("bearerAuth" = [])),
     tag = "raid"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn rebuild_array(
     State(state): State<AppState>,
@@ -437,7 +426,6 @@ pub async fn rebuild_array(
     security(("bearerAuth" = [])),
     tag = "raid"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn add_disk_to_array(
     State(state): State<AppState>,
@@ -508,7 +496,6 @@ pub async fn add_disk_to_array(
     security(("bearerAuth" = [])),
     tag = "raid"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn remove_disk_from_array(
     State(state): State<AppState>,

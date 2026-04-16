@@ -130,7 +130,6 @@ async fn store_image(state: &AppState, image_bytes: &[u8]) -> Result<String, (St
     tag = "image"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn generate_image(
     State(state): State<AppState>,
     Json(body): Json<GenerateRequest>,
@@ -216,7 +215,6 @@ pub async fn generate_image(
     security(("bearerAuth" = [])),
     tag = "image"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn inpaint_image(
     State(state): State<AppState>,
@@ -370,7 +368,6 @@ pub async fn inpaint_image(
     tag = "image"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn img2img(
     State(state): State<AppState>,
     mut multipart: Multipart,
@@ -503,7 +500,6 @@ pub async fn img2img(
     tag = "image"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn upscale_image(
     State(state): State<AppState>,
     mut multipart: Multipart,
@@ -603,7 +599,6 @@ pub async fn upscale_image(
     security(("bearerAuth" = [])),
     tag = "image"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_image_models() -> Result<Json<ImageModelsResponse>, (StatusCode, String)> {
     let worker = create_imagegen_worker().map_err(|e| (StatusCode::SERVICE_UNAVAILABLE, e))?;

@@ -87,7 +87,6 @@ pub struct AuditLogListResponse {
     )
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn list_audit_logs(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -180,7 +179,6 @@ pub async fn list_audit_logs(
     )
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn get_audit_log(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -229,7 +227,6 @@ pub async fn get_audit_log(
         (status = 401, description = "Not authenticated"),
     )
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn export_audit_logs(
     State(state): State<AppState>,
@@ -316,7 +313,6 @@ pub struct AuditQueryRequest {
         (status = 401, description = "Not authenticated"),
     )
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn query_audit(
     State(state): State<AppState>,

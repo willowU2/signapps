@@ -71,7 +71,6 @@ pub struct UpdateProgressRequest {
     tag = "Workforce Learning"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn list_courses(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -149,7 +148,6 @@ pub async fn list_courses(
     tag = "Workforce Learning"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn get_course(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -204,7 +202,6 @@ pub async fn get_course(
     security(("bearer" = [])),
     tag = "Workforce Learning"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn update_progress(
     State(state): State<AppState>,

@@ -108,7 +108,6 @@ pub enum PreviewType {
     tag = "preview"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn get_thumbnail(
     State(state): State<AppState>,
     Path((bucket, key)): Path<(String, String)>,
@@ -690,7 +689,6 @@ struct PreviewNotAvailable {
     tag = "preview"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn generate_preview(
     State(state): State<AppState>,
     Path((bucket, key)): Path<(String, String)>,
@@ -782,7 +780,6 @@ pub async fn generate_preview(
     security(("bearerAuth" = [])),
     tag = "preview"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_preview(
     State(state): State<AppState>,
@@ -948,7 +945,6 @@ pub async fn get_preview(
     tag = "preview"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn get_preview_info(
     State(state): State<AppState>,
     Path((bucket, key)): Path<(String, String)>,
@@ -1074,7 +1070,6 @@ pub struct ArchiveListResponse {
     tag = "preview"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn get_archive_listing(
     State(state): State<AppState>,
     Path((bucket, key)): Path<(String, String)>,
@@ -1163,7 +1158,6 @@ pub struct DocumentMetadata {
     security(("bearerAuth" = [])),
     tag = "preview"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_document_metadata(
     State(state): State<AppState>,

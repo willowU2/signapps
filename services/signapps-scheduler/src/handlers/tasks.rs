@@ -56,7 +56,6 @@ pub struct TaskAttachmentResponse {
     tag = "Tasks"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn list(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -101,7 +100,6 @@ pub struct UpdateTaskRequest {
 }
 
 /// Create a task.
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn create(
     State(state): State<AppState>,
@@ -160,7 +158,6 @@ pub async fn create(
     tag = "Tasks"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn get_by_id(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -185,7 +182,6 @@ pub async fn get_by_id(
 }
 
 /// Update a task.
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn update(
     State(state): State<AppState>,
@@ -238,7 +234,6 @@ pub async fn update(
     security(("bearer" = [])),
     tag = "Tasks"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete(
     State(state): State<AppState>,
@@ -360,7 +355,6 @@ pub async fn my_tasks(
     tag = "Tasks"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn add_attachment(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -408,7 +402,6 @@ pub async fn add_attachment(
     tag = "Tasks"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn list_attachments(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -453,7 +446,6 @@ pub async fn list_attachments(
     security(("bearer" = [])),
     tag = "Tasks"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_attachment(
     State(state): State<AppState>,

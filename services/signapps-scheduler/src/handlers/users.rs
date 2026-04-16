@@ -21,7 +21,6 @@ use crate::AppState;
     tag = "Users"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn list_users(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,

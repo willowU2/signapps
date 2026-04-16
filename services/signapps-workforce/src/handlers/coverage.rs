@@ -206,7 +206,6 @@ pub struct RuleQueryParams {
     tag = "Workforce Coverage"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn list_templates(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -244,7 +243,6 @@ pub async fn list_templates(
     security(("bearer" = [])),
     tag = "Workforce Coverage"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn create_template(
     State(state): State<AppState>,
@@ -320,7 +318,6 @@ pub async fn create_template(
     tag = "Workforce Coverage"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn get_template(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -359,7 +356,6 @@ pub async fn get_template(
     security(("bearer" = [])),
     tag = "Workforce Coverage"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn update_template(
     State(state): State<AppState>,
@@ -447,7 +443,6 @@ pub async fn update_template(
     tag = "Workforce Coverage"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn delete_template(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -503,7 +498,6 @@ pub async fn delete_template(
     security(("bearer" = [])),
     tag = "Workforce Coverage"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn duplicate_template(
     State(state): State<AppState>,
@@ -570,7 +564,6 @@ pub async fn duplicate_template(
     tag = "Workforce Coverage"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn list_rules(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -629,7 +622,6 @@ pub async fn list_rules(
     security(("bearer" = [])),
     tag = "Workforce Coverage"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn create_rule(
     State(state): State<AppState>,
@@ -737,7 +729,6 @@ pub async fn create_rule(
     tag = "Workforce Coverage"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn get_rule(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -775,7 +766,6 @@ pub async fn get_rule(
     security(("bearer" = [])),
     tag = "Workforce Coverage"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn update_rule(
     State(state): State<AppState>,
@@ -853,7 +843,6 @@ pub async fn update_rule(
     tag = "Workforce Coverage"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn delete_rule(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -891,7 +880,6 @@ pub async fn delete_rule(
     security(("bearer" = [])),
     tag = "Workforce Coverage"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_rules_by_node(
     State(state): State<AppState>,
@@ -942,7 +930,6 @@ pub async fn get_rules_by_node(
     security(("bearer" = [])),
     tag = "Workforce Coverage"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_effective_coverage(
     State(state): State<AppState>,

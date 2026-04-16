@@ -76,7 +76,6 @@ pub struct UpsertIndexingRule {
     tag = "storage_settings"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn list_storage_rules(State(state): State<AppState>) -> Result<Json<Vec<StorageRule>>> {
     let rules: Vec<StorageRule> = sqlx::query_as(
         r#"
@@ -104,7 +103,6 @@ pub async fn list_storage_rules(State(state): State<AppState>) -> Result<Json<Ve
     security(("bearerAuth" = [])),
     tag = "storage_settings"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn create_storage_rule(
     State(state): State<AppState>,
@@ -142,7 +140,6 @@ pub async fn create_storage_rule(
     security(("bearerAuth" = [])),
     tag = "storage_settings"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn update_storage_rule(
     State(state): State<AppState>,
@@ -183,7 +180,6 @@ pub async fn update_storage_rule(
     tag = "storage_settings"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn delete_storage_rule(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -217,7 +213,6 @@ pub async fn delete_storage_rule(
     tag = "storage_settings"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn list_indexing_rules(State(state): State<AppState>) -> Result<Json<Vec<IndexingRule>>> {
     let rules: Vec<IndexingRule> = sqlx::query_as(
         r#"
@@ -245,7 +240,6 @@ pub async fn list_indexing_rules(State(state): State<AppState>) -> Result<Json<V
     security(("bearerAuth" = [])),
     tag = "storage_settings"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn create_indexing_rule(
     State(state): State<AppState>,
@@ -284,7 +278,6 @@ pub async fn create_indexing_rule(
     security(("bearerAuth" = [])),
     tag = "storage_settings"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn update_indexing_rule(
     State(state): State<AppState>,
@@ -325,7 +318,6 @@ pub async fn update_indexing_rule(
     security(("bearerAuth" = [])),
     tag = "storage_settings"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_indexing_rule(
     State(state): State<AppState>,
@@ -375,7 +367,6 @@ pub struct UpsertSystemSetting {
     tag = "storage_settings"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn get_system_setting(
     State(state): axum::extract::State<crate::AppState>,
     axum::extract::Path(key): axum::extract::Path<String>,
@@ -418,7 +409,6 @@ pub async fn get_system_setting(
     security(("bearerAuth" = [])),
     tag = "storage_settings"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn update_system_setting(
     State(state): axum::extract::State<crate::AppState>,

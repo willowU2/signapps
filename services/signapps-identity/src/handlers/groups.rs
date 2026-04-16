@@ -62,7 +62,6 @@ pub struct AddMemberRequest {
     )
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn list(
     State(state): State<AppState>,
     axum::extract::Query(query): axum::extract::Query<ListQuery>,
@@ -106,7 +105,6 @@ pub async fn list(
     )
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn get(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -142,7 +140,6 @@ pub async fn get(
     )
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn create(
     State(state): State<AppState>,
     Json(payload): Json<signapps_db::models::CreateGroup>,
@@ -173,7 +170,6 @@ pub async fn create(
         (status = 404, description = "Group not found"),
     )
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn update(
     State(state): State<AppState>,
@@ -213,7 +209,6 @@ pub async fn update(
     )
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn delete(State(state): State<AppState>, Path(id): Path<Uuid>) -> Result<StatusCode> {
     let repo = GroupRepository::new(&state.pool);
     repo.delete(id).await?;
@@ -234,7 +229,6 @@ pub async fn delete(State(state): State<AppState>, Path(id): Path<Uuid>) -> Resu
         (status = 404, description = "Group not found"),
     )
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn add_member(
     State(state): State<AppState>,
@@ -268,7 +262,6 @@ pub async fn add_member(
     )
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn remove_member(
     State(state): State<AppState>,
     Path((group_id, user_id)): Path<(Uuid, Uuid)>,
@@ -291,7 +284,6 @@ pub async fn remove_member(
         (status = 404, description = "Group not found"),
     )
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_members(
     State(state): State<AppState>,

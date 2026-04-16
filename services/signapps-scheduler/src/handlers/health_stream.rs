@@ -98,7 +98,6 @@ async fn collect_snapshot() -> HealthSnapshot {
     tag = "Health"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn health_stream(
     State(_state): State<AppState>,
 ) -> Sse<impl Stream<Item = Result<Event, Infallible>>> {

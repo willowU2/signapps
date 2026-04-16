@@ -22,7 +22,6 @@ use signapps_common::Claims;
     tag = "Social Signatures"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn list_signatures(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -55,7 +54,6 @@ pub async fn list_signatures(
     security(("bearer" = [])),
     tag = "Social Signatures"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn create_signature(
     State(state): State<AppState>,
@@ -97,7 +95,6 @@ pub async fn create_signature(
     security(("bearer" = [])),
     tag = "Social Signatures"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn update_signature(
     State(state): State<AppState>,
@@ -161,7 +158,6 @@ pub async fn update_signature(
     security(("bearer" = [])),
     tag = "Social Signatures"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_signature(
     State(state): State<AppState>,

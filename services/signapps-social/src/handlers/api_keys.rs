@@ -36,7 +36,6 @@ fn hash_key(key: &str) -> String {
     tag = "Social API Keys"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn list_api_keys(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -69,7 +68,6 @@ pub async fn list_api_keys(
     security(("bearer" = [])),
     tag = "Social API Keys"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn create_api_key(
     State(state): State<AppState>,
@@ -136,7 +134,6 @@ pub async fn create_api_key(
     security(("bearer" = [])),
     tag = "Social API Keys"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn revoke_api_key(
     State(state): State<AppState>,

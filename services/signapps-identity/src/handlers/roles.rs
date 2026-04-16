@@ -33,7 +33,6 @@ pub struct RoleResponse {
     )
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn list(State(state): State<AppState>) -> Result<Json<Vec<RoleResponse>>> {
     let repo = GroupRepository::new(&state.pool);
     let roles = repo.list_roles().await?;
@@ -66,7 +65,6 @@ pub async fn list(State(state): State<AppState>) -> Result<Json<Vec<RoleResponse
     )
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn create(
     State(state): State<AppState>,
     Json(payload): Json<signapps_db::models::CreateRole>,
@@ -98,7 +96,6 @@ pub async fn create(
         (status = 404, description = "Role not found"),
     )
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn update(
     State(state): State<AppState>,
@@ -138,7 +135,6 @@ pub async fn update(
         (status = 404, description = "Role not found"),
     )
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete(State(state): State<AppState>, Path(id): Path<Uuid>) -> Result<StatusCode> {
     let repo = GroupRepository::new(&state.pool);

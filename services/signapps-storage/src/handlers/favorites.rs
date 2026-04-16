@@ -113,7 +113,6 @@ fn map_row_to_favorite(row: &sqlx::postgres::PgRow) -> Result<Favorite> {
     tag = "favorites"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn add_favorite(
     State(state): State<AppState>,
     axum::Extension(user_id): axum::Extension<Uuid>,
@@ -170,7 +169,6 @@ pub async fn add_favorite(
     security(("bearerAuth" = [])),
     tag = "favorites"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn list_favorites(
     State(state): State<AppState>,
@@ -256,7 +254,6 @@ pub async fn list_favorites(
     tag = "favorites"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn get_favorite(
     State(state): State<AppState>,
     axum::Extension(user_id): axum::Extension<Uuid>,
@@ -324,7 +321,6 @@ pub async fn get_favorite(
     tag = "favorites"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn update_favorite(
     State(state): State<AppState>,
     axum::Extension(user_id): axum::Extension<Uuid>,
@@ -370,7 +366,6 @@ pub async fn update_favorite(
     tag = "favorites"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn remove_favorite(
     State(state): State<AppState>,
     axum::Extension(user_id): axum::Extension<Uuid>,
@@ -406,7 +401,6 @@ pub async fn remove_favorite(
     security(("bearerAuth" = [])),
     tag = "favorites"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn remove_favorite_by_path(
     State(state): State<AppState>,
@@ -445,7 +439,6 @@ pub async fn remove_favorite_by_path(
     tag = "favorites"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn reorder_favorites(
     State(state): State<AppState>,
     axum::Extension(user_id): axum::Extension<Uuid>,
@@ -483,7 +476,6 @@ pub async fn reorder_favorites(
     security(("bearerAuth" = [])),
     tag = "favorites"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn check_favorite(
     State(state): State<AppState>,

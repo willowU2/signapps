@@ -72,7 +72,6 @@ pub struct HardwareResponse {
     tag = "models"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn list_local_models(
     State(state): State<AppState>,
 ) -> Result<Json<LocalModelsResponse>, (StatusCode, String)> {
@@ -108,7 +107,6 @@ pub async fn list_local_models(
     tag = "models"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn list_available_models(
     State(state): State<AppState>,
 ) -> Result<Json<AvailableModelsResponse>, (StatusCode, String)> {
@@ -122,7 +120,6 @@ pub async fn list_available_models(
 }
 
 /// Dynamically search HuggingFace for models.
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn search_models(
     State(state): State<AppState>,
@@ -160,7 +157,6 @@ pub async fn search_models(
     security(("bearerAuth" = [])),
     tag = "models"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn download_model(
     State(state): State<AppState>,
@@ -221,7 +217,6 @@ pub async fn download_model(
     tag = "models"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn get_model_status(
     State(state): State<AppState>,
     Path(model_id): Path<String>,
@@ -254,7 +249,6 @@ pub async fn get_model_status(
     security(("bearerAuth" = [])),
     tag = "models"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn delete_model(
     State(state): State<AppState>,
@@ -290,7 +284,6 @@ pub async fn delete_model(
     security(("bearerAuth" = [])),
     tag = "models"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn get_hardware(
     State(state): State<AppState>,

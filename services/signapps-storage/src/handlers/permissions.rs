@@ -125,7 +125,6 @@ fn validate_mode(mode: u32) -> Result<()> {
     tag = "permissions"
 )]
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub async fn get_permissions(
     State(_state): State<AppState>,
     Path((bucket, key)): Path<(String, String)>,
@@ -165,7 +164,6 @@ pub async fn get_permissions(
     security(("bearerAuth" = [])),
     tag = "permissions"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn set_permissions(
     State(_state): State<AppState>,
@@ -208,7 +206,6 @@ pub async fn set_permissions(
     security(("bearerAuth" = [])),
     tag = "permissions"
 )]
-#[tracing::instrument(skip_all)]
 #[tracing::instrument(skip_all)]
 pub async fn reset_permissions(
     State(_state): State<AppState>,

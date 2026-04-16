@@ -11,11 +11,6 @@ import { getClient, getServiceBaseUrl, ServiceName } from "./factory";
 const storageClient = getClient(ServiceName.STORAGE);
 const STORAGE_URL = getServiceBaseUrl(ServiceName.STORAGE);
 
-export interface Bucket {
-  name: string;
-  created_at: string;
-}
-
 export interface UploadResponse {
   id: string;
   bucket: string;
