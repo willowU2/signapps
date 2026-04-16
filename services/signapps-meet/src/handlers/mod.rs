@@ -4,6 +4,7 @@ pub mod lobby;
 pub mod openapi;
 pub mod participants;
 pub mod polls;
+pub mod questions;
 pub mod raised_hands;
 pub mod recordings;
 pub mod remote;

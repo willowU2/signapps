@@ -120,8 +120,8 @@ async fn meet_health() -> axum::Json<serde_json::Value> {
 fn build_router(state: AppState) -> Router {
     use axum::routing::{delete, get, patch, post};
     use handlers::{
-        lobby, openapi, participants, polls, raised_hands, recordings, remote, rooms, tokens,
-        transcription, video_messages, voicemails, waiting_room, webhooks,
+        lobby, openapi, participants, polls, questions, raised_hands, recordings, remote, rooms,
+        tokens, transcription, video_messages, voicemails, waiting_room, webhooks,
     };
 
     // Public routes
@@ -243,6 +243,23 @@ fn build_router(state: AppState) -> Router {
         )
         .route("/api/v1/meet/polls/:id/vote", post(polls::vote_poll))
         .route("/api/v1/meet/polls/:id/close", post(polls::close_poll))
+        // Q&A (Phase 3c)
+        .route(
+            "/api/v1/meet/rooms/:code/questions",
+            get(questions::list_questions).post(questions::ask_question),
+        )
+        .route(
+            "/api/v1/meet/questions/:id/upvote",
+            post(questions::upvote_question),
+        )
+        .route(
+            "/api/v1/meet/questions/:id/answer",
+            post(questions::answer_question),
+        )
+        .route(
+            "/api/v1/meet/questions/:id",
+            delete(questions::delete_question),
+        )
         // Remote desktop connections (absorbed from signapps-remote, port 3017)
         .route(
             "/api/v1/remote/connections",

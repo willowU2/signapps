@@ -46,6 +46,9 @@ anyhow = "1.0"
 # Async streams (used by remote WebSocket handler)
 futures = { workspace = true }
 
+# In-memory concurrent maps (used by Q&A upvote dedup)
+dashmap = { workspace = true }
+
 # Password hashing
 bcrypt = "0.15"
 

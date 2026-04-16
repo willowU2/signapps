@@ -407,6 +407,33 @@ export const meetApi = {
                 `/meet/polls/${encodeURIComponent(pollId)}/close`,
             ),
     },
+
+    // ========================================================================
+    // Q&A (Phase 3c)
+    // ========================================================================
+
+    questions: {
+        list: (code: string) =>
+            meetClient.get<MeetQuestion[]>(
+                `/meet/rooms/${encodeURIComponent(code)}/questions`,
+            ),
+        ask: (code: string, data: AskQuestionRequest) =>
+            meetClient.post<MeetQuestion>(
+                `/meet/rooms/${encodeURIComponent(code)}/questions`,
+                data,
+            ),
+        upvote: (id: string) =>
+            meetClient.post<MeetQuestion>(
+                `/meet/questions/${encodeURIComponent(id)}/upvote`,
+            ),
+        answer: (id: string, data: AnswerQuestionRequest) =>
+            meetClient.post<MeetQuestion>(
+                `/meet/questions/${encodeURIComponent(id)}/answer`,
+                data,
+            ),
+        delete: (id: string) =>
+            meetClient.delete(`/meet/questions/${encodeURIComponent(id)}`),
+    },
 };
 
 // ============================================================================
@@ -518,4 +545,27 @@ export interface CreateMeetPollRequest {
 
 export interface VoteMeetPollRequest {
     option_index: number;
+}
+
+// ============================================================================
+// Q&A (Phase 3c)
+// ============================================================================
+
+export interface MeetQuestion {
+    id: string;
+    room_id: string;
+    asked_by: string;
+    question: string;
+    answer?: string | null;
+    upvotes: number;
+    created_at: string;
+    answered_at?: string | null;
+}
+
+export interface AskQuestionRequest {
+    question: string;
+}
+
+export interface AnswerQuestionRequest {
+    answer: string;
 }

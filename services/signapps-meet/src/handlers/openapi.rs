@@ -77,6 +77,12 @@ impl Modify for SecurityAddon {
         crate::handlers::polls::list_polls,
         crate::handlers::polls::vote_poll,
         crate::handlers::polls::close_poll,
+        // Q&A (Phase 3c)
+        crate::handlers::questions::ask_question,
+        crate::handlers::questions::list_questions,
+        crate::handlers::questions::upvote_question,
+        crate::handlers::questions::answer_question,
+        crate::handlers::questions::delete_question,
         // Transcription
         crate::handlers::transcription::handle_session_ended,
         crate::handlers::transcription::ingest_transcription,
@@ -125,6 +131,9 @@ impl Modify for SecurityAddon {
         crate::handlers::polls::Poll,
         crate::handlers::polls::CreatePollRequest,
         crate::handlers::polls::VotePollRequest,
+        crate::handlers::questions::Question,
+        crate::handlers::questions::AskQuestionRequest,
+        crate::handlers::questions::AnswerQuestionRequest,
         crate::handlers::transcription::SessionEndedEvent,
         crate::handlers::transcription::IngestTranscriptionRequest,
         crate::handlers::transcription::IngestTranscriptionResponse,

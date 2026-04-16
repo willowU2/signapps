@@ -1,6 +1,14 @@
 "use client";
 
-import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import {
+  lazy,
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   useParticipants,
   useRoomContext,
@@ -12,6 +20,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Tabs,
   TabsContent,
@@ -41,25 +50,31 @@ import {
   Plus,
   Trash2,
   Trophy,
+  ArrowUp,
+  Send,
 } from "lucide-react";
 
 import { meetApi } from "@/lib/api/meet";
-import type { MeetPoll } from "@/lib/api/meet";
+import type { MeetPoll, MeetQuestion } from "@/lib/api/meet";
 
 /** LiveKit data channel topic — polls create/vote/close broadcasts. */
 export const POLL_TOPIC = "poll";
+/** LiveKit data channel topic — Q&A ask/upvote/answer/delete broadcasts. */
+export const QA_TOPIC = "qa";
 
 interface PollBroadcast {
   type: "created" | "voted" | "closed";
   poll_id?: string;
 }
 
-// Lazy placeholders — Q&A wired in Phase 3c follow-up commit
+interface QaBroadcast {
+  type: "asked" | "upvoted" | "answered" | "deleted";
+  question_id?: string;
+}
+
+// Lazy placeholders — Chat / Whiteboard remain placeholders for now
 const ChatPanel = lazy(() =>
   Promise.resolve({ default: () => <Placeholder label="Chat" /> }),
-);
-const QAPanel = lazy(() =>
-  Promise.resolve({ default: () => <Placeholder label="Q&A" /> }),
 );
 const WhiteboardPanel = lazy(() =>
   Promise.resolve({ default: () => <Placeholder label="Whiteboard" /> }),
@@ -645,6 +660,392 @@ function PollsTab({
   );
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Q&A tab
+// ─────────────────────────────────────────────────────────────────────────────
+
+function AnswerDialog({
+  question,
+  onAnswered,
+}: {
+  question: MeetQuestion;
+  onAnswered: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [answer, setAnswer] = useState(question.answer ?? "");
+  const [submitting, setSubmitting] = useState(false);
+
+  const submit = async () => {
+    const trimmed = answer.trim();
+    if (!trimmed) {
+      toast.error("La réponse ne peut pas être vide");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await meetApi.questions.answer(question.id, { answer: trimmed });
+      toast.success("Réponse publiée");
+      setOpen(false);
+      onAnswered();
+    } catch {
+      toast.error("Impossible de répondre");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button
+          size="sm"
+          variant="ghost"
+          className="h-7 text-xs text-muted-foreground hover:text-foreground"
+        >
+          {question.answer ? "Modifier la réponse" : "Répondre"}
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="bg-card border-border">
+        <DialogHeader>
+          <DialogTitle>Répondre à la question</DialogTitle>
+          <DialogDescription>
+            <span className="text-foreground">{question.question}</span>
+          </DialogDescription>
+        </DialogHeader>
+        <Textarea
+          value={answer}
+          onChange={(e) => setAnswer(e.target.value)}
+          placeholder="Votre réponse"
+          rows={4}
+          className="resize-none"
+        />
+        <DialogFooter>
+          <Button
+            variant="ghost"
+            onClick={() => setOpen(false)}
+            disabled={submitting}
+          >
+            Annuler
+          </Button>
+          <Button onClick={submit} disabled={submitting}>
+            {submitting ? "Envoi…" : "Publier"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function QaCard({
+  question,
+  isHost,
+  localIdentity,
+  upvoted,
+  onUpvote,
+  onDelete,
+  onMutated,
+}: {
+  question: MeetQuestion;
+  isHost: boolean;
+  localIdentity: string;
+  upvoted: boolean;
+  onUpvote: (id: string) => Promise<void>;
+  onDelete: (id: string) => Promise<void>;
+  onMutated: () => void;
+}) {
+  const [busy, setBusy] = useState(false);
+  const mine = question.asked_by === localIdentity;
+  const canDelete = isHost || mine;
+
+  const handleUpvote = async () => {
+    if (upvoted || busy) return;
+    setBusy(true);
+    try {
+      await onUpvote(question.id);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!confirm("Supprimer cette question ?")) return;
+    setBusy(true);
+    try {
+      await onDelete(question.id);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <article
+      data-testid="qa-card"
+      className="flex gap-2 rounded-lg border border-border bg-card p-3 shadow-sm"
+    >
+      <button
+        type="button"
+        onClick={handleUpvote}
+        disabled={upvoted || busy}
+        aria-pressed={upvoted}
+        className={`flex shrink-0 flex-col items-center justify-center gap-0 rounded-md px-2 py-1 text-xs ${
+          upvoted
+            ? "bg-primary/15 text-primary"
+            : "bg-muted text-foreground hover:bg-muted/70"
+        } ${upvoted || busy ? "cursor-default" : "cursor-pointer"}`}
+        aria-label={upvoted ? "Déjà voté" : "Voter"}
+      >
+        <ArrowUp className="h-3.5 w-3.5" />
+        <span className="font-semibold">{question.upvotes}</span>
+      </button>
+      <div className="min-w-0 flex-1">
+        <p className="text-sm text-foreground">{question.question}</p>
+        {question.answer && (
+          <div className="mt-1.5 rounded-md bg-muted/40 p-2 text-xs text-foreground">
+            <span className="text-[10px] font-semibold uppercase tracking-wide text-primary">
+              Réponse
+            </span>
+            <p>{question.answer}</p>
+          </div>
+        )}
+        <div className="mt-1.5 flex items-center gap-1 text-[11px] text-muted-foreground">
+          <span className="truncate">
+            {mine ? "vous" : question.asked_by}
+          </span>
+          <span>·</span>
+          <span>
+            {new Date(question.created_at).toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
+          </span>
+          <div className="ml-auto flex items-center gap-1">
+            {isHost && (
+              <AnswerDialog question={question} onAnswered={onMutated} />
+            )}
+            {canDelete && (
+              <Button
+                size="icon"
+                variant="ghost"
+                onClick={handleDelete}
+                disabled={busy}
+                aria-label="Supprimer"
+                className="h-7 w-7 text-muted-foreground hover:text-destructive"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </Button>
+            )}
+          </div>
+        </div>
+      </div>
+    </article>
+  );
+}
+
+function QaTab({
+  roomCode,
+  isHost,
+  localIdentity,
+}: {
+  roomCode: string;
+  isHost: boolean;
+  localIdentity: string;
+}) {
+  const room = useRoomContext();
+  const [questions, setQuestions] = useState<MeetQuestion[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [text, setText] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const upvotedRef = useRef<Set<string>>(new Set());
+  const [, forceTick] = useState(0);
+
+  const refresh = useCallback(async () => {
+    try {
+      const res = await meetApi.questions.list(roomCode);
+      setQuestions(res.data);
+    } catch {
+      // keep previous
+    } finally {
+      setLoading(false);
+    }
+  }, [roomCode]);
+
+  useEffect(() => {
+    refresh();
+    const id = window.setInterval(refresh, 15_000);
+    return () => window.clearInterval(id);
+  }, [refresh]);
+
+  useEffect(() => {
+    if (!room) return;
+    const decoder = new TextDecoder();
+    const onData = (
+      payload: Uint8Array,
+      _p?: RemoteParticipant,
+      _k?: unknown,
+      topic?: string,
+    ) => {
+      if (topic !== QA_TOPIC) return;
+      try {
+        const json = JSON.parse(decoder.decode(payload)) as QaBroadcast;
+        if (json?.type) refresh();
+      } catch {
+        // ignore
+      }
+    };
+    room.on(RoomEvent.DataReceived, onData);
+    return () => {
+      room.off(RoomEvent.DataReceived, onData);
+    };
+  }, [room, refresh]);
+
+  const broadcast = useCallback(
+    async (payload: QaBroadcast) => {
+      if (!room?.localParticipant) return;
+      try {
+        const encoder = new TextEncoder();
+        await room.localParticipant.publishData(
+          encoder.encode(JSON.stringify(payload)),
+          { reliable: true, topic: QA_TOPIC },
+        );
+      } catch {
+        // non-fatal
+      }
+    },
+    [room],
+  );
+
+  const handleSubmit = async (e?: React.FormEvent) => {
+    e?.preventDefault();
+    const trimmed = text.trim();
+    if (!trimmed) return;
+    setSubmitting(true);
+    try {
+      await meetApi.questions.ask(roomCode, { question: trimmed });
+      setText("");
+      await refresh();
+      void broadcast({ type: "asked" });
+    } catch {
+      toast.error("Envoi impossible");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleUpvote = useCallback(
+    async (id: string) => {
+      if (upvotedRef.current.has(id)) return;
+      upvotedRef.current.add(id);
+      forceTick((n) => n + 1);
+      try {
+        await meetApi.questions.upvote(id);
+        await refresh();
+        void broadcast({ type: "upvoted", question_id: id });
+      } catch {
+        upvotedRef.current.delete(id);
+        forceTick((n) => n + 1);
+        toast.error("Vote impossible");
+      }
+    },
+    [broadcast, refresh],
+  );
+
+  const handleDelete = useCallback(
+    async (id: string) => {
+      try {
+        await meetApi.questions.delete(id);
+        await refresh();
+        void broadcast({ type: "deleted", question_id: id });
+      } catch {
+        toast.error("Suppression impossible");
+      }
+    },
+    [broadcast, refresh],
+  );
+
+  // Sort: unanswered first, answered below; within each group by upvotes DESC, created ASC.
+  const sorted = useMemo(() => {
+    const byRank = (a: MeetQuestion, b: MeetQuestion) => {
+      if (b.upvotes !== a.upvotes) return b.upvotes - a.upvotes;
+      return a.created_at.localeCompare(b.created_at);
+    };
+    const unanswered = questions.filter((q) => !q.answer).sort(byRank);
+    const answered = questions.filter((q) => !!q.answer).sort(byRank);
+    return { unanswered, answered };
+  }, [questions]);
+
+  return (
+    <div className="flex h-full flex-col">
+      <form
+        onSubmit={handleSubmit}
+        className="flex items-center gap-2 border-b border-border bg-card p-3"
+      >
+        <Input
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          placeholder="Poser une question…"
+          maxLength={500}
+          disabled={submitting}
+        />
+        <Button
+          type="submit"
+          size="icon"
+          disabled={submitting || !text.trim()}
+          aria-label="Envoyer la question"
+        >
+          <Send className="h-4 w-4" />
+        </Button>
+      </form>
+      <div className="flex-1 overflow-y-auto p-3">
+        {loading && questions.length === 0 && (
+          <div className="p-6 text-center text-sm text-muted-foreground">
+            Chargement…
+          </div>
+        )}
+        {!loading && questions.length === 0 && (
+          <div className="rounded-lg border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+            Aucune question pour l&apos;instant
+          </div>
+        )}
+        {sorted.unanswered.length > 0 && (
+          <div className="flex flex-col gap-2">
+            {sorted.unanswered.map((q) => (
+              <QaCard
+                key={q.id}
+                question={q}
+                isHost={isHost}
+                localIdentity={localIdentity}
+                upvoted={upvotedRef.current.has(q.id)}
+                onUpvote={handleUpvote}
+                onDelete={handleDelete}
+                onMutated={refresh}
+              />
+            ))}
+          </div>
+        )}
+        {sorted.answered.length > 0 && (
+          <div className="mt-4 flex flex-col gap-2">
+            <span className="text-[11px] uppercase tracking-wide text-muted-foreground">
+              Répondues
+            </span>
+            {sorted.answered.map((q) => (
+              <QaCard
+                key={q.id}
+                question={q}
+                isHost={isHost}
+                localIdentity={localIdentity}
+                upvoted={upvotedRef.current.has(q.id)}
+                onUpvote={handleUpvote}
+                onDelete={handleDelete}
+                onMutated={refresh}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 interface MeetSidebarProps {
   onClose: () => void;
   defaultTab?: string;
@@ -742,8 +1143,12 @@ export function MeetSidebar({
                 localIdentity={localIdentity}
               />
             </TabsContent>
-            <TabsContent value="qa" className="m-0">
-              <QAPanel />
+            <TabsContent value="qa" className="m-0 h-full">
+              <QaTab
+                roomCode={roomCode}
+                isHost={isHost}
+                localIdentity={localIdentity}
+              />
             </TabsContent>
             <TabsContent value="whiteboard" className="m-0">
               <WhiteboardPanel />

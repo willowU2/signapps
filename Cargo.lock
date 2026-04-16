@@ -11031,6 +11031,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "signapps-livekit-client"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "jsonwebtoken",
+ "reqwest 0.12.28",
+ "serde",
+ "serde_json",
+ "thiserror 1.0.69",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
 name = "signapps-mail"
 version = "0.1.0"
 dependencies = [
@@ -11142,6 +11156,7 @@ dependencies = [
  "base64 0.22.1",
  "bcrypt 0.15.1",
  "chrono",
+ "dashmap 6.1.0",
  "dotenvy",
  "futures 0.3.31",
  "jsonwebtoken",
@@ -11150,6 +11165,7 @@ dependencies = [
  "serde",
  "serde_json",
  "signapps-common",
+ "signapps-livekit-client",
  "sqlx",
  "thiserror 1.0.69",
  "tokio",
