@@ -71,6 +71,12 @@ export default function MeetLobbyPage() {
   const [micLevel, setMicLevel] = useState(0);
   const [joining, setJoining] = useState(false);
   const [roomName, setRoomName] = useState<string | null>(null);
+  const [requiresKnock, setRequiresKnock] = useState(false);
+  const [isHost, setIsHost] = useState(false);
+  const [knockState, setKnockState] = useState<
+    "idle" | "waiting" | "admitted" | "denied"
+  >("idle");
+  const [knockIdentity, setKnockIdentity] = useState<string | null>(null);
 
   // Pre-fill display name from auth store
   useEffect(() => {
@@ -83,9 +89,61 @@ export default function MeetLobbyPage() {
   useEffect(() => {
     meetApi
       .getLobby(code)
-      .then((res) => setRoomName(res.data.room_name))
+      .then((res) => {
+        setRoomName(res.data.room_name);
+        setRequiresKnock(res.data.requires_knock === true);
+      })
       .catch(() => setRoomName(null));
   }, [code]);
+
+  // Detect whether the authenticated user is the host — list_rooms only
+  // returns rooms they own. Gates the knock flow.
+  useEffect(() => {
+    let active = true;
+    if (!user) {
+      setIsHost(false);
+      return;
+    }
+    meetApi
+      .listRooms()
+      .then((res) => {
+        if (!active) return;
+        setIsHost(res.data.some((r) => r.room_code === code));
+      })
+      .catch(() => {
+        if (active) setIsHost(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [code, user]);
+
+  // Poll knock status once we've knocked.
+  useEffect(() => {
+    if (knockState !== "waiting" || !knockIdentity) return;
+    let active = true;
+    const tick = () => {
+      meetApi
+        .getKnockStatus(code, knockIdentity)
+        .then((res) => {
+          if (!active) return;
+          if (res.data.status === "admitted") {
+            setKnockState("admitted");
+          } else if (res.data.status === "denied") {
+            setKnockState("denied");
+          }
+        })
+        .catch(() => {
+          // Keep polling; the server might be restarting.
+        });
+    };
+    tick();
+    const id = setInterval(tick, 2000);
+    return () => {
+      active = false;
+      clearInterval(id);
+    };
+  }, [code, knockState, knockIdentity]);
 
   // Request media and enumerate devices
   const startStream = useCallback(
@@ -263,30 +321,51 @@ export default function MeetLobbyPage() {
     });
   }, [micOn]);
 
+  const performJoin = useCallback(async () => {
+    const res = await meetApi.joinByCode(code, displayName || undefined);
+    try {
+      sessionStorage.setItem(
+        `meet:prefs:${code}`,
+        JSON.stringify({
+          cameraOn,
+          micOn,
+          selectedCamera,
+          selectedMic,
+          selectedSpeaker,
+          displayName,
+          token: res.data.token,
+          livekitUrl: res.data.livekit_url,
+          roomName: res.data.room_name,
+        }),
+      );
+    } catch {
+      // ignore storage errors
+    }
+    router.push(`/meet/${encodeURIComponent(code)}`);
+  }, [
+    code,
+    cameraOn,
+    micOn,
+    selectedCamera,
+    selectedMic,
+    selectedSpeaker,
+    displayName,
+    router,
+  ]);
+
   const handleJoin = async () => {
     setJoining(true);
     try {
-      const res = await meetApi.joinByCode(code, displayName || undefined);
-      // Stash preferences in session storage so meet-room can read them
-      try {
-        sessionStorage.setItem(
-          `meet:prefs:${code}`,
-          JSON.stringify({
-            cameraOn,
-            micOn,
-            selectedCamera,
-            selectedMic,
-            selectedSpeaker,
-            displayName,
-            token: res.data.token,
-            livekitUrl: res.data.livekit_url,
-            roomName: res.data.room_name,
-          }),
-        );
-      } catch {
-        // ignore storage errors
+      // Host bypasses the knock flow — they are trusted joiners.
+      if (requiresKnock && !isHost) {
+        const res = await meetApi.knock(code, {
+          display_name: displayName || "Invité",
+        });
+        setKnockIdentity(res.data.identity);
+        setKnockState("waiting");
+      } else {
+        await performJoin();
       }
-      router.push(`/meet/${encodeURIComponent(code)}`);
     } catch {
       toast.error(
         "Impossible de rejoindre la salle. Vérifie le code ou réessaie.",
@@ -295,6 +374,20 @@ export default function MeetLobbyPage() {
       setJoining(false);
     }
   };
+
+  // When the host admits us we transition automatically.
+  useEffect(() => {
+    if (knockState === "admitted") {
+      performJoin().catch(() => {
+        toast.error("Impossible de rejoindre après admission.");
+        setKnockState("idle");
+      });
+    } else if (knockState === "denied") {
+      toast.error("L'hôte a refusé ta demande d'entrée.");
+      const t = setTimeout(() => router.push("/meet"), 1500);
+      return () => clearTimeout(t);
+    }
+  }, [knockState, performJoin, router]);
 
   const levelBars = useMemo(() => {
     const count = 12;
@@ -570,14 +663,31 @@ export default function MeetLobbyPage() {
               {/* Join button */}
               <Button
                 onClick={handleJoin}
-                disabled={joining}
+                disabled={joining || knockState === "waiting"}
                 className="h-12 w-full bg-primary text-primary-foreground hover:bg-primary/90 gap-2"
               >
-                {joining ? (
+                {joining || knockState === "waiting" ? (
                   <Loader2 className="h-5 w-5 animate-spin" />
                 ) : null}
-                {joining ? "Connexion..." : "Rejoindre maintenant"}
+                {knockState === "waiting"
+                  ? "En attente de l'hôte..."
+                  : joining
+                    ? "Connexion..."
+                    : requiresKnock && !isHost
+                      ? "Demander l'accès"
+                      : "Rejoindre maintenant"}
               </Button>
+              {knockState === "waiting" && (
+                <p className="text-xs text-muted-foreground text-center">
+                  L&apos;hôte reçoit ta demande. Patiente — tu entreras
+                  automatiquement dès qu&apos;elle est acceptée.
+                </p>
+              )}
+              {knockState === "denied" && (
+                <p className="text-xs text-destructive text-center">
+                  L&apos;hôte a refusé ta demande. Redirection...
+                </p>
+              )}
             </div>
           </aside>
         </div>

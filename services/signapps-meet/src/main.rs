@@ -23,9 +23,6 @@ pub struct AppState {
     pub jwt_config: JwtConfig,
     /// Shared LiveKit Server client (token issuance, RoomService, Egress).
     pub livekit: Arc<LiveKitClient>,
-    /// In-memory lobby / knock state (provisional until
-    /// `meet_extensions.sql` lands — see Task 14 STOP-point in the plan).
-    pub lobby: Arc<handlers::lobby::LobbyState>,
 }
 
 impl AuthState for AppState {
@@ -85,7 +82,6 @@ async fn main() -> anyhow::Result<()> {
         pool,
         jwt_config,
         livekit,
-        lobby: Arc::new(handlers::lobby::LobbyState::new()),
     };
 
     let app = build_router(state);
@@ -135,6 +131,7 @@ fn build_router(state: AppState) -> Router {
         // Lobby (public — unauth lookups and knock-to-enter)
         .route("/api/v1/meet/rooms/:code/lobby", get(lobby::get_lobby))
         .route("/api/v1/meet/rooms/:code/knock", post(lobby::knock))
+        .route("/api/v1/meet/rooms/:code/knock-status", get(lobby::knock_status))
         // Recording visibility — lets every participant (not just the
         // host) poll whether the room is being recorded.
         .route(
@@ -179,7 +176,8 @@ fn build_router(state: AppState) -> Router {
             "/api/v1/meet/rooms/by-code/:code/recording/stop",
             post(recordings::stop_room_recording_by_code),
         )
-        // Lobby admit/deny (host-only)
+        // Lobby admit/deny + pending list (host-only)
+        .route("/api/v1/meet/rooms/:code/knocks", get(lobby::list_knocks))
         .route("/api/v1/meet/rooms/:code/admit/:identity", post(lobby::admit))
         .route("/api/v1/meet/rooms/:code/deny/:identity", post(lobby::deny))
         // Waiting room (legacy DB-backed — retained for Phase 0 compatibility)

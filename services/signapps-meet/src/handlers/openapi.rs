@@ -55,11 +55,18 @@ impl Modify for SecurityAddon {
         crate::handlers::recordings::start_room_recording_by_code,
         crate::handlers::recordings::stop_room_recording_by_code,
         crate::handlers::recordings::delete_recording,
-        // Waiting room
+        // Waiting room (legacy — user_id indexed)
         crate::handlers::waiting_room::list_waiting,
         crate::handlers::waiting_room::admit_user,
         crate::handlers::waiting_room::deny_user,
         crate::handlers::waiting_room::join_waiting_room,
+        // Lobby (DB-backed knock flow — identity indexed)
+        crate::handlers::lobby::get_lobby,
+        crate::handlers::lobby::knock,
+        crate::handlers::lobby::knock_status,
+        crate::handlers::lobby::list_knocks,
+        crate::handlers::lobby::admit,
+        crate::handlers::lobby::deny,
         // Transcription
         crate::handlers::transcription::handle_session_ended,
         // Video messages
@@ -93,6 +100,12 @@ impl Modify for SecurityAddon {
         crate::handlers::tokens::TokenQuery,
         crate::handlers::waiting_room::WaitingRoomResponse,
         crate::handlers::waiting_room::JoinWaitingRoomRequest,
+        crate::handlers::lobby::LobbyInfo,
+        crate::handlers::lobby::KnockRequest,
+        crate::handlers::lobby::KnockResponse,
+        crate::handlers::lobby::KnockEntry,
+        crate::handlers::lobby::KnockStatus,
+        crate::handlers::lobby::KnockStatusResponse,
         crate::handlers::transcription::SessionEndedEvent,
         crate::handlers::video_messages::VideoMessage,
         crate::handlers::video_messages::CreateVideoMessageRequest,

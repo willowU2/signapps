@@ -55,7 +55,16 @@ import {
   Radio,
   Captions,
   Circle,
+  DoorOpen,
+  Check,
+  X,
 } from "lucide-react";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import type { KnockEntry } from "@/lib/api/meet";
 
 import { MeetSidebar } from "./meet-sidebar";
 
@@ -146,6 +155,41 @@ function useRecordingPolling(code: string) {
 }
 
 /**
+ * Poll pending knock requests for the given room code (host only).
+ * No-op when `enabled=false` (non-host path).
+ */
+function usePendingKnocks(code: string, enabled: boolean) {
+  const [entries, setEntries] = useState<KnockEntry[]>([]);
+
+  const refresh = useCallback(async () => {
+    if (!enabled) {
+      setEntries([]);
+      return;
+    }
+    try {
+      const res = await meetApi.listKnocks(code);
+      setEntries(res.data);
+    } catch {
+      // Non-host or transient error — keep the previous snapshot silently.
+    }
+  }, [code, enabled]);
+
+  useEffect(() => {
+    let active = true;
+    refresh();
+    const id = setInterval(() => {
+      if (active) refresh();
+    }, 3000);
+    return () => {
+      active = false;
+      clearInterval(id);
+    };
+  }, [refresh]);
+
+  return { entries, refresh };
+}
+
+/**
  * Resolve whether the current user is the room's host by scanning
  * `listRooms()` (which only returns rooms the caller created).
  */
@@ -190,7 +234,31 @@ function MeetUiContent({
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const isHost = useIsRoomHost(roomId);
   const { isRecording, refresh: refreshRecording } = useRecordingPolling(roomId);
+  const { entries: pendingKnocks, refresh: refreshKnocks } = usePendingKnocks(
+    roomId,
+    isHost,
+  );
   const [recordingBusy, setRecordingBusy] = useState(false);
+
+  const handleAdmit = async (identity: string) => {
+    try {
+      await meetApi.admitKnock(roomId, identity);
+      sonnerToast.success("Participant admis");
+      await refreshKnocks();
+    } catch {
+      sonnerToast.error("Impossible d'admettre ce participant");
+    }
+  };
+
+  const handleDeny = async (identity: string) => {
+    try {
+      await meetApi.denyKnock(roomId, identity);
+      sonnerToast.message("Demande refusée");
+      await refreshKnocks();
+    } catch {
+      sonnerToast.error("Impossible de refuser cette demande");
+    }
+  };
 
   const {
     isMicrophoneEnabled,
@@ -325,6 +393,82 @@ function MeetUiContent({
         </div>
         {/* Right */}
         <div className="flex items-center gap-1">
+          {isHost && pendingKnocks.length > 0 && (
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="relative h-8 text-muted-foreground hover:text-foreground gap-1.5"
+                  aria-label={`${pendingKnocks.length} demandes d'entrée`}
+                >
+                  <DoorOpen className="h-4 w-4" />
+                  <Badge
+                    className="h-5 min-w-[1.25rem] px-1.5 bg-primary text-primary-foreground"
+                    aria-hidden
+                  >
+                    {pendingKnocks.length}
+                  </Badge>
+                  <span className="hidden md:inline">Demandes</span>
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent
+                align="end"
+                className="w-80 bg-card border-border p-0"
+              >
+                <div className="px-4 py-3 border-b border-border">
+                  <div className="text-sm font-semibold text-foreground">
+                    Demandes d&apos;entrée
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    {pendingKnocks.length}{" "}
+                    {pendingKnocks.length > 1 ? "personnes" : "personne"} en
+                    attente
+                  </div>
+                </div>
+                <ul className="flex flex-col divide-y divide-border max-h-80 overflow-y-auto">
+                  {pendingKnocks.map((entry) => (
+                    <li
+                      key={entry.request_id}
+                      className="flex items-center gap-2 px-3 py-2"
+                    >
+                      <Avatar className="h-8 w-8 shrink-0">
+                        <AvatarFallback className="bg-muted text-foreground text-xs font-semibold">
+                          {initials(entry.display_name)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="min-w-0 flex-1">
+                        <div className="truncate text-sm font-medium text-foreground">
+                          {entry.display_name}
+                        </div>
+                        <div className="truncate text-[11px] text-muted-foreground">
+                          {entry.identity}
+                        </div>
+                      </div>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => handleAdmit(entry.identity)}
+                        className="h-8 w-8 text-primary hover:bg-primary/10"
+                        aria-label="Admettre"
+                      >
+                        <Check className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => handleDeny(entry.identity)}
+                        className="h-8 w-8 text-destructive hover:bg-destructive/10"
+                        aria-label="Refuser"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </li>
+                  ))}
+                </ul>
+              </PopoverContent>
+            </Popover>
+          )}
           <Button
             variant="ghost"
             size="icon"

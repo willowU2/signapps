@@ -118,20 +118,42 @@ export interface InstantRoomResponse {
 }
 
 export interface LobbyInfo {
-    room_code: string;
+    /** Room UUID (for code→id resolution without a separate round-trip). */
+    room_id: string;
+    /** Human-readable room name. */
     room_name: string;
-    knock_required?: boolean;
-    host_present?: boolean;
-    participant_count?: number;
+    /** Whether the room accepts joins (not `ended`). */
+    is_open: boolean;
+    /** Whether the host requires explicit admission (knock flow). */
+    requires_knock: boolean;
+    /** Whether the room is password-protected. */
+    has_password: boolean;
 }
 
 export interface KnockRequest {
-    display_name?: string;
+    display_name: string;
+    identity?: string;
 }
 
+export type KnockStatus = 'pending' | 'admitted' | 'denied';
+
 export interface KnockResponse {
-    knock_id: string;
-    status: 'pending' | 'admitted' | 'denied';
+    request_id: string;
+    identity: string;
+    status: KnockStatus;
+}
+
+export interface KnockEntry {
+    request_id: string;
+    identity: string;
+    display_name: string;
+    status: KnockStatus;
+    created_at: string;
+    resolved_at?: string;
+}
+
+export interface KnockStatusResponse {
+    status: KnockStatus;
 }
 
 export interface JoinRoomResponse {
@@ -172,14 +194,29 @@ export const meetApi = {
     getLobby: (code: string) =>
         meetClient.get<LobbyInfo>(`/meet/rooms/${code}/lobby`),
 
-    knock: (code: string, data?: KnockRequest) =>
-        meetClient.post<KnockResponse>(`/meet/rooms/${code}/knock`, data ?? {}),
+    /** DB-backed knock flow (persisted in meet.waiting_room_requests). */
+    knock: (code: string, data: KnockRequest) =>
+        meetClient.post<KnockResponse>(`/meet/rooms/${code}/knock`, data),
 
-    admitKnock: (code: string, knockId: string) =>
-        meetClient.post(`/meet/rooms/${code}/admit`, { knock_id: knockId }),
+    /** Public polling endpoint — returns the current status for an identity. */
+    getKnockStatus: (code: string, identity: string) =>
+        meetClient.get<KnockStatusResponse>(
+            `/meet/rooms/${code}/knock-status?identity=${encodeURIComponent(identity)}`,
+        ),
 
-    denyKnock: (code: string, knockId: string) =>
-        meetClient.post(`/meet/rooms/${code}/deny`, { knock_id: knockId }),
+    /** Host-only — returns pending knockers for this room. */
+    listKnocks: (code: string) =>
+        meetClient.get<KnockEntry[]>(`/meet/rooms/${code}/knocks`),
+
+    admitKnock: (code: string, identity: string) =>
+        meetClient.post<KnockEntry>(
+            `/meet/rooms/${code}/admit/${encodeURIComponent(identity)}`,
+        ),
+
+    denyKnock: (code: string, identity: string) =>
+        meetClient.post<KnockEntry>(
+            `/meet/rooms/${code}/deny/${encodeURIComponent(identity)}`,
+        ),
 
     joinByCode: (code: string, displayName?: string) =>
         meetClient.post<JoinRoomResponse>(`/meet/rooms/${code}/join`, {
