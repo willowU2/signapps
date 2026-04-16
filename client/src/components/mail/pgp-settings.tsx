@@ -240,8 +240,7 @@ export function PgpSettings({ accountId, accountEmail }: PgpSettingsProps) {
 
       updateConfig({ enabled: true, keyPair: storedKeyPair });
       toast.success("Paire de clés générée avec succès");
-    } catch (err) {
-      console.error("Key generation failed:", err);
+    } catch {
       toast.error("Impossible de générer la paire de clés");
     } finally {
       setGenerating(false);
@@ -323,8 +322,7 @@ export function PgpSettings({ accountId, accountEmail }: PgpSettingsProps) {
       setImportPublicKey("");
       setImportPrivateKey("");
       toast.success("Clés importées avec succès");
-    } catch (err) {
-      console.error("Import failed:", err);
+    } catch {
       toast.error(
         "Format de clé invalide. Utilisez des clés RSA au format PEM.",
       );

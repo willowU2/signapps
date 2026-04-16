@@ -324,7 +324,11 @@ export function MailDisplay({
           let subject = `Re: ${mail.subject}`;
 
           if (replyMode === "replyAll") {
-            // For reply-all, include original sender (same as reply for now, cc others if available)
+            // TODO(mail/reply-all): populate cc from mail.cc + mail.recipients once
+            // Mail type exposes those fields (currently the frontend model only
+            // carries a single `email` sender). Until then replyAll falls back
+            // to reply behavior, which is UX-equivalent to "Reply" — no silent
+            // cc list is sent.
             recipient = mail.email;
             subject = `Re: ${mail.subject}`;
           } else if (replyMode === "forward") {
@@ -470,7 +474,6 @@ export function MailDisplay({
           onError: (err) => {
             setIsRepliesLoading(false);
             toast.error(`Failed to generate replies: ${err}`);
-            console.warn(err);
           },
         },
         {
@@ -481,10 +484,9 @@ export function MailDisplay({
           language: crmDeals.length > 0 ? "fr" : "en",
         },
       );
-    } catch (e) {
+    } catch {
       setIsRepliesLoading(false);
       toast.error("Impossible de démarrer la génération");
-      console.warn(e);
     }
   };
 
@@ -842,7 +844,10 @@ export function MailDisplay({
               <h2 className="font-normal text-[22px] leading-tight text-foreground">
                 {mail.subject}
               </h2>
-              <PgpStatusBadges body={mail.text} accountId={mail.id} />
+              <PgpStatusBadges
+                body={mail.text}
+                accountId={mail.account_id ?? accountId ?? ""}
+              />
               <span className="bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 text-xs px-2 py-0.5 rounded border border-amber-200 dark:border-amber-800/50 font-medium leading-none flex items-center h-5">
                 Externe
               </span>
@@ -1033,7 +1038,7 @@ export function MailDisplay({
           <div className="px-8 py-1">
             <DecryptButton
               body={mail.text}
-              accountId={mail.id}
+              accountId={mail.account_id ?? accountId ?? ""}
               onDecrypted={setDecryptedBody}
             />
           </div>
@@ -1052,7 +1057,7 @@ export function MailDisplay({
           {!decryptedBody && mail.body_html && showHtml ? (
             <div className="px-8 py-2">
               <iframe
-                sandbox="allow-same-origin"
+                sandbox=""
                 referrerPolicy="no-referrer"
                 srcDoc={
                   '<meta name="referrer" content="no-referrer">' +

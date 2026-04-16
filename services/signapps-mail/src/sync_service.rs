@@ -23,15 +23,21 @@ const TLS_CONNECT_TIMEOUT_SECS: u64 = 10;
 const SYNC_ACCOUNT_TIMEOUT_SECS: u64 = 120;
 
 /// Build a native-tls connector for IMAP connections.
-/// Build a native-tls connector (used by async_imap which requires it).
-pub fn build_native_tls_connector(accept_invalid: bool) -> tokio_native_tls::TlsConnector {
-    tokio_native_tls::TlsConnector::from(
-        native_tls::TlsConnector::builder()
-            .danger_accept_invalid_certs(accept_invalid)
-            .danger_accept_invalid_hostnames(accept_invalid)
-            .build()
-            .expect("Failed to build TLS connector"),
-    )
+///
+/// # Errors
+///
+/// Returns `native_tls::Error` if the underlying TLS library cannot load a
+/// usable CA store or initialize the connector. Callers must handle this
+/// rather than panic — the worker thread is long-lived and a panic would
+/// take down all pending syncs.
+pub fn build_native_tls_connector(
+    accept_invalid: bool,
+) -> Result<tokio_native_tls::TlsConnector, native_tls::Error> {
+    let connector = native_tls::TlsConnector::builder()
+        .danger_accept_invalid_certs(accept_invalid)
+        .danger_accept_invalid_hostnames(accept_invalid)
+        .build()?;
+    Ok(tokio_native_tls::TlsConnector::from(connector))
 }
 
 /// Perform a TLS handshake with a timeout using native-tls.

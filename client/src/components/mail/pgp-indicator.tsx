@@ -151,8 +151,7 @@ export function DecryptButton({
       setDecrypted(true);
       onDecrypted(plaintext);
       toast.success("Email decrypted");
-    } catch (err) {
-      console.error("Decryption failed:", err);
+    } catch {
       toast.error(
         "Failed to decrypt. The email may have been encrypted with a different key.",
       );

@@ -50,7 +50,10 @@ pub async fn test_imap_connection(
     let imap_port = account.imap_port.unwrap_or(993) as u16;
 
     // Build TLS connector (rustls — reliable on Windows)
-    let tls = crate::sync_service::build_native_tls_connector(false);
+    let tls = match crate::sync_service::build_native_tls_connector(false) {
+        Ok(t) => t,
+        Err(e) => return (false, Some(format!("TLS init failed: {}", e)), None),
+    };
 
     // Connect to IMAP server
     let tcp_stream = match tokio::net::TcpStream::connect((imap_server.as_str(), imap_port)).await {

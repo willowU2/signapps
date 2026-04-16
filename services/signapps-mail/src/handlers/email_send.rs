@@ -64,6 +64,23 @@ pub async fn send_email(
             .into_response();
     }
 
+    // Reject header injection: CR/LF in any header-bearing field would allow
+    // an attacker to inject arbitrary SMTP headers (Bcc, Content-Type, etc.).
+    let has_crlf = |s: &str| s.contains('\r') || s.contains('\n');
+    if has_crlf(&payload.recipient)
+        || has_crlf(&payload.subject)
+        || payload.cc.as_deref().is_some_and(has_crlf)
+        || payload.bcc.as_deref().is_some_and(has_crlf)
+    {
+        return (
+            StatusCode::BAD_REQUEST,
+            Json(serde_json::json!({
+                "error": "Header fields cannot contain CR or LF characters"
+            })),
+        )
+            .into_response();
+    }
+
     if payload.subject.len() > 998 {
         return (
             StatusCode::BAD_REQUEST,

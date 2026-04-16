@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
+import DOMPurify from "isomorphic-dompurify";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AppLayout } from "@/components/layout/app-layout";
 import { usePageTitle } from "@/hooks/use-page-title";
@@ -535,14 +536,11 @@ export default function MailTemplatesPage() {
                   {substituteVariables(previewTemplate.subject, previewValues)}
                 </div>
               )}
-              <div
-                className="p-4 text-sm whitespace-pre-wrap"
-                dangerouslySetInnerHTML={{
-                  __html: substituteVariables(
-                    previewTemplate.body_html ?? "",
-                    previewValues,
-                  ),
-                }}
+              <TemplatePreviewHtml
+                html={substituteVariables(
+                  previewTemplate.body_html ?? "",
+                  previewValues,
+                )}
               />
             </div>
           )}
@@ -595,5 +593,21 @@ export default function MailTemplatesPage() {
         </AlertDialogContent>
       </AlertDialog>
     </AppLayout>
+  );
+}
+
+/**
+ * Renders sanitized template HTML.
+ * The body_html comes from server-stored templates and may contain arbitrary
+ * markup authored by admin users. Sanitize via DOMPurify before injection to
+ * block XSS via <script>, event handlers, and dangerous URI schemes.
+ */
+function TemplatePreviewHtml({ html }: { html: string }) {
+  const safe = useMemo(() => DOMPurify.sanitize(html), [html]);
+  return (
+    <div
+      className="p-4 text-sm whitespace-pre-wrap"
+      dangerouslySetInnerHTML={{ __html: safe }}
+    />
   );
 }
