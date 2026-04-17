@@ -1,18 +1,11 @@
 {
-  "generated_at": "2026-04-17T00:11:18.894Z",
+  "generated_at": "2026-04-17T09:35:43.433Z",
   "total_routes": 240,
   "results": [
     {
       "route": "/",
       "status": "ok",
       "violations": [
-        {
-          "id": "aria-allowed-role",
-          "impact": "minor",
-          "help": "ARIA role should be appropriate for the element",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/aria-allowed-role?application=playwright",
-          "nodes": 1
-        },
         {
           "id": "button-name",
           "impact": "critical",
@@ -21,10 +14,10 @@
           "nodes": 6
         },
         {
-          "id": "heading-order",
+          "id": "page-has-heading-one",
           "impact": "moderate",
-          "help": "Heading levels should only increase by one",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/heading-order?application=playwright",
+          "help": "Page should contain a level-one heading",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/page-has-heading-one?application=playwright",
           "nodes": 1
         },
         {
@@ -35,80 +28,31 @@
           "nodes": 4
         }
       ],
-      "timing_ms": 26381
+      "timing_ms": 24078
     },
     {
       "route": "/cal",
-      "status": "error",
-      "violations": [],
-      "error": "page.goto: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3000/cal\", waiting until \"domcontentloaded\"\u001b[22m\n",
-      "timing_ms": 30006
-    },
-    {
-      "route": "/cal/heatmap",
-      "status": "error",
-      "violations": [],
-      "error": "page.goto: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3000/cal/heatmap\", waiting until \"domcontentloaded\"\u001b[22m\n",
-      "timing_ms": 30001
-    },
-    {
-      "route": "/metrics",
-      "status": "error",
-      "violations": [],
-      "error": "page.goto: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3000/metrics\", waiting until \"domcontentloaded\"\u001b[22m\n",
-      "timing_ms": 30002
-    },
-    {
-      "route": "/account/connections",
       "status": "ok",
       "violations": [
-        {
-          "id": "aria-allowed-role",
-          "impact": "minor",
-          "help": "ARIA role should be appropriate for the element",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/aria-allowed-role?application=playwright",
-          "nodes": 1
-        },
-        {
-          "id": "heading-order",
-          "impact": "moderate",
-          "help": "Heading levels should only increase by one",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/heading-order?application=playwright",
-          "nodes": 1
-        },
-        {
-          "id": "region",
-          "impact": "moderate",
-          "help": "All page content should be contained by landmarks",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/region?application=playwright",
-          "nodes": 4
-        }
-      ],
-      "timing_ms": 43488
-    },
-    {
-      "route": "/accounting",
-      "status": "ok",
-      "violations": [
-        {
-          "id": "aria-allowed-role",
-          "impact": "minor",
-          "help": "ARIA role should be appropriate for the element",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/aria-allowed-role?application=playwright",
-          "nodes": 1
-        },
         {
           "id": "button-name",
           "impact": "critical",
           "help": "Buttons must have discernible text",
           "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/button-name?application=playwright",
-          "nodes": 25
+          "nodes": 2
         },
         {
-          "id": "heading-order",
+          "id": "landmark-main-is-top-level",
           "impact": "moderate",
-          "help": "Heading levels should only increase by one",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/heading-order?application=playwright",
+          "help": "Main landmark should not be contained in another landmark",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/landmark-main-is-top-level?application=playwright",
+          "nodes": 1
+        },
+        {
+          "id": "landmark-no-duplicate-main",
+          "impact": "moderate",
+          "help": "Document should not have more than one main landmark",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/landmark-no-duplicate-main?application=playwright",
           "nodes": 1
         },
         {
@@ -116,27 +60,6 @@
           "impact": "moderate",
           "help": "Landmarks should have a unique role or role/label/title (i.e. accessible name) combination",
           "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/landmark-unique?application=playwright",
-          "nodes": 1
-        },
-        {
-          "id": "region",
-          "impact": "moderate",
-          "help": "All page content should be contained by landmarks",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/region?application=playwright",
-          "nodes": 4
-        }
-      ],
-      "timing_ms": 25577
-    },
-    {
-      "route": "/admin",
-      "status": "ok",
-      "violations": [
-        {
-          "id": "landmark-one-main",
-          "impact": "moderate",
-          "help": "Document should have one main landmark",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/landmark-one-main?application=playwright",
           "nodes": 1
         },
         {
@@ -151,43 +74,15 @@
           "impact": "moderate",
           "help": "All page content should be contained by landmarks",
           "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/region?application=playwright",
-          "nodes": 1
-        },
-        {
-          "id": "skip-link",
-          "impact": "moderate",
-          "help": "The skip-link target should exist and be focusable",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/skip-link?application=playwright",
-          "nodes": 1
+          "nodes": 4
         }
       ],
-      "timing_ms": 23029
+      "timing_ms": 33845
     },
     {
-      "route": "/admin/accessibility",
-      "status": "error",
-      "violations": [],
-      "error": "page.goto: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3000/admin/accessibility\", waiting until \"domcontentloaded\"\u001b[22m\n",
-      "timing_ms": 30015
-    },
-    {
-      "route": "/admin/active-directory",
+      "route": "/cal/heatmap",
       "status": "ok",
       "violations": [
-        {
-          "id": "aria-allowed-role",
-          "impact": "minor",
-          "help": "ARIA role should be appropriate for the element",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/aria-allowed-role?application=playwright",
-          "nodes": 1
-        },
-        {
-          "id": "heading-order",
-          "impact": "moderate",
-          "help": "Heading levels should only increase by one",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/heading-order?application=playwright",
-          "nodes": 1
-        },
         {
           "id": "region",
           "impact": "moderate",
@@ -196,404 +91,12 @@
           "nodes": 4
         }
       ],
-      "timing_ms": 45308
+      "timing_ms": 22676
     },
     {
-      "route": "/admin/active-directory/certificates",
+      "route": "/metrics",
       "status": "ok",
       "violations": [
-        {
-          "id": "aria-allowed-role",
-          "impact": "minor",
-          "help": "ARIA role should be appropriate for the element",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/aria-allowed-role?application=playwright",
-          "nodes": 1
-        },
-        {
-          "id": "heading-order",
-          "impact": "moderate",
-          "help": "Heading levels should only increase by one",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/heading-order?application=playwright",
-          "nodes": 1
-        },
-        {
-          "id": "region",
-          "impact": "moderate",
-          "help": "All page content should be contained by landmarks",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/region?application=playwright",
-          "nodes": 4
-        }
-      ],
-      "timing_ms": 24471
-    },
-    {
-      "route": "/admin/active-directory/computers",
-      "status": "ok",
-      "violations": [
-        {
-          "id": "aria-allowed-role",
-          "impact": "minor",
-          "help": "ARIA role should be appropriate for the element",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/aria-allowed-role?application=playwright",
-          "nodes": 1
-        },
-        {
-          "id": "button-name",
-          "impact": "critical",
-          "help": "Buttons must have discernible text",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/button-name?application=playwright",
-          "nodes": 1
-        },
-        {
-          "id": "heading-order",
-          "impact": "moderate",
-          "help": "Heading levels should only increase by one",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/heading-order?application=playwright",
-          "nodes": 1
-        },
-        {
-          "id": "region",
-          "impact": "moderate",
-          "help": "All page content should be contained by landmarks",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/region?application=playwright",
-          "nodes": 4
-        }
-      ],
-      "timing_ms": 24395
-    },
-    {
-      "route": "/admin/active-directory/dc-management",
-      "status": "ok",
-      "violations": [
-        {
-          "id": "aria-allowed-role",
-          "impact": "minor",
-          "help": "ARIA role should be appropriate for the element",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/aria-allowed-role?application=playwright",
-          "nodes": 1
-        },
-        {
-          "id": "heading-order",
-          "impact": "moderate",
-          "help": "Heading levels should only increase by one",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/heading-order?application=playwright",
-          "nodes": 1
-        },
-        {
-          "id": "region",
-          "impact": "moderate",
-          "help": "All page content should be contained by landmarks",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/region?application=playwright",
-          "nodes": 4
-        }
-      ],
-      "timing_ms": 29479
-    },
-    {
-      "route": "/admin/active-directory/deployment",
-      "status": "ok",
-      "violations": [
-        {
-          "id": "aria-allowed-role",
-          "impact": "minor",
-          "help": "ARIA role should be appropriate for the element",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/aria-allowed-role?application=playwright",
-          "nodes": 1
-        },
-        {
-          "id": "heading-order",
-          "impact": "moderate",
-          "help": "Heading levels should only increase by one",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/heading-order?application=playwright",
-          "nodes": 1
-        },
-        {
-          "id": "region",
-          "impact": "moderate",
-          "help": "All page content should be contained by landmarks",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/region?application=playwright",
-          "nodes": 4
-        }
-      ],
-      "timing_ms": 29559
-    },
-    {
-      "route": "/admin/active-directory/dhcp",
-      "status": "ok",
-      "violations": [
-        {
-          "id": "aria-allowed-role",
-          "impact": "minor",
-          "help": "ARIA role should be appropriate for the element",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/aria-allowed-role?application=playwright",
-          "nodes": 1
-        },
-        {
-          "id": "heading-order",
-          "impact": "moderate",
-          "help": "Heading levels should only increase by one",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/heading-order?application=playwright",
-          "nodes": 1
-        },
-        {
-          "id": "region",
-          "impact": "moderate",
-          "help": "All page content should be contained by landmarks",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/region?application=playwright",
-          "nodes": 4
-        }
-      ],
-      "timing_ms": 24159
-    },
-    {
-      "route": "/admin/active-directory/dns",
-      "status": "ok",
-      "violations": [
-        {
-          "id": "aria-allowed-role",
-          "impact": "minor",
-          "help": "ARIA role should be appropriate for the element",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/aria-allowed-role?application=playwright",
-          "nodes": 1
-        },
-        {
-          "id": "heading-order",
-          "impact": "moderate",
-          "help": "Heading levels should only increase by one",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/heading-order?application=playwright",
-          "nodes": 1
-        },
-        {
-          "id": "region",
-          "impact": "moderate",
-          "help": "All page content should be contained by landmarks",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/region?application=playwright",
-          "nodes": 4
-        }
-      ],
-      "timing_ms": 24442
-    },
-    {
-      "route": "/admin/active-directory/domains",
-      "status": "ok",
-      "violations": [
-        {
-          "id": "aria-allowed-role",
-          "impact": "minor",
-          "help": "ARIA role should be appropriate for the element",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/aria-allowed-role?application=playwright",
-          "nodes": 1
-        },
-        {
-          "id": "heading-order",
-          "impact": "moderate",
-          "help": "Heading levels should only increase by one",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/heading-order?application=playwright",
-          "nodes": 1
-        },
-        {
-          "id": "region",
-          "impact": "moderate",
-          "help": "All page content should be contained by landmarks",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/region?application=playwright",
-          "nodes": 4
-        }
-      ],
-      "timing_ms": 24140
-    },
-    {
-      "route": "/admin/active-directory/gpo",
-      "status": "ok",
-      "violations": [
-        {
-          "id": "aria-allowed-role",
-          "impact": "minor",
-          "help": "ARIA role should be appropriate for the element",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/aria-allowed-role?application=playwright",
-          "nodes": 1
-        },
-        {
-          "id": "button-name",
-          "impact": "critical",
-          "help": "Buttons must have discernible text",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/button-name?application=playwright",
-          "nodes": 1
-        },
-        {
-          "id": "heading-order",
-          "impact": "moderate",
-          "help": "Heading levels should only increase by one",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/heading-order?application=playwright",
-          "nodes": 1
-        },
-        {
-          "id": "region",
-          "impact": "moderate",
-          "help": "All page content should be contained by landmarks",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/region?application=playwright",
-          "nodes": 4
-        }
-      ],
-      "timing_ms": 24504
-    },
-    {
-      "route": "/admin/active-directory/kerberos",
-      "status": "ok",
-      "violations": [
-        {
-          "id": "aria-allowed-role",
-          "impact": "minor",
-          "help": "ARIA role should be appropriate for the element",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/aria-allowed-role?application=playwright",
-          "nodes": 1
-        },
-        {
-          "id": "button-name",
-          "impact": "critical",
-          "help": "Buttons must have discernible text",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/button-name?application=playwright",
-          "nodes": 1
-        },
-        {
-          "id": "heading-order",
-          "impact": "moderate",
-          "help": "Heading levels should only increase by one",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/heading-order?application=playwright",
-          "nodes": 1
-        },
-        {
-          "id": "region",
-          "impact": "moderate",
-          "help": "All page content should be contained by landmarks",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/region?application=playwright",
-          "nodes": 4
-        }
-      ],
-      "timing_ms": 24224
-    },
-    {
-      "route": "/admin/active-directory/security",
-      "status": "ok",
-      "violations": [
-        {
-          "id": "aria-allowed-role",
-          "impact": "minor",
-          "help": "ARIA role should be appropriate for the element",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/aria-allowed-role?application=playwright",
-          "nodes": 1
-        },
-        {
-          "id": "heading-order",
-          "impact": "moderate",
-          "help": "Heading levels should only increase by one",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/heading-order?application=playwright",
-          "nodes": 1
-        },
-        {
-          "id": "region",
-          "impact": "moderate",
-          "help": "All page content should be contained by landmarks",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/region?application=playwright",
-          "nodes": 4
-        }
-      ],
-      "timing_ms": 25241
-    },
-    {
-      "route": "/admin/active-directory/snapshots",
-      "status": "ok",
-      "violations": [
-        {
-          "id": "aria-allowed-role",
-          "impact": "minor",
-          "help": "ARIA role should be appropriate for the element",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/aria-allowed-role?application=playwright",
-          "nodes": 1
-        },
-        {
-          "id": "heading-order",
-          "impact": "moderate",
-          "help": "Heading levels should only increase by one",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/heading-order?application=playwright",
-          "nodes": 1
-        },
-        {
-          "id": "region",
-          "impact": "moderate",
-          "help": "All page content should be contained by landmarks",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/region?application=playwright",
-          "nodes": 4
-        }
-      ],
-      "timing_ms": 24322
-    },
-    {
-      "route": "/admin/active-directory/sync",
-      "status": "ok",
-      "violations": [
-        {
-          "id": "aria-allowed-role",
-          "impact": "minor",
-          "help": "ARIA role should be appropriate for the element",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/aria-allowed-role?application=playwright",
-          "nodes": 1
-        },
-        {
-          "id": "heading-order",
-          "impact": "moderate",
-          "help": "Heading levels should only increase by one",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/heading-order?application=playwright",
-          "nodes": 1
-        },
-        {
-          "id": "region",
-          "impact": "moderate",
-          "help": "All page content should be contained by landmarks",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/region?application=playwright",
-          "nodes": 4
-        }
-      ],
-      "timing_ms": 24157
-    },
-    {
-      "route": "/admin/activity",
-      "status": "ok",
-      "violations": [
-        {
-          "id": "aria-allowed-role",
-          "impact": "minor",
-          "help": "ARIA role should be appropriate for the element",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/aria-allowed-role?application=playwright",
-          "nodes": 1
-        },
-        {
-          "id": "heading-order",
-          "impact": "moderate",
-          "help": "Heading levels should only increase by one",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/heading-order?application=playwright",
-          "nodes": 1
-        },
-        {
-          "id": "region",
-          "impact": "moderate",
-          "help": "All page content should be contained by landmarks",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/region?application=playwright",
-          "nodes": 4
-        }
-      ],
-      "timing_ms": 24332
-    },
-    {
-      "route": "/admin/ai-cost",
-      "status": "ok",
-      "violations": [
-        {
-          "id": "aria-allowed-role",
-          "impact": "minor",
-          "help": "ARIA role should be appropriate for the element",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/aria-allowed-role?application=playwright",
-          "nodes": 1
-        },
         {
           "id": "button-name",
           "impact": "critical",
@@ -602,10 +105,115 @@
           "nodes": 2
         },
         {
-          "id": "heading-order",
+          "id": "region",
           "impact": "moderate",
-          "help": "Heading levels should only increase by one",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/heading-order?application=playwright",
+          "help": "All page content should be contained by landmarks",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/region?application=playwright",
+          "nodes": 4
+        }
+      ],
+      "timing_ms": 30335
+    },
+    {
+      "route": "/account/connections",
+      "status": "ok",
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "help": "All page content should be contained by landmarks",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/region?application=playwright",
+          "nodes": 4
+        }
+      ],
+      "timing_ms": 24257
+    },
+    {
+      "route": "/accounting",
+      "status": "ok",
+      "violations": [
+        {
+          "id": "button-name",
+          "impact": "critical",
+          "help": "Buttons must have discernible text",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/button-name?application=playwright",
+          "nodes": 25
+        },
+        {
+          "id": "region",
+          "impact": "moderate",
+          "help": "All page content should be contained by landmarks",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/region?application=playwright",
+          "nodes": 4
+        }
+      ],
+      "timing_ms": 35859
+    },
+    {
+      "route": "/admin",
+      "status": "ok",
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "help": "All page content should be contained by landmarks",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/region?application=playwright",
+          "nodes": 4
+        }
+      ],
+      "timing_ms": 30236
+    },
+    {
+      "route": "/admin/accessibility",
+      "status": "ok",
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "help": "All page content should be contained by landmarks",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/region?application=playwright",
+          "nodes": 4
+        }
+      ],
+      "timing_ms": 24713
+    },
+    {
+      "route": "/admin/active-directory",
+      "status": "ok",
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "help": "All page content should be contained by landmarks",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/region?application=playwright",
+          "nodes": 4
+        }
+      ],
+      "timing_ms": 37932
+    },
+    {
+      "route": "/admin/active-directory/certificates",
+      "status": "ok",
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "help": "All page content should be contained by landmarks",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/region?application=playwright",
+          "nodes": 4
+        }
+      ],
+      "timing_ms": 24266
+    },
+    {
+      "route": "/admin/active-directory/computers",
+      "status": "ok",
+      "violations": [
+        {
+          "id": "button-name",
+          "impact": "critical",
+          "help": "Buttons must have discernible text",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/button-name?application=playwright",
           "nodes": 1
         },
         {
@@ -616,27 +224,202 @@
           "nodes": 4
         }
       ],
-      "timing_ms": 27445
+      "timing_ms": 24601
+    },
+    {
+      "route": "/admin/active-directory/dc-management",
+      "status": "ok",
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "help": "All page content should be contained by landmarks",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/region?application=playwright",
+          "nodes": 4
+        }
+      ],
+      "timing_ms": 30884
+    },
+    {
+      "route": "/admin/active-directory/deployment",
+      "status": "ok",
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "help": "All page content should be contained by landmarks",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/region?application=playwright",
+          "nodes": 4
+        }
+      ],
+      "timing_ms": 30725
+    },
+    {
+      "route": "/admin/active-directory/dhcp",
+      "status": "ok",
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "help": "All page content should be contained by landmarks",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/region?application=playwright",
+          "nodes": 4
+        }
+      ],
+      "timing_ms": 24130
+    },
+    {
+      "route": "/admin/active-directory/dns",
+      "status": "ok",
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "help": "All page content should be contained by landmarks",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/region?application=playwright",
+          "nodes": 4
+        }
+      ],
+      "timing_ms": 24475
+    },
+    {
+      "route": "/admin/active-directory/domains",
+      "status": "ok",
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "help": "All page content should be contained by landmarks",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/region?application=playwright",
+          "nodes": 4
+        }
+      ],
+      "timing_ms": 24252
+    },
+    {
+      "route": "/admin/active-directory/gpo",
+      "status": "ok",
+      "violations": [
+        {
+          "id": "button-name",
+          "impact": "critical",
+          "help": "Buttons must have discernible text",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/button-name?application=playwright",
+          "nodes": 1
+        },
+        {
+          "id": "region",
+          "impact": "moderate",
+          "help": "All page content should be contained by landmarks",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/region?application=playwright",
+          "nodes": 4
+        }
+      ],
+      "timing_ms": 24392
+    },
+    {
+      "route": "/admin/active-directory/kerberos",
+      "status": "ok",
+      "violations": [
+        {
+          "id": "button-name",
+          "impact": "critical",
+          "help": "Buttons must have discernible text",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/button-name?application=playwright",
+          "nodes": 1
+        },
+        {
+          "id": "region",
+          "impact": "moderate",
+          "help": "All page content should be contained by landmarks",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/region?application=playwright",
+          "nodes": 4
+        }
+      ],
+      "timing_ms": 24146
+    },
+    {
+      "route": "/admin/active-directory/security",
+      "status": "ok",
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "help": "All page content should be contained by landmarks",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/region?application=playwright",
+          "nodes": 4
+        }
+      ],
+      "timing_ms": 24461
+    },
+    {
+      "route": "/admin/active-directory/snapshots",
+      "status": "ok",
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "help": "All page content should be contained by landmarks",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/region?application=playwright",
+          "nodes": 4
+        }
+      ],
+      "timing_ms": 24102
+    },
+    {
+      "route": "/admin/active-directory/sync",
+      "status": "ok",
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "help": "All page content should be contained by landmarks",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/region?application=playwright",
+          "nodes": 4
+        }
+      ],
+      "timing_ms": 24371
+    },
+    {
+      "route": "/admin/activity",
+      "status": "ok",
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "help": "All page content should be contained by landmarks",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/region?application=playwright",
+          "nodes": 4
+        }
+      ],
+      "timing_ms": 24101
+    },
+    {
+      "route": "/admin/ai-cost",
+      "status": "ok",
+      "violations": [
+        {
+          "id": "button-name",
+          "impact": "critical",
+          "help": "Buttons must have discernible text",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/button-name?application=playwright",
+          "nodes": 2
+        },
+        {
+          "id": "region",
+          "impact": "moderate",
+          "help": "All page content should be contained by landmarks",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/region?application=playwright",
+          "nodes": 4
+        }
+      ],
+      "timing_ms": 24914
     },
     {
       "route": "/admin/ai-training",
       "status": "ok",
       "violations": [
         {
-          "id": "aria-allowed-role",
-          "impact": "minor",
-          "help": "ARIA role should be appropriate for the element",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/aria-allowed-role?application=playwright",
-          "nodes": 1
-        },
-        {
-          "id": "heading-order",
-          "impact": "moderate",
-          "help": "Heading levels should only increase by one",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/heading-order?application=playwright",
-          "nodes": 1
-        },
-        {
           "id": "region",
           "impact": "moderate",
           "help": "All page content should be contained by landmarks",
@@ -644,27 +427,13 @@
           "nodes": 4
         }
       ],
-      "timing_ms": 29447
+      "timing_ms": 31445
     },
     {
       "route": "/admin/ai/lightrag",
       "status": "ok",
       "violations": [
         {
-          "id": "aria-allowed-role",
-          "impact": "minor",
-          "help": "ARIA role should be appropriate for the element",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/aria-allowed-role?application=playwright",
-          "nodes": 1
-        },
-        {
-          "id": "heading-order",
-          "impact": "moderate",
-          "help": "Heading levels should only increase by one",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/heading-order?application=playwright",
-          "nodes": 1
-        },
-        {
           "id": "region",
           "impact": "moderate",
           "help": "All page content should be contained by landmarks",
@@ -672,27 +441,13 @@
           "nodes": 4
         }
       ],
-      "timing_ms": 24223
+      "timing_ms": 24303
     },
     {
       "route": "/admin/api-docs",
       "status": "ok",
       "violations": [
         {
-          "id": "aria-allowed-role",
-          "impact": "minor",
-          "help": "ARIA role should be appropriate for the element",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/aria-allowed-role?application=playwright",
-          "nodes": 1
-        },
-        {
-          "id": "heading-order",
-          "impact": "moderate",
-          "help": "Heading levels should only increase by one",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/heading-order?application=playwright",
-          "nodes": 1
-        },
-        {
           "id": "region",
           "impact": "moderate",
           "help": "All page content should be contained by landmarks",
@@ -700,26 +455,12 @@
           "nodes": 4
         }
       ],
-      "timing_ms": 25082
+      "timing_ms": 25182
     },
     {
       "route": "/admin/api-health",
       "status": "ok",
       "violations": [
-        {
-          "id": "aria-allowed-role",
-          "impact": "minor",
-          "help": "ARIA role should be appropriate for the element",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/aria-allowed-role?application=playwright",
-          "nodes": 1
-        },
-        {
-          "id": "heading-order",
-          "impact": "moderate",
-          "help": "Heading levels should only increase by one",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/heading-order?application=playwright",
-          "nodes": 1
-        },
         {
           "id": "region",
           "impact": "moderate",
@@ -735,27 +476,13 @@
           "nodes": 1
         }
       ],
-      "timing_ms": 24715
+      "timing_ms": 24337
     },
     {
       "route": "/admin/api-marketplace",
       "status": "ok",
       "violations": [
         {
-          "id": "aria-allowed-role",
-          "impact": "minor",
-          "help": "ARIA role should be appropriate for the element",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/aria-allowed-role?application=playwright",
-          "nodes": 1
-        },
-        {
-          "id": "heading-order",
-          "impact": "moderate",
-          "help": "Heading levels should only increase by one",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/heading-order?application=playwright",
-          "nodes": 1
-        },
-        {
           "id": "region",
           "impact": "moderate",
           "help": "All page content should be contained by landmarks",
@@ -763,262 +490,10 @@
           "nodes": 4
         }
       ],
-      "timing_ms": 24590
+      "timing_ms": 27883
     },
     {
       "route": "/admin/api-platform",
-      "status": "ok",
-      "violations": [
-        {
-          "id": "landmark-one-main",
-          "impact": "moderate",
-          "help": "Document should have one main landmark",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/landmark-one-main?application=playwright",
-          "nodes": 1
-        },
-        {
-          "id": "page-has-heading-one",
-          "impact": "moderate",
-          "help": "Page should contain a level-one heading",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/page-has-heading-one?application=playwright",
-          "nodes": 1
-        },
-        {
-          "id": "region",
-          "impact": "moderate",
-          "help": "All page content should be contained by landmarks",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/region?application=playwright",
-          "nodes": 2
-        },
-        {
-          "id": "skip-link",
-          "impact": "moderate",
-          "help": "The skip-link target should exist and be focusable",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/skip-link?application=playwright",
-          "nodes": 1
-        }
-      ],
-      "timing_ms": 25034
-    },
-    {
-      "route": "/admin/api-playground",
-      "status": "ok",
-      "violations": [
-        {
-          "id": "aria-allowed-role",
-          "impact": "minor",
-          "help": "ARIA role should be appropriate for the element",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/aria-allowed-role?application=playwright",
-          "nodes": 1
-        },
-        {
-          "id": "heading-order",
-          "impact": "moderate",
-          "help": "Heading levels should only increase by one",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/heading-order?application=playwright",
-          "nodes": 1
-        },
-        {
-          "id": "region",
-          "impact": "moderate",
-          "help": "All page content should be contained by landmarks",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/region?application=playwright",
-          "nodes": 4
-        },
-        {
-          "id": "select-name",
-          "impact": "critical",
-          "help": "Select element must have an accessible name",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/select-name?application=playwright",
-          "nodes": 1
-        }
-      ],
-      "timing_ms": 25058
-    },
-    {
-      "route": "/admin/api-quota",
-      "status": "ok",
-      "violations": [
-        {
-          "id": "aria-allowed-role",
-          "impact": "minor",
-          "help": "ARIA role should be appropriate for the element",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/aria-allowed-role?application=playwright",
-          "nodes": 1
-        },
-        {
-          "id": "heading-order",
-          "impact": "moderate",
-          "help": "Heading levels should only increase by one",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/heading-order?application=playwright",
-          "nodes": 1
-        },
-        {
-          "id": "region",
-          "impact": "moderate",
-          "help": "All page content should be contained by landmarks",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/region?application=playwright",
-          "nodes": 4
-        }
-      ],
-      "timing_ms": 29586
-    },
-    {
-      "route": "/admin/audit",
-      "status": "ok",
-      "violations": [
-        {
-          "id": "aria-allowed-role",
-          "impact": "minor",
-          "help": "ARIA role should be appropriate for the element",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/aria-allowed-role?application=playwright",
-          "nodes": 1
-        },
-        {
-          "id": "button-name",
-          "impact": "critical",
-          "help": "Buttons must have discernible text",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/button-name?application=playwright",
-          "nodes": 1
-        },
-        {
-          "id": "heading-order",
-          "impact": "moderate",
-          "help": "Heading levels should only increase by one",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/heading-order?application=playwright",
-          "nodes": 1
-        },
-        {
-          "id": "label",
-          "impact": "critical",
-          "help": "Form elements must have labels",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/label?application=playwright",
-          "nodes": 2
-        },
-        {
-          "id": "region",
-          "impact": "moderate",
-          "help": "All page content should be contained by landmarks",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/region?application=playwright",
-          "nodes": 4
-        }
-      ],
-      "timing_ms": 24458
-    },
-    {
-      "route": "/admin/backup",
-      "status": "ok",
-      "violations": [
-        {
-          "id": "aria-allowed-role",
-          "impact": "minor",
-          "help": "ARIA role should be appropriate for the element",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/aria-allowed-role?application=playwright",
-          "nodes": 1
-        },
-        {
-          "id": "button-name",
-          "impact": "critical",
-          "help": "Buttons must have discernible text",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/button-name?application=playwright",
-          "nodes": 1
-        },
-        {
-          "id": "heading-order",
-          "impact": "moderate",
-          "help": "Heading levels should only increase by one",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/heading-order?application=playwright",
-          "nodes": 1
-        },
-        {
-          "id": "label",
-          "impact": "critical",
-          "help": "Form elements must have labels",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/label?application=playwright",
-          "nodes": 6
-        },
-        {
-          "id": "region",
-          "impact": "moderate",
-          "help": "All page content should be contained by landmarks",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/region?application=playwright",
-          "nodes": 4
-        }
-      ],
-      "timing_ms": 30442
-    },
-    {
-      "route": "/admin/backups",
-      "status": "ok",
-      "violations": [
-        {
-          "id": "landmark-one-main",
-          "impact": "moderate",
-          "help": "Document should have one main landmark",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/landmark-one-main?application=playwright",
-          "nodes": 1
-        },
-        {
-          "id": "page-has-heading-one",
-          "impact": "moderate",
-          "help": "Page should contain a level-one heading",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/page-has-heading-one?application=playwright",
-          "nodes": 1
-        },
-        {
-          "id": "region",
-          "impact": "moderate",
-          "help": "All page content should be contained by landmarks",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/region?application=playwright",
-          "nodes": 2
-        },
-        {
-          "id": "skip-link",
-          "impact": "moderate",
-          "help": "The skip-link target should exist and be focusable",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/skip-link?application=playwright",
-          "nodes": 1
-        }
-      ],
-      "timing_ms": 24816
-    },
-    {
-      "route": "/admin/branding",
-      "status": "ok",
-      "violations": [
-        {
-          "id": "aria-allowed-role",
-          "impact": "minor",
-          "help": "ARIA role should be appropriate for the element",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/aria-allowed-role?application=playwright",
-          "nodes": 1
-        },
-        {
-          "id": "heading-order",
-          "impact": "moderate",
-          "help": "Heading levels should only increase by one",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/heading-order?application=playwright",
-          "nodes": 1
-        },
-        {
-          "id": "label",
-          "impact": "critical",
-          "help": "Form elements must have labels",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/label?application=playwright",
-          "nodes": 1
-        },
-        {
-          "id": "region",
-          "impact": "moderate",
-          "help": "All page content should be contained by landmarks",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/region?application=playwright",
-          "nodes": 4
-        }
-      ],
-      "timing_ms": 24327
-    },
-    {
-      "route": "/admin/companies",
       "status": "ok",
       "violations": [
         {
@@ -1043,31 +518,87 @@
           "nodes": 1
         }
       ],
-      "timing_ms": 24107
+      "timing_ms": 24075
+    },
+    {
+      "route": "/admin/api-playground",
+      "status": "error",
+      "violations": [],
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/admin/api-playground\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3000/admin/api-playground\", waiting until \"domcontentloaded\"\u001b[22m\n",
+      "timing_ms": 2365
+    },
+    {
+      "route": "/admin/api-quota",
+      "status": "error",
+      "violations": [],
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/admin/api-quota\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3000/admin/api-quota\", waiting until \"domcontentloaded\"\u001b[22m\n",
+      "timing_ms": 262
+    },
+    {
+      "route": "/admin/audit",
+      "status": "error",
+      "violations": [],
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/admin/audit\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3000/admin/audit\", waiting until \"domcontentloaded\"\u001b[22m\n",
+      "timing_ms": 2108
+    },
+    {
+      "route": "/admin/backup",
+      "status": "error",
+      "violations": [],
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/admin/backup\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3000/admin/backup\", waiting until \"domcontentloaded\"\u001b[22m\n",
+      "timing_ms": 248
+    },
+    {
+      "route": "/admin/backups",
+      "status": "error",
+      "violations": [],
+      "error": "page.goto: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3000/admin/backups\", waiting until \"domcontentloaded\"\u001b[22m\n",
+      "timing_ms": 30012
+    },
+    {
+      "route": "/admin/branding",
+      "status": "ok",
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "help": "All page content should be contained by landmarks",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/region?application=playwright",
+          "nodes": 4
+        }
+      ],
+      "timing_ms": 25178
+    },
+    {
+      "route": "/admin/companies",
+      "status": "ok",
+      "violations": [
+        {
+          "id": "landmark-one-main",
+          "impact": "moderate",
+          "help": "Document should have one main landmark",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/landmark-one-main?application=playwright",
+          "nodes": 1
+        },
+        {
+          "id": "page-has-heading-one",
+          "impact": "moderate",
+          "help": "Page should contain a level-one heading",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/page-has-heading-one?application=playwright",
+          "nodes": 1
+        }
+      ],
+      "timing_ms": 25870
     },
     {
       "route": "/admin/container-resources",
       "status": "ok",
       "violations": [
         {
-          "id": "aria-allowed-role",
-          "impact": "minor",
-          "help": "ARIA role should be appropriate for the element",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/aria-allowed-role?application=playwright",
-          "nodes": 1
-        },
-        {
           "id": "button-name",
           "impact": "critical",
           "help": "Buttons must have discernible text",
           "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/button-name?application=playwright",
-          "nodes": 1
-        },
-        {
-          "id": "heading-order",
-          "impact": "moderate",
-          "help": "Heading levels should only increase by one",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/heading-order?application=playwright",
           "nodes": 1
         },
         {
@@ -1078,199 +609,122 @@
           "nodes": 4
         }
       ],
-      "timing_ms": 29380
+      "timing_ms": 27931
     },
     {
       "route": "/admin/cve",
       "status": "ok",
       "violations": [
         {
-          "id": "aria-allowed-role",
-          "impact": "minor",
-          "help": "ARIA role should be appropriate for the element",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/aria-allowed-role?application=playwright",
-          "nodes": 1
-        },
-        {
-          "id": "button-name",
-          "impact": "critical",
-          "help": "Buttons must have discernible text",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/button-name?application=playwright",
-          "nodes": 1
-        },
-        {
-          "id": "heading-order",
+          "id": "landmark-one-main",
           "impact": "moderate",
-          "help": "Heading levels should only increase by one",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/heading-order?application=playwright",
+          "help": "Document should have one main landmark",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/landmark-one-main?application=playwright",
           "nodes": 1
         },
         {
-          "id": "region",
+          "id": "page-has-heading-one",
           "impact": "moderate",
-          "help": "All page content should be contained by landmarks",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/region?application=playwright",
-          "nodes": 4
+          "help": "Page should contain a level-one heading",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/page-has-heading-one?application=playwright",
+          "nodes": 1
         }
       ],
-      "timing_ms": 24439
+      "timing_ms": 7901
     },
     {
       "route": "/admin/db-explorer",
       "status": "ok",
       "violations": [
         {
-          "id": "aria-allowed-role",
-          "impact": "minor",
-          "help": "ARIA role should be appropriate for the element",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/aria-allowed-role?application=playwright",
+          "id": "landmark-one-main",
+          "impact": "moderate",
+          "help": "Document should have one main landmark",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/landmark-one-main?application=playwright",
           "nodes": 1
         },
         {
-          "id": "heading-order",
+          "id": "page-has-heading-one",
           "impact": "moderate",
-          "help": "Heading levels should only increase by one",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/heading-order?application=playwright",
+          "help": "Page should contain a level-one heading",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/page-has-heading-one?application=playwright",
           "nodes": 1
-        },
-        {
-          "id": "region",
-          "impact": "moderate",
-          "help": "All page content should be contained by landmarks",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/region?application=playwright",
-          "nodes": 4
         }
       ],
-      "timing_ms": 24354
+      "timing_ms": 23247
     },
     {
       "route": "/admin/deploy",
       "status": "ok",
       "violations": [
         {
-          "id": "aria-allowed-role",
-          "impact": "minor",
-          "help": "ARIA role should be appropriate for the element",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/aria-allowed-role?application=playwright",
+          "id": "landmark-one-main",
+          "impact": "moderate",
+          "help": "Document should have one main landmark",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/landmark-one-main?application=playwright",
           "nodes": 1
         },
         {
-          "id": "heading-order",
+          "id": "page-has-heading-one",
           "impact": "moderate",
-          "help": "Heading levels should only increase by one",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/heading-order?application=playwright",
+          "help": "Page should contain a level-one heading",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/page-has-heading-one?application=playwright",
           "nodes": 1
-        },
-        {
-          "id": "landmark-unique",
-          "impact": "moderate",
-          "help": "Landmarks should have a unique role or role/label/title (i.e. accessible name) combination",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/landmark-unique?application=playwright",
-          "nodes": 1
-        },
-        {
-          "id": "region",
-          "impact": "moderate",
-          "help": "All page content should be contained by landmarks",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/region?application=playwright",
-          "nodes": 4
         }
       ],
-      "timing_ms": 24311
+      "timing_ms": 15904
     },
     {
       "route": "/admin/deploy/feature-flags",
       "status": "ok",
       "violations": [
         {
-          "id": "aria-allowed-role",
-          "impact": "minor",
-          "help": "ARIA role should be appropriate for the element",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/aria-allowed-role?application=playwright",
+          "id": "landmark-one-main",
+          "impact": "moderate",
+          "help": "Document should have one main landmark",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/landmark-one-main?application=playwright",
           "nodes": 1
         },
         {
-          "id": "heading-order",
+          "id": "page-has-heading-one",
           "impact": "moderate",
-          "help": "Heading levels should only increase by one",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/heading-order?application=playwright",
+          "help": "Page should contain a level-one heading",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/page-has-heading-one?application=playwright",
           "nodes": 1
-        },
-        {
-          "id": "landmark-unique",
-          "impact": "moderate",
-          "help": "Landmarks should have a unique role or role/label/title (i.e. accessible name) combination",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/landmark-unique?application=playwright",
-          "nodes": 1
-        },
-        {
-          "id": "region",
-          "impact": "moderate",
-          "help": "All page content should be contained by landmarks",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/region?application=playwright",
-          "nodes": 4
         }
       ],
-      "timing_ms": 24527
+      "timing_ms": 11591
     },
     {
       "route": "/admin/deploy/maintenance",
       "status": "ok",
       "violations": [
         {
-          "id": "aria-allowed-role",
-          "impact": "minor",
-          "help": "ARIA role should be appropriate for the element",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/aria-allowed-role?application=playwright",
+          "id": "landmark-one-main",
+          "impact": "moderate",
+          "help": "Document should have one main landmark",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/landmark-one-main?application=playwright",
           "nodes": 1
         },
         {
-          "id": "heading-order",
+          "id": "page-has-heading-one",
           "impact": "moderate",
-          "help": "Heading levels should only increase by one",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/heading-order?application=playwright",
+          "help": "Page should contain a level-one heading",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/page-has-heading-one?application=playwright",
           "nodes": 1
-        },
-        {
-          "id": "landmark-unique",
-          "impact": "moderate",
-          "help": "Landmarks should have a unique role or role/label/title (i.e. accessible name) combination",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/landmark-unique?application=playwright",
-          "nodes": 1
-        },
-        {
-          "id": "region",
-          "impact": "moderate",
-          "help": "All page content should be contained by landmarks",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/region?application=playwright",
-          "nodes": 4
         }
       ],
-      "timing_ms": 24126
+      "timing_ms": 23694
     },
     {
       "route": "/admin/deploy/on-premise",
       "status": "ok",
       "violations": [
         {
-          "id": "aria-allowed-role",
-          "impact": "minor",
-          "help": "ARIA role should be appropriate for the element",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/aria-allowed-role?application=playwright",
-          "nodes": 1
-        },
-        {
           "id": "heading-order",
           "impact": "moderate",
           "help": "Heading levels should only increase by one",
           "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/heading-order?application=playwright",
-          "nodes": 2
-        },
-        {
-          "id": "landmark-unique",
-          "impact": "moderate",
-          "help": "Landmarks should have a unique role or role/label/title (i.e. accessible name) combination",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/landmark-unique?application=playwright",
           "nodes": 1
         },
         {
@@ -1281,31 +735,17 @@
           "nodes": 4
         }
       ],
-      "timing_ms": 24443
+      "timing_ms": 23612
     },
     {
       "route": "/admin/deploy/runtime-config",
       "status": "ok",
       "violations": [
         {
-          "id": "aria-allowed-role",
-          "impact": "minor",
-          "help": "ARIA role should be appropriate for the element",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/aria-allowed-role?application=playwright",
-          "nodes": 1
-        },
-        {
           "id": "heading-order",
           "impact": "moderate",
           "help": "Heading levels should only increase by one",
           "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/heading-order?application=playwright",
-          "nodes": 2
-        },
-        {
-          "id": "landmark-unique",
-          "impact": "moderate",
-          "help": "Landmarks should have a unique role or role/label/title (i.e. accessible name) combination",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/landmark-unique?application=playwright",
           "nodes": 1
         },
         {
@@ -1316,7 +756,7 @@
           "nodes": 4
         }
       ],
-      "timing_ms": 24127
+      "timing_ms": 36872
     },
     {
       "route": "/admin/devices",
@@ -1330,41 +770,20 @@
           "nodes": 1
         },
         {
-          "id": "region",
+          "id": "page-has-heading-one",
           "impact": "moderate",
-          "help": "All page content should be contained by landmarks",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/region?application=playwright",
-          "nodes": 2
-        },
-        {
-          "id": "skip-link",
-          "impact": "moderate",
-          "help": "The skip-link target should exist and be focusable",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/skip-link?application=playwright",
+          "help": "Page should contain a level-one heading",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/page-has-heading-one?application=playwright",
           "nodes": 1
         }
       ],
-      "timing_ms": 29138
+      "timing_ms": 28430
     },
     {
       "route": "/admin/email-templates",
       "status": "ok",
       "violations": [
         {
-          "id": "aria-allowed-role",
-          "impact": "minor",
-          "help": "ARIA role should be appropriate for the element",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/aria-allowed-role?application=playwright",
-          "nodes": 1
-        },
-        {
-          "id": "heading-order",
-          "impact": "moderate",
-          "help": "Heading levels should only increase by one",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/heading-order?application=playwright",
-          "nodes": 1
-        },
-        {
           "id": "region",
           "impact": "moderate",
           "help": "All page content should be contained by landmarks",
@@ -1372,60 +791,25 @@
           "nodes": 4
         }
       ],
-      "timing_ms": 29811
+      "timing_ms": 28229
     },
     {
       "route": "/admin/feature-flags",
-      "status": "ok",
-      "violations": [
-        {
-          "id": "aria-allowed-role",
-          "impact": "minor",
-          "help": "ARIA role should be appropriate for the element",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/aria-allowed-role?application=playwright",
-          "nodes": 1
-        },
-        {
-          "id": "button-name",
-          "impact": "critical",
-          "help": "Buttons must have discernible text",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/button-name?application=playwright",
-          "nodes": 2
-        },
-        {
-          "id": "heading-order",
-          "impact": "moderate",
-          "help": "Heading levels should only increase by one",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/heading-order?application=playwright",
-          "nodes": 1
-        },
-        {
-          "id": "region",
-          "impact": "moderate",
-          "help": "All page content should be contained by landmarks",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/region?application=playwright",
-          "nodes": 4
-        }
-      ],
-      "timing_ms": 31174
+      "status": "error",
+      "violations": [],
+      "error": "page.goto: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3000/admin/feature-flags\", waiting until \"domcontentloaded\"\u001b[22m\n",
+      "timing_ms": 30007
     },
     {
       "route": "/admin/floorplans",
       "status": "ok",
       "violations": [
         {
-          "id": "aria-allowed-role",
-          "impact": "minor",
-          "help": "ARIA role should be appropriate for the element",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/aria-allowed-role?application=playwright",
-          "nodes": 1
-        },
-        {
           "id": "heading-order",
           "impact": "moderate",
           "help": "Heading levels should only increase by one",
           "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/heading-order?application=playwright",
-          "nodes": 2
+          "nodes": 1
         },
         {
           "id": "region",
@@ -1435,7 +819,7 @@
           "nodes": 4
         }
       ],
-      "timing_ms": 25109
+      "timing_ms": 31725
     },
     {
       "route": "/admin/gamification",
@@ -1463,19 +847,12 @@
           "nodes": 1
         }
       ],
-      "timing_ms": 20401
+      "timing_ms": 20516
     },
     {
       "route": "/admin/groups",
       "status": "ok",
       "violations": [
-        {
-          "id": "button-name",
-          "impact": "critical",
-          "help": "Buttons must have discernible text",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/button-name?application=playwright",
-          "nodes": 1
-        },
         {
           "id": "landmark-one-main",
           "impact": "moderate",
@@ -1498,7 +875,7 @@
           "nodes": 1
         }
       ],
-      "timing_ms": 24822
+      "timing_ms": 24489
     },
     {
       "route": "/admin/integrations",
@@ -1526,7 +903,7 @@
           "nodes": 1
         }
       ],
-      "timing_ms": 20364
+      "timing_ms": 20268
     },
     {
       "route": "/admin/invitations",
@@ -1554,101 +931,19 @@
           "nodes": 1
         }
       ],
-      "timing_ms": 20366
+      "timing_ms": 20305
     },
     {
       "route": "/admin/license",
-      "status": "error",
-      "violations": [],
-      "error": "page.goto: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3000/admin/license\", waiting until \"domcontentloaded\"\u001b[22m\n",
-      "timing_ms": 30006
-    },
-    {
-      "route": "/admin/lms",
-      "status": "error",
-      "violations": [],
-      "error": "page.goto: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3000/admin/lms\", waiting until \"domcontentloaded\"\u001b[22m\n",
-      "timing_ms": 30008
-    },
-    {
-      "route": "/admin/ml-config",
-      "status": "error",
-      "violations": [],
-      "error": "page.goto: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3000/admin/ml-config\", waiting until \"domcontentloaded\"\u001b[22m\n",
-      "timing_ms": 30006
-    },
-    {
-      "route": "/admin/ml-training",
-      "status": "error",
-      "violations": [],
-      "error": "page.goto: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3000/admin/ml-training\", waiting until \"domcontentloaded\"\u001b[22m\n",
-      "timing_ms": 30005
-    },
-    {
-      "route": "/admin/monitoring",
-      "status": "error",
-      "violations": [],
-      "error": "page.goto: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3000/admin/monitoring\", waiting until \"domcontentloaded\"\u001b[22m\n",
-      "timing_ms": 30013
-    },
-    {
-      "route": "/admin/oauth-providers",
-      "status": "error",
-      "violations": [],
-      "error": "page.goto: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3000/admin/oauth-providers\", waiting until \"domcontentloaded\"\u001b[22m\n",
-      "timing_ms": 30012
-    },
-    {
-      "route": "/admin/offline-devices",
-      "status": "ok",
-      "violations": [],
-      "timing_ms": 39679
-    },
-    {
-      "route": "/admin/onboarding",
-      "status": "ok",
-      "violations": [],
-      "timing_ms": 20413
-    },
-    {
-      "route": "/admin/org-structure",
-      "status": "error",
-      "violations": [],
-      "error": "page.goto: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3000/admin/org-structure\", waiting until \"domcontentloaded\"\u001b[22m\n",
-      "timing_ms": 30009
-    },
-    {
-      "route": "/admin/organizations",
-      "status": "error",
-      "violations": [],
-      "error": "page.goto: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3000/admin/organizations\", waiting until \"domcontentloaded\"\u001b[22m\n",
-      "timing_ms": 30014
-    },
-    {
-      "route": "/admin/partners",
-      "status": "error",
-      "violations": [],
-      "error": "page.goto: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3000/admin/partners\", waiting until \"domcontentloaded\"\u001b[22m\n",
-      "timing_ms": 30014
-    },
-    {
-      "route": "/admin/peer-mesh",
-      "status": "error",
-      "violations": [],
-      "error": "page.goto: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3000/admin/peer-mesh\", waiting until \"domcontentloaded\"\u001b[22m\n",
-      "timing_ms": 30014
-    },
-    {
-      "route": "/admin/permissions",
-      "status": "error",
-      "violations": [],
-      "error": "page.goto: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3000/admin/permissions\", waiting until \"domcontentloaded\"\u001b[22m\n",
-      "timing_ms": 30014
-    },
-    {
-      "route": "/admin/persons",
       "status": "ok",
       "violations": [
+        {
+          "id": "landmark-one-main",
+          "impact": "moderate",
+          "help": "Document should have one main landmark",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/landmark-one-main?application=playwright",
+          "nodes": 1
+        },
         {
           "id": "page-has-heading-one",
           "impact": "moderate",
@@ -1657,147 +952,367 @@
           "nodes": 1
         }
       ],
-      "timing_ms": 42797
+      "timing_ms": 17124
+    },
+    {
+      "route": "/admin/lms",
+      "status": "ok",
+      "violations": [
+        {
+          "id": "landmark-one-main",
+          "impact": "moderate",
+          "help": "Document should have one main landmark",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/landmark-one-main?application=playwright",
+          "nodes": 1
+        },
+        {
+          "id": "region",
+          "impact": "moderate",
+          "help": "All page content should be contained by landmarks",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/region?application=playwright",
+          "nodes": 2
+        },
+        {
+          "id": "skip-link",
+          "impact": "moderate",
+          "help": "The skip-link target should exist and be focusable",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/skip-link?application=playwright",
+          "nodes": 1
+        }
+      ],
+      "timing_ms": 20848
+    },
+    {
+      "route": "/admin/ml-config",
+      "status": "ok",
+      "violations": [
+        {
+          "id": "landmark-one-main",
+          "impact": "moderate",
+          "help": "Document should have one main landmark",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/landmark-one-main?application=playwright",
+          "nodes": 1
+        },
+        {
+          "id": "region",
+          "impact": "moderate",
+          "help": "All page content should be contained by landmarks",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/region?application=playwright",
+          "nodes": 2
+        },
+        {
+          "id": "skip-link",
+          "impact": "moderate",
+          "help": "The skip-link target should exist and be focusable",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/skip-link?application=playwright",
+          "nodes": 1
+        }
+      ],
+      "timing_ms": 25869
+    },
+    {
+      "route": "/admin/ml-training",
+      "status": "ok",
+      "violations": [
+        {
+          "id": "landmark-one-main",
+          "impact": "moderate",
+          "help": "Document should have one main landmark",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/landmark-one-main?application=playwright",
+          "nodes": 1
+        },
+        {
+          "id": "region",
+          "impact": "moderate",
+          "help": "All page content should be contained by landmarks",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/region?application=playwright",
+          "nodes": 2
+        },
+        {
+          "id": "skip-link",
+          "impact": "moderate",
+          "help": "The skip-link target should exist and be focusable",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/skip-link?application=playwright",
+          "nodes": 1
+        }
+      ],
+      "timing_ms": 20393
+    },
+    {
+      "route": "/admin/monitoring",
+      "status": "ok",
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "help": "All page content should be contained by landmarks",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/region?application=playwright",
+          "nodes": 4
+        }
+      ],
+      "timing_ms": 23593
+    },
+    {
+      "route": "/admin/oauth-providers",
+      "status": "ok",
+      "violations": [
+        {
+          "id": "landmark-one-main",
+          "impact": "moderate",
+          "help": "Document should have one main landmark",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/landmark-one-main?application=playwright",
+          "nodes": 1
+        },
+        {
+          "id": "page-has-heading-one",
+          "impact": "moderate",
+          "help": "Page should contain a level-one heading",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/page-has-heading-one?application=playwright",
+          "nodes": 1
+        },
+        {
+          "id": "region",
+          "impact": "moderate",
+          "help": "All page content should be contained by landmarks",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/region?application=playwright",
+          "nodes": 1
+        },
+        {
+          "id": "skip-link",
+          "impact": "moderate",
+          "help": "The skip-link target should exist and be focusable",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/skip-link?application=playwright",
+          "nodes": 1
+        }
+      ],
+      "timing_ms": 14713
+    },
+    {
+      "route": "/admin/offline-devices",
+      "status": "ok",
+      "violations": [
+        {
+          "id": "landmark-one-main",
+          "impact": "moderate",
+          "help": "Document should have one main landmark",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/landmark-one-main?application=playwright",
+          "nodes": 1
+        },
+        {
+          "id": "region",
+          "impact": "moderate",
+          "help": "All page content should be contained by landmarks",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/region?application=playwright",
+          "nodes": 2
+        },
+        {
+          "id": "skip-link",
+          "impact": "moderate",
+          "help": "The skip-link target should exist and be focusable",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/skip-link?application=playwright",
+          "nodes": 1
+        }
+      ],
+      "timing_ms": 20856
+    },
+    {
+      "route": "/admin/onboarding",
+      "status": "ok",
+      "violations": [
+        {
+          "id": "landmark-one-main",
+          "impact": "moderate",
+          "help": "Document should have one main landmark",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/landmark-one-main?application=playwright",
+          "nodes": 1
+        },
+        {
+          "id": "region",
+          "impact": "moderate",
+          "help": "All page content should be contained by landmarks",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/region?application=playwright",
+          "nodes": 2
+        },
+        {
+          "id": "skip-link",
+          "impact": "moderate",
+          "help": "The skip-link target should exist and be focusable",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/skip-link?application=playwright",
+          "nodes": 1
+        }
+      ],
+      "timing_ms": 23632
+    },
+    {
+      "route": "/admin/org-structure",
+      "status": "ok",
+      "violations": [
+        {
+          "id": "button-name",
+          "impact": "critical",
+          "help": "Buttons must have discernible text",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/button-name?application=playwright",
+          "nodes": 11
+        },
+        {
+          "id": "region",
+          "impact": "moderate",
+          "help": "All page content should be contained by landmarks",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/region?application=playwright",
+          "nodes": 4
+        }
+      ],
+      "timing_ms": 29145
+    },
+    {
+      "route": "/admin/organizations",
+      "status": "ok",
+      "violations": [],
+      "timing_ms": 20903
+    },
+    {
+      "route": "/admin/partners",
+      "status": "ok",
+      "violations": [
+        {
+          "id": "landmark-one-main",
+          "impact": "moderate",
+          "help": "Document should have one main landmark",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/landmark-one-main?application=playwright",
+          "nodes": 1
+        },
+        {
+          "id": "page-has-heading-one",
+          "impact": "moderate",
+          "help": "Page should contain a level-one heading",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/page-has-heading-one?application=playwright",
+          "nodes": 1
+        },
+        {
+          "id": "region",
+          "impact": "moderate",
+          "help": "All page content should be contained by landmarks",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/region?application=playwright",
+          "nodes": 1
+        },
+        {
+          "id": "skip-link",
+          "impact": "moderate",
+          "help": "The skip-link target should exist and be focusable",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/skip-link?application=playwright",
+          "nodes": 1
+        }
+      ],
+      "timing_ms": 19315
+    },
+    {
+      "route": "/admin/peer-mesh",
+      "status": "ok",
+      "violations": [],
+      "timing_ms": 22018
+    },
+    {
+      "route": "/admin/permissions",
+      "status": "ok",
+      "violations": [],
+      "timing_ms": 26165
+    },
+    {
+      "route": "/admin/persons",
+      "status": "ok",
+      "violations": [],
+      "timing_ms": 27662
     },
     {
       "route": "/admin/platform",
       "status": "ok",
       "violations": [
         {
+          "id": "landmark-one-main",
+          "impact": "moderate",
+          "help": "Document should have one main landmark",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/landmark-one-main?application=playwright",
+          "nodes": 1
+        },
+        {
           "id": "page-has-heading-one",
           "impact": "moderate",
           "help": "Page should contain a level-one heading",
           "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/page-has-heading-one?application=playwright",
           "nodes": 1
+        },
+        {
+          "id": "region",
+          "impact": "moderate",
+          "help": "All page content should be contained by landmarks",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/region?application=playwright",
+          "nodes": 1
+        },
+        {
+          "id": "skip-link",
+          "impact": "moderate",
+          "help": "The skip-link target should exist and be focusable",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/skip-link?application=playwright",
+          "nodes": 1
         }
       ],
-      "timing_ms": 20969
+      "timing_ms": 11751
     },
     {
       "route": "/admin/prompts",
       "status": "ok",
-      "violations": [
-        {
-          "id": "page-has-heading-one",
-          "impact": "moderate",
-          "help": "Page should contain a level-one heading",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/page-has-heading-one?application=playwright",
-          "nodes": 1
-        }
-      ],
-      "timing_ms": 21535
+      "violations": [],
+      "timing_ms": 22255
     },
     {
       "route": "/admin/restore",
       "status": "ok",
-      "violations": [
-        {
-          "id": "page-has-heading-one",
-          "impact": "moderate",
-          "help": "Page should contain a level-one heading",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/page-has-heading-one?application=playwright",
-          "nodes": 1
-        }
-      ],
-      "timing_ms": 22427
+      "violations": [],
+      "timing_ms": 23834
     },
     {
       "route": "/admin/roles",
       "status": "ok",
-      "violations": [
-        {
-          "id": "page-has-heading-one",
-          "impact": "moderate",
-          "help": "Page should contain a level-one heading",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/page-has-heading-one?application=playwright",
-          "nodes": 1
-        }
-      ],
-      "timing_ms": 20401
+      "violations": [],
+      "timing_ms": 28809
     },
     {
       "route": "/admin/search",
       "status": "ok",
-      "violations": [
-        {
-          "id": "page-has-heading-one",
-          "impact": "moderate",
-          "help": "Page should contain a level-one heading",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/page-has-heading-one?application=playwright",
-          "nodes": 1
-        }
-      ],
-      "timing_ms": 20386
+      "violations": [],
+      "timing_ms": 20405
     },
     {
       "route": "/admin/security",
       "status": "ok",
-      "violations": [
-        {
-          "id": "page-has-heading-one",
-          "impact": "moderate",
-          "help": "Page should contain a level-one heading",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/page-has-heading-one?application=playwright",
-          "nodes": 1
-        }
-      ],
-      "timing_ms": 20410
+      "violations": [],
+      "timing_ms": 24284
     },
     {
       "route": "/admin/sessions",
       "status": "ok",
-      "violations": [
-        {
-          "id": "page-has-heading-one",
-          "impact": "moderate",
-          "help": "Page should contain a level-one heading",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/page-has-heading-one?application=playwright",
-          "nodes": 1
-        }
-      ],
-      "timing_ms": 20388
+      "violations": [],
+      "timing_ms": 20338
     },
     {
       "route": "/admin/settings",
       "status": "ok",
-      "violations": [
-        {
-          "id": "page-has-heading-one",
-          "impact": "moderate",
-          "help": "Page should contain a level-one heading",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/page-has-heading-one?application=playwright",
-          "nodes": 1
-        }
-      ],
-      "timing_ms": 20373
+      "violations": [],
+      "timing_ms": 26684
     },
     {
       "route": "/admin/system-health",
-      "status": "ok",
-      "violations": [
-        {
-          "id": "page-has-heading-one",
-          "impact": "moderate",
-          "help": "Page should contain a level-one heading",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/page-has-heading-one?application=playwright",
-          "nodes": 1
-        }
-      ],
-      "timing_ms": 20389
+      "status": "error",
+      "violations": [],
+      "error": "page.evaluate: Execution context was destroyed, most likely because of a navigation",
+      "timing_ms": 25598
     },
     {
       "route": "/admin/tenant",
-      "status": "ok",
-      "violations": [
-        {
-          "id": "page-has-heading-one",
-          "impact": "moderate",
-          "help": "Page should contain a level-one heading",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/page-has-heading-one?application=playwright",
-          "nodes": 1
-        }
-      ],
-      "timing_ms": 20382
+      "status": "error",
+      "violations": [],
+      "error": "page.evaluate: Execution context was destroyed, most likely because of a navigation",
+      "timing_ms": 22289
     },
     {
       "route": "/admin/tenants",
@@ -1811,7 +1326,7 @@
           "nodes": 1
         }
       ],
-      "timing_ms": 20455
+      "timing_ms": 21251
     },
     {
       "route": "/admin/themes",
@@ -1825,7 +1340,7 @@
           "nodes": 1
         }
       ],
-      "timing_ms": 20385
+      "timing_ms": 20498
     },
     {
       "route": "/admin/users",
@@ -1839,12 +1354,19 @@
           "nodes": 1
         }
       ],
-      "timing_ms": 20418
+      "timing_ms": 26241
     },
     {
       "route": "/admin/users-list",
       "status": "ok",
       "violations": [
+        {
+          "id": "landmark-one-main",
+          "impact": "moderate",
+          "help": "Document should have one main landmark",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/landmark-one-main?application=playwright",
+          "nodes": 1
+        },
         {
           "id": "page-has-heading-one",
           "impact": "moderate",
@@ -1853,7 +1375,7 @@
           "nodes": 1
         }
       ],
-      "timing_ms": 20415
+      "timing_ms": 7084
     },
     {
       "route": "/admin/webhooks",
@@ -1867,7 +1389,7 @@
           "nodes": 1
         }
       ],
-      "timing_ms": 20391
+      "timing_ms": 20944
     },
     {
       "route": "/ai",
@@ -1881,7 +1403,7 @@
           "nodes": 1
         }
       ],
-      "timing_ms": 20378
+      "timing_ms": 20442
     },
     {
       "route": "/ai/hub",
@@ -1895,7 +1417,7 @@
           "nodes": 1
         }
       ],
-      "timing_ms": 20421
+      "timing_ms": 28582
     },
     {
       "route": "/analytics",
@@ -1909,7 +1431,7 @@
           "nodes": 1
         }
       ],
-      "timing_ms": 20460
+      "timing_ms": 20399
     },
     {
       "route": "/analytics/abtest",
@@ -1923,7 +1445,7 @@
           "nodes": 1
         }
       ],
-      "timing_ms": 20374
+      "timing_ms": 20425
     },
     {
       "route": "/analytics/campaigns",
@@ -1937,7 +1459,7 @@
           "nodes": 1
         }
       ],
-      "timing_ms": 20376
+      "timing_ms": 20424
     },
     {
       "route": "/analytics/funnels",
@@ -1951,7 +1473,7 @@
           "nodes": 1
         }
       ],
-      "timing_ms": 20403
+      "timing_ms": 20424
     },
     {
       "route": "/analytics/journey",
@@ -1965,7 +1487,7 @@
           "nodes": 1
         }
       ],
-      "timing_ms": 20376
+      "timing_ms": 20426
     },
     {
       "route": "/analytics/kpi",
@@ -1979,7 +1501,7 @@
           "nodes": 1
         }
       ],
-      "timing_ms": 20400
+      "timing_ms": 20947
     },
     {
       "route": "/analytics/revenue",
@@ -1993,7 +1515,7 @@
           "nodes": 1
         }
       ],
-      "timing_ms": 20407
+      "timing_ms": 23697
     },
     {
       "route": "/appstore",
@@ -2007,7 +1529,7 @@
           "nodes": 1
         }
       ],
-      "timing_ms": 20399
+      "timing_ms": 20391
     },
     {
       "route": "/bio",
@@ -2021,7 +1543,7 @@
           "nodes": 1
         }
       ],
-      "timing_ms": 20392
+      "timing_ms": 20440
     },
     {
       "route": "/board",
@@ -2035,7 +1557,7 @@
           "nodes": 1
         }
       ],
-      "timing_ms": 20435
+      "timing_ms": 20466
     },
     {
       "route": "/bookmarks",
@@ -2049,7 +1571,7 @@
           "nodes": 1
         }
       ],
-      "timing_ms": 20386
+      "timing_ms": 20373
     },
     {
       "route": "/cal/alerts",
@@ -2063,7 +1585,7 @@
           "nodes": 1
         }
       ],
-      "timing_ms": 20413
+      "timing_ms": 20476
     },
     {
       "route": "/cal/events",
@@ -2091,21 +1613,14 @@
           "nodes": 1
         }
       ],
-      "timing_ms": 20404
+      "timing_ms": 20414
     },
     {
       "route": "/cal/presence-rules",
-      "status": "ok",
-      "violations": [
-        {
-          "id": "page-has-heading-one",
-          "impact": "moderate",
-          "help": "Page should contain a level-one heading",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/page-has-heading-one?application=playwright",
-          "nodes": 1
-        }
-      ],
-      "timing_ms": 20363
+      "status": "error",
+      "violations": [],
+      "error": "page.goto: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3000/cal/presence-rules\", waiting until \"domcontentloaded\"\u001b[22m\n",
+      "timing_ms": 30009
     },
     {
       "route": "/cal/projects",
@@ -2119,7 +1634,7 @@
           "nodes": 1
         }
       ],
-      "timing_ms": 20444
+      "timing_ms": 39107
     },
     {
       "route": "/cal/share",
@@ -2133,7 +1648,7 @@
           "nodes": 1
         }
       ],
-      "timing_ms": 20382
+      "timing_ms": 20453
     },
     {
       "route": "/cal/tasks",
@@ -2147,7 +1662,7 @@
           "nodes": 1
         }
       ],
-      "timing_ms": 20424
+      "timing_ms": 20402
     },
     {
       "route": "/cal/timesheets",
@@ -2161,7 +1676,7 @@
           "nodes": 1
         }
       ],
-      "timing_ms": 20382
+      "timing_ms": 45978
     },
     {
       "route": "/changelog",
@@ -2175,7 +1690,7 @@
           "nodes": 1
         }
       ],
-      "timing_ms": 20414
+      "timing_ms": 20371
     },
     {
       "route": "/chat",
@@ -2189,7 +1704,7 @@
           "nodes": 1
         }
       ],
-      "timing_ms": 20420
+      "timing_ms": 20456
     },
     {
       "route": "/chat/unified",
@@ -2203,7 +1718,7 @@
           "nodes": 1
         }
       ],
-      "timing_ms": 20424
+      "timing_ms": 20379
     },
     {
       "route": "/collaboration",
@@ -2217,21 +1732,14 @@
           "nodes": 1
         }
       ],
-      "timing_ms": 20429
+      "timing_ms": 20431
     },
     {
       "route": "/comms/events",
-      "status": "ok",
-      "violations": [
-        {
-          "id": "page-has-heading-one",
-          "impact": "moderate",
-          "help": "Page should contain a level-one heading",
-          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/page-has-heading-one?application=playwright",
-          "nodes": 1
-        }
-      ],
-      "timing_ms": 20422
+      "status": "error",
+      "violations": [],
+      "error": "page.goto: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3000/comms/events\", waiting until \"domcontentloaded\"\u001b[22m\n",
+      "timing_ms": 30009
     },
     {
       "route": "/comms/intranet",
@@ -2245,7 +1753,7 @@
           "nodes": 1
         }
       ],
-      "timing_ms": 20382
+      "timing_ms": 23355
     },
     {
       "route": "/comms/newsletter",
@@ -2259,7 +1767,7 @@
           "nodes": 1
         }
       ],
-      "timing_ms": 20421
+      "timing_ms": 20428
     },
     {
       "route": "/comms/video-meeting",
@@ -2273,7 +1781,7 @@
           "nodes": 1
         }
       ],
-      "timing_ms": 20395
+      "timing_ms": 20399
     },
     {
       "route": "/complete-profile",
@@ -2287,7 +1795,7 @@
           "nodes": 1
         }
       ],
-      "timing_ms": 20400
+      "timing_ms": 28112
     },
     {
       "route": "/contacts",
@@ -2301,7 +1809,7 @@
           "nodes": 1
         }
       ],
-      "timing_ms": 20422
+      "timing_ms": 36808
     },
     {
       "route": "/containers",
@@ -2315,7 +1823,7 @@
           "nodes": 1
         }
       ],
-      "timing_ms": 20424
+      "timing_ms": 20512
     },
     {
       "route": "/crm",
@@ -2329,7 +1837,7 @@
           "nodes": 1
         }
       ],
-      "timing_ms": 20395
+      "timing_ms": 20412
     },
     {
       "route": "/crm/deals",
@@ -2343,7 +1851,7 @@
           "nodes": 1
         }
       ],
-      "timing_ms": 20387
+      "timing_ms": 22520
     },
     {
       "route": "/crm/leads",
@@ -2357,7 +1865,7 @@
           "nodes": 1
         }
       ],
-      "timing_ms": 20453
+      "timing_ms": 20438
     },
     {
       "route": "/crm/pipeline",
@@ -2371,7 +1879,7 @@
           "nodes": 1
         }
       ],
-      "timing_ms": 20434
+      "timing_ms": 20448
     },
     {
       "route": "/data-room",
@@ -2385,7 +1893,7 @@
           "nodes": 1
         }
       ],
-      "timing_ms": 20415
+      "timing_ms": 20443
     },
     {
       "route": "/design",
@@ -2399,7 +1907,7 @@
           "nodes": 1
         }
       ],
-      "timing_ms": 20398
+      "timing_ms": 20459
     },
     {
       "route": "/design/brand-kit",
@@ -2413,7 +1921,7 @@
           "nodes": 1
         }
       ],
-      "timing_ms": 20411
+      "timing_ms": 20437
     },
     {
       "route": "/devices",
@@ -2427,7 +1935,7 @@
           "nodes": 1
         }
       ],
-      "timing_ms": 20394
+      "timing_ms": 20452
     },
     {
       "route": "/docs",
@@ -2441,7 +1949,7 @@
           "nodes": 1
         }
       ],
-      "timing_ms": 20413
+      "timing_ms": 20446
     },
     {
       "route": "/docs/new",
@@ -2455,7 +1963,7 @@
           "nodes": 1
         }
       ],
-      "timing_ms": 20414
+      "timing_ms": 20454
     },
     {
       "route": "/domains",
@@ -2469,7 +1977,7 @@
           "nodes": 1
         }
       ],
-      "timing_ms": 20413
+      "timing_ms": 20443
     },
     {
       "route": "/drive",
@@ -2483,7 +1991,7 @@
           "nodes": 1
         }
       ],
-      "timing_ms": 20447
+      "timing_ms": 20432
     },
     {
       "route": "/drive/recent",
@@ -2497,7 +2005,7 @@
           "nodes": 1
         }
       ],
-      "timing_ms": 20397
+      "timing_ms": 20430
     },
     {
       "route": "/drive/shared",
@@ -2511,7 +2019,7 @@
           "nodes": 1
         }
       ],
-      "timing_ms": 20432
+      "timing_ms": 20443
     },
     {
       "route": "/drive/starred",
@@ -2525,7 +2033,7 @@
           "nodes": 1
         }
       ],
-      "timing_ms": 20394
+      "timing_ms": 20430
     },
     {
       "route": "/drive/trash",
@@ -2539,7 +2047,7 @@
           "nodes": 1
         }
       ],
-      "timing_ms": 20438
+      "timing_ms": 20451
     },
     {
       "route": "/entity",
@@ -2553,7 +2061,7 @@
           "nodes": 1
         }
       ],
-      "timing_ms": 20456
+      "timing_ms": 20419
     },
     {
       "route": "/expenses",
@@ -2567,7 +2075,7 @@
           "nodes": 1
         }
       ],
-      "timing_ms": 20405
+      "timing_ms": 20433
     },
     {
       "route": "/family",
@@ -2581,7 +2089,7 @@
           "nodes": 1
         }
       ],
-      "timing_ms": 20427
+      "timing_ms": 20438
     },
     {
       "route": "/finance",
@@ -2595,7 +2103,7 @@
           "nodes": 1
         }
       ],
-      "timing_ms": 20393
+      "timing_ms": 20438
     },
     {
       "route": "/finance/budgets",
@@ -2609,7 +2117,7 @@
           "nodes": 1
         }
       ],
-      "timing_ms": 20461
+      "timing_ms": 20431
     },
     {
       "route": "/finance/expenses",
@@ -2623,7 +2131,7 @@
           "nodes": 1
         }
       ],
-      "timing_ms": 20385
+      "timing_ms": 20432
     },
     {
       "route": "/finance/reports",
@@ -2637,7 +2145,7 @@
           "nodes": 1
         }
       ],
-      "timing_ms": 20374
+      "timing_ms": 20442
     },
     {
       "route": "/flows",
@@ -2651,7 +2159,7 @@
           "nodes": 1
         }
       ],
-      "timing_ms": 20409
+      "timing_ms": 20486
     },
     {
       "route": "/forms",
@@ -2665,7 +2173,7 @@
           "nodes": 1
         }
       ],
-      "timing_ms": 20401
+      "timing_ms": 20441
     },
     {
       "route": "/forms/new",
@@ -2679,7 +2187,7 @@
           "nodes": 1
         }
       ],
-      "timing_ms": 20481
+      "timing_ms": 20466
     },
     {
       "route": "/forms/templates",
@@ -2693,7 +2201,7 @@
           "nodes": 1
         }
       ],
-      "timing_ms": 20409
+      "timing_ms": 20421
     },
     {
       "route": "/fund",
@@ -2707,7 +2215,7 @@
           "nodes": 1
         }
       ],
-      "timing_ms": 20423
+      "timing_ms": 20542
     },
     {
       "route": "/gamification/leaderboard",
@@ -2721,7 +2229,7 @@
           "nodes": 1
         }
       ],
-      "timing_ms": 20421
+      "timing_ms": 20390
     },
     {
       "route": "/help",
@@ -2735,7 +2243,7 @@
           "nodes": 1
         }
       ],
-      "timing_ms": 20417
+      "timing_ms": 20413
     },
     {
       "route": "/hr",
@@ -2749,7 +2257,7 @@
           "nodes": 1
         }
       ],
-      "timing_ms": 20420
+      "timing_ms": 20411
     },
     {
       "route": "/hr/onboarding",
@@ -2763,7 +2271,7 @@
           "nodes": 1
         }
       ],
-      "timing_ms": 20441
+      "timing_ms": 20406
     },
     {
       "route": "/infrastructure",
@@ -2777,7 +2285,7 @@
           "nodes": 1
         }
       ],
-      "timing_ms": 20431
+      "timing_ms": 20374
     },
     {
       "route": "/invoices",
@@ -2791,7 +2299,7 @@
           "nodes": 1
         }
       ],
-      "timing_ms": 20468
+      "timing_ms": 20423
     },
     {
       "route": "/it/assets",
@@ -2805,7 +2313,7 @@
           "nodes": 1
         }
       ],
-      "timing_ms": 20417
+      "timing_ms": 20378
     },
     {
       "route": "/it/changes",
@@ -2819,7 +2327,7 @@
           "nodes": 1
         }
       ],
-      "timing_ms": 20443
+      "timing_ms": 20393
     },
     {
       "route": "/it/cmdb",
@@ -2833,7 +2341,7 @@
           "nodes": 1
         }
       ],
-      "timing_ms": 20445
+      "timing_ms": 20389
     },
     {
       "route": "/it/incidents",
@@ -2847,7 +2355,7 @@
           "nodes": 1
         }
       ],
-      "timing_ms": 20393
+      "timing_ms": 20378
     },
     {
       "route": "/it/monitoring",
@@ -2861,7 +2369,7 @@
           "nodes": 1
         }
       ],
-      "timing_ms": 20401
+      "timing_ms": 20385
     },
     {
       "route": "/it/ops",
@@ -2875,70 +2383,119 @@
           "nodes": 1
         }
       ],
-      "timing_ms": 20429
+      "timing_ms": 20393
     },
     {
       "route": "/it/problems",
-      "status": "error",
-      "violations": [],
-      "error": "page.evaluate: Target page, context or browser has been closed",
-      "timing_ms": 12051
+      "status": "ok",
+      "violations": [
+        {
+          "id": "page-has-heading-one",
+          "impact": "moderate",
+          "help": "Page should contain a level-one heading",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/page-has-heading-one?application=playwright",
+          "nodes": 1
+        }
+      ],
+      "timing_ms": 20433
     },
     {
       "route": "/it/releases",
-      "status": "error",
-      "violations": [],
-      "error": "page.goto: Target page, context or browser has been closed",
-      "timing_ms": 1
+      "status": "ok",
+      "violations": [
+        {
+          "id": "page-has-heading-one",
+          "impact": "moderate",
+          "help": "Page should contain a level-one heading",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/page-has-heading-one?application=playwright",
+          "nodes": 1
+        }
+      ],
+      "timing_ms": 20426
     },
     {
       "route": "/keep",
-      "status": "error",
-      "violations": [],
-      "error": "page.goto: Target page, context or browser has been closed",
-      "timing_ms": 0
+      "status": "ok",
+      "violations": [
+        {
+          "id": "page-has-heading-one",
+          "impact": "moderate",
+          "help": "Page should contain a level-one heading",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/page-has-heading-one?application=playwright",
+          "nodes": 1
+        }
+      ],
+      "timing_ms": 20447
     },
     {
       "route": "/login",
-      "status": "error",
-      "violations": [],
-      "error": "page.goto: Target page, context or browser has been closed",
-      "timing_ms": 6
+      "status": "ok",
+      "violations": [
+        {
+          "id": "page-has-heading-one",
+          "impact": "moderate",
+          "help": "Page should contain a level-one heading",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/page-has-heading-one?application=playwright",
+          "nodes": 1
+        }
+      ],
+      "timing_ms": 20429
     },
     {
       "route": "/lms",
-      "status": "error",
-      "violations": [],
-      "error": "page.goto: Target page, context or browser has been closed",
-      "timing_ms": 0
+      "status": "ok",
+      "violations": [
+        {
+          "id": "page-has-heading-one",
+          "impact": "moderate",
+          "help": "Page should contain a level-one heading",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/page-has-heading-one?application=playwright",
+          "nodes": 1
+        }
+      ],
+      "timing_ms": 20447
     },
     {
       "route": "/lms/courses",
-      "status": "error",
-      "violations": [],
-      "error": "page.goto: Target page, context or browser has been closed",
-      "timing_ms": 3
+      "status": "ok",
+      "violations": [
+        {
+          "id": "page-has-heading-one",
+          "impact": "moderate",
+          "help": "Page should contain a level-one heading",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/page-has-heading-one?application=playwright",
+          "nodes": 1
+        }
+      ],
+      "timing_ms": 20440
     },
     {
       "route": "/logout",
-      "status": "error",
-      "violations": [],
-      "error": "page.goto: Target page, context or browser has been closed",
-      "timing_ms": 1
+      "status": "ok",
+      "violations": [
+        {
+          "id": "page-has-heading-one",
+          "impact": "moderate",
+          "help": "Page should contain a level-one heading",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/page-has-heading-one?application=playwright",
+          "nodes": 1
+        }
+      ],
+      "timing_ms": 20445
     },
     {
       "route": "/maintenance",
       "status": "error",
       "violations": [],
-      "error": "page.goto: Target page, context or browser has been closed",
-      "timing_ms": 0
+      "error": "page.evaluate: Target page, context or browser has been closed",
+      "timing_ms": 11502
     },
     {
       "route": "/mail",
       "status": "error",
       "violations": [],
       "error": "page.goto: Target page, context or browser has been closed",
-      "timing_ms": 0
+      "timing_ms": 1
     },
     {
       "route": "/mail/rules",
@@ -2952,42 +2509,42 @@
       "status": "error",
       "violations": [],
       "error": "page.goto: Target page, context or browser has been closed",
-      "timing_ms": 0
+      "timing_ms": 1
     },
     {
       "route": "/mail/signatures",
       "status": "error",
       "violations": [],
       "error": "page.goto: Target page, context or browser has been closed",
-      "timing_ms": 0
+      "timing_ms": 7
     },
     {
       "route": "/mail/templates",
       "status": "error",
       "violations": [],
       "error": "page.goto: Target page, context or browser has been closed",
-      "timing_ms": 0
+      "timing_ms": 1
     },
     {
       "route": "/me",
       "status": "error",
       "violations": [],
       "error": "page.goto: Target page, context or browser has been closed",
-      "timing_ms": 1
+      "timing_ms": 0
     },
     {
       "route": "/media",
       "status": "error",
       "violations": [],
       "error": "page.goto: Target page, context or browser has been closed",
-      "timing_ms": 0
+      "timing_ms": 2
     },
     {
       "route": "/meet",
       "status": "error",
       "violations": [],
       "error": "page.goto: Target page, context or browser has been closed",
-      "timing_ms": 0
+      "timing_ms": 1
     },
     {
       "route": "/members",
@@ -3050,7 +2607,7 @@
       "status": "error",
       "violations": [],
       "error": "page.goto: Target page, context or browser has been closed",
-      "timing_ms": 0
+      "timing_ms": 6
     },
     {
       "route": "/office/favorites",
@@ -3085,14 +2642,14 @@
       "status": "error",
       "violations": [],
       "error": "page.goto: Target page, context or browser has been closed",
-      "timing_ms": 1
+      "timing_ms": 0
     },
     {
       "route": "/office/trash",
       "status": "error",
       "violations": [],
       "error": "page.goto: Target page, context or browser has been closed",
-      "timing_ms": 0
+      "timing_ms": 1
     },
     {
       "route": "/onboarding",
@@ -3134,7 +2691,7 @@
       "status": "error",
       "violations": [],
       "error": "page.goto: Target page, context or browser has been closed",
-      "timing_ms": 0
+      "timing_ms": 1
     },
     {
       "route": "/presentations",
@@ -3148,7 +2705,7 @@
       "status": "error",
       "violations": [],
       "error": "page.goto: Target page, context or browser has been closed",
-      "timing_ms": 1
+      "timing_ms": 0
     },
     {
       "route": "/projects",
@@ -3162,7 +2719,7 @@
       "status": "error",
       "violations": [],
       "error": "page.goto: Target page, context or browser has been closed",
-      "timing_ms": 0
+      "timing_ms": 1
     },
     {
       "route": "/pxe",
@@ -3197,7 +2754,7 @@
       "status": "error",
       "violations": [],
       "error": "page.goto: Target page, context or browser has been closed",
-      "timing_ms": 0
+      "timing_ms": 1
     },
     {
       "route": "/sample-viewer",
@@ -3211,7 +2768,7 @@
       "status": "error",
       "violations": [],
       "error": "page.goto: Target page, context or browser has been closed",
-      "timing_ms": 1
+      "timing_ms": 0
     },
     {
       "route": "/scheduling/board",
@@ -3225,7 +2782,7 @@
       "status": "error",
       "violations": [],
       "error": "page.goto: Target page, context or browser has been closed",
-      "timing_ms": 0
+      "timing_ms": 1
     },
     {
       "route": "/search",
@@ -3260,7 +2817,7 @@
       "status": "error",
       "violations": [],
       "error": "page.goto: Target page, context or browser has been closed",
-      "timing_ms": 0
+      "timing_ms": 1
     },
     {
       "route": "/share",
@@ -3274,7 +2831,7 @@
       "status": "error",
       "violations": [],
       "error": "page.goto: Target page, context or browser has been closed",
-      "timing_ms": 1
+      "timing_ms": 0
     },
     {
       "route": "/shared-with-me/groups",
@@ -3288,14 +2845,14 @@
       "status": "error",
       "violations": [],
       "error": "page.goto: Target page, context or browser has been closed",
-      "timing_ms": 0
+      "timing_ms": 1
     },
     {
       "route": "/sheets",
       "status": "error",
       "violations": [],
       "error": "page.goto: Target page, context or browser has been closed",
-      "timing_ms": 1
+      "timing_ms": 0
     },
     {
       "route": "/sheets/new",
@@ -3323,7 +2880,7 @@
       "status": "error",
       "violations": [],
       "error": "page.goto: Target page, context or browser has been closed",
-      "timing_ms": 1
+      "timing_ms": 0
     },
     {
       "route": "/social",
@@ -3351,14 +2908,14 @@
       "status": "error",
       "violations": [],
       "error": "page.goto: Target page, context or browser has been closed",
-      "timing_ms": 0
+      "timing_ms": 1
     },
     {
       "route": "/social/feed",
       "status": "error",
       "violations": [],
       "error": "page.goto: Target page, context or browser has been closed",
-      "timing_ms": 1
+      "timing_ms": 0
     },
     {
       "route": "/storage",
@@ -3386,7 +2943,7 @@
       "status": "error",
       "violations": [],
       "error": "page.goto: Target page, context or browser has been closed",
-      "timing_ms": 0
+      "timing_ms": 1
     },
     {
       "route": "/terms",
@@ -3414,14 +2971,14 @@
       "status": "error",
       "violations": [],
       "error": "page.goto: Target page, context or browser has been closed",
-      "timing_ms": 0
+      "timing_ms": 1
     },
     {
       "route": "/vault/import",
       "status": "error",
       "violations": [],
       "error": "page.goto: Target page, context or browser has been closed",
-      "timing_ms": 1
+      "timing_ms": 0
     },
     {
       "route": "/vault/passwords",
@@ -3442,7 +2999,7 @@
       "status": "error",
       "violations": [],
       "error": "page.goto: Target page, context or browser has been closed",
-      "timing_ms": 0
+      "timing_ms": 1
     },
     {
       "route": "/whiteboard",
@@ -3456,7 +3013,7 @@
       "status": "error",
       "violations": [],
       "error": "page.goto: Target page, context or browser has been closed",
-      "timing_ms": 1
+      "timing_ms": 0
     },
     {
       "route": "/workflows",
@@ -3470,7 +3027,7 @@
       "status": "error",
       "violations": [],
       "error": "page.goto: Target page, context or browser has been closed",
-      "timing_ms": 0
+      "timing_ms": 1
     },
     {
       "route": "/workforce/hr",
@@ -3484,7 +3041,7 @@
       "status": "error",
       "violations": [],
       "error": "page.goto: Target page, context or browser has been closed",
-      "timing_ms": 1
+      "timing_ms": 0
     }
   ]
 }
