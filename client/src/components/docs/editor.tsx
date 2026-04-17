@@ -3351,6 +3351,8 @@ ${html}
                 <button
                   role="combobox"
                   aria-expanded={fontOpen}
+                  aria-haspopup="listbox"
+                  aria-controls="font-picker-listbox"
                   className="flex items-center justify-between h-[28px] w-[130px] rounded-none px-3 border-0 border-r border-[#c7c7c7] dark:border-[#5f6368] bg-transparent hover:bg-muted dark:hover:bg-[#303134] focus:outline-none text-[13px] text-[#444746] dark:text-[#e3e3e3] font-medium transition-colors"
                 >
                   <span

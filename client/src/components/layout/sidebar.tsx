@@ -715,6 +715,7 @@ export function Sidebar({ portalMode }: SidebarProps = {}) {
         />
       )}
 
+      {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- drag-and-drop drop target on nav; no keyboard equivalent for file drag */}
       <nav
         aria-label="Navigation principale"
         className={cn(

@@ -273,7 +273,7 @@ export function EventBlock({
       tabIndex={0}
       role="button"
       aria-label={`${event.title} - ${format(event.start, "EEEE d MMMM à HH:mm", { locale: fr })}`}
-      aria-selected={isSelected}
+      aria-pressed={isSelected}
     >
       <div
         className={cn(

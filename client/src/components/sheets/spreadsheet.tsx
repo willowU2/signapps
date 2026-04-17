@@ -3595,19 +3595,23 @@ export function Spreadsheet({
   const { startC, endC } = visibleCols;
 
   return (
-    <div
-      ref={mainContainerRef}
-      data-testid="spreadsheet-root"
-      data-active-cell={activeCell ? `${activeCell.r},${activeCell.c}` : ""}
-      data-active-sheet-id={sheets[activeSheetIndex]?.id ?? ""}
-      data-editing={isEditing ? "true" : "false"}
-      className={cn(
-        "spreadsheet-root w-full h-full flex flex-col bg-background dark:bg-[#1f1f1f] text-[#202124] dark:text-[#e8eaed] outline-none font-sans text-sm select-none",
-        paintFormat && "cursor-cell",
-      )}
-      tabIndex={0}
-      onKeyDown={handleKeyDown}
-    >
+    <>
+      {/* eslint-disable jsx-a11y/no-noninteractive-element-interactions, jsx-a11y/no-noninteractive-tabindex -- spreadsheet root acts as application widget; tabIndex + key handler required for cell navigation */}
+      <div
+        ref={mainContainerRef}
+        data-testid="spreadsheet-root"
+        data-active-cell={activeCell ? `${activeCell.r},${activeCell.c}` : ""}
+        data-active-sheet-id={sheets[activeSheetIndex]?.id ?? ""}
+        data-editing={isEditing ? "true" : "false"}
+        role="application"
+        aria-label="Feuille de calcul"
+        className={cn(
+          "spreadsheet-root w-full h-full flex flex-col bg-background dark:bg-[#1f1f1f] text-[#202124] dark:text-[#e8eaed] outline-none font-sans text-sm select-none",
+          paintFormat && "cursor-cell",
+        )}
+        tabIndex={0}
+        onKeyDown={handleKeyDown}
+      >
       {/* Print-friendly layout — hide chrome, show all rows */}
       <style>{`
                 @media print {
@@ -6070,6 +6074,7 @@ export function Spreadsheet({
             role="tab"
             aria-selected={i === activeSheetIndex}
             aria-label={`Feuille ${sheet.name}`}
+            tabIndex={i === activeSheetIndex ? 0 : -1}
             className={cn(
               "px-5 py-2.5 text-[13px] font-medium transition-colors h-10 flex items-center mb-0 mt-auto relative group",
               i === activeSheetIndex
@@ -6496,5 +6501,7 @@ export function Spreadsheet({
         onClose={() => setActiveModal(null)}
       />
     </div>
+      {/* eslint-enable jsx-a11y/no-noninteractive-element-interactions, jsx-a11y/no-noninteractive-tabindex */}
+    </>
   );
 }

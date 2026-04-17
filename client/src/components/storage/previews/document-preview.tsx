@@ -131,6 +131,7 @@ export function DocumentPreview({
       {/* Office Viewer Iframe */}
       {isOfficeDocument() && publicUrl && (
         <div className="w-full h-[60vh] border rounded-lg overflow-hidden bg-background">
+          {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- onError handles load failure, not user interaction */}
           <iframe
             src={`https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(publicUrl)}`}
             width="100%"

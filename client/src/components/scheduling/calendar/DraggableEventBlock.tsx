@@ -221,7 +221,7 @@ export function DraggableEventBlock({
       tabIndex={0}
       role="button"
       aria-label={`${event.title} - ${format(event.start, "EEEE d MMMM à HH:mm", { locale: fr })}`}
-      aria-selected={isSelected}
+      aria-pressed={isSelected}
     >
       {/* Top Resize Handle */}
       {displayHeight > 40 && (

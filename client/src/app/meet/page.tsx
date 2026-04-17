@@ -688,17 +688,15 @@ function RecordingRow({ recording }: { recording: RecordingWithRoom }) {
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <span tabIndex={0}>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  disabled
-                  className="border-border text-foreground gap-1"
-                >
-                  <Download className="h-3.5 w-3.5" />
-                  Télécharger
-                </Button>
-              </span>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled
+                className="border-border text-foreground gap-1"
+              >
+                <Download className="h-3.5 w-3.5" />
+                Télécharger
+              </Button>
             </TooltipTrigger>
             <TooltipContent>
               Téléchargement disponible après intégration du stockage

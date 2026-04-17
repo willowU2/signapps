@@ -411,7 +411,7 @@ export function TimeItemBlock({
       tabIndex={0}
       role="button"
       aria-label={`${item.title} - ${startTimeFormatted}`}
-      aria-selected={isSelected}
+      aria-pressed={isSelected}
     >
       <div
         className={cn(

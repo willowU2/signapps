@@ -234,7 +234,7 @@ export default function BrandingPage() {
             </div>
             {branding.logo_url && (
               <div className="rounded-md border bg-muted/40 p-4 inline-block">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
+                {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/no-noninteractive-element-interactions */}
                 <img
                   src={branding.logo_url}
                   alt="Logo preview"

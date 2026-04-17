@@ -389,15 +389,18 @@ export function SecureRemoteViewer({
 
   // ─── Render ────────────────────────────────────────────────────────────────
 
+  /* eslint-disable jsx-a11y/no-noninteractive-element-interactions, jsx-a11y/no-noninteractive-tabindex -- role=application widget; tabIndex + key handlers required for remote keyboard input forwarding */
   return (
-    <div
-      ref={containerRef}
-      className="flex flex-col gap-3 w-full"
-      onKeyDown={handleKeyDown}
-      onKeyUp={handleKeyUp}
-      tabIndex={0}
-      aria-label={`Remote viewer: ${machineName}`}
-    >
+    <>
+      <div
+        ref={containerRef}
+        className="flex flex-col gap-3 w-full"
+        onKeyDown={handleKeyDown}
+        onKeyUp={handleKeyUp}
+        tabIndex={0}
+        role="application"
+        aria-label={`Remote viewer: ${machineName}`}
+      >
       {/* ── Info bar ── */}
       <div className="flex items-center justify-between gap-2 rounded-lg border bg-card px-3 py-2">
         <div className="flex items-center gap-2">
@@ -608,5 +611,7 @@ export function SecureRemoteViewer({
         </p>
       )}
     </div>
+    </>
   );
+  /* eslint-enable jsx-a11y/no-noninteractive-element-interactions, jsx-a11y/no-noninteractive-tabindex */
 }

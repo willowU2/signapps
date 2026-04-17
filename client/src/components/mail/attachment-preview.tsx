@@ -55,11 +55,13 @@ function AttachmentThumbnail({
     <>
       <div className="group relative flex flex-col items-center w-28 rounded-xl border border-border/60 bg-muted/30 overflow-hidden hover:border-border transition-all cursor-pointer shadow-sm">
         {/* Preview area */}
-        <div
+        <button
+          type="button"
           className="w-full h-20 flex items-center justify-center bg-muted/50 overflow-hidden"
           onClick={() => setPreviewOpen(true)}
         >
           {isImage ? (
+            // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- onError handles load failure only; interaction is on the parent button
             <img
               src={attachment.url}
               alt={attachment.name}
@@ -77,7 +79,7 @@ function AttachmentThumbnail({
           ) : (
             <Icon className="h-8 w-8 text-muted-foreground" />
           )}
-        </div>
+        </button>
 
         {/* Hover overlay */}
         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
