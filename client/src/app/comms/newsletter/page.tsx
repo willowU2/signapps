@@ -350,12 +350,12 @@ export default function NewsletterPage() {
                             <p className="text-sm font-medium">{s.content}</p>
                           )}
                           {s.type === "link" && (
-                            <a
-                              href="#"
+                            <button
+                              type="button"
                               className="text-primary underline text-sm"
                             >
                               {s.content.split("|")[0].trim()}
-                            </a>
+                            </button>
                           )}
                         </div>
                       ))}

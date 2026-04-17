@@ -403,6 +403,7 @@ export default function FloorPlanEditor() {
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={`data:image/svg+xml;utf8,${encodeURIComponent(planData.svgContent)}`}
+                  alt={`Plan d'étage ${planData.name || ""}`}
                   className="w-full h-full object-cover pointer-events-none"
                 />
 
