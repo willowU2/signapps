@@ -9,6 +9,7 @@ members = [
     "crates/signapps-kerberos-kdc",
     "crates/signapps-keystore",
     "crates/signapps-oauth",
+    "crates/signapps-filters",
     "crates/signapps-cache",
     "crates/signapps-audit",
     "crates/signapps-common",
@@ -111,7 +112,6 @@ members = [
     "services/signapps-gateway",
     # Endpoint management agent (standalone binary)
     "services/signapps-agent",
-    "services/signapps-nexus",
     # Developer tooling
     "tools/signapps-installer",
     "tools/signapps-seed",
