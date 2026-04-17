@@ -9,7 +9,10 @@ use signapps_common::middleware::{auth_middleware, tenant_context_middleware, Au
 use signapps_common::JwtConfig;
 use signapps_livekit_client::LiveKitClient;
 use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
-use tower_http::{cors::CorsLayer, trace::TraceLayer};
+use tower_http::{
+    cors::{AllowOrigin, CorsLayer},
+    trace::TraceLayer,
+};
 
 mod events;
 mod handlers;
@@ -285,7 +288,10 @@ fn build_router(state: AppState) -> Router {
         ));
 
     let cors = CorsLayer::new()
-        .allow_origin(tower_http::cors::Any)
+        .allow_origin(AllowOrigin::list([
+            "http://localhost:3000".parse().expect("valid CORS origin"),
+            "http://127.0.0.1:3000".parse().expect("valid CORS origin"),
+        ]))
         .allow_methods([
             axum::http::Method::GET,
             axum::http::Method::POST,
@@ -297,9 +303,12 @@ fn build_router(state: AppState) -> Router {
         .allow_headers([
             axum::http::header::CONTENT_TYPE,
             axum::http::header::AUTHORIZATION,
+            axum::http::header::ACCEPT,
+            axum::http::header::ORIGIN,
             axum::http::HeaderName::from_static("x-request-id"),
             axum::http::HeaderName::from_static("x-workspace-id"),
-        ]);
+        ])
+        .allow_credentials(true);
 
     public_routes
         .merge(openapi::swagger_router())
