@@ -285,7 +285,7 @@ export default function BrandingPage() {
               <div className="flex items-center gap-3">
                 <input
                   type="color"
-                  id="primary_color_picker"
+                  id="primary_color"
                   value={branding.primary_color ?? "#6366f1"}
                   onChange={(e) =>
                     setBranding((b) => ({
