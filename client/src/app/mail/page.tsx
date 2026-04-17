@@ -1851,8 +1851,8 @@ export default function MailPage() {
 
               {/* Resize handle between list and display */}
               {isWide && selectedId && (
-                {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- resize handle is intentionally mouse-only (drag interaction has no keyboard equivalent) */}
-              <div
+                // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- resize handle is mouse-only
+                <div
                   role="separator"
                   aria-orientation="vertical"
                   aria-label="Redimensionner le panneau"
