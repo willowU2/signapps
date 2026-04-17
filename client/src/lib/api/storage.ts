@@ -184,8 +184,7 @@ export const storageApi = {
     ),
 
   // Tags
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  getTags: () => storageClient.get<any[]>("/tags"),
+  getTags: () => storageClient.get<Tag[]>("/tags"),
   createTag: (data: Record<string, unknown>) =>
     storageClient.post("/tags", data),
   updateTag: (id: string, data: Record<string, unknown>) =>
