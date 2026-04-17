@@ -19,6 +19,13 @@ interface WorkspaceShellProps {
   hideGlobalSidebar?: boolean;
   /** Hide the right sidebar rail (e.g. for full-width modules) */
   hideRightSidebar?: boolean;
+  /**
+   * Render the content area as a plain `<div>` instead of `<main
+   * id="main-content">`. Set this when a parent layout (e.g. `AppLayout`)
+   * already provides the main landmark — otherwise axe reports
+   * `landmark-no-duplicate-main`. Defaults to `false`.
+   */
+  hideMainLandmark?: boolean;
 }
 
 export function WorkspaceShell({
@@ -29,8 +36,12 @@ export function WorkspaceShell({
   className,
   hideGlobalSidebar = false,
   hideRightSidebar = false,
+  hideMainLandmark = false,
 }: WorkspaceShellProps) {
   const { sidebarCollapsed, rightSidebarOpen } = useUIStore();
+
+  const ContentWrapper = hideMainLandmark ? "div" : "main";
+  const contentProps = hideMainLandmark ? {} : { id: "main-content" as const };
 
   return (
     // AQ-MOBI: no left padding on mobile (sidebar hidden as drawer), md+ uses sidebar width
@@ -52,7 +63,12 @@ export function WorkspaceShell({
         {sidebar}
 
         {/* Scalable Main Content Area */}
-        <div className="flex-1 flex flex-col min-w-0">{children}</div>
+        <ContentWrapper
+          {...contentProps}
+          className="flex-1 flex flex-col min-w-0"
+        >
+          {children}
+        </ContentWrapper>
 
         {rightRail}
       </div>

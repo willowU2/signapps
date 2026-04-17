@@ -715,8 +715,7 @@ export function Sidebar({ portalMode }: SidebarProps = {}) {
         />
       )}
 
-      <aside
-        role="navigation"
+      <nav
         aria-label="Navigation principale"
         className={cn(
           "fixed top-0 left-0 bottom-0 z-50 flex h-full flex-col bg-sidebar py-4 transition-all duration-200 border-r",
@@ -1258,7 +1257,7 @@ export function Sidebar({ portalMode }: SidebarProps = {}) {
         >
           {!isExpanded ? "v0.1" : "SignApps v0.1.0"}
         </div>
-      </aside>
+      </nav>
 
       {/* Context menu for pinned items */}
       {contextMenu && (

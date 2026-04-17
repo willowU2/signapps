@@ -230,6 +230,7 @@ export function PdfFormFiller() {
                     variant="ghost"
                     className="h-7 w-7 flex-shrink-0"
                     onClick={() => removeField(idx)}
+                    aria-label="Supprimer"
                   >
                     <Trash2 className="h-3.5 w-3.5 text-destructive" />
                   </Button>

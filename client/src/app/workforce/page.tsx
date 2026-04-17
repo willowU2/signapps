@@ -436,6 +436,7 @@ export default function WorkforcePage() {
                   size="icon"
                   className="h-7 w-7"
                   onClick={() => handleAddNode()}
+                  aria-label="Ajouter"
                 >
                   <Plus className="h-4 w-4" />
                 </Button>

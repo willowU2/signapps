@@ -389,6 +389,7 @@ export function WorkspaceMembersSheet({
                                     member.username || "this user",
                                   )
                                 }
+                                aria-label="Supprimer"
                               >
                                 <Trash2 className="h-4 w-4" />
                               </Button>

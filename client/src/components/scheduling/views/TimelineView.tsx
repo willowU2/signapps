@@ -327,10 +327,20 @@ export function TimelineView({
       {/* Toolbar */}
       <div className="flex items-center justify-between border-b p-2">
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="icon" onClick={handlePrev}>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={handlePrev}
+            aria-label="Précédent"
+          >
             <ChevronLeft className="h-4 w-4" />
           </Button>
-          <Button variant="outline" size="icon" onClick={handleNext}>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={handleNext}
+            aria-label="Suivant"
+          >
             <ChevronRight className="h-4 w-4" />
           </Button>
           <span className="text-sm font-medium">
@@ -357,6 +367,7 @@ export function TimelineView({
             variant="outline"
             size="icon"
             onClick={() => setZoom((z) => Math.max(0.5, z - 0.25))}
+            aria-label="Dézoomer"
           >
             <ZoomOut className="h-4 w-4" />
           </Button>
@@ -364,6 +375,7 @@ export function TimelineView({
             variant="outline"
             size="icon"
             onClick={() => setZoom((z) => Math.min(2, z + 0.25))}
+            aria-label="Zoomer"
           >
             <ZoomIn className="h-4 w-4" />
           </Button>

@@ -278,6 +278,7 @@ export function PendingAttachment({
         size="icon"
         className="h-4 w-4 rounded-full hover:bg-muted shrink-0"
         onClick={onRemove}
+        aria-label="Fermer"
       >
         <X className="h-2.5 w-2.5" />
       </Button>

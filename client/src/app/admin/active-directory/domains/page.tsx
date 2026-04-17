@@ -496,6 +496,7 @@ export default function DomainsPage() {
                               className="h-7 w-7 text-muted-foreground hover:text-foreground"
                               onClick={() => openEditDialog(domain)}
                               title="Modifier ce domaine"
+                              aria-label="Modifier ce domaine"
                             >
                               <Pencil className="h-3.5 w-3.5" />
                             </Button>
@@ -505,6 +506,7 @@ export default function DomainsPage() {
                               className="h-7 w-7 text-muted-foreground hover:text-destructive"
                               onClick={() => handleDelete(domain)}
                               title="Supprimer ce domaine"
+                              aria-label="Supprimer ce domaine"
                             >
                               <Trash2 className="h-3.5 w-3.5" />
                             </Button>

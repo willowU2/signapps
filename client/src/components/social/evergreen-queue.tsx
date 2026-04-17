@@ -169,7 +169,12 @@ export function EvergreenQueue({
           </span>
           <Sheet>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-7 w-7">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7"
+                aria-label="Paramètres"
+              >
                 <Settings className="w-3 h-3" />
               </Button>
             </SheetTrigger>
@@ -285,6 +290,7 @@ export function EvergreenQueue({
                     onClick={() =>
                       setShowHistory(showHistory === post.id ? null : post.id)
                     }
+                    aria-label="View history"
                   >
                     <History className="w-3 h-3" />
                   </Button>

@@ -475,6 +475,7 @@ export default function AutomationPage() {
                   variant="ghost"
                   className="h-7 w-7 text-destructive flex-shrink-0 ml-2"
                   onClick={() => handleDelete(rule)}
+                  aria-label="Supprimer"
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                 </Button>

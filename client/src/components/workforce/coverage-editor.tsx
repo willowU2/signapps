@@ -31,12 +31,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { TooltipIconButton } from "@/components/ui/tooltip-icon-button";
 import type {
   CoverageSlot,
   WeeklyPattern,
@@ -295,6 +291,7 @@ export function CoverageEditor({
               e.stopPropagation();
               deleteSlot(day, index);
             }}
+            aria-label="Supprimer"
           >
             <Trash2 className="h-3.5 w-3.5 text-destructive" />
           </Button>
@@ -376,45 +373,33 @@ export function CoverageEditor({
         {!isExpanded && !readOnly && (
           <TooltipProvider>
             <div className="mt-auto flex justify-center gap-1">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      openSlotDialog(day.key);
-                    }}
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Ajouter un créneau</TooltipContent>
-              </Tooltip>
+              <TooltipIconButton
+                label="Ajouter un créneau"
+                className="h-7 w-7"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  openSlotDialog(day.key);
+                }}
+              >
+                <Plus className="h-4 w-4" />
+              </TooltipIconButton>
 
               {slots.length > 0 && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        // Copy to next day
-                        const currentIndex = DAYS_OF_WEEK.findIndex(
-                          (d) => d.key === day.key,
-                        );
-                        const nextDay = DAYS_OF_WEEK[(currentIndex + 1) % 7];
-                        copyDaySlots(day.key, nextDay.key);
-                      }}
-                    >
-                      <Copy className="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>Copier vers le jour suivant</TooltipContent>
-                </Tooltip>
+                <TooltipIconButton
+                  label="Copier vers le jour suivant"
+                  className="h-7 w-7"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    // Copy to next day
+                    const currentIndex = DAYS_OF_WEEK.findIndex(
+                      (d) => d.key === day.key,
+                    );
+                    const nextDay = DAYS_OF_WEEK[(currentIndex + 1) % 7];
+                    copyDaySlots(day.key, nextDay.key);
+                  }}
+                >
+                  <Copy className="h-4 w-4" />
+                </TooltipIconButton>
               )}
             </div>
           </TooltipProvider>

@@ -52,6 +52,7 @@ export function HistoryPanel({
           size="icon"
           className="h-6 w-6"
           onClick={onClose}
+          aria-label="Fermer"
         >
           <X className="h-3.5 w-3.5" />
         </Button>

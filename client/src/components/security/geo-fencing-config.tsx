@@ -210,6 +210,7 @@ export function GeoFencingConfig() {
                     variant="ghost"
                     className="h-7 w-7 text-muted-foreground"
                     onClick={() => removeRule(r.id)}
+                    aria-label="Supprimer"
                   >
                     <Trash2 className="h-3 w-3" />
                   </Button>

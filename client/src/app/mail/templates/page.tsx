@@ -226,7 +226,7 @@ export default function MailTemplatesPage() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Link href="/mail/settings">
-              <Button variant="ghost" size="icon">
+              <Button variant="ghost" size="icon" aria-label="Retour">
                 <ArrowLeft className="h-4 w-4" />
               </Button>
             </Link>
@@ -315,6 +315,7 @@ export default function MailTemplatesPage() {
                               className="h-7 w-7"
                               title="Aperçu"
                               onClick={() => openPreview(t)}
+                              aria-label="Aperçu"
                             >
                               <Eye className="h-3.5 w-3.5" />
                             </Button>
@@ -324,6 +325,7 @@ export default function MailTemplatesPage() {
                               className="h-7 w-7"
                               title="Modifier"
                               onClick={() => openEdit(t)}
+                              aria-label="Modifier"
                             >
                               <Pencil className="h-3.5 w-3.5" />
                             </Button>
@@ -333,6 +335,7 @@ export default function MailTemplatesPage() {
                               className="h-7 w-7 text-destructive hover:text-destructive"
                               title="Supprimer"
                               onClick={() => setDeleteTarget(t)}
+                              aria-label="Supprimer"
                             >
                               <Trash2 className="h-3.5 w-3.5" />
                             </Button>

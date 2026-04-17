@@ -109,6 +109,7 @@ export default function DesignHistoryPanel({
             onClick={undo}
             disabled={undoStack.length === 0}
             title="Undo"
+            aria-label="Undo"
           >
             <Undo2 className="w-3 h-3" />
           </Button>
@@ -119,6 +120,7 @@ export default function DesignHistoryPanel({
             onClick={redo}
             disabled={redoStack.length === 0}
             title="Redo"
+            aria-label="Redo"
           >
             <Redo2 className="w-3 h-3" />
           </Button>

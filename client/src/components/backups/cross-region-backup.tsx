@@ -199,6 +199,7 @@ export function CrossRegionBackup() {
               size="icon"
               className="h-8 w-8 text-destructive"
               onClick={() => remove(loc.id)}
+              aria-label="Supprimer"
             >
               <Trash2 className="h-3.5 w-3.5" />
             </Button>

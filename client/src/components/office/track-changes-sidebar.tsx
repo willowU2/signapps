@@ -37,12 +37,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { TooltipIconButton } from "@/components/ui/tooltip-icon-button";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
@@ -318,41 +314,27 @@ function ChangeItem({ change, onAccept, onReject, onClick }: ChangeItemProps) {
         {isPending && (
           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
             <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7 text-green-600 hover:text-green-700 hover:bg-green-100"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onAccept();
-                    }}
-                  >
-                    <Check className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Accepter</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+              <TooltipIconButton
+                label="Accepter"
+                className="h-7 w-7 text-green-600 hover:text-green-700 hover:bg-green-100"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onAccept();
+                }}
+              >
+                <Check className="h-4 w-4" />
+              </TooltipIconButton>
 
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7 text-red-600 hover:text-red-700 hover:bg-red-100"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onReject();
-                    }}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Rejeter</TooltipContent>
-              </Tooltip>
+              <TooltipIconButton
+                label="Rejeter"
+                className="h-7 w-7 text-red-600 hover:text-red-700 hover:bg-red-100"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onReject();
+                }}
+              >
+                <X className="h-4 w-4" />
+              </TooltipIconButton>
             </TooltipProvider>
           </div>
         )}

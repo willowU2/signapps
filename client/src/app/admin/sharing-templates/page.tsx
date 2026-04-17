@@ -216,6 +216,7 @@ function GrantEditorRow({
             className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
             onClick={() => onRemove(index)}
             title="Supprimer cette règle"
+            aria-label="Supprimer cette règle"
           >
             <Trash2 className="h-3.5 w-3.5" />
           </Button>
@@ -426,6 +427,7 @@ function TemplateCard({ template, onDelete }: TemplateCardProps) {
               className="h-7 w-7 shrink-0 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all"
               onClick={() => onDelete(template.id)}
               title="Supprimer ce template"
+              aria-label="Supprimer ce template"
             >
               <Trash2 className="h-3.5 w-3.5" />
             </Button>

@@ -449,7 +449,12 @@ export default function TimesheetPage() {
               </span>
               <div className="flex items-center gap-1">
                 {!timerRunning ? (
-                  <Button size="icon" onClick={handleStart} title="Demarrer">
+                  <Button
+                    size="icon"
+                    onClick={handleStart}
+                    title="Demarrer"
+                    aria-label="Démarrer le chronomètre"
+                  >
                     <Play className="h-4 w-4" />
                   </Button>
                 ) : (
@@ -458,6 +463,7 @@ export default function TimesheetPage() {
                     size="icon"
                     onClick={handlePause}
                     title={timerPaused ? "Reprendre" : "Pause"}
+                    aria-label={timerPaused ? "Reprendre" : "Pause"}
                   >
                     {timerPaused ? (
                       <Play className="h-4 w-4" />
@@ -472,6 +478,7 @@ export default function TimesheetPage() {
                   onClick={handleStop}
                   disabled={timerSeconds === 0}
                   title="Arreter et sauvegarder"
+                  aria-label="Arrêter et sauvegarder"
                 >
                   <Square className="h-4 w-4" />
                 </Button>
@@ -535,14 +542,24 @@ export default function TimesheetPage() {
         {/* Week navigation and view toggle */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="icon" onClick={prevWeek}>
-              <ChevronLeft className="h-4 w-4" />
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={prevWeek}
+              aria-label="Semaine précédente"
+            >
+              <ChevronLeft className="h-4 w-4" aria-hidden="true" />
             </Button>
             <Button variant="outline" size="sm" onClick={goToThisWeek}>
-              Aujourd'hui
+              Aujourd&apos;hui
             </Button>
-            <Button variant="outline" size="icon" onClick={nextWeek}>
-              <ChevronRight className="h-4 w-4" />
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={nextWeek}
+              aria-label="Semaine suivante"
+            >
+              <ChevronRight className="h-4 w-4" aria-hidden="true" />
             </Button>
             <span className="text-sm font-medium ml-2">
               {currentWeek.toLocaleDateString("fr-FR", {

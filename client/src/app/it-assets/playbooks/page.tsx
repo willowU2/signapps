@@ -171,6 +171,7 @@ function StepRow({
           className="h-7 w-7"
           disabled={index === 0}
           onClick={onMoveUp}
+          aria-label="Monter l'étape"
         >
           <ChevronUp className="h-3 w-3" />
         </Button>
@@ -180,6 +181,7 @@ function StepRow({
           className="h-7 w-7"
           disabled={index === total - 1}
           onClick={onMoveDown}
+          aria-label="Descendre l'étape"
         >
           <ChevronDown className="h-3 w-3" />
         </Button>
@@ -188,8 +190,9 @@ function StepRow({
           size="icon"
           className="h-7 w-7 text-red-500 hover:text-red-700"
           onClick={onRemove}
+          aria-label="Supprimer l'étape"
         >
-          <Trash2 className="h-3 w-3" />
+          <Trash2 className="h-3 w-3" aria-hidden="true" />
         </Button>
       </div>
     </div>
@@ -537,16 +540,24 @@ export default function PlaybooksPage() {
                               size="icon"
                               className="h-8 w-8"
                               onClick={() => openEdit(pb)}
+                              aria-label={`Modifier ${pb.name}`}
                             >
-                              <Pencil className="h-3.5 w-3.5" />
+                              <Pencil
+                                className="h-3.5 w-3.5"
+                                aria-hidden="true"
+                              />
                             </Button>
                             <Button
                               variant="ghost"
                               size="icon"
                               className="h-8 w-8 text-red-500 hover:text-red-700"
                               onClick={() => deleteMut.mutate(pb.id)}
+                              aria-label={`Supprimer ${pb.name}`}
                             >
-                              <Trash2 className="h-3.5 w-3.5" />
+                              <Trash2
+                                className="h-3.5 w-3.5"
+                                aria-hidden="true"
+                              />
                             </Button>
                           </div>
                         </TableCell>

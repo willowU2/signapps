@@ -4,7 +4,6 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useUIStore, RightWidgetType } from "@/lib/store";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
@@ -27,12 +26,8 @@ import {
   Clock,
 } from "lucide-react";
 import * as LucideIcons from "lucide-react";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { TooltipIconButton } from "@/components/ui/tooltip-icon-button";
 
 import { ChatWidget } from "@/components/chat/chat-widget";
 import { CalendarWidget } from "@/components/calendar/calendar-widget";
@@ -301,35 +296,28 @@ export function RightSidebar() {
             <h2 className="font-semibold text-sm">{panelTitle}</h2>
             <div className="flex items-center gap-1">
               {/* Pin toggle */}
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={handlePinToggle}
-                  >
-                    <Pin
-                      className={cn(
-                        "h-4 w-4",
-                        rightSidebarPinned && "fill-primary text-primary",
-                      )}
-                    />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="left">
-                  {rightSidebarPinned ? "Désépingler" : "Épingler ouvert"}
-                </TooltipContent>
-              </Tooltip>
+              <TooltipIconButton
+                label={rightSidebarPinned ? "Désépingler" : "Épingler ouvert"}
+                tooltipSide="left"
+                className="h-8 w-8"
+                onClick={handlePinToggle}
+              >
+                <Pin
+                  className={cn(
+                    "h-4 w-4",
+                    rightSidebarPinned && "fill-primary text-primary",
+                  )}
+                />
+              </TooltipIconButton>
               {!rightSidebarPinned && (
-                <Button
-                  variant="ghost"
-                  size="icon"
+                <TooltipIconButton
+                  label="Fermer le panneau"
+                  tooltipSide="left"
                   className="h-8 w-8"
                   onClick={() => setRightSidebarOpen(false)}
                 >
                   <X className="h-4 w-4" />
-                </Button>
+                </TooltipIconButton>
               )}
             </div>
           </div>
@@ -447,8 +435,9 @@ export function RightSidebar() {
       </div>
 
       {/* Icon Bar (always visible, fixed on far right) */}
-      <div
+      <aside
         ref={iconBarRef}
+        aria-label="Barre d'outils latérale"
         className="hidden md:flex fixed top-0 right-0 bottom-0 w-16 bg-background border-l border-border z-40 flex-col items-center py-4 gap-1"
         style={{ width: "var(--right-sidebar-icon-width)" }}
       >
@@ -457,65 +446,52 @@ export function RightSidebar() {
             const isActive =
               isOpen && activeRightWidget === item.id && panelMode === "widget";
             return (
-              <Tooltip key={item.id + item.label}>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className={cn(
-                      "h-10 w-10 transition-colors",
-                      isActive && "bg-accent text-accent-foreground",
-                    )}
-                    onClick={() => toggleWidget(item.id)}
-                  >
-                    <item.icon className="h-5 w-5" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="left">
-                  <p>{item.label}</p>
-                </TooltipContent>
-              </Tooltip>
+              <TooltipIconButton
+                key={item.id + item.label}
+                label={item.label}
+                tooltipSide="left"
+                className={cn(
+                  "h-10 w-10 transition-colors",
+                  isActive && "bg-accent text-accent-foreground",
+                )}
+                onClick={() => toggleWidget(item.id)}
+              >
+                <item.icon className="h-5 w-5" />
+              </TooltipIconButton>
             );
           })}
 
           <div className="my-1 w-8 border-t border-border" />
 
           {/* App launcher toggle */}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className={cn(
-                  "h-10 w-10 transition-colors",
-                  isOpen &&
-                    panelMode === "apps" &&
-                    "bg-accent text-accent-foreground",
-                )}
-                onClick={openApps}
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <rect x="3" y="3" width="7" height="7" rx="1" />
-                  <rect x="14" y="3" width="7" height="7" rx="1" />
-                  <rect x="3" y="14" width="7" height="7" rx="1" />
-                  <rect x="14" y="14" width="7" height="7" rx="1" />
-                </svg>
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="left">
-              <p>All Apps</p>
-            </TooltipContent>
-          </Tooltip>
+          <TooltipIconButton
+            label="All Apps"
+            tooltipSide="left"
+            className={cn(
+              "h-10 w-10 transition-colors",
+              isOpen &&
+                panelMode === "apps" &&
+                "bg-accent text-accent-foreground",
+            )}
+            onClick={openApps}
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <rect x="3" y="3" width="7" height="7" rx="1" />
+              <rect x="14" y="3" width="7" height="7" rx="1" />
+              <rect x="3" y="14" width="7" height="7" rx="1" />
+              <rect x="14" y="14" width="7" height="7" rx="1" />
+            </svg>
+          </TooltipIconButton>
 
           {/* Expand/collapse toggle */}
           <div className="mt-auto flex flex-col items-center gap-2">
@@ -527,45 +503,31 @@ export function RightSidebar() {
 
             {/* Pin indicator */}
             {rightSidebarPinned && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-primary"
-                    onClick={handlePinToggle}
-                  >
-                    <Pin className="h-4 w-4 fill-primary" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="left">
-                  <p>Désépingler</p>
-                </TooltipContent>
-              </Tooltip>
+              <TooltipIconButton
+                label="Désépingler"
+                tooltipSide="left"
+                className="h-8 w-8 text-primary"
+                onClick={handlePinToggle}
+              >
+                <Pin className="h-4 w-4 fill-primary" />
+              </TooltipIconButton>
             )}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-10 w-10 text-muted-foreground"
-                  onClick={() => setRightSidebarOpen(!isOpen)}
-                >
-                  <ChevronRight
-                    className={cn(
-                      "h-5 w-5 transition-transform duration-200",
-                      isOpen && "rotate-180",
-                    )}
-                  />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="left">
-                <p>{isOpen ? "Hide Panel" : "Show Panel"}</p>
-              </TooltipContent>
-            </Tooltip>
+            <TooltipIconButton
+              label={isOpen ? "Hide Panel" : "Show Panel"}
+              tooltipSide="left"
+              className="h-10 w-10 text-muted-foreground"
+              onClick={() => setRightSidebarOpen(!isOpen)}
+            >
+              <ChevronRight
+                className={cn(
+                  "h-5 w-5 transition-transform duration-200",
+                  isOpen && "rotate-180",
+                )}
+              />
+            </TooltipIconButton>
           </div>
         </TooltipProvider>
-      </div>
+      </aside>
     </>
   );
 }

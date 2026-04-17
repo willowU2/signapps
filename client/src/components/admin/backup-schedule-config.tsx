@@ -161,8 +161,14 @@ export function BackupScheduleConfig() {
                 const val = Object.values(cronParts)[fi];
                 return (
                   <div key={field} className="space-y-1">
-                    <span className="text-muted-foreground">{labels[fi]}</span>
+                    <label
+                      htmlFor={`cron-${field}`}
+                      className="text-muted-foreground"
+                    >
+                      {labels[fi]}
+                    </label>
                     <Input
+                      id={`cron-${field}`}
                       value={val}
                       onChange={(e) => {
                         const parts = [
@@ -195,8 +201,9 @@ export function BackupScheduleConfig() {
         {/* Retention */}
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
-            <Label>Retention (days)</Label>
+            <Label htmlFor="backup-retention">Retention (days)</Label>
             <Input
+              id="backup-retention"
               type="number"
               min={1}
               value={config.retentionDays}
@@ -209,7 +216,7 @@ export function BackupScheduleConfig() {
             />
           </div>
           <div className="space-y-1.5">
-            <Label>Destination</Label>
+            <Label htmlFor="backup-destination">Destination</Label>
             <Select
               value={config.destination}
               onValueChange={(v) => setConfig({ ...config, destination: v })}

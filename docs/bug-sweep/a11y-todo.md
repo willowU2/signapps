@@ -112,6 +112,59 @@ Five additional pages that bypass `AppLayout` now wrap their shell in
 - The `/poll/[id]` title bar is now a `<header>` and its decorative "S"
   badge is `aria-hidden`.
 
+### Wave 2c + 3a — WorkspaceShell landmark + TooltipIconButton helper (done 2026-04-16)
+
+- `WorkspaceShell` content area now renders as `<main id='main-content'>`
+  by default; a new `hideMainLandmark` prop covers the case where a
+  parent (e.g. `AppLayout` in mail) already provides the landmark.
+  `EditorLayout` sets `hideMainLandmark` and keeps its own `<main>`, and
+  the fullscreen editor branch gains `<main>` + `<header>` + aria-label
+  on the Minimize button. Free ripples : `/chat` and `/keep` (passthrough
+  layouts) now have a main landmark and a working skip-link target.
+- Added `<TooltipIconButton>` (`components/ui/tooltip-icon-button.tsx`)
+  + unit tests — it bundles Tooltip + Trigger + Button + Content into a
+  single component, requires `label` at the type level, and hides the
+  icon child via `aria-hidden`. Defaults `variant="ghost"` `size="icon"`.
+  Migrated `components/layout/right-sidebar.tsx` (6 call sites) and
+  `components/chat/chat-input.tsx` (3 call sites) as the first consumers.
+- Dev-only `console.warn` inside the shared `<Button>` now fires when
+  `size` starts with `"icon"` but there's no `aria-label` /
+  `aria-labelledby` / text children, to catch regressions before the
+  next axe run.
+- Per-route fix : `/containers` list row "more actions" trigger gained
+  an aria-label tying the dropdown to the container name.
+
+### Attempted re-audit on 2026-04-16 — blocked by stale dev server
+
+Ran `e2e/a11y-audit.spec.ts` at 21:47 after wave 2/2b/2c/3a fixes. The
+resulting baseline showed **-2 total violations** (2914 → 2912), which
+contradicts the source changes. Root cause verified by direct inspection :
+
+- `client/.next/server/app/maintenance/page.js` mtime : 16:17
+- `client/src/app/maintenance/page.tsx` mtime : 17:13
+- `curl -sL http://localhost:3000/login` returns HTML with the
+  skip-link anchor but **no `<main>` element** despite the source
+  having been edited to emit one.
+
+Conclusion : the Next.js dev server (started earlier in the session)
+stopped recompiling on file changes — likely the file watcher dropped
+out. The 24-minute audit measured pre-wave-2 compiled output, so the
+delta is not meaningful. The original `a11y-axe-baseline.json` from
+16:45 has been restored as the canonical baseline ; the 22:11 re-run
+was discarded.
+
+**To measure the real wave-2/3 delta** :
+
+```bash
+# Terminate the stale dev server, then :
+cd client && npm run dev       # fresh dev server with working HMR
+# — and separately, once /login compiled:
+npx playwright test e2e/a11y-audit.spec.ts --project=chromium
+```
+
+Alternatively, run against a production build :
+`cd client && npm run build && npm run start` (no HMR, fully baked).
+
 ### Pending (requires fresh axe run)
 
 - Delta measurement : rerun `e2e/a11y-audit.spec.ts` with services up and regenerate `a11y-axe-baseline.json` / `a11y-axe-summary.md`. This is the gate for prioritising the next wave — per-route vs. layout-level.

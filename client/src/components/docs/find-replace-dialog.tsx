@@ -175,6 +175,7 @@ export function FindReplaceDialog({
                 size="icon"
                 onClick={findPrevious}
                 disabled={matchCount === 0}
+                aria-label="Monter"
               >
                 <ChevronUp className="w-4 h-4" />
               </Button>
@@ -183,6 +184,7 @@ export function FindReplaceDialog({
                 size="icon"
                 onClick={findNext}
                 disabled={matchCount === 0}
+                aria-label="Descendre"
               >
                 <ChevronDown className="w-4 h-4" />
               </Button>

@@ -218,6 +218,7 @@ export function ContactHistory({
                         variant="ghost"
                         className="size-5 text-muted-foreground hover:text-destructive"
                         onClick={() => onDelete(a.id)}
+                        aria-label="Supprimer"
                       >
                         <Trash2 className="size-3" />
                       </Button>

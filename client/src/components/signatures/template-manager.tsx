@@ -245,6 +245,7 @@ function CreateTemplateDialog({
                       size="icon"
                       className="h-6 w-6"
                       onClick={() => removeField(field.id)}
+                      aria-label="Supprimer"
                     >
                       <Trash2 className="h-3 w-3" />
                     </Button>
@@ -345,6 +346,7 @@ export function TemplateManager({
                         variant="ghost"
                         size="icon"
                         className="h-7 w-7 shrink-0"
+                        aria-label="Plus d'actions"
                       >
                         <MoreVertical className="h-4 w-4" />
                       </Button>

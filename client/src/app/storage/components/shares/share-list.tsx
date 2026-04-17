@@ -200,6 +200,7 @@ export function ShareList({
                             size="icon"
                             onClick={() => copyLink(share)}
                             title="Copier le lien"
+                            aria-label="Copier le lien"
                           >
                             <Copy className="h-4 w-4" />
                           </Button>
@@ -210,12 +211,17 @@ export function ShareList({
                               window.open(`/share/${share.token}`, "_blank")
                             }
                             title="Ouvrir"
+                            aria-label="Ouvrir"
                           >
                             <ExternalLink className="h-4 w-4" />
                           </Button>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                aria-label="Plus d'actions"
+                              >
                                 <MoreVertical className="h-4 w-4" />
                               </Button>
                             </DropdownMenuTrigger>

@@ -18,6 +18,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { TooltipIconButton } from "@/components/ui/tooltip-icon-button";
 import {
   Select,
   SelectContent,
@@ -399,57 +400,38 @@ export function FloorPlan({
         {/* Zoom controls */}
         <div className="flex items-center gap-1">
           <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 w-8 p-0"
-                  onClick={() => handleZoom(-ZOOM_STEP)}
-                  disabled={viewState.zoom <= MIN_ZOOM}
-                >
-                  <ZoomOut className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>D\u00e9zoomer</TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+            <TooltipIconButton
+              label="Dézoomer"
+              size="icon-sm"
+              className="h-8 w-8 p-0"
+              onClick={() => handleZoom(-ZOOM_STEP)}
+              disabled={viewState.zoom <= MIN_ZOOM}
+            >
+              <ZoomOut className="h-4 w-4" />
+            </TooltipIconButton>
 
-          <span className="text-xs text-muted-foreground w-12 text-center">
-            {Math.round(viewState.zoom * 100)}%
-          </span>
+            <span className="text-xs text-muted-foreground w-12 text-center">
+              {Math.round(viewState.zoom * 100)}%
+            </span>
 
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 w-8 p-0"
-                  onClick={() => handleZoom(ZOOM_STEP)}
-                  disabled={viewState.zoom >= MAX_ZOOM}
-                >
-                  <ZoomIn className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Zoomer</TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+            <TooltipIconButton
+              label="Zoomer"
+              size="icon-sm"
+              className="h-8 w-8 p-0"
+              onClick={() => handleZoom(ZOOM_STEP)}
+              disabled={viewState.zoom >= MAX_ZOOM}
+            >
+              <ZoomIn className="h-4 w-4" />
+            </TooltipIconButton>
 
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 w-8 p-0"
-                  onClick={resetView}
-                >
-                  <Maximize2 className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>R\u00e9initialiser la vue</TooltipContent>
-            </Tooltip>
+            <TooltipIconButton
+              label="Réinitialiser la vue"
+              size="icon-sm"
+              className="h-8 w-8 p-0"
+              onClick={resetView}
+            >
+              <Maximize2 className="h-4 w-4" />
+            </TooltipIconButton>
           </TooltipProvider>
         </div>
       </div>

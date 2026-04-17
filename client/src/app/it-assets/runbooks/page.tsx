@@ -178,6 +178,7 @@ function StepEditor({
             variant="ghost"
             className="h-6 w-6 text-destructive"
             onClick={onDelete}
+            aria-label="Supprimer"
           >
             <Trash2 className="h-3 w-3" />
           </Button>
@@ -672,6 +673,7 @@ export default function RunbooksPage() {
                       variant="ghost"
                       className="h-8 w-8 text-muted-foreground hover:text-destructive"
                       onClick={() => deleteMutation.mutate(rb.id)}
+                      aria-label="Supprimer"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </Button>

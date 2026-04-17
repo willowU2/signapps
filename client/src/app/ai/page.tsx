@@ -962,8 +962,13 @@ export default function AIPage() {
         >
           <div className="flex items-center justify-between p-3 border-b">
             <h2 className="font-semibold text-sm">Historique</h2>
-            <Button variant="ghost" size="icon" onClick={createNewChat}>
-              <Plus className="h-4 w-4" />
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={createNewChat}
+              aria-label="Nouvelle conversation"
+            >
+              <Plus className="h-4 w-4" aria-hidden="true" />
             </Button>
           </div>
 
@@ -1004,8 +1009,12 @@ export default function AIPage() {
                           variant="ghost"
                           size="icon"
                           className="h-6 w-6 opacity-0 group-hover:opacity-100"
+                          aria-label="Actions de conversation"
                         >
-                          <MoreVertical className="h-3 w-3" />
+                          <MoreVertical
+                            className="h-3 w-3"
+                            aria-hidden="true"
+                          />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
@@ -1048,11 +1057,14 @@ export default function AIPage() {
           className="absolute left-0 top-1/2 -translate-y-1/2 z-10 h-8 w-4 rounded-l-none rounded-r-md bg-muted hover:bg-muted-foreground/20"
           style={{ left: sidebarOpen ? "288px" : "0px" }}
           onClick={() => setSidebarOpen(!sidebarOpen)}
+          aria-label={
+            sidebarOpen ? "Fermer l'historique" : "Ouvrir l'historique"
+          }
         >
           {sidebarOpen ? (
-            <ChevronLeft className="h-3 w-3" />
+            <ChevronLeft className="h-3 w-3" aria-hidden="true" />
           ) : (
-            <ChevronRight className="h-3 w-3" />
+            <ChevronRight className="h-3 w-3" aria-hidden="true" />
           )}
         </Button>
 
@@ -1191,8 +1203,9 @@ export default function AIPage() {
                   setSystemPromptDialogOpen(true);
                 }}
                 title="Prompt systeme personnalise"
+                aria-label="Prompt système personnalisé"
               >
-                <Settings className="h-4 w-4" />
+                <Settings className="h-4 w-4" aria-hidden="true" />
               </Button>
 
               <Badge variant="outline" className="gap-1">
@@ -1209,8 +1222,9 @@ export default function AIPage() {
                   fetchProviders();
                   fetchKnowledgeBases();
                 }}
+                aria-label="Actualiser les statistiques"
               >
-                <RefreshCw className="h-4 w-4" />
+                <RefreshCw className="h-4 w-4" aria-hidden="true" />
               </Button>
             </div>
           </div>
@@ -1510,8 +1524,12 @@ export default function AIPage() {
                                   variant="ghost"
                                   size="icon"
                                   className="h-8 w-8"
+                                  aria-label={`Actions pour ${kb.name}`}
                                 >
-                                  <MoreVertical className="h-4 w-4" />
+                                  <MoreVertical
+                                    className="h-4 w-4"
+                                    aria-hidden="true"
+                                  />
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">

@@ -571,6 +571,7 @@ export default function PxeWizardPage() {
                                         ),
                                       }))
                                     }
+                                    aria-label="Supprimer"
                                   >
                                     <Trash2 className="h-3 w-3" />
                                   </Button>
@@ -902,6 +903,7 @@ export default function PxeWizardPage() {
                           variant="ghost"
                           className="h-7 w-7 text-destructive"
                           onClick={() => deleteImageMutation.mutate(img.id)}
+                          aria-label="Supprimer"
                         >
                           <Trash2 className="h-3 w-3" />
                         </Button>

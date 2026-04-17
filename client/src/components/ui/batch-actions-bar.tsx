@@ -115,6 +115,7 @@ export function BatchActionsBar({
             className="h-7 w-7 ml-1"
             onClick={onClearSelection}
             title="Annuler la sélection"
+            aria-label="Annuler la sélection"
           >
             <X className="h-4 w-4" />
           </Button>

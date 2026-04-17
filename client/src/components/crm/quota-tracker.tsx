@@ -145,6 +145,7 @@ export function QuotaTracker({ currentPeriod = getCurrentPeriod() }: Props) {
                     size="icon"
                     className="h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity"
                     onClick={() => remove(q.id)}
+                    aria-label="Supprimer"
                   >
                     <Trash2 className="h-3 w-3 text-destructive" />
                   </Button>

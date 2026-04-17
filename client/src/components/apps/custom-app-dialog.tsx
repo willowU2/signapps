@@ -168,6 +168,7 @@ export function CustomAppDialog({
                   variant="ghost"
                   size="icon"
                   onClick={() => setPorts(ports.filter((_, j) => j !== i))}
+                  aria-label="Supprimer"
                 >
                   <Trash2 className="h-4 w-4 text-destructive" />
                 </Button>
@@ -213,6 +214,7 @@ export function CustomAppDialog({
                   variant="ghost"
                   size="icon"
                   onClick={() => setEnv(env.filter((_, j) => j !== i))}
+                  aria-label="Supprimer"
                 >
                   <Trash2 className="h-4 w-4 text-destructive" />
                 </Button>
@@ -260,6 +262,7 @@ export function CustomAppDialog({
                   variant="ghost"
                   size="icon"
                   onClick={() => setVolumes(volumes.filter((_, j) => j !== i))}
+                  aria-label="Supprimer"
                 >
                   <Trash2 className="h-4 w-4 text-destructive" />
                 </Button>

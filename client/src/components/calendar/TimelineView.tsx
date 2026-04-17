@@ -312,6 +312,7 @@ export function TimelineView({
             variant="outline"
             size="icon"
             onClick={() => setZoom((z) => Math.max(0.5, z - 0.25))}
+            aria-label="Dézoomer"
           >
             <ZoomOut className="h-4 w-4" />
           </Button>
@@ -319,6 +320,7 @@ export function TimelineView({
             variant="outline"
             size="icon"
             onClick={() => setZoom((z) => Math.min(2, z + 0.25))}
+            aria-label="Zoomer"
           >
             <ZoomIn className="h-4 w-4" />
           </Button>

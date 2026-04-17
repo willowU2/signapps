@@ -327,6 +327,7 @@ export default function PurchaseOrdersPage() {
                           className="col-span-1 h-7 w-7"
                           onClick={() => removeItem(item.id)}
                           disabled={items.length === 1}
+                          aria-label="Supprimer"
                         >
                           <Trash2 className="h-3 w-3" />
                         </Button>

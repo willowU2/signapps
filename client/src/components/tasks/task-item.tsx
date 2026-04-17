@@ -278,6 +278,7 @@ export const TaskItem = React.memo(function TaskItem({
           e.stopPropagation();
           onRemove(task.id);
         }}
+        aria-label="Supprimer"
       >
         <Trash2 className="h-4 w-4" />
       </Button>

@@ -146,6 +146,7 @@ export function TeamsConnector() {
                     onClick={() =>
                       setChannels((cs) => cs.filter((c) => c.id !== ch.id))
                     }
+                    aria-label="Supprimer"
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>

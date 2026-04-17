@@ -213,6 +213,7 @@ export function DocMergeFields({ onInsert }: DocMergeFieldsProps) {
                             e.stopPropagation();
                             removeCustom(field.id);
                           }}
+                          aria-label="Supprimer"
                         >
                           <Trash2 className="h-3 w-3 text-destructive" />
                         </Button>

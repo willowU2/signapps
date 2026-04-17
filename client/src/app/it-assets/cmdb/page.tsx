@@ -406,6 +406,7 @@ export default function CmdbPage() {
                           deleteMut.mutate(ci.id);
                         }}
                         className="h-7 w-7 text-destructive hover:text-destructive"
+                        aria-label="Supprimer"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                       </Button>

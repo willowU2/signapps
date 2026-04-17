@@ -151,6 +151,7 @@ export function ShareNote({ noteId, noteTitle, onClose }: ShareNoteProps) {
                 variant="ghost"
                 className="size-6 text-muted-foreground hover:text-destructive"
                 onClick={() => handleRemove(s.id)}
+                aria-label="Supprimer"
               >
                 <Trash2 className="size-3" />
               </Button>

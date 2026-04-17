@@ -255,6 +255,7 @@ export function CompetitorMonitor() {
                     onClick={() => handleRefresh(c.id)}
                     disabled={refreshingId === c.id}
                     title="Refresh stats"
+                    aria-label="Refresh stats"
                   >
                     <RefreshCw
                       className={`w-3 h-3 ${refreshingId === c.id ? "animate-spin" : ""}`}
@@ -265,6 +266,7 @@ export function CompetitorMonitor() {
                     size="icon"
                     className="h-6 w-6 text-destructive"
                     onClick={() => handleRemove(c.id)}
+                    aria-label="Supprimer"
                   >
                     <Trash2 className="w-3 h-3" />
                   </Button>

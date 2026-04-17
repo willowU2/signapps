@@ -257,6 +257,7 @@ export function DependencyMap({ cis, relationships }: DependencyMapProps) {
               size="icon"
               className="h-7 w-7"
               onClick={() => setZoom((z) => Math.min(z + 0.2, 2))}
+              aria-label="Zoomer"
             >
               <ZoomIn className="h-3.5 w-3.5" />
             </Button>
@@ -265,6 +266,7 @@ export function DependencyMap({ cis, relationships }: DependencyMapProps) {
               size="icon"
               className="h-7 w-7"
               onClick={() => setZoom((z) => Math.max(z - 0.2, 0.4))}
+              aria-label="Dézoomer"
             >
               <ZoomOut className="h-3.5 w-3.5" />
             </Button>
@@ -273,6 +275,7 @@ export function DependencyMap({ cis, relationships }: DependencyMapProps) {
               size="icon"
               className="h-7 w-7"
               onClick={reset}
+              aria-label="Réinitialiser"
             >
               <RotateCcw className="h-3.5 w-3.5" />
             </Button>

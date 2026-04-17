@@ -171,6 +171,7 @@ export function VpnDashboardTab({
                         quickTunnel.public_url || quickTunnel.subdomain,
                       )
                     }
+                    aria-label="Copier"
                   >
                     <Copy className="h-3 w-3" />
                   </Button>

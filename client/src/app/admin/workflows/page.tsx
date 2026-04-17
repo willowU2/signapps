@@ -577,6 +577,7 @@ export default function WorkflowsPage() {
                       size="icon"
                       className="h-8 w-8"
                       onClick={() => openEdit(rule)}
+                      aria-label="Modifier"
                     >
                       <Pencil className="h-3.5 w-3.5" />
                     </Button>
@@ -585,6 +586,7 @@ export default function WorkflowsPage() {
                       size="icon"
                       className="h-8 w-8 text-destructive hover:text-destructive"
                       onClick={() => setDeleteTarget(rule.id)}
+                      aria-label="Supprimer"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </Button>
@@ -723,6 +725,7 @@ export default function WorkflowsPage() {
                     size="icon"
                     className="h-8 w-8 shrink-0"
                     onClick={() => removeCondition(i)}
+                    aria-label="Supprimer"
                   >
                     <Trash2 className="h-3.5 w-3.5 text-destructive" />
                   </Button>
@@ -764,6 +767,7 @@ export default function WorkflowsPage() {
                       size="icon"
                       className="h-7 w-7"
                       onClick={() => removeAction(i)}
+                      aria-label="Supprimer"
                     >
                       <Trash2 className="h-3 w-3 text-destructive" />
                     </Button>

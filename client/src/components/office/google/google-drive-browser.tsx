@@ -176,7 +176,12 @@ function FileItem({
       ) : (
         <DropdownMenu>
           <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-            <Button variant="ghost" size="icon" className="h-8 w-8">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              aria-label="Plus d'actions"
+            >
               <MoreHorizontal className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
@@ -416,6 +421,7 @@ export function GoogleDriveBrowser({
           size="icon"
           className="h-9 w-9"
           onClick={() => listFiles(currentFolderId ?? undefined, true)}
+          aria-label="Actualiser"
         >
           <RefreshCw className="h-4 w-4" />
         </Button>

@@ -157,6 +157,7 @@ export function DiscordConnector() {
                     onClick={() =>
                       setWebhooks((ws) => ws.filter((w) => w.id !== wh.id))
                     }
+                    aria-label="Supprimer"
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>

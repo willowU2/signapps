@@ -572,6 +572,7 @@ export function EventSheet({
                 variant="outline"
                 size="icon"
                 onClick={handleAddAttendee}
+                aria-label="Ajouter"
               >
                 <Plus className="h-4 w-4" />
               </Button>

@@ -272,6 +272,7 @@ export function DataRetentionPolicies() {
                   className="h-7 w-7"
                   onClick={() => runPolicy(p.id)}
                   disabled={runningId === p.id}
+                  aria-label="Lecture"
                 >
                   <Play
                     className={`h-3.5 w-3.5 ${runningId === p.id ? "animate-pulse" : ""}`}
@@ -282,6 +283,7 @@ export function DataRetentionPolicies() {
                   variant="ghost"
                   className="h-7 w-7"
                   onClick={() => openEdit(p)}
+                  aria-label="Modifier"
                 >
                   <Pencil className="h-3.5 w-3.5" />
                 </Button>
@@ -290,6 +292,7 @@ export function DataRetentionPolicies() {
                   variant="ghost"
                   className="h-7 w-7 text-destructive"
                   onClick={() => deletePolicy(p.id)}
+                  aria-label="Supprimer"
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                 </Button>

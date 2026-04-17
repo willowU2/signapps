@@ -261,6 +261,7 @@ export function RiskRegister() {
                     e.stopPropagation();
                     setRisks((p) => p.filter((x) => x.id !== r.id));
                   }}
+                  aria-label="Supprimer"
                 >
                   <Trash2 className="size-3" />
                 </Button>

@@ -258,6 +258,7 @@ export function RulesEditor() {
                   size="icon"
                   className="h-7 w-7 text-destructive"
                   onClick={() => deleteRule(rule.id)}
+                  aria-label="Supprimer"
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>
@@ -377,6 +378,7 @@ export function RulesEditor() {
                       onClick={() =>
                         setNewConditions((p) => p.filter((_, idx) => idx !== i))
                       }
+                      aria-label="Supprimer"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -415,6 +417,7 @@ export function RulesEditor() {
                       onClick={() =>
                         setNewActions((p) => p.filter((_, idx) => idx !== i))
                       }
+                      aria-label="Supprimer"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>

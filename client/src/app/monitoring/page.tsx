@@ -1188,6 +1188,7 @@ export default function MonitoringPage() {
                                   setEditingConfig(config);
                                   setAlertDialogOpen(true);
                                 }}
+                                aria-label="Paramètres"
                               >
                                 <Settings className="h-4 w-4" />
                               </Button>
@@ -1195,6 +1196,7 @@ export default function MonitoringPage() {
                                 variant="ghost"
                                 size="icon"
                                 onClick={() => setDeleteConfigId(config.id)}
+                                aria-label="Supprimer"
                               >
                                 <Trash2 className="h-4 w-4 text-destructive" />
                               </Button>

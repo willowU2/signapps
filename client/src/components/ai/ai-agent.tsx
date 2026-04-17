@@ -506,6 +506,7 @@ Only include steps actually needed. Use ISO dates for dates.`,
               onClick={() => setMessages([])}
               disabled={isRunning}
               title="Nouvelle conversation"
+              aria-label="Nouvelle conversation"
             >
               <RefreshCw className="h-4 w-4" />
             </Button>

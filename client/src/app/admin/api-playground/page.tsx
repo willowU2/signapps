@@ -708,6 +708,7 @@ export default function ApiPlaygroundPage() {
                           onClick={() =>
                             setHeaders((prev) => prev.filter((_, j) => j !== i))
                           }
+                          aria-label="Supprimer"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
                         </Button>

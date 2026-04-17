@@ -237,6 +237,7 @@ const ObjectiveCard: React.FC<ObjectiveCardProps> = ({
                   onDelete(objective.id);
                 }}
                 className="text-destructive hover:bg-destructive/10"
+                aria-label="Fermer"
               >
                 <X className="h-4 w-4" />
               </Button>

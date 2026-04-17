@@ -197,6 +197,7 @@ export function AssetMaintenance({ assetId, assetName }: Props) {
                       className="h-7 w-7"
                       title="Mark Done"
                       onClick={() => markDone(item.id)}
+                      aria-label="Mark Done"
                     >
                       <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
                     </Button>
@@ -206,6 +207,7 @@ export function AssetMaintenance({ assetId, assetName }: Props) {
                       className="h-7 w-7"
                       title="Remove"
                       onClick={() => remove(item.id)}
+                      aria-label="Remove"
                     >
                       <Trash2 className="h-3.5 w-3.5 text-destructive" />
                     </Button>

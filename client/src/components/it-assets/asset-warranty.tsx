@@ -193,6 +193,7 @@ export function AssetWarranty({ assetId, assetName }: Props) {
                     onClick={() =>
                       setContracts((cs) => cs.filter((x) => x.id !== c.id))
                     }
+                    aria-label="Supprimer"
                   >
                     <Trash2 className="h-3.5 w-3.5 text-destructive" />
                   </Button>

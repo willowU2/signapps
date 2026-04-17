@@ -380,7 +380,12 @@ export function WeekCalendar({
             {format(weekEnd, "d MMM yyyy", { locale: fr })}
           </h2>
           <div className="flex gap-2">
-            <Button variant="outline" size="icon" onClick={handlePrevWeek}>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={handlePrevWeek}
+              aria-label="Précédent"
+            >
               <ChevronLeft className="h-4 w-4" />
             </Button>
             <Button
@@ -390,7 +395,12 @@ export function WeekCalendar({
             >
               Aujourd'hui
             </Button>
-            <Button variant="outline" size="icon" onClick={handleNextWeek}>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={handleNextWeek}
+              aria-label="Suivant"
+            >
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>

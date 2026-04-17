@@ -471,6 +471,7 @@ export default function DigitalSignagePage() {
                             toggleActive(slide.id);
                           }}
                           title={slide.active ? "Disable" : "Enable"}
+                          aria-label="Aperçu"
                         >
                           <Eye
                             className={cn(
@@ -487,6 +488,7 @@ export default function DigitalSignagePage() {
                             e.stopPropagation();
                             remove(slide.id);
                           }}
+                          aria-label="Supprimer"
                         >
                           <Trash2 className="h-3 w-3" />
                         </Button>

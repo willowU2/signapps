@@ -128,14 +128,24 @@ function ResourceCalendar({
     <div className="flex flex-col h-full border rounded-lg overflow-hidden">
       {/* Calendar Header */}
       <div className="flex items-center justify-between p-3 border-b bg-muted/30">
-        <Button variant="ghost" size="icon" onClick={goToPreviousWeek}>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={goToPreviousWeek}
+          aria-label="Précédent"
+        >
           <ChevronLeft className="h-4 w-4" />
         </Button>
         <span className="font-medium">
           {format(weekStart, "d MMM", { locale: fr })} -{" "}
           {format(weekEnd, "d MMM yyyy", { locale: fr })}
         </span>
-        <Button variant="ghost" size="icon" onClick={goToNextWeek}>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={goToNextWeek}
+          aria-label="Suivant"
+        >
           <ChevronRight className="h-4 w-4" />
         </Button>
       </div>

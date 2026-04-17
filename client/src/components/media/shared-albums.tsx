@@ -194,6 +194,7 @@ export function SharedAlbums() {
                     variant="ghost"
                     className="absolute top-1 right-1 h-6 w-6 bg-black/40 text-white opacity-0 group-hover:opacity-100 transition-opacity"
                     onClick={() => removeFile(album.id, file.id)}
+                    aria-label="Fermer"
                   >
                     <X className="h-3 w-3" />
                   </Button>
@@ -264,6 +265,7 @@ export function SharedAlbums() {
                         e.stopPropagation();
                         deleteAlbum(album.id);
                       }}
+                      aria-label="Supprimer"
                     >
                       <Trash2 className="h-3.5 w-3.5 text-destructive" />
                     </Button>

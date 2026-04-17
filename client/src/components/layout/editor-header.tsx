@@ -73,6 +73,7 @@ export function EditorHeader({ documentId, icon }: EditorHeaderProps) {
           onClick={toggleSidebar}
           className={`transition-colors ${!sidebarCollapsed ? "bg-accent text-accent-foreground" : "text-muted-foreground"}`}
           title="Toggle Left Menu"
+          aria-label="Toggle Left Menu"
         >
           <PanelLeft className="h-5 w-5" />
         </Button>
@@ -115,6 +116,7 @@ export function EditorHeader({ documentId, icon }: EditorHeaderProps) {
           onClick={toggleRightSidebar}
           className={`transition-colors mr-2 ${rightSidebarOpen ? "bg-accent text-accent-foreground" : "text-muted-foreground"}`}
           title="Toggle Right Menu"
+          aria-label="Toggle Right Menu"
         >
           <PanelRight className="h-5 w-5" />
         </Button>

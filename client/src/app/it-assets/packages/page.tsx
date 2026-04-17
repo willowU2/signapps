@@ -500,6 +500,7 @@ export default function PackagesPage() {
                                 className="h-7 w-7"
                                 title="Déployer"
                                 onClick={() => openDeploy(pkg)}
+                                aria-label="Déployer"
                               >
                                 <Download className="h-3 w-3" />
                               </Button>
@@ -508,6 +509,7 @@ export default function PackagesPage() {
                                 variant="ghost"
                                 className="h-7 w-7"
                                 onClick={() => openEdit(pkg)}
+                                aria-label="Modifier"
                               >
                                 <Edit className="h-3 w-3" />
                               </Button>
@@ -516,6 +518,7 @@ export default function PackagesPage() {
                                 variant="ghost"
                                 className="h-7 w-7 text-destructive"
                                 onClick={() => deleteMutation.mutate(pkg.id)}
+                                aria-label="Supprimer"
                               >
                                 <Trash2 className="h-3 w-3" />
                               </Button>
@@ -727,7 +730,12 @@ export default function PackagesPage() {
                     placeholder="\\server\share\installer.msi"
                     className="flex-1"
                   />
-                  <Button size="icon" variant="outline" title="Parcourir">
+                  <Button
+                    size="icon"
+                    variant="outline"
+                    title="Parcourir"
+                    aria-label="Parcourir"
+                  >
                     <Upload className="h-4 w-4" />
                   </Button>
                 </div>

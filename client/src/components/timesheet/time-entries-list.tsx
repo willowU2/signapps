@@ -153,6 +153,7 @@ export function TimeEntriesList({
                         variant="ghost"
                         className="h-8 w-8 text-green-600"
                         onClick={handleSave}
+                        aria-label="Sauvegarder"
                       >
                         <Save className="h-4 w-4" />
                       </Button>
@@ -161,6 +162,7 @@ export function TimeEntriesList({
                         variant="ghost"
                         className="h-8 w-8 text-destructive"
                         onClick={handleCancel}
+                        aria-label="Fermer"
                       >
                         <X className="h-4 w-4" />
                       </Button>
@@ -185,6 +187,7 @@ export function TimeEntriesList({
                         className="h-8 w-8"
                         onClick={() => handleEdit(entry)}
                         disabled={editingId !== null}
+                        aria-label="Modifier"
                       >
                         <Pencil className="h-4 w-4" />
                       </Button>
@@ -194,6 +197,7 @@ export function TimeEntriesList({
                         className="h-8 w-8 text-destructive hover:text-destructive"
                         onClick={() => handleDelete(entry.id)}
                         disabled={editingId !== null}
+                        aria-label="Supprimer"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>

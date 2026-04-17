@@ -228,16 +228,18 @@ export function StorageRulesSettings() {
                       variant="ghost"
                       className="h-8 w-8 text-green-600"
                       onClick={handleSave}
+                      aria-label="Sauvegarder"
                     >
-                      <Save className="h-4 w-4" />
+                      <Save className="h-4 w-4" aria-hidden="true" />
                     </Button>
                     <Button
                       size="icon"
                       variant="ghost"
                       className="h-8 w-8 text-destructive"
                       onClick={() => setEditingId(null)}
+                      aria-label="Annuler"
                     >
-                      <X className="h-4 w-4" />
+                      <X className="h-4 w-4" aria-hidden="true" />
                     </Button>
                   </div>
                 </TableCell>
@@ -296,6 +298,7 @@ export function StorageRulesSettings() {
                         variant="ghost"
                         className="h-8 w-8 text-green-600"
                         onClick={handleSave}
+                        aria-label="Sauvegarder"
                       >
                         <Save className="h-4 w-4" />
                       </Button>
@@ -304,6 +307,7 @@ export function StorageRulesSettings() {
                         variant="ghost"
                         className="h-8 w-8 text-destructive"
                         onClick={() => setEditingId(null)}
+                        aria-label="Fermer"
                       >
                         <X className="h-4 w-4" />
                       </Button>
@@ -342,8 +346,9 @@ export function StorageRulesSettings() {
                         className="h-8 w-8"
                         onClick={() => handleEdit(rule)}
                         disabled={editingId !== null}
+                        aria-label={`Modifier ${rule.file_type}`}
                       >
-                        <Pencil className="h-4 w-4" />
+                        <Pencil className="h-4 w-4" aria-hidden="true" />
                       </Button>
                       <Button
                         size="icon"
@@ -351,8 +356,9 @@ export function StorageRulesSettings() {
                         className="h-8 w-8 text-destructive hover:text-destructive"
                         onClick={() => handleDelete(rule.id)}
                         disabled={editingId !== null}
+                        aria-label={`Supprimer ${rule.file_type}`}
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Trash2 className="h-4 w-4" aria-hidden="true" />
                       </Button>
                     </div>
                   </TableCell>

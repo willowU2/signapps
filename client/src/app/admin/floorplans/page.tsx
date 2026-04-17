@@ -132,6 +132,7 @@ export default function AdminFloorPlans() {
                     className="text-red-500 hover:text-red-600 hover:bg-red-50"
                     onClick={() => setDeletePlanId(plan.id)}
                     disabled={deletePlan.isPending}
+                    aria-label="Supprimer"
                   >
                     <Trash2 className="w-4 h-4" />
                   </Button>

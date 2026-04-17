@@ -179,6 +179,7 @@ export function SecureShareDialog({
                     className="absolute right-1 top-1 h-8 w-8"
                     onClick={() => setShowPassword((v) => !v)}
                     type="button"
+                    aria-label="Masquer"
                   >
                     {showPassword ? (
                       <EyeOff className="h-4 w-4" />

@@ -260,6 +260,7 @@ export function CompetitorTracker() {
                     size="icon"
                     className="h-7 w-7 text-muted-foreground hover:text-destructive"
                     onClick={() => removeCompetitor(c.id)}
+                    aria-label="Supprimer"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </Button>

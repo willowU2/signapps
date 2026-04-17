@@ -160,7 +160,12 @@ export function ComplianceAuditTrail() {
           <Button size="sm" variant="outline" onClick={exportAuditLog}>
             <Download className="h-3.5 w-3.5 mr-1" /> Export
           </Button>
-          <Button size="icon" variant="ghost" onClick={load}>
+          <Button
+            size="icon"
+            variant="ghost"
+            onClick={load}
+            aria-label="Actualiser"
+          >
             <RefreshCw className="h-3.5 w-3.5" />
           </Button>
         </div>

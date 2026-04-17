@@ -363,6 +363,7 @@ export function ContainerDetailsSheet({
                               size="icon"
                               className="h-5 w-5 opacity-0 group-hover:opacity-100 shrink-0"
                               onClick={() => copyToClipboard(envVar)}
+                              aria-label="Copier"
                             >
                               <Copy className="h-3 w-3" />
                             </Button>
@@ -565,6 +566,7 @@ function InfoRow({
               size="icon"
               className="h-5 w-5 shrink-0"
               onClick={() => copyToClipboard(copyable)}
+              aria-label="Copier"
             >
               <Copy className="h-3 w-3" />
             </Button>

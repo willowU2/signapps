@@ -504,6 +504,7 @@ export function NLPInput({
                 size="icon"
                 className="h-6 w-6"
                 onClick={() => setShowPreview(false)}
+                aria-label="Fermer"
               >
                 <X className="h-3 w-3" />
               </Button>

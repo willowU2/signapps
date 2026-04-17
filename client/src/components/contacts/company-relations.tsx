@@ -132,6 +132,7 @@ function CompanyCard({
                 className="size-6 text-muted-foreground hover:text-destructive"
                 onClick={() => onUnlink(c.id)}
                 title="Délier"
+                aria-label="Délier"
               >
                 <Unlink className="size-3" />
               </Button>

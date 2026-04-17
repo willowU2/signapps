@@ -19,6 +19,7 @@ export function MailHeader() {
           variant="ghost"
           size="icon"
           className="h-12 w-12 rounded-full text-muted-foreground hover:bg-muted"
+          aria-label="Menu"
         >
           <Menu className="h-6 w-6" />
         </Button>
@@ -101,6 +102,7 @@ export function MailHeader() {
           variant="ghost"
           size="icon"
           className="h-10 w-10 rounded-full text-muted-foreground hover:bg-muted"
+          aria-label="Paramètres"
         >
           <Settings className="h-5 w-5" />
         </Button>

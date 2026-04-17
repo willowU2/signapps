@@ -466,6 +466,7 @@ export default function CertificatesPage() {
                                     className="h-7 w-7"
                                     title="Renouveler"
                                     onClick={() => handleRenew(cert)}
+                                    aria-label="Renouveler"
                                   >
                                     <RefreshCw className="h-3.5 w-3.5" />
                                   </Button>
@@ -478,6 +479,7 @@ export default function CertificatesPage() {
                                       className="h-7 w-7 text-destructive hover:text-destructive"
                                       title="Révoquer"
                                       onClick={() => handleRevoke(cert)}
+                                      aria-label="Révoquer"
                                     >
                                       <Ban className="h-3.5 w-3.5" />
                                     </Button>

@@ -467,6 +467,7 @@ ${transcript}`,
               size="icon"
               disabled={segments.length === 0}
               title="Copy transcript"
+              aria-label="Copy transcript"
             >
               {copied ? (
                 <CheckCircle2 className="h-4 w-4 text-green-500" />
@@ -481,6 +482,7 @@ ${transcript}`,
               size="icon"
               disabled={segments.length === 0}
               title="Export as text"
+              aria-label="Export as text"
             >
               <Download className="h-4 w-4" />
             </Button>

@@ -301,6 +301,7 @@ function KanbanColumnDroppable({
           size="icon"
           className="h-6 w-6"
           onClick={() => onCreateEvent?.()}
+          aria-label="Ajouter"
         >
           <Plus className="h-4 w-4" />
         </Button>

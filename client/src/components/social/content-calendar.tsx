@@ -236,6 +236,7 @@ export function ContentCalendar({
                 size="icon"
                 className="h-7 w-7"
                 onClick={() => navigate(-1)}
+                aria-label="Précédent"
               >
                 <ChevronLeft className="w-4 h-4" />
               </Button>
@@ -244,6 +245,7 @@ export function ContentCalendar({
                 size="icon"
                 className="h-7 w-7"
                 onClick={() => navigate(1)}
+                aria-label="Suivant"
               >
                 <ChevronRight className="w-4 h-4" />
               </Button>

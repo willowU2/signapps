@@ -106,8 +106,9 @@ export function VoiceMessageRecorder({
                 size="icon"
                 className="h-8 w-8 text-muted-foreground hover:text-foreground"
                 onClick={startRecording}
+                aria-label="Enregistrer un message vocal"
               >
-                <Mic className="h-4 w-4" />
+                <Mic className="h-4 w-4" aria-hidden="true" />
               </Button>
             </TooltipTrigger>
             <TooltipContent side="top">Record voice message</TooltipContent>
@@ -126,8 +127,9 @@ export function VoiceMessageRecorder({
               size="icon"
               className="h-6 w-6 text-destructive hover:bg-destructive/10"
               onClick={stopRecording}
+              aria-label="Arrêter l'enregistrement"
             >
-              <Square className="h-3 w-3 fill-current" />
+              <Square className="h-3 w-3 fill-current" aria-hidden="true" />
             </Button>
           </div>
         )}
@@ -140,11 +142,12 @@ export function VoiceMessageRecorder({
               size="icon"
               className="h-6 w-6 text-primary"
               onClick={togglePlay}
+              aria-label={isPlaying ? "Pause" : "Lecture"}
             >
               {isPlaying ? (
-                <Pause className="h-3 w-3" />
+                <Pause className="h-3 w-3" aria-hidden="true" />
               ) : (
-                <Play className="h-3 w-3" />
+                <Play className="h-3 w-3" aria-hidden="true" />
               )}
             </Button>
             <div className="w-24 h-1.5 rounded-full bg-muted">
@@ -169,8 +172,9 @@ export function VoiceMessageRecorder({
               size="icon"
               className="h-6 w-6 text-destructive hover:bg-destructive/10"
               onClick={handleDiscard}
+              aria-label="Supprimer l'enregistrement"
             >
-              <Trash2 className="h-3 w-3" />
+              <Trash2 className="h-3 w-3" aria-hidden="true" />
             </Button>
             <Button
               type="button"
@@ -178,8 +182,9 @@ export function VoiceMessageRecorder({
               size="icon"
               className="h-6 w-6 text-primary hover:bg-primary/10"
               onClick={handleSend}
+              aria-label="Envoyer le message vocal"
             >
-              <Send className="h-3 w-3" />
+              <Send className="h-3 w-3" aria-hidden="true" />
             </Button>
           </div>
         )}
@@ -231,11 +236,12 @@ export function VoiceMessagePlayer({
         size="icon"
         className="h-7 w-7 text-primary shrink-0"
         onClick={toggle}
+        aria-label={playing ? "Pause" : "Écouter le message vocal"}
       >
         {playing ? (
-          <Pause className="h-3.5 w-3.5" />
+          <Pause className="h-3.5 w-3.5" aria-hidden="true" />
         ) : (
-          <Play className="h-3.5 w-3.5" />
+          <Play className="h-3.5 w-3.5" aria-hidden="true" />
         )}
       </Button>
       <div className="flex-1 h-1.5 rounded-full bg-muted">

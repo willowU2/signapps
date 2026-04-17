@@ -328,10 +328,20 @@ export function RosterView({
       {/* Toolbar */}
       <div className="flex items-center justify-between border-b p-3">
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="icon" onClick={handlePrevWeek}>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={handlePrevWeek}
+            aria-label="Précédent"
+          >
             <ChevronLeft className="h-4 w-4" />
           </Button>
-          <Button variant="outline" size="icon" onClick={handleNextWeek}>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={handleNextWeek}
+            aria-label="Suivant"
+          >
             <ChevronRight className="h-4 w-4" />
           </Button>
           <span className="text-sm font-medium">

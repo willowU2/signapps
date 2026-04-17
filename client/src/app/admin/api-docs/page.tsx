@@ -902,15 +902,26 @@ export default function ApiDocsPage() {
                               variant="ghost"
                               size="icon"
                               className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
+                              aria-label={
+                                copiedPath === fullPath
+                                  ? `Chemin copié : ${fullPath}`
+                                  : `Copier le chemin ${fullPath}`
+                              }
                               onClick={(e) => {
                                 e.stopPropagation();
                                 copyPath(fullPath);
                               }}
                             >
                               {copiedPath === fullPath ? (
-                                <Check className="h-3.5 w-3.5 text-green-600" />
+                                <Check
+                                  className="h-3.5 w-3.5 text-green-600"
+                                  aria-hidden="true"
+                                />
                               ) : (
-                                <Copy className="h-3.5 w-3.5" />
+                                <Copy
+                                  className="h-3.5 w-3.5"
+                                  aria-hidden="true"
+                                />
                               )}
                             </Button>
                           </div>

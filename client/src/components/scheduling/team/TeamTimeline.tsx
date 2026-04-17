@@ -233,13 +233,23 @@ export function TeamTimeline({
       {/* Header */}
       <div className="flex items-center justify-between p-3 border-b bg-muted/30">
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" onClick={goToPreviousDay}>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={goToPreviousDay}
+            aria-label="Précédent"
+          >
             <ChevronLeft className="h-4 w-4" />
           </Button>
           <Button variant="outline" size="sm" onClick={goToToday}>
             Aujourd'hui
           </Button>
-          <Button variant="ghost" size="icon" onClick={goToNextDay}>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={goToNextDay}
+            aria-label="Suivant"
+          >
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>

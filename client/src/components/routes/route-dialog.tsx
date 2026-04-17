@@ -850,8 +850,9 @@ export function RouteDialog({
                         variant="outline"
                         size="icon"
                         onClick={addDnsRecord}
+                        aria-label="Ajouter un enregistrement DNS"
                       >
-                        <Plus className="h-4 w-4" />
+                        <Plus className="h-4 w-4" aria-hidden="true" />
                       </Button>
                     </div>
                   </div>
@@ -898,6 +899,7 @@ export function RouteDialog({
                             variant="ghost"
                             size="icon"
                             onClick={() => removeDnsRecord(index)}
+                            aria-label="Supprimer cet enregistrement DNS"
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -1019,6 +1021,7 @@ export function RouteDialog({
                         variant="outline"
                         size="icon"
                         onClick={addWhitelistIp}
+                        aria-label="Ajouter une IP en whitelist"
                       >
                         <Plus className="h-4 w-4" />
                       </Button>
@@ -1058,6 +1061,7 @@ export function RouteDialog({
                         variant="outline"
                         size="icon"
                         onClick={addBlacklistIp}
+                        aria-label="Ajouter une IP en blacklist"
                       >
                         <Plus className="h-4 w-4" />
                       </Button>
@@ -1117,6 +1121,7 @@ export function RouteDialog({
                             variant="outline"
                             size="icon"
                             onClick={addBlockedCountry}
+                            aria-label="Ajouter un pays bloqué"
                           >
                             <Plus className="h-4 w-4" />
                           </Button>
@@ -1180,6 +1185,7 @@ export function RouteDialog({
                     variant="outline"
                     size="icon"
                     onClick={addRequestHeader}
+                    aria-label="Ajouter un header de requête"
                   >
                     <Plus className="h-4 w-4" />
                   </Button>
@@ -1198,6 +1204,7 @@ export function RouteDialog({
                         variant="ghost"
                         size="icon"
                         onClick={() => removeRequestHeader(i)}
+                        aria-label="Supprimer ce header de requête"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -1235,6 +1242,7 @@ export function RouteDialog({
                     variant="outline"
                     size="icon"
                     onClick={addResponseHeader}
+                    aria-label="Ajouter un header de réponse"
                   >
                     <Plus className="h-4 w-4" />
                   </Button>
@@ -1253,6 +1261,7 @@ export function RouteDialog({
                         variant="ghost"
                         size="icon"
                         onClick={() => removeResponseHeader(i)}
+                        aria-label="Supprimer ce header de réponse"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -1281,6 +1290,7 @@ export function RouteDialog({
                       variant="outline"
                       size="icon"
                       onClick={addRemoveRequestHeader}
+                      aria-label="Ajouter un header à retirer"
                     >
                       <Plus className="h-4 w-4" />
                     </Button>
@@ -1325,8 +1335,9 @@ export function RouteDialog({
                       variant="outline"
                       size="icon"
                       onClick={addRemoveResponseHeader}
+                      aria-label="Ajouter un header de réponse à retirer"
                     >
-                      <Plus className="h-4 w-4" />
+                      <Plus className="h-4 w-4" aria-hidden="true" />
                     </Button>
                   </div>
                   <div className="flex flex-wrap gap-2">

@@ -168,7 +168,7 @@ export function TenantLandingPage({
           ))}
           {editMode && (
             <Card className="p-4 flex items-center justify-center border-dashed border-2 cursor-pointer hover:bg-muted">
-              <Button variant="ghost" size="icon">
+              <Button variant="ghost" size="icon" aria-label="Ajouter">
                 <Plus className="size-4" />
               </Button>
             </Card>

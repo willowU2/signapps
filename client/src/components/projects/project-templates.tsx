@@ -209,6 +209,7 @@ function TemplateCard({
               variant="outline"
               className="size-8 text-destructive"
               onClick={() => onDelete(template.id)}
+              aria-label="Supprimer"
             >
               <Trash2 className="size-3" />
             </Button>
@@ -376,6 +377,7 @@ export function ProjectTemplates() {
                   onClick={() =>
                     setCurrentTasks((p) => p.filter((x) => x.id !== t.id))
                   }
+                  aria-label="Supprimer"
                 >
                   <Trash2 className="size-3" />
                 </Button>

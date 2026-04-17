@@ -613,6 +613,7 @@ export default function ITAssetsPage() {
                                     className="h-8 w-8"
                                     title="Étiquette QR"
                                     onClick={() => setQrAsset(asset)}
+                                    aria-label="Étiquette QR"
                                   >
                                     <QrCode className="h-4 w-4" />
                                   </Button>
@@ -622,6 +623,7 @@ export default function ITAssetsPage() {
                                     className="h-8 w-8 text-muted-foreground hover:text-primary"
                                     title="Modifier"
                                     onClick={() => openEdit(asset)}
+                                    aria-label="Modifier"
                                   >
                                     <Edit className="h-4 w-4" />
                                   </Button>
@@ -631,6 +633,7 @@ export default function ITAssetsPage() {
                                     className="h-8 w-8 text-muted-foreground hover:text-destructive"
                                     title="Supprimer"
                                     onClick={() => setDeleteAsset(asset)}
+                                    aria-label="Supprimer"
                                   >
                                     <Trash className="h-4 w-4" />
                                   </Button>

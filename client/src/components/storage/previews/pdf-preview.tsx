@@ -302,8 +302,9 @@ export function PDFPreview({
             onClick={prevPage}
             disabled={currentPage <= 1}
             title="Page précédente (←)"
+            aria-label="Page précédente"
           >
-            <ChevronLeft className="h-4 w-4" />
+            <ChevronLeft className="h-4 w-4" aria-hidden="true" />
           </Button>
 
           <form
@@ -328,8 +329,9 @@ export function PDFPreview({
             onClick={nextPage}
             disabled={!numPages || currentPage >= numPages}
             title="Page suivante (→)"
+            aria-label="Page suivante"
           >
-            <ChevronRight className="h-4 w-4" />
+            <ChevronRight className="h-4 w-4" aria-hidden="true" />
           </Button>
         </div>
 
@@ -341,8 +343,9 @@ export function PDFPreview({
             onClick={zoomOut}
             disabled={zoom <= MIN_ZOOM}
             title="Zoom arrière (Ctrl+-)"
+            aria-label="Dézoomer"
           >
-            <ZoomOut className="h-4 w-4" />
+            <ZoomOut className="h-4 w-4" aria-hidden="true" />
           </Button>
 
           <select
@@ -364,8 +367,9 @@ export function PDFPreview({
             onClick={zoomIn}
             disabled={zoom >= MAX_ZOOM}
             title="Zoom avant (Ctrl++)"
+            aria-label="Zoomer"
           >
-            <ZoomIn className="h-4 w-4" />
+            <ZoomIn className="h-4 w-4" aria-hidden="true" />
           </Button>
         </div>
 
@@ -376,8 +380,9 @@ export function PDFPreview({
             size="icon"
             onClick={rotate}
             title="Rotation (90°)"
+            aria-label="Rotation 90°"
           >
-            <RotateCw className="h-4 w-4" />
+            <RotateCw className="h-4 w-4" aria-hidden="true" />
           </Button>
 
           <Button
@@ -385,11 +390,12 @@ export function PDFPreview({
             size="icon"
             onClick={toggleFullscreen}
             title={isFullscreen ? "Quitter plein écran" : "Plein écran"}
+            aria-label={isFullscreen ? "Quitter le plein écran" : "Plein écran"}
           >
             {isFullscreen ? (
-              <Minimize2 className="h-4 w-4" />
+              <Minimize2 className="h-4 w-4" aria-hidden="true" />
             ) : (
-              <Maximize2 className="h-4 w-4" />
+              <Maximize2 className="h-4 w-4" aria-hidden="true" />
             )}
           </Button>
 
@@ -399,8 +405,9 @@ export function PDFPreview({
               size="icon"
               onClick={handleDownload}
               title="Télécharger"
+              aria-label="Télécharger le PDF"
             >
-              <Download className="h-4 w-4" />
+              <Download className="h-4 w-4" aria-hidden="true" />
             </Button>
           )}
         </div>

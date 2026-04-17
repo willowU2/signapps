@@ -206,7 +206,13 @@ function TagsInput({ value, onChange, maxTags = 10 }: TagsInputProps) {
             placeholder="Ajouter un tag..."
             className="flex-1"
           />
-          <Button type="button" variant="outline" size="icon" onClick={addTag}>
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            onClick={addTag}
+            aria-label="Ajouter"
+          >
             <Plus className="h-4 w-4" />
           </Button>
         </div>

@@ -95,6 +95,7 @@ export function BulkActionToolbar({
           className="h-7 w-7"
           onClick={onClearSelection}
           title="Clear selection"
+          aria-label="Clear selection"
         >
           <X className="h-3.5 w-3.5" />
         </Button>

@@ -456,6 +456,7 @@ export default function DesignCanvas({ fabricCanvasRef }: DesignCanvasProps) {
               size="icon"
               className="h-7 w-7"
               onClick={handleZoomOut}
+              aria-label="Dézoomer"
             >
               <ZoomOut className="h-3.5 w-3.5" />
             </Button>
@@ -467,6 +468,7 @@ export default function DesignCanvas({ fabricCanvasRef }: DesignCanvasProps) {
               size="icon"
               className="h-7 w-7"
               onClick={handleZoomIn}
+              aria-label="Zoomer"
             >
               <ZoomIn className="h-3.5 w-3.5" />
             </Button>

@@ -197,6 +197,7 @@ export function TriggerBuilder() {
                   variant="ghost"
                   title="Test run"
                   onClick={() => testRun(a)}
+                  aria-label="Test run"
                 >
                   <Play className="h-4 w-4" />
                 </Button>
@@ -205,6 +206,7 @@ export function TriggerBuilder() {
                   variant="ghost"
                   className="text-destructive"
                   onClick={() => remove(a.id)}
+                  aria-label="Supprimer"
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>

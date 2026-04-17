@@ -1265,6 +1265,7 @@ export function AgentChat() {
                       className="h-[44px] w-[44px] shrink-0"
                       onClick={() => sendMessage()}
                       disabled={!input.trim() || isTyping}
+                      aria-label="Envoyer"
                     >
                       <Send className="h-4 w-4" />
                     </Button>
@@ -1292,6 +1293,7 @@ export function AgentChat() {
                   size="icon"
                   className="h-7 w-7"
                   onClick={startNewChat}
+                  aria-label="Ajouter"
                 >
                   <Plus className="h-4 w-4" />
                 </Button>

@@ -264,6 +264,7 @@ export function RssManager() {
                         onClick={() => handleCheckNow(feed.id)}
                         disabled={checkingId === feed.id}
                         title="Check now"
+                        aria-label="Check now"
                       >
                         <RefreshCw
                           className={`h-4 w-4 ${checkingId === feed.id ? "animate-spin" : ""}`}
@@ -274,6 +275,7 @@ export function RssManager() {
                         size="icon"
                         className="text-destructive hover:text-destructive"
                         onClick={() => deleteRssFeed(feed.id)}
+                        aria-label="Supprimer"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>

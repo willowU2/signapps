@@ -218,6 +218,7 @@ export function RestApiConnector() {
                   onClick={() =>
                     setCalls((cs) => cs.filter((c) => c.id !== call.id))
                   }
+                  aria-label="Supprimer"
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>
@@ -321,6 +322,7 @@ export function RestApiConnector() {
                     size="icon"
                     variant="ghost"
                     onClick={() => removeHeader(i)}
+                    aria-label="Supprimer"
                   >
                     <Trash2 className="h-3 w-3" />
                   </Button>

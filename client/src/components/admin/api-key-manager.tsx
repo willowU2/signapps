@@ -250,6 +250,7 @@ export function ApiKeyManager() {
                       className="h-8 w-8"
                       onClick={() => setRevealedId(isRevealed ? null : key.id)}
                       disabled={!key.isActive}
+                      aria-label="Masquer"
                     >
                       {isRevealed ? (
                         <EyeOff className="h-4 w-4" />
@@ -275,6 +276,7 @@ export function ApiKeyManager() {
                       variant="ghost"
                       className="h-8 w-8 text-destructive hover:text-destructive"
                       onClick={() => handleRevoke(key.id)}
+                      aria-label="Supprimer"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>

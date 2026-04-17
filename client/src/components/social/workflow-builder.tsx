@@ -136,6 +136,7 @@ function WorkflowCard({
           size="icon"
           className="h-7 w-7 text-destructive hover:text-destructive"
           onClick={() => onDelete(wf.id)}
+          aria-label="Supprimer"
         >
           <Trash2 className="w-3 h-3" />
         </Button>

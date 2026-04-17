@@ -333,11 +333,12 @@ export function PomodoroTimer({
           size="icon"
           onClick={toggle}
           className={cn(isRunning && "text-primary")}
+          aria-label={isRunning ? "Pause" : "Démarrer"}
         >
           {isRunning ? (
-            <Pause className="h-5 w-5" />
+            <Pause className="h-5 w-5" aria-hidden="true" />
           ) : (
-            <Play className="h-5 w-5" />
+            <Play className="h-5 w-5" aria-hidden="true" />
           )}
         </Button>
       </div>
@@ -360,17 +361,25 @@ export function PomodoroTimer({
               onClick={() =>
                 setSettings((s) => ({ ...s, soundEnabled: !s.soundEnabled }))
               }
+              aria-label={
+                settings.soundEnabled ? "Couper le son" : "Activer le son"
+              }
             >
               {settings.soundEnabled ? (
-                <Volume2 className="h-4 w-4" />
+                <Volume2 className="h-4 w-4" aria-hidden="true" />
               ) : (
                 <VolumeX className="h-4 w-4" />
               )}
             </Button>
             <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
               <DialogTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8">
-                  <Settings className="h-4 w-4" />
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  aria-label="Paramètres Pomodoro"
+                >
+                  <Settings className="h-4 w-4" aria-hidden="true" />
                 </Button>
               </DialogTrigger>
               <DialogContent>
@@ -491,8 +500,13 @@ export function PomodoroTimer({
 
         {/* Controls */}
         <div className="flex items-center justify-center gap-2">
-          <Button variant="outline" size="icon" onClick={reset}>
-            <RotateCcw className="h-4 w-4" />
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={reset}
+            aria-label="Réinitialiser"
+          >
+            <RotateCcw className="h-4 w-4" aria-hidden="true" />
           </Button>
           <Button size="lg" className="w-16 h-16 rounded-full" onClick={toggle}>
             {isRunning ? (
@@ -501,8 +515,13 @@ export function PomodoroTimer({
               <Play className="h-6 w-6 ml-1" />
             )}
           </Button>
-          <Button variant="outline" size="icon" onClick={skip}>
-            <SkipForward className="h-4 w-4" />
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={skip}
+            aria-label="Passer au prochain cycle"
+          >
+            <SkipForward className="h-4 w-4" aria-hidden="true" />
           </Button>
         </div>
 

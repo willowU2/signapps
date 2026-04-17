@@ -296,10 +296,22 @@ export function NotificationPopover() {
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative">
-          <Bell className="h-5 w-5" />
+        <Button
+          variant="ghost"
+          size="icon"
+          className="relative"
+          aria-label={
+            unreadCount > 0
+              ? `Notifications (${unreadCount} non lues)`
+              : "Notifications"
+          }
+        >
+          <Bell className="h-5 w-5" aria-hidden="true" />
           {unreadCount > 0 && (
-            <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-medium text-primary-foreground animate-pulse ring-2 ring-background">
+            <span
+              className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-medium text-primary-foreground animate-pulse ring-2 ring-background"
+              aria-hidden="true"
+            >
               {unreadCount > 9 ? "9+" : unreadCount}
             </span>
           )}
@@ -410,24 +422,29 @@ export function NotificationPopover() {
                               size="icon"
                               className="h-6 w-6 hover:bg-background/80"
                               title="Marquer comme lu"
+                              aria-label="Marquer comme lu"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 markAsRead(notification.id);
                               }}
                             >
-                              <Check className="h-3.5 w-3.5 text-muted-foreground" />
+                              <Check
+                                className="h-3.5 w-3.5 text-muted-foreground"
+                                aria-hidden="true"
+                              />
                             </Button>
                           )}
                           <Button
                             variant="ghost"
                             size="icon"
                             className="h-6 w-6 hover:bg-destructive/10 hover:text-destructive"
+                            aria-label="Supprimer la notification"
                             onClick={(e) => {
                               e.stopPropagation();
                               removeNotification(notification.id);
                             }}
                           >
-                            <X className="h-3.5 w-3.5" />
+                            <X className="h-3.5 w-3.5" aria-hidden="true" />
                           </Button>
                         </div>
                       </div>

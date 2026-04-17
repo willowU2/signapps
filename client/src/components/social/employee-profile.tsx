@@ -79,10 +79,15 @@ export function EmployeeProfile({
         >
           {isFollowing ? "Following" : "Follow"}
         </Button>
-        <Button variant="outline" size="icon" title="Email">
+        <Button variant="outline" size="icon" title="Email" aria-label="Email">
           <Mail className="w-4 h-4" />
         </Button>
-        <Button variant="outline" size="icon" title="Message">
+        <Button
+          variant="outline"
+          size="icon"
+          title="Message"
+          aria-label="Message"
+        >
           <MessageSquare className="w-4 h-4" />
         </Button>
       </div>

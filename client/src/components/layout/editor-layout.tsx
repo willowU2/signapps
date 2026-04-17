@@ -40,8 +40,11 @@ export function EditorLayout({
 
   if (fullscreen) {
     return (
-      <div className="fixed inset-0 z-50 bg-background flex flex-col">
-        <div className="flex items-center justify-between px-4 py-2 border-b bg-background/95 backdrop-blur-sm shrink-0">
+      <main
+        id="main-content"
+        className="fixed inset-0 z-50 bg-background flex flex-col"
+      >
+        <header className="flex items-center justify-between px-4 py-2 border-b bg-background/95 backdrop-blur-sm shrink-0">
           <div className="flex items-center gap-2">
             {icon}
             <span className="text-sm font-medium truncate max-w-[300px]">
@@ -53,18 +56,23 @@ export function EditorLayout({
             size="icon"
             onClick={toggleFullscreen}
             title="Quitter le plein écran (Echap)"
+            aria-label="Quitter le plein écran"
           >
-            <Minimize2 className="h-4 w-4" />
+            <Minimize2 className="h-4 w-4" aria-hidden="true" />
           </Button>
-        </div>
+        </header>
         <div className="flex-1 overflow-hidden relative">{children}</div>
-      </div>
+      </main>
     );
   }
 
   return (
-    <WorkspaceShell className="bg-muted/40 relative" header={<GlobalHeader />}>
-      <main className="flex-1 overflow-hidden relative p-4">
+    <WorkspaceShell
+      className="bg-muted/40 relative"
+      header={<GlobalHeader />}
+      hideMainLandmark={true}
+    >
+      <main id="main-content" className="flex-1 overflow-hidden relative p-4">
         <div className="absolute inset-4 bg-background rounded-2xl shadow-premium border border-border/50 overflow-hidden">
           <Button
             variant="ghost"
@@ -72,8 +80,9 @@ export function EditorLayout({
             onClick={toggleFullscreen}
             className="absolute top-2 right-2 z-10 h-8 w-8 opacity-50 hover:opacity-100 transition-opacity"
             title="Plein écran"
+            aria-label="Passer en plein écran"
           >
-            <Maximize2 className="h-4 w-4" />
+            <Maximize2 className="h-4 w-4" aria-hidden="true" />
           </Button>
           {children}
         </div>

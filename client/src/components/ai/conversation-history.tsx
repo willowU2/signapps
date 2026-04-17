@@ -89,6 +89,7 @@ function ConversationRow({
           className="h-7 w-7"
           onClick={() => onResume(conversation.id)}
           title="Reprendre la conversation"
+          aria-label="Reprendre la conversation"
         >
           <Play className="h-3.5 w-3.5" />
         </Button>
@@ -98,6 +99,7 @@ function ConversationRow({
           className="h-7 w-7 text-destructive hover:text-destructive"
           onClick={() => onDelete(conversation.id)}
           title="Supprimer"
+          aria-label="Supprimer"
         >
           <Trash2 className="h-3.5 w-3.5" />
         </Button>

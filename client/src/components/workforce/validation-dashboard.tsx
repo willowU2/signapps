@@ -153,13 +153,23 @@ export function ValidationDashboard({
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="icon" onClick={goToPreviousWeek}>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={goToPreviousWeek}
+            aria-label="Précédent"
+          >
             <ChevronLeft className="h-4 w-4" />
           </Button>
           <Button variant="outline" size="sm" onClick={goToToday}>
             Aujourd'hui
           </Button>
-          <Button variant="outline" size="icon" onClick={goToNextWeek}>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={goToNextWeek}
+            aria-label="Suivant"
+          >
             <ChevronRight className="h-4 w-4" />
           </Button>
           <Button
@@ -167,6 +177,7 @@ export function ValidationDashboard({
             size="icon"
             onClick={() => refetch()}
             disabled={isFetching}
+            aria-label="Actualiser"
           >
             <RefreshCw
               className={cn("h-4 w-4", isFetching && "animate-spin")}

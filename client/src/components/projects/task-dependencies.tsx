@@ -230,6 +230,7 @@ function TaskRow({
           size="icon-sm"
           onClick={onDelete}
           className="text-muted-foreground hover:text-red-600"
+          aria-label="Supprimer"
         >
           <Trash2 className="size-4" />
         </Button>

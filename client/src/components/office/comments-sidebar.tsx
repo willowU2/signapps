@@ -203,6 +203,7 @@ function CommentThread({
               e.stopPropagation();
               setIsExpanded(!isExpanded);
             }}
+            aria-label="Monter"
           >
             {isExpanded ? (
               <ChevronUp className="h-4 w-4" />
@@ -213,7 +214,12 @@ function CommentThread({
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-              <Button variant="ghost" size="icon" className="h-7 w-7">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7"
+                aria-label="Plus d'actions"
+              >
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>

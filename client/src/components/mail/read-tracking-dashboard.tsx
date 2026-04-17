@@ -91,7 +91,12 @@ export function ReadTrackingDashboard() {
               <SelectItem value="90d">Last 90 days</SelectItem>
             </SelectContent>
           </Select>
-          <Button size="icon" variant="ghost" onClick={load}>
+          <Button
+            size="icon"
+            variant="ghost"
+            onClick={load}
+            aria-label="Actualiser"
+          >
             <RefreshCw className="h-3.5 w-3.5" />
           </Button>
         </div>

@@ -385,6 +385,7 @@ export function VaultShareDialog({
                   type="button"
                   onClick={() => setExpiresAt("")}
                   className="h-8 w-8"
+                  aria-label="Fermer"
                 >
                   <X className="h-4 w-4" />
                 </Button>

@@ -313,6 +313,7 @@ export function CategoryManager() {
                 size="icon"
                 className="h-6 w-6 hover:text-red-500"
                 onClick={() => handleDelete(cat.id)}
+                aria-label="Supprimer"
               >
                 <Trash2 className="h-3 w-3" />
               </Button>

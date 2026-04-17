@@ -47,6 +47,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { TooltipIconButton } from "@/components/ui/tooltip-icon-button";
 import {
   Popover,
   PopoverContent,
@@ -430,8 +431,11 @@ export default function KeepPage() {
               size="icon"
               className="h-12 w-12 rounded-full text-[#9aa0a6] hover:bg-[#3c4043] mr-1"
               onClick={() => setSidebarExpanded(!sidebarExpanded)}
+              aria-label={
+                sidebarExpanded ? "Réduire le menu" : "Ouvrir le menu"
+              }
             >
-              <Menu className="h-6 w-6" />
+              <Menu className="h-6 w-6" aria-hidden="true" />
             </Button>
 
             {/* Logo */}
@@ -467,72 +471,40 @@ export default function KeepPage() {
 
             {/* Right actions */}
             <div className="flex items-center gap-1 ml-auto">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-10 w-10 rounded-full text-[#9aa0a6] hover:bg-[#3c4043]"
-                    onClick={() => refetch()}
-                  >
-                    <RefreshCw className="h-5 w-5" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent className="bg-[#3c4043] text-[#e8eaed] border-[#5f6368]">
-                  Actualiser
-                </TooltipContent>
-              </Tooltip>
+              <TooltipIconButton
+                label="Actualiser"
+                className="h-10 w-10 rounded-full text-[#9aa0a6] hover:bg-[#3c4043]"
+                onClick={() => refetch()}
+              >
+                <RefreshCw className="h-5 w-5" />
+              </TooltipIconButton>
 
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-10 w-10 rounded-full text-[#9aa0a6] hover:bg-[#3c4043]"
-                    onClick={() => setIsGridView(!isGridView)}
-                  >
-                    {isGridView ? (
-                      <List className="h-5 w-5" />
-                    ) : (
-                      <Grid className="h-5 w-5" />
-                    )}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent className="bg-[#3c4043] text-[#e8eaed] border-[#5f6368]">
-                  {isGridView ? "Affichage liste" : "Affichage grille"}
-                </TooltipContent>
-              </Tooltip>
+              <TooltipIconButton
+                label={isGridView ? "Affichage liste" : "Affichage grille"}
+                className="h-10 w-10 rounded-full text-[#9aa0a6] hover:bg-[#3c4043]"
+                onClick={() => setIsGridView(!isGridView)}
+              >
+                {isGridView ? (
+                  <List className="h-5 w-5" />
+                ) : (
+                  <Grid className="h-5 w-5" />
+                )}
+              </TooltipIconButton>
 
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-10 w-10 rounded-full text-[#9aa0a6] hover:bg-[#3c4043]"
-                    onClick={() => setPresentationMode(true)}
-                  >
-                    <Presentation className="h-5 w-5" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent className="bg-[#3c4043] text-[#e8eaed] border-[#5f6368]">
-                  Mode présentation
-                </TooltipContent>
-              </Tooltip>
+              <TooltipIconButton
+                label="Mode présentation"
+                className="h-10 w-10 rounded-full text-[#9aa0a6] hover:bg-[#3c4043]"
+                onClick={() => setPresentationMode(true)}
+              >
+                <Presentation className="h-5 w-5" />
+              </TooltipIconButton>
 
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-10 w-10 rounded-full text-[#9aa0a6] hover:bg-[#3c4043]"
-                  >
-                    <Settings className="h-5 w-5" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent className="bg-[#3c4043] text-[#e8eaed] border-[#5f6368]">
-                  Paramètres
-                </TooltipContent>
-              </Tooltip>
+              <TooltipIconButton
+                label="Paramètres"
+                className="h-10 w-10 rounded-full text-[#9aa0a6] hover:bg-[#3c4043]"
+              >
+                <Settings className="h-5 w-5" />
+              </TooltipIconButton>
 
               <div className="mx-3">
                 <Avatar className="h-8 w-8 cursor-pointer">
@@ -779,13 +751,17 @@ export default function KeepPage() {
                                 variant="ghost"
                                 size="icon"
                                 className="h-8 w-8 rounded-full text-[#9aa0a6] hover:bg-[#3c4043]"
+                                aria-label="Couleur d'arrière-plan"
                               >
-                                <Palette className="h-[18px] w-[18px]" />
+                                <Palette
+                                  className="h-[18px] w-[18px]"
+                                  aria-hidden="true"
+                                />
                               </Button>
                             </PopoverTrigger>
                           </TooltipTrigger>
                           <TooltipContent className="bg-[#3c4043] text-[#e8eaed] border-[#5f6368]">
-                            Couleur d'arrière-plan
+                            Couleur d&apos;arrière-plan
                           </TooltipContent>
                         </Tooltip>
                         <PopoverContent className="w-auto p-2 bg-[#3c4043] border-[#5f6368]">
@@ -808,20 +784,12 @@ export default function KeepPage() {
                           </div>
                         </PopoverContent>
                       </Popover>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 rounded-full text-[#9aa0a6] hover:bg-[#3c4043]"
-                          >
-                            <Image className="h-[18px] w-[18px]" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent className="bg-[#3c4043] text-[#e8eaed] border-[#5f6368]">
-                          Ajouter une image
-                        </TooltipContent>
-                      </Tooltip>
+                      <TooltipIconButton
+                        label="Ajouter une image"
+                        className="h-8 w-8 rounded-full text-[#9aa0a6] hover:bg-[#3c4043]"
+                      >
+                        <Image className="h-[18px] w-[18px]" />
+                      </TooltipIconButton>
                     </div>
                     <Button
                       variant="ghost"

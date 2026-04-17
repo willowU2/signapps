@@ -194,6 +194,7 @@ export function CertificateManagement() {
                         variant="ghost"
                         title="Renew"
                         onClick={() => renew(cert.id)}
+                        aria-label="Renew"
                       >
                         <RefreshCw className="h-4 w-4" />
                       </Button>
@@ -201,6 +202,7 @@ export function CertificateManagement() {
                         size="icon"
                         variant="ghost"
                         title="Download chain"
+                        aria-label="Download chain"
                       >
                         <Download className="h-4 w-4" />
                       </Button>
@@ -209,6 +211,7 @@ export function CertificateManagement() {
                         variant="ghost"
                         className="text-destructive"
                         onClick={() => remove(cert.id)}
+                        aria-label="Supprimer"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>

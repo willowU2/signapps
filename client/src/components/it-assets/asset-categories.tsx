@@ -80,6 +80,7 @@ function CategoryNode({
           variant="ghost"
           className="h-6 w-6 opacity-0 group-hover:opacity-100"
           onClick={() => onDelete(cat.id)}
+          aria-label="Supprimer"
         >
           <Trash2 className="h-3 w-3 text-muted-foreground hover:text-destructive" />
         </Button>

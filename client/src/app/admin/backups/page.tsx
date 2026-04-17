@@ -418,6 +418,7 @@ function SnapshotRow({
                 size="icon"
                 className="h-7 w-7"
                 title="Restaurer"
+                aria-label="Restaurer"
                 onClick={() => onRestore(snapshot)}
               >
                 <ArchiveRestore className="h-3.5 w-3.5" />
@@ -428,6 +429,7 @@ function SnapshotRow({
               size="icon"
               className="h-7 w-7"
               title="Supprimer"
+              aria-label="Supprimer"
               onClick={() => onDelete(snapshot.id)}
             >
               <Trash2 className="h-3.5 w-3.5 text-destructive" />
@@ -720,6 +722,7 @@ export default function DriveBackupsPage() {
                             size="icon"
                             className="h-7 w-7"
                             title="Lancer maintenant"
+                            aria-label="Lancer maintenant"
                             onClick={() => handleRunPlan(plan.id)}
                           >
                             <Play className="h-3.5 w-3.5 text-green-600" />
@@ -729,6 +732,7 @@ export default function DriveBackupsPage() {
                             size="icon"
                             className="h-7 w-7"
                             title="Modifier"
+                            aria-label="Modifier"
                             onClick={() => {
                               setEditingPlan(plan);
                               setPlanDialogOpen(true);
@@ -741,6 +745,7 @@ export default function DriveBackupsPage() {
                             size="icon"
                             className="h-7 w-7"
                             title="Supprimer"
+                            aria-label="Supprimer"
                             onClick={() => handleDeletePlan(plan.id)}
                           >
                             <Trash2 className="h-3.5 w-3.5 text-destructive" />

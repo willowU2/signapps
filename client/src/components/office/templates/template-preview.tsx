@@ -191,6 +191,7 @@ function PreviewImages({ images, thumbnailUrl }: PreviewImagesProps) {
                   (i) => (i - 1 + allImages.length) % allImages.length,
                 )
               }
+              aria-label="Précédent"
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
@@ -199,6 +200,7 @@ function PreviewImages({ images, thumbnailUrl }: PreviewImagesProps) {
               size="icon"
               className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8"
               onClick={() => setCurrentIndex((i) => (i + 1) % allImages.length)}
+              aria-label="Suivant"
             >
               <ChevronRight className="h-4 w-4" />
             </Button>

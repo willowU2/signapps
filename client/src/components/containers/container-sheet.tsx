@@ -364,6 +364,7 @@ export function ContainerSheet({
                           size="icon"
                           onClick={() => removePort(index)}
                           disabled={loading}
+                          aria-label="Supprimer"
                         >
                           <Trash2 className="h-4 w-4 text-destructive" />
                         </Button>
@@ -436,6 +437,7 @@ export function ContainerSheet({
                           size="icon"
                           onClick={() => removeEnv(index)}
                           disabled={loading}
+                          aria-label="Supprimer"
                         >
                           <Trash2 className="h-4 w-4 text-destructive" />
                         </Button>
@@ -507,6 +509,7 @@ export function ContainerSheet({
                           size="icon"
                           onClick={() => removeVolume(index)}
                           disabled={loading}
+                          aria-label="Supprimer"
                         >
                           <Trash2 className="h-4 w-4 text-destructive" />
                         </Button>

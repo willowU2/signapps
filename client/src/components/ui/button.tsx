@@ -50,6 +50,36 @@ function Button({
   }) {
   const Comp = asChild ? Slot.Root : "button";
 
+  // Dev-mode a11y guardrail : icon-only buttons (size="icon*") with no
+  // textual accessible name collapse into axe `button-name` violations
+  // at runtime. This warn fires once per offending site during
+  // development so regressions are caught before they reach the audit.
+  // Prefer `<TooltipIconButton>` which enforces the label via types.
+  if (
+    process.env.NODE_ENV !== "production" &&
+    typeof size === "string" &&
+    size.startsWith("icon") &&
+    !props["aria-label"] &&
+    !props["aria-labelledby"] &&
+    !asChild
+  ) {
+    // Skip when children can provide text — only warn if children is
+    // trivially a single element (the typical "icon-only" shape).
+    const children = props.children;
+    const isBare =
+      React.isValidElement(children) ||
+      children === null ||
+      children === undefined;
+    if (isBare) {
+      console.warn(
+        '[a11y] <Button size="' +
+          size +
+          '"> is icon-only but has no aria-label / aria-labelledby. ' +
+          "Screen readers will announce nothing. Prefer <TooltipIconButton> or pass aria-label.",
+      );
+    }
+  }
+
   return (
     <Comp
       data-slot="button"

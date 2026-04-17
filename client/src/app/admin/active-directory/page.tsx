@@ -496,6 +496,7 @@ export default function ActiveDirectoryPage() {
                             onClick={() =>
                               handleDeleteDomain(domain.id, domain.dns_name)
                             }
+                            aria-label="Supprimer"
                           >
                             <Trash2 className="h-4 w-4 text-destructive" />
                           </Button>

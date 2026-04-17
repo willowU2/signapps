@@ -316,13 +316,15 @@ test.describe("A11y baseline audit", () => {
         });
 
         // Wait for real content before auditing (axe on an empty SPA
-        // shell produces meaningless results).
+        // shell produces meaningless results). 20s gives client
+        // components time to hydrate — the first visit per route in dev
+        // mode triggers JIT compilation (~5-15s on slow pages).
         await page
           .locator(
             "main, nav, [data-slot='sidebar'], form, [data-page='login']",
           )
           .first()
-          .waitFor({ state: "visible", timeout: 10_000 })
+          .waitFor({ state: "visible", timeout: 20_000 })
           .catch(() => {});
 
         const { violations } = await new AxeBuilder({ page })

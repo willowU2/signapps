@@ -138,6 +138,7 @@ export function VideoPreview({ src, fileName }: VideoPreviewProps) {
             size="icon"
             className="absolute h-16 w-16 rounded-full hover:bg-background/20"
             onClick={handlePlayPause}
+            aria-label="Lecture"
           >
             <Play className="h-8 w-8 text-white fill-white" />
           </Button>
@@ -171,6 +172,7 @@ export function VideoPreview({ src, fileName }: VideoPreviewProps) {
               size="icon"
               className="h-8 w-8 text-gray-300 hover:text-white"
               onClick={handlePlayPause}
+              aria-label="Pause"
             >
               {isPlaying ? (
                 <Pause className="h-4 w-4" />

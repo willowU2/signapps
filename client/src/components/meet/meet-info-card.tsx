@@ -34,6 +34,7 @@ export function MeetInfoCard({ roomId, onClose }: MeetInfoCardProps) {
             size="icon"
             className="h-8 w-8 text-[#5f6368] hover:bg-muted dark:hover:bg-[#28292a] rounded-full"
             onClick={onClose}
+            aria-label="Fermer"
           >
             <X className="h-5 w-5" />
           </Button>
@@ -59,6 +60,7 @@ export function MeetInfoCard({ roomId, onClose }: MeetInfoCardProps) {
           size="icon"
           className="h-8 w-8 text-[#5f6368] shrink-0"
           onClick={handleCopy}
+          aria-label="Copier"
         >
           <Copy className="h-4 w-4" />
         </Button>

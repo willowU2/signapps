@@ -75,6 +75,7 @@ export default function DesignBrandKit() {
             size="icon"
             className="h-6 w-6"
             onClick={addColor}
+            aria-label="Ajouter"
           >
             <Plus className="h-3.5 w-3.5" />
           </Button>

@@ -695,8 +695,9 @@ export function FilePreviewDialog({
                   size="icon"
                   onClick={() => setZoom((z) => Math.max(z - 0.25, 0.25))}
                   disabled={zoom <= 0.25}
+                  aria-label="Dézoomer"
                 >
-                  <ZoomOut className="h-4 w-4" />
+                  <ZoomOut className="h-4 w-4" aria-hidden="true" />
                 </Button>
                 <span className="text-sm text-muted-foreground w-12 text-center">
                   {Math.round(zoom * 100)}%
@@ -706,8 +707,9 @@ export function FilePreviewDialog({
                   size="icon"
                   onClick={() => setZoom((z) => Math.min(z + 0.25, 3))}
                   disabled={zoom >= 3}
+                  aria-label="Zoomer"
                 >
-                  <ZoomIn className="h-4 w-4" />
+                  <ZoomIn className="h-4 w-4" aria-hidden="true" />
                 </Button>
               </>
             )}
@@ -715,11 +717,14 @@ export function FilePreviewDialog({
               variant="ghost"
               size="icon"
               onClick={() => setIsFullscreen(!isFullscreen)}
+              aria-label={
+                isFullscreen ? "Quitter le plein écran" : "Plein écran"
+              }
             >
               {isFullscreen ? (
-                <Minimize2 className="h-4 w-4" />
+                <Minimize2 className="h-4 w-4" aria-hidden="true" />
               ) : (
-                <Maximize2 className="h-4 w-4" />
+                <Maximize2 className="h-4 w-4" aria-hidden="true" />
               )}
             </Button>
             {onDownload && (
@@ -727,12 +732,18 @@ export function FilePreviewDialog({
                 variant="ghost"
                 size="icon"
                 onClick={() => onDownload(file)}
+                aria-label="Télécharger"
               >
-                <Download className="h-4 w-4" />
+                <Download className="h-4 w-4" aria-hidden="true" />
               </Button>
             )}
-            <Button variant="ghost" size="icon" onClick={handleClose}>
-              <X className="h-4 w-4" />
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleClose}
+              aria-label="Fermer l'aperçu"
+            >
+              <X className="h-4 w-4" aria-hidden="true" />
             </Button>
           </div>
         </DialogHeader>
@@ -748,16 +759,18 @@ export function FilePreviewDialog({
                 size="icon"
                 className="absolute left-2 top-1/2 -translate-y-1/2 bg-background/80 backdrop-blur-sm"
                 onClick={() => navigateTo("prev")}
+                aria-label="Fichier précédent"
               >
-                <ChevronLeft className="h-4 w-4" />
+                <ChevronLeft className="h-4 w-4" aria-hidden="true" />
               </Button>
               <Button
                 variant="outline"
                 size="icon"
                 className="absolute right-2 top-1/2 -translate-y-1/2 bg-background/80 backdrop-blur-sm"
                 onClick={() => navigateTo("next")}
+                aria-label="Fichier suivant"
               >
-                <ChevronRight className="h-4 w-4" />
+                <ChevronRight className="h-4 w-4" aria-hidden="true" />
               </Button>
             </>
           )}

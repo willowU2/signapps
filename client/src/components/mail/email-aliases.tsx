@@ -194,6 +194,7 @@ export function EmailAliases({ accountId, accountEmail }: EmailAliasesProps) {
                 variant="ghost"
                 className="h-7 w-7"
                 onClick={() => openEdit(alias)}
+                aria-label="Modifier"
               >
                 <Pencil className="h-3.5 w-3.5" />
               </Button>
@@ -202,6 +203,7 @@ export function EmailAliases({ accountId, accountEmail }: EmailAliasesProps) {
                 variant="ghost"
                 className="h-7 w-7 text-destructive"
                 onClick={() => handleDelete(alias.id)}
+                aria-label="Supprimer"
               >
                 <Trash2 className="h-3.5 w-3.5" />
               </Button>

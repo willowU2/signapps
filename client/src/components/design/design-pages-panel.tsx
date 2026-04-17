@@ -27,6 +27,7 @@ export default function DesignPagesPanel() {
           className="h-6 w-6"
           onClick={addPage}
           title="Add page"
+          aria-label="Add page"
         >
           <Plus className="h-3.5 w-3.5" />
         </Button>

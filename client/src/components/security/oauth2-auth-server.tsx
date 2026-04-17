@@ -157,6 +157,7 @@ export function OAuth2AuthServer() {
                       variant="ghost"
                       onClick={() => rotateSecret(c.id)}
                       title="Rotate secret"
+                      aria-label="Rotate secret"
                     >
                       <RefreshCw className="h-4 w-4" />
                     </Button>
@@ -165,6 +166,7 @@ export function OAuth2AuthServer() {
                       variant="ghost"
                       className="text-destructive"
                       onClick={() => deleteClient(c.id)}
+                      aria-label="Supprimer"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -183,6 +185,7 @@ export function OAuth2AuthServer() {
                       variant="ghost"
                       className="h-6 w-6"
                       onClick={() => copy(c.client_id)}
+                      aria-label="Copier"
                     >
                       <Copy className="h-3 w-3" />
                     </Button>
@@ -209,6 +212,7 @@ export function OAuth2AuthServer() {
                       variant="ghost"
                       className="h-6 w-6"
                       onClick={() => copy(c.client_secret)}
+                      aria-label="Copier"
                     >
                       <Copy className="h-3 w-3" />
                     </Button>

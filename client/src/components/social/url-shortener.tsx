@@ -392,6 +392,7 @@ export function UrlShortenerPopover({
                             className="h-5 w-5"
                             onClick={() => handleCopy(entry.short)}
                             title="Copy short URL"
+                            aria-label="Copy short URL"
                           >
                             <Copy className="h-3 w-3" />
                           </Button>

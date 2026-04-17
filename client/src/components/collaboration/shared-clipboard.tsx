@@ -9,6 +9,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { TooltipIconButton } from "@/components/ui/tooltip-icon-button";
 import { Copy, Pin, Trash2, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -202,65 +203,46 @@ export function SharedClipboard({
                       )}
                     </div>
                     <div className="flex gap-1 shrink-0">
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="h-7 w-7 p-0"
-                            onClick={() => copyToClipboard(item.text, item.id)}
-                          >
-                            <Copy
-                              className={cn(
-                                "w-3.5 h-3.5 transition-colors",
-                                copiedId === item.id
-                                  ? "text-green-600"
-                                  : "text-muted-foreground",
-                              )}
-                            />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          {copiedId === item.id
-                            ? "Copied!"
-                            : "Copy to clipboard"}
-                        </TooltipContent>
-                      </Tooltip>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="h-7 w-7 p-0"
-                            onClick={() => togglePin(item.id)}
-                          >
-                            <Pin
-                              className={cn(
-                                "w-3.5 h-3.5 transition-colors",
-                                item.pinnedAt
-                                  ? "text-primary fill-primary"
-                                  : "text-muted-foreground",
-                              )}
-                            />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          {item.pinnedAt ? "Unpin" : "Pin"}
-                        </TooltipContent>
-                      </Tooltip>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="h-7 w-7 p-0"
-                            onClick={() => deleteItem(item.id)}
-                          >
-                            <Trash2 className="w-3.5 h-3.5 text-muted-foreground hover:text-destructive" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>Supprimer</TooltipContent>
-                      </Tooltip>
+                      <TooltipIconButton
+                        label={
+                          copiedId === item.id ? "Copied!" : "Copy to clipboard"
+                        }
+                        size="icon-sm"
+                        className="h-7 w-7 p-0"
+                        onClick={() => copyToClipboard(item.text, item.id)}
+                      >
+                        <Copy
+                          className={cn(
+                            "w-3.5 h-3.5 transition-colors",
+                            copiedId === item.id
+                              ? "text-green-600"
+                              : "text-muted-foreground",
+                          )}
+                        />
+                      </TooltipIconButton>
+                      <TooltipIconButton
+                        label={item.pinnedAt ? "Unpin" : "Pin"}
+                        size="icon-sm"
+                        className="h-7 w-7 p-0"
+                        onClick={() => togglePin(item.id)}
+                      >
+                        <Pin
+                          className={cn(
+                            "w-3.5 h-3.5 transition-colors",
+                            item.pinnedAt
+                              ? "text-primary fill-primary"
+                              : "text-muted-foreground",
+                          )}
+                        />
+                      </TooltipIconButton>
+                      <TooltipIconButton
+                        label="Supprimer"
+                        size="icon-sm"
+                        className="h-7 w-7 p-0"
+                        onClick={() => deleteItem(item.id)}
+                      >
+                        <Trash2 className="w-3.5 h-3.5 text-muted-foreground hover:text-destructive" />
+                      </TooltipIconButton>
                     </div>
                   </div>
                 );

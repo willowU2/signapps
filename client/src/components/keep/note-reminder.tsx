@@ -211,6 +211,7 @@ export function NoteReminder({
                 variant="ghost"
                 className="size-6 text-muted-foreground hover:text-destructive shrink-0"
                 onClick={() => onDelete(r.id)}
+                aria-label="Supprimer"
               >
                 <Trash2 className="size-3" />
               </Button>

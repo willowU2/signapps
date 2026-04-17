@@ -329,10 +329,14 @@ export default function AuditLogPage() {
 
               {/* Date from */}
               <div className="w-[160px]">
-                <label className="text-xs font-medium text-muted-foreground mb-1 block">
+                <label
+                  htmlFor="audit-date-from"
+                  className="text-xs font-medium text-muted-foreground mb-1 block"
+                >
                   Du
                 </label>
                 <Input
+                  id="audit-date-from"
                   type="date"
                   value={dateFrom}
                   onChange={(e) => setDateFrom(e.target.value)}
@@ -341,10 +345,14 @@ export default function AuditLogPage() {
 
               {/* Date to */}
               <div className="w-[160px]">
-                <label className="text-xs font-medium text-muted-foreground mb-1 block">
+                <label
+                  htmlFor="audit-date-to"
+                  className="text-xs font-medium text-muted-foreground mb-1 block"
+                >
                   Au
                 </label>
                 <Input
+                  id="audit-date-to"
                   type="date"
                   value={dateTo}
                   onChange={(e) => setDateTo(e.target.value)}

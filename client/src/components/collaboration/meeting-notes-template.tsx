@@ -262,6 +262,7 @@ export function MeetingNotesTemplate() {
                   size="icon"
                   className="col-span-1 h-7 w-7 text-destructive"
                   onClick={() => removeAction(action.id)}
+                  aria-label="Supprimer"
                 >
                   <Trash2 className="h-3 w-3" />
                 </Button>

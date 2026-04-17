@@ -108,6 +108,7 @@ export function TotpDisplay({ totpSecret, className }: TotpDisplayProps) {
           className="h-7 w-7"
           onClick={refresh}
           disabled={loading}
+          aria-label="Actualiser"
         >
           <RefreshCw className={cn("h-3.5 w-3.5", loading && "animate-spin")} />
         </Button>
@@ -117,6 +118,7 @@ export function TotpDisplay({ totpSecret, className }: TotpDisplayProps) {
           size="icon"
           className="h-7 w-7"
           onClick={handleCopy}
+          aria-label="Copier"
         >
           <Copy className="h-3.5 w-3.5" />
         </Button>

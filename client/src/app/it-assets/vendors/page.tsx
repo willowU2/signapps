@@ -341,6 +341,7 @@ export default function VendorsPage() {
                             size="icon"
                             className="h-7 w-7"
                             onClick={() => openEdit(v)}
+                            aria-label="Modifier"
                           >
                             <Edit className="h-3.5 w-3.5" />
                           </Button>
@@ -349,6 +350,7 @@ export default function VendorsPage() {
                             size="icon"
                             className="h-7 w-7 text-destructive hover:text-destructive"
                             onClick={() => setDeleteId(v.id)}
+                            aria-label="Supprimer"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
                           </Button>

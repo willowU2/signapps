@@ -210,6 +210,7 @@ export function ConditionalLogicEditor({
               size="icon"
               className="h-6 w-6"
               onClick={() => onChange(undefined)}
+              aria-label="Supprimer"
             >
               <Trash2 className="h-3 w-3" />
             </Button>
@@ -278,6 +279,7 @@ export function ConditionalLogicEditor({
             className="h-6 w-6"
             disabled={g.conditions.length === 1 && !group}
             onClick={() => removeCondition(idx)}
+            aria-label="Supprimer"
           >
             <Trash2 className="h-3 w-3" />
           </Button>

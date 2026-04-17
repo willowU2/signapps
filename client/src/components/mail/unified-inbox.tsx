@@ -175,6 +175,7 @@ export function UnifiedInbox() {
             size="icon"
             variant="ghost"
             onClick={() => loadEmails([...activeAccountIds], accounts)}
+            aria-label="Actualiser"
           >
             <RefreshCw className="h-3.5 w-3.5" />
           </Button>

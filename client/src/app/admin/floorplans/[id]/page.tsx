@@ -230,6 +230,7 @@ export default function FloorPlanEditor() {
               size="icon"
               onClick={() => router.push("/admin/floorplans")}
               className="rounded-full"
+              aria-label="Retour"
             >
               <ArrowLeft className="w-5 h-5" />
             </Button>
@@ -381,6 +382,7 @@ export default function FloorPlanEditor() {
                             ),
                           }));
                         }}
+                        aria-label="Supprimer"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </Button>

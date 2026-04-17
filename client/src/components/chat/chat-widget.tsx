@@ -106,6 +106,7 @@ export function ChatWidget() {
                 className="h-7 w-7 text-muted-foreground hover:text-destructive"
                 onClick={clearMessages}
                 disabled={isStreaming || messages.length <= 1}
+                aria-label="Supprimer"
               >
                 <Trash2 className="h-3.5 w-3.5" />
               </Button>
@@ -204,6 +205,7 @@ export function ChatWidget() {
               type="button"
               onClick={handleStop}
               className="text-destructive h-8 w-8 shrink-0 hover:bg-destructive/10"
+              aria-label="Arrêter"
             >
               <Square className="h-4 w-4 fill-current" />
             </Button>
@@ -214,6 +216,7 @@ export function ChatWidget() {
               type="submit"
               disabled={!input.trim()}
               className="h-8 w-8 shrink-0 text-primary hover:bg-primary/10 disabled:opacity-50"
+              aria-label="Envoyer"
             >
               <Send className="h-4 w-4" />
             </Button>

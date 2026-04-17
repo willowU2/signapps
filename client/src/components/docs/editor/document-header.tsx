@@ -85,22 +85,25 @@ export function DocumentHeader({
               variant="ghost"
               size="icon"
               className="h-6 w-6 text-[#5f6368] hover:text-[#202124] dark:text-[#9aa0a6] hover:bg-[#f1f3f4] dark:hover:bg-[#303134]"
+              aria-label="Ajouter aux favoris"
             >
-              <Star className="h-[14px] w-[14px]" />
+              <Star className="h-[14px] w-[14px]" aria-hidden="true" />
             </Button>
             <Button
               variant="ghost"
               size="icon"
               className="h-6 w-6 text-[#5f6368] hover:text-[#202124] dark:text-[#9aa0a6] hover:bg-[#f1f3f4] dark:hover:bg-[#303134]"
+              aria-label="Déplacer dans un dossier"
             >
-              <Folder className="h-[14px] w-[14px]" />
+              <Folder className="h-[14px] w-[14px]" aria-hidden="true" />
             </Button>
             <Button
               variant="ghost"
               size="icon"
               className="h-6 w-6 text-[#5f6368] hover:text-[#202124] dark:text-[#9aa0a6] hover:bg-[#f1f3f4] dark:hover:bg-[#303134]"
+              aria-label="Synchronisation cloud"
             >
-              <Cloud className="h-[14px] w-[14px]" />
+              <Cloud className="h-[14px] w-[14px]" aria-hidden="true" />
             </Button>
           </div>
           {/* Inject the Menu Bar right under the title */}
@@ -157,15 +160,17 @@ export function DocumentHeader({
             variant="ghost"
             size="icon"
             className="h-10 w-10 rounded-full text-[#5f6368] hover:bg-[#f1f3f4] dark:text-[#9aa0a6] dark:hover:bg-[#303134]"
+            aria-label="Commentaires"
           >
-            <MessageSquarePlus className="h-5 w-5" />
+            <MessageSquarePlus className="h-5 w-5" aria-hidden="true" />
           </Button>
           <Button
             variant="ghost"
             size="icon"
             className="h-10 w-10 rounded-full text-[#5f6368] hover:bg-[#f1f3f4] dark:text-[#9aa0a6] dark:hover:bg-[#303134] mr-2"
+            aria-label="Appel vidéo"
           >
-            <Video className="h-5 w-5" />
+            <Video className="h-5 w-5" aria-hidden="true" />
           </Button>
 
           <Button className="bg-[#c2e7ff] hover:bg-[#a8d3f1] text-[#001d35] font-medium rounded-full px-6 h-9 transition-colors shadow-none dark:bg-[#004a77] dark:text-[#c2e7ff] dark:hover:bg-[#005a92] mr-2">

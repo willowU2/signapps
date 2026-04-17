@@ -364,6 +364,7 @@ export function ChatSidebar({
           size="icon"
           className="h-8 w-8 rounded-full text-muted-foreground hover:bg-muted"
           onClick={() => setCreateDialogOpen(true)}
+          aria-label="Ajouter"
         >
           <Plus className="h-4 w-4" />
         </Button>
@@ -421,6 +422,7 @@ export function ChatSidebar({
                   e.stopPropagation();
                   setDmDialogOpen(true);
                 }}
+                aria-label="Ajouter"
               >
                 <Plus className="h-4 w-4 text-muted-foreground" />
               </Button>

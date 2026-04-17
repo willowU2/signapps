@@ -213,6 +213,7 @@ export function FormToDocMapper() {
                         variant="ghost"
                         className="h-7 w-7"
                         asChild
+                        aria-label="Télécharger"
                       >
                         <a href={`/api/docs/${r.doc_id}/download`} download>
                           <Download className="h-3.5 w-3.5" />

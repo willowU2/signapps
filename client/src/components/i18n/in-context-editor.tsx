@@ -248,6 +248,7 @@ export function InContextEditor() {
                           variant="ghost"
                           className="h-7 w-7"
                           onClick={cancelEdit}
+                          aria-label="Fermer"
                         >
                           <X className="h-3 w-3" />
                         </Button>

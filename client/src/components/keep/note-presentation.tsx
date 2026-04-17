@@ -153,6 +153,7 @@ export function NotePresentation({
             variant="ghost"
             className="text-white hover:bg-card/10"
             onClick={onClose}
+            aria-label="Fermer"
           >
             <X className="size-5" />
           </Button>
@@ -245,6 +246,7 @@ export function NotePresentation({
           className="text-white hover:bg-card/10 size-12"
           disabled={current === 0}
           onClick={prev}
+          aria-label="Précédent"
         >
           <ChevronLeft className="size-7" />
         </Button>
@@ -255,6 +257,7 @@ export function NotePresentation({
           className="text-white hover:bg-card/10 size-12"
           disabled={current === notes.length - 1}
           onClick={next}
+          aria-label="Suivant"
         >
           <ChevronRight className="size-7" />
         </Button>

@@ -1523,6 +1523,7 @@ ${header}
                                       size="icon"
                                       variant="ghost"
                                       title="Voir les emails"
+                                      aria-label="Voir les emails"
                                       onClick={(e) => {
                                         e.stopPropagation();
                                         setEmailPanelContactId(
@@ -1544,6 +1545,7 @@ ${header}
                                     size="icon"
                                     variant="ghost"
                                     title="Favori"
+                                    aria-label="Favori"
                                     onClick={() => toggleFavorite(c)}
                                   >
                                     {c.favorite ? (
@@ -1560,6 +1562,7 @@ ${header}
                                           size="icon"
                                           variant="ghost"
                                           title="Groupes"
+                                          aria-label="Groupes"
                                           onClick={(e) => e.stopPropagation()}
                                         >
                                           <UsersRound className="h-4 w-4" />
@@ -1614,6 +1617,7 @@ ${header}
                                     size="icon"
                                     variant="ghost"
                                     title="Modifier"
+                                    aria-label="Modifier"
                                     onClick={() => handleEdit(c)}
                                   >
                                     <Pencil className="h-4 w-4" />
@@ -1622,6 +1626,7 @@ ${header}
                                     size="icon"
                                     variant="ghost"
                                     title="Supprimer"
+                                    aria-label="Supprimer"
                                     onClick={() => setDeleteTarget(c.id)}
                                   >
                                     <Trash2 className="h-4 w-4 text-destructive" />
@@ -2062,16 +2067,18 @@ ${header}
                         setEditingGroupName(g.name);
                         setEditingGroupColor(g.color ?? "#6366f1");
                       }}
+                      aria-label={`Modifier le groupe ${g.name}`}
                     >
-                      <Pencil className="h-3.5 w-3.5" />
+                      <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
                     </Button>
                     <Button
                       size="icon"
                       variant="ghost"
                       className="h-7 w-7 text-destructive hover:text-destructive"
                       onClick={() => setGroupDeleteTarget(g.id)}
+                      aria-label={`Supprimer le groupe ${g.name}`}
                     >
-                      <Trash2 className="h-3.5 w-3.5" />
+                      <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
                     </Button>
                   </>
                 )}

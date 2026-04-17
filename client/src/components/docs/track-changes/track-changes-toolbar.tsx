@@ -27,6 +27,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { TooltipIconButton } from "@/components/ui/tooltip-icon-button";
 import { cn } from "@/lib/utils";
 import type { TrackChange } from "@/components/docs/extensions/track-changes";
 
@@ -126,21 +127,13 @@ export function TrackChangesToolbar({
 
         {/* Open Sidebar Button */}
         {onToggleSidebar && (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={onToggleSidebar}
-                className="gap-1"
-              >
-                <PanelRightOpen className="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Ouvrir le panneau des modifications</p>
-            </TooltipContent>
-          </Tooltip>
+          <TooltipIconButton
+            label="Ouvrir le panneau des modifications"
+            size="icon-sm"
+            onClick={onToggleSidebar}
+          >
+            <PanelRightOpen className="h-4 w-4" />
+          </TooltipIconButton>
         )}
 
         {/* Changes Count & Actions Dropdown */}

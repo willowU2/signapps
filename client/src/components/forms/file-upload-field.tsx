@@ -74,6 +74,7 @@ export function FileUploadField({ fieldId, required, onChange }: Props) {
               e.stopPropagation();
               clear();
             }}
+            aria-label="Fermer"
           >
             <X className="h-3 w-3" />
           </Button>

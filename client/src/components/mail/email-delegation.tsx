@@ -166,6 +166,7 @@ export function EmailDelegation({ accountId }: EmailDelegationProps) {
               variant="ghost"
               className="h-7 w-7 text-destructive ml-2 flex-shrink-0"
               onClick={() => handleRevoke(d.id)}
+              aria-label="Supprimer"
             >
               <Trash2 className="h-3.5 w-3.5" />
             </Button>

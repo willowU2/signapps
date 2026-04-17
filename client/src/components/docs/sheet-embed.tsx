@@ -105,6 +105,7 @@ export function SheetEmbedView({
             onClick={fetchData}
             disabled={loading}
             title="Refresh data"
+            aria-label="Refresh data"
           >
             <RefreshCw
               className={cn("h-3.5 w-3.5", loading && "animate-spin")}
@@ -116,6 +117,7 @@ export function SheetEmbedView({
             className="h-7 w-7"
             onClick={openSheet}
             title="Open full sheet"
+            aria-label="Open full sheet"
           >
             <ExternalLink className="h-3.5 w-3.5" />
           </Button>

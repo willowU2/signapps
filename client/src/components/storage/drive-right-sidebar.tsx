@@ -260,6 +260,7 @@ export function DriveRightSidebar() {
               size="icon"
               className="h-7 w-7 rounded-full"
               onClick={() => setActiveApp(null)}
+              aria-label="Fermer"
             >
               <X className="h-4 w-4 text-[#5f6368] dark:text-[#9aa0a6]" />
             </Button>
@@ -365,6 +366,7 @@ export function DriveRightSidebar() {
                     size="icon"
                     className="h-8 w-8 rounded-full shrink-0"
                     onClick={() => handleAddTask()}
+                    aria-label="Ajouter"
                   >
                     <Plus className="w-5 h-5 text-blue-600" />
                   </Button>

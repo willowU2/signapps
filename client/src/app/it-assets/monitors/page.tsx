@@ -531,6 +531,7 @@ export default function CustomMonitorsPage() {
                           variant="ghost"
                           onClick={() => deleteMutation.mutate(m.id)}
                           className="text-muted-foreground hover:text-destructive"
+                          aria-label="Supprimer"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
                         </Button>

@@ -232,6 +232,7 @@ export default function SignaturesPage() {
                           size="icon"
                           className="h-8 w-8"
                           onClick={() => setSelectedId(env.id)}
+                          aria-label="Aperçu"
                         >
                           <Eye className="h-4 w-4" />
                         </Button>

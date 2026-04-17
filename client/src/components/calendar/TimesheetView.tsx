@@ -639,6 +639,7 @@ export function TimesheetView() {
               size="icon"
               onClick={goPrev}
               className="h-8 w-8"
+              aria-label="Précédent"
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
@@ -656,6 +657,7 @@ export function TimesheetView() {
               size="icon"
               onClick={goNext}
               className="h-8 w-8"
+              aria-label="Suivant"
             >
               <ChevronRight className="h-4 w-4" />
             </Button>

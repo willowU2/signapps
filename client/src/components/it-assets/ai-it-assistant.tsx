@@ -367,6 +367,7 @@ export function AiItAssistant({
               className="h-8 w-8 shrink-0"
               onClick={() => sendMessage(input)}
               disabled={loading || !input.trim()}
+              aria-label="Envoyer"
             >
               <Send className="h-3.5 w-3.5" />
             </Button>
