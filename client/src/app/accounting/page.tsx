@@ -134,7 +134,10 @@ export default function AccountingPage() {
               Gestion financière complète
             </p>
           </div>
-          <nav className="flex-1 overflow-y-auto p-2 space-y-0.5">
+          <nav
+            aria-label="Navigation comptabilité"
+            className="flex-1 overflow-y-auto p-2 space-y-0.5"
+          >
             {TABS.map((tab) => {
               const Icon = tab.icon;
               return (

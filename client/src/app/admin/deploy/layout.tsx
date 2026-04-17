@@ -32,7 +32,10 @@ export default function DeployLayout({
           </p>
         </div>
 
-        <nav className="border-b border-border">
+        <nav
+          aria-label="Onglets déploiement"
+          className="border-b border-border"
+        >
           <ul className="flex gap-1">
             {tabs.map((tab) => {
               const active = pathname === tab.href;

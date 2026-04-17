@@ -159,9 +159,9 @@ export function Header() {
               S
             </div>
           )}
-          <h1 className="text-xl font-medium text-foreground/80 tracking-tight">
+          <span className="text-xl font-medium text-foreground/80 tracking-tight">
             {instanceName ?? "SignApps"}
-          </h1>
+          </span>
         </button>
       </div>
 
