@@ -111,6 +111,7 @@ members = [
     "services/signapps-gateway",
     # Endpoint management agent (standalone binary)
     "services/signapps-agent",
+    "services/signapps-nexus",
     # Developer tooling
     "tools/signapps-installer",
     "tools/signapps-seed",
@@ -164,7 +165,7 @@ reqwest = { version = "0.12", features = ["json", "stream", "multipart"] }
 bollard = "0.16"
 
 # Vector DB (pgvector via PostgreSQL)
-pgvector = { version = "0.3", features = ["sqlx"] }
+pgvector = { version = "0.3", features = ["sqlx", "serde"] }
 
 # OpenAI-compatible (vLLM)
 async-openai = "0.20"
