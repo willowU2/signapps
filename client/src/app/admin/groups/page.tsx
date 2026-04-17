@@ -158,8 +158,9 @@ export default function GroupsPage() {
                         size="icon"
                         onClick={() => handleEdit(group)}
                         className="h-8 w-8 text-blue-500 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-950/50"
+                        aria-label={`Modifier ${group.name}`}
                       >
-                        <Edit2 className="h-4 w-4" />
+                        <Edit2 className="h-4 w-4" aria-hidden="true" />
                       </Button>
                       <Button
                         variant="ghost"
