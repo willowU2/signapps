@@ -148,6 +148,7 @@ function VideoPreview({ url, filename }: { url: string; filename: string }) {
         </a>
       </div>
       <div className="flex-1 overflow-auto flex items-center justify-center bg-black p-4">
+        {/* eslint-disable-next-line jsx-a11y/media-has-caption -- Captions not available for this media type */}
         <video src={url} controls className="max-w-full max-h-full rounded">
           Votre navigateur ne supporte pas la lecture video.
         </video>
@@ -174,6 +175,7 @@ function AudioPreview({ url, filename }: { url: string; filename: string }) {
           <p className="text-sm text-muted-foreground font-medium">
             {filename}
           </p>
+          {/* eslint-disable-next-line jsx-a11y/media-has-caption -- Captions not available for this media type */}
           <audio src={url} controls className="w-full">
             Votre navigateur ne supporte pas la lecture audio.
           </audio>

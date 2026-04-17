@@ -72,6 +72,7 @@ export function InlineAudioPlayer({
   return (
     <div className="flex items-center gap-2 px-3 py-2 bg-muted/80 backdrop-blur border rounded-lg text-sm">
       {blobUrl && (
+        // eslint-disable-next-line jsx-a11y/media-has-caption -- Captions not available
         <audio
           ref={audioRef}
           src={blobUrl}

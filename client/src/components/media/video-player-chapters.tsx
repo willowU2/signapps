@@ -121,6 +121,7 @@ export function VideoPlayerWithChapters() {
           </div>
         ) : (
           <div className="space-y-2">
+            {/* eslint-disable-next-line jsx-a11y/media-has-caption -- Captions not available for this media type */}
             <video
               ref={videoRef}
               src={videoUrl}
