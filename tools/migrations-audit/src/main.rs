@@ -20,12 +20,14 @@ fn main() {
 
     let patterns = [
         (
+            // Only flag statements at column 0; indented ones are assumed to
+            // already sit inside a DO-block or IF NOT EXISTS (…) guard.
             "CREATE TABLE without IF NOT EXISTS",
-            Regex::new(r"(?im)^\s*CREATE\s+TABLE\s+(?!IF\s+NOT\s+EXISTS)").unwrap(),
+            Regex::new(r"(?im)^CREATE\s+TABLE\s+(?!IF\s+NOT\s+EXISTS)").unwrap(),
         ),
         (
             "CREATE [UNIQUE] INDEX without IF NOT EXISTS",
-            Regex::new(r"(?im)^\s*CREATE\s+(UNIQUE\s+)?INDEX\s+(?!IF\s+NOT\s+EXISTS)").unwrap(),
+            Regex::new(r"(?im)^CREATE\s+(UNIQUE\s+)?INDEX\s+(?!IF\s+NOT\s+EXISTS)").unwrap(),
         ),
         (
             "ADD CONSTRAINT without DO-block guard",

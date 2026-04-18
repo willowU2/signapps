@@ -23,8 +23,9 @@ fn main() {
     let index = Regex::new(r"(?im)^(CREATE\s+)((?:UNIQUE\s+)?)INDEX\s+(?!IF\s+NOT\s+EXISTS)").unwrap();
     // Postgres 16 does NOT support ALTER TABLE ... ADD CONSTRAINT IF NOT EXISTS.
     // Wrap the full statement in a DO-block that catches duplicate_object.
+    // Supports both single-line and multi-line statements (up to the first `;`).
     let constraint = Regex::new(
-        r"(?im)^(ALTER\s+TABLE\s+[^\n;]+\s+ADD\s+CONSTRAINT\s+[^\n;]+;)",
+        r"(?ims)^(ALTER\s+TABLE\s+\S+\s+ADD\s+CONSTRAINT\s+[^;]+;)",
     )
     .unwrap();
     // Single-line CREATE TYPE ... AS ENUM (...);  — only at column 0.
