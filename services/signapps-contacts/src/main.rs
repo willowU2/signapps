@@ -24,7 +24,6 @@ use signapps_common::{Claims, JwtConfig};
 use signapps_db::DatabasePool;
 use signapps_sharing::routes::sharing_routes;
 use signapps_sharing::{ResourceType, SharingEngine};
-use std::sync::{Arc, Mutex};
 use tower_http::cors::{AllowOrigin, CorsLayer};
 use tower_http::trace::TraceLayer;
 use uuid::Uuid;
@@ -116,9 +115,55 @@ pub struct AddGroupMemberRequest {
 pub struct AppState {
     pub pool: DatabasePool,
     pub jwt_config: JwtConfig,
-    pub contacts: Arc<Mutex<Vec<Contact>>>,
-    pub groups: Arc<Mutex<Vec<ContactGroup>>>,
     pub event_bus: PgEventBus,
+}
+
+// ── DB helpers ──────────────────────────────────────────────────────────────
+
+async fn fetch_group_ids(
+    pool: &sqlx::PgPool,
+    contact_id: Uuid,
+) -> Result<Vec<Uuid>, sqlx::Error> {
+    let rows: Vec<(Uuid,)> =
+        sqlx::query_as("SELECT group_id FROM contact_group_members WHERE contact_id = $1")
+            .bind(contact_id)
+            .fetch_all(pool)
+            .await?;
+    Ok(rows.into_iter().map(|(g,)| g).collect())
+}
+
+fn row_to_contact(row: &sqlx::postgres::PgRow, group_ids: Vec<Uuid>) -> Contact {
+    use sqlx::Row;
+    let created: chrono::DateTime<chrono::Utc> = row.try_get("created_at").unwrap_or_else(|_| Utc::now());
+    let updated: chrono::DateTime<chrono::Utc> = row.try_get("updated_at").unwrap_or_else(|_| Utc::now());
+    Contact {
+        id: row.try_get("id").unwrap_or_else(|_| Uuid::nil()),
+        owner_id: row.try_get("owner_id").unwrap_or_else(|_| Uuid::nil()),
+        first_name: row.try_get("first_name").unwrap_or_default(),
+        last_name: row.try_get("last_name").unwrap_or_default(),
+        email: row.try_get("email").ok(),
+        phone: row.try_get("phone").ok(),
+        organization: row.try_get("organization").ok(),
+        job_title: row.try_get("job_title").ok(),
+        group_ids,
+        created_at: created.to_rfc3339(),
+        updated_at: updated.to_rfc3339(),
+    }
+}
+
+fn row_to_group(row: &sqlx::postgres::PgRow) -> ContactGroup {
+    use sqlx::Row;
+    let created: chrono::DateTime<chrono::Utc> = row.try_get("created_at").unwrap_or_else(|_| Utc::now());
+    let updated: chrono::DateTime<chrono::Utc> = row.try_get("updated_at").unwrap_or_else(|_| Utc::now());
+    ContactGroup {
+        id: row.try_get("id").unwrap_or_else(|_| Uuid::nil()),
+        owner_id: row.try_get("owner_id").unwrap_or_else(|_| Uuid::nil()),
+        name: row.try_get("name").unwrap_or_default(),
+        description: row.try_get("description").ok(),
+        color: row.try_get("color").ok(),
+        created_at: created.to_rfc3339(),
+        updated_at: updated.to_rfc3339(),
+    }
 }
 
 impl AuthState for AppState {
@@ -141,9 +186,33 @@ impl AuthState for AppState {
     security(("bearer" = [])),
     tag = "Contacts",
 )]
-async fn list_contacts(State(state): State<AppState>) -> impl IntoResponse {
-    let contacts = state.contacts.lock().unwrap_or_else(|e| e.into_inner());
-    Json(contacts.clone())
+async fn list_contacts(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+) -> impl IntoResponse {
+    let pool = state.pool.inner();
+    let rows = match sqlx::query(
+        "SELECT * FROM contacts WHERE owner_id = $1 ORDER BY updated_at DESC",
+    )
+    .bind(claims.sub)
+    .fetch_all(pool)
+    .await
+    {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!(?e, "Failed to list contacts");
+            return (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!([]))).into_response();
+        }
+    };
+
+    let mut result = Vec::with_capacity(rows.len());
+    for row in &rows {
+        use sqlx::Row;
+        let id: Uuid = row.try_get("id").unwrap_or_else(|_| Uuid::nil());
+        let group_ids = fetch_group_ids(pool, id).await.unwrap_or_default();
+        result.push(row_to_contact(row, group_ids));
+    }
+    Json(result).into_response()
 }
 
 #[utoipa::path(
@@ -162,25 +231,48 @@ async fn create_contact(
     Extension(claims): Extension<Claims>,
     Json(payload): Json<CreateContactRequest>,
 ) -> impl IntoResponse {
-    let now = Utc::now().to_rfc3339();
-    let contact = Contact {
-        id: Uuid::new_v4(),
-        owner_id: claims.sub,
-        first_name: payload.first_name,
-        last_name: payload.last_name,
-        email: payload.email,
-        phone: payload.phone,
-        organization: payload.organization,
-        job_title: payload.job_title,
-        group_ids: payload.group_ids.unwrap_or_default(),
-        created_at: now.clone(),
-        updated_at: now,
+    let pool = state.pool.inner();
+    let id = Uuid::new_v4();
+    let row = match sqlx::query(
+        "INSERT INTO contacts
+            (id, owner_id, first_name, last_name, email, phone, organization, job_title)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+         RETURNING *",
+    )
+    .bind(id)
+    .bind(claims.sub)
+    .bind(&payload.first_name)
+    .bind(&payload.last_name)
+    .bind(&payload.email)
+    .bind(&payload.phone)
+    .bind(&payload.organization)
+    .bind(&payload.job_title)
+    .fetch_one(pool)
+    .await
+    {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!(?e, "Failed to insert contact");
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({ "error": "DB insert failed" })),
+            );
+        }
     };
-    state
-        .contacts
-        .lock()
-        .unwrap_or_else(|e| e.into_inner())
-        .push(contact.clone());
+
+    let group_ids = payload.group_ids.unwrap_or_default();
+    for gid in &group_ids {
+        let _ = sqlx::query(
+            "INSERT INTO contact_group_members (group_id, contact_id) VALUES ($1, $2)
+             ON CONFLICT DO NOTHING",
+        )
+        .bind(gid)
+        .bind(id)
+        .execute(pool)
+        .await;
+    }
+
+    let contact = row_to_contact(&row, group_ids);
     tracing::info!(id = %contact.id, "Contact created");
     let _ = state
         .event_bus
@@ -194,7 +286,10 @@ async fn create_contact(
             }),
         })
         .await;
-    (StatusCode::CREATED, Json(contact))
+    (
+        StatusCode::CREATED,
+        Json(serde_json::to_value(contact).unwrap_or_default()),
+    )
 }
 
 #[utoipa::path(
@@ -212,16 +307,30 @@ async fn create_contact(
     tag = "Contacts",
 )]
 async fn get_contact(State(state): State<AppState>, Path(id): Path<Uuid>) -> impl IntoResponse {
-    let contacts = state.contacts.lock().unwrap_or_else(|e| e.into_inner());
-    match contacts.iter().find(|c| c.id == id) {
-        Some(c) => (
-            StatusCode::OK,
-            Json(serde_json::to_value(c).unwrap_or_default()),
-        ),
-        None => (
+    let pool = state.pool.inner();
+    let row = sqlx::query("SELECT * FROM contacts WHERE id = $1")
+        .bind(id)
+        .fetch_optional(pool)
+        .await;
+    match row {
+        Ok(Some(r)) => {
+            let gids = fetch_group_ids(pool, id).await.unwrap_or_default();
+            (
+                StatusCode::OK,
+                Json(serde_json::to_value(row_to_contact(&r, gids)).unwrap_or_default()),
+            )
+        }
+        Ok(None) => (
             StatusCode::NOT_FOUND,
             Json(serde_json::json!({ "error": "Contact not found" })),
         ),
+        Err(e) => {
+            tracing::error!(?e, "Failed to fetch contact");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({ "error": "DB error" })),
+            )
+        }
     }
 }
 
@@ -245,41 +354,69 @@ async fn update_contact(
     Path(id): Path<Uuid>,
     Json(payload): Json<UpdateContactRequest>,
 ) -> impl IntoResponse {
-    let mut contacts = state.contacts.lock().unwrap_or_else(|e| e.into_inner());
-    match contacts.iter_mut().find(|c| c.id == id) {
-        Some(c) => {
-            if let Some(v) = payload.first_name {
-                c.first_name = v;
-            }
-            if let Some(v) = payload.last_name {
-                c.last_name = v;
-            }
-            if payload.email.is_some() {
-                c.email = payload.email;
-            }
-            if payload.phone.is_some() {
-                c.phone = payload.phone;
-            }
-            if payload.organization.is_some() {
-                c.organization = payload.organization;
-            }
-            if payload.job_title.is_some() {
-                c.job_title = payload.job_title;
-            }
-            if let Some(v) = payload.group_ids {
-                c.group_ids = v;
-            }
-            c.updated_at = Utc::now().to_rfc3339();
-            (
-                StatusCode::OK,
-                Json(serde_json::to_value(&*c).unwrap_or_default()),
+    let pool = state.pool.inner();
+    // COALESCE pattern — update only fields provided in payload.
+    let row = match sqlx::query(
+        "UPDATE contacts SET
+            first_name   = COALESCE($2, first_name),
+            last_name    = COALESCE($3, last_name),
+            email        = COALESCE($4, email),
+            phone        = COALESCE($5, phone),
+            organization = COALESCE($6, organization),
+            job_title    = COALESCE($7, job_title),
+            updated_at   = NOW()
+         WHERE id = $1
+         RETURNING *",
+    )
+    .bind(id)
+    .bind(&payload.first_name)
+    .bind(&payload.last_name)
+    .bind(&payload.email)
+    .bind(&payload.phone)
+    .bind(&payload.organization)
+    .bind(&payload.job_title)
+    .fetch_optional(pool)
+    .await
+    {
+        Ok(Some(r)) => r,
+        Ok(None) => {
+            return (
+                StatusCode::NOT_FOUND,
+                Json(serde_json::json!({ "error": "Contact not found" })),
+            );
+        }
+        Err(e) => {
+            tracing::error!(?e, "Update contact failed");
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({ "error": "DB error" })),
+            );
+        }
+    };
+
+    // Replace group memberships if provided.
+    if let Some(new_groups) = payload.group_ids.as_ref() {
+        let _ = sqlx::query("DELETE FROM contact_group_members WHERE contact_id = $1")
+            .bind(id)
+            .execute(pool)
+            .await;
+        for gid in new_groups {
+            let _ = sqlx::query(
+                "INSERT INTO contact_group_members (group_id, contact_id) VALUES ($1, $2)
+                 ON CONFLICT DO NOTHING",
             )
-        },
-        None => (
-            StatusCode::NOT_FOUND,
-            Json(serde_json::json!({ "error": "Contact not found" })),
-        ),
+            .bind(gid)
+            .bind(id)
+            .execute(pool)
+            .await;
+        }
     }
+
+    let gids = fetch_group_ids(pool, id).await.unwrap_or_default();
+    (
+        StatusCode::OK,
+        Json(serde_json::to_value(row_to_contact(&row, gids)).unwrap_or_default()),
+    )
 }
 
 #[utoipa::path(
@@ -297,14 +434,21 @@ async fn update_contact(
     tag = "Contacts",
 )]
 async fn delete_contact(State(state): State<AppState>, Path(id): Path<Uuid>) -> StatusCode {
-    let mut contacts = state.contacts.lock().unwrap_or_else(|e| e.into_inner());
-    let before = contacts.len();
-    contacts.retain(|c| c.id != id);
-    if contacts.len() < before {
-        tracing::info!(id = %id, "Contact deleted");
-        StatusCode::NO_CONTENT
-    } else {
-        StatusCode::NOT_FOUND
+    let pool = state.pool.inner();
+    match sqlx::query("DELETE FROM contacts WHERE id = $1")
+        .bind(id)
+        .execute(pool)
+        .await
+    {
+        Ok(res) if res.rows_affected() > 0 => {
+            tracing::info!(id = %id, "Contact deleted");
+            StatusCode::NO_CONTENT
+        }
+        Ok(_) => StatusCode::NOT_FOUND,
+        Err(e) => {
+            tracing::error!(?e, "Delete contact failed");
+            StatusCode::INTERNAL_SERVER_ERROR
+        }
     }
 }
 
@@ -378,7 +522,6 @@ async fn import_contacts_csv(
     let mut imported = 0u32;
     let mut skipped = 0u32;
     let mut failed = 0u32;
-    let now = Utc::now().to_rfc3339();
 
     let mut lines = content.lines();
 
@@ -442,28 +585,31 @@ async fn import_contacts_csv(
             continue;
         }
 
-        let contact = Contact {
-            id: Uuid::new_v4(),
-            owner_id: claims.sub,
-            first_name,
-            last_name,
-            email: parse_col(&cols, idx_email),
-            phone: parse_col(&cols, idx_phone),
-            organization: parse_col(&cols, idx_company),
-            job_title: parse_col(&cols, idx_job_title),
-            group_ids: vec![],
-            created_at: now.clone(),
-            updated_at: now.clone(),
-        };
+        let id = Uuid::new_v4();
+        let email = parse_col(&cols, idx_email);
+        let phone = parse_col(&cols, idx_phone);
+        let organization = parse_col(&cols, idx_company);
+        let job_title = parse_col(&cols, idx_job_title);
 
-        match state.contacts.lock() {
-            Ok(mut lock) => {
-                lock.push(contact);
-                imported += 1;
-            },
-            Err(_) => {
-                failed += 1;
-            },
+        let insert = sqlx::query(
+            "INSERT INTO contacts
+                (id, owner_id, first_name, last_name, email, phone, organization, job_title)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",
+        )
+        .bind(id)
+        .bind(claims.sub)
+        .bind(&first_name)
+        .bind(&last_name)
+        .bind(&email)
+        .bind(&phone)
+        .bind(&organization)
+        .bind(&job_title)
+        .execute(state.pool.inner())
+        .await;
+
+        match insert {
+            Ok(_) => imported += 1,
+            Err(_) => failed += 1,
         }
     }
 
@@ -491,9 +637,17 @@ async fn import_contacts_csv(
     security(("bearer" = [])),
     tag = "Groups",
 )]
-async fn list_groups(State(state): State<AppState>) -> impl IntoResponse {
-    let groups = state.groups.lock().unwrap_or_else(|e| e.into_inner());
-    Json(groups.clone())
+async fn list_groups(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+) -> impl IntoResponse {
+    let rows = sqlx::query("SELECT * FROM contact_groups WHERE owner_id = $1 ORDER BY name")
+        .bind(claims.sub)
+        .fetch_all(state.pool.inner())
+        .await
+        .unwrap_or_default();
+    let groups: Vec<ContactGroup> = rows.iter().map(row_to_group).collect();
+    Json(groups).into_response()
 }
 
 #[utoipa::path(
@@ -519,26 +673,36 @@ async fn create_group(
             Json(serde_json::json!({ "error": "Group name cannot be empty" })),
         );
     }
-    let now = Utc::now().to_rfc3339();
-    let group = ContactGroup {
-        id: Uuid::new_v4(),
-        owner_id: claims.sub,
-        name: payload.name,
-        description: payload.description,
-        color: payload.color,
-        created_at: now.clone(),
-        updated_at: now,
-    };
-    state
-        .groups
-        .lock()
-        .unwrap_or_else(|e| e.into_inner())
-        .push(group.clone());
-    tracing::info!(id = %group.id, "Contact group created");
-    (
-        StatusCode::CREATED,
-        Json(serde_json::to_value(group).unwrap_or_default()),
+    let id = Uuid::new_v4();
+    match sqlx::query(
+        "INSERT INTO contact_groups (id, owner_id, name, description, color)
+         VALUES ($1, $2, $3, $4, $5)
+         RETURNING *",
     )
+    .bind(id)
+    .bind(claims.sub)
+    .bind(&payload.name)
+    .bind(&payload.description)
+    .bind(&payload.color)
+    .fetch_one(state.pool.inner())
+    .await
+    {
+        Ok(row) => {
+            let group = row_to_group(&row);
+            tracing::info!(id = %group.id, "Contact group created");
+            (
+                StatusCode::CREATED,
+                Json(serde_json::to_value(group).unwrap_or_default()),
+            )
+        }
+        Err(e) => {
+            tracing::error!(?e, "Create group failed");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({ "error": "DB error" })),
+            )
+        }
+    }
 }
 
 #[utoipa::path(
@@ -562,34 +726,45 @@ async fn update_group(
     Path(id): Path<Uuid>,
     Json(payload): Json<UpdateGroupRequest>,
 ) -> impl IntoResponse {
-    let mut groups = state.groups.lock().unwrap_or_else(|e| e.into_inner());
-    match groups.iter_mut().find(|g| g.id == id) {
-        Some(g) => {
-            if let Some(name) = payload.name {
-                if name.trim().is_empty() {
-                    return (
-                        StatusCode::BAD_REQUEST,
-                        Json(serde_json::json!({ "error": "Group name cannot be empty" })),
-                    );
-                }
-                g.name = name;
-            }
-            if payload.color.is_some() {
-                g.color = payload.color;
-            }
-            if payload.description.is_some() {
-                g.description = payload.description;
-            }
-            g.updated_at = Utc::now().to_rfc3339();
-            (
-                StatusCode::OK,
-                Json(serde_json::to_value(&*g).unwrap_or_default()),
-            )
-        },
-        None => (
+    if let Some(n) = payload.name.as_ref() {
+        if n.trim().is_empty() {
+            return (
+                StatusCode::BAD_REQUEST,
+                Json(serde_json::json!({ "error": "Group name cannot be empty" })),
+            );
+        }
+    }
+    match sqlx::query(
+        "UPDATE contact_groups SET
+            name        = COALESCE($2, name),
+            description = COALESCE($3, description),
+            color       = COALESCE($4, color),
+            updated_at  = NOW()
+         WHERE id = $1
+         RETURNING *",
+    )
+    .bind(id)
+    .bind(&payload.name)
+    .bind(&payload.description)
+    .bind(&payload.color)
+    .fetch_optional(state.pool.inner())
+    .await
+    {
+        Ok(Some(row)) => (
+            StatusCode::OK,
+            Json(serde_json::to_value(row_to_group(&row)).unwrap_or_default()),
+        ),
+        Ok(None) => (
             StatusCode::NOT_FOUND,
             Json(serde_json::json!({ "error": "Group not found" })),
         ),
+        Err(e) => {
+            tracing::error!(?e, "Update group failed");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({ "error": "DB error" })),
+            )
+        }
     }
 }
 
@@ -608,21 +783,21 @@ async fn update_group(
     tag = "Groups",
 )]
 async fn delete_group(State(state): State<AppState>, Path(id): Path<Uuid>) -> StatusCode {
-    // Unassign this group from all contacts first
+    // Cascade: contact_group_members.group_id ON DELETE CASCADE handles membership cleanup.
+    match sqlx::query("DELETE FROM contact_groups WHERE id = $1")
+        .bind(id)
+        .execute(state.pool.inner())
+        .await
     {
-        let mut contacts = state.contacts.lock().unwrap_or_else(|e| e.into_inner());
-        for contact in contacts.iter_mut() {
-            contact.group_ids.retain(|gid| *gid != id);
+        Ok(res) if res.rows_affected() > 0 => {
+            tracing::info!(id = %id, "Contact group deleted");
+            StatusCode::NO_CONTENT
         }
-    }
-    let mut groups = state.groups.lock().unwrap_or_else(|e| e.into_inner());
-    let before = groups.len();
-    groups.retain(|g| g.id != id);
-    if groups.len() < before {
-        tracing::info!(id = %id, "Contact group deleted");
-        StatusCode::NO_CONTENT
-    } else {
-        StatusCode::NOT_FOUND
+        Ok(_) => StatusCode::NOT_FOUND,
+        Err(e) => {
+            tracing::error!(?e, "Delete group failed");
+            StatusCode::INTERNAL_SERVER_ERROR
+        }
     }
 }
 
@@ -646,31 +821,44 @@ async fn add_group_member(
     Path(group_id): Path<Uuid>,
     Json(payload): Json<AddGroupMemberRequest>,
 ) -> impl IntoResponse {
-    // Verify group exists
-    {
-        let groups = state.groups.lock().unwrap_or_else(|e| e.into_inner());
-        if !groups.iter().any(|g| g.id == group_id) {
-            return (
-                StatusCode::NOT_FOUND,
-                Json(serde_json::json!({ "error": "Group not found" })),
-            );
-        }
+    let pool = state.pool.inner();
+    let group_exists: Option<(Uuid,)> =
+        sqlx::query_as("SELECT id FROM contact_groups WHERE id = $1")
+            .bind(group_id)
+            .fetch_optional(pool)
+            .await
+            .unwrap_or(None);
+    if group_exists.is_none() {
+        return (
+            StatusCode::NOT_FOUND,
+            Json(serde_json::json!({ "error": "Group not found" })),
+        );
     }
-    // Add group_id to contact
-    let mut contacts = state.contacts.lock().unwrap_or_else(|e| e.into_inner());
-    match contacts.iter_mut().find(|c| c.id == payload.contact_id) {
-        Some(c) => {
-            if !c.group_ids.contains(&group_id) {
-                c.group_ids.push(group_id);
-                c.updated_at = Utc::now().to_rfc3339();
-            }
-            (StatusCode::OK, Json(serde_json::json!({ "ok": true })))
-        },
-        None => (
+    let contact_exists: Option<(Uuid,)> =
+        sqlx::query_as("SELECT id FROM contacts WHERE id = $1")
+            .bind(payload.contact_id)
+            .fetch_optional(pool)
+            .await
+            .unwrap_or(None);
+    if contact_exists.is_none() {
+        return (
             StatusCode::NOT_FOUND,
             Json(serde_json::json!({ "error": "Contact not found" })),
-        ),
+        );
     }
+    let _ = sqlx::query(
+        "INSERT INTO contact_group_members (group_id, contact_id) VALUES ($1, $2)
+         ON CONFLICT DO NOTHING",
+    )
+    .bind(group_id)
+    .bind(payload.contact_id)
+    .execute(pool)
+    .await;
+    let _ = sqlx::query("UPDATE contacts SET updated_at = NOW() WHERE id = $1")
+        .bind(payload.contact_id)
+        .execute(pool)
+        .await;
+    (StatusCode::OK, Json(serde_json::json!({ "ok": true })))
 }
 
 #[utoipa::path(
@@ -692,14 +880,24 @@ async fn remove_group_member(
     State(state): State<AppState>,
     Path((group_id, contact_id)): Path<(Uuid, Uuid)>,
 ) -> StatusCode {
-    let mut contacts = state.contacts.lock().unwrap_or_else(|e| e.into_inner());
-    match contacts.iter_mut().find(|c| c.id == contact_id) {
-        Some(c) => {
-            c.group_ids.retain(|gid| *gid != group_id);
-            c.updated_at = Utc::now().to_rfc3339();
+    let pool = state.pool.inner();
+    match sqlx::query(
+        "DELETE FROM contact_group_members WHERE group_id = $1 AND contact_id = $2",
+    )
+    .bind(group_id)
+    .bind(contact_id)
+    .execute(pool)
+    .await
+    {
+        Ok(res) if res.rows_affected() > 0 => {
+            let _ = sqlx::query("UPDATE contacts SET updated_at = NOW() WHERE id = $1")
+                .bind(contact_id)
+                .execute(pool)
+                .await;
             StatusCode::NO_CONTENT
-        },
-        None => StatusCode::NOT_FOUND,
+        }
+        Ok(_) => StatusCode::NOT_FOUND,
+        Err(_) => StatusCode::INTERNAL_SERVER_ERROR,
     }
 }
 
@@ -904,12 +1102,10 @@ async fn main() -> anyhow::Result<()> {
     let state = AppState {
         pool: pool.clone(),
         jwt_config,
-        contacts: Arc::new(Mutex::new(Vec::new())),
-        groups: Arc::new(Mutex::new(Vec::new())),
         event_bus,
     };
 
-    tracing::info!("In-memory store initialized (skeleton — no DB yet)");
+    tracing::info!("Contacts service backed by PostgreSQL");
 
     let sharing_engine = SharingEngine::new(pool.inner().clone(), CacheService::default_config());
 

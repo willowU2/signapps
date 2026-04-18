@@ -168,7 +168,19 @@ pub fn split_vcards(input: &str) -> Vec<&str> {
     tag = "Contacts",
 )]
 pub async fn export_vcf(State(state): State<AppState>) -> Response {
-    let contacts = state.contacts.lock().unwrap_or_else(|e| e.into_inner());
+    use crate::{fetch_group_ids, row_to_contact};
+    let pool = state.pool.inner();
+    let rows = sqlx::query("SELECT * FROM contacts ORDER BY updated_at DESC")
+        .fetch_all(pool)
+        .await
+        .unwrap_or_default();
+    let mut contacts: Vec<Contact> = Vec::with_capacity(rows.len());
+    for row in &rows {
+        use sqlx::Row;
+        let id: Uuid = row.try_get("id").unwrap_or_else(|_| Uuid::nil());
+        let gids = fetch_group_ids(pool, id).await.unwrap_or_default();
+        contacts.push(row_to_contact(row, gids));
+    }
     let body: String = contacts.iter().map(contact_to_vcard).collect();
 
     (
@@ -219,17 +231,39 @@ pub async fn import_vcf(
     }
 
     let mut created: Vec<Contact> = Vec::new();
-    let mut store = state.contacts.lock().unwrap_or_else(|e| e.into_inner());
+    let pool = state.pool.inner();
 
     for block in blocks {
         if let Some(mut contact) = vcard_to_contact(block) {
-            // Avoid duplicate UIDs already present in the store
-            if store.iter().any(|c| c.id == contact.id) {
+            // Avoid UUID collision in DB
+            let exists: Option<(Uuid,)> =
+                sqlx::query_as("SELECT id FROM contacts WHERE id = $1")
+                    .bind(contact.id)
+                    .fetch_optional(pool)
+                    .await
+                    .unwrap_or(None);
+            if exists.is_some() {
                 contact.id = Uuid::new_v4();
             }
-            tracing::info!(id = %contact.id, "Contact imported via vCard");
-            store.push(contact.clone());
-            created.push(contact);
+            let insert = sqlx::query(
+                "INSERT INTO contacts
+                    (id, owner_id, first_name, last_name, email, phone, organization, job_title)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",
+            )
+            .bind(contact.id)
+            .bind(contact.owner_id)
+            .bind(&contact.first_name)
+            .bind(&contact.last_name)
+            .bind(&contact.email)
+            .bind(&contact.phone)
+            .bind(&contact.organization)
+            .bind(&contact.job_title)
+            .execute(pool)
+            .await;
+            if insert.is_ok() {
+                tracing::info!(id = %contact.id, "Contact imported via vCard");
+                created.push(contact);
+            }
         }
     }
 

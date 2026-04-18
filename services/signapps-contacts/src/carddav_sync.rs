@@ -125,30 +125,46 @@ pub async fn sync_carddav(
     let mut synced = 0usize;
     let mut skipped = 0usize;
     let mut errors: Vec<String> = Vec::new();
-    let mut store = state.contacts.lock().unwrap_or_else(|e| e.into_inner());
+    let pool = state.pool.inner();
 
     for block in &blocks {
         match vcard_to_contact(block) {
-            Some(mut contact) => {
-                if let Some(existing) = store.iter_mut().find(|c| c.id == contact.id) {
-                    // Update in-place (keep same ID)
-                    existing.first_name = contact.first_name;
-                    existing.last_name = contact.last_name;
-                    existing.email = contact.email;
-                    existing.phone = contact.phone;
-                    existing.organization = contact.organization;
-                    existing.job_title = contact.job_title;
-                    existing.updated_at = Utc::now().to_rfc3339();
+            Some(contact) => {
+                // Upsert by UID
+                let res = sqlx::query(
+                    "INSERT INTO contacts
+                        (id, owner_id, first_name, last_name, email, phone, organization, job_title)
+                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+                     ON CONFLICT (id) DO UPDATE SET
+                        first_name = EXCLUDED.first_name,
+                        last_name  = EXCLUDED.last_name,
+                        email      = EXCLUDED.email,
+                        phone      = EXCLUDED.phone,
+                        organization = EXCLUDED.organization,
+                        job_title  = EXCLUDED.job_title,
+                        updated_at = NOW()",
+                )
+                .bind(contact.id)
+                .bind(contact.owner_id)
+                .bind(&contact.first_name)
+                .bind(&contact.last_name)
+                .bind(&contact.email)
+                .bind(&contact.phone)
+                .bind(&contact.organization)
+                .bind(&contact.job_title)
+                .execute(pool)
+                .await;
+                if res.is_ok() {
+                    synced += 1;
                 } else {
-                    contact.updated_at = Utc::now().to_rfc3339();
-                    store.push(contact);
+                    skipped += 1;
+                    errors.push("DB upsert failed".into());
                 }
-                synced += 1;
-            },
+            }
             None => {
                 skipped += 1;
                 errors.push("Skipped vCard: missing name field".to_string());
-            },
+            }
         }
     }
 
