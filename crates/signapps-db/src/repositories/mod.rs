@@ -109,6 +109,9 @@ pub use signapps_db_shared::repositories::StyleRepository;
 // Versioning repositories (command log + snapshots) — lives in signapps-db-shared.
 pub use signapps_db_shared::repositories::VersioningRepository;
 
+// Automation, extension, and action catalog repositories — lives in signapps-db-shared.
+pub use signapps_db_shared::repositories::AutomationRepository;
+
 // Drive ACL repositories — now live in signapps-db-storage (Phase 4 split).
 pub use signapps_db_storage::repositories::{AuditAlertConfigRepository, DriveAuditLogRepository};
 

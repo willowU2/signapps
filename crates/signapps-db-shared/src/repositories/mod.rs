@@ -3,6 +3,9 @@
 pub mod activity_repository;
 pub use activity_repository::ActivityRepository;
 
+pub mod automation_repository;
+pub use automation_repository::AutomationRepository;
+
 pub mod cell_format_repository;
 pub use cell_format_repository::CellFormatRepository;
 

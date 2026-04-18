@@ -9,9 +9,11 @@ pub mod presentation;
 pub mod resource_booking;
 pub mod style;
 pub mod tenant;
+pub mod automation;
 pub mod versioning;
 
 pub use activity::*;
+pub use automation::*;
 pub use cell_format::*;
 pub use company::*;
 pub use entity_reference::*;
