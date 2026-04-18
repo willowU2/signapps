@@ -29,6 +29,7 @@ pub fn declare(shared: SharedState) -> Vec<ServiceSpec> {
         spec_billing(shared.clone()),
         spec_signatures(shared.clone()),
         spec_gamification(shared.clone()),
+        spec_compliance(shared.clone()),
     ]
 }
 
@@ -273,6 +274,18 @@ fn spec_gamification(shared: SharedState) -> ServiceSpec {
         async move {
             let router = signapps_gamification::router(shared).await?;
             run_server_on_addr(router, "0.0.0.0", 3033).await
+        }
+    })
+}
+
+fn spec_compliance(shared: SharedState) -> ServiceSpec {
+    ServiceSpec::new("signapps-compliance", 3032, move || {
+        let shared = shared.clone();
+        async move {
+            // router() spawns the daily retention purge job as a
+            // detached tokio task tied to this factory scope.
+            let router = signapps_compliance::router(shared).await?;
+            run_server_on_addr(router, "0.0.0.0", 3032).await
         }
     })
 }
