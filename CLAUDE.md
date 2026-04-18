@@ -377,12 +377,15 @@ scripts/              → start-all, stop, backup, seed, log rotation
 
 ### Service Pattern
 
-Chaque service Rust suit la même structure :
-- `main.rs` – Router Axum, state injection, middleware stack, `#[instrument]` sur les handlers
-- `handlers/` – Request handlers par domaine
-- State via `Extension` ou `State` extractors
-- Auth middleware from `signapps-common` injecte `Claims`
-- Retourne `Result<_, AppError>` (RFC 7807)
+Chaque service Rust est à la fois une bibliothèque et un binaire :
+- `src/lib.rs` – Expose `pub async fn router(shared: SharedState) -> anyhow::Result<Router>` consommé par `signapps-platform` (single-binary).
+- `src/main.rs` – Binaire legacy `#[tokio::main]` conservé pour `just start-legacy` (debug isolé). Appelle `SharedState::init_once` puis délègue à `lib::router`.
+- `src/handlers/` – Request handlers par domaine.
+- État `AppState` injecté via `Extension` ou `State` extractors.
+- Auth middleware depuis `signapps-common` injecte `Claims`.
+- Retourne `Result<_, AppError>` (RFC 7807).
+
+Les ressources partagées (`PgPool`, `JwtConfig`, `Keystore`, `CacheService`, `PgEventBus`) sont construites **une seule fois** par `signapps-service::shared_state::SharedState::init_once()` au boot de `signapps-platform`. Chaque service borrow un `Arc<SharedState>` au lieu d'ouvrir son propre pool.
 
 ### Shared Crate Conventions
 
@@ -548,6 +551,10 @@ See `docs/architecture/inter-service-communication.md` for details and patterns.
 - **Frontend port** : TOUJOURS port 3000
 - **Auto-login dev** : `http://localhost:3000/login?auto=admin`
 - **PostgreSQL** : `just db-start` (Docker) ou natif
+- **Runtime backend (défaut)** : `just start` → **signapps-platform** (single binary, 34 services en tokio tasks, cold start < 3 s)
+- **Runtime backend (legacy)** : `just start-legacy` → 33 binaires séparés (debug isolé d'un service)
+- **Smoke check** : `just smoke` (ping 5 /health critiques)
+- **Bench** : `./scripts/bench-coldstart.sh` (échec si boot > 3 s)
 - **Conventional Commits** : obligatoires (`feat:`, `fix:`, `perf:`, `refactor:`, `docs:`, `test:`, `chore:`, `ci:`)
 - **Changelog** : `just changelog` après chaque release
 
