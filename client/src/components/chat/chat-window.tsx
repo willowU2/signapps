@@ -3,8 +3,8 @@
 import { SpinnerInfinity } from "spinners-react";
 import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
+import { VirtualList } from "@/components/common/virtual-list";
 import {
   Sparkles,
   Hash,
@@ -53,6 +53,14 @@ interface ChatWindowProps {
   isPrivate?: boolean;
 }
 
+/**
+ * Virtual row descriptor: either a date separator (pinned header)
+ * or a chat message with its grouping metadata.
+ */
+type VirtualRow =
+  | { kind: "date"; id: string; timestamp: number }
+  | { kind: "message"; id: string; message: ChatMessage; showAvatar: boolean };
+
 export function ChatWindow({
   channelId,
   channelName,
@@ -60,7 +68,6 @@ export function ChatWindow({
   isPrivate,
 }: ChatWindowProps) {
   const displayName = channelName || channelId;
-  const scrollRef = useRef<HTMLDivElement>(null);
 
   const { user: authUser, isAuthenticated } = useAuth();
 
@@ -131,19 +138,12 @@ export function ChatWindow({
     return () => stop();
   }, [stop]);
 
-  // Auto scroll on new messages
-  useEffect(() => {
-    if (scrollRef.current) {
-      const el = scrollRef.current.querySelector(
-        "[data-radix-scroll-area-viewport]",
-      ) as HTMLElement;
-      if (el && !activeThreadMsgId) {
-        setTimeout(() => {
-          el.scrollTop = el.scrollHeight;
-        }, 100);
-      }
-    }
-  }, [messages, activeThreadMsgId]);
+  // Track whether the scroll viewport is pinned to the bottom.
+  const [atBottom, setAtBottom] = useState(true);
+  const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
+    const el = e.currentTarget;
+    setAtBottom(el.scrollHeight - el.scrollTop <= el.clientHeight + 24);
+  }, []);
 
   // Mark read when window is focused
   useEffect(() => {
@@ -312,21 +312,45 @@ export function ChatWindow({
     (m) => m.parentId === activeThreadMsgId,
   );
 
-  const formattedMessages: ChatMessage[] = messages
-    .filter((m) => !m.parentId)
-    .map((m) => ({
-      id: m.id,
-      content: m.content,
-      senderId: m.senderId,
-      senderName: m.senderName,
-      timestamp:
-        typeof m.timestamp === "string"
-          ? new Date(m.timestamp).getTime()
-          : (m.timestamp as number),
-      reactions: m.reactions,
-      isPinned: m.isPinned,
-      attachment: m.attachment,
-    }));
+  const formattedMessages: ChatMessage[] = useMemo(
+    () =>
+      messages
+        .filter((m) => !m.parentId)
+        .map((m) => ({
+          id: m.id,
+          content: m.content,
+          senderId: m.senderId,
+          senderName: m.senderName,
+          timestamp:
+            typeof m.timestamp === "string"
+              ? new Date(m.timestamp).getTime()
+              : (m.timestamp as number),
+          reactions: m.reactions,
+          isPinned: m.isPinned,
+          attachment: m.attachment,
+        })),
+    [messages],
+  );
+
+  // Flatten messages + date separators into a single row list for virtualization.
+  const virtualRows: VirtualRow[] = useMemo(() => {
+    const rows: VirtualRow[] = [];
+    for (let i = 0; i < formattedMessages.length; i += 1) {
+      const msg = formattedMessages[i];
+      const prev = i > 0 ? formattedMessages[i - 1] : null;
+      const needsDate = !prev || msg.timestamp - prev.timestamp > 86400000;
+      if (needsDate) {
+        rows.push({
+          kind: "date",
+          id: `date-${msg.id}`,
+          timestamp: msg.timestamp,
+        });
+      }
+      const showAvatar = !prev || prev.senderId !== msg.senderId;
+      rows.push({ kind: "message", id: msg.id, message: msg, showAvatar });
+    }
+    return rows;
+  }, [formattedMessages]);
 
   // IDEA-142: export
   const handleExport = (format: "json" | "csv") => {
@@ -612,137 +636,129 @@ export function ChatWindow({
           )}
 
           {/* Messages List Area */}
-          <ScrollArea className="flex-1 min-h-0 px-4 relative" ref={scrollRef}>
-            <div className="flex flex-col min-h-full justify-end py-4">
-              {formattedMessages.length === 0 && isConnecté && (
-                <div className="flex flex-col items-center justify-center py-20 text-center animate-in fade-in duration-500">
-                  <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center text-primary mb-4">
-                    <Hash className="h-8 w-8" />
-                  </div>
-                  <h2 className="text-xl font-bold mb-2">
-                    Welcome to #{displayName}
-                  </h2>
-                  <p className="text-muted-foreground text-sm max-w-[300px]">
-                    Start the conversation! You can send messages, share files,
-                    and react with emojis.
-                  </p>
+          <div className="flex-1 min-h-0 flex flex-col">
+            {formattedMessages.length === 0 && isConnecté && (
+              <div className="flex flex-col items-center justify-center py-20 text-center animate-in fade-in duration-500">
+                <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center text-primary mb-4">
+                  <Hash className="h-8 w-8" />
                 </div>
-              )}
+                <h2 className="text-xl font-bold mb-2">
+                  Welcome to #{displayName}
+                </h2>
+                <p className="text-muted-foreground text-sm max-w-[300px]">
+                  Start the conversation! You can send messages, share files,
+                  and react with emojis.
+                </p>
+              </div>
+            )}
 
-              {/* AI Card */}
-              {aiCard && (
-                <div className="mx-4 mb-6 mt-2 relative animate-in fade-in slide-in-from-bottom-4 duration-300">
-                  <div
-                    className={cn(
-                      "relative rounded-2xl border p-4 shadow-sm backdrop-blur-sm",
-                      aiCard.type === "summary"
-                        ? "border-purple-500/20 bg-purple-500/5"
-                        : aiCard.type === "task"
-                          ? "border-blue-500/20 bg-blue-500/5"
-                          : aiCard.type === "meet"
-                            ? "border-green-500/20 bg-green-500/5"
-                            : "border-orange-500/20 bg-orange-500/5",
-                    )}
-                  >
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        {aiCard.type === "summary" && (
-                          <Sparkles className="h-4 w-4 text-purple-500" />
-                        )}
-                        {aiCard.type === "task" && (
-                          <CheckCircle className="h-4 w-4 text-blue-500" />
-                        )}
-                        {aiCard.type === "meet" && (
-                          <Video className="h-4 w-4 text-green-500" />
-                        )}
-                        {aiCard.type === "ask" && (
-                          <Bot className="h-4 w-4 text-orange-500" />
-                        )}
-                        <h4 className="text-sm font-semibold">
-                          {aiCard.title}
-                        </h4>
-                        {aiCard.status === "generating" && (
-                          <SpinnerInfinity
-                            size={20}
-                            color="currentColor"
-                            secondaryColor="rgba(128,128,128,0.2)"
-                            speed={120}
-                            className="text-muted-foreground ml-2"
-                          />
-                        )}
-                      </div>
+            {/* AI Card */}
+            {aiCard && (
+              <div className="mx-4 mb-6 mt-2 relative animate-in fade-in slide-in-from-bottom-4 duration-300 shrink-0">
+                <div
+                  className={cn(
+                    "relative rounded-2xl border p-4 shadow-sm backdrop-blur-sm",
+                    aiCard.type === "summary"
+                      ? "border-purple-500/20 bg-purple-500/5"
+                      : aiCard.type === "task"
+                        ? "border-blue-500/20 bg-blue-500/5"
+                        : aiCard.type === "meet"
+                          ? "border-green-500/20 bg-green-500/5"
+                          : "border-orange-500/20 bg-orange-500/5",
+                  )}
+                >
+                  <div className="flex items-start justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      {aiCard.type === "summary" && (
+                        <Sparkles className="h-4 w-4 text-purple-500" />
+                      )}
+                      {aiCard.type === "task" && (
+                        <CheckCircle className="h-4 w-4 text-blue-500" />
+                      )}
+                      {aiCard.type === "meet" && (
+                        <Video className="h-4 w-4 text-green-500" />
+                      )}
+                      {aiCard.type === "ask" && (
+                        <Bot className="h-4 w-4 text-orange-500" />
+                      )}
+                      <h4 className="text-sm font-semibold">{aiCard.title}</h4>
+                      {aiCard.status === "generating" && (
+                        <SpinnerInfinity
+                          size={20}
+                          color="currentColor"
+                          secondaryColor="rgba(128,128,128,0.2)"
+                          speed={120}
+                          className="text-muted-foreground ml-2"
+                        />
+                      )}
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 text-muted-foreground hover:bg-muted rounded-full -mt-1 -mr-1"
+                      onClick={() => {
+                        if (aiCard.status === "generating") stop();
+                        setAiCard(null);
+                      }}
+                      aria-label="Fermer"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                  <div className="text-[13px] leading-relaxed text-muted-foreground whitespace-pre-wrap pl-6">
+                    {aiCard.content ||
+                      (aiCard.status === "generating" ? "Thinking..." : "")}
+                  </div>
+                  {aiCard.type === "meet" && aiCard.status === "done" && (
+                    <div className="mt-3 pl-6">
                       <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6 text-muted-foreground hover:bg-muted rounded-full -mt-1 -mr-1"
-                        onClick={() => {
-                          if (aiCard.status === "generating") stop();
-                          setAiCard(null);
-                        }}
-                        aria-label="Fermer"
+                        size="sm"
+                        className="h-8 gap-1.5 bg-green-600 hover:bg-green-700 text-white"
                       >
-                        <X className="h-3.5 w-3.5" />
+                        <Video className="h-3.5 w-3.5" /> Join Meeting
                       </Button>
                     </div>
-                    <div className="text-[13px] leading-relaxed text-muted-foreground whitespace-pre-wrap pl-6">
-                      {aiCard.content ||
-                        (aiCard.status === "generating" ? "Thinking..." : "")}
-                    </div>
-                    {aiCard.type === "meet" && aiCard.status === "done" && (
-                      <div className="mt-3 pl-6">
-                        <Button
-                          size="sm"
-                          className="h-8 gap-1.5 bg-green-600 hover:bg-green-700 text-white"
-                        >
-                          <Video className="h-3.5 w-3.5" /> Join Meeting
-                        </Button>
-                      </div>
-                    )}
-                  </div>
+                  )}
                 </div>
-              )}
-
-              <div className="flex flex-col justify-end w-full">
-                {formattedMessages.map((msg, i) => {
-                  const showAvatar =
-                    i === 0 ||
-                    formattedMessages[i - 1].senderId !== msg.senderId;
-                  const showDate =
-                    i === 0 ||
-                    msg.timestamp - formattedMessages[i - 1].timestamp >
-                      86400000;
-                  return (
-                    <div key={msg.id} className="flex flex-col">
-                      {showDate && (
-                        <div className="flex items-center justify-center my-6 sticky top-2 z-10">
-                          <div className="px-3 py-1 text-[11px] font-semibold text-muted-foreground uppercase tracking-widest bg-background border rounded-full shadow-sm">
-                            {new Date(msg.timestamp).toLocaleDateString([], {
-                              weekday: "long",
-                              month: "short",
-                              day: "numeric",
-                            })}
-                          </div>
-                        </div>
-                      )}
-                      <MessageItem
-                        message={msg}
-                        isMe={msg.senderId === user.id}
-                        showAvatar={showAvatar}
-                        channelId={channelId}
-                        onReplyInThread={(id) => setActiveThreadMsgId(id)}
-                        onAddReaction={addReaction}
-                        onPin={pinMessage}
-                        onUnpin={unpinMessage}
-                        canPin={FEATURES.CHAT_PINS}
-                        onMessageEdited={updateMessageContent}
-                        onMessageDeleted={removeMessage}
-                      />
-                    </div>
-                  );
-                })}
               </div>
-            </div>
-          </ScrollArea>
+            )}
+
+            <VirtualList
+              items={virtualRows}
+              estimateSize={(i) => (virtualRows[i]?.kind === "date" ? 48 : 72)}
+              overscan={10}
+              scrollToBottom={atBottom && !activeThreadMsgId}
+              onScroll={handleScroll}
+              className="flex-1 min-h-0 px-4"
+              renderItem={(row) =>
+                row.kind === "date" ? (
+                  <div className="flex items-center justify-center my-4">
+                    <div className="px-3 py-1 text-[11px] font-semibold text-muted-foreground uppercase tracking-widest bg-background border rounded-full shadow-sm">
+                      {new Date(row.timestamp).toLocaleDateString([], {
+                        weekday: "long",
+                        month: "short",
+                        day: "numeric",
+                      })}
+                    </div>
+                  </div>
+                ) : (
+                  <MessageItem
+                    message={row.message}
+                    isMe={row.message.senderId === user.id}
+                    showAvatar={row.showAvatar}
+                    channelId={channelId}
+                    onReplyInThread={(id) => setActiveThreadMsgId(id)}
+                    onAddReaction={addReaction}
+                    onPin={pinMessage}
+                    onUnpin={unpinMessage}
+                    canPin={FEATURES.CHAT_PINS}
+                    onMessageEdited={updateMessageContent}
+                    onMessageDeleted={removeMessage}
+                  />
+                )
+              }
+            />
+          </div>
 
           {/* Main Input */}
           <div className="p-4 bg-background shrink-0">
