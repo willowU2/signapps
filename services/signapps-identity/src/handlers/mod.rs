@@ -8,6 +8,7 @@ pub mod api_keys;
 pub mod auth;
 // backup moved to signapps-backup service (port 3031)
 pub mod bookmarks;
+pub mod brand_kit;
 pub mod branding;
 pub mod bulk_users;
 pub mod comms;

@@ -451,6 +451,8 @@ fn create_router(state: AppState) -> Router {
         // Dashboard widget layouts
         .route("/api/v1/dashboard/layout", get(handlers::dashboard::get_layout).put(handlers::dashboard::save_layout))
         .route("/api/v1/dashboard/widgets/summary", get(handlers::dashboard::widgets_summary))
+        // Brand Kit (per-tenant visual identity)
+        .route("/api/v1/brand-kit", get(handlers::brand_kit::get_brand_kit).put(handlers::brand_kit::update_brand_kit))
         // Keep notes
         .route(
             "/api/v1/keep/notes",
