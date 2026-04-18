@@ -29,12 +29,23 @@ export function installConsoleFilter(): void {
 
   const original = console.error;
   console.error = (...args: unknown[]) => {
-    if (
-      args.length > 0 &&
-      typeof args[0] === "string" &&
-      BENIGN_PATTERNS.some((re) => re.test(args[0] as string))
-    ) {
-      return;
+    if (args.length > 0) {
+      const first = args[0];
+      // Extract a string to test against benign patterns: lucide passes an
+      // `Error` instance whose `.message` holds the real text, while other
+      // libs call console.error with a raw string.  We check both shapes
+      // plus the error's string coercion as a final fallback.
+      const candidates: string[] = [];
+      if (typeof first === "string") {
+        candidates.push(first);
+      }
+      if (first instanceof Error) {
+        candidates.push(first.message);
+        candidates.push(String(first));
+      }
+      if (candidates.some((s) => BENIGN_PATTERNS.some((re) => re.test(s)))) {
+        return;
+      }
     }
     original.apply(console, args);
   };
