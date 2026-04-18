@@ -38,6 +38,7 @@ pub fn declare(shared: SharedState) -> Vec<ServiceSpec> {
         spec_containers(shared.clone()),
         spec_deploy(shared.clone()),
         spec_gateway(shared.clone()),
+        spec_scheduler(shared.clone()),
     ]
 }
 
@@ -406,6 +407,22 @@ fn spec_gateway(shared: SharedState) -> ServiceSpec {
             // loopback HTTP. No background tasks.
             let router = signapps_gateway::router(shared).await?;
             run_server_on_addr(router, "0.0.0.0", 3099).await
+        }
+    })
+}
+
+fn spec_scheduler(shared: SharedState) -> ServiceSpec {
+    ServiceSpec::new("signapps-scheduler", 3007, move || {
+        let shared = shared.clone();
+        async move {
+            // router() spawns the CRON tick loop, the unified RAG
+            // ingestion loop, and (optionally) the Redis Pub/Sub
+            // listener as detached tokio tasks tied to this factory
+            // scope, so they die with the service when the supervisor
+            // respawns it. Set SCHEDULER_TICK_ENABLED=false in the test
+            // runtime to silence the 60 s ticker.
+            let router = signapps_scheduler::router(shared).await?;
+            run_server_on_addr(router, "0.0.0.0", 3007).await
         }
     })
 }
