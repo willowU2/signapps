@@ -31,6 +31,7 @@ signapps-media    = { path = "../signapps-media" }
 signapps-securelink = { path = "../signapps-securelink" }
 signapps-metrics  = { path = "../signapps-metrics" }
 signapps-social   = { path = "../signapps-social" }
+signapps-pxe      = { path = "../signapps-pxe" }
 
 anyhow  = { workspace = true }
 axum    = { workspace = true }

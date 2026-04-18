@@ -20,6 +20,7 @@ pub fn declare(shared: SharedState) -> Vec<ServiceSpec> {
         spec_securelink(shared.clone()),
         spec_metrics(shared.clone()),
         spec_social(shared.clone()),
+        spec_pxe(shared.clone()),
     ]
 }
 
@@ -158,6 +159,21 @@ fn spec_social(shared: SharedState) -> ServiceSpec {
             // scope, so they die with the service on supervisor restart.
             let router = signapps_social::router(shared).await?;
             run_server_on_addr(router, "0.0.0.0", 3019).await
+        }
+    })
+}
+
+fn spec_pxe(shared: SharedState) -> ServiceSpec {
+    ServiceSpec::new("signapps-pxe", 3016, move || {
+        let shared = shared.clone();
+        async move {
+            // router() optionally spawns the TFTP UDP :69 listener, the
+            // ProxyDHCP listener, and the DC protocol listeners (LDAP,
+            // Kerberos KDC, NTP). All are gated on env flags
+            // (PXE_ENABLE_TFTP, PXE_ENABLE_PROXY_DHCP, PXE_ENABLE_DC)
+            // and default-off so the dev box boots without root.
+            let router = signapps_pxe::router(shared).await?;
+            run_server_on_addr(router, "0.0.0.0", 3016).await
         }
     })
 }
