@@ -140,8 +140,16 @@ const nextConfig = {
           // directive only after auditing that dependency.
           {
             key: "Content-Security-Policy",
+            // React's dev runtime needs `unsafe-eval` to reconstruct source
+            // callstacks and support Fast Refresh.  Production keeps the
+            // tighter CSP (no `unsafe-eval`) — the formula evaluator runs
+            // as a pure parser on the main thread and as a worker module,
+            // neither of which needs the directive.
             value:
-              "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src * data: blob:; connect-src 'self' http://localhost:* ws://localhost:* https://api.openverse.org https://openverse.org https://*.openverse.org https://commons.wikimedia.org https://upload.wikimedia.org https://picsum.photos https://api.unsplash.com https://images.unsplash.com https://api.pexels.com https://images.pexels.com https://pixabay.com https://cdn.pixabay.com https://data.jsdelivr.com https://cdn.jsdelivr.net https://3dicons.sgp1.cdn.digitaloceanspaces.com https://nominatim.openstreetmap.org; font-src 'self' data:; media-src 'self' blob:; frame-src 'self' https://www.openstreetmap.org; worker-src 'self' blob:",
+              (process.env.NODE_ENV === "development"
+                ? "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; "
+                : "default-src 'self'; script-src 'self' 'unsafe-inline'; ") +
+              "style-src 'self' 'unsafe-inline'; img-src * data: blob:; connect-src 'self' http://localhost:* ws://localhost:* https://api.openverse.org https://openverse.org https://*.openverse.org https://commons.wikimedia.org https://upload.wikimedia.org https://picsum.photos https://api.unsplash.com https://images.unsplash.com https://api.pexels.com https://images.pexels.com https://pixabay.com https://cdn.pixabay.com https://data.jsdelivr.com https://cdn.jsdelivr.net https://3dicons.sgp1.cdn.digitaloceanspaces.com https://nominatim.openstreetmap.org; font-src 'self' data:; media-src 'self' blob:; frame-src 'self' https://www.openstreetmap.org; worker-src 'self' blob:",
           },
         ],
       },

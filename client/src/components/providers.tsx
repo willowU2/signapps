@@ -22,7 +22,12 @@ import { GlobalPolling } from "@/components/global-polling";
 import { ThemeInitializer } from "@/components/theme-initializer";
 import { RouteProgressBar } from "@/components/layout/route-progress-bar";
 import { PasswordExpiryBanner } from "@/components/auth/password-expiry-banner";
+import { installConsoleFilter } from "@/lib/console-filter";
 import dynamic from "next/dynamic";
+
+// Install the benign-warning filter as soon as the client module loads.
+// See `lib/console-filter.ts` for the list of silenced patterns.
+installConsoleFilter();
 
 // AQ-PERF (J1 2026-04-18): these components are always rendered on the
 // full-app shell (after /login) but none of them is visible on first paint.
