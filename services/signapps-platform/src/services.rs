@@ -23,6 +23,7 @@ pub fn declare(shared: SharedState) -> Vec<ServiceSpec> {
         spec_pxe(shared.clone()),
         spec_it_assets(shared.clone()),
         spec_workforce(shared.clone()),
+        spec_vault(shared.clone()),
     ]
 }
 
@@ -196,6 +197,24 @@ fn spec_workforce(shared: SharedState) -> ServiceSpec {
         async move {
             let router = signapps_workforce::router(shared).await?;
             run_server_on_addr(router, "0.0.0.0", 3024).await
+        }
+    })
+}
+
+fn spec_vault(shared: SharedState) -> ServiceSpec {
+    ServiceSpec::new("signapps-vault", 3025, move || {
+        let shared = shared.clone();
+        async move {
+            // IMPORTANT: vault reuses `shared.keystore` implicitly via
+            // SharedState — it must NOT call `Keystore::init` on its own,
+            // since init_once already unlocked the master key. Re-unlocking
+            // from a second crate instance would panic or double-decrypt.
+            //
+            // Today vault uses its own `vault_crypto` module (not
+            // signapps-keystore), but any future wiring that reaches for
+            // a DEK must go through `shared.keystore.clone()`.
+            let router = signapps_vault::router(shared).await?;
+            run_server_on_addr(router, "0.0.0.0", 3025).await
         }
     })
 }
