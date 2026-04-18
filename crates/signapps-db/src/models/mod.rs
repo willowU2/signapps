@@ -160,6 +160,9 @@ pub mod presentation {
 pub mod style {
     pub use signapps_db_shared::models::style::*;
 }
+pub mod versioning {
+    pub use signapps_db_shared::models::versioning::*;
+}
 pub mod tenant;
 pub mod user {
     pub use signapps_db_identity::models::user::*;
@@ -214,3 +217,4 @@ pub use tenant::*;
 pub use user::*;
 pub use user_preferences::*;
 pub use vault::*;
+pub use versioning::*;

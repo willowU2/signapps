@@ -106,6 +106,9 @@ pub use signapps_db_shared::repositories::PresentationRepository;
 // Style inheritance repositories — lives in signapps-db-shared.
 pub use signapps_db_shared::repositories::StyleRepository;
 
+// Versioning repositories (command log + snapshots) — lives in signapps-db-shared.
+pub use signapps_db_shared::repositories::VersioningRepository;
+
 // Drive ACL repositories — now live in signapps-db-storage (Phase 4 split).
 pub use signapps_db_storage::repositories::{AuditAlertConfigRepository, DriveAuditLogRepository};
 

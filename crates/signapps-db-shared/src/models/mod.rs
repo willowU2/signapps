@@ -9,6 +9,7 @@ pub mod presentation;
 pub mod resource_booking;
 pub mod style;
 pub mod tenant;
+pub mod versioning;
 
 pub use activity::*;
 pub use cell_format::*;
@@ -19,3 +20,4 @@ pub use presentation::*;
 pub use resource_booking::*;
 pub use style::*;
 pub use tenant::*;
+pub use versioning::*;

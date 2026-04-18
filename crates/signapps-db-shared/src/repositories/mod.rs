@@ -30,3 +30,6 @@ pub use tenant_repository::{
     TemplateRepository, TenantCalendarRepository, TenantRepository, TenantResourceRepository,
     TenantTaskRepository, WorkspaceRepository,
 };
+
+pub mod versioning_repository;
+pub use versioning_repository::VersioningRepository;
