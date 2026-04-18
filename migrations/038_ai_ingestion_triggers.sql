@@ -4,7 +4,7 @@
 
 -- 1. Fix the ingestion queue schema constraint bug
 ALTER TABLE ai.ingestion_queue DROP CONSTRAINT IF EXISTS unq_ai_ingestion_queue_record;
-ALTER TABLE ai.ingestion_queue ADD CONSTRAINT unq_ai_ingestion_queue_record UNIQUE (source_table, record_id);
+DO $$ BEGIN ALTER TABLE ai.ingestion_queue ADD CONSTRAINT unq_ai_ingestion_queue_record UNIQUE (source_table, record_id); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- Helper function to queue ingestion jobs on INSERT/UPDATE/DELETE
 CREATE OR REPLACE FUNCTION trigger_queue_ai_ingestion()

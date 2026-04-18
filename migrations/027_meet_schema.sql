@@ -2,7 +2,7 @@
 -- Video conferencing rooms, participants, and recordings
 CREATE SCHEMA IF NOT EXISTS meet;
 -- Rooms table
-CREATE TABLE meet.rooms (
+CREATE TABLE IF NOT EXISTS meet.rooms (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name VARCHAR(255) NOT NULL,
     description TEXT,
@@ -21,7 +21,7 @@ CREATE TABLE meet.rooms (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 -- Room participants tracking
-CREATE TABLE meet.room_participants (
+CREATE TABLE IF NOT EXISTS meet.room_participants (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     room_id UUID NOT NULL REFERENCES meet.rooms(id) ON DELETE CASCADE,
     user_id UUID REFERENCES identity.users(id) ON DELETE
@@ -35,7 +35,7 @@ CREATE TABLE meet.room_participants (
         is_screen_sharing BOOLEAN NOT NULL DEFAULT false
 );
 -- Recordings
-CREATE TABLE meet.recordings (
+CREATE TABLE IF NOT EXISTS meet.recordings (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     room_id UUID NOT NULL REFERENCES meet.rooms(id) ON DELETE CASCADE,
     started_by UUID NOT NULL REFERENCES identity.users(id) ON DELETE CASCADE,
@@ -51,7 +51,7 @@ CREATE TABLE meet.recordings (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 -- Meeting history for analytics
-CREATE TABLE meet.meeting_history (
+CREATE TABLE IF NOT EXISTS meet.meeting_history (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     room_id UUID NOT NULL,
     room_name VARCHAR(255) NOT NULL,
@@ -65,17 +65,17 @@ CREATE TABLE meet.meeting_history (
     had_screen_share BOOLEAN NOT NULL DEFAULT false
 );
 -- Indexes
-CREATE INDEX idx_rooms_created_by ON meet.rooms(created_by);
-CREATE INDEX idx_rooms_status ON meet.rooms(status);
-CREATE INDEX idx_rooms_scheduled_start ON meet.rooms(scheduled_start);
-CREATE INDEX idx_rooms_room_code ON meet.rooms(room_code);
-CREATE INDEX idx_participants_room_id ON meet.room_participants(room_id);
-CREATE INDEX idx_participants_user_id ON meet.room_participants(user_id);
-CREATE INDEX idx_participants_active ON meet.room_participants(room_id)
+CREATE INDEX IF NOT EXISTS idx_rooms_created_by ON meet.rooms(created_by);
+CREATE INDEX IF NOT EXISTS idx_rooms_status ON meet.rooms(status);
+CREATE INDEX IF NOT EXISTS idx_rooms_scheduled_start ON meet.rooms(scheduled_start);
+CREATE INDEX IF NOT EXISTS idx_rooms_room_code ON meet.rooms(room_code);
+CREATE INDEX IF NOT EXISTS idx_participants_room_id ON meet.room_participants(room_id);
+CREATE INDEX IF NOT EXISTS idx_participants_user_id ON meet.room_participants(user_id);
+CREATE INDEX IF NOT EXISTS idx_participants_active ON meet.room_participants(room_id)
 WHERE left_at IS NULL;
-CREATE UNIQUE INDEX idx_unique_active_participant ON meet.room_participants(room_id, user_id)
+CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_active_participant ON meet.room_participants(room_id, user_id)
 WHERE left_at IS NULL;
-CREATE INDEX idx_recordings_room_id ON meet.recordings(room_id);
-CREATE INDEX idx_recordings_status ON meet.recordings(status);
-CREATE INDEX idx_history_host_id ON meet.meeting_history(host_id);
-CREATE INDEX idx_history_started_at ON meet.meeting_history(started_at);
+CREATE INDEX IF NOT EXISTS idx_recordings_room_id ON meet.recordings(room_id);
+CREATE INDEX IF NOT EXISTS idx_recordings_status ON meet.recordings(status);
+CREATE INDEX IF NOT EXISTS idx_history_host_id ON meet.meeting_history(host_id);
+CREATE INDEX IF NOT EXISTS idx_history_started_at ON meet.meeting_history(started_at);

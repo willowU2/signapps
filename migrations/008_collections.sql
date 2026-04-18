@@ -27,7 +27,7 @@ DO $$ BEGIN IF NOT EXISTS (
     FROM pg_constraint
     WHERE conname = 'fk_document_vectors_collection'
 ) THEN
-ALTER TABLE ai.document_vectors
-ADD CONSTRAINT fk_document_vectors_collection FOREIGN KEY (collection) REFERENCES ai.collections(name) ON DELETE CASCADE;
+DO $$ BEGIN ALTER TABLE ai.document_vectors
+ADD CONSTRAINT fk_document_vectors_collection FOREIGN KEY (collection) REFERENCES ai.collections(name) ON DELETE CASCADE; EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 END IF;
 END $$;

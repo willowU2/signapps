@@ -8,7 +8,7 @@
 CREATE SCHEMA IF NOT EXISTS mail;
 
 -- Mail Accounts (IMAP/SMTP connections)
-CREATE TABLE mail.accounts (
+CREATE TABLE IF NOT EXISTS mail.accounts (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID NOT NULL REFERENCES identity.users(id) ON DELETE CASCADE,
     email_address VARCHAR(255) NOT NULL,
@@ -47,11 +47,11 @@ CREATE TABLE mail.accounts (
     UNIQUE(user_id, email_address)
 );
 
-CREATE INDEX idx_mail_accounts_user_id ON mail.accounts(user_id);
-CREATE INDEX idx_mail_accounts_status ON mail.accounts(status);
+CREATE INDEX IF NOT EXISTS idx_mail_accounts_user_id ON mail.accounts(user_id);
+CREATE INDEX IF NOT EXISTS idx_mail_accounts_status ON mail.accounts(status);
 
 -- Mail Folders
-CREATE TABLE mail.folders (
+CREATE TABLE IF NOT EXISTS mail.folders (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     account_id UUID NOT NULL REFERENCES mail.accounts(id) ON DELETE CASCADE,
     name VARCHAR(255) NOT NULL,
@@ -66,11 +66,11 @@ CREATE TABLE mail.folders (
     UNIQUE(account_id, imap_path)
 );
 
-CREATE INDEX idx_mail_folders_account_id ON mail.folders(account_id);
-CREATE INDEX idx_mail_folders_type ON mail.folders(folder_type);
+CREATE INDEX IF NOT EXISTS idx_mail_folders_account_id ON mail.folders(account_id);
+CREATE INDEX IF NOT EXISTS idx_mail_folders_type ON mail.folders(folder_type);
 
 -- Emails
-CREATE TABLE mail.emails (
+CREATE TABLE IF NOT EXISTS mail.emails (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     account_id UUID NOT NULL REFERENCES mail.accounts(id) ON DELETE CASCADE,
     folder_id UUID REFERENCES mail.folders(id) ON DELETE SET NULL,
@@ -121,18 +121,18 @@ CREATE TABLE mail.emails (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_mail_emails_account_id ON mail.emails(account_id);
-CREATE INDEX idx_mail_emails_folder_id ON mail.emails(folder_id);
-CREATE INDEX idx_mail_emails_thread_id ON mail.emails(thread_id);
-CREATE INDEX idx_mail_emails_message_id ON mail.emails(message_id);
-CREATE INDEX idx_mail_emails_imap_uid ON mail.emails(account_id, imap_uid);
-CREATE INDEX idx_mail_emails_received_at ON mail.emails(received_at DESC);
-CREATE INDEX idx_mail_emails_is_read ON mail.emails(is_read) WHERE NOT is_read;
-CREATE INDEX idx_mail_emails_is_starred ON mail.emails(is_starred) WHERE is_starred;
-CREATE INDEX idx_mail_emails_snoozed ON mail.emails(snoozed_until) WHERE snoozed_until IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_mail_emails_account_id ON mail.emails(account_id);
+CREATE INDEX IF NOT EXISTS idx_mail_emails_folder_id ON mail.emails(folder_id);
+CREATE INDEX IF NOT EXISTS idx_mail_emails_thread_id ON mail.emails(thread_id);
+CREATE INDEX IF NOT EXISTS idx_mail_emails_message_id ON mail.emails(message_id);
+CREATE INDEX IF NOT EXISTS idx_mail_emails_imap_uid ON mail.emails(account_id, imap_uid);
+CREATE INDEX IF NOT EXISTS idx_mail_emails_received_at ON mail.emails(received_at DESC);
+CREATE INDEX IF NOT EXISTS idx_mail_emails_is_read ON mail.emails(is_read) WHERE NOT is_read;
+CREATE INDEX IF NOT EXISTS idx_mail_emails_is_starred ON mail.emails(is_starred) WHERE is_starred;
+CREATE INDEX IF NOT EXISTS idx_mail_emails_snoozed ON mail.emails(snoozed_until) WHERE snoozed_until IS NOT NULL;
 
 -- Attachments
-CREATE TABLE mail.attachments (
+CREATE TABLE IF NOT EXISTS mail.attachments (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     email_id UUID NOT NULL REFERENCES mail.emails(id) ON DELETE CASCADE,
     filename VARCHAR(500) NOT NULL,
@@ -145,10 +145,10 @@ CREATE TABLE mail.attachments (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_mail_attachments_email_id ON mail.attachments(email_id);
+CREATE INDEX IF NOT EXISTS idx_mail_attachments_email_id ON mail.attachments(email_id);
 
 -- Mail Labels (custom user labels)
-CREATE TABLE mail.labels (
+CREATE TABLE IF NOT EXISTS mail.labels (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     account_id UUID NOT NULL REFERENCES mail.accounts(id) ON DELETE CASCADE,
     name VARCHAR(100) NOT NULL,
@@ -158,10 +158,10 @@ CREATE TABLE mail.labels (
     UNIQUE(account_id, name)
 );
 
-CREATE INDEX idx_mail_labels_account_id ON mail.labels(account_id);
+CREATE INDEX IF NOT EXISTS idx_mail_labels_account_id ON mail.labels(account_id);
 
 -- Mail Rules (filters)
-CREATE TABLE mail.rules (
+CREATE TABLE IF NOT EXISTS mail.rules (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     account_id UUID NOT NULL REFERENCES mail.accounts(id) ON DELETE CASCADE,
     name VARCHAR(255) NOT NULL,
@@ -179,7 +179,7 @@ CREATE TABLE mail.rules (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_mail_rules_account_id ON mail.rules(account_id);
+CREATE INDEX IF NOT EXISTS idx_mail_rules_account_id ON mail.rules(account_id);
 
 -- Create default folders for new accounts (trigger function)
 CREATE OR REPLACE FUNCTION mail.create_default_folders()

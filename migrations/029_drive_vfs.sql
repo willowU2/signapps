@@ -9,7 +9,7 @@ CREATE SCHEMA IF NOT EXISTS drive;
 -- 'folder': A directory
 -- 'file': A binary file stored in storage.files
 -- 'document': A collaborative document stored in public.documents
-CREATE TYPE drive.node_type AS ENUM ('folder', 'file', 'document');
+DO $$ BEGIN CREATE TYPE drive.node_type AS ENUM ('folder', 'file', 'document'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 -- ============================================================================
 -- Table: drive.nodes
 -- ============================================================================
@@ -55,7 +55,7 @@ UPDATE ON drive.nodes FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 -- Table: drive.permissions
 -- ============================================================================
 -- Define roles: 'viewer', 'editor', 'manager'
-CREATE TYPE drive.permission_role AS ENUM ('viewer', 'editor', 'manager');
+DO $$ BEGIN CREATE TYPE drive.permission_role AS ENUM ('viewer', 'editor', 'manager'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 CREATE TABLE IF NOT EXISTS drive.permissions (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     node_id UUID NOT NULL REFERENCES drive.nodes(id) ON DELETE CASCADE,

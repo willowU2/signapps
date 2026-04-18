@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS workforce_org_node_types (
     UNIQUE(tenant_id, code)
 );
 
-CREATE INDEX idx_org_node_types_tenant ON workforce_org_node_types(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_org_node_types_tenant ON workforce_org_node_types(tenant_id);
 
 -- Insert default node types for each tenant
 INSERT INTO workforce_org_node_types (tenant_id, code, name, icon, color, allowed_children, sort_order)
@@ -65,11 +65,11 @@ CREATE TABLE IF NOT EXISTS workforce_org_nodes (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_org_nodes_tenant ON workforce_org_nodes(tenant_id);
-CREATE INDEX idx_org_nodes_parent ON workforce_org_nodes(parent_id);
-CREATE INDEX idx_org_nodes_type ON workforce_org_nodes(node_type);
-CREATE INDEX idx_org_nodes_active ON workforce_org_nodes(tenant_id, is_active);
-CREATE UNIQUE INDEX idx_org_nodes_code ON workforce_org_nodes(tenant_id, code) WHERE code IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_org_nodes_tenant ON workforce_org_nodes(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_org_nodes_parent ON workforce_org_nodes(parent_id);
+CREATE INDEX IF NOT EXISTS idx_org_nodes_type ON workforce_org_nodes(node_type);
+CREATE INDEX IF NOT EXISTS idx_org_nodes_active ON workforce_org_nodes(tenant_id, is_active);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_org_nodes_code ON workforce_org_nodes(tenant_id, code) WHERE code IS NOT NULL;
 
 -- ============================================================================
 -- Organization Closure Table (for efficient ancestor/descendant queries)
@@ -83,9 +83,9 @@ CREATE TABLE IF NOT EXISTS workforce_org_closure (
     PRIMARY KEY (ancestor_id, descendant_id)
 );
 
-CREATE INDEX idx_org_closure_ancestor ON workforce_org_closure(ancestor_id);
-CREATE INDEX idx_org_closure_descendant ON workforce_org_closure(descendant_id);
-CREATE INDEX idx_org_closure_depth ON workforce_org_closure(depth);
+CREATE INDEX IF NOT EXISTS idx_org_closure_ancestor ON workforce_org_closure(ancestor_id);
+CREATE INDEX IF NOT EXISTS idx_org_closure_descendant ON workforce_org_closure(descendant_id);
+CREATE INDEX IF NOT EXISTS idx_org_closure_depth ON workforce_org_closure(depth);
 
 -- ============================================================================
 -- Function Definitions (job roles/positions)
@@ -106,8 +106,8 @@ CREATE TABLE IF NOT EXISTS workforce_function_definitions (
     UNIQUE(tenant_id, code)
 );
 
-CREATE INDEX idx_function_defs_tenant ON workforce_function_definitions(tenant_id);
-CREATE INDEX idx_function_defs_active ON workforce_function_definitions(tenant_id, is_active);
+CREATE INDEX IF NOT EXISTS idx_function_defs_tenant ON workforce_function_definitions(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_function_defs_active ON workforce_function_definitions(tenant_id, is_active);
 
 -- ============================================================================
 -- Employees (distinct from system users)
@@ -134,12 +134,12 @@ CREATE TABLE IF NOT EXISTS workforce_employees (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_employees_tenant ON workforce_employees(tenant_id);
-CREATE INDEX idx_employees_org_node ON workforce_employees(org_node_id);
-CREATE INDEX idx_employees_user ON workforce_employees(user_id);
-CREATE INDEX idx_employees_status ON workforce_employees(tenant_id, status);
-CREATE INDEX idx_employees_functions ON workforce_employees USING gin(functions);
-CREATE UNIQUE INDEX idx_employees_number ON workforce_employees(tenant_id, employee_number) WHERE employee_number IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_employees_tenant ON workforce_employees(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_employees_org_node ON workforce_employees(org_node_id);
+CREATE INDEX IF NOT EXISTS idx_employees_user ON workforce_employees(user_id);
+CREATE INDEX IF NOT EXISTS idx_employees_status ON workforce_employees(tenant_id, status);
+CREATE INDEX IF NOT EXISTS idx_employees_functions ON workforce_employees USING gin(functions);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_employees_number ON workforce_employees(tenant_id, employee_number) WHERE employee_number IS NOT NULL;
 
 -- ============================================================================
 -- Coverage Templates (reusable weekly patterns)
@@ -164,8 +164,8 @@ CREATE TABLE IF NOT EXISTS workforce_coverage_templates (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_coverage_templates_tenant ON workforce_coverage_templates(tenant_id);
-CREATE INDEX idx_coverage_templates_default ON workforce_coverage_templates(tenant_id, is_default);
+CREATE INDEX IF NOT EXISTS idx_coverage_templates_tenant ON workforce_coverage_templates(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_coverage_templates_default ON workforce_coverage_templates(tenant_id, is_default);
 
 -- ============================================================================
 -- Coverage Rules (applied to org nodes)
@@ -188,11 +188,11 @@ CREATE TABLE IF NOT EXISTS workforce_coverage_rules (
     CONSTRAINT valid_date_range CHECK (valid_to IS NULL OR valid_to >= valid_from)
 );
 
-CREATE INDEX idx_coverage_rules_tenant ON workforce_coverage_rules(tenant_id);
-CREATE INDEX idx_coverage_rules_org_node ON workforce_coverage_rules(org_node_id);
-CREATE INDEX idx_coverage_rules_template ON workforce_coverage_rules(template_id);
-CREATE INDEX idx_coverage_rules_active ON workforce_coverage_rules(tenant_id, is_active);
-CREATE INDEX idx_coverage_rules_validity ON workforce_coverage_rules(valid_from, valid_to);
+CREATE INDEX IF NOT EXISTS idx_coverage_rules_tenant ON workforce_coverage_rules(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_coverage_rules_org_node ON workforce_coverage_rules(org_node_id);
+CREATE INDEX IF NOT EXISTS idx_coverage_rules_template ON workforce_coverage_rules(template_id);
+CREATE INDEX IF NOT EXISTS idx_coverage_rules_active ON workforce_coverage_rules(tenant_id, is_active);
+CREATE INDEX IF NOT EXISTS idx_coverage_rules_validity ON workforce_coverage_rules(valid_from, valid_to);
 
 -- ============================================================================
 -- Triggers

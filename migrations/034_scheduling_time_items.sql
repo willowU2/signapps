@@ -9,7 +9,7 @@ CREATE SCHEMA IF NOT EXISTS scheduling;
 -- ============================================================================
 -- Time Items (Unified: task/event/booking/shift/milestone/reminder/blocker)
 -- ============================================================================
-CREATE TABLE scheduling.time_items (
+CREATE TABLE IF NOT EXISTS scheduling.time_items (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
 
     -- Type
@@ -77,33 +77,33 @@ CREATE TABLE scheduling.time_items (
 );
 
 -- Indexes
-CREATE INDEX idx_time_items_owner_id ON scheduling.time_items(owner_id);
-CREATE INDEX idx_time_items_tenant_id ON scheduling.time_items(tenant_id);
-CREATE INDEX idx_time_items_item_type ON scheduling.time_items(item_type);
-CREATE INDEX idx_time_items_scope ON scheduling.time_items(scope);
-CREATE INDEX idx_time_items_status ON scheduling.time_items(status);
-CREATE INDEX idx_time_items_priority ON scheduling.time_items(priority);
-CREATE INDEX idx_time_items_start_time ON scheduling.time_items(start_time);
-CREATE INDEX idx_time_items_deadline ON scheduling.time_items(deadline);
-CREATE INDEX idx_time_items_parent_id ON scheduling.time_items(parent_id);
-CREATE INDEX idx_time_items_project_id ON scheduling.time_items(project_id);
-CREATE INDEX idx_time_items_resource_id ON scheduling.time_items(resource_id);
-CREATE INDEX idx_time_items_deleted_at ON scheduling.time_items(deleted_at) WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_time_items_owner_id ON scheduling.time_items(owner_id);
+CREATE INDEX IF NOT EXISTS idx_time_items_tenant_id ON scheduling.time_items(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_time_items_item_type ON scheduling.time_items(item_type);
+CREATE INDEX IF NOT EXISTS idx_time_items_scope ON scheduling.time_items(scope);
+CREATE INDEX IF NOT EXISTS idx_time_items_status ON scheduling.time_items(status);
+CREATE INDEX IF NOT EXISTS idx_time_items_priority ON scheduling.time_items(priority);
+CREATE INDEX IF NOT EXISTS idx_time_items_start_time ON scheduling.time_items(start_time);
+CREATE INDEX IF NOT EXISTS idx_time_items_deadline ON scheduling.time_items(deadline);
+CREATE INDEX IF NOT EXISTS idx_time_items_parent_id ON scheduling.time_items(parent_id);
+CREATE INDEX IF NOT EXISTS idx_time_items_project_id ON scheduling.time_items(project_id);
+CREATE INDEX IF NOT EXISTS idx_time_items_resource_id ON scheduling.time_items(resource_id);
+CREATE INDEX IF NOT EXISTS idx_time_items_deleted_at ON scheduling.time_items(deleted_at) WHERE deleted_at IS NULL;
 
 -- Range query index (for calendar views)
-CREATE INDEX idx_time_items_date_range ON scheduling.time_items(tenant_id, owner_id, start_time, end_time)
+CREATE INDEX IF NOT EXISTS idx_time_items_date_range ON scheduling.time_items(tenant_id, owner_id, start_time, end_time)
     WHERE deleted_at IS NULL;
 
 -- GIN index for tags
-CREATE INDEX idx_time_items_tags ON scheduling.time_items USING GIN(tags);
+CREATE INDEX IF NOT EXISTS idx_time_items_tags ON scheduling.time_items USING GIN(tags);
 
 -- GIN index for metadata
-CREATE INDEX idx_time_items_metadata ON scheduling.time_items USING GIN(metadata);
+CREATE INDEX IF NOT EXISTS idx_time_items_metadata ON scheduling.time_items USING GIN(metadata);
 
 -- ============================================================================
 -- Time Item Users (Participants)
 -- ============================================================================
-CREATE TABLE scheduling.time_item_users (
+CREATE TABLE IF NOT EXISTS scheduling.time_item_users (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     time_item_id UUID NOT NULL REFERENCES scheduling.time_items(id) ON DELETE CASCADE,
     user_id UUID NOT NULL REFERENCES identity.users(id) ON DELETE CASCADE,
@@ -114,13 +114,13 @@ CREATE TABLE scheduling.time_item_users (
     UNIQUE(time_item_id, user_id)
 );
 
-CREATE INDEX idx_time_item_users_time_item_id ON scheduling.time_item_users(time_item_id);
-CREATE INDEX idx_time_item_users_user_id ON scheduling.time_item_users(user_id);
+CREATE INDEX IF NOT EXISTS idx_time_item_users_time_item_id ON scheduling.time_item_users(time_item_id);
+CREATE INDEX IF NOT EXISTS idx_time_item_users_user_id ON scheduling.time_item_users(user_id);
 
 -- ============================================================================
 -- Time Item Groups (Group Participants)
 -- ============================================================================
-CREATE TABLE scheduling.time_item_groups (
+CREATE TABLE IF NOT EXISTS scheduling.time_item_groups (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     time_item_id UUID NOT NULL REFERENCES scheduling.time_items(id) ON DELETE CASCADE,
     group_id UUID NOT NULL REFERENCES identity.groups(id) ON DELETE CASCADE,
@@ -129,13 +129,13 @@ CREATE TABLE scheduling.time_item_groups (
     UNIQUE(time_item_id, group_id)
 );
 
-CREATE INDEX idx_time_item_groups_time_item_id ON scheduling.time_item_groups(time_item_id);
-CREATE INDEX idx_time_item_groups_group_id ON scheduling.time_item_groups(group_id);
+CREATE INDEX IF NOT EXISTS idx_time_item_groups_time_item_id ON scheduling.time_item_groups(time_item_id);
+CREATE INDEX IF NOT EXISTS idx_time_item_groups_group_id ON scheduling.time_item_groups(group_id);
 
 -- ============================================================================
 -- Time Item Dependencies (Blocked By)
 -- ============================================================================
-CREATE TABLE scheduling.time_item_dependencies (
+CREATE TABLE IF NOT EXISTS scheduling.time_item_dependencies (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     time_item_id UUID NOT NULL REFERENCES scheduling.time_items(id) ON DELETE CASCADE,
     depends_on_id UUID NOT NULL REFERENCES scheduling.time_items(id) ON DELETE CASCADE,
@@ -147,13 +147,13 @@ CREATE TABLE scheduling.time_item_dependencies (
     CHECK (time_item_id != depends_on_id)
 );
 
-CREATE INDEX idx_time_item_deps_time_item_id ON scheduling.time_item_dependencies(time_item_id);
-CREATE INDEX idx_time_item_deps_depends_on_id ON scheduling.time_item_dependencies(depends_on_id);
+CREATE INDEX IF NOT EXISTS idx_time_item_deps_time_item_id ON scheduling.time_item_dependencies(time_item_id);
+CREATE INDEX IF NOT EXISTS idx_time_item_deps_depends_on_id ON scheduling.time_item_dependencies(depends_on_id);
 
 -- ============================================================================
 -- Recurrence Rules
 -- ============================================================================
-CREATE TABLE scheduling.recurrence_rules (
+CREATE TABLE IF NOT EXISTS scheduling.recurrence_rules (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     time_item_id UUID NOT NULL REFERENCES scheduling.time_items(id) ON DELETE CASCADE,
     frequency VARCHAR(16) NOT NULL CHECK (frequency IN ('daily', 'weekly', 'monthly', 'yearly', 'custom')),
@@ -170,12 +170,12 @@ CREATE TABLE scheduling.recurrence_rules (
     UNIQUE(time_item_id)
 );
 
-CREATE INDEX idx_recurrence_rules_time_item_id ON scheduling.recurrence_rules(time_item_id);
+CREATE INDEX IF NOT EXISTS idx_recurrence_rules_time_item_id ON scheduling.recurrence_rules(time_item_id);
 
 -- ============================================================================
 -- Scheduling Resources (Rooms, Equipment)
 -- ============================================================================
-CREATE TABLE scheduling.resources (
+CREATE TABLE IF NOT EXISTS scheduling.resources (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     tenant_id UUID NOT NULL,
     name VARCHAR(255) NOT NULL,
@@ -189,14 +189,14 @@ CREATE TABLE scheduling.resources (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_resources_tenant_id ON scheduling.resources(tenant_id);
-CREATE INDEX idx_resources_resource_type ON scheduling.resources(resource_type);
-CREATE INDEX idx_resources_is_active ON scheduling.resources(is_active);
+CREATE INDEX IF NOT EXISTS idx_resources_tenant_id ON scheduling.resources(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_resources_resource_type ON scheduling.resources(resource_type);
+CREATE INDEX IF NOT EXISTS idx_resources_is_active ON scheduling.resources(is_active);
 
 -- ============================================================================
 -- Booking Rules (for external booking pages)
 -- ============================================================================
-CREATE TABLE scheduling.booking_rules (
+CREATE TABLE IF NOT EXISTS scheduling.booking_rules (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     time_item_id UUID REFERENCES scheduling.time_items(id) ON DELETE CASCADE,
     resource_id UUID REFERENCES scheduling.resources(id) ON DELETE CASCADE,
@@ -220,14 +220,14 @@ CREATE TABLE scheduling.booking_rules (
     )
 );
 
-CREATE INDEX idx_booking_rules_slug ON scheduling.booking_rules(slug);
-CREATE INDEX idx_booking_rules_user_id ON scheduling.booking_rules(user_id);
-CREATE INDEX idx_booking_rules_resource_id ON scheduling.booking_rules(resource_id);
+CREATE INDEX IF NOT EXISTS idx_booking_rules_slug ON scheduling.booking_rules(slug);
+CREATE INDEX IF NOT EXISTS idx_booking_rules_user_id ON scheduling.booking_rules(user_id);
+CREATE INDEX IF NOT EXISTS idx_booking_rules_resource_id ON scheduling.booking_rules(resource_id);
 
 -- ============================================================================
 -- Templates (Reusable TimeItem templates)
 -- ============================================================================
-CREATE TABLE scheduling.templates (
+CREATE TABLE IF NOT EXISTS scheduling.templates (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     tenant_id UUID NOT NULL,
     name VARCHAR(255) NOT NULL,
@@ -240,14 +240,14 @@ CREATE TABLE scheduling.templates (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_templates_tenant_id ON scheduling.templates(tenant_id);
-CREATE INDEX idx_templates_category ON scheduling.templates(category);
-CREATE INDEX idx_templates_is_public ON scheduling.templates(is_public);
+CREATE INDEX IF NOT EXISTS idx_templates_tenant_id ON scheduling.templates(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_templates_category ON scheduling.templates(category);
+CREATE INDEX IF NOT EXISTS idx_templates_is_public ON scheduling.templates(is_public);
 
 -- ============================================================================
 -- User Scheduling Preferences
 -- ============================================================================
-CREATE TABLE scheduling.user_preferences (
+CREATE TABLE IF NOT EXISTS scheduling.user_preferences (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID NOT NULL UNIQUE REFERENCES identity.users(id) ON DELETE CASCADE,
 
@@ -286,7 +286,7 @@ CREATE TABLE scheduling.user_preferences (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_user_preferences_user_id ON scheduling.user_preferences(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_preferences_user_id ON scheduling.user_preferences(user_id);
 
 -- ============================================================================
 -- Updated_at Trigger
