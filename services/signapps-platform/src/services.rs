@@ -24,6 +24,7 @@ pub fn declare(shared: SharedState) -> Vec<ServiceSpec> {
         spec_it_assets(shared.clone()),
         spec_workforce(shared.clone()),
         spec_vault(shared.clone()),
+        spec_org(shared.clone()),
     ]
 }
 
@@ -215,6 +216,16 @@ fn spec_vault(shared: SharedState) -> ServiceSpec {
             // a DEK must go through `shared.keystore.clone()`.
             let router = signapps_vault::router(shared).await?;
             run_server_on_addr(router, "0.0.0.0", 3025).await
+        }
+    })
+}
+
+fn spec_org(shared: SharedState) -> ServiceSpec {
+    ServiceSpec::new("signapps-org", 3026, move || {
+        let shared = shared.clone();
+        async move {
+            let router = signapps_org::router(shared).await?;
+            run_server_on_addr(router, "0.0.0.0", 3026).await
         }
     })
 }
