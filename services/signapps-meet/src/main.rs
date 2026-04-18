@@ -160,6 +160,8 @@ fn build_router(state: AppState) -> Router {
         .route("/api/v1/meet/rooms/instant", post(rooms::create_instant_room))
         .route("/api/v1/meet/rooms/:id", get(rooms::get_room).put(rooms::update_room).delete(rooms::delete_room))
         .route("/api/v1/meet/rooms/:id/end", post(rooms::end_room))
+        // Join by code (must be before :id routes to avoid capture)
+        .route("/api/v1/meet/rooms/by-code/:code/join", post(tokens::join_by_code))
         // Token generation
         .route("/api/v1/meet/token", get(tokens::get_token))
         .route("/api/v1/meet/rooms/:id/token", get(tokens::get_room_token))

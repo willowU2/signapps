@@ -7405,6 +7405,7 @@ version = "0.3.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6ed92bf218dbe236609222dca0345767408ee7d5c93876c7fe09fa9b03f7249f"
 dependencies = [
+ "serde",
  "sqlx",
 ]
 
@@ -11447,6 +11448,10 @@ dependencies = [
  "sha2",
  "uuid",
 ]
+
+[[package]]
+name = "signapps-nexus"
+version = "0.1.0"
 
 [[package]]
 name = "signapps-notifications"

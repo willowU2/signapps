@@ -229,22 +229,104 @@ export default function MeetLobbyPage() {
         streamRef.current = null;
       }
 
-      try {
-        const constraints: MediaStreamConstraints = {
-          video: cameraOn
-            ? cameraId
-              ? { deviceId: { exact: cameraId } }
-              : true
-            : false,
-          audio: micId ? { deviceId: { exact: micId } } : true,
-        };
+      // Build preferred constraints
+      const videoConstraint: MediaStreamConstraints["video"] = cameraOn
+        ? cameraId
+          ? { deviceId: { exact: cameraId } }
+          : true
+        : false;
+      const audioConstraint: MediaStreamConstraints["audio"] = micId
+        ? { deviceId: { exact: micId } }
+        : true;
 
-        // getUserMedia requires at least one of video/audio true
-        if (!constraints.video && !constraints.audio) {
-          return;
+      // Try progressively less restrictive constraints
+      const attempts: MediaStreamConstraints[] = [
+        { video: videoConstraint, audio: audioConstraint },
+        ...(videoConstraint && audioConstraint
+          ? [
+              { video: videoConstraint, audio: false },
+              { video: false, audio: audioConstraint },
+            ]
+          : []),
+        { video: true, audio: false },
+        { video: false, audio: true },
+      ].filter((c) => c.video || c.audio);
+
+      let stream: MediaStream | null = null;
+      let lastError: { name?: string; message?: string } | null = null;
+
+      for (const constraints of attempts) {
+        try {
+          stream = await navigator.mediaDevices.getUserMedia(constraints);
+          break;
+        } catch (err) {
+          lastError = err as { name?: string; message?: string };
+          // If permission denied, don't retry other constraints
+          if (
+            lastError.name === "NotAllowedError" ||
+            lastError.name === "PermissionDeniedError"
+          ) {
+            break;
+          }
+        }
+      }
+
+      if (!stream) {
+        // All attempts failed — try to at least enumerate devices
+        try {
+          const devices = await navigator.mediaDevices.enumerateDevices();
+          setCameras(
+            devices
+              .filter((d) => d.kind === "videoinput")
+              .map((d) => ({
+                deviceId: d.deviceId,
+                label: d.label || "Caméra",
+              })),
+          );
+          setMicrophones(
+            devices
+              .filter((d) => d.kind === "audioinput")
+              .map((d) => ({
+                deviceId: d.deviceId,
+                label: d.label || "Micro",
+              })),
+          );
+          setSpeakers(
+            devices
+              .filter((d) => d.kind === "audiooutput")
+              .map((d) => ({
+                deviceId: d.deviceId,
+                label: d.label || "Haut-parleur",
+              })),
+          );
+        } catch {
+          // ignore
         }
 
-        const stream = await navigator.mediaDevices.getUserMedia(constraints);
+        if (
+          lastError?.name === "NotAllowedError" ||
+          lastError?.name === "PermissionDeniedError"
+        ) {
+          setPermissionError(
+            "Autorise l'accès caméra/micro dans ton navigateur pour rejoindre.",
+          );
+        } else if (lastError?.name === "NotFoundError") {
+          setPermissionError(
+            "Aucune caméra ou micro détecté sur cet appareil.",
+          );
+        } else if (lastError?.name === "NotReadableError") {
+          setPermissionError(
+            "La caméra ou le micro est utilisé par une autre application.",
+          );
+        } else if (lastError) {
+          setPermissionError(
+            `Erreur : ${lastError.name} — ${lastError.message ?? "inconnu"}`,
+          );
+        }
+        return;
+      }
+
+      try {
         streamRef.current = stream;
         setRawStream(stream);
         setPermissionError(null);
@@ -326,24 +408,9 @@ export default function MeetLobbyPage() {
           const s = audioTrack.getSettings();
           if (s.deviceId) setSelectedMic(s.deviceId);
         }
-      } catch (err) {
-        const e = err as { name?: string; message?: string };
-        if (
-          e.name === "NotAllowedError" ||
-          e.name === "PermissionDeniedError"
-        ) {
-          setPermissionError(
-            "Autorise l'accès caméra/micro dans ton navigateur pour rejoindre.",
-          );
-        } else if (e.name === "NotFoundError") {
-          setPermissionError(
-            "Aucune caméra ou micro détecté sur cet appareil.",
-          );
-        } else {
-          setPermissionError(
-            `Erreur d'accès aux périphériques : ${e.message ?? e.name ?? "inconnu"}`,
-          );
-        }
+      } catch {
+        // Stream setup succeeded but post-processing (analyser, enumerate) failed
+        // — non-fatal, the stream is usable.
       }
     },
     [cameraOn, micOn, selectedCamera, selectedMic],
@@ -409,7 +476,7 @@ export default function MeetLobbyPage() {
           selectedSpeaker,
           displayName,
           token: res.data.token,
-          livekitUrl: res.data.livekit_url,
+          livekitUrl: (res.data.livekit_url || "").replace(/^http(s?):\/\//, "ws$1://") || "ws://localhost:7880",
           roomName: res.data.room_name,
         }),
       );
@@ -575,14 +642,26 @@ export default function MeetLobbyPage() {
                   <div className="mt-1 text-destructive/80">
                     {permissionError}
                   </div>
-                  <a
-                    href="https://support.google.com/chrome/answer/2693767"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="mt-2 inline-block text-xs underline hover:no-underline"
-                  >
-                    Instructions (Chrome, Firefox, Safari, Edge)
-                  </a>
+                  <div className="mt-2 flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPermissionError(null);
+                        startStream();
+                      }}
+                      className="text-xs font-medium underline hover:no-underline"
+                    >
+                      Réessayer
+                    </button>
+                    <a
+                      href="https://support.google.com/chrome/answer/2693767"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-xs underline hover:no-underline"
+                    >
+                      Instructions Chrome, Firefox, Safari, Edge
+                    </a>
+                  </div>
                 </div>
               </div>
             )}
@@ -597,14 +676,14 @@ export default function MeetLobbyPage() {
                   Caméra
                 </Label>
                 <Select
-                  value={selectedCamera}
+                  value={selectedCamera || undefined}
                   onValueChange={setSelectedCamera}
                 >
                   <SelectTrigger className="bg-background">
                     <SelectValue placeholder="Sélectionner une caméra" />
                   </SelectTrigger>
                   <SelectContent>
-                    {cameras.map((d) => (
+                    {cameras.filter((d) => d.deviceId).map((d) => (
                       <SelectItem key={d.deviceId} value={d.deviceId}>
                         {d.label}
                       </SelectItem>
@@ -622,12 +701,12 @@ export default function MeetLobbyPage() {
                 <Label className="text-xs font-medium text-muted-foreground">
                   Micro
                 </Label>
-                <Select value={selectedMic} onValueChange={setSelectedMic}>
+                <Select value={selectedMic || undefined} onValueChange={setSelectedMic}>
                   <SelectTrigger className="bg-background">
                     <SelectValue placeholder="Sélectionner un micro" />
                   </SelectTrigger>
                   <SelectContent>
-                    {microphones.map((d) => (
+                    {microphones.filter((d) => d.deviceId).map((d) => (
                       <SelectItem key={d.deviceId} value={d.deviceId}>
                         {d.label}
                       </SelectItem>
@@ -646,14 +725,14 @@ export default function MeetLobbyPage() {
                   Haut-parleur
                 </Label>
                 <Select
-                  value={selectedSpeaker}
+                  value={selectedSpeaker || undefined}
                   onValueChange={setSelectedSpeaker}
                 >
                   <SelectTrigger className="bg-background">
                     <SelectValue placeholder="Sélectionner un haut-parleur" />
                   </SelectTrigger>
                   <SelectContent>
-                    {speakers.map((d) => (
+                    {speakers.filter((d) => d.deviceId).map((d) => (
                       <SelectItem key={d.deviceId} value={d.deviceId}>
                         {d.label}
                       </SelectItem>

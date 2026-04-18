@@ -231,9 +231,9 @@ export default function MeetPage() {
     setStartingInstant(true);
     try {
       const res = await meetApi.createInstantRoom();
-      const code = res.data.room_code;
+      const code = res.data.code;
       toast.success("Salle créée");
-      router.push(`/meet/${code}`);
+      router.push(`/meet/${code}/lobby`);
     } catch {
       toast.error(
         "Impossible de créer un appel instantané. Le service Meet est peut-être indisponible.",

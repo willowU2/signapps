@@ -15,6 +15,15 @@ const nextConfig = {
   async headers() {
     return [
       {
+        // Service worker must never be cached — always fetch fresh to pick up
+        // kill-switch / new version.
+        source: "/sw.js",
+        headers: [
+          { key: "Cache-Control", value: "no-store, must-revalidate" },
+          { key: "Service-Worker-Allowed", value: "/" },
+        ],
+      },
+      {
         // Immutable cache for hashed static assets — safe to cache forever
         source: "/_next/static/(.*)",
         headers: [

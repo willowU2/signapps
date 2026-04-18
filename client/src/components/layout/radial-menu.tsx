@@ -49,7 +49,7 @@ interface RadialMenuItem {
 }
 
 const STORAGE_KEY = "radial-menu-config";
-const VISIBLE_SLOTS = 7; // Number of visible items in the arc at once
+const VISIBLE_SLOTS = 5; // Number of visible items in the arc at once
 
 function loadConfig(): string[] | null {
   if (typeof window === "undefined") return null;
@@ -82,9 +82,79 @@ export function RadialMenu() {
   const { setActiveRightWidget, setRightSidebarOpen } = useUIStore();
   const { setOpen: openCommandBar } = useCommandBarStore();
 
+  // ── Drag state — allows repositioning the FAB like the AI chat button ──
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const dragRef = useRef({ x: 0, y: 0, startX: 0, startY: 0, moved: false });
+
   useEffect(() => {
     setEnabledItems(loadConfig());
+    try {
+      const saved = localStorage.getItem("radial-fab-pos");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        const maxX = 0;
+        const minX = -window.innerWidth + 80;
+        const minY = -window.innerHeight + 140;
+        const maxY = 0;
+        const clampedX = Math.max(minX, Math.min(maxX, parsed.x || 0));
+        const clampedY = Math.max(minY, Math.min(maxY, parsed.y || 0));
+        setPosition({ x: clampedX, y: clampedY });
+      }
+    } catch {}
   }, []);
+
+  // ── Drag handlers ──
+  const handleDragPointerDown = useCallback(
+    (e: React.PointerEvent) => {
+      if (isOpen || showCustomize) return;
+      (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+      dragRef.current = {
+        startX: e.clientX,
+        startY: e.clientY,
+        x: position.x,
+        y: position.y,
+        moved: false,
+      };
+    },
+    [isOpen, showCustomize, position.x, position.y],
+  );
+
+  const handleDragPointerMove = useCallback(
+    (e: React.PointerEvent) => {
+      if (!e.currentTarget.hasPointerCapture(e.pointerId)) return;
+      const dx = e.clientX - dragRef.current.startX;
+      const dy = e.clientY - dragRef.current.startY;
+      if (!dragRef.current.moved && (Math.abs(dx) > 3 || Math.abs(dy) > 3)) {
+        dragRef.current.moved = true;
+        setIsDragging(true);
+        // Cancel any pending long-press so drag doesn't trigger "customize"
+        if (longPressTimer) {
+          clearTimeout(longPressTimer);
+          setLongPressTimer(null);
+        }
+      }
+      if (dragRef.current.moved) {
+        setPosition({ x: dragRef.current.x + dx, y: dragRef.current.y + dy });
+      }
+    },
+    [longPressTimer],
+  );
+
+  const handleDragPointerUp = useCallback(
+    (e: React.PointerEvent) => {
+      (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+      if (dragRef.current.moved) {
+        setTimeout(() => setIsDragging(false), 50);
+        try {
+          localStorage.setItem("radial-fab-pos", JSON.stringify(position));
+        } catch {}
+      } else {
+        setIsDragging(false);
+      }
+    },
+    [position],
+  );
 
   const toggleAI = useCallback(() => {
     setActiveRightWidget("chat");
@@ -263,28 +333,8 @@ export function RadialMenu() {
     clampedOffset + VISIBLE_SLOTS,
   );
 
-  // Mouse position determines scroll direction
-  const handleMouseMove = useCallback(
-    (e: React.MouseEvent) => {
-      if (!isOpen || !containerRef.current) return;
-      const rect = containerRef.current.getBoundingClientRect();
-      // FAB center
-      const fabCenterX = rect.right - 28; // 14px half of w-14
-      const fabCenterY = rect.bottom - 28;
-      // Mouse angle relative to FAB center
-      const dx = e.clientX - fabCenterX;
-      const dy = e.clientY - fabCenterY;
-      const angle = Math.atan2(dy, dx) * (180 / Math.PI);
-      // If mouse is near the "left" edge of the arc (< -160°), scroll up (show earlier items)
-      // If mouse is near the "top" edge of the arc (> -100°), scroll down (show later items)
-      if (angle < -160 && clampedOffset > 0) {
-        setScrollOffset((prev) => Math.max(0, prev - 1));
-      } else if (angle > -100 && angle < -80 && clampedOffset < maxOffset) {
-        setScrollOffset((prev) => Math.min(maxOffset, prev + 1));
-      }
-    },
-    [isOpen, clampedOffset, maxOffset],
-  );
+  // (Previous mouse-position auto-scroll was too jittery — replaced by
+  // explicit wheel scroll only.)
 
   // Mouse wheel scroll
   const handleWheel = useCallback(
@@ -301,18 +351,13 @@ export function RadialMenu() {
 
   // ─── Arc geometry ────────────────────────────────────────────────────────
 
-  const radius = 130;
-  const startAngle = -180; // left
-  const endAngle = -90; // top
-  const angleStep =
-    VISIBLE_SLOTS > 1 ? (endAngle - startAngle) / (VISIBLE_SLOTS - 1) : 0;
-
-  // Size scaling: center item is biggest, edges are smaller
-  const getScale = (index: number) => {
-    const center = (VISIBLE_SLOTS - 1) / 2;
-    const distance = Math.abs(index - center) / center; // 0 at center, 1 at edges
-    return 1.3 - distance * 0.5; // 1.3x at center, 0.8x at edges
-  };
+  // Full circle layout — evenly distribute VISIBLE_SLOTS items around 360°.
+  // Starts at 12 o'clock (-90°) and goes clockwise.
+  const radius = 220;
+  const angleStep = 360 / VISIBLE_SLOTS;
+  const startAngle = -90; // top
+  // All items same size when laid out evenly on a circle.
+  const getScale = () => 1;
 
   // ─── Close handlers ──────────────────────────────────────────────────────
 
@@ -391,54 +436,66 @@ export function RadialMenu() {
     <>
       <div
         ref={containerRef}
-        className="fixed bottom-[72px] right-[8px] z-[100] hidden md:block"
-        onMouseMove={handleMouseMove}
+        className={cn(
+          "hidden md:block z-[100]",
+          isOpen ? "fixed inset-0" : "fixed bottom-[72px] right-[8px]",
+        )}
+        style={
+          !isOpen
+            ? {
+                transform: `translate(${position.x}px, ${position.y}px)`,
+                transition: isDragging
+                  ? "none"
+                  : "transform 300ms cubic-bezier(0.16, 1, 0.3, 1)",
+              }
+            : undefined
+        }
         onWheel={handleWheel}
       >
-        {/* Backdrop */}
+        {/* Full-screen backdrop with gradient blur when open */}
         {isOpen && (
           <div
-            className="fixed inset-0 bg-black/10 backdrop-blur-[1px] z-[99]"
+            className="fixed inset-0 bg-background/60 backdrop-blur-md z-[99] animate-in fade-in duration-300"
             onClick={() => setIsOpen(false)}
           />
         )}
 
-        {/* Scroll indicators */}
-        {isOpen && clampedOffset > 0 && (
-          <div
-            className="absolute z-[101] text-muted-foreground text-[10px]"
-            style={{
-              transform: `translate(${Math.cos((-180 * Math.PI) / 180) * (radius + 30)}px, ${Math.sin((-180 * Math.PI) / 180) * (radius + 30)}px)`,
-            }}
-          >
-            ← plus
-          </div>
-        )}
-        {isOpen && clampedOffset < maxOffset && (
-          <div
-            className="absolute z-[101] text-muted-foreground text-[10px]"
-            style={{
-              transform: `translate(${Math.cos((-90 * Math.PI) / 180) * (radius + 30)}px, ${Math.sin((-90 * Math.PI) / 180) * (radius + 30)}px)`,
-            }}
-          >
-            ↑ plus
-          </div>
-        )}
+        {/* Radial items + FAB cluster */}
+        <div
+          className={cn(
+            "z-[101] flex items-center justify-center",
+            isOpen
+              ? "fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
+              : "relative",
+          )}
+        >
+          {/* Decorative ring when open */}
+          {isOpen && (
+            <div
+              className="absolute rounded-full border border-primary/20 animate-in fade-in zoom-in-50 duration-500 pointer-events-none"
+              style={{
+                width: radius * 2 + 80,
+                height: radius * 2 + 80,
+              }}
+            />
+          )}
+          {isOpen && (
+            <div
+              className="absolute rounded-full border border-primary/10 pointer-events-none"
+              style={{
+                width: radius * 2,
+                height: radius * 2,
+              }}
+            />
+          )}
 
-        {/* Radial items */}
-        <div className="relative z-[101] flex items-center justify-center">
           {visibleItems.map((item, i) => {
             const angle = (startAngle + i * angleStep) * (Math.PI / 180);
             const x = Math.cos(angle) * radius;
             const y = Math.sin(angle) * radius;
-            const scale = getScale(i);
-            const size = Math.round(44 * scale);
-            const iconSize = Math.round(18 * scale);
-
-            const center = Math.floor((VISIBLE_SLOTS - 1) / 2);
-            const dist = Math.abs(i - center);
-            const showLabel = dist <= 1;
-            const labelOpacity = dist === 0 ? 1 : 0.6;
+            const scale = getScale();
+            const size = Math.round(64 * scale);
+            const iconSize = Math.round(26 * scale);
 
             return (
               <div
@@ -448,10 +505,9 @@ export function RadialMenu() {
                   transform: isOpen
                     ? `translate(${x}px, ${y}px) scale(${scale})`
                     : "translate(0px, 0px) scale(0.3)",
-                  transition: `transform 400ms cubic-bezier(0.16, 1, 0.3, 1) ${isOpen ? i * 60 : (VISIBLE_SLOTS - i) * 25}ms, opacity 300ms ease ${isOpen ? i * 60 : 0}ms`,
+                  transition: `transform 500ms cubic-bezier(0.34, 1.56, 0.64, 1) ${isOpen ? i * 50 : (VISIBLE_SLOTS - i) * 25}ms, opacity 300ms ease ${isOpen ? i * 50 : 0}ms`,
                   opacity: isOpen ? 1 : 0,
                   pointerEvents: isOpen ? "auto" : "none",
-                  zIndex: 50 + Math.round((1 - Math.abs(i - center)) * 10),
                 }}
               >
                 <button
@@ -460,7 +516,7 @@ export function RadialMenu() {
                     setIsOpen(false);
                   }}
                   className={cn(
-                    "relative rounded-full flex items-center justify-center text-white shadow-lg hover:shadow-xl hover:scale-110 active:scale-90 transition-all duration-200",
+                    "group relative rounded-full flex items-center justify-center text-white shadow-lg hover:shadow-2xl hover:scale-110 active:scale-90 transition-all duration-200",
                     item.color,
                   )}
                   style={{ width: size, height: size }}
@@ -469,42 +525,61 @@ export function RadialMenu() {
                   {React.cloneElement(item.icon, {
                     style: { width: iconSize, height: iconSize },
                   } as React.SVGProps<SVGSVGElement>)}
+                  {/* Tooltip on hover */}
+                  <span className="absolute top-full mt-2 px-3 py-1 rounded-lg bg-popover text-popover-foreground text-xs font-medium shadow-lg border border-border/50 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap">
+                    {item.label}
+                  </span>
                 </button>
               </div>
             );
           })}
 
-          {/* FAB trigger */}
+          {/* FAB trigger (center when open, anchor when closed) */}
           <button
-            onClick={() => !showCustomize && setIsOpen(!isOpen)}
-            onPointerDown={handleFabPointerDown}
-            onPointerUp={handleFabPointerUp}
-            onPointerLeave={handleFabPointerUp}
+            onClick={() => {
+              if (isDragging || dragRef.current.moved) return;
+              if (!showCustomize) setIsOpen(!isOpen);
+            }}
+            onPointerDown={(e) => {
+              handleDragPointerDown(e);
+              handleFabPointerDown();
+            }}
+            onPointerMove={handleDragPointerMove}
+            onPointerUp={(e) => {
+              handleDragPointerUp(e);
+              handleFabPointerUp();
+            }}
+            onPointerCancel={(e) => {
+              handleDragPointerUp(e);
+              handleFabPointerUp();
+            }}
             onContextMenu={(e) => {
               e.preventDefault();
               setShowCustomize(true);
               setIsOpen(false);
             }}
             className={cn(
-              "relative z-10 w-14 h-14 rounded-full flex items-center justify-center text-white shadow-xl transition-all duration-300",
+              "relative z-10 rounded-full flex items-center justify-center text-white shadow-xl transition-all duration-300 touch-none",
               isOpen
-                ? "bg-destructive hover:bg-destructive/90"
-                : "bg-primary hover:bg-primary/90",
+                ? "w-20 h-20 bg-destructive hover:bg-destructive/90 shadow-2xl cursor-pointer"
+                : isDragging
+                  ? "w-14 h-14 bg-primary cursor-grabbing scale-105 shadow-2xl"
+                  : "w-14 h-14 bg-primary hover:bg-primary/90 cursor-grab",
             )}
             title={
               isOpen
                 ? "Fermer"
-                : "Actions rapides (clic long pour personnaliser)"
+                : "Clic : ouvrir · Glisser : déplacer · Clic long : personnaliser"
             }
           >
             <div
               className={cn(
-                "transition-transform duration-300",
-                isOpen ? "rotate-45" : "rotate-0",
+                "transition-transform duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)]",
+                isOpen ? "rotate-[225deg]" : "rotate-0",
               )}
             >
               {isOpen ? (
-                <X className="h-6 w-6" />
+                <X className="h-8 w-8" />
               ) : (
                 <Plus className="h-6 w-6" />
               )}
@@ -512,7 +587,7 @@ export function RadialMenu() {
           </button>
         </div>
 
-        {/* Label bar below FAB: prev << CURRENT >> next */}
+        {/* Center label — shown above the FAB when open */}
         {isOpen &&
           (() => {
             const centerIdx = Math.floor((VISIBLE_SLOTS - 1) / 2);
@@ -526,31 +601,28 @@ export function RadialMenu() {
                 : null;
             return (
               <div
-                className="absolute z-[110] select-none pointer-events-none rounded-2xl shadow-2xl overflow-hidden"
+                className="fixed z-[110] select-none pointer-events-none animate-in fade-in slide-in-from-bottom-2 duration-300"
                 style={{
-                  bottom: radius + 40,
-                  right: -10,
-                  transition: "all 300ms cubic-bezier(0.16, 1, 0.3, 1)",
+                  top: `calc(50% - ${radius + 90}px)`,
+                  left: "50%",
+                  transform: "translateX(-50%)",
                 }}
               >
-                {/* Background layer with blur — separate from text */}
-                <div className="absolute inset-0 bg-background/75 backdrop-blur-md border border-border/30 rounded-2xl" />
-                {/* Text layer — crisp, no blur */}
-                <div className="relative flex items-center gap-2 px-5 py-2.5">
+                <div className="rounded-2xl bg-card/90 backdrop-blur-md border border-border/50 shadow-2xl px-6 py-3 flex items-center gap-3">
                   {prev && (
-                    <span className="text-[12px] text-muted-foreground/50 truncate max-w-[120px]">
+                    <span className="text-xs text-muted-foreground/60 truncate max-w-[120px]">
                       {prev.label}
                     </span>
                   )}
-                  <span className="text-[14px] text-muted-foreground/30 font-light">
+                  <span className="text-sm text-muted-foreground/30 font-light">
                     {"«"}
                   </span>
                   {curr && (
-                    <span className="text-[15px] font-bold text-foreground uppercase tracking-wider">
+                    <span className="text-base font-bold text-foreground uppercase tracking-wider">
                       {curr.label}
                     </span>
                   )}
-                  <span className="text-[14px] text-muted-foreground/30 font-light">
+                  <span className="text-sm text-muted-foreground/30 font-light">
                     {"»"}
                   </span>
                   {next && (

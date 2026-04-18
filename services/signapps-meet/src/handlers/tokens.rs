@@ -266,6 +266,84 @@ pub async fn get_room_token(
     }))
 }
 
+/// Join a room by its short code (used by the frontend after instant-create
+/// or when navigating to `/meet/:code`).
+#[utoipa::path(
+    post,
+    path = "/api/v1/meet/rooms/{code}/join",
+    params(("code" = String, Path, description = "Room short code")),
+    request_body(content = JoinRoomRequest, content_type = "application/json"),
+    responses(
+        (status = 200, description = "Joined room", body = TokenResponse),
+        (status = 404, description = "Room not found"),
+        (status = 401, description = "Unauthorized"),
+    ),
+    security(("bearer" = [])),
+    tag = "Meet"
+)]
+#[tracing::instrument(skip(state), fields(user_id = %claims.sub))]
+pub async fn join_by_code(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(code): Path<String>,
+    body: Option<Json<JoinRoomRequest>>,
+) -> Result<Json<TokenResponse>, (StatusCode, String)> {
+    let body = body.map(|Json(b)| b);
+
+    let room = sqlx::query_as::<_, Room>(
+        "SELECT * FROM meet.rooms WHERE room_code = $1",
+    )
+    .bind(&code)
+    .fetch_optional(&state.pool)
+    .await
+    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
+    .ok_or((StatusCode::NOT_FOUND, "Room not found".to_string()))?;
+
+    if room.status == "ended" {
+        return Err((StatusCode::GONE, "Room has ended".to_string()));
+    }
+
+    let display_name = body
+        .as_ref()
+        .and_then(|r| r.display_name.clone())
+        .unwrap_or_else(|| claims.username.clone());
+
+    let is_host = room.created_by == claims.sub;
+
+    let token = state
+        .livekit
+        .generate_token(grants_for(
+            &room.room_code,
+            &claims.sub.to_string(),
+            &display_name,
+            is_host,
+        ))
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+    // Record participant join
+    sqlx::query(
+        r#"
+        INSERT INTO meet.room_participants (room_id, user_id, display_name, role)
+        VALUES ($1, $2, $3, $4)
+        ON CONFLICT (room_id, user_id) WHERE left_at IS NULL
+        DO UPDATE SET joined_at = NOW()
+        "#,
+    )
+    .bind(room.id)
+    .bind(claims.sub)
+    .bind(&display_name)
+    .bind(if is_host { "host" } else { "participant" })
+    .execute(&state.pool)
+    .await
+    .ok();
+
+    Ok(Json(TokenResponse {
+        token,
+        livekit_url: state.livekit.base_url.clone(),
+        room_name: room.room_code,
+    }))
+}
+
 #[cfg(test)]
 mod tests {
     #[allow(unused_imports)]
@@ -273,8 +351,6 @@ mod tests {
 
     #[test]
     fn module_compiles() {
-        // Verify this handler module compiles correctly.
-        // Integration tests require a running database and service.
         assert!(true, "{} handler module loaded", module_path!());
     }
 }

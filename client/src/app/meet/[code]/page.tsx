@@ -71,7 +71,8 @@ export default function MeetCodePage() {
         const res = await meetApi.joinByCode(code);
         if (!active) return;
         setToken(res.data.token);
-        setServerUrl(res.data.livekit_url || LIVEKIT_URL);
+        const rawUrl = res.data.livekit_url || LIVEKIT_URL;
+        setServerUrl(rawUrl.replace(/^http(s?):\/\//, "ws$1://"));
         setRoomName(res.data.room_name || code);
       } catch {
         if (!active) return;

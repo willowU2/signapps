@@ -112,10 +112,9 @@ export interface MuteRequest {
 }
 
 export interface InstantRoomResponse {
-    id: string;
-    room_code: string;
-    name: string;
-    livekit_url?: string;
+    code: string;
+    token: string;
+    url: string;
 }
 
 export interface LobbyInfo {
@@ -220,7 +219,7 @@ export const meetApi = {
         ),
 
     joinByCode: (code: string, displayName?: string) =>
-        meetClient.post<JoinRoomResponse>(`/meet/rooms/${code}/join`, {
+        meetClient.post<JoinRoomResponse>(`/meet/rooms/by-code/${code}/join`, {
             display_name: displayName,
         }),
 
