@@ -6,6 +6,11 @@ rust-version.workspace = true
 authors.workspace = true
 license.workspace = true
 description = "Web Tunnel VPN service - access home services without opening ports"
+default-run = "signapps-securelink"
+
+[lib]
+name = "signapps_securelink"
+path = "src/lib.rs"
 
 [[bin]]
 name = "signapps-securelink"
@@ -14,14 +19,17 @@ path = "src/main.rs"
 [features]
 default = []
 # Enable mesh VPN features (requires database)
-mesh-vpn = ["signapps-db", "sqlx"]
+mesh-vpn = ["dep:signapps-db", "dep:sqlx"]
 # Enable DHCP/NTP server (requires database + signapps-dns-server)
-dhcp-server = ["signapps-db", "signapps-dns-server", "sqlx"]
+dhcp-server = ["dep:signapps-db", "dep:signapps-dns-server", "dep:sqlx"]
 
 [dependencies]
 mimalloc = { workspace = true }
 # Common (error types, result)
 signapps-common = { path = "../../crates/signapps-common" }
+# Always-on dependencies for the lib + legacy bin
+signapps-service = { path = "../../crates/signapps-service" }
+anyhow = { workspace = true }
 
 # OpenAPI documentation
 utoipa = { workspace = true }
