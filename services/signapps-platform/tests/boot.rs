@@ -25,7 +25,7 @@ async fn platform_boots_in_under_three_seconds() {
     std::env::set_var("PXE_ENABLE_PROXY_DHCP", "false");
     std::env::set_var("PXE_ENABLE_DC", "false");
 
-    // Ports that every batch up to and including W2.T13 (batch #3) must
+    // Ports that every batch up to and including W2.T14 (batch #4) must
     // bind on a clean process. Note: collaboration historically binds
     // :3034 (the spec's mention of :3013 referred to a service that
     // does not yet exist in the codebase).
@@ -34,6 +34,9 @@ async fn platform_boots_in_under_three_seconds() {
     // gated off) and :3019 (social).  signapps-nexus and signapps-agent
     // were explicitly skipped (nexus is a stub not in the workspace,
     // agent is a client-side endpoint binary).
+    //
+    // Batch #4 adds :3022 (it-assets), :3024 (workforce), :3025 (vault),
+    // :3026 (org), :3029 (tenant-config).
     let expected_ports: &[u16] = &[
         3001, // identity
         3003, // proxy (admin only — engine disabled for the test)
@@ -47,6 +50,11 @@ async fn platform_boots_in_under_three_seconds() {
         3019, // social
         3020, // chat
         3021, // contacts
+        3022, // it-assets
+        3024, // workforce
+        3025, // vault
+        3026, // org
+        3029, // tenant-config
         3034, // collaboration
         8095, // notifications
     ];
