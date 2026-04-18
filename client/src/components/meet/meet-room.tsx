@@ -14,10 +14,9 @@ import {
 import { toast as sonnerToast } from "sonner";
 import { meetApi } from "@/lib/api/meet";
 import { useAuthStore } from "@/lib/store";
+import { LiveKitRoom, RoomAudioRenderer } from "@/components/meet/livekit-lazy";
 import {
-  LiveKitRoom,
   ParticipantTile,
-  RoomAudioRenderer,
   useTracks,
   useLocalParticipant,
   useConnectionState,
@@ -288,7 +287,10 @@ function useTranscriptionPipeline(enabled: boolean, roomCode: string) {
 
   useEffect(() => {
     if (!enabled) return;
-    if (typeof window === "undefined" || !navigator.mediaDevices?.getUserMedia) {
+    if (
+      typeof window === "undefined" ||
+      !navigator.mediaDevices?.getUserMedia
+    ) {
       setError("microphone-unsupported");
       return;
     }
@@ -340,11 +342,9 @@ function useTranscriptionPipeline(enabled: boolean, roomCode: string) {
         };
 
         // Persist (server-side authoritative copy).
-        void meetApi.transcription
-          .ingest(roomCode, chunk)
-          .catch(() => {
-            // Keep the meeting going even if persistence hiccups.
-          });
+        void meetApi.transcription.ingest(roomCode, chunk).catch(() => {
+          // Keep the meeting going even if persistence hiccups.
+        });
 
         // Broadcast to peers via LiveKit data channel.
         if (room?.localParticipant) {
@@ -436,7 +436,9 @@ function readVirtualBgPrefs(): VirtualBgPrefs {
     if (!raw) return { mode: "none", imageId: VIRTUAL_BG_PRESETS[0].id };
     const parsed = JSON.parse(raw) as Partial<VirtualBgPrefs>;
     const mode: BackgroundMode =
-      parsed.mode === "blur" || parsed.mode === "image" || parsed.mode === "none"
+      parsed.mode === "blur" ||
+      parsed.mode === "image" ||
+      parsed.mode === "none"
         ? parsed.mode
         : "none";
     const imageId = parsed.imageId || VIRTUAL_BG_PRESETS[0].id;
@@ -723,7 +725,8 @@ function MeetUiContent({
   const isMobile = useIsMobile();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const isHost = useIsRoomHost(roomId);
-  const { isRecording, refresh: refreshRecording } = useRecordingPolling(roomId);
+  const { isRecording, refresh: refreshRecording } =
+    useRecordingPolling(roomId);
   const { entries: pendingKnocks, refresh: refreshKnocks } = usePendingKnocks(
     roomId,
     isHost,
@@ -799,8 +802,7 @@ function MeetUiContent({
       setTranscriptionEnabled(false);
     }
   }, [transcriptionError, transcriptionEnabled]);
-  const toggleTranscription = () =>
-    setTranscriptionEnabled((v) => !v);
+  const toggleTranscription = () => setTranscriptionEnabled((v) => !v);
 
   const handleAdmit = async (identity: string) => {
     try {
@@ -919,224 +921,207 @@ function MeetUiContent({
     <RaisedHandsContext.Provider
       value={{ raisedSet, isHost, lowerOther: lowerOtherHand }}
     >
-    <div className="flex h-full w-full flex-col bg-background overflow-hidden">
-      {/* ── Top bar ───────────────────────────────────────────────── */}
-      <header className="h-12 px-3 md:px-4 flex items-center justify-between bg-card border-b border-border shrink-0">
-        {/* Left */}
-        <div className="flex items-center gap-1 min-w-0">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleLeave}
-            className="h-8 text-muted-foreground hover:text-foreground gap-1.5"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            <span className="hidden sm:inline">Quitter</span>
-          </Button>
-        </div>
-        {/* Center */}
-        <div className="flex items-center gap-2 min-w-0">
-          <h1 className="hidden sm:block text-sm font-semibold text-foreground truncate max-w-[40vw]">
-            {roomName}
-          </h1>
-          <Badge
-            variant="outline"
-            className="border-border text-foreground gap-1"
-          >
-            <Circle className="h-2 w-2 fill-primary text-primary" />
-            {participantCount}
-          </Badge>
-          {isRecording && (
-            <Badge
-              className="bg-destructive text-destructive-foreground gap-1 animate-pulse"
-              aria-label="Enregistrement en cours"
+      <div className="flex h-full w-full flex-col bg-background overflow-hidden">
+        {/* ── Top bar ───────────────────────────────────────────────── */}
+        <header className="h-12 px-3 md:px-4 flex items-center justify-between bg-card border-b border-border shrink-0">
+          {/* Left */}
+          <div className="flex items-center gap-1 min-w-0">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleLeave}
+              className="h-8 text-muted-foreground hover:text-foreground gap-1.5"
             >
-              <Circle className="h-2 w-2 fill-current" />
-              <span className="hidden sm:inline">Enregistrement</span>
+              <ArrowLeft className="h-4 w-4" />
+              <span className="hidden sm:inline">Quitter</span>
+            </Button>
+          </div>
+          {/* Center */}
+          <div className="flex items-center gap-2 min-w-0">
+            <h1 className="hidden sm:block text-sm font-semibold text-foreground truncate max-w-[40vw]">
+              {roomName}
+            </h1>
+            <Badge
+              variant="outline"
+              className="border-border text-foreground gap-1"
+            >
+              <Circle className="h-2 w-2 fill-primary text-primary" />
+              {participantCount}
             </Badge>
-          )}
-        </div>
-        {/* Right */}
-        <div className="flex items-center gap-1">
-          {isHost && pendingKnocks.length > 0 && (
-            <Popover>
-              <PopoverTrigger asChild>
+            {isRecording && (
+              <Badge
+                className="bg-destructive text-destructive-foreground gap-1 animate-pulse"
+                aria-label="Enregistrement en cours"
+              >
+                <Circle className="h-2 w-2 fill-current" />
+                <span className="hidden sm:inline">Enregistrement</span>
+              </Badge>
+            )}
+          </div>
+          {/* Right */}
+          <div className="flex items-center gap-1">
+            {isHost && pendingKnocks.length > 0 && (
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="relative h-8 text-muted-foreground hover:text-foreground gap-1.5"
+                    aria-label={`${pendingKnocks.length} demandes d'entrée`}
+                  >
+                    <DoorOpen className="h-4 w-4" />
+                    <Badge
+                      className="h-5 min-w-[1.25rem] px-1.5 bg-primary text-primary-foreground"
+                      aria-hidden
+                    >
+                      {pendingKnocks.length}
+                    </Badge>
+                    <span className="hidden md:inline">Demandes</span>
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent
+                  align="end"
+                  className="w-80 bg-card border-border p-0"
+                >
+                  <div className="px-4 py-3 border-b border-border">
+                    <div className="text-sm font-semibold text-foreground">
+                      Demandes d&apos;entrée
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {pendingKnocks.length}{" "}
+                      {pendingKnocks.length > 1 ? "personnes" : "personne"} en
+                      attente
+                    </div>
+                  </div>
+                  <ul className="flex flex-col divide-y divide-border max-h-80 overflow-y-auto">
+                    {pendingKnocks.map((entry) => (
+                      <li
+                        key={entry.request_id}
+                        className="flex items-center gap-2 px-3 py-2"
+                      >
+                        <Avatar className="h-8 w-8 shrink-0">
+                          <AvatarFallback className="bg-muted text-foreground text-xs font-semibold">
+                            {initials(entry.display_name)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="min-w-0 flex-1">
+                          <div className="truncate text-sm font-medium text-foreground">
+                            {entry.display_name}
+                          </div>
+                          <div className="truncate text-[11px] text-muted-foreground">
+                            {entry.identity}
+                          </div>
+                        </div>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          onClick={() => handleAdmit(entry.identity)}
+                          className="h-8 w-8 text-primary hover:bg-primary/10"
+                          aria-label="Admettre"
+                        >
+                          <Check className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          onClick={() => handleDeny(entry.identity)}
+                          className="h-8 w-8 text-destructive hover:bg-destructive/10"
+                          aria-label="Refuser"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </li>
+                    ))}
+                  </ul>
+                </PopoverContent>
+              </Popover>
+            )}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={openSidebar}
+              className="h-8 w-8 text-muted-foreground hover:text-foreground"
+              aria-label="Participants et chat"
+            >
+              <Users className="h-4 w-4" />
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
-                  size="sm"
-                  className="relative h-8 text-muted-foreground hover:text-foreground gap-1.5"
-                  aria-label={`${pendingKnocks.length} demandes d'entrée`}
+                  size="icon"
+                  className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                  aria-label="Plus d'options"
                 >
-                  <DoorOpen className="h-4 w-4" />
-                  <Badge
-                    className="h-5 min-w-[1.25rem] px-1.5 bg-primary text-primary-foreground"
-                    aria-hidden
-                  >
-                    {pendingKnocks.length}
-                  </Badge>
-                  <span className="hidden md:inline">Demandes</span>
+                  <MoreVertical className="h-4 w-4" />
                 </Button>
-              </PopoverTrigger>
-              <PopoverContent
-                align="end"
-                className="w-80 bg-card border-border p-0"
-              >
-                <div className="px-4 py-3 border-b border-border">
-                  <div className="text-sm font-semibold text-foreground">
-                    Demandes d&apos;entrée
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    {pendingKnocks.length}{" "}
-                    {pendingKnocks.length > 1 ? "personnes" : "personne"} en
-                    attente
-                  </div>
-                </div>
-                <ul className="flex flex-col divide-y divide-border max-h-80 overflow-y-auto">
-                  {pendingKnocks.map((entry) => (
-                    <li
-                      key={entry.request_id}
-                      className="flex items-center gap-2 px-3 py-2"
-                    >
-                      <Avatar className="h-8 w-8 shrink-0">
-                        <AvatarFallback className="bg-muted text-foreground text-xs font-semibold">
-                          {initials(entry.display_name)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="min-w-0 flex-1">
-                        <div className="truncate text-sm font-medium text-foreground">
-                          {entry.display_name}
-                        </div>
-                        <div className="truncate text-[11px] text-muted-foreground">
-                          {entry.identity}
-                        </div>
-                      </div>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        onClick={() => handleAdmit(entry.identity)}
-                        className="h-8 w-8 text-primary hover:bg-primary/10"
-                        aria-label="Admettre"
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuItem onClick={copyLink} className="gap-2">
+                  <Link2 className="h-4 w-4" />
+                  Copier le lien
+                </DropdownMenuItem>
+                {isHost && (
+                  <>
+                    <DropdownMenuSeparator />
+                    {isRecording ? (
+                      <DropdownMenuItem
+                        onClick={stopRecording}
+                        disabled={recordingBusy}
+                        className="gap-2 text-destructive focus:text-destructive"
                       >
-                        <Check className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        onClick={() => handleDeny(entry.identity)}
-                        className="h-8 w-8 text-destructive hover:bg-destructive/10"
-                        aria-label="Refuser"
+                        <Radio className="h-4 w-4" />
+                        Arrêter l&apos;enregistrement
+                      </DropdownMenuItem>
+                    ) : (
+                      <DropdownMenuItem
+                        onClick={startRecording}
+                        disabled={recordingBusy}
+                        className="gap-2"
                       >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </li>
-                  ))}
-                </ul>
-              </PopoverContent>
-            </Popover>
-          )}
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={openSidebar}
-            className="h-8 w-8 text-muted-foreground hover:text-foreground"
-            aria-label="Participants et chat"
-          >
-            <Users className="h-4 w-4" />
-          </Button>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                aria-label="Plus d'options"
-              >
-                <MoreVertical className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuItem onClick={copyLink} className="gap-2">
-                <Link2 className="h-4 w-4" />
-                Copier le lien
-              </DropdownMenuItem>
-              {isHost && (
-                <>
-                  <DropdownMenuSeparator />
-                  {isRecording ? (
-                    <DropdownMenuItem
-                      onClick={stopRecording}
-                      disabled={recordingBusy}
-                      className="gap-2 text-destructive focus:text-destructive"
-                    >
-                      <Radio className="h-4 w-4" />
-                      Arrêter l&apos;enregistrement
-                    </DropdownMenuItem>
-                  ) : (
-                    <DropdownMenuItem
-                      onClick={startRecording}
-                      disabled={recordingBusy}
-                      className="gap-2"
-                    >
-                      <Radio className="h-4 w-4" />
-                      Démarrer l&apos;enregistrement
-                    </DropdownMenuItem>
-                  )}
-                </>
-              )}
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={toggleTranscription} className="gap-2">
-                <Captions className="h-4 w-4" />
-                {transcriptionEnabled
-                  ? "Arrêter la transcription"
-                  : "Activer la transcription"}
-              </DropdownMenuItem>
-              <DropdownMenuItem className="gap-2">
-                <Settings className="h-4 w-4" />
-                Paramètres
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem className="gap-2">
-                <Info className="h-4 w-4" />
-                Info salle
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </header>
-
-      {/* ── Body: grid + sidebar ───────────────────────────────── */}
-      <div className="flex-1 flex min-h-0">
-        <main className="relative flex-1 min-w-0 flex flex-col">
-          <VideoGrid isMobile={isMobile} />
-          <LiveTranscriptionOverlay
-            roomCode={roomId}
-            visible={transcriptionEnabled}
-          />
-        </main>
-
-        {/* Desktop sidebar (fixed panel, md+) */}
-        {sidebarOpen && !isMobile && (
-          <div className="hidden md:flex animate-in slide-in-from-right duration-200">
-            <MeetSidebar
-              onClose={() => setSidebarOpen(false)}
-              roomCode={roomId}
-              isHost={isHost}
-              raisedSet={raisedSet}
-              onLowerOther={lowerOtherHand}
-            />
+                        <Radio className="h-4 w-4" />
+                        Démarrer l&apos;enregistrement
+                      </DropdownMenuItem>
+                    )}
+                  </>
+                )}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={toggleTranscription}
+                  className="gap-2"
+                >
+                  <Captions className="h-4 w-4" />
+                  {transcriptionEnabled
+                    ? "Arrêter la transcription"
+                    : "Activer la transcription"}
+                </DropdownMenuItem>
+                <DropdownMenuItem className="gap-2">
+                  <Settings className="h-4 w-4" />
+                  Paramètres
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem className="gap-2">
+                  <Info className="h-4 w-4" />
+                  Info salle
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
-        )}
+        </header>
 
-        {/* Mobile sidebar (Sheet drawer, < md) */}
-        <Sheet
-          open={sidebarOpen && isMobile}
-          onOpenChange={(o) => setSidebarOpen(o)}
-        >
-          <SheetContent
-            side="bottom"
-            className="h-[80vh] p-0 bg-card border-border md:hidden"
-          >
-            <div className="h-full">
+        {/* ── Body: grid + sidebar ───────────────────────────────── */}
+        <div className="flex-1 flex min-h-0">
+          <main className="relative flex-1 min-w-0 flex flex-col">
+            <VideoGrid isMobile={isMobile} />
+            <LiveTranscriptionOverlay
+              roomCode={roomId}
+              visible={transcriptionEnabled}
+            />
+          </main>
+
+          {/* Desktop sidebar (fixed panel, md+) */}
+          {sidebarOpen && !isMobile && (
+            <div className="hidden md:flex animate-in slide-in-from-right duration-200">
               <MeetSidebar
                 onClose={() => setSidebarOpen(false)}
                 roomCode={roomId}
@@ -1145,28 +1130,48 @@ function MeetUiContent({
                 onLowerOther={lowerOtherHand}
               />
             </div>
-          </SheetContent>
-        </Sheet>
-      </div>
+          )}
 
-      {/* ── Bottom controls ──────────────────────────────────── */}
-      <BottomBar
-        isConnected={isConnected}
-        isMicrophoneEnabled={isMicrophoneEnabled}
-        isCameraEnabled={isCameraEnabled}
-        isScreenShareEnabled={isScreenShareEnabled}
-        onToggleMic={toggleMic}
-        onToggleCamera={toggleCamera}
-        onToggleScreenShare={toggleScreenShare}
-        onLeave={handleLeave}
-        transcriptionEnabled={transcriptionEnabled}
-        onToggleTranscription={toggleTranscription}
-        handRaised={isLocalRaised}
-        onToggleRaiseHand={toggleRaiseHand}
-        bgPrefs={bgPrefs}
-        onChangeBgPrefs={setBgPrefs}
-      />
-    </div>
+          {/* Mobile sidebar (Sheet drawer, < md) */}
+          <Sheet
+            open={sidebarOpen && isMobile}
+            onOpenChange={(o) => setSidebarOpen(o)}
+          >
+            <SheetContent
+              side="bottom"
+              className="h-[80vh] p-0 bg-card border-border md:hidden"
+            >
+              <div className="h-full">
+                <MeetSidebar
+                  onClose={() => setSidebarOpen(false)}
+                  roomCode={roomId}
+                  isHost={isHost}
+                  raisedSet={raisedSet}
+                  onLowerOther={lowerOtherHand}
+                />
+              </div>
+            </SheetContent>
+          </Sheet>
+        </div>
+
+        {/* ── Bottom controls ──────────────────────────────────── */}
+        <BottomBar
+          isConnected={isConnected}
+          isMicrophoneEnabled={isMicrophoneEnabled}
+          isCameraEnabled={isCameraEnabled}
+          isScreenShareEnabled={isScreenShareEnabled}
+          onToggleMic={toggleMic}
+          onToggleCamera={toggleCamera}
+          onToggleScreenShare={toggleScreenShare}
+          onLeave={handleLeave}
+          transcriptionEnabled={transcriptionEnabled}
+          onToggleTranscription={toggleTranscription}
+          handRaised={isLocalRaised}
+          onToggleRaiseHand={toggleRaiseHand}
+          bgPrefs={bgPrefs}
+          onChangeBgPrefs={setBgPrefs}
+        />
+      </div>
     </RaisedHandsContext.Provider>
   );
 }
@@ -1189,7 +1194,9 @@ interface BottomBarProps {
   handRaised: boolean;
   onToggleRaiseHand: () => void;
   bgPrefs: VirtualBgPrefs;
-  onChangeBgPrefs: (updater: VirtualBgPrefs | ((prev: VirtualBgPrefs) => VirtualBgPrefs)) => void;
+  onChangeBgPrefs: (
+    updater: VirtualBgPrefs | ((prev: VirtualBgPrefs) => VirtualBgPrefs),
+  ) => void;
 }
 
 function BottomBar({
@@ -1208,8 +1215,7 @@ function BottomBar({
   bgPrefs,
   onChangeBgPrefs,
 }: BottomBarProps) {
-  const round =
-    "rounded-full h-10 w-10 md:h-11 md:w-11 transition-colors";
+  const round = "rounded-full h-10 w-10 md:h-11 md:w-11 transition-colors";
 
   return (
     <footer
@@ -1227,7 +1233,9 @@ function BottomBar({
             ? "bg-muted text-foreground hover:bg-muted/80"
             : "bg-destructive/10 text-destructive hover:bg-destructive/20"
         }`}
-        aria-label={isMicrophoneEnabled ? "Couper le micro" : "Activer le micro"}
+        aria-label={
+          isMicrophoneEnabled ? "Couper le micro" : "Activer le micro"
+        }
       >
         {isMicrophoneEnabled ? (
           <Mic className="h-4 w-4 md:h-5 md:w-5" />
@@ -1362,10 +1370,7 @@ function BottomBar({
             </div>
           )}
           <DropdownMenuSeparator />
-          <DropdownMenuItem
-            onClick={onToggleTranscription}
-            className="gap-2"
-          >
+          <DropdownMenuItem onClick={onToggleTranscription} className="gap-2">
             <Captions className="h-4 w-4" />
             {transcriptionEnabled
               ? "Arrêter la transcription"
@@ -1435,12 +1440,9 @@ function VideoGrid({ isMobile = false }: { isMobile?: boolean }) {
   const count = tracks.length;
   let colsClass = "grid-cols-1 place-items-center";
   if (count === 2) colsClass = "grid-cols-1 sm:grid-cols-2";
-  else if (count >= 3 && count <= 4)
-    colsClass = "grid-cols-1 sm:grid-cols-2";
-  else if (count >= 5 && count <= 9)
-    colsClass = "grid-cols-2 md:grid-cols-3";
-  else if (count > 9)
-    colsClass = "grid-cols-2 md:grid-cols-3 lg:grid-cols-4";
+  else if (count >= 3 && count <= 4) colsClass = "grid-cols-1 sm:grid-cols-2";
+  else if (count >= 5 && count <= 9) colsClass = "grid-cols-2 md:grid-cols-3";
+  else if (count > 9) colsClass = "grid-cols-2 md:grid-cols-3 lg:grid-cols-4";
 
   // On mobile with 2+ tiles, allow vertical scroll so tiles keep a readable aspect.
   const mobileScroll = isMobile && count >= 2 ? "overflow-y-auto" : "min-h-0";
