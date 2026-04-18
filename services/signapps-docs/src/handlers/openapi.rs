@@ -130,6 +130,15 @@ impl Modify for SecurityAddon {
         crate::handlers::drawing::render_svg,
         crate::handlers::drawing::render_png,
         crate::handlers::drawing::generate_chart,
+        // Template Variables
+        crate::handlers::template_vars::list_variables,
+        crate::handlers::template_vars::create_variable,
+        crate::handlers::template_vars::delete_variable,
+        crate::handlers::template_vars::resolve_variables,
+        crate::handlers::template_vars::batch_export,
+        // Social Presets
+        crate::handlers::template_vars::list_social_presets,
+        crate::handlers::template_vars::list_social_presets_by_platform,
     ),
     components(schemas(
         // Classify
@@ -208,6 +217,17 @@ impl Modify for SecurityAddon {
         crate::handlers::drawing::RenderRequest,
         crate::handlers::drawing::ChartRequest,
         crate::handlers::drawing::ChartSeriesInput,
+        // Template Variables
+        signapps_db::models::TemplateVariable,
+        signapps_db::models::CreateTemplateVariable,
+        signapps_db::models::TemplateDataset,
+        signapps_db::models::CreateDataset,
+        signapps_db::models::SocialPreset,
+        crate::handlers::template_vars::ResolveBody,
+        crate::handlers::template_vars::ResolveResponse,
+        crate::handlers::template_vars::BatchExportBody,
+        crate::handlers::template_vars::BatchExportItem,
+        crate::handlers::template_vars::BatchExportResponse,
     )),
     tags(
         (name = "System", description = "Health and system endpoints"),
@@ -222,6 +242,8 @@ impl Modify for SecurityAddon {
         (name = "Sheet Formats", description = "Spreadsheet cell formats and sheet metadata persistence"),
         (name = "Versions", description = "Document versioning -- command log, snapshots, undo, and diff"),
         (name = "Drawing", description = "Drawing primitive rendering (SVG/PNG) and chart generation"),
+        (name = "Template Variables", description = "Template variable placeholders for dynamic document generation"),
+        (name = "Social Presets", description = "Social media format presets (canvas sizes)"),
     ),
     modifiers(&SecurityAddon),
 )]
