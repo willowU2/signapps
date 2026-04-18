@@ -40,9 +40,16 @@ pub struct DocMetadata {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum DocBody {
-    Document { nodes: Vec<DocNode> },
-    Spreadsheet { sheets: Vec<SheetData> },
-    Presentation { slides: Vec<SlideData>, master: Option<MasterData> },
+    Document {
+        nodes: Vec<DocNode>,
+    },
+    Spreadsheet {
+        sheets: Vec<SheetData>,
+    },
+    Presentation {
+        slides: Vec<SlideData>,
+        master: Option<MasterData>,
+    },
 }
 
 // ============================================================================
@@ -53,15 +60,40 @@ pub enum DocBody {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum DocNode {
-    Paragraph { content: Vec<InlineNode>, style: Option<String> },
-    Heading { level: u8, content: Vec<InlineNode> },
-    BulletList { items: Vec<ListItem> },
-    OrderedList { items: Vec<ListItem>, start: u32 },
-    TaskList { items: Vec<TaskItem> },
-    Blockquote { nodes: Vec<DocNode> },
-    CodeBlock { language: Option<String>, code: String },
-    Table { rows: Vec<TableRow> },
-    Image { src: String, alt: Option<String>, width: Option<u32>, height: Option<u32> },
+    Paragraph {
+        content: Vec<InlineNode>,
+        style: Option<String>,
+    },
+    Heading {
+        level: u8,
+        content: Vec<InlineNode>,
+    },
+    BulletList {
+        items: Vec<ListItem>,
+    },
+    OrderedList {
+        items: Vec<ListItem>,
+        start: u32,
+    },
+    TaskList {
+        items: Vec<TaskItem>,
+    },
+    Blockquote {
+        nodes: Vec<DocNode>,
+    },
+    CodeBlock {
+        language: Option<String>,
+        code: String,
+    },
+    Table {
+        rows: Vec<TableRow>,
+    },
+    Image {
+        src: String,
+        alt: Option<String>,
+        width: Option<u32>,
+        height: Option<u32>,
+    },
     HorizontalRule,
     PageBreak,
 }
@@ -192,11 +224,33 @@ pub struct SlideData {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum SlideElement {
-    Title { text: String },
-    Subtitle { text: String },
-    TextBlock { content: Vec<DocNode>, x: f64, y: f64, width: f64, height: f64 },
-    Image { src: String, x: f64, y: f64, width: f64, height: f64 },
-    Shape { shape_type: String, x: f64, y: f64, width: f64, height: f64 },
+    Title {
+        text: String,
+    },
+    Subtitle {
+        text: String,
+    },
+    TextBlock {
+        content: Vec<DocNode>,
+        x: f64,
+        y: f64,
+        width: f64,
+        height: f64,
+    },
+    Image {
+        src: String,
+        x: f64,
+        y: f64,
+        width: f64,
+        height: f64,
+    },
+    Shape {
+        shape_type: String,
+        x: f64,
+        y: f64,
+        width: f64,
+        height: f64,
+    },
 }
 
 /// Master slide data (branding defaults).

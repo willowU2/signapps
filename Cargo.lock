@@ -11002,6 +11002,7 @@ dependencies = [
  "chrono",
  "comrak 0.31.0",
  "docx-rs",
+ "ego-tree",
  "lopdf 0.33.0",
  "mime_guess",
  "printpdf",

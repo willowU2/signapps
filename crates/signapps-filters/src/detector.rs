@@ -58,15 +58,11 @@ impl Format {
     /// Returns the primary MIME type for this format.
     pub fn mime_type(&self) -> &str {
         match self {
-            Self::Docx => {
-                "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-            }
-            Self::Xlsx => {
-                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            }
+            Self::Docx => "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            Self::Xlsx => "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             Self::Pptx => {
                 "application/vnd.openxmlformats-officedocument.presentationml.presentation"
-            }
+            },
             Self::Odt => "application/vnd.oasis.opendocument.text",
             Self::Ods => "application/vnd.oasis.opendocument.spreadsheet",
             Self::Odp => "application/vnd.oasis.opendocument.presentation",
@@ -154,13 +150,9 @@ impl FormatDetector {
                 let mimetype = mimetype.trim();
                 match mimetype {
                     "application/vnd.oasis.opendocument.text" => return Some(Format::Odt),
-                    "application/vnd.oasis.opendocument.spreadsheet" => {
-                        return Some(Format::Ods)
-                    }
-                    "application/vnd.oasis.opendocument.presentation" => {
-                        return Some(Format::Odp)
-                    }
-                    _ => {}
+                    "application/vnd.oasis.opendocument.spreadsheet" => return Some(Format::Ods),
+                    "application/vnd.oasis.opendocument.presentation" => return Some(Format::Odp),
+                    _ => {},
                 }
             }
         }

@@ -89,8 +89,14 @@ impl FilterRegistry {
 
 impl Default for FilterRegistry {
     fn default() -> Self {
-        // Returns empty for now -- filters will be registered in Task 4+5
-        Self::new()
+        let mut registry = Self::new();
+        registry.register(Format::Text, Box::new(crate::formats::text::TextFilter));
+        registry.register(
+            Format::Markdown,
+            Box::new(crate::formats::markdown::MarkdownFilter),
+        );
+        registry.register(Format::Html, Box::new(crate::formats::html::HtmlFilter));
+        registry
     }
 }
 
@@ -106,8 +112,12 @@ mod tests {
     }
 
     #[test]
-    fn supported_formats_empty_by_default() {
+    fn default_registry_has_text_markdown_html() {
         let registry = FilterRegistry::default();
-        assert!(registry.supported_formats().is_empty());
+        let formats = registry.supported_formats();
+        assert!(formats.contains(&Format::Text));
+        assert!(formats.contains(&Format::Markdown));
+        assert!(formats.contains(&Format::Html));
+        assert_eq!(formats.len(), 3);
     }
 }

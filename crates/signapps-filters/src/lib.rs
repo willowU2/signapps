@@ -15,6 +15,7 @@
 
 pub mod detector;
 pub mod error;
+pub mod formats;
 pub mod intermediate;
 pub mod registry;
 pub mod traits;
