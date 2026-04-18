@@ -15,6 +15,9 @@ pub use job_repository::JobRepository;
 pub mod resource_booking_repository;
 pub use resource_booking_repository::ResourceBookingRepository;
 
+pub mod style_repository;
+pub use style_repository::StyleRepository;
+
 pub mod tenant_repository;
 pub use tenant_repository::{
     LabelRepository, ProjectRepository, ReservationRepository, ResourceTypeRepository,

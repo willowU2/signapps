@@ -97,6 +97,9 @@ pub use signapps_db_shared::repositories::ResourceBookingRepository;
 // Company / person-company / login-context repositories — lives in signapps-db-shared.
 pub use signapps_db_shared::repositories::CompanyRepository;
 
+// Style inheritance repositories — lives in signapps-db-shared.
+pub use signapps_db_shared::repositories::StyleRepository;
+
 // Drive ACL repositories — now live in signapps-db-storage (Phase 4 split).
 pub use signapps_db_storage::repositories::{AuditAlertConfigRepository, DriveAuditLogRepository};
 
@@ -129,5 +132,4 @@ pub use signapps_db_vault::repositories::{
 pub use signapps_db_mail::repositories::{
     AccountRepository, DomainRepository, MailboxRepository, MessageRepository,
 };
-
 pub mod test_helpers;

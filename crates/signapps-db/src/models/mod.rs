@@ -151,6 +151,9 @@ pub mod company {
 pub mod resource_booking {
     pub use signapps_db_shared::models::resource_booking::*;
 }
+pub mod style {
+    pub use signapps_db_shared::models::style::*;
+}
 pub mod tenant;
 pub mod user {
     pub use signapps_db_identity::models::user::*;
@@ -194,6 +197,7 @@ pub use org_policies::*;
 pub use raid::*;
 pub use resource_booking::*;
 pub use route::*;
+pub use style::*;
 pub use scheduling::*;
 pub use storage_quota::*;
 pub use storage_tier2::*;
