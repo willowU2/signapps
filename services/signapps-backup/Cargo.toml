@@ -6,6 +6,11 @@ rust-version.workspace = true
 authors.workspace = true
 license.workspace = true
 description = "Backup service — PostgreSQL dump and file backup management for SignApps Platform"
+default-run = "signapps-backup"
+
+[lib]
+name = "signapps_backup"
+path = "src/lib.rs"
 
 [[bin]]
 name = "signapps-backup"
@@ -15,6 +20,7 @@ path = "src/main.rs"
 mimalloc = { workspace = true }
 # Internal crates
 signapps-common = { path = "../../crates/signapps-common" }
+signapps-service = { path = "../../crates/signapps-service" }
 
 # Web framework
 axum = { workspace = true }

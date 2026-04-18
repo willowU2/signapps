@@ -30,6 +30,7 @@ pub fn declare(shared: SharedState) -> Vec<ServiceSpec> {
         spec_signatures(shared.clone()),
         spec_gamification(shared.clone()),
         spec_compliance(shared.clone()),
+        spec_backup(shared.clone()),
     ]
 }
 
@@ -286,6 +287,16 @@ fn spec_compliance(shared: SharedState) -> ServiceSpec {
             // detached tokio task tied to this factory scope.
             let router = signapps_compliance::router(shared).await?;
             run_server_on_addr(router, "0.0.0.0", 3032).await
+        }
+    })
+}
+
+fn spec_backup(shared: SharedState) -> ServiceSpec {
+    ServiceSpec::new("signapps-backup", 3031, move || {
+        let shared = shared.clone();
+        async move {
+            let router = signapps_backup::router(shared).await?;
+            run_server_on_addr(router, "0.0.0.0", 3031).await
         }
     })
 }
