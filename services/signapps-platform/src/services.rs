@@ -39,6 +39,7 @@ pub fn declare(shared: SharedState) -> Vec<ServiceSpec> {
         spec_deploy(shared.clone()),
         spec_gateway(shared.clone()),
         spec_scheduler(shared.clone()),
+        spec_webhooks(shared.clone()),
     ]
 }
 
@@ -423,6 +424,22 @@ fn spec_scheduler(shared: SharedState) -> ServiceSpec {
             // runtime to silence the 60 s ticker.
             let router = signapps_scheduler::router(shared).await?;
             run_server_on_addr(router, "0.0.0.0", 3007).await
+        }
+    })
+}
+
+fn spec_webhooks(shared: SharedState) -> ServiceSpec {
+    ServiceSpec::new("signapps-webhooks", 3027, move || {
+        let shared = shared.clone();
+        async move {
+            // router() spawns any persistent dispatcher / retry-queue
+            // worker as detached tokio tasks tied to this factory
+            // scope. Currently the service has no such worker —
+            // outbound dispatch is inline on /test — but the hook is
+            // in place so a future retry queue is automatically
+            // restarted on supervisor respawn.
+            let router = signapps_webhooks_svc::router(shared).await?;
+            run_server_on_addr(router, "0.0.0.0", 3027).await
         }
     })
 }
