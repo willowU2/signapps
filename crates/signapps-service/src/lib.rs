@@ -23,6 +23,8 @@
 //! }
 //! ```
 
+pub mod shared_state;
+
 mod shutdown;
 
 #[cfg(windows)]

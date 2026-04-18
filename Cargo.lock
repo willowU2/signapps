@@ -10937,6 +10937,7 @@ dependencies = [
  "signapps-cache",
  "signapps-common",
  "signapps-db",
+ "signapps-drawing",
  "signapps-filters",
  "signapps-sharing",
  "sqlx",
@@ -11226,6 +11227,7 @@ dependencies = [
  "tower-http 0.5.2",
  "tracing",
  "tracing-subscriber",
+ "uuid",
 ]
 
 [[package]]
@@ -11538,10 +11540,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "signapps-nexus"
-version = "0.1.0"
-
-[[package]]
 name = "signapps-notifications"
 version = "0.1.0"
 dependencies = [
@@ -11850,6 +11848,10 @@ dependencies = [
  "eventlog",
  "log",
  "once_cell",
+ "signapps-cache",
+ "signapps-common",
+ "signapps-db",
+ "signapps-keystore",
  "thiserror 1.0.69",
  "tokio",
  "tracing",
