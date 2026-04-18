@@ -22,6 +22,7 @@ signapps-identity = { path = "../signapps-identity" }
 signapps-contacts = { path = "../signapps-contacts" }
 signapps-forms    = { path = "../signapps-forms" }
 signapps-storage  = { path = "../signapps-storage" }
+signapps-notifications = { path = "../signapps-notifications" }
 
 anyhow  = { workspace = true }
 axum    = { workspace = true }
