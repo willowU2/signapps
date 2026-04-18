@@ -97,6 +97,9 @@ pub use signapps_db_shared::repositories::ResourceBookingRepository;
 // Company / person-company / login-context repositories — lives in signapps-db-shared.
 pub use signapps_db_shared::repositories::CompanyRepository;
 
+// Cell format & sheet metadata repositories — lives in signapps-db-shared.
+pub use signapps_db_shared::repositories::CellFormatRepository;
+
 // Style inheritance repositories — lives in signapps-db-shared.
 pub use signapps_db_shared::repositories::StyleRepository;
 

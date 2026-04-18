@@ -3,6 +3,9 @@
 pub mod activity_repository;
 pub use activity_repository::ActivityRepository;
 
+pub mod cell_format_repository;
+pub use cell_format_repository::CellFormatRepository;
+
 pub mod company_repository;
 pub use company_repository::CompanyRepository;
 
