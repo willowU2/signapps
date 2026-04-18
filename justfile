@@ -142,6 +142,14 @@ status:
     @echo "Identity:  " && curl -s -o /dev/null -w "%{http_code}" http://localhost:3001/health 2>/dev/null || echo "down"
     @echo "Calendar:  " && curl -s -o /dev/null -w "%{http_code}" http://localhost:3011/health 2>/dev/null || echo "down"
 
+# Smoke check : ping 5 critical /health endpoints
+smoke:
+    #!/usr/bin/env bash
+    for port in 3001 3005 3011 3099 8095; do
+        printf "  :%-5s -> " "$port"
+        curl -s -o /dev/null -w "%{http_code}\n" "http://localhost:$port/health" || echo "DOWN"
+    done
+
 # ─────────────────────────── Database ────────────────────────
 
 # Lancer PostgreSQL Docker
