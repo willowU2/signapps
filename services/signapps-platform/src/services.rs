@@ -37,6 +37,7 @@ pub fn declare(shared: SharedState) -> Vec<ServiceSpec> {
         spec_docs(shared.clone()),
         spec_containers(shared.clone()),
         spec_deploy(shared.clone()),
+        spec_gateway(shared.clone()),
     ]
 }
 
@@ -391,6 +392,20 @@ fn spec_deploy(shared: SharedState) -> ServiceSpec {
             // src/bin/server.rs for context.
             let router = signapps_deploy::router(shared).await?;
             run_server_on_addr(router, "0.0.0.0", 3700).await
+        }
+    })
+}
+
+fn spec_gateway(shared: SharedState) -> ServiceSpec {
+    ServiceSpec::new("signapps-gateway", 3099, move || {
+        let shared = shared.clone();
+        async move {
+            // The gateway is a pure reverse-proxy + GraphQL aggregator.
+            // It does not touch the DB at boot — every request is
+            // forwarded to the sibling service that owns the path, over
+            // loopback HTTP. No background tasks.
+            let router = signapps_gateway::router(shared).await?;
+            run_server_on_addr(router, "0.0.0.0", 3099).await
         }
     })
 }

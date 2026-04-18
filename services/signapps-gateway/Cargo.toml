@@ -6,6 +6,11 @@ rust-version.workspace = true
 authors.workspace = true
 license.workspace = true
 description = "Single-binary gateway for SignApps Platform - spawns all services as tokio tasks"
+default-run = "signapps-gateway"
+
+[lib]
+name = "signapps_gateway"
+path = "src/lib.rs"
 
 [[bin]]
 name = "signapps-gateway"
@@ -18,6 +23,7 @@ signapps-common = { path = "../../crates/signapps-common" }
 signapps-db = { path = "../../crates/signapps-db" }
 signapps-cache = { path = "../../crates/signapps-cache" }
 signapps-runtime = { path = "../../crates/signapps-runtime" }
+signapps-service = { path = "../../crates/signapps-service" }
 
 # Web framework
 axum = { workspace = true }
