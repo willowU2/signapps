@@ -6,6 +6,9 @@ pub use activity_repository::ActivityRepository;
 pub mod automation_repository;
 pub use automation_repository::AutomationRepository;
 
+pub mod brand_kit_repository;
+pub use brand_kit_repository::BrandKitRepository;
+
 pub mod cell_format_repository;
 pub use cell_format_repository::CellFormatRepository;
 
@@ -33,6 +36,12 @@ pub use tenant_repository::{
     TemplateRepository, TenantCalendarRepository, TenantRepository, TenantResourceRepository,
     TenantTaskRepository, WorkspaceRepository,
 };
+
+pub mod template_variable_repository;
+pub use template_variable_repository::TemplateVariableRepository;
+
+pub mod validation_repository;
+pub use validation_repository::ValidationRepository;
 
 pub mod versioning_repository;
 pub use versioning_repository::VersioningRepository;

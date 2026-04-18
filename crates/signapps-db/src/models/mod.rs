@@ -145,6 +145,9 @@ pub mod org_groups {
 pub mod org_policies {
     pub use signapps_db_identity::models::org_policies::*;
 }
+pub mod brand_kit {
+    pub use signapps_db_shared::models::brand_kit::*;
+}
 pub mod company {
     pub use signapps_db_shared::models::company::*;
 }
@@ -163,6 +166,12 @@ pub mod style {
 pub mod automation {
     pub use signapps_db_shared::models::automation::*;
 }
+pub mod template_variable {
+    pub use signapps_db_shared::models::template_variable::*;
+}
+pub mod validation_rule {
+    pub use signapps_db_shared::models::validation_rule::*;
+}
 pub mod versioning {
     pub use signapps_db_shared::models::versioning::*;
 }
@@ -180,10 +189,11 @@ pub mod vault {
 }
 
 pub use audit_log::*;
+pub use automation::*;
+pub use brand_kit::*;
 pub use backup::*;
-pub use cell_format::*;
-pub use presentation::*;
 pub use calendar::*;
+pub use cell_format::*;
 pub use certificate::*;
 pub use company::*;
 pub use container::*;
@@ -208,17 +218,19 @@ pub use org_boards::*;
 pub use org_delegations::*;
 pub use org_groups::*;
 pub use org_policies::*;
+pub use presentation::*;
 pub use raid::*;
 pub use resource_booking::*;
 pub use route::*;
-pub use style::*;
 pub use scheduling::*;
 pub use storage_quota::*;
 pub use storage_tier2::*;
 pub use storage_tier3::*;
+pub use style::*;
+pub use template_variable::*;
+pub use validation_rule::*;
 pub use tenant::*;
 pub use user::*;
 pub use user_preferences::*;
 pub use vault::*;
-pub use automation::*;
 pub use versioning::*;

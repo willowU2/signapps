@@ -91,6 +91,9 @@ pub use entity_reference_repository::EntityReferenceRepository;
 pub mod activity_repository;
 pub use activity_repository::ActivityRepository;
 
+// Brand kit repository — lives in signapps-db-shared.
+pub use signapps_db_shared::repositories::BrandKitRepository;
+
 // Resource booking (standalone `resources` schema) — lives in signapps-db-shared.
 pub use signapps_db_shared::repositories::ResourceBookingRepository;
 
@@ -105,6 +108,12 @@ pub use signapps_db_shared::repositories::PresentationRepository;
 
 // Style inheritance repositories — lives in signapps-db-shared.
 pub use signapps_db_shared::repositories::StyleRepository;
+
+// Template variable, dataset, and social-preset repositories — lives in signapps-db-shared.
+pub use signapps_db_shared::repositories::TemplateVariableRepository;
+
+// Validation rule repositories — lives in signapps-db-shared.
+pub use signapps_db_shared::repositories::ValidationRepository;
 
 // Versioning repositories (command log + snapshots) — lives in signapps-db-shared.
 pub use signapps_db_shared::repositories::VersioningRepository;
