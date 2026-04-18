@@ -8,7 +8,7 @@ mod handlers;
 
 use axum::{
     middleware,
-    routing::{get, post},
+    routing::{delete, get, post, put},
     Router,
 };
 use signapps_common::bootstrap::{init_tracing, load_env, ServiceConfig};
@@ -89,9 +89,62 @@ fn create_router(state: AppState) -> Router {
             auth_middleware::<AppState>,
         ));
 
+    // Automation, extension, and action catalog routes (authenticated)
+    let automation_routes = Router::new()
+        .route(
+            "/api/v1/automations",
+            get(handlers::automations::list_automations)
+                .post(handlers::automations::create_automation),
+        )
+        .route(
+            "/api/v1/automations/:id",
+            get(handlers::automations::get_automation)
+                .put(handlers::automations::update_automation)
+                .delete(handlers::automations::delete_automation),
+        )
+        .route(
+            "/api/v1/automations/:id/steps",
+            get(handlers::automations::list_steps).post(handlers::automations::add_step),
+        )
+        .route(
+            "/api/v1/automations/:id/steps/:step_id",
+            put(handlers::automations::update_step).delete(handlers::automations::delete_step),
+        )
+        .route(
+            "/api/v1/automations/:id/run",
+            post(handlers::automations::trigger_run),
+        )
+        .route(
+            "/api/v1/automations/:id/runs",
+            get(handlers::automations::list_runs),
+        )
+        .route(
+            "/api/v1/extensions",
+            get(handlers::automations::list_extensions)
+                .post(handlers::automations::install_extension),
+        )
+        .route(
+            "/api/v1/extensions/:id/approve",
+            put(handlers::automations::approve_extension),
+        )
+        .route(
+            "/api/v1/extensions/:id",
+            delete(handlers::automations::uninstall_extension),
+        )
+        .route(
+            "/api/v1/actions",
+            get(handlers::automations::list_actions),
+        )
+        .route_layer(middleware::from_fn(tenant_context_middleware))
+        .route_layer(middleware::from_fn_with_state(
+            state.clone(),
+            auth_middleware::<AppState>,
+        ));
+
     public_routes
         .merge(slack_public_routes)
         .merge(slack_admin_routes)
+        .merge(automation_routes)
         .layer(TraceLayer::new_for_http())
         .layer(cors)
         .with_state(state)
