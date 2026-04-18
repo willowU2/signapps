@@ -24,6 +24,7 @@
 //! ```
 
 pub mod shared_state;
+pub mod supervisor;
 
 mod shutdown;
 
