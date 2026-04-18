@@ -12,6 +12,7 @@ pub fn declare(shared: SharedState) -> Vec<ServiceSpec> {
         spec_forms(shared.clone()),
         spec_storage(shared.clone()),
         spec_notifications(shared.clone()),
+        spec_chat(shared.clone()),
     ]
 }
 
@@ -61,6 +62,16 @@ fn spec_notifications(shared: SharedState) -> ServiceSpec {
         async move {
             let router = signapps_notifications::router(shared).await?;
             run_server_on_addr(router, "0.0.0.0", 8095).await
+        }
+    })
+}
+
+fn spec_chat(shared: SharedState) -> ServiceSpec {
+    ServiceSpec::new("signapps-chat", 3020, move || {
+        let shared = shared.clone();
+        async move {
+            let router = signapps_chat::router(shared).await?;
+            run_server_on_addr(router, "0.0.0.0", 3020).await
         }
     })
 }

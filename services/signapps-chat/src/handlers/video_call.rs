@@ -103,8 +103,8 @@ pub async fn start_video_call(
         .ok_or(AppError::Unauthorized)?
         .to_string();
 
-    let meet_base = std::env::var("MEET_SERVICE_URL")
-        .unwrap_or_else(|_| "http://localhost:3014".to_string());
+    let meet_base =
+        std::env::var("MEET_SERVICE_URL").unwrap_or_else(|_| "http://localhost:3014".to_string());
     let meet_url = format!(
         "{}/api/v1/meet/rooms/instant",
         meet_base.trim_end_matches('/')
@@ -142,9 +142,7 @@ pub async fn start_video_call(
 
     // 3. Insert a system message carrying the join link. We embed a JSON
     // marker in the attachment column so the UI can render a rich card.
-    let system_body = format!(
-        "📹 {display_name} a démarré un appel vidéo — Rejoindre: {room_url}"
-    );
+    let system_body = format!("📹 {display_name} a démarré un appel vidéo — Rejoindre: {room_url}");
     let attachment = serde_json::json!({
         "message_type": "system_video_call",
         "room_code": meet.code,
