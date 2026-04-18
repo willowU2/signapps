@@ -55,10 +55,30 @@ export async function fetchServer<T>(
   });
 
   if (!res.ok) {
-    throw new Error(
+    const err = new Error(
       `server fetch failed: ${res.status} ${res.statusText} for ${url}`,
     );
+    (err as Error & { status?: number }).status = res.status;
+    throw err;
   }
 
   return (await res.json()) as T;
+}
+
+/**
+ * Log an RSC prefetch failure at the right level: 401/404 are expected
+ * pre-login or when a feature endpoint is unavailable — they fall back
+ * to an empty shell silently.  Everything else logs a warning.
+ */
+export function logFetchFailure(tag: string, err: unknown): void {
+  const status = (err as { status?: number } | null)?.status;
+  if (status === 401 || status === 404) {
+    // Expected in the RSC pre-login / feature-unavailable path.  Keep it
+    // debug-level so the dev console is not spammed.
+    // eslint-disable-next-line no-console
+    console.debug(`[${tag}] server prefetch skipped (${status})`);
+    return;
+  }
+
+  console.warn(`[${tag}] server fetch failed`, err);
 }

@@ -20,11 +20,16 @@ import { cn } from "@/lib/utils";
 import { DynamicIcon, type IconName } from "lucide-react/dynamic";
 import type { WidgetRenderProps } from "@/lib/dashboard/types";
 
+const LUCIDE_NAME_RE = /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/;
+
 function AppIcon({ name, className }: { name: string; className?: string }) {
   const kebab = name
     .replace(/([A-Z])/g, "-$1")
     .replace(/^-/, "")
     .toLowerCase();
+  if (!LUCIDE_NAME_RE.test(kebab)) {
+    return <Grid className={className} />;
+  }
   return (
     <DynamicIcon
       name={kebab as IconName}

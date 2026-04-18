@@ -1,6 +1,6 @@
 import "server-only";
 
-import { fetchServer } from "./http";
+import { fetchServer, logFetchFailure } from "./http";
 
 /**
  * Raw form shape as returned by `GET /api/v1/forms` — kept independent of
@@ -55,7 +55,7 @@ export async function fetchFormsList(): Promise<FormsListResponse> {
       unreachable: false,
     };
   } catch (err) {
-    console.error("[forms] server fetch failed, returning empty shell", err);
+    logFetchFailure("forms", err);
     return { forms: [], responseCounts: {}, unreachable: true };
   }
 }

@@ -1,6 +1,6 @@
 import "server-only";
 
-import { fetchServer } from "./http";
+import { fetchServer, logFetchFailure } from "./http";
 
 /**
  * Minimal shape of a contact returned by `/api/v1/contacts` — mirrors the
@@ -71,7 +71,7 @@ export async function fetchContactsList(
       unreachable: false,
     };
   } catch (err) {
-    console.error("[contacts] server fetch failed, returning empty shell", err);
+    logFetchFailure("contacts", err);
     return { contacts: [], total: 0, unreachable: true };
   }
 }

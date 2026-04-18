@@ -39,11 +39,16 @@ import { TasksWidget } from "@/components/tasks/tasks-widget";
 import { APP_CATEGORIES } from "@/lib/app-registry";
 import { useAppRegistry } from "@/hooks/use-app-registry";
 
+const LUCIDE_NAME_RE = /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/;
+
 function DynIcon({ name, className }: { name: string; className?: string }) {
   const kebab = name
     .replace(/([A-Z])/g, "-$1")
     .replace(/^-/, "")
     .toLowerCase();
+  if (!LUCIDE_NAME_RE.test(kebab)) {
+    return <Grid className={className} />;
+  }
   return (
     <DynamicIcon
       name={kebab as IconName}

@@ -1,6 +1,6 @@
 import "server-only";
 
-import { fetchServer } from "./http";
+import { fetchServer, logFetchFailure } from "./http";
 
 /**
  * Minimal shape of an email returned by `/api/v1/mail/emails` — mirrors the
@@ -79,7 +79,7 @@ export async function fetchMailInbox(
       unreachable: false,
     };
   } catch (err) {
-    console.error("[mail] server fetch failed, returning empty shell", err);
+    logFetchFailure("mail", err);
     return { messages: [], folder, unreachable: true };
   }
 }

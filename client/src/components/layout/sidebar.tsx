@@ -83,15 +83,23 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
+// Matches the valid lucide icon name shape: lowercase letters + digits +
+// hyphens, no leading/trailing hyphen.  User-pinned apps may have stored
+// raw strings (emoji, custom labels) — short-circuit those to the
+// <Grid /> fallback without hitting lucide's loader, which otherwise
+// logs a noisy "Name in Lucide DynamicIcon not found" error.
+const LUCIDE_NAME_RE = /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/;
+
 function DynIcon({ name, className }: { name: string; className?: string }) {
-  // `DynamicIcon` from lucide-react/dynamic accepts a kebab-case icon
-  // name ("layout-dashboard") and lazy-loads just that icon's SVG.
-  // We keep a <Grid /> fallback while the chunk is fetched or when
-  // the provided name is not a valid lucide icon.
   const kebab = name
     .replace(/([A-Z])/g, "-$1")
     .replace(/^-/, "")
     .toLowerCase();
+
+  if (!LUCIDE_NAME_RE.test(kebab)) {
+    return <Grid className={className} />;
+  }
+
   return (
     <DynamicIcon
       name={kebab as IconName}

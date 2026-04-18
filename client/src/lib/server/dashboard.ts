@@ -1,6 +1,6 @@
 import "server-only";
 
-import { fetchServer } from "./http";
+import { fetchServer, logFetchFailure } from "./http";
 
 /**
  * Aggregated dashboard summary data returned by the identity service
@@ -87,16 +87,10 @@ export async function fetchDashboardData(): Promise<DashboardInitialData> {
     layoutResult.status === "fulfilled" ? layoutResult.value : null;
 
   if (summaryResult.status === "rejected") {
-    console.error(
-      "[dashboard] server summary prefetch failed",
-      summaryResult.reason,
-    );
+    logFetchFailure("dashboard/summary", summaryResult.reason);
   }
   if (layoutResult.status === "rejected") {
-    console.error(
-      "[dashboard] server layout prefetch failed",
-      layoutResult.reason,
-    );
+    logFetchFailure("dashboard/layout", layoutResult.reason);
   }
 
   return {

@@ -1,6 +1,6 @@
 import "server-only";
 
-import { fetchServer } from "./http";
+import { fetchServer, logFetchFailure } from "./http";
 
 /**
  * Minimal shape of a project returned by `/api/v1/projects` — mirrors the
@@ -62,7 +62,7 @@ export async function fetchProjectsList(): Promise<ProjectsListResponse> {
       unreachable: false,
     };
   } catch (err) {
-    console.error("[projects] server fetch failed, returning empty shell", err);
+    logFetchFailure("projects", err);
     return { projects: [], total: 0, unreachable: true };
   }
 }
