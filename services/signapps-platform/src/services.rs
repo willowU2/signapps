@@ -22,6 +22,7 @@ pub fn declare(shared: SharedState) -> Vec<ServiceSpec> {
         spec_social(shared.clone()),
         spec_pxe(shared.clone()),
         spec_it_assets(shared.clone()),
+        spec_workforce(shared.clone()),
     ]
 }
 
@@ -185,6 +186,16 @@ fn spec_it_assets(shared: SharedState) -> ServiceSpec {
         async move {
             let router = signapps_it_assets::router(shared).await?;
             run_server_on_addr(router, "0.0.0.0", 3022).await
+        }
+    })
+}
+
+fn spec_workforce(shared: SharedState) -> ServiceSpec {
+    ServiceSpec::new("signapps-workforce", 3024, move || {
+        let shared = shared.clone();
+        async move {
+            let router = signapps_workforce::router(shared).await?;
+            run_server_on_addr(router, "0.0.0.0", 3024).await
         }
     })
 }
