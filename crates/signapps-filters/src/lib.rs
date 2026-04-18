@@ -13,8 +13,14 @@
 //! let pdf = registry.export(&doc, Format::Pdf)?;
 //! ```
 
+pub mod detector;
 pub mod error;
 pub mod intermediate;
+pub mod registry;
+pub mod traits;
 
+pub use detector::{Format, FormatDetector};
 pub use error::{FilterError, FilterResult};
 pub use intermediate::*;
+pub use registry::FilterRegistry;
+pub use traits::FilterTrait;
