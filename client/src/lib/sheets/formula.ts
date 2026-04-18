@@ -434,8 +434,13 @@ function evaluateMath(expr: string): string {
     return SHEET_ERRORS.VALUE;
   }
 
-  // Security: strip whitespace and apply strict guards before eval
+  // Security: strip whitespace and apply strict guards before parsing.
+  // The previous implementation used `Function()` which forced
+  // `script-src 'unsafe-eval'` in the CSP. The pure recursive-descent
+  // parser below has identical semantics on the allowed character
+  // class `[0-9+\-*/().\s]`, so the CSP no longer needs that directive.
   const sanitized = expr.replace(/\s/g, "");
+  if (sanitized.length === 0) return "";
   // Reject if too long (prevents resource exhaustion)
   if (sanitized.length > 200) return SHEET_ERRORS.VALUE;
   // Reject any identifier characters — no access to variables or prototypes
@@ -443,14 +448,106 @@ function evaluateMath(expr: string): string {
 
   try {
     if (/\/0(?!\.)/.test(sanitized)) return SHEET_ERRORS.DIV_ZERO;
-    const result = Function(
-      '"use strict"; return (' + sanitized + ")",
-    )() as number;
+    const parser = new MathParser(sanitized);
+    const result = parser.parse();
     if (typeof result !== "number" || isNaN(result) || !isFinite(result))
       return SHEET_ERRORS.VALUE;
     return Math.round(result * 10000000000) / 10000000000 + "";
   } catch {
     return SHEET_ERRORS.ERROR;
+  }
+}
+
+/**
+ * Recursive-descent parser for the sanitized math subset used by
+ * `evaluateMath`. Grammar:
+ *   expr   := term (('+' | '-') term)*
+ *   term   := factor (('*' | '/') factor)*
+ *   factor := '-' factor | '(' expr ')' | number
+ *
+ * Pure TypeScript, no dynamic code execution — lets the CSP drop
+ * `'unsafe-eval'`. An identical copy lives in
+ * `client/src/workers/formula.worker.ts` for off-main-thread recalc.
+ */
+class MathParser {
+  private pos = 0;
+
+  constructor(private readonly input: string) {}
+
+  parse(): number {
+    const value = this.parseExpr();
+    if (this.pos !== this.input.length)
+      throw new Error("unexpected trailing input");
+    return value;
+  }
+
+  private parseExpr(): number {
+    let left = this.parseTerm();
+    while (this.pos < this.input.length) {
+      const op = this.input[this.pos];
+      if (op !== "+" && op !== "-") break;
+      this.pos++;
+      const right = this.parseTerm();
+      left = op === "+" ? left + right : left - right;
+    }
+    return left;
+  }
+
+  private parseTerm(): number {
+    let left = this.parseFactor();
+    while (this.pos < this.input.length) {
+      const op = this.input[this.pos];
+      if (op !== "*" && op !== "/") break;
+      this.pos++;
+      const right = this.parseFactor();
+      if (op === "*") left = left * right;
+      else {
+        if (right === 0) throw new Error("division by zero");
+        left = left / right;
+      }
+    }
+    return left;
+  }
+
+  private parseFactor(): number {
+    const ch = this.input[this.pos];
+    if (ch === "+") {
+      this.pos++;
+      return this.parseFactor();
+    }
+    if (ch === "-") {
+      this.pos++;
+      return -this.parseFactor();
+    }
+    if (ch === "(") {
+      this.pos++;
+      const value = this.parseExpr();
+      if (this.input[this.pos] !== ")") throw new Error("expected ')'");
+      this.pos++;
+      return value;
+    }
+    return this.parseNumber();
+  }
+
+  private parseNumber(): number {
+    const start = this.pos;
+    let hasDigit = false;
+    while (this.pos < this.input.length && /[0-9]/.test(this.input[this.pos])) {
+      this.pos++;
+      hasDigit = true;
+    }
+    if (this.pos < this.input.length && this.input[this.pos] === ".") {
+      this.pos++;
+      while (
+        this.pos < this.input.length &&
+        /[0-9]/.test(this.input[this.pos])
+      ) {
+        this.pos++;
+        hasDigit = true;
+      }
+    }
+    if (!hasDigit) throw new Error("expected number");
+    return parseFloat(this.input.slice(start, this.pos));
   }
 }
 
