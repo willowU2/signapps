@@ -100,9 +100,13 @@ dev:
 doctor:
     bash scripts/doctor.sh
 
-# Lancer tous les services (PowerShell, auto-loads .env)
-start:
+# Lancer tous les services (legacy: 33 process, PowerShell)
+start-legacy:
     powershell.exe -File scripts/start-all.ps1
+
+# Lancer tous les services (single-binary, single process)
+start:
+    powershell.exe -File scripts/start-platform.ps1
 
 # Stopper tous les services
 stop:
