@@ -18,6 +18,8 @@ signapps-common  = { path = "../../crates/signapps-common" }
 signapps-db      = { path = "../../crates/signapps-db" }
 signapps-service = { path = "../../crates/signapps-service" }
 
+signapps-identity = { path = "../signapps-identity" }
+
 anyhow  = { workspace = true }
 axum    = { workspace = true }
 tokio   = { workspace = true, features = ["full"] }

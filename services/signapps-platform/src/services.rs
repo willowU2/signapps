@@ -1,13 +1,20 @@
 //! Declarative list of every service running inside the single-binary.
-//!
-//! Each entry provides a short name, its canonical port, and an async
-//! factory that builds the service's router then binds it to that port.
-//! Services are wired one-by-one in Tasks 9, 11–17, 21.
 
+use signapps_common::bootstrap::run_server_on_addr;
 use signapps_service::{shared_state::SharedState, supervisor::ServiceSpec};
 
-/// Build the list of every service to run.  Currently empty — services
-/// are added by subsequent tasks.
-pub fn declare(_shared: SharedState) -> Vec<ServiceSpec> {
-    Vec::new()
+/// Build the list of services to run.  Grows as Tasks 11-17, 21 wire
+/// each service.
+pub fn declare(shared: SharedState) -> Vec<ServiceSpec> {
+    vec![spec_identity(shared.clone())]
+}
+
+fn spec_identity(shared: SharedState) -> ServiceSpec {
+    ServiceSpec::new("signapps-identity", 3001, move || {
+        let shared = shared.clone();
+        async move {
+            let router = signapps_identity::router(shared).await?;
+            run_server_on_addr(router, "0.0.0.0", 3001).await
+        }
+    })
 }

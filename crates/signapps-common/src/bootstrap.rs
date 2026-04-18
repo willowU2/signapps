@@ -389,6 +389,37 @@ pub async fn run_server(router: Router, config: &ServiceConfig) -> anyhow::Resul
     Ok(())
 }
 
+/// Bind `router` to `host:port` and serve until graceful shutdown.
+///
+/// Unlike [`run_server`], this variant accepts an explicit socket
+/// address rather than a full [`ServiceConfig`] — useful for the
+/// single-binary runtime where every service is spawned as a tokio
+/// task with its own port and no per-service env parsing.
+///
+/// # Errors
+///
+/// Returns when the listener cannot bind or when `axum::serve` fails.
+///
+/// # Panics
+///
+/// Panics only if `host:port` cannot be parsed as a socket address.
+pub async fn run_server_on_addr(
+    router: axum::Router,
+    host: &str,
+    port: u16,
+) -> anyhow::Result<()> {
+    let addr: std::net::SocketAddr = format!("{host}:{port}").parse()?;
+    tracing::info!(%addr, "listening");
+    let listener = tokio::net::TcpListener::bind(addr).await?;
+    axum::serve(
+        listener,
+        router.into_make_service_with_connect_info::<std::net::SocketAddr>(),
+    )
+    .with_graceful_shutdown(graceful_shutdown())
+    .await?;
+    Ok(())
+}
+
 /// Run an Axum server with a custom shutdown signal.
 ///
 /// Use this when running as a Windows service where you need to control
