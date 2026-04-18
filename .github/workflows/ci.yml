@@ -366,3 +366,77 @@ jobs:
 
       - name: Build + budget
         run: pnpm run budget
+
+  # ─────────────────────────────────────────────────────────
+  # Job 8: lighthouse-ci — per-page performance gate
+  # ─────────────────────────────────────────────────────────
+  lighthouse-ci:
+    name: Lighthouse CI (critical pages)
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    needs: [bundle-budget]
+
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: signapps
+          POSTGRES_PASSWORD: signapps_dev
+          POSTGRES_DB: signapps
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U signapps"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgres://signapps:signapps_dev@localhost:5432/signapps
+      JWT_SECRET: thisisaverylongdevsecretatleast32bytes
+      KEYSTORE_MASTER_KEY: "0000000000000000000000000000000000000000000000000000000000000000"
+      PROXY_ENABLED: "false"
+      PXE_ENABLE_TFTP: "false"
+      MAIL_PROTOCOLS_ENABLED: "false"
+      CONTAINERS_ENABLED: "false"
+      DEPLOY_API_ENABLED: "false"
+      SCHEDULER_TICK_ENABLED: "false"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: client/pnpm-lock.yaml
+
+      - name: Build signapps-platform
+        run: cargo build --release -p signapps-platform
+
+      - name: Build frontend
+        working-directory: client
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm run build
+
+      - name: Start services
+        run: |
+          ./target/release/signapps-platform &
+          cd client && pnpm run start &
+          sleep 20
+
+      - name: Seed admin user
+        run: cargo run --release --bin seed_db -p signapps-identity
+
+      - name: Lighthouse CI
+        working-directory: client
+        run: npx @lhci/cli@latest autorun --config=lighthouse/config.json
