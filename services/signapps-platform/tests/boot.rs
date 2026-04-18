@@ -19,19 +19,32 @@ async fn platform_boots_in_under_three_seconds() {
     // Administrator on Windows) and the smoke test only validates the
     // admin :3003 endpoint.
     std::env::set_var("PROXY_ENABLED", "false");
+    // Keep PXE side-channels off: TFTP needs UDP :69 and DC/ProxyDHCP
+    // need other privileged ports that CI / dev boxes can't bind.
+    std::env::set_var("PXE_ENABLE_TFTP", "false");
+    std::env::set_var("PXE_ENABLE_PROXY_DHCP", "false");
+    std::env::set_var("PXE_ENABLE_DC", "false");
 
-    // Ports that every batch up to and including W2.T12 (batch #2) must
+    // Ports that every batch up to and including W2.T13 (batch #3) must
     // bind on a clean process. Note: collaboration historically binds
     // :3034 (the spec's mention of :3013 referred to a service that
     // does not yet exist in the codebase).
+    //
+    // Batch #3 adds :3008 (metrics), :3016 (pxe admin — side channels
+    // gated off) and :3019 (social).  signapps-nexus and signapps-agent
+    // were explicitly skipped (nexus is a stub not in the workspace,
+    // agent is a client-side endpoint binary).
     let expected_ports: &[u16] = &[
         3001, // identity
         3003, // proxy (admin only — engine disabled for the test)
         3004, // storage
         3006, // securelink
+        3008, // metrics
         3009, // media
         3014, // meet
         3015, // forms
+        3016, // pxe (admin only — TFTP/DHCP/DC disabled for the test)
+        3019, // social
         3020, // chat
         3021, // contacts
         3034, // collaboration
