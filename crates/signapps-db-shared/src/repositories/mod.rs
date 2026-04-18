@@ -18,6 +18,9 @@ pub use job_repository::JobRepository;
 pub mod resource_booking_repository;
 pub use resource_booking_repository::ResourceBookingRepository;
 
+pub mod presentation_repository;
+pub use presentation_repository::PresentationRepository;
+
 pub mod style_repository;
 pub use style_repository::StyleRepository;
 

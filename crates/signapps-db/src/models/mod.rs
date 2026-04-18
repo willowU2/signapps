@@ -154,6 +154,9 @@ pub mod resource_booking {
 pub mod cell_format {
     pub use signapps_db_shared::models::cell_format::*;
 }
+pub mod presentation {
+    pub use signapps_db_shared::models::presentation::*;
+}
 pub mod style {
     pub use signapps_db_shared::models::style::*;
 }
@@ -173,6 +176,7 @@ pub mod vault {
 pub use audit_log::*;
 pub use backup::*;
 pub use cell_format::*;
+pub use presentation::*;
 pub use calendar::*;
 pub use certificate::*;
 pub use company::*;

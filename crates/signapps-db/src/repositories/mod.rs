@@ -100,6 +100,9 @@ pub use signapps_db_shared::repositories::CompanyRepository;
 // Cell format & sheet metadata repositories — lives in signapps-db-shared.
 pub use signapps_db_shared::repositories::CellFormatRepository;
 
+// Presentation, slide layout, and slide repositories — lives in signapps-db-shared.
+pub use signapps_db_shared::repositories::PresentationRepository;
+
 // Style inheritance repositories — lives in signapps-db-shared.
 pub use signapps_db_shared::repositories::StyleRepository;
 
