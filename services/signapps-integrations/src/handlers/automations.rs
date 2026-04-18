@@ -391,8 +391,7 @@ pub async fn approve_extension(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Result<Json<serde_json::Value>> {
-    let extension =
-        AutomationRepository::approve_extension(&state.pool, id, claims.sub).await?;
+    let extension = AutomationRepository::approve_extension(&state.pool, id, claims.sub).await?;
 
     tracing::info!(extension_id = %id, "Extension approved");
 

@@ -42,6 +42,7 @@ signapps-signatures = { path = "../signapps-signatures" }
 signapps-gamification = { path = "../signapps-gamification" }
 signapps-compliance = { path = "../signapps-compliance" }
 signapps-backup   = { path = "../signapps-backup" }
+signapps-integrations = { path = "../signapps-integrations" }
 
 anyhow  = { workspace = true }
 axum    = { workspace = true }

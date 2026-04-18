@@ -31,6 +31,7 @@ pub fn declare(shared: SharedState) -> Vec<ServiceSpec> {
         spec_gamification(shared.clone()),
         spec_compliance(shared.clone()),
         spec_backup(shared.clone()),
+        spec_integrations(shared.clone()),
     ]
 }
 
@@ -297,6 +298,16 @@ fn spec_backup(shared: SharedState) -> ServiceSpec {
         async move {
             let router = signapps_backup::router(shared).await?;
             run_server_on_addr(router, "0.0.0.0", 3031).await
+        }
+    })
+}
+
+fn spec_integrations(shared: SharedState) -> ServiceSpec {
+    ServiceSpec::new("signapps-integrations", 3030, move || {
+        let shared = shared.clone();
+        async move {
+            let router = signapps_integrations::router(shared).await?;
+            run_server_on_addr(router, "0.0.0.0", 3030).await
         }
     })
 }
