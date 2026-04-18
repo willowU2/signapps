@@ -7,6 +7,12 @@ import { usePageTitle } from "@/hooks/use-page-title";
 import { AppLayout } from "@/components/layout/app-layout";
 import { formsApi } from "@/lib/api/forms";
 import type { Form, FormField } from "@/lib/api/forms";
+import { FIELD_CATEGORIES } from "@/lib/forms/field-catalog";
+import { FormFieldStylePanel } from "@/components/forms/form-field-style-panel";
+import { FormLivePreview } from "@/components/forms/form-live-preview";
+import { ImageChoiceEditor } from "@/components/forms/image-choice-editor";
+import { MatrixEditor } from "@/components/forms/matrix-editor";
+import { cn } from "@/lib/utils";
 import {
   Card,
   CardContent,
@@ -93,6 +99,66 @@ interface SortableFieldProps {
   updateField: (id: string, updates: Partial<ExtendedFormField>) => void;
   removeField: (id: string) => void;
   quizMode: boolean;
+}
+
+/**
+ * Collapsible toggle for the conditional-logic editor.
+ * Hidden by default — user clicks the pill button to configure a rule,
+ * or it auto-expands if a rule is already set.
+ */
+function ConditionalLogicToggle({
+  field,
+  allFields,
+  onUpdate,
+}: {
+  field: FormField;
+  allFields: FormField[];
+  onUpdate: (cond: ConditionGroup | undefined) => void;
+}) {
+  const cond = (field as FormField & { show_if?: ConditionGroup }).show_if;
+  const hasLogic = Boolean(
+    cond &&
+      ((cond as ConditionGroup).conditions?.some((c) => c.field_id) ||
+        (cond as unknown as { field_id?: string }).field_id),
+  );
+  const [open, setOpen] = useState(hasLogic);
+
+  if (!open) {
+    return (
+      <div className="mb-3">
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground border border-dashed border-border rounded-full px-2.5 py-1 transition-colors"
+          title="Ajouter une règle d'affichage conditionnel"
+        >
+          <Plus className="h-3 w-3" />
+          Logique conditionnelle
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mb-4 relative">
+      <button
+        type="button"
+        onClick={() => {
+          onUpdate(undefined);
+          setOpen(false);
+        }}
+        className="absolute -top-2 right-2 z-10 text-[10px] text-muted-foreground hover:text-destructive bg-background border rounded-full px-2 py-0.5"
+        title="Retirer la logique conditionnelle"
+      >
+        Retirer
+      </button>
+      <ConditionalLogicEditor
+        field={field}
+        allFields={allFields}
+        onChange={(cond) => onUpdate(cond)}
+      />
+    </div>
+  );
 }
 
 function SortableField({
@@ -210,20 +276,38 @@ function SortableField({
               }
             >
               <SelectTrigger className="h-9">
-                <SelectValue />
+                <SelectValue placeholder="Choisir un type..." />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Text">Texte court</SelectItem>
-                <SelectItem value="TextArea">Paragraphe</SelectItem>
-                <SelectItem value="Number">Nombre</SelectItem>
-                <SelectItem value="Email">Email</SelectItem>
-                <SelectItem value="SingleChoice">
-                  Choix unique (Radio)
-                </SelectItem>
-                <SelectItem value="MultipleChoice">Cases à cocher</SelectItem>
-                <SelectItem value="Date">Date</SelectItem>
-                <SelectItem value="File">Fichier</SelectItem>
-                <SelectItem value="Signature">Signature</SelectItem>
+              <SelectContent className="max-h-[400px]">
+                {FIELD_CATEGORIES.map((cat) => (
+                  <div key={cat.id}>
+                    <div className="px-2 py-1.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider bg-muted/50 sticky top-0">
+                      {cat.label}
+                    </div>
+                    {cat.fields.map((fdef) => {
+                      const Icon = fdef.icon;
+                      return (
+                        <SelectItem
+                          key={fdef.type}
+                          value={fdef.type}
+                          className="text-xs"
+                        >
+                          <div className="flex items-center gap-2">
+                            <div
+                              className={cn(
+                                "h-5 w-5 rounded flex items-center justify-center text-white shrink-0",
+                                fdef.accent,
+                              )}
+                            >
+                              <Icon className="h-3 w-3" />
+                            </div>
+                            <span>{fdef.label}</span>
+                          </div>
+                        </SelectItem>
+                      );
+                    })}
+                  </div>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -249,11 +333,15 @@ function SortableField({
         </div>
 
         {(field.field_type === "SingleChoice" ||
-          field.field_type === "MultipleChoice") && (
+          field.field_type === "MultipleChoice" ||
+          field.field_type === "Dropdown" ||
+          field.field_type === "Ranking") && (
           <div className="space-y-4 mb-4 bg-muted/20 p-3 rounded-md border">
             <div>
               <Label className="text-xs font-semibold text-muted-foreground mb-2 block">
-                Options disponibles
+                {field.field_type === "Ranking"
+                  ? "Éléments à classer (ordre initial proposé au répondant)"
+                  : "Options disponibles"}
               </Label>
               <div className="space-y-2">
                 {(field.options || []).map((opt, i) => (
@@ -380,14 +468,28 @@ function SortableField({
           </div>
         )}
 
-        {/* Conditional logic */}
-        <div className="mb-4">
-          <ConditionalLogicEditor
+        {/* Image choice options editor */}
+        {field.field_type === "ImageChoice" && (
+          <ImageChoiceEditor
             field={field as FormField}
-            allFields={allFields as FormField[]}
-            onChange={(cond) => updateField(field.id, { show_if: cond })}
+            onUpdate={(patch) => updateField(field.id, patch)}
           />
-        </div>
+        )}
+
+        {/* Matrix rows/columns editor */}
+        {field.field_type === "Matrix" && (
+          <MatrixEditor
+            field={field as FormField}
+            onUpdate={(patch) => updateField(field.id, patch)}
+          />
+        )}
+
+        {/* Conditional logic — collapsed by default, shown only if active */}
+        <ConditionalLogicToggle
+          field={field as FormField}
+          allFields={allFields as FormField[]}
+          onUpdate={(cond) => updateField(field.id, { show_if: cond })}
+        />
 
         <div className="flex items-center justify-end border-t pt-3 mt-2">
           <div className="flex items-center space-x-2">
@@ -405,6 +507,14 @@ function SortableField({
               Champ obligatoire
             </Label>
           </div>
+        </div>
+
+        {/* Per-field style panel — collapsible, appears after each field */}
+        <div className="mt-3">
+          <FormFieldStylePanel
+            field={field}
+            onChange={(patch) => updateField(field.id, patch)}
+          />
         </div>
       </div>
     </Card>
@@ -564,7 +674,7 @@ export default function FormBuilderPage() {
           </div>
           <div className="flex gap-2">
             <Button variant="outline" asChild data-testid="form-editor-preview">
-              <Link href={`/f/${formId}`} target="_blank">
+              <Link href={`/f/${formId}?preview=1`} target="_blank">
                 <Eye className="h-4 w-4 mr-2" /> Aperçu public
               </Link>
             </Button>
@@ -585,6 +695,10 @@ export default function FormBuilderPage() {
           <TabsList data-testid="form-editor-tabs">
             <TabsTrigger value="builder" data-testid="form-editor-tab-builder">
               Éditeur
+            </TabsTrigger>
+            <TabsTrigger value="preview" data-testid="form-editor-tab-preview">
+              <Eye className="h-3.5 w-3.5 mr-1.5" />
+              Aperçu
             </TabsTrigger>
             <TabsTrigger
               value="analytics"
@@ -666,104 +780,59 @@ export default function FormBuilderPage() {
                       </CardDescription>
                     </CardHeader>
                     <CardContent
-                      className="p-4 grid grid-cols-2 gap-2"
+                      className="p-3 space-y-4 max-h-[calc(100vh-200px)] overflow-y-auto"
                       data-testid="form-field-palette"
                     >
-                      <Button
-                        variant="outline"
-                        className="justify-start h-auto py-3 px-3 hover:border-primary/50"
-                        onClick={() => addField("Text")}
-                        data-testid="form-field-palette-text"
-                      >
-                        <Type className="h-4 w-4 mr-2 text-blue-500" />
-                        <span className="text-xs">Texte Court</span>
-                      </Button>
-                      <Button
-                        variant="outline"
-                        className="justify-start h-auto py-3 px-3 hover:border-primary/50"
-                        onClick={() => addField("TextArea")}
-                        data-testid="form-field-palette-textarea"
-                      >
-                        <List className="h-4 w-4 mr-2 text-indigo-500" />
-                        <span className="text-xs">Paragraphe</span>
-                      </Button>
-                      <Button
-                        variant="outline"
-                        className="justify-start h-auto py-3 px-3 hover:border-primary/50"
-                        onClick={() => addField("SingleChoice")}
-                        data-testid="form-field-palette-singlechoice"
-                      >
-                        <CircleDot className="h-4 w-4 mr-2 text-emerald-500" />
-                        <span className="text-xs">Choix unique</span>
-                      </Button>
-                      <Button
-                        variant="outline"
-                        className="justify-start h-auto py-3 px-3 hover:border-primary/50"
-                        onClick={() => addField("MultipleChoice")}
-                        data-testid="form-field-palette-multiplechoice"
-                      >
-                        <CheckSquare className="h-4 w-4 mr-2 text-emerald-500" />
-                        <span className="text-xs">Choix multiple</span>
-                      </Button>
-                      <Button
-                        variant="outline"
-                        className="justify-start h-auto py-3 px-3 hover:border-primary/50"
-                        onClick={() => addField("Number")}
-                        data-testid="form-field-palette-number"
-                      >
-                        <Hash className="h-4 w-4 mr-2 text-orange-500" />
-                        <span className="text-xs">Nombre</span>
-                      </Button>
-                      <Button
-                        variant="outline"
-                        className="justify-start h-auto py-3 px-3 hover:border-primary/50"
-                        onClick={() => addField("Email")}
-                        data-testid="form-field-palette-email"
-                      >
-                        <Mail className="h-4 w-4 mr-2 text-sky-500" />
-                        <span className="text-xs">Email</span>
-                      </Button>
-                      <Button
-                        variant="outline"
-                        className="justify-start h-auto py-3 px-3 hover:border-primary/50"
-                        onClick={() => addField("Date")}
-                        data-testid="form-field-palette-date"
-                      >
-                        <Calendar className="h-4 w-4 mr-2 text-rose-500" />
-                        <span className="text-xs">Date</span>
-                      </Button>
-                      <Button
-                        variant="outline"
-                        className="justify-start h-auto py-3 px-3 hover:border-primary/50"
-                        onClick={() => addField("File")}
-                        data-testid="form-field-palette-file"
-                      >
-                        <ImageIcon className="h-4 w-4 mr-2 text-fuchsia-500" />
-                        <span className="text-xs">Fichier</span>
-                      </Button>
-                      <Button
-                        variant="outline"
-                        className="justify-start h-auto py-3 px-3 hover:border-primary/50"
-                        onClick={() => addField("Signature")}
-                        data-testid="form-field-palette-signature"
-                      >
-                        <PenLine className="h-4 w-4 mr-2 text-cyan-500" />
-                        <span className="text-xs">Signature</span>
-                      </Button>
-                      <Button
-                        variant="outline"
-                        className="justify-start h-auto py-3 px-3 hover:border-primary/50"
-                        onClick={() => addField("PageBreak")}
-                        data-testid="form-field-palette-pagebreak"
-                      >
-                        <Layers className="h-4 w-4 mr-2 text-violet-500" />
-                        <span className="text-xs">Saut de page</span>
-                      </Button>
+                      {FIELD_CATEGORIES.map((cat) => (
+                        <div key={cat.id} className="space-y-1.5">
+                          <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider px-1">
+                            {cat.label}
+                          </p>
+                          <div className="grid grid-cols-2 gap-1.5">
+                            {cat.fields.map((fdef) => {
+                              const Icon = fdef.icon;
+                              return (
+                                <button
+                                  key={fdef.type}
+                                  type="button"
+                                  onClick={() => addField(fdef.type)}
+                                  className="flex items-center gap-2 rounded-md border border-border bg-background hover:border-primary/50 hover:bg-muted/30 p-2 transition-all group"
+                                  title={fdef.description}
+                                  data-testid={`form-field-palette-${fdef.type.toLowerCase()}`}
+                                >
+                                  <div
+                                    className={cn(
+                                      "h-6 w-6 rounded flex items-center justify-center text-white shrink-0",
+                                      fdef.accent,
+                                    )}
+                                  >
+                                    <Icon className="h-3.5 w-3.5" />
+                                  </div>
+                                  <span className="text-[10px] text-left leading-tight flex-1 truncate">
+                                    {fdef.label}
+                                  </span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ))}
                     </CardContent>
                   </Card>
                 </div>
               </div>
             </div>
+          </TabsContent>
+
+          {/* Preview Tab — live WYSIWYG of what respondents see, no publish needed */}
+          <TabsContent value="preview" className="mt-4">
+            {form ? (
+              <FormLivePreview form={{ ...form, fields }} />
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Chargement du formulaire...
+              </p>
+            )}
           </TabsContent>
 
           {/* Analytics Tab */}

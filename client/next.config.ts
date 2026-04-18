@@ -99,7 +99,7 @@ const nextConfig = {
           {
             key: "Content-Security-Policy",
             value:
-              "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src * data: blob:; connect-src 'self' http://localhost:* ws://localhost:* https://api.openverse.org https://openverse.org https://*.openverse.org https://commons.wikimedia.org https://upload.wikimedia.org https://picsum.photos https://api.unsplash.com https://images.unsplash.com https://api.pexels.com https://images.pexels.com https://pixabay.com https://cdn.pixabay.com https://data.jsdelivr.com https://cdn.jsdelivr.net https://3dicons.sgp1.cdn.digitaloceanspaces.com; font-src 'self' data:; media-src 'self' blob:; frame-src 'self'",
+              "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src * data: blob:; connect-src 'self' http://localhost:* ws://localhost:* https://api.openverse.org https://openverse.org https://*.openverse.org https://commons.wikimedia.org https://upload.wikimedia.org https://picsum.photos https://api.unsplash.com https://images.unsplash.com https://api.pexels.com https://images.pexels.com https://pixabay.com https://cdn.pixabay.com https://data.jsdelivr.com https://cdn.jsdelivr.net https://3dicons.sgp1.cdn.digitaloceanspaces.com https://nominatim.openstreetmap.org; font-src 'self' data:; media-src 'self' blob:; frame-src 'self' https://www.openstreetmap.org",
           },
         ],
       },
