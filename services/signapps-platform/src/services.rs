@@ -36,6 +36,7 @@ pub fn declare(shared: SharedState) -> Vec<ServiceSpec> {
         spec_mail(shared.clone()),
         spec_docs(shared.clone()),
         spec_containers(shared.clone()),
+        spec_deploy(shared.clone()),
     ]
 }
 
@@ -372,6 +373,24 @@ fn spec_containers(shared: SharedState) -> ServiceSpec {
             // and the :3002 admin API still serves.
             let router = signapps_containers::router(shared).await?;
             run_server_on_addr(router, "0.0.0.0", 3002).await
+        }
+    })
+}
+
+fn spec_deploy(shared: SharedState) -> ServiceSpec {
+    ServiceSpec::new("signapps-deploy", 3700, move || {
+        let shared = shared.clone();
+        async move {
+            // The protected /api/v1/deploy/* router is dormant by default
+            // and only mounted when DEPLOY_API_ENABLED=true. The :3700
+            // listener always serves the public /health and /version
+            // routes so the supervisor can probe it.
+            //
+            // Default port 3700 sits above the Windows Hyper-V reserved
+            // range (typically 2953-3653) — see services/signapps-deploy/
+            // src/bin/server.rs for context.
+            let router = signapps_deploy::router(shared).await?;
+            run_server_on_addr(router, "0.0.0.0", 3700).await
         }
     })
 }

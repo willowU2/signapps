@@ -47,6 +47,7 @@ signapps-calendar = { path = "../signapps-calendar" }
 signapps-mail     = { path = "../signapps-mail" }
 signapps-docs     = { path = "../signapps-docs" }
 signapps-containers = { path = "../signapps-containers" }
+signapps-deploy   = { path = "../signapps-deploy" }
 
 anyhow  = { workspace = true }
 axum    = { workspace = true }
