@@ -26,6 +26,7 @@ pub fn declare(shared: SharedState) -> Vec<ServiceSpec> {
         spec_vault(shared.clone()),
         spec_org(shared.clone()),
         spec_tenant_config(shared.clone()),
+        spec_billing(shared.clone()),
     ]
 }
 
@@ -237,6 +238,19 @@ fn spec_tenant_config(shared: SharedState) -> ServiceSpec {
         async move {
             let router = signapps_tenant_config::router(shared).await?;
             run_server_on_addr(router, "0.0.0.0", 3029).await
+        }
+    })
+}
+
+fn spec_billing(shared: SharedState) -> ServiceSpec {
+    ServiceSpec::new("signapps-billing", 8096, move || {
+        let shared = shared.clone();
+        async move {
+            // router() spawns the cross-service event consumer
+            // (crm.deal.won → auto-create draft invoice) as a detached
+            // tokio task tied to this factory scope.
+            let router = signapps_billing::router(shared).await?;
+            run_server_on_addr(router, "0.0.0.0", 8096).await
         }
     })
 }

@@ -6,6 +6,11 @@ rust-version.workspace = true
 authors.workspace = true
 license.workspace = true
 description = "Billing service for SignApps Platform — plans and invoices"
+default-run = "signapps-billing"
+
+[lib]
+name = "signapps_billing"
+path = "src/lib.rs"
 
 [[bin]]
 name = "signapps-billing"
@@ -15,6 +20,7 @@ path = "src/main.rs"
 mimalloc = { workspace = true }
 signapps-common = { path = "../../crates/signapps-common" }
 signapps-db = { path = "../../crates/signapps-db" }
+signapps-service = { path = "../../crates/signapps-service" }
 axum = { workspace = true }
 tokio = { workspace = true }
 serde = { workspace = true }
@@ -34,3 +40,7 @@ hmac = "0.12"
 sha2 = "0.10"
 hex = { workspace = true }
 utoipa = { workspace = true }
+
+[dev-dependencies]
+tokio-test = { workspace = true }
+tower = { workspace = true }
