@@ -10,7 +10,10 @@
 //!
 //! # Panics
 //!
-//! Aucun panic possible — toutes les erreurs sont propagées via
+//! [`SharedState::init_once`] delegates JWT config construction to
+//! [`signapps_common::JwtConfig::from_env`], which panics on missing or
+//! malformed `JWT_SECRET` / `JWT_PRIVATE_KEY_PEM` / `JWT_PUBLIC_KEY_PEM`
+//! environment variables.  Every other subsystem propagates errors via
 //! `anyhow::Result`.
 
 use std::sync::Arc;
@@ -20,6 +23,20 @@ use signapps_cache::CacheService;
 use signapps_common::{bootstrap::load_env, pg_events::PgEventBus, JwtConfig};
 use signapps_db::{create_pool, DatabasePool};
 use signapps_keystore::{Keystore, KeystoreBackend};
+
+/// Identity string used by every subsystem running inside the
+/// single-binary when publishing Postgres events or emitting logs
+/// scoped to the whole process.
+pub const PLATFORM_SOURCE: &str = "signapps-platform";
+
+/// Max entries kept by the shared in-process cache (rate limit counters,
+/// JWT blacklist, misc per-request memoization).  Dimensioned for a
+/// realistic tenant load; bump if you observe eviction pressure.
+const CACHE_MAX_ENTRIES: u64 = 50_000;
+
+/// Default TTL applied to cache entries whose caller did not override it.
+/// 15 minutes matches the access-token lifetime of `signapps-identity`.
+const CACHE_DEFAULT_TTL: std::time::Duration = std::time::Duration::from_secs(900);
 
 /// Aggregate of every resource that must live for the lifetime of the
 /// single-binary process. Constructed exactly once via
@@ -51,8 +68,10 @@ impl SharedState {
     ///
     /// # Panics
     ///
-    /// Aucun panic possible — toutes les erreurs sont propagées via
-    /// `anyhow::Result`.
+    /// Propagates the panic contract of [`JwtConfig::from_env`] — which
+    /// panics on missing / malformed JWT key material.  All other
+    /// failures (DB connect, keystore unlock, env lookup) are returned
+    /// as [`anyhow::Error`].
     ///
     /// # Examples
     ///
@@ -82,14 +101,11 @@ impl SharedState {
                 .context("failed to unlock shared keystore")?,
         );
 
-        let cache = Arc::new(CacheService::new(
-            50_000,
-            std::time::Duration::from_secs(900),
-        ));
+        let cache = Arc::new(CacheService::new(CACHE_MAX_ENTRIES, CACHE_DEFAULT_TTL));
 
         let event_bus = Arc::new(PgEventBus::new(
             pool.inner().clone(),
-            "signapps-platform".to_string(),
+            PLATFORM_SOURCE.to_string(),
         ));
 
         Ok(Self {
