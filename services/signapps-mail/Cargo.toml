@@ -3,6 +3,15 @@ name = "signapps-mail"
 version = "0.1.0"
 edition = "2021"
 license.workspace = true
+default-run = "signapps-mail"
+
+[lib]
+name = "signapps_mail"
+path = "src/lib.rs"
+
+[[bin]]
+name = "signapps-mail"
+path = "src/main.rs"
 
 [dependencies]
 mimalloc = { workspace = true }
@@ -22,6 +31,7 @@ chrono = { version = "0.4", features = ["serde"] }
 signapps-common = { path = "../../crates/signapps-common" }
 signapps-oauth = { path = "../../crates/signapps-oauth" }
 signapps-keystore = { path = "../../crates/signapps-keystore" }
+signapps-service = { path = "../../crates/signapps-service" }
 anyhow = { workspace = true }
 signapps-sharing = { path = "../../crates/signapps-sharing" }
 signapps-cache = { path = "../../crates/signapps-cache" }

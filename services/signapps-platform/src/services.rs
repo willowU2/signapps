@@ -33,6 +33,7 @@ pub fn declare(shared: SharedState) -> Vec<ServiceSpec> {
         spec_backup(shared.clone()),
         spec_integrations(shared.clone()),
         spec_calendar(shared.clone()),
+        spec_mail(shared.clone()),
     ]
 }
 
@@ -323,6 +324,22 @@ fn spec_calendar(shared: SharedState) -> ServiceSpec {
             // as detached tokio tasks tied to this factory scope.
             let router = signapps_calendar::router(shared).await?;
             run_server_on_addr(router, "0.0.0.0", 3011).await
+        }
+    })
+}
+
+fn spec_mail(shared: SharedState) -> ServiceSpec {
+    ServiceSpec::new("signapps-mail", 3012, move || {
+        let shared = shared.clone();
+        async move {
+            // router() spawns: polling sync, IMAP IDLE listeners, daily/
+            // weekly digests, scheduled-email dispatcher, OAuth consumer,
+            // cross-service event listener (calendar.task.overdue,
+            // billing.invoice.{overdue,created}). The SMTP/IMAP/DAV/Sieve
+            // protocol listeners are gated behind MAIL_PROTOCOLS_ENABLED
+            // and default-off in the test/dev runtime.
+            let router = signapps_mail::router(shared).await?;
+            run_server_on_addr(router, "0.0.0.0", 3012).await
         }
     })
 }

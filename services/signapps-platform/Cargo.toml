@@ -44,6 +44,7 @@ signapps-compliance = { path = "../signapps-compliance" }
 signapps-backup   = { path = "../signapps-backup" }
 signapps-integrations = { path = "../signapps-integrations" }
 signapps-calendar = { path = "../signapps-calendar" }
+signapps-mail     = { path = "../signapps-mail" }
 
 anyhow  = { workspace = true }
 axum    = { workspace = true }
