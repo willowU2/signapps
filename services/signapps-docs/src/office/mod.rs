@@ -13,6 +13,7 @@ pub mod presentation;
 pub mod spreadsheet;
 
 use crate::office::handlers::jobs::JobStore;
+use signapps_filters::FilterRegistry;
 
 /// Application state for the office sub-service (stateless document conversion).
 #[derive(Clone)]
@@ -22,6 +23,8 @@ pub struct OfficeState {
     pub cache: signapps_cache::BinaryCacheService,
     /// In-memory async job queue for heavy document exports (MT-02)
     pub jobs: JobStore,
+    /// Unified document filter pipeline for format conversion.
+    pub filters: std::sync::Arc<FilterRegistry>,
 }
 
 impl OfficeState {
@@ -32,6 +35,7 @@ impl OfficeState {
             importer: importer::DocumentImporter::new(),
             cache: signapps_cache::BinaryCacheService::default_config(),
             jobs: handlers::jobs::new_job_store(),
+            filters: std::sync::Arc::new(FilterRegistry::default()),
         }
     }
 }

@@ -305,6 +305,7 @@ export function AudioGenPanel() {
 
               {/* Audio player */}
               <div className="rounded-lg border bg-muted/30 p-4">
+                {/* eslint-disable-next-line jsx-a11y/media-has-caption -- Captions not available for this media type */}
                 <audio src={result.audio_url} controls className="w-full" />
               </div>
 

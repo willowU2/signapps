@@ -519,9 +519,9 @@ export function DriveRightSidebar() {
                   </div>
                   <p className="text-[10px] text-center text-[#5f6368] mt-3 pb-2">
                     Gemini peut faire des erreurs.{" "}
-                    <a href="#" className="underline">
+                    <button type="button" className="underline">
                       En savoir plus
-                    </a>
+                    </button>
                   </p>
                 </div>
               </div>

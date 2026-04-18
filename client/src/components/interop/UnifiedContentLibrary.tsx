@@ -280,7 +280,7 @@ export function UnifiedContentLibrary() {
                     rel="noopener noreferrer"
                     className="aspect-square rounded-lg border overflow-hidden bg-muted/30 hover:opacity-80 transition-opacity"
                   >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/no-noninteractive-element-interactions */}
                     <img
                       src={m.url}
                       alt={m.name}

@@ -632,6 +632,7 @@ export function FilePreviewDialog({
           <div className="flex flex-col items-center justify-center p-8 space-y-4">
             <Music className="h-16 w-16 text-pink-500" />
             <p className="font-medium">{file.name}</p>
+            {/* eslint-disable-next-line jsx-a11y/media-has-caption -- Captions not available for this media type */}
             <audio controls src={blobUrl} className="w-full max-w-md" />
           </div>
         ) : null;

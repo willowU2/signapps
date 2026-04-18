@@ -187,10 +187,14 @@ export function ShortcutManager() {
             <p className="text-sm text-muted-foreground">
               {editingId && shortcuts.find((s) => s.id === editingId)?.name}
             </p>
+            {/* eslint-disable jsx-a11y/no-noninteractive-element-interactions, jsx-a11y/no-noninteractive-tabindex */}
+            {/* Keyboard shortcut capture area — tabIndex + onKeyDown are required to receive key events for shortcut recording */}
             <div
               onKeyDown={handleKeyDown}
               className="p-6 rounded-lg border-2 border-dashed bg-muted/30 text-center focus:outline-none focus:border-primary transition-colors"
               tabIndex={0}
+              role="group"
+              aria-label="Zone de capture de raccourci clavier"
             >
               {recordedKeys.length > 0 ? (
                 <div className="flex items-center justify-center gap-1">
@@ -205,6 +209,7 @@ export function ShortcutManager() {
                 </p>
               )}
             </div>
+            {/* eslint-enable jsx-a11y/no-noninteractive-element-interactions, jsx-a11y/no-noninteractive-tabindex */}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsDialogOpen(false)}>

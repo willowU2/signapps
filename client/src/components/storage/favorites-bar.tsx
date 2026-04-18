@@ -249,13 +249,14 @@ export function FavoritesBar({ maxFavorites = 4 }: FavoritesBarProps) {
                 </div>
 
                 {/* Name */}
-                <p
-                  className="text-xs font-medium truncate cursor-pointer hover:underline"
+                <button
+                  type="button"
+                  className="text-xs font-medium truncate cursor-pointer hover:underline text-left"
                   onClick={() => handleNavigate(favorite)}
                   title={favorite.display_name || favorite.filename}
                 >
                   {favorite.display_name || favorite.filename}
-                </p>
+                </button>
 
                 {/* Menu (shown on hover) */}
                 <DropdownMenu>

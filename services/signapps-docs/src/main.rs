@@ -53,6 +53,11 @@ fn office_router() -> Router<OfficeState> {
         // Async job queue routes
         .route("/api/v1/office/jobs/convert", post(handlers::jobs::submit_convert_job))
         .route("/api/v1/office/jobs/:id", get(handlers::jobs::get_job_status))
+        // Unified filter pipeline routes (FilterRegistry)
+        .route("/api/v1/filters/formats", get(handlers::filters::list_formats))
+        .route("/api/v1/filters/import", post(handlers::filters::import_file))
+        .route("/api/v1/filters/export", post(handlers::filters::export_file))
+        .route("/api/v1/filters/convert", post(handlers::filters::convert_file))
 }
 use signapps_cache::CacheService;
 use signapps_common::bootstrap::{init_tracing, load_env, ServiceConfig};
@@ -79,6 +84,10 @@ use handlers::health::health_handler;
 use handlers::macros::{create_macro, delete_macro, list_macros, update_macro};
 use handlers::notes::{create_note, delete_note, list_notes, update_note};
 use handlers::templates::{create_template, delete_template, get_template, list_templates};
+use handlers::sheet_formats::{
+    batch_upsert_formats, delete_format, get_metadata, list_formats, upsert_format,
+    upsert_metadata,
+};
 use handlers::types::{board, chat, sheet, slide, text};
 use handlers::websocket::websocket_handler;
 use signapps_common::AiIndexerClient;
@@ -147,7 +156,16 @@ async fn main() -> anyhow::Result<()> {
         .route(
             "/api/v1/fonts/files/:family/:variant",
             get(handlers::fonts::get_font_file),
-        );
+        )
+        // Drawing endpoints — stateless rendering, no auth required
+        .route("/api/v1/drawing/render/svg", post(handlers::drawing::render_svg))
+        .route("/api/v1/drawing/render/png", post(handlers::drawing::render_png))
+        .route("/api/v1/drawing/charts", post(handlers::drawing::generate_chart))
+        // Server-side render endpoints — stateless document/slide/template rendering
+        .route("/api/v1/render/document", post(handlers::server_render::render_document))
+        .route("/api/v1/render/slide", post(handlers::server_render::render_slide))
+        .route("/api/v1/render/thumbnail", post(handlers::server_render::render_thumbnail))
+        .route("/api/v1/render/template", post(handlers::server_render::render_template));
 
     // Protected routes (auth required)
     let protected_routes = Router::new()
@@ -207,6 +225,44 @@ async fn main() -> anyhow::Result<()> {
         .route("/api/v1/keep/notes", post(create_note))
         .route("/api/v1/keep/notes/:id", put(update_note))
         .route("/api/v1/keep/notes/:id", delete(delete_note))
+        // Style definitions (cascade inheritance for docs, sheets, slides)
+        .route("/api/v1/styles", get(handlers::styles::list_styles).post(handlers::styles::create_style))
+        .route("/api/v1/styles/templates/:template_id", get(handlers::styles::list_template_styles))
+        .route("/api/v1/styles/:id", get(handlers::styles::get_style).put(handlers::styles::update_style).delete(handlers::styles::delete_style))
+        .route("/api/v1/styles/:id/resolved", get(handlers::styles::get_resolved_style))
+        // Presentations persistence (slides CRUD)
+        .route("/api/v1/presentations", post(handlers::presentations::create_presentation))
+        .route("/api/v1/presentations/:doc_id", get(handlers::presentations::get_presentation).put(handlers::presentations::update_presentation))
+        .route("/api/v1/presentations/:doc_id/layouts", get(handlers::presentations::list_layouts))
+        .route("/api/v1/presentations/:doc_id/slides", get(handlers::presentations::list_slides).post(handlers::presentations::create_slide))
+        .route("/api/v1/presentations/:doc_id/slides/reorder", put(handlers::presentations::reorder_slides))
+        .route("/api/v1/presentations/:doc_id/slides/:slide_id", put(handlers::presentations::update_slide).delete(handlers::presentations::delete_slide))
+        // Sheet format persistence (cell formats + sheet metadata)
+        .route("/api/v1/sheets/:doc_id/formats", get(list_formats))
+        .route("/api/v1/sheets/:doc_id/formats/batch", post(batch_upsert_formats))
+        .route("/api/v1/sheets/:doc_id/formats/:cell_ref", put(upsert_format))
+        .route("/api/v1/sheets/:doc_id/formats/:cell_ref", delete(delete_format))
+        .route("/api/v1/sheets/:doc_id/metadata", get(get_metadata))
+        .route("/api/v1/sheets/:doc_id/metadata", put(upsert_metadata))
+        // Document versioning (command log + snapshots)
+        .route("/api/v1/versions/:doc_id/commands", post(handlers::versions::append_command).get(handlers::versions::list_commands))
+        .route("/api/v1/versions/:doc_id/undo", post(handlers::versions::undo_last_command))
+        .route("/api/v1/versions/:doc_id/snapshots", post(handlers::versions::create_snapshot).get(handlers::versions::list_snapshots))
+        .route("/api/v1/versions/:doc_id/snapshots/diff", post(handlers::versions::diff_snapshots))
+        .route("/api/v1/versions/:doc_id/snapshots/:id", get(handlers::versions::get_snapshot))
+        .route("/api/v1/versions/:doc_id/snapshots/:id/restore", post(handlers::versions::restore_snapshot))
+        // Template variables (Polotno-inspired dynamic generation)
+        .route("/api/v1/templates/:id/variables", get(handlers::template_vars::list_variables).post(handlers::template_vars::create_variable))
+        .route("/api/v1/templates/:id/variables/:var_id", delete(handlers::template_vars::delete_variable))
+        .route("/api/v1/templates/:id/resolve", post(handlers::template_vars::resolve_variables))
+        .route("/api/v1/templates/:id/batch-export", post(handlers::template_vars::batch_export))
+        // Social media presets
+        .route("/api/v1/social-presets", get(handlers::template_vars::list_social_presets))
+        .route("/api/v1/social-presets/:platform", get(handlers::template_vars::list_social_presets_by_platform))
+        // Design validation rules
+        .route("/api/v1/validation/rules", get(handlers::validation::list_rules).post(handlers::validation::create_rule))
+        .route("/api/v1/validation/rules/:id", put(handlers::validation::update_rule).delete(handlers::validation::delete_rule))
+        .route("/api/v1/validation/check", post(handlers::validation::check_document))
         // Collab WebSocket alias — originally signapps-collab (port 3013), now served from port 3010
         // Old URL: ws://localhost:3013/api/v1/collab/ws/:doc_id
         // New URL: ws://localhost:3010/api/v1/collab/ws/:doc_id

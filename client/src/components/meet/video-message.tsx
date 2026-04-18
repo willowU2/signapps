@@ -363,6 +363,7 @@ export function VideoMessage() {
                 {/* Video Player */}
                 {playingId === message.id && message.videoUrl && (
                   <div className="mt-4 bg-black rounded-lg overflow-hidden aspect-video w-full">
+                    {/* eslint-disable-next-line jsx-a11y/media-has-caption -- Captions not available for this media type */}
                     <video
                       key={message.id}
                       src={message.videoUrl}

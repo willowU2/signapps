@@ -111,6 +111,7 @@ export function VideoPreview({ src, fileName }: VideoPreviewProps) {
     <div ref={containerRef} className="bg-black rounded-lg overflow-hidden">
       {/* Video Player */}
       <div className="relative w-full bg-black aspect-video flex items-center justify-center">
+        {/* eslint-disable-next-line jsx-a11y/media-has-caption -- Captions not available for this media type */}
         <video
           ref={videoRef}
           src={src}

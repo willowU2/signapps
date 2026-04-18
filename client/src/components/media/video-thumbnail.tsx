@@ -98,6 +98,7 @@ export function VideoThumbnailGenerator() {
           <div className="space-y-4">
             {/* Hidden video + canvas for extraction */}
 
+            {/* eslint-disable-next-line jsx-a11y/media-has-caption -- Captions not available for this media type */}
             <video
               ref={videoRef}
               src={videoUrl}

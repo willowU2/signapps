@@ -1056,6 +1056,7 @@ export function MailDisplay({
           )}
           {!decryptedBody && mail.body_html && showHtml ? (
             <div className="px-8 py-2">
+              {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- onLoad adjusts iframe height, not a user interaction */}
               <iframe
                 sandbox=""
                 referrerPolicy="no-referrer"

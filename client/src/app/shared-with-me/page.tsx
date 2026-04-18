@@ -136,13 +136,13 @@ function GrantItem({ grant }: GrantItemProps) {
       </Badge>
 
       {/* Open link — placeholder */}
-      <a
-        href="#"
+      <button
+        type="button"
         className="text-xs text-primary underline-offset-2 hover:underline opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
         aria-label={`Ouvrir la ressource ${grant.resource_id}`}
       >
         Ouvrir
-      </a>
+      </button>
     </div>
   );
 }

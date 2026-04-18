@@ -68,9 +68,11 @@ zip = { version = "2.0", default-features = false, features = ["deflate"] }
 
 # ─── Workspace crates ──────────────────────────────────────────────────────────
 signapps-common = { path = "../../crates/signapps-common" }
-signapps-db = { path = "../../crates/signapps-db" }
+signapps-db = { path = "../../crates/signapps-db", features = ["openapi"] }
 signapps-cache = { path = "../../crates/signapps-cache" }
 signapps-sharing = { path = "../../crates/signapps-sharing" }
+signapps-filters = { path = "../../crates/signapps-filters" }
+signapps-drawing = { path = "../../crates/signapps-drawing", features = ["png", "pdf"] }
 dotenvy.workspace = true
 reqwest = { workspace = true }
 url = "2"

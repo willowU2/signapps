@@ -91,11 +91,35 @@ pub use entity_reference_repository::EntityReferenceRepository;
 pub mod activity_repository;
 pub use activity_repository::ActivityRepository;
 
+// Brand kit repository — lives in signapps-db-shared.
+pub use signapps_db_shared::repositories::BrandKitRepository;
+
 // Resource booking (standalone `resources` schema) — lives in signapps-db-shared.
 pub use signapps_db_shared::repositories::ResourceBookingRepository;
 
 // Company / person-company / login-context repositories — lives in signapps-db-shared.
 pub use signapps_db_shared::repositories::CompanyRepository;
+
+// Cell format & sheet metadata repositories — lives in signapps-db-shared.
+pub use signapps_db_shared::repositories::CellFormatRepository;
+
+// Presentation, slide layout, and slide repositories — lives in signapps-db-shared.
+pub use signapps_db_shared::repositories::PresentationRepository;
+
+// Style inheritance repositories — lives in signapps-db-shared.
+pub use signapps_db_shared::repositories::StyleRepository;
+
+// Template variable, dataset, and social-preset repositories — lives in signapps-db-shared.
+pub use signapps_db_shared::repositories::TemplateVariableRepository;
+
+// Validation rule repositories — lives in signapps-db-shared.
+pub use signapps_db_shared::repositories::ValidationRepository;
+
+// Versioning repositories (command log + snapshots) — lives in signapps-db-shared.
+pub use signapps_db_shared::repositories::VersioningRepository;
+
+// Automation, extension, and action catalog repositories — lives in signapps-db-shared.
+pub use signapps_db_shared::repositories::AutomationRepository;
 
 // Drive ACL repositories — now live in signapps-db-storage (Phase 4 split).
 pub use signapps_db_storage::repositories::{AuditAlertConfigRepository, DriveAuditLogRepository};
@@ -129,5 +153,4 @@ pub use signapps_db_vault::repositories::{
 pub use signapps_db_mail::repositories::{
     AccountRepository, DomainRepository, MailboxRepository, MessageRepository,
 };
-
 pub mod test_helpers;

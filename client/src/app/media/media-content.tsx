@@ -506,6 +506,7 @@ function TtsTab() {
                   Audio ready
                 </div>
 
+                {/* eslint-disable-next-line jsx-a11y/media-has-caption -- Captions not available for this media type */}
                 <audio
                   ref={audioRef}
                   src={audioUrl}

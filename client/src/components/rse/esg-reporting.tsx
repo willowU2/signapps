@@ -196,13 +196,14 @@ export default function ESGReporting() {
                     <span className="text-xs text-muted-foreground">/100</span>
                   </div>
                 ) : (
-                  <p
+                  <button
+                    type="button"
                     className="text-sm text-muted-foreground cursor-pointer hover:text-indigo-600"
                     title="Click to edit"
                     onClick={() => setEditingScore(item.category)}
                   >
                     Score: {item.score}/100
-                  </p>
+                  </button>
                 )}
               </div>
               <span className="text-xl">{getTrendIcon(item.trend)}</span>

@@ -616,6 +616,7 @@ export function VideoGenPanel() {
                 </div>
               </div>
 
+              {/* eslint-disable-next-line jsx-a11y/media-has-caption -- Captions not available for this media type */}
               <video
                 src={result.video_url}
                 controls

@@ -93,6 +93,7 @@ export default function TiltedCard({
   }
 
   return (
+    // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- 3D tilt effect responds to mouse position; no keyboard equivalent for hover parallax
     <figure
       ref={ref}
       className={`relative w-full h-full [perspective:800px] flex flex-col items-center justify-center ${className}`}
