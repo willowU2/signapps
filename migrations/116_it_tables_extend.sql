@@ -8,7 +8,7 @@ ALTER TABLE it.components ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NU
 UPDATE it.components SET name = COALESCE(model, 'unknown') WHERE name IS NULL;
 -- Unique constraint for ON CONFLICT in agent hardware inventory
 ALTER TABLE it.components DROP CONSTRAINT IF EXISTS components_hw_type_unique;
-ALTER TABLE it.components ADD CONSTRAINT components_hw_type_unique UNIQUE (hardware_id, type);
+DO $$ BEGIN ALTER TABLE it.components ADD CONSTRAINT components_hw_type_unique UNIQUE (hardware_id, type); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- it.software_licenses: add vendor, license_type, purchase_date, expiry_date, notes, updated_at
 ALTER TABLE it.software_licenses ADD COLUMN IF NOT EXISTS license_type VARCHAR(50);

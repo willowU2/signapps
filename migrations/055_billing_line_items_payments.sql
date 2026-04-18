@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS billing.line_items (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_line_items_invoice ON billing.line_items(invoice_id);
+CREATE INDEX IF NOT EXISTS idx_line_items_invoice ON billing.line_items(invoice_id);
 
 -- ============================================================================
 -- Payments
@@ -44,5 +44,5 @@ CREATE TABLE IF NOT EXISTS billing.payments (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_payments_invoice ON billing.payments(invoice_id);
+CREATE INDEX IF NOT EXISTS idx_payments_invoice ON billing.payments(invoice_id);
 */

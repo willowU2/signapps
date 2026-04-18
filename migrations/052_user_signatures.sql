@@ -17,4 +17,4 @@ CREATE TABLE IF NOT EXISTS identity.user_signatures (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_user_signatures_user ON identity.user_signatures(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_signatures_user ON identity.user_signatures(user_id);

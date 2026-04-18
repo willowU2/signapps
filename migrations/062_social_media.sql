@@ -1,7 +1,7 @@
 CREATE SCHEMA IF NOT EXISTS social;
 
 -- Connected social accounts
-CREATE TABLE social.accounts (
+CREATE TABLE IF NOT EXISTS social.accounts (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL,
     platform VARCHAR(32) NOT NULL, -- twitter, facebook, instagram, linkedin, mastodon, bluesky
@@ -19,7 +19,7 @@ CREATE TABLE social.accounts (
 );
 
 -- Posts (drafts, scheduled, published)
-CREATE TABLE social.posts (
+CREATE TABLE IF NOT EXISTS social.posts (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL,
     status VARCHAR(32) NOT NULL DEFAULT 'draft', -- draft, scheduled, publishing, published, failed
@@ -36,7 +36,7 @@ CREATE TABLE social.posts (
 );
 
 -- Per-platform post targets (one post can go to multiple platforms)
-CREATE TABLE social.post_targets (
+CREATE TABLE IF NOT EXISTS social.post_targets (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     post_id UUID NOT NULL REFERENCES social.posts(id) ON DELETE CASCADE,
     account_id UUID NOT NULL REFERENCES social.accounts(id) ON DELETE CASCADE,
@@ -49,7 +49,7 @@ CREATE TABLE social.post_targets (
 );
 
 -- Inbox (comments, mentions, DMs)
-CREATE TABLE social.inbox (
+CREATE TABLE IF NOT EXISTS social.inbox (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     account_id UUID NOT NULL REFERENCES social.accounts(id) ON DELETE CASCADE,
     platform_item_id VARCHAR(255),
@@ -66,7 +66,7 @@ CREATE TABLE social.inbox (
 );
 
 -- Analytics snapshots
-CREATE TABLE social.analytics (
+CREATE TABLE IF NOT EXISTS social.analytics (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     account_id UUID NOT NULL REFERENCES social.accounts(id) ON DELETE CASCADE,
     date DATE NOT NULL,
@@ -82,7 +82,7 @@ CREATE TABLE social.analytics (
 );
 
 -- Post analytics
-CREATE TABLE social.post_analytics (
+CREATE TABLE IF NOT EXISTS social.post_analytics (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     post_target_id UUID NOT NULL REFERENCES social.post_targets(id) ON DELETE CASCADE,
     impressions INTEGER DEFAULT 0,
@@ -96,7 +96,7 @@ CREATE TABLE social.post_analytics (
 );
 
 -- RSS feeds for auto-posting
-CREATE TABLE social.rss_feeds (
+CREATE TABLE IF NOT EXISTS social.rss_feeds (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL,
     feed_url TEXT NOT NULL,
@@ -111,7 +111,7 @@ CREATE TABLE social.rss_feeds (
 );
 
 -- Post templates
-CREATE TABLE social.templates (
+CREATE TABLE IF NOT EXISTS social.templates (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL,
     name VARCHAR(255) NOT NULL,
@@ -121,9 +121,9 @@ CREATE TABLE social.templates (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_social_posts_user ON social.posts(user_id);
-CREATE INDEX idx_social_posts_status ON social.posts(status);
-CREATE INDEX idx_social_posts_scheduled ON social.posts(scheduled_at) WHERE status = 'scheduled';
-CREATE INDEX idx_social_inbox_account ON social.inbox(account_id);
-CREATE INDEX idx_social_inbox_unread ON social.inbox(account_id) WHERE is_read = false;
-CREATE INDEX idx_social_analytics_date ON social.analytics(account_id, date);
+CREATE INDEX IF NOT EXISTS idx_social_posts_user ON social.posts(user_id);
+CREATE INDEX IF NOT EXISTS idx_social_posts_status ON social.posts(status);
+CREATE INDEX IF NOT EXISTS idx_social_posts_scheduled ON social.posts(scheduled_at) WHERE status = 'scheduled';
+CREATE INDEX IF NOT EXISTS idx_social_inbox_account ON social.inbox(account_id);
+CREATE INDEX IF NOT EXISTS idx_social_inbox_unread ON social.inbox(account_id) WHERE is_read = false;
+CREATE INDEX IF NOT EXISTS idx_social_analytics_date ON social.analytics(account_id, date);

@@ -14,9 +14,9 @@ ALTER TABLE notifications.notifications
 ALTER TABLE notifications.notifications
     DROP CONSTRAINT IF EXISTS notifications_priority_check;
 
-ALTER TABLE notifications.notifications
+DO $$ BEGIN ALTER TABLE notifications.notifications
     ADD CONSTRAINT notifications_priority_check
-        CHECK (priority IN ('low', 'normal', 'high', 'urgent'));
+        CHECK (priority IN ('low', 'normal', 'high', 'urgent')); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- 3. Narrow type column to VARCHAR(20) for consistency with crate model
 ALTER TABLE notifications.notifications
