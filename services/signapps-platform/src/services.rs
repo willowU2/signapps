@@ -25,6 +25,7 @@ pub fn declare(shared: SharedState) -> Vec<ServiceSpec> {
         spec_workforce(shared.clone()),
         spec_vault(shared.clone()),
         spec_org(shared.clone()),
+        spec_tenant_config(shared.clone()),
     ]
 }
 
@@ -226,6 +227,16 @@ fn spec_org(shared: SharedState) -> ServiceSpec {
         async move {
             let router = signapps_org::router(shared).await?;
             run_server_on_addr(router, "0.0.0.0", 3026).await
+        }
+    })
+}
+
+fn spec_tenant_config(shared: SharedState) -> ServiceSpec {
+    ServiceSpec::new("signapps-tenant-config", 3029, move || {
+        let shared = shared.clone();
+        async move {
+            let router = signapps_tenant_config::router(shared).await?;
+            run_server_on_addr(router, "0.0.0.0", 3029).await
         }
     })
 }

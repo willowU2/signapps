@@ -36,6 +36,7 @@ signapps-it-assets = { path = "../signapps-it-assets" }
 signapps-workforce = { path = "../signapps-workforce" }
 signapps-vault    = { path = "../signapps-vault" }
 signapps-org      = { path = "../signapps-org" }
+signapps-tenant-config = { path = "../signapps-tenant-config" }
 
 anyhow  = { workspace = true }
 axum    = { workspace = true }
