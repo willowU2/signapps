@@ -1,0 +1,18 @@
+[package]
+name = "migrations-audit"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+publish = false
+
+[[bin]]
+name = "migrations-audit"
+path = "src/main.rs"
+
+[[bin]]
+name = "migrations-audit-rewrite"
+path = "src/bin/make_idempotent.rs"
+
+[dependencies]
+fancy-regex = "0.13"
+walkdir = "2"

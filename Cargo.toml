@@ -117,6 +117,7 @@ members = [
     # Developer tooling
     "tools/signapps-installer",
     "tools/signapps-seed",
+    "tools/migrations-audit",
 ]
 
 [workspace.package]
