@@ -14,8 +14,29 @@ async fn platform_boots_in_under_three_seconds() {
         "KEYSTORE_MASTER_KEY",
         "0000000000000000000000000000000000000000000000000000000000000000",
     );
+    // Disable the integrated proxy engine for the smoke test — its
+    // :80 / :443 listeners require elevated privileges (root on Linux,
+    // Administrator on Windows) and the smoke test only validates the
+    // admin :3003 endpoint.
+    std::env::set_var("PROXY_ENABLED", "false");
 
-    let expected_ports: &[u16] = &[3001, 3004, 3015, 3020, 3021, 8095];
+    // Ports that every batch up to and including W2.T12 (batch #2) must
+    // bind on a clean process. Note: collaboration historically binds
+    // :3034 (the spec's mention of :3013 referred to a service that
+    // does not yet exist in the codebase).
+    let expected_ports: &[u16] = &[
+        3001, // identity
+        3003, // proxy (admin only — engine disabled for the test)
+        3004, // storage
+        3006, // securelink
+        3009, // media
+        3014, // meet
+        3015, // forms
+        3020, // chat
+        3021, // contacts
+        3034, // collaboration
+        8095, // notifications
+    ];
     let start = Instant::now();
 
     let mut child = std::process::Command::new(env!("CARGO_BIN_EXE_signapps-platform"))
