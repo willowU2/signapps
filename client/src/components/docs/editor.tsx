@@ -197,7 +197,8 @@ import mammoth from "mammoth";
 import { Document as DocxDocument, Packer, Paragraph, TextRun } from "docx";
 import { saveAs } from "file-saver";
 import VerEx from "verbal-expressions";
-import { htmlToMarkdown, markdownToHtml, isMarkdown } from "@/lib/markdown";
+import { markdownToHtml, isMarkdown } from "@/lib/markdown";
+import { htmlToMarkdown as htmlToMarkdownWorker } from "@/lib/workers/markdown-client";
 import { useAutosave } from "@/hooks/use-autosave";
 import ContextMenuStandard7 from "@/components/context-menu-standard-7";
 
@@ -1176,6 +1177,9 @@ const Editor = ({
 
   // IDEA-009: Split view (editor + markdown preview)
   const [splitView, setSplitView] = useState(false);
+  // Markdown preview computed in a worker (off the main thread) so toggling
+  // split view on large docs never janks the typing cursor.
+  const [splitViewMarkdown, setSplitViewMarkdown] = useState("");
 
   // IDEA-010 / IDEA-011: Resolved comments & threading
   const [resolvedComments, setResolvedComments] = useState<string[]>([]);
@@ -1722,6 +1726,37 @@ const Editor = ({
     };
   }, [editor, documentId]);
 
+  // IDEA-009: Keep the split-view markdown preview in sync with editor
+  // content via the worker, so typing never blocks on turndown.
+  useEffect(() => {
+    if (!editor || !splitView) {
+      setSplitViewMarkdown("");
+      return;
+    }
+    let cancelled = false;
+    let pending = false;
+    const recompute = () => {
+      if (pending) return;
+      pending = true;
+      htmlToMarkdownWorker(editor.getHTML())
+        .then((md) => {
+          if (!cancelled) setSplitViewMarkdown(md);
+        })
+        .catch((err) => {
+          console.error("[markdown-preview] worker failed", err);
+        })
+        .finally(() => {
+          pending = false;
+        });
+    };
+    recompute();
+    editor.on("update", recompute);
+    return () => {
+      cancelled = true;
+      editor.off("update", recompute);
+    };
+  }, [editor, splitView]);
+
   // Global keyboard shortcuts
   useEffect(() => {
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
@@ -2197,19 +2232,25 @@ ${html}
     printWindow.document.close();
   }, [editor, documentName]);
 
-  // Export to Markdown
-  const exportToMarkdown = useCallback(() => {
+  // Export to Markdown (runs in background worker — off the main thread)
+  const exportToMarkdown = useCallback(async () => {
     if (!editor) return;
     const htmlString = editor.getHTML();
-    const markdown = htmlToMarkdown(htmlString);
-
-    // Create and download markdown file
-    const blob = new Blob([markdown], { type: "text/markdown;charset=utf-8" });
-    saveAs(
-      blob,
-      `${documentName.replace(/\.(docx|md)$/, "") || "document"}.md`,
-    );
-    toast.success("Exporté en Markdown");
+    try {
+      const markdown = await htmlToMarkdownWorker(htmlString);
+      // Create and download markdown file
+      const blob = new Blob([markdown], {
+        type: "text/markdown;charset=utf-8",
+      });
+      saveAs(
+        blob,
+        `${documentName.replace(/\.(docx|md)$/, "") || "document"}.md`,
+      );
+      toast.success("Exporté en Markdown");
+    } catch (err) {
+      console.error("[markdown-export] worker failed", err);
+      toast.error("Échec de l'export Markdown");
+    }
   }, [editor, documentName]);
 
   // Import Markdown content
@@ -4143,7 +4184,7 @@ ${html}
               <SplitSquareHorizontal className="w-4 h-4 text-gray-400" />
             </div>
             <pre className="whitespace-pre-wrap text-xs text-muted-foreground dark:text-gray-300 leading-relaxed">
-              {htmlToMarkdown(editor.getHTML())}
+              {splitViewMarkdown}
             </pre>
           </div>
         )}
