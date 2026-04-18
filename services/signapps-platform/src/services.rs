@@ -28,6 +28,7 @@ pub fn declare(shared: SharedState) -> Vec<ServiceSpec> {
         spec_tenant_config(shared.clone()),
         spec_billing(shared.clone()),
         spec_signatures(shared.clone()),
+        spec_gamification(shared.clone()),
     ]
 }
 
@@ -262,6 +263,16 @@ fn spec_signatures(shared: SharedState) -> ServiceSpec {
         async move {
             let router = signapps_signatures::router(shared).await?;
             run_server_on_addr(router, "0.0.0.0", 3028).await
+        }
+    })
+}
+
+fn spec_gamification(shared: SharedState) -> ServiceSpec {
+    ServiceSpec::new("signapps-gamification", 3033, move || {
+        let shared = shared.clone();
+        async move {
+            let router = signapps_gamification::router(shared).await?;
+            run_server_on_addr(router, "0.0.0.0", 3033).await
         }
     })
 }
