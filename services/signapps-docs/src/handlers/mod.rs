@@ -14,6 +14,7 @@ pub mod styles;
 pub mod template_vars;
 pub mod templates;
 pub mod types;
+pub mod server_render;
 pub mod validation;
 pub mod versions;
 pub mod websocket;

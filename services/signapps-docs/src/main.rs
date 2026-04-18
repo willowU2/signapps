@@ -160,7 +160,12 @@ async fn main() -> anyhow::Result<()> {
         // Drawing endpoints — stateless rendering, no auth required
         .route("/api/v1/drawing/render/svg", post(handlers::drawing::render_svg))
         .route("/api/v1/drawing/render/png", post(handlers::drawing::render_png))
-        .route("/api/v1/drawing/charts", post(handlers::drawing::generate_chart));
+        .route("/api/v1/drawing/charts", post(handlers::drawing::generate_chart))
+        // Server-side render endpoints — stateless document/slide/template rendering
+        .route("/api/v1/render/document", post(handlers::server_render::render_document))
+        .route("/api/v1/render/slide", post(handlers::server_render::render_slide))
+        .route("/api/v1/render/thumbnail", post(handlers::server_render::render_thumbnail))
+        .route("/api/v1/render/template", post(handlers::server_render::render_template));
 
     // Protected routes (auth required)
     let protected_routes = Router::new()
