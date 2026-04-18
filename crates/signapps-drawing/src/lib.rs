@@ -9,7 +9,9 @@
 //! 1. **Shapes** (`shapes`) -- high-level drawing objects with position, size, and style.
 //! 2. **Primitives** (`primitives`) -- atomic visual elements (rect, ellipse, line, path, text, image, group).
 //! 3. **Styles** (`styles`) -- fill, stroke, opacity, transforms, text anchoring.
-//! 4. **Render** (`render`) -- multi-target rendering processors (SVG implemented, PNG/PDF planned).
+//! 4. **Render** (`render`) -- multi-target rendering processors (SVG, PNG, PDF).
+//! 5. **Display Tree** (`tree`) -- ordered z-indexed element container.
+//! 6. **Charts** (`charts`) -- data-to-primitive chart generation (bar, line, pie, donut, area, scatter).
 //!
 //! # Example
 //!
@@ -33,7 +35,9 @@
 //! assert!(svg_str.contains("<rect"));
 //! ```
 
+pub mod charts;
 pub mod primitives;
 pub mod render;
 pub mod shapes;
 pub mod styles;
+pub mod tree;
