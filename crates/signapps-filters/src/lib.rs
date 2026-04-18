@@ -14,5 +14,7 @@
 //! ```
 
 pub mod error;
+pub mod intermediate;
 
 pub use error::{FilterError, FilterResult};
+pub use intermediate::*;
