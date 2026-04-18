@@ -7,6 +7,10 @@ authors.workspace = true
 license.workspace = true
 description = "AI/RAG service for SignApps Platform"
 
+[lib]
+name = "signapps_ai"
+path = "src/lib.rs"
+
 [[bin]]
 name = "signapps-ai"
 path = "src/main.rs"
@@ -16,6 +20,8 @@ mimalloc = { workspace = true }
 signapps-common = { path = "../../crates/signapps-common" }
 signapps-db = { path = "../../crates/signapps-db", features = ["openapi"] }
 signapps-runtime = { path = "../../crates/signapps-runtime" }
+signapps-service = { path = "../../crates/signapps-service" }
+once_cell = "1.19"
 axum = { workspace = true }
 tokio = { workspace = true }
 tokio-stream = { workspace = true }
