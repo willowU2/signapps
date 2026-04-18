@@ -55,6 +55,7 @@ async fn platform_boots_in_under_three_seconds() {
         3002, // containers (Docker probe disabled for the test)
         3003, // proxy (admin only — engine disabled for the test)
         3004, // storage
+        3005, // ai (providers + model manager + hardware lazy via OnceCell)
         3006, // securelink
         3007, // scheduler (CRON tick disabled for the test)
         3008, // metrics
@@ -120,6 +121,7 @@ async fn platform_boots_in_under_three_seconds() {
     child.kill().ok();
     child.wait().ok();
 
+    eprintln!("single-binary boot elapsed: {elapsed:?}");
     assert!(
         elapsed < Duration::from_secs(3),
         "single-binary boot took {elapsed:?}, expected < 3s"

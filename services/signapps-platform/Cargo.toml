@@ -55,6 +55,7 @@ signapps-deploy   = { path = "../signapps-deploy" }
 signapps-gateway  = { path = "../signapps-gateway" }
 signapps-scheduler = { path = "../signapps-scheduler" }
 signapps-webhooks-svc = { path = "../signapps-webhooks" }
+signapps-ai       = { path = "../signapps-ai" }
 
 anyhow  = { workspace = true }
 axum    = { workspace = true }

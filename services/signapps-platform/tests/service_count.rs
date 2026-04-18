@@ -1,10 +1,10 @@
-//! Asserts that `declare()` returns all 33 service specs wired into the
+//! Asserts that `declare()` returns all 34 service specs wired into the
 //! single-binary runtime.
 
 use signapps_platform::services;
 use signapps_service::shared_state::SharedState;
 
-const EXPECTED_SERVICE_COUNT: usize = 33;
+const EXPECTED_SERVICE_COUNT: usize = 34;
 
 #[tokio::test]
 #[ignore = "requires postgres + env; run with `cargo test -- --ignored`"]

@@ -40,6 +40,7 @@ pub fn declare(shared: SharedState) -> Vec<ServiceSpec> {
         spec_gateway(shared.clone()),
         spec_scheduler(shared.clone()),
         spec_webhooks(shared.clone()),
+        spec_ai(shared.clone()),
     ]
 }
 
@@ -440,6 +441,26 @@ fn spec_webhooks(shared: SharedState) -> ServiceSpec {
             // restarted on supervisor respawn.
             let router = signapps_webhooks_svc::router(shared).await?;
             run_server_on_addr(router, "0.0.0.0", 3027).await
+        }
+    })
+}
+
+fn spec_ai(shared: SharedState) -> ServiceSpec {
+    ServiceSpec::new("signapps-ai", 3005, move || {
+        let shared = shared.clone();
+        async move {
+            // The AI router is built eagerly but heavy subsystems
+            // (GPU hardware detection, model manager, LLM provider
+            // probing) are deferred to the first HTTP request via
+            // `tokio::sync::OnceCell` in `signapps_ai::llm::lazy`.
+            // See `services/signapps-ai/src/llm/lazy.rs`.
+            //
+            // The 93-tool `ToolRegistry` is built once per process
+            // via `once_cell::sync::Lazy` in
+            // `signapps_ai::tools::registry::GLOBAL_TOOL_REGISTRY`,
+            // so subsequent router clones share the same registry.
+            let router = signapps_ai::router(shared).await?;
+            run_server_on_addr(router, "0.0.0.0", 3005).await
         }
     })
 }
