@@ -2,6 +2,7 @@
 
 pub mod conversion;
 pub mod data_export;
+pub mod filters;
 pub mod data_import;
 pub mod health;
 pub mod import;
