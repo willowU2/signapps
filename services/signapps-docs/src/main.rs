@@ -246,6 +246,18 @@ async fn main() -> anyhow::Result<()> {
         .route("/api/v1/versions/:doc_id/snapshots/diff", post(handlers::versions::diff_snapshots))
         .route("/api/v1/versions/:doc_id/snapshots/:id", get(handlers::versions::get_snapshot))
         .route("/api/v1/versions/:doc_id/snapshots/:id/restore", post(handlers::versions::restore_snapshot))
+        // Template variables (Polotno-inspired dynamic generation)
+        .route("/api/v1/templates/:id/variables", get(handlers::template_vars::list_variables).post(handlers::template_vars::create_variable))
+        .route("/api/v1/templates/:id/variables/:var_id", delete(handlers::template_vars::delete_variable))
+        .route("/api/v1/templates/:id/resolve", post(handlers::template_vars::resolve_variables))
+        .route("/api/v1/templates/:id/batch-export", post(handlers::template_vars::batch_export))
+        // Social media presets
+        .route("/api/v1/social-presets", get(handlers::template_vars::list_social_presets))
+        .route("/api/v1/social-presets/:platform", get(handlers::template_vars::list_social_presets_by_platform))
+        // Design validation rules
+        .route("/api/v1/validation/rules", get(handlers::validation::list_rules).post(handlers::validation::create_rule))
+        .route("/api/v1/validation/rules/:id", put(handlers::validation::update_rule).delete(handlers::validation::delete_rule))
+        .route("/api/v1/validation/check", post(handlers::validation::check_document))
         // Collab WebSocket alias — originally signapps-collab (port 3013), now served from port 3010
         // Old URL: ws://localhost:3013/api/v1/collab/ws/:doc_id
         // New URL: ws://localhost:3010/api/v1/collab/ws/:doc_id
