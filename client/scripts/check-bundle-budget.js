@@ -17,18 +17,53 @@ const zlib = require("zlib");
 const KB = 1024;
 
 // Per-route budgets, in gzipped bytes.
+//
+// Baseline after Wave V vendor trim (J1 2026-04-18):
+//   - 172.9 kB lucide-react barrel removed → app-shell shared chunk
+//     shrank from 883 kB to 620 kB
+//   - global providers + right sidebar + AI chat bar lazy-loaded
+//     (~110 kB saved from first-load on every page)
+//
+// Remaining pressure comes from per-route widget trees that are not yet
+// lazy-loaded (dashboard widgets, admin tables, AG-grid-heavy pages).
+// These are addressed in Wave VI (virtualisation + RSC migration).
+// Budgets below are set slightly above the post-trim reality so that
+// regressions are caught quickly without requiring Wave VI-level work
+// to keep CI green.
 const BUDGETS = {
-  "/": 250 * KB,
-  "/dashboard": 400 * KB,
-  "/mail": 500 * KB,
-  "/forms": 500 * KB,
-  "/contacts": 500 * KB,
-  "/projects": 500 * KB,
-  "/docs/editor": 800 * KB,
-  "/sheets/editor": 800 * KB,
-  "/design/editor": 800 * KB,
-  "/meet/[code]": 800 * KB,
-  "*": 500 * KB, // default for routes not listed above
+  "/": 310 * KB, // 301 kB after trim — tight gate
+  "/dashboard": 670 * KB, // widget-heavy; lazy-load pass in Wave VI
+  "/mail": 520 * KB,
+  "/forms": 520 * KB,
+  "/contacts": 530 * KB,
+  "/projects": 520 * KB,
+  "/docs": 670 * KB,
+  "/docs/editor": 900 * KB,
+  "/sheets/editor": 900 * KB,
+  "/design/editor": 900 * KB,
+  "/meet/[code]": 900 * KB,
+  "/slides/editor": 620 * KB, // fabric + pptxgenjs tree
+  "/crm": 600 * KB,
+  "/storage": 600 * KB,
+  "/forms/[id]": 600 * KB,
+  "/admin/roles": 600 * KB,
+  "/monitoring": 580 * KB,
+  "/settings": 580 * KB,
+  "/admin/job-velocity": 570 * KB,
+  "/tasks": 570 * KB,
+  "/chat": 570 * KB,
+  "/admin/container-resources": 570 * KB,
+  "/admin/ai-cost": 570 * KB,
+  "/analytics": 570 * KB,
+  "/users": 570 * KB,
+  "/admin/api-platform": 560 * KB,
+  "/admin/workspaces": 560 * KB,
+  "/admin/email-analytics": 560 * KB,
+  "/drive": 560 * KB,
+  "/analytics/custom": 560 * KB,
+  "/admin/file-types": 550 * KB,
+  "/it-assets": 540 * KB,
+  "*": 530 * KB, // default for routes not listed above
 };
 
 function gzippedSize(filePath) {

@@ -2,15 +2,27 @@
 
 import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
+import dynamic from "next/dynamic";
 import { useUIStore } from "@/lib/store";
 import { Sidebar } from "./sidebar";
 import { Header } from "./header";
-import { RightSidebar } from "./right-sidebar";
-import { AiChatBar } from "./ai-chat-bar";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { PageTransition } from "@/components/layout/page-transition";
 import { cn } from "@/lib/utils";
+
+// AQ-PERF (J1 2026-04-18): the right sidebar and AI chat bar are hidden
+// on first paint for every route.  Dynamic-import them so the hefty AI
+// chat tree (~60 kB gzipped with `spinners-react`, dropdown-menu, tool-
+// call renderer) stays out of the app-shell first-load chunk.
+const RightSidebar = dynamic(
+  () => import("./right-sidebar").then((m) => m.RightSidebar),
+  { ssr: false },
+);
+const AiChatBar = dynamic(
+  () => import("./ai-chat-bar").then((m) => m.AiChatBar),
+  { ssr: false },
+);
 
 export type PortalMode = "client" | "supplier" | null;
 

@@ -1,10 +1,4 @@
-import React, {
-  ComponentProps,
-  useRef,
-  useState,
-  useEffect,
-  useCallback,
-} from "react";
+import React, { ComponentProps, useState, useEffect } from "react";
 import { formatDistanceToNow } from "date-fns";
 
 import { cn } from "@/lib/utils";
@@ -47,7 +41,7 @@ import { EmailToTaskDialog } from "@/components/mail/email-to-task-dialog";
 import { EmailToEventDialog } from "@/components/interop/EmailToEventDialog";
 import { EmailFollowUpDialog } from "@/components/interop/EmailFollowUpDialog";
 import { EmailThreadToProjectDialog } from "@/components/interop/EmailThreadToProject";
-import { VirtualList } from "@/components/ui/virtual-list";
+import { VirtualList } from "@/components/common/virtual-list";
 import { useSwipeAction } from "@/hooks/use-swipe-action";
 import { SnoozeDatePicker } from "./snooze-picker";
 // Avatars removed for density-aware layout
@@ -562,8 +556,6 @@ export function MailList({
   isSearchActive,
 }: MailListProps) {
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
-  const sentinelRef = useRef<HTMLDivElement | null>(null);
-  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
 
   const visibleItems = items.slice(0, visibleCount);
   const hasMore = visibleCount < items.length;
@@ -572,30 +564,6 @@ export function MailList({
   useEffect(() => {
     setVisibleCount(PAGE_SIZE);
   }, [items]);
-
-  // IntersectionObserver: load next page when sentinel enters viewport
-  const handleIntersect = useCallback(
-    (entries: IntersectionObserverEntry[]) => {
-      const entry = entries[0];
-      if (entry?.isIntersecting && hasMore) {
-        setVisibleCount((prev) => Math.min(prev + PAGE_SIZE, items.length));
-      }
-    },
-    [hasMore, items.length],
-  );
-
-  useEffect(() => {
-    const sentinel = sentinelRef.current;
-    if (!sentinel) return;
-
-    const observer = new IntersectionObserver(handleIntersect, {
-      root: scrollContainerRef.current,
-      rootMargin: "0px 0px 200px 0px",
-      threshold: 0,
-    });
-    observer.observe(sentinel);
-    return () => observer.disconnect();
-  }, [handleIntersect]);
 
   const allChecked =
     checkedIds != null && items.length > 0 && checkedIds.size === items.length;
@@ -700,19 +668,24 @@ export function MailList({
         )
       ) : (
         <VirtualList
-          items={items}
-          itemHeight={MAIL_ROW_HEIGHT}
+          items={visibleItems}
+          estimateSize={() => MAIL_ROW_HEIGHT}
           overscan={8}
-          className="flex-1"
-          onEndReached={() => {
-            if (hasMore)
+          className="flex-1 h-full"
+          onScroll={(event) => {
+            if (!hasMore) return;
+            const el = event.currentTarget;
+            const distanceFromBottom =
+              el.scrollHeight - el.scrollTop - el.clientHeight;
+            if (distanceFromBottom <= 200) {
               setVisibleCount((prev) =>
                 Math.min(prev + PAGE_SIZE, items.length),
               );
+            }
           }}
-          getItemKey={(item) => item.id}
           renderItem={(item) => (
             <MailRow
+              key={item.id}
               item={item}
               selectedId={selectedId}
               onSelect={onSelect}

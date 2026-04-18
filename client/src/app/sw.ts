@@ -45,6 +45,31 @@ const serwist = new Serwist({
         networkTimeoutSeconds: 10,
       }),
     },
+    // GET list endpoints — StaleWhileRevalidate for snappy navigation back.
+    // Pattern match: /api/v1/**/list or /api/v1/**/list?...
+    {
+      matcher: ({ request, url }) =>
+        request.method === "GET" &&
+        /\/api\/v1\/.*\/list(\?|$)/.test(url.pathname + url.search),
+      handler: new StaleWhileRevalidate({
+        cacheName: "api-list",
+        plugins: [
+          new ExpirationPlugin({ maxEntries: 200, maxAgeSeconds: 5 * 60 }),
+        ],
+      }),
+    },
+    // Rarely-changing config — CacheFirst.
+    {
+      matcher: ({ url }) =>
+        url.pathname === "/api/v1/brand-kit" ||
+        url.pathname === "/api/v1/tenant-config",
+      handler: new CacheFirst({
+        cacheName: "api-config",
+        plugins: [
+          new ExpirationPlugin({ maxEntries: 10, maxAgeSeconds: 60 * 60 }),
+        ],
+      }),
+    },
     // API reads: network-first with cache fallback
     {
       matcher: ({ url }) => url.pathname.startsWith("/api/"),

@@ -20,6 +20,11 @@ const nextConfig = {
   // Auto tree-shake large barrel-imported packages (Next.js 15+ feature).
   // Saves ~300-600kB on the main JS bundle for this app.
   experimental: {
+    // AQ-PERF: Next.js tree-shakes these packages' barrel exports even when
+    // callers `import { X } from "pkg"`.  Keep the list exhaustive — adding
+    // a package that ends up not barrel-imported is a no-op, but forgetting
+    // one that is used widely (like `@dnd-kit/*`, `react-aria*`, `jotai`)
+    // eagerly pulls the whole barrel into the first-load chunk.
     optimizePackageImports: [
       "lucide-react",
       "@radix-ui/react-icons",
@@ -27,9 +32,13 @@ const nextConfig = {
       "date-fns",
       "lodash",
       "framer-motion",
+      "motion",
       "@tiptap/core",
       "@tiptap/react",
       "@tiptap/starter-kit",
+      "@tiptap/suggestion",
+      "@tiptap/pm",
+      "@tiptap/y-tiptap",
       "@radix-ui/react-alert-dialog",
       "@radix-ui/react-checkbox",
       "@radix-ui/react-popover",
@@ -37,8 +46,28 @@ const nextConfig = {
       "@base-ui-components/react",
       "@livekit/components-react",
       "@tanstack/react-query",
+      "@tanstack/react-query-persist-client",
       "@tanstack/react-table",
       "@tanstack/react-virtual",
+      "@dnd-kit/core",
+      "@dnd-kit/sortable",
+      "@dnd-kit/utilities",
+      "@floating-ui/dom",
+      "react-aria",
+      "react-aria-components",
+      "radix-ui",
+      "jotai",
+      "cmdk",
+      "sonner",
+      "tippy.js",
+      "fuse.js",
+      "class-variance-authority",
+      "tailwind-merge",
+      "@xyflow/react",
+      "@hookform/resolvers",
+      "react-hook-form",
+      "zustand",
+      "zod",
     ],
   },
   async headers() {
@@ -100,18 +129,19 @@ const nextConfig = {
             key: "Permissions-Policy",
             value: "camera=(), microphone=(self), geolocation=()",
           },
-          // NOTE (C6 - accepted risk): 'unsafe-eval' is required by the formula evaluator
-          // (Function() constructor in client/src/lib/sheets/formula.ts) and by several
-          // third-party libraries (monaco-editor, Tiptap extensions, Serwist service worker
-          // compilation). Removing it would break the spreadsheet/macro editor.
-          // Mitigation: the formula evaluator has been hardened (C1) — strict length limit +
-          // identifier rejection — so the actual injection surface is minimal.
-          // TODO: replace Function() with a pure recursive-descent parser to allow removing
-          // 'unsafe-eval' entirely.
+          // C6 — 'unsafe-eval' has been removed (Wave W, Task 4):
+          // the sheets formula evaluator now uses a pure recursive-descent
+          // math parser (see client/src/lib/sheets/formula.ts::MathParser)
+          // instead of `Function()`, and an off-main-thread worker is
+          // available in client/src/workers/formula.worker.ts for future
+          // background recalc. `worker-src 'self' blob:` stays implicit
+          // (via default-src 'self') for the worker bundle. If any vendored
+          // dependency reintroduces a dynamic code path, re-add the
+          // directive only after auditing that dependency.
           {
             key: "Content-Security-Policy",
             value:
-              "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src * data: blob:; connect-src 'self' http://localhost:* ws://localhost:* https://api.openverse.org https://openverse.org https://*.openverse.org https://commons.wikimedia.org https://upload.wikimedia.org https://picsum.photos https://api.unsplash.com https://images.unsplash.com https://api.pexels.com https://images.pexels.com https://pixabay.com https://cdn.pixabay.com https://data.jsdelivr.com https://cdn.jsdelivr.net https://3dicons.sgp1.cdn.digitaloceanspaces.com https://nominatim.openstreetmap.org; font-src 'self' data:; media-src 'self' blob:; frame-src 'self' https://www.openstreetmap.org",
+              "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src * data: blob:; connect-src 'self' http://localhost:* ws://localhost:* https://api.openverse.org https://openverse.org https://*.openverse.org https://commons.wikimedia.org https://upload.wikimedia.org https://picsum.photos https://api.unsplash.com https://images.unsplash.com https://api.pexels.com https://images.pexels.com https://pixabay.com https://cdn.pixabay.com https://data.jsdelivr.com https://cdn.jsdelivr.net https://3dicons.sgp1.cdn.digitaloceanspaces.com https://nominatim.openstreetmap.org; font-src 'self' data:; media-src 'self' blob:; frame-src 'self' https://www.openstreetmap.org; worker-src 'self' blob:",
           },
         ],
       },

@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { VirtualList } from "@/components/common/virtual-list";
 import {
   Bell,
   Container,
@@ -387,12 +388,16 @@ export function NotificationCenter() {
         <Separator />
 
         {/* ── Body ── */}
-        <ScrollArea className="h-[340px]">
-          {isLoading ? (
+        {isLoading ? (
+          <ScrollArea className="h-[340px]">
             <LoadingSkeleton />
-          ) : notifications.length === 0 ? (
+          </ScrollArea>
+        ) : notifications.length === 0 ? (
+          <ScrollArea className="h-[340px]">
             <EmptyState />
-          ) : (
+          </ScrollArea>
+        ) : notifications.length < 30 ? (
+          <ScrollArea className="h-[340px]">
             <div className="divide-y">
               {notifications.map((notification) => (
                 <NotificationItem
@@ -404,8 +409,24 @@ export function NotificationCenter() {
                 />
               ))}
             </div>
-          )}
-        </ScrollArea>
+          </ScrollArea>
+        ) : (
+          <VirtualList
+            items={notifications}
+            estimateSize={() => 84}
+            overscan={10}
+            className="h-[340px] divide-y"
+            renderItem={(notification) => (
+              <NotificationItem
+                key={notification.id}
+                notification={notification}
+                onRead={markAsRead}
+                onRemove={remove}
+                onNavigate={handleNavigate}
+              />
+            )}
+          />
+        )}
       </PopoverContent>
     </Popover>
   );

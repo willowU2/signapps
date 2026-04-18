@@ -15,18 +15,23 @@ import { APP_CATEGORIES, type AppEntry } from "@/lib/app-registry";
 import { useAppRegistry } from "@/hooks/use-app-registry";
 import { usePinnedAppsStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
-import * as LucideIcons from "lucide-react";
+// AQ-PERF: lazy-load each lucide icon individually (kebab-case name)
+// rather than pulling the whole barrel into the dashboard bundle.
+import { DynamicIcon, type IconName } from "lucide-react/dynamic";
 import type { WidgetRenderProps } from "@/lib/dashboard/types";
 
 function AppIcon({ name, className }: { name: string; className?: string }) {
-  const Icon = (
-    LucideIcons as unknown as Record<
-      string,
-      React.ComponentType<{ className?: string }> | undefined
-    >
-  )[name];
-  if (!Icon) return <LucideIcons.Grid className={className} />;
-  return <Icon className={className} />;
+  const kebab = name
+    .replace(/([A-Z])/g, "-$1")
+    .replace(/^-/, "")
+    .toLowerCase();
+  return (
+    <DynamicIcon
+      name={kebab as IconName}
+      className={className}
+      fallback={() => <Grid className={className} />}
+    />
+  );
 }
 
 export function WidgetAllApps({ widget }: Partial<WidgetRenderProps> = {}) {
