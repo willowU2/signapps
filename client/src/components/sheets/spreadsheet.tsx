@@ -1873,15 +1873,29 @@ export function Spreadsheet({
   // IDEA-022: Advanced conditional formatting helpers
   const selectionNumValues = useMemo(() => {
     if (!selectionBounds) return { min: 0, max: 100 };
-    const nums: number[] = [];
-    for (let r = selectionBounds.minR; r <= selectionBounds.maxR; r++)
-      for (let c = selectionBounds.minC; c <= selectionBounds.maxC; c++) {
+    let min = 0;
+    let max = 1;
+    let found = false;
+    // Cap iteration to avoid stack overflow on huge selections
+    const maxR = Math.min(selectionBounds.maxR, selectionBounds.minR + 1000);
+    const maxC = Math.min(selectionBounds.maxC, selectionBounds.minC + 100);
+    for (let r = selectionBounds.minR; r <= maxR; r++)
+      for (let c = selectionBounds.minC; c <= maxC; c++) {
         const v = Number(
           evaluatedData[`${r},${c}`] || data[`${r},${c}`]?.value || "",
         );
-        if (!isNaN(v)) nums.push(v);
+        if (!isNaN(v)) {
+          if (!found) {
+            min = v;
+            max = v;
+            found = true;
+          } else {
+            if (v < min) min = v;
+            if (v > max) max = v;
+          }
+        }
       }
-    return { min: Math.min(...nums, 0), max: Math.max(...nums, 1) };
+    return { min, max };
   }, [selectionBounds, evaluatedData, data]);
 
   const advCondFormatOverlay = useCallback(
@@ -3612,8 +3626,8 @@ export function Spreadsheet({
         tabIndex={0}
         onKeyDown={handleKeyDown}
       >
-      {/* Print-friendly layout — hide chrome, show all rows */}
-      <style>{`
+        {/* Print-friendly layout — hide chrome, show all rows */}
+        <style>{`
                 @media print {
                     body { background: white !important; }
                     /* Hide menu bar, toolbar, formula bar, sheet tabs, and app shell */
@@ -3646,2861 +3660,2944 @@ export function Spreadsheet({
                 }
             `}</style>
 
-      {/* ===== MENU BAR ===== */}
-      <div data-print-hide className="-ml-1.5 flex flex-col pt-0.5">
-        <EditorMenu
-          menus={[
-            {
-              id: "file",
-              label: "Fichier",
-              items: [
-                {
-                  label: "Nouveau",
-                  subItems: [
-                    { label: "Feuille de calcul", action: "new" },
-                    { label: "À partir d'un modèle", action: "templates" },
-                  ],
-                },
-                { label: "Ouvrir", action: "open", shortcut: "Ctrl+O" },
-                { label: "Importer", action: "import" },
-                { label: "Créer une copie", action: "copyFile" },
-                { sep: true },
-                { label: "Envoyer par e-mail", action: "email_send" },
-                {
-                  label: "Télécharger",
-                  subItems: [
-                    { label: "Microsoft Excel (.xlsx)", action: "export_xlsx" },
-                    {
-                      label: "Valeurs séparées par des virgules (.csv)",
-                      action: "export_csv",
-                    },
-                    { label: "Document PDF (.pdf)", action: "print" },
-                    {
-                      label: "Aperçu avant impression",
-                      action: "print_preview",
-                    },
-                  ],
-                },
-                { label: "Approbations", action: "approvals" },
-                { sep: true },
-                { label: "Renommer", action: "rename" },
-                { label: "Placer dans la corbeille", action: "trash" },
-                { sep: true },
-                {
-                  label: "Historique des versions",
-                  subItems: [
-                    {
-                      label: "Nommer la version actuelle",
-                      action: "name_version",
-                    },
-                    {
-                      label: "Afficher l'historique des versions",
-                      action: "version_history",
-                    },
-                  ],
-                },
-                {
-                  label: "Rendre disponible hors connexion",
-                  action: "offline_mode",
-                },
-                { sep: true },
-                { label: "Détails", action: "file_details" },
-                { label: "Limites de sécurité", action: "security_limits" },
-                { label: "Paramètres", action: "file_settings" },
-              ],
-            },
-            {
-              id: "edit",
-              label: "Édition",
-              items: [
-                { label: "Annuler", action: "undo", shortcut: "Ctrl+Z" },
-                { label: "Rétablir", action: "redo", shortcut: "Ctrl+Y" },
-                { sep: true },
-                { label: "Couper", action: "cut", shortcut: "Ctrl+X" },
-                { label: "Copier", action: "copy", shortcut: "Ctrl+C" },
-                { label: "Coller", action: "paste", shortcut: "Ctrl+V" },
-                { sep: true },
-                {
-                  label: "Rechercher et remplacer",
-                  action: "find",
-                  shortcut: "Ctrl+H",
-                },
-              ],
-            },
-            {
-              id: "view",
-              label: "Affichage",
-              items: [
-                {
-                  label: "Afficher",
-                  subItems: [
-                    { label: "Barre de formules", action: "toggleFormulaBar" },
-                    { label: "Quadrillage", action: "toggleGridlines" },
-                    { label: "Plages protégées", action: "protected_ranges" },
-                  ],
-                },
-                {
-                  label: "Figer",
-                  subItems: [
-                    { label: "Figer la première ligne", action: "freezeRow" },
-                    { label: "Figer la première colonne", action: "freezeCol" },
-                    { label: "Libérer les lignes", action: "unfreezeRow" },
-                    { label: "Libérer les colonnes", action: "unfreezeCol" },
-                  ],
-                },
-                {
-                  label: "Regrouper",
-                  subItems: [
-                    {
-                      label: "Associer lignes/colonnes",
-                      action: "group_rows_cols",
-                    },
-                    {
-                      label: "Dissocier lignes/colonnes",
-                      action: "ungroup_rows_cols",
-                    },
-                  ],
-                },
-                { label: "Commentaires", action: "show_comments" },
-                { sep: true },
-                { label: "Feuilles masquées", action: "hidden_sheets" },
-                { sep: true },
-                {
-                  label: "Zoom",
-                  subItems: [
-                    { label: "50%", action: "zoom50" },
-                    { label: "75%", action: "zoom75" },
-                    { label: "100%", action: "zoom100" },
-                    { label: "125%", action: "zoom125" },
-                    { label: "150%", action: "zoom150" },
-                    { label: "200%", action: "zoom200" },
-                  ],
-                },
-                { label: "Plein écran", action: "fullScreen" },
-                { sep: true },
-                {
-                  label: isReadOnly ? "Passer en Édition" : "Mode Lecture",
-                  action: "toggle_read_only",
-                },
-              ],
-            },
-            {
-              id: "insert",
-              label: "Insertion",
-              items: [
-                {
-                  label: "Cellules",
-                  subItems: [
-                    {
-                      label: "Décaler vers la droite",
-                      action: "shift_cells_right",
-                    },
-                    {
-                      label: "Décaler vers le bas",
-                      action: "shift_cells_down",
-                    },
-                  ],
-                },
-                {
-                  label: "Lignes",
-                  subItems: [
-                    {
-                      label: "Insérer 1 ligne au-dessus",
-                      action: "insertRowAbove",
-                    },
-                    {
-                      label: "Insérer 1 ligne en-dessous",
-                      action: "insertRowBelow",
-                    },
-                  ],
-                },
-                {
-                  label: "Colonnes",
-                  subItems: [
-                    {
-                      label: "Insérer 1 colonne à gauche",
-                      action: "insertColLeft",
-                    },
-                    {
-                      label: "Insérer 1 colonne à droite",
-                      action: "insertColRight",
-                    },
-                  ],
-                },
-                {
-                  label: "Feuille",
-                  action: "insertSheet",
-                  shortcut: "Maj+F11",
-                },
-                { sep: true },
-                { label: "Générer un tableau", action: "generate_table" },
-                { label: "Tableaux prédéfinis", action: "preset_tables" },
-                { sep: true },
-                { label: "Chronologie", action: "insert_timeline" },
-                { label: "Graphique (simple)", action: "chart" },
-                { label: "Graphique avance", action: "chartDialog" },
-                { label: "Tableau croise dynamique", action: "pivot_table" },
-                {
-                  label: "Image",
-                  subItems: [
-                    {
-                      label: "Insérer une image dans la cellule",
-                      action: "image_in_cell",
-                    },
-                    {
-                      label: "Insérer une image sur les cellules",
-                      action: "image_over_cells",
-                    },
-                  ],
-                },
-                { label: "Dessin", action: "insert_drawing" },
-                { sep: true },
-                {
-                  label: "Fonction",
-                  subItems: [
-                    { label: "SUM", action: "insertSum" },
-                    { label: "AVERAGE", action: "insertAvg" },
-                    { label: "COUNT", action: "insertCount" },
-                    { label: "MAX", action: "insertMax" },
-                    { label: "MIN", action: "insertMin" },
-                  ],
-                },
-                { label: "Lien", action: "link", shortcut: "Ctrl+K" },
-                { sep: true },
-                { label: "Case à cocher", action: "insertCheckbox" },
-                { label: "Liste déroulante", action: "validation" },
-              ],
-            },
-            {
-              id: "format",
-              label: "Format",
-              items: [
-                {
-                  label: "Nombre",
-                  subItems: [
-                    { label: "Automatique", action: "formatAuto" },
-                    { label: "Texte brut", action: "formatText" },
-                    { label: "Nombre", action: "formatNumber" },
-                    { label: "Pourcentage", action: "formatPercent" },
-                    { label: "Scientifique", action: "formatScientific" },
-                    { sep: true },
-                    { label: "Comptabilité", action: "formatAccounting" },
-                    { label: "Finances", action: "formatFinance" },
-                    { label: "Devise", action: "formatCurrency" },
-                    {
-                      label: "Devise (arrondie)",
-                      action: "formatCurrencyRounded",
-                    },
-                    { sep: true },
-                    { label: "Date", action: "formatDate" },
-                    { label: "Heure", action: "formatTime" },
-                    { label: "Date et heure", action: "formatDateTime" },
-                    { label: "Durée", action: "formatDuration" },
-                    { sep: true },
-                    { label: "Autres formats", action: "format_custom" },
-                  ],
-                },
-                {
-                  label: "Retour à la ligne",
-                  subItems: [
-                    { label: "Débordement", action: "overflowText" },
-                    { label: "Retour à la ligne", action: "wrapText" },
-                    { label: "Tronquer", action: "truncateText" },
-                  ],
-                },
-                {
-                  label: "Rotation du texte",
-                  subItems: [
-                    { label: "Aucune", action: "rotateNone" },
-                    { label: "Incliner vers le haut", action: "rotateTiltUp" },
-                    { label: "Incliner vers le bas", action: "rotateTiltDown" },
-                    { label: "Rotation vers le haut", action: "rotateUp" },
-                    { label: "Rotation vers le bas", action: "rotateDown" },
-                    {
-                      label: "Empiler verticalement",
-                      action: "rotateVertical",
-                    },
-                  ],
-                },
-                { sep: true },
-                {
-                  label: "Fusionner les cellules",
-                  subItems: [
-                    {
-                      label: "Fusionner toutes les cellules",
-                      action: "mergeCellsAll",
-                    },
-                    {
-                      label: "Fusionner horizontalement",
-                      action: "mergeCellsHoriz",
-                    },
-                    {
-                      label: "Fusionner verticalement",
-                      action: "mergeCellsVert",
-                    },
-                    {
-                      label: "Annuler la fusion",
-                      action: "unmergeCellsAction",
-                    },
-                  ],
-                },
-                { sep: true },
-                {
-                  label: "Convertir en tableau",
-                  action: "convert_to_table",
-                  shortcut: "Ctrl+Alt+T",
-                },
-                { label: "Mise en forme conditionnelle", action: "condFormat" },
-                {
-                  label: "M.E.F. conditionnelle avancée",
-                  action: "advanced_cond_format",
-                },
-                { label: "Couleurs en alternance", action: "bandedRows" },
-                { sep: true },
-                {
-                  label: "Effacer la mise en forme",
-                  action: "clearFormat",
-                  shortcut: "Ctrl+\\",
-                },
-              ],
-            },
-            {
-              id: "data",
-              label: "Données",
-              items: [
-                { label: "Analyser les données", action: "analyze_data" },
-                { sep: true },
-                {
-                  label: "Trier une feuille",
-                  subItems: [
-                    { label: "Trier la feuille de A à Z", action: "sortAsc" },
-                    { label: "Trier la feuille de Z à A", action: "sortDesc" },
-                  ],
-                },
-                {
-                  label: "Trier une plage",
-                  subItems: [
-                    { label: "Trier la plage de A à Z", action: "sortAsc" },
-                    { label: "Trier la plage de Z à A", action: "sortDesc" },
-                  ],
-                },
-                { sep: true },
-                { label: "Créer un filtre", action: "filter" },
-                {
-                  label: "Créer une vue avec critère de regroupement",
-                  subItems: [
-                    {
-                      label: "Nouvelle vue de regroupement",
-                      action: "group_view",
-                    },
-                  ],
-                },
-                { label: "Créer une vue filtrée", action: "filtered_view" },
-                { label: "Ajouter un segment", action: "add_slicer" },
-                { sep: true },
-                {
-                  label: "Protéger des feuilles et des plages",
-                  action: "protect_sheets",
-                },
-                { label: "Plages nommées", action: "named_ranges" },
-                { label: "Fonctions nommées", action: "named_functions" },
-                { label: "Plage aléatoire", action: "random_range" },
-                { sep: true },
-                { label: "Statistiques de colonne", action: "column_stats" },
-                { label: "Validation des données", action: "validation" },
-                { label: "Validation avancée", action: "advanced_validation" },
-                {
-                  label: "Nettoyage des données",
-                  subItems: [
-                    {
-                      label: "Suggestions de nettoyage",
-                      action: "cleanup_suggestions",
-                    },
-                    {
-                      label: "Supprimer les doublons",
-                      action: "remove_duplicates",
-                    },
-                    {
-                      label: "Supprimer les espaces",
-                      action: "trim_whitespace",
-                    },
-                  ],
-                },
-                { label: "Scinder le texte en colonnes", action: "split_text" },
-              ],
-            },
-            {
-              id: "tools",
-              label: "Outils",
-              items: [
-                { label: "Créer un formulaire", action: "create_form" },
-                {
-                  label: "Orthographe",
-                  subItems: [
-                    {
-                      label: "Vérification orthographique",
-                      action: "spell_check",
-                    },
-                    {
-                      label: "Dictionnaire personnel",
-                      action: "personal_dictionary",
-                    },
-                  ],
-                },
-                {
-                  label: "Commandes des suggestions",
-                  subItems: [
-                    {
-                      label: "Activer la suggestion automatique",
-                      action: "auto_complete_settings",
-                    },
-                  ],
-                },
-                {
-                  label: "Notifications conditionnelles",
-                  action: "conditional_notifications",
-                },
-                { sep: true },
-                {
-                  label: "Paramètres de notification",
-                  subItems: [
-                    {
-                      label: "M'informer des modifications",
-                      action: "notify_changes",
-                    },
-                  ],
-                },
-                { label: "Accessibilité", action: "accessibility_settings" },
-                { sep: true },
-                {
-                  label: "Tableau de bord des activités",
-                  action: "activity_dashboard",
-                },
-              ],
-            },
-            {
-              id: "gemini",
-              label: "Gemini",
-              items: [
-                { label: "Analyser les données", action: "ai_analyze" },
-                { sep: true },
-                { label: "Générer des graphiques", action: "ai_charts" },
-                {
-                  label: "Générer un tableau croisé dynamique",
-                  action: "ai_pivot",
-                },
-                { label: "Générer un tableau", action: "ai_table" },
-                { label: "Générer une image", action: "ai_image" },
-                { label: "Générer une formule", action: "ai_formula" },
-                { sep: true },
-                { label: "Résumer du texte", action: "ai_summarize" },
-                { label: "Classer du texte", action: "ai_classify" },
-                { label: "Analyser les sentiments", action: "ai_sentiment" },
-                { label: "Générer du texte", action: "ai_generate" },
-                { sep: true },
-                { label: "Poser une question", action: "gemini" },
-              ],
-            },
-            {
-              id: "extensions",
-              label: "Extensions",
-              items: [
-                {
-                  label: "Modules complémentaires",
-                  subItems: [
-                    {
-                      label: "Télécharger des modules complémentaires",
-                      action: "add_ons",
-                    },
-                  ],
-                },
-                {
-                  label: "Macros",
-                  subItems: [
-                    { label: "Editeur de macros", action: "macroEditor" },
-                    { label: "Enregistrer une macro", action: "record_macro" },
-                  ],
-                },
-                { label: "Apps Script", action: "apps_script" },
-                {
-                  label: "AppSheet",
-                  subItems: [
-                    { label: "Créer une application", action: "create_app" },
-                  ],
-                },
-              ],
-            },
-            {
-              id: "help",
-              label: "Aide",
-              items: [
-                { label: "Rechercher dans les menus", shortcut: "Alt+/" },
-                { sep: true },
-                { label: "Demandez de l'aide à Gemini", action: "gemini" },
-                { label: "Aide de Sheets", action: "help_docs" },
-                {
-                  label: "Aidez-nous à améliorer Sheets",
-                  action: "send_feedback",
-                },
-                { sep: true },
-                { label: "Liste des fonctions", action: "functions_list" },
-                { label: "Raccourcis clavier", action: "keyboard_shortcuts" },
-              ],
-            },
-          ]}
-          onAction={(action, label) => {
-            const NATIVE_ACTIONS = [
-              "new",
-              "open",
-              "import",
-              "export_xlsx",
-              "export_csv",
-              "print",
-              "rename",
-              "trash",
-              "fullScreen",
-              "copyFile",
-              "undo",
-              "redo",
-              "cut",
-              "copy",
-              "paste",
-              "find",
-              "toggleGridlines",
-              "freezeRow",
-              "freezeCol",
-              "insertRowAbove",
-              "insertRowBelow",
-              "insertColLeft",
-              "insertColRight",
-              "chart",
-              "link",
-              "comment",
-              "bold",
-              "italic",
-              "underline",
-              "strikethrough",
-              "alignLeft",
-              "alignCenter",
-              "alignRight",
-              "clearFormat",
-              "unfreezeRow",
-              "unfreezeCol",
-              "zoom50",
-              "zoom75",
-              "zoom100",
-              "zoom125",
-              "zoom150",
-              "zoom200",
-              "toggleFormulaBar",
-              "insertSum",
-              "insertAvg",
-              "insertCount",
-              "insertMax",
-              "insertMin",
-              "condFormat",
-              "bandedRows",
-              "sortAsc",
-              "sortDesc",
-              "filter",
-              "validation",
-              "gemini",
-              "toggle_read_only",
-              "insertCheckbox",
-              "wrapText",
-              "overflowText",
-              "truncateText",
-              "mergeCellsAll",
-              "mergeCellsHoriz",
-              "mergeCellsVert",
-              "unmergeCellsAction",
-              "insertSheet",
-              "formatAuto",
-              "formatText",
-              "formatNumber",
-              "formatPercent",
-              "formatScientific",
-              "formatAccounting",
-              "formatFinance",
-              "formatCurrency",
-              "formatCurrencyRounded",
-              "formatDate",
-              "formatTime",
-              "formatDateTime",
-              "formatDuration",
-              "rotateNone",
-              "rotateTiltUp",
-              "rotateTiltDown",
-              "rotateUp",
-              "rotateDown",
-              "rotateVertical",
-              "pivot_table",
-              "chartDialog",
-              "macroEditor",
-            ];
+        {/* ===== MENU BAR ===== */}
+        <div data-print-hide className="-ml-1.5 flex flex-col pt-0.5">
+          <EditorMenu
+            menus={[
+              {
+                id: "file",
+                label: "Fichier",
+                items: [
+                  {
+                    label: "Nouveau",
+                    subItems: [
+                      { label: "Feuille de calcul", action: "new" },
+                      { label: "À partir d'un modèle", action: "templates" },
+                    ],
+                  },
+                  { label: "Ouvrir", action: "open", shortcut: "Ctrl+O" },
+                  { label: "Importer", action: "import" },
+                  { label: "Créer une copie", action: "copyFile" },
+                  { sep: true },
+                  { label: "Envoyer par e-mail", action: "email_send" },
+                  {
+                    label: "Télécharger",
+                    subItems: [
+                      {
+                        label: "Microsoft Excel (.xlsx)",
+                        action: "export_xlsx",
+                      },
+                      {
+                        label: "Valeurs séparées par des virgules (.csv)",
+                        action: "export_csv",
+                      },
+                      { label: "Document PDF (.pdf)", action: "print" },
+                      {
+                        label: "Aperçu avant impression",
+                        action: "print_preview",
+                      },
+                    ],
+                  },
+                  { label: "Approbations", action: "approvals" },
+                  { sep: true },
+                  { label: "Renommer", action: "rename" },
+                  { label: "Placer dans la corbeille", action: "trash" },
+                  { sep: true },
+                  {
+                    label: "Historique des versions",
+                    subItems: [
+                      {
+                        label: "Nommer la version actuelle",
+                        action: "name_version",
+                      },
+                      {
+                        label: "Afficher l'historique des versions",
+                        action: "version_history",
+                      },
+                    ],
+                  },
+                  {
+                    label: "Rendre disponible hors connexion",
+                    action: "offline_mode",
+                  },
+                  { sep: true },
+                  { label: "Détails", action: "file_details" },
+                  { label: "Limites de sécurité", action: "security_limits" },
+                  { label: "Paramètres", action: "file_settings" },
+                ],
+              },
+              {
+                id: "edit",
+                label: "Édition",
+                items: [
+                  { label: "Annuler", action: "undo", shortcut: "Ctrl+Z" },
+                  { label: "Rétablir", action: "redo", shortcut: "Ctrl+Y" },
+                  { sep: true },
+                  { label: "Couper", action: "cut", shortcut: "Ctrl+X" },
+                  { label: "Copier", action: "copy", shortcut: "Ctrl+C" },
+                  { label: "Coller", action: "paste", shortcut: "Ctrl+V" },
+                  { sep: true },
+                  {
+                    label: "Rechercher et remplacer",
+                    action: "find",
+                    shortcut: "Ctrl+H",
+                  },
+                ],
+              },
+              {
+                id: "view",
+                label: "Affichage",
+                items: [
+                  {
+                    label: "Afficher",
+                    subItems: [
+                      {
+                        label: "Barre de formules",
+                        action: "toggleFormulaBar",
+                      },
+                      { label: "Quadrillage", action: "toggleGridlines" },
+                      { label: "Plages protégées", action: "protected_ranges" },
+                    ],
+                  },
+                  {
+                    label: "Figer",
+                    subItems: [
+                      { label: "Figer la première ligne", action: "freezeRow" },
+                      {
+                        label: "Figer la première colonne",
+                        action: "freezeCol",
+                      },
+                      { label: "Libérer les lignes", action: "unfreezeRow" },
+                      { label: "Libérer les colonnes", action: "unfreezeCol" },
+                    ],
+                  },
+                  {
+                    label: "Regrouper",
+                    subItems: [
+                      {
+                        label: "Associer lignes/colonnes",
+                        action: "group_rows_cols",
+                      },
+                      {
+                        label: "Dissocier lignes/colonnes",
+                        action: "ungroup_rows_cols",
+                      },
+                    ],
+                  },
+                  { label: "Commentaires", action: "show_comments" },
+                  { sep: true },
+                  { label: "Feuilles masquées", action: "hidden_sheets" },
+                  { sep: true },
+                  {
+                    label: "Zoom",
+                    subItems: [
+                      { label: "50%", action: "zoom50" },
+                      { label: "75%", action: "zoom75" },
+                      { label: "100%", action: "zoom100" },
+                      { label: "125%", action: "zoom125" },
+                      { label: "150%", action: "zoom150" },
+                      { label: "200%", action: "zoom200" },
+                    ],
+                  },
+                  { label: "Plein écran", action: "fullScreen" },
+                  { sep: true },
+                  {
+                    label: isReadOnly ? "Passer en Édition" : "Mode Lecture",
+                    action: "toggle_read_only",
+                  },
+                ],
+              },
+              {
+                id: "insert",
+                label: "Insertion",
+                items: [
+                  {
+                    label: "Cellules",
+                    subItems: [
+                      {
+                        label: "Décaler vers la droite",
+                        action: "shift_cells_right",
+                      },
+                      {
+                        label: "Décaler vers le bas",
+                        action: "shift_cells_down",
+                      },
+                    ],
+                  },
+                  {
+                    label: "Lignes",
+                    subItems: [
+                      {
+                        label: "Insérer 1 ligne au-dessus",
+                        action: "insertRowAbove",
+                      },
+                      {
+                        label: "Insérer 1 ligne en-dessous",
+                        action: "insertRowBelow",
+                      },
+                    ],
+                  },
+                  {
+                    label: "Colonnes",
+                    subItems: [
+                      {
+                        label: "Insérer 1 colonne à gauche",
+                        action: "insertColLeft",
+                      },
+                      {
+                        label: "Insérer 1 colonne à droite",
+                        action: "insertColRight",
+                      },
+                    ],
+                  },
+                  {
+                    label: "Feuille",
+                    action: "insertSheet",
+                    shortcut: "Maj+F11",
+                  },
+                  { sep: true },
+                  { label: "Générer un tableau", action: "generate_table" },
+                  { label: "Tableaux prédéfinis", action: "preset_tables" },
+                  { sep: true },
+                  { label: "Chronologie", action: "insert_timeline" },
+                  { label: "Graphique (simple)", action: "chart" },
+                  { label: "Graphique avance", action: "chartDialog" },
+                  { label: "Tableau croise dynamique", action: "pivot_table" },
+                  {
+                    label: "Image",
+                    subItems: [
+                      {
+                        label: "Insérer une image dans la cellule",
+                        action: "image_in_cell",
+                      },
+                      {
+                        label: "Insérer une image sur les cellules",
+                        action: "image_over_cells",
+                      },
+                    ],
+                  },
+                  { label: "Dessin", action: "insert_drawing" },
+                  { sep: true },
+                  {
+                    label: "Fonction",
+                    subItems: [
+                      { label: "SUM", action: "insertSum" },
+                      { label: "AVERAGE", action: "insertAvg" },
+                      { label: "COUNT", action: "insertCount" },
+                      { label: "MAX", action: "insertMax" },
+                      { label: "MIN", action: "insertMin" },
+                    ],
+                  },
+                  { label: "Lien", action: "link", shortcut: "Ctrl+K" },
+                  { sep: true },
+                  { label: "Case à cocher", action: "insertCheckbox" },
+                  { label: "Liste déroulante", action: "validation" },
+                ],
+              },
+              {
+                id: "format",
+                label: "Format",
+                items: [
+                  {
+                    label: "Nombre",
+                    subItems: [
+                      { label: "Automatique", action: "formatAuto" },
+                      { label: "Texte brut", action: "formatText" },
+                      { label: "Nombre", action: "formatNumber" },
+                      { label: "Pourcentage", action: "formatPercent" },
+                      { label: "Scientifique", action: "formatScientific" },
+                      { sep: true },
+                      { label: "Comptabilité", action: "formatAccounting" },
+                      { label: "Finances", action: "formatFinance" },
+                      { label: "Devise", action: "formatCurrency" },
+                      {
+                        label: "Devise (arrondie)",
+                        action: "formatCurrencyRounded",
+                      },
+                      { sep: true },
+                      { label: "Date", action: "formatDate" },
+                      { label: "Heure", action: "formatTime" },
+                      { label: "Date et heure", action: "formatDateTime" },
+                      { label: "Durée", action: "formatDuration" },
+                      { sep: true },
+                      { label: "Autres formats", action: "format_custom" },
+                    ],
+                  },
+                  {
+                    label: "Retour à la ligne",
+                    subItems: [
+                      { label: "Débordement", action: "overflowText" },
+                      { label: "Retour à la ligne", action: "wrapText" },
+                      { label: "Tronquer", action: "truncateText" },
+                    ],
+                  },
+                  {
+                    label: "Rotation du texte",
+                    subItems: [
+                      { label: "Aucune", action: "rotateNone" },
+                      {
+                        label: "Incliner vers le haut",
+                        action: "rotateTiltUp",
+                      },
+                      {
+                        label: "Incliner vers le bas",
+                        action: "rotateTiltDown",
+                      },
+                      { label: "Rotation vers le haut", action: "rotateUp" },
+                      { label: "Rotation vers le bas", action: "rotateDown" },
+                      {
+                        label: "Empiler verticalement",
+                        action: "rotateVertical",
+                      },
+                    ],
+                  },
+                  { sep: true },
+                  {
+                    label: "Fusionner les cellules",
+                    subItems: [
+                      {
+                        label: "Fusionner toutes les cellules",
+                        action: "mergeCellsAll",
+                      },
+                      {
+                        label: "Fusionner horizontalement",
+                        action: "mergeCellsHoriz",
+                      },
+                      {
+                        label: "Fusionner verticalement",
+                        action: "mergeCellsVert",
+                      },
+                      {
+                        label: "Annuler la fusion",
+                        action: "unmergeCellsAction",
+                      },
+                    ],
+                  },
+                  { sep: true },
+                  {
+                    label: "Convertir en tableau",
+                    action: "convert_to_table",
+                    shortcut: "Ctrl+Alt+T",
+                  },
+                  {
+                    label: "Mise en forme conditionnelle",
+                    action: "condFormat",
+                  },
+                  {
+                    label: "M.E.F. conditionnelle avancée",
+                    action: "advanced_cond_format",
+                  },
+                  { label: "Couleurs en alternance", action: "bandedRows" },
+                  { sep: true },
+                  {
+                    label: "Effacer la mise en forme",
+                    action: "clearFormat",
+                    shortcut: "Ctrl+\\",
+                  },
+                ],
+              },
+              {
+                id: "data",
+                label: "Données",
+                items: [
+                  { label: "Analyser les données", action: "analyze_data" },
+                  { sep: true },
+                  {
+                    label: "Trier une feuille",
+                    subItems: [
+                      { label: "Trier la feuille de A à Z", action: "sortAsc" },
+                      {
+                        label: "Trier la feuille de Z à A",
+                        action: "sortDesc",
+                      },
+                    ],
+                  },
+                  {
+                    label: "Trier une plage",
+                    subItems: [
+                      { label: "Trier la plage de A à Z", action: "sortAsc" },
+                      { label: "Trier la plage de Z à A", action: "sortDesc" },
+                    ],
+                  },
+                  { sep: true },
+                  { label: "Créer un filtre", action: "filter" },
+                  {
+                    label: "Créer une vue avec critère de regroupement",
+                    subItems: [
+                      {
+                        label: "Nouvelle vue de regroupement",
+                        action: "group_view",
+                      },
+                    ],
+                  },
+                  { label: "Créer une vue filtrée", action: "filtered_view" },
+                  { label: "Ajouter un segment", action: "add_slicer" },
+                  { sep: true },
+                  {
+                    label: "Protéger des feuilles et des plages",
+                    action: "protect_sheets",
+                  },
+                  { label: "Plages nommées", action: "named_ranges" },
+                  { label: "Fonctions nommées", action: "named_functions" },
+                  { label: "Plage aléatoire", action: "random_range" },
+                  { sep: true },
+                  { label: "Statistiques de colonne", action: "column_stats" },
+                  { label: "Validation des données", action: "validation" },
+                  {
+                    label: "Validation avancée",
+                    action: "advanced_validation",
+                  },
+                  {
+                    label: "Nettoyage des données",
+                    subItems: [
+                      {
+                        label: "Suggestions de nettoyage",
+                        action: "cleanup_suggestions",
+                      },
+                      {
+                        label: "Supprimer les doublons",
+                        action: "remove_duplicates",
+                      },
+                      {
+                        label: "Supprimer les espaces",
+                        action: "trim_whitespace",
+                      },
+                    ],
+                  },
+                  {
+                    label: "Scinder le texte en colonnes",
+                    action: "split_text",
+                  },
+                ],
+              },
+              {
+                id: "tools",
+                label: "Outils",
+                items: [
+                  { label: "Créer un formulaire", action: "create_form" },
+                  {
+                    label: "Orthographe",
+                    subItems: [
+                      {
+                        label: "Vérification orthographique",
+                        action: "spell_check",
+                      },
+                      {
+                        label: "Dictionnaire personnel",
+                        action: "personal_dictionary",
+                      },
+                    ],
+                  },
+                  {
+                    label: "Commandes des suggestions",
+                    subItems: [
+                      {
+                        label: "Activer la suggestion automatique",
+                        action: "auto_complete_settings",
+                      },
+                    ],
+                  },
+                  {
+                    label: "Notifications conditionnelles",
+                    action: "conditional_notifications",
+                  },
+                  { sep: true },
+                  {
+                    label: "Paramètres de notification",
+                    subItems: [
+                      {
+                        label: "M'informer des modifications",
+                        action: "notify_changes",
+                      },
+                    ],
+                  },
+                  { label: "Accessibilité", action: "accessibility_settings" },
+                  { sep: true },
+                  {
+                    label: "Tableau de bord des activités",
+                    action: "activity_dashboard",
+                  },
+                ],
+              },
+              {
+                id: "gemini",
+                label: "Gemini",
+                items: [
+                  { label: "Analyser les données", action: "ai_analyze" },
+                  { sep: true },
+                  { label: "Générer des graphiques", action: "ai_charts" },
+                  {
+                    label: "Générer un tableau croisé dynamique",
+                    action: "ai_pivot",
+                  },
+                  { label: "Générer un tableau", action: "ai_table" },
+                  { label: "Générer une image", action: "ai_image" },
+                  { label: "Générer une formule", action: "ai_formula" },
+                  { sep: true },
+                  { label: "Résumer du texte", action: "ai_summarize" },
+                  { label: "Classer du texte", action: "ai_classify" },
+                  { label: "Analyser les sentiments", action: "ai_sentiment" },
+                  { label: "Générer du texte", action: "ai_generate" },
+                  { sep: true },
+                  { label: "Poser une question", action: "gemini" },
+                ],
+              },
+              {
+                id: "extensions",
+                label: "Extensions",
+                items: [
+                  {
+                    label: "Modules complémentaires",
+                    subItems: [
+                      {
+                        label: "Télécharger des modules complémentaires",
+                        action: "add_ons",
+                      },
+                    ],
+                  },
+                  {
+                    label: "Macros",
+                    subItems: [
+                      { label: "Editeur de macros", action: "macroEditor" },
+                      {
+                        label: "Enregistrer une macro",
+                        action: "record_macro",
+                      },
+                    ],
+                  },
+                  { label: "Apps Script", action: "apps_script" },
+                  {
+                    label: "AppSheet",
+                    subItems: [
+                      { label: "Créer une application", action: "create_app" },
+                    ],
+                  },
+                ],
+              },
+              {
+                id: "help",
+                label: "Aide",
+                items: [
+                  { label: "Rechercher dans les menus", shortcut: "Alt+/" },
+                  { sep: true },
+                  { label: "Demandez de l'aide à Gemini", action: "gemini" },
+                  { label: "Aide de Sheets", action: "help_docs" },
+                  {
+                    label: "Aidez-nous à améliorer Sheets",
+                    action: "send_feedback",
+                  },
+                  { sep: true },
+                  { label: "Liste des fonctions", action: "functions_list" },
+                  { label: "Raccourcis clavier", action: "keyboard_shortcuts" },
+                ],
+              },
+            ]}
+            onAction={(action, label) => {
+              const NATIVE_ACTIONS = [
+                "new",
+                "open",
+                "import",
+                "export_xlsx",
+                "export_csv",
+                "print",
+                "rename",
+                "trash",
+                "fullScreen",
+                "copyFile",
+                "undo",
+                "redo",
+                "cut",
+                "copy",
+                "paste",
+                "find",
+                "toggleGridlines",
+                "freezeRow",
+                "freezeCol",
+                "insertRowAbove",
+                "insertRowBelow",
+                "insertColLeft",
+                "insertColRight",
+                "chart",
+                "link",
+                "comment",
+                "bold",
+                "italic",
+                "underline",
+                "strikethrough",
+                "alignLeft",
+                "alignCenter",
+                "alignRight",
+                "clearFormat",
+                "unfreezeRow",
+                "unfreezeCol",
+                "zoom50",
+                "zoom75",
+                "zoom100",
+                "zoom125",
+                "zoom150",
+                "zoom200",
+                "toggleFormulaBar",
+                "insertSum",
+                "insertAvg",
+                "insertCount",
+                "insertMax",
+                "insertMin",
+                "condFormat",
+                "bandedRows",
+                "sortAsc",
+                "sortDesc",
+                "filter",
+                "validation",
+                "gemini",
+                "toggle_read_only",
+                "insertCheckbox",
+                "wrapText",
+                "overflowText",
+                "truncateText",
+                "mergeCellsAll",
+                "mergeCellsHoriz",
+                "mergeCellsVert",
+                "unmergeCellsAction",
+                "insertSheet",
+                "formatAuto",
+                "formatText",
+                "formatNumber",
+                "formatPercent",
+                "formatScientific",
+                "formatAccounting",
+                "formatFinance",
+                "formatCurrency",
+                "formatCurrencyRounded",
+                "formatDate",
+                "formatTime",
+                "formatDateTime",
+                "formatDuration",
+                "rotateNone",
+                "rotateTiltUp",
+                "rotateTiltDown",
+                "rotateUp",
+                "rotateDown",
+                "rotateVertical",
+                "pivot_table",
+                "chartDialog",
+                "macroEditor",
+              ];
 
-            if (action === "todo" || !NATIVE_ACTIONS.includes(action)) {
-              setActiveModal({ id: action, label });
-              return;
-            }
+              if (action === "todo" || !NATIVE_ACTIONS.includes(action)) {
+                setActiveModal({ id: action, label });
+                return;
+              }
 
-            if (action === "insertCheckbox") {
-              if (selectionBounds) {
-                for (
-                  let r = selectionBounds.minR;
-                  r <= selectionBounds.maxR;
-                  r++
-                ) {
+              if (action === "insertCheckbox") {
+                if (selectionBounds) {
+                  for (
+                    let r = selectionBounds.minR;
+                    r <= selectionBounds.maxR;
+                    r++
+                  ) {
+                    for (
+                      let c = selectionBounds.minC;
+                      c <= selectionBounds.maxC;
+                      c++
+                    ) {
+                      setCellValidation(r, c, { type: "boolean" });
+                      if (!data[`${r},${c}`]?.value) setCell(r, c, "FALSE");
+                    }
+                  }
+                } else if (activeCell) {
+                  setCellValidation(activeCell.r, activeCell.c, {
+                    type: "boolean",
+                  });
+                  if (!data[`${activeCell.r},${activeCell.c}`]?.value)
+                    setCell(activeCell.r, activeCell.c, "FALSE");
+                }
+                return;
+              }
+              if (action === "wrapText") {
+                applyToSelection({ wrap: true });
+                return;
+              }
+              if (action === "overflowText") {
+                applyToSelection({ wrap: false });
+                return;
+              }
+              if (action === "truncateText") {
+                applyToSelection({ wrap: false, overflow: "hidden" });
+                toast.success("Texte tronqué");
+                return;
+              }
+              // Number formats
+              if (action === "formatAuto") {
+                applyToSelection({ numberFormat: "auto" });
+                toast.success("Format automatique");
+                return;
+              }
+              if (action === "formatText") {
+                applyToSelection({ numberFormat: "text" });
+                toast.success("Format texte");
+                return;
+              }
+              if (action === "formatNumber") {
+                applyToSelection({ numberFormat: "number" });
+                toast.success("Format nombre");
+                return;
+              }
+              if (action === "formatPercent") {
+                applyToSelection({ numberFormat: "percent" });
+                toast.success("Format pourcentage");
+                return;
+              }
+              if (action === "formatScientific") {
+                applyToSelection({ numberFormat: "scientific" });
+                toast.success("Format scientifique");
+                return;
+              }
+              if (action === "formatAccounting") {
+                applyToSelection({ numberFormat: "accounting" });
+                toast.success("Format comptabilité");
+                return;
+              }
+              if (action === "formatFinance") {
+                applyToSelection({ numberFormat: "accounting" });
+                toast.success("Format finances");
+                return;
+              }
+              if (action === "formatCurrency") {
+                applyToSelection({ numberFormat: "currency" });
+                toast.success("Format devise");
+                return;
+              }
+              if (action === "formatCurrencyRounded") {
+                applyToSelection({ numberFormat: "currency", decimals: 0 });
+                toast.success("Format devise arrondie");
+                return;
+              }
+              if (action === "formatDate") {
+                applyToSelection({ numberFormat: "date" });
+                toast.success("Format date");
+                return;
+              }
+              if (action === "formatTime") {
+                applyToSelection({ numberFormat: "time" });
+                toast.success("Format heure");
+                return;
+              }
+              if (action === "formatDateTime") {
+                applyToSelection({ numberFormat: "datetime" });
+                toast.success("Format date et heure");
+                return;
+              }
+              if (action === "formatDuration") {
+                applyToSelection({ numberFormat: "duration" });
+                toast.success("Format durée");
+                return;
+              }
+              // Text rotation
+              if (action === "rotateNone") {
+                applyToSelection({ rotation: 0 });
+                toast.success("Rotation supprimée");
+                return;
+              }
+              if (action === "rotateTiltUp") {
+                applyToSelection({ rotation: -45 });
+                toast.success("Incliné vers le haut");
+                return;
+              }
+              if (action === "rotateTiltDown") {
+                applyToSelection({ rotation: 45 });
+                toast.success("Incliné vers le bas");
+                return;
+              }
+              if (action === "rotateUp") {
+                applyToSelection({ rotation: -90 });
+                toast.success("Rotation vers le haut");
+                return;
+              }
+              if (action === "rotateDown") {
+                applyToSelection({ rotation: 90 });
+                toast.success("Rotation vers le bas");
+                return;
+              }
+              if (action === "rotateVertical") {
+                applyToSelection({ rotation: "vertical" });
+                toast.success("Texte vertical");
+                return;
+              }
+              if (action === "mergeCellsAll") {
+                handleMerge();
+                return;
+              }
+              if (action === "mergeCellsHoriz") {
+                if (selectionBounds) {
+                  for (
+                    let r = selectionBounds.minR;
+                    r <= selectionBounds.maxR;
+                    r++
+                  ) {
+                    mergeCells(
+                      r,
+                      r,
+                      selectionBounds.minC,
+                      selectionBounds.maxC,
+                    );
+                  }
+                  toast.success("Fusion horizontale");
+                }
+                return;
+              }
+              if (action === "mergeCellsVert") {
+                if (selectionBounds) {
                   for (
                     let c = selectionBounds.minC;
                     c <= selectionBounds.maxC;
                     c++
                   ) {
-                    setCellValidation(r, c, { type: "boolean" });
-                    if (!data[`${r},${c}`]?.value) setCell(r, c, "FALSE");
+                    mergeCells(
+                      selectionBounds.minR,
+                      selectionBounds.maxR,
+                      c,
+                      c,
+                    );
+                  }
+                  toast.success("Fusion verticale");
+                }
+                return;
+              }
+              if (action === "unmergeCellsAction") {
+                if (selectionBounds) {
+                  unmergeCells(selectionBounds.minR, selectionBounds.minC);
+                  toast.info("Défusionné");
+                }
+                return;
+              }
+
+              if (action === "new") window.open("/sheets", "_blank");
+              if (action === "open")
+                toast.info(
+                  "Rendez-vous sur l'accueil Drive pour ouvrir un fichier.",
+                );
+              if (action === "import") fileInputRef.current?.click();
+              if (action === "export_xlsx") exportXLSX("xlsx");
+              if (action === "export_csv") exportXLSX("csv");
+              if (action === "print") window.print();
+              if (action === "toggle_read_only") {
+                setIsReadOnly((r) => {
+                  const newR = !r;
+                  toast.info(
+                    newR ? "Mode Lecture seule activé" : "Mode Édition activé",
+                  );
+                  return newR;
+                });
+              }
+              if (action === "rename") {
+                const name = prompt(
+                  "Nouveau nom du fichier:",
+                  "Document sans titre",
+                );
+                if (name) toast.success(`Fichier renommé en "${name}"`);
+              }
+              if (action === "trash") {
+                if (
+                  confirm("Voulez-vous placer ce fichier dans la corbeille ?")
+                ) {
+                  toast.success("Fichier placé dans la corbeille.");
+                  window.location.href = "/drive";
+                }
+              }
+              if (action === "fullScreen") {
+                if (!document.fullscreenElement) {
+                  document.documentElement
+                    .requestFullscreen()
+                    .catch(() => toast.error("Le plein écran est bloqué."));
+                } else {
+                  document.exitFullscreen();
+                }
+              }
+              if (action === "copyFile") {
+                toast.success("Document dupliqué avec succès.");
+              }
+              if (action === "undo") undo();
+              if (action === "redo") redo();
+              if (action === "cut") handleContextAction("cut");
+              if (action === "copy") handleContextAction("copy");
+              if (action === "paste") handleContextAction("paste");
+              if (action === "find") setShowFind(true);
+              if (action === "toggleGridlines")
+                setShowGridlines(!showGridlines);
+              if (action === "freezeRow") {
+                setFreezeRows(1);
+                toast.success("Première ligne figée");
+              }
+              if (action === "freezeCol") {
+                setFreezeCols(1);
+                toast.success("Première colonne figée");
+              }
+              if (action === "insertRowAbove")
+                handleContextAction("insertRowAbove");
+              if (action === "insertRowBelow")
+                handleContextAction("insertRowBelow");
+              if (action === "insertColLeft")
+                handleContextAction("insertColLeft");
+              if (action === "insertColRight")
+                handleContextAction("insertColRight");
+              if (action === "chart") setShowChartPicker(true);
+              if (action === "link") {
+                const url = prompt("URL:");
+                if (url && activeCell) {
+                  setCell(activeCell.r, activeCell.c, url);
+                  toast.success("Lien inséré");
+                }
+              }
+              if (action === "comment") {
+                if (activeCell) {
+                  const existing =
+                    data[`${activeCell.r},${activeCell.c}`]?.comment || "";
+                  const c = prompt("Commentaire:", existing);
+                  if (c !== null) {
+                    setCellComment(activeCell.r, activeCell.c, c || undefined);
+                    toast.success(
+                      c ? "Commentaire ajouté" : "Commentaire supprimé",
+                    );
                   }
                 }
-              } else if (activeCell) {
-                setCellValidation(activeCell.r, activeCell.c, {
-                  type: "boolean",
+              }
+              if (action === "bold") toggleBoolFormat("bold");
+              if (action === "italic") toggleBoolFormat("italic");
+              if (action === "underline") toggleBoolFormat("underline");
+              if (action === "strikethrough") toggleBoolFormat("strikethrough");
+              if (action === "alignLeft") applyToSelection({ align: "left" });
+              if (action === "alignCenter")
+                applyToSelection({ align: "center" });
+              if (action === "alignRight") applyToSelection({ align: "right" });
+              if (action === "clearFormat")
+                applyToSelection({
+                  bold: false,
+                  italic: false,
+                  underline: false,
+                  strikethrough: false,
+                  textColor: undefined,
+                  fillColor: undefined,
+                  align: undefined,
+                  verticalAlign: undefined,
+                  fontFamily: undefined,
+                  fontSize: undefined,
+                  numberFormat: "auto",
                 });
-                if (!data[`${activeCell.r},${activeCell.c}`]?.value)
-                  setCell(activeCell.r, activeCell.c, "FALSE");
+              if (action === "unfreezeRow") {
+                setFreezeRows(0);
+                toast.info("Lignes libérées");
               }
-              return;
-            }
-            if (action === "wrapText") {
-              applyToSelection({ wrap: true });
-              return;
-            }
-            if (action === "overflowText") {
-              applyToSelection({ wrap: false });
-              return;
-            }
-            if (action === "truncateText") {
-              applyToSelection({ wrap: false, overflow: "hidden" });
-              toast.success("Texte tronqué");
-              return;
-            }
-            // Number formats
-            if (action === "formatAuto") {
-              applyToSelection({ numberFormat: "auto" });
-              toast.success("Format automatique");
-              return;
-            }
-            if (action === "formatText") {
-              applyToSelection({ numberFormat: "text" });
-              toast.success("Format texte");
-              return;
-            }
-            if (action === "formatNumber") {
-              applyToSelection({ numberFormat: "number" });
-              toast.success("Format nombre");
-              return;
-            }
-            if (action === "formatPercent") {
-              applyToSelection({ numberFormat: "percent" });
-              toast.success("Format pourcentage");
-              return;
-            }
-            if (action === "formatScientific") {
-              applyToSelection({ numberFormat: "scientific" });
-              toast.success("Format scientifique");
-              return;
-            }
-            if (action === "formatAccounting") {
-              applyToSelection({ numberFormat: "accounting" });
-              toast.success("Format comptabilité");
-              return;
-            }
-            if (action === "formatFinance") {
-              applyToSelection({ numberFormat: "accounting" });
-              toast.success("Format finances");
-              return;
-            }
-            if (action === "formatCurrency") {
-              applyToSelection({ numberFormat: "currency" });
-              toast.success("Format devise");
-              return;
-            }
-            if (action === "formatCurrencyRounded") {
-              applyToSelection({ numberFormat: "currency", decimals: 0 });
-              toast.success("Format devise arrondie");
-              return;
-            }
-            if (action === "formatDate") {
-              applyToSelection({ numberFormat: "date" });
-              toast.success("Format date");
-              return;
-            }
-            if (action === "formatTime") {
-              applyToSelection({ numberFormat: "time" });
-              toast.success("Format heure");
-              return;
-            }
-            if (action === "formatDateTime") {
-              applyToSelection({ numberFormat: "datetime" });
-              toast.success("Format date et heure");
-              return;
-            }
-            if (action === "formatDuration") {
-              applyToSelection({ numberFormat: "duration" });
-              toast.success("Format durée");
-              return;
-            }
-            // Text rotation
-            if (action === "rotateNone") {
-              applyToSelection({ rotation: 0 });
-              toast.success("Rotation supprimée");
-              return;
-            }
-            if (action === "rotateTiltUp") {
-              applyToSelection({ rotation: -45 });
-              toast.success("Incliné vers le haut");
-              return;
-            }
-            if (action === "rotateTiltDown") {
-              applyToSelection({ rotation: 45 });
-              toast.success("Incliné vers le bas");
-              return;
-            }
-            if (action === "rotateUp") {
-              applyToSelection({ rotation: -90 });
-              toast.success("Rotation vers le haut");
-              return;
-            }
-            if (action === "rotateDown") {
-              applyToSelection({ rotation: 90 });
-              toast.success("Rotation vers le bas");
-              return;
-            }
-            if (action === "rotateVertical") {
-              applyToSelection({ rotation: "vertical" });
-              toast.success("Texte vertical");
-              return;
-            }
-            if (action === "mergeCellsAll") {
-              handleMerge();
-              return;
-            }
-            if (action === "mergeCellsHoriz") {
-              if (selectionBounds) {
-                for (
-                  let r = selectionBounds.minR;
-                  r <= selectionBounds.maxR;
-                  r++
-                ) {
-                  mergeCells(r, r, selectionBounds.minC, selectionBounds.maxC);
+              if (action === "unfreezeCol") {
+                setFreezeCols(0);
+                toast.info("Colonnes libérées");
+              }
+              if (action === "toggleFormulaBar") {
+                setShowFormulaBar((v) => {
+                  toast.info(
+                    v
+                      ? "Barre de formules masquée"
+                      : "Barre de formules affichée",
+                  );
+                  return !v;
+                });
+                return;
+              }
+              if (action === "zoom50") {
+                setZoomLevel(50);
+                toast.success("Zoom à 50%");
+                return;
+              }
+              if (action === "zoom75") {
+                setZoomLevel(75);
+                toast.success("Zoom à 75%");
+                return;
+              }
+              if (action === "zoom100") {
+                setZoomLevel(100);
+                toast.success("Zoom à 100%");
+                return;
+              }
+              if (action === "zoom125") {
+                setZoomLevel(125);
+                toast.success("Zoom à 125%");
+                return;
+              }
+              if (action === "zoom150") {
+                setZoomLevel(150);
+                toast.success("Zoom à 150%");
+                return;
+              }
+              if (action === "zoom200") {
+                setZoomLevel(200);
+                toast.success("Zoom à 200%");
+                return;
+              }
+              if (action === "insertSum") {
+                if (activeCell) {
+                  setCell(activeCell.r, activeCell.c, "=SUM()");
+                  setIsEditing(true);
+                  setTimeout(() => formulaBarRef.current?.focus(), 0);
                 }
-                toast.success("Fusion horizontale");
               }
-              return;
-            }
-            if (action === "mergeCellsVert") {
-              if (selectionBounds) {
-                for (
-                  let c = selectionBounds.minC;
-                  c <= selectionBounds.maxC;
-                  c++
-                ) {
-                  mergeCells(selectionBounds.minR, selectionBounds.maxR, c, c);
+              if (action === "insertAvg") {
+                if (activeCell) {
+                  setCell(activeCell.r, activeCell.c, "=AVERAGE()");
+                  setIsEditing(true);
+                  setTimeout(() => formulaBarRef.current?.focus(), 0);
                 }
-                toast.success("Fusion verticale");
               }
-              return;
-            }
-            if (action === "unmergeCellsAction") {
-              if (selectionBounds) {
-                unmergeCells(selectionBounds.minR, selectionBounds.minC);
-                toast.info("Défusionné");
+              if (action === "insertCount") {
+                if (activeCell) {
+                  setCell(activeCell.r, activeCell.c, "=COUNT()");
+                  setIsEditing(true);
+                  setTimeout(() => formulaBarRef.current?.focus(), 0);
+                }
               }
-              return;
-            }
-
-            if (action === "new") window.open("/sheets", "_blank");
-            if (action === "open")
-              toast.info(
-                "Rendez-vous sur l'accueil Drive pour ouvrir un fichier.",
-              );
-            if (action === "import") fileInputRef.current?.click();
-            if (action === "export_xlsx") exportXLSX("xlsx");
-            if (action === "export_csv") exportXLSX("csv");
-            if (action === "print") window.print();
-            if (action === "toggle_read_only") {
-              setIsReadOnly((r) => {
-                const newR = !r;
-                toast.info(
-                  newR ? "Mode Lecture seule activé" : "Mode Édition activé",
+              if (action === "insertMax") {
+                if (activeCell) {
+                  setCell(activeCell.r, activeCell.c, "=MAX()");
+                  setIsEditing(true);
+                  setTimeout(() => formulaBarRef.current?.focus(), 0);
+                }
+              }
+              if (action === "insertMin") {
+                if (activeCell) {
+                  setCell(activeCell.r, activeCell.c, "=MIN()");
+                  setIsEditing(true);
+                  setTimeout(() => formulaBarRef.current?.focus(), 0);
+                }
+              }
+              if (action === "condFormat") setShowCondFormat(true);
+              if (action === "bandedRows") setBandedRows(!bandedRows);
+              if (action === "sortAsc") handleContextAction("sortAsc");
+              if (action === "sortDesc") handleContextAction("sortDesc");
+              if (action === "filter") toggleFilter();
+              if (action === "validation") {
+                if (!activeCell) return;
+                const vals = prompt(
+                  "Valeurs de la liste (séparées par des virgules):",
                 );
-                return newR;
-              });
-            }
-            if (action === "rename") {
-              const name = prompt(
-                "Nouveau nom du fichier:",
-                "Document sans titre",
-              );
-              if (name) toast.success(`Fichier renommé en "${name}"`);
-            }
-            if (action === "trash") {
-              if (
-                confirm("Voulez-vous placer ce fichier dans la corbeille ?")
-              ) {
-                toast.success("Fichier placé dans la corbeille.");
-                window.location.href = "/drive";
+                if (vals) {
+                  setCellValidation(activeCell.r, activeCell.c, {
+                    type: "list",
+                    values: vals.split(",").map((v) => v.trim()),
+                  });
+                  toast.success("Validation ajoutée");
+                }
               }
-            }
-            if (action === "fullScreen") {
-              if (!document.fullscreenElement) {
-                document.documentElement
-                  .requestFullscreen()
-                  .catch(() => toast.error("Le plein écran est bloqué."));
-              } else {
-                document.exitFullscreen();
+              if (action === "insertSheet") {
+                addSheet(`Sheet${sheets.length + 1}`);
+                toast.success("Nouvelle feuille ajoutée");
+                return;
               }
+              if (action === "pivot_table") {
+                setShowPivotDialog(true);
+                return;
+              }
+              if (action === "chartDialog") {
+                setShowChartDialog(true);
+                return;
+              }
+              if (action === "macroEditor") {
+                setShowMacroEditor(true);
+                return;
+              }
+              // IDEA-018: Named ranges
+              if (action === "named_ranges") {
+                setShowNamedRanges(true);
+                return;
+              }
+              // IDEA-020: Print preview
+              if (action === "print_preview") {
+                setShowPrintPreview(true);
+                return;
+              }
+              // IDEA-021: Advanced data validation
+              if (action === "advanced_validation") {
+                setShowAdvancedValidation(true);
+                return;
+              }
+              // IDEA-022: Advanced conditional formatting
+              if (action === "advanced_cond_format") {
+                setShowAdvCondFormat(true);
+                return;
+              }
+            }}
+          />
+        </div>
+
+        {/* ===== TOOLBAR ===== */}
+        <Toolbar
+          data-print-hide
+          className="overflow-x-auto custom-scrollbar flex-nowrap min-h-[44px]"
+        >
+          <TBtn onClick={undo} title="Annuler (Ctrl+Z)">
+            <Undo className="w-[18px] h-[18px]" />
+          </TBtn>
+          <TBtn onClick={redo} title="R\u00E9tablir (Ctrl+Y)">
+            <Redo className="w-[18px] h-[18px]" />
+          </TBtn>
+          <TBtn onClick={() => window.print()} title="Imprimer (Ctrl+P)">
+            <Printer className="w-[18px] h-[18px]" />
+          </TBtn>
+          <TBtn
+            onClick={() => {
+              if (paintFormat) setPaintFormat(null);
+              else if (activeCell) {
+                setPaintFormat({ ...activeCellStyle });
+                toast.info("Cliquez sur une cellule");
+              }
+            }}
+            active={!!paintFormat}
+            title="Reproduire la mise en forme"
+          >
+            <Paintbrush className="w-[18px] h-[18px]" />
+          </TBtn>
+          <Sep />
+          <TBtn
+            onClick={() =>
+              applyToSelection({
+                numberFormat:
+                  activeCellStyle.numberFormat === "currency"
+                    ? "auto"
+                    : "currency",
+              })
             }
-            if (action === "copyFile") {
-              toast.success("Document dupliqué avec succès.");
+            active={activeCellStyle.numberFormat === "currency"}
+            title="Format mon\u00E9taire"
+            className="font-serif font-medium"
+          >
+            {"\u20AC"}
+          </TBtn>
+          <TBtn
+            onClick={() =>
+              applyToSelection({
+                numberFormat:
+                  activeCellStyle.numberFormat === "percent"
+                    ? "auto"
+                    : "percent",
+              })
             }
-            if (action === "undo") undo();
-            if (action === "redo") redo();
-            if (action === "cut") handleContextAction("cut");
-            if (action === "copy") handleContextAction("copy");
-            if (action === "paste") handleContextAction("paste");
-            if (action === "find") setShowFind(true);
-            if (action === "toggleGridlines") setShowGridlines(!showGridlines);
-            if (action === "freezeRow") {
-              setFreezeRows(1);
-              toast.success("Première ligne figée");
-            }
-            if (action === "freezeCol") {
-              setFreezeCols(1);
-              toast.success("Première colonne figée");
-            }
-            if (action === "insertRowAbove")
-              handleContextAction("insertRowAbove");
-            if (action === "insertRowBelow")
-              handleContextAction("insertRowBelow");
-            if (action === "insertColLeft")
-              handleContextAction("insertColLeft");
-            if (action === "insertColRight")
-              handleContextAction("insertColRight");
-            if (action === "chart") setShowChartPicker(true);
-            if (action === "link") {
+            active={activeCellStyle.numberFormat === "percent"}
+            title="Format pourcentage"
+          >
+            <Percent className="w-[18px] h-[18px]" />
+          </TBtn>
+          <TBtn
+            onClick={() => changeDecimals(-1)}
+            title="R\u00E9duire d\u00E9cimales"
+            className="tracking-tighter font-semibold text-xs"
+          >
+            {".0\u2190"}
+          </TBtn>
+          <TBtn
+            onClick={() => changeDecimals(1)}
+            title="Augmenter d\u00E9cimales"
+            className="tracking-tighter font-semibold text-xs"
+          >
+            {".00\u2192"}
+          </TBtn>
+          {/* Number Format Dropdown */}
+          <Popover open={showNumberFormat} onOpenChange={setShowNumberFormat}>
+            <PopoverTrigger asChild>
+              <TBtn title="Format num\u00E9rique">
+                <Hash className="w-[18px] h-[18px]" />
+              </TBtn>
+            </PopoverTrigger>
+            <PopoverContent className="w-44 p-1" align="start" sideOffset={8}>
+              {(
+                [
+                  { fmt: "auto", label: "Automatique" },
+                  { fmt: "number", label: "Nombre (1 000,00)" },
+                  { fmt: "currency", label: "Mon\u00E9taire (\u20AC)" },
+                  { fmt: "accounting", label: "Comptabilit\u00E9" },
+                  { fmt: "percent", label: "Pourcentage (%)" },
+                  { fmt: "scientific", label: "Scientifique (1E+3)" },
+                  { fmt: "date", label: "Date (AAAA-MM-JJ)" },
+                  { fmt: "time", label: "Heure (HH:MM:SS)" },
+                ] as { fmt: CellStyle["numberFormat"]; label: string }[]
+              ).map(({ fmt, label }) => (
+                <button
+                  key={fmt}
+                  className={cn(
+                    "w-full text-left px-3 py-1.5 text-[12px] hover:bg-[#f1f3f4] dark:hover:bg-[#3c4043] rounded-sm",
+                    activeCellStyle.numberFormat === fmt &&
+                      "bg-[#e8f0fe] dark:bg-[#3c4043] font-medium",
+                  )}
+                  onClick={() => {
+                    applyToSelection({ numberFormat: fmt });
+                    setShowNumberFormat(false);
+                  }}
+                >
+                  {label}
+                </button>
+              ))}
+            </PopoverContent>
+          </Popover>
+          <Sep />
+          {/* Font Picker */}
+          <Popover open={showFontPicker} onOpenChange={setShowFontPicker}>
+            <PopoverTrigger asChild>
+              <button className="px-2 text-[13px] text-[#444746] dark:text-[#e3e3e3] border border-transparent hover:border-[#c7c7c7] border hover:bg-background rounded flex items-center cursor-pointer h-7 w-24 justify-between mx-0.5">
+                <span className="truncate">
+                  {activeCellStyle.fontFamily || "Arial"}
+                </span>
+                <ChevronDown className="w-3 h-3 ml-1 shrink-0" />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent
+              className="w-48 max-h-64 p-1 overflow-y-auto"
+              align="start"
+              sideOffset={8}
+            >
+              {FONTS.map((font) => (
+                <button
+                  key={font}
+                  className={cn(
+                    "w-full px-3 py-1.5 text-left text-[13px] hover:bg-[#f1f3f4] dark:hover:bg-[#3c4043] rounded-sm",
+                    activeCellStyle.fontFamily === font &&
+                      "bg-[#e8f0fe] dark:bg-[#3c4043]",
+                  )}
+                  style={{ fontFamily: font }}
+                  onClick={() => {
+                    applyToSelection({ fontFamily: font });
+                    setShowFontPicker(false);
+                  }}
+                >
+                  {font}
+                </button>
+              ))}
+            </PopoverContent>
+          </Popover>
+          {/* Font Size */}
+          <div className="flex items-center border border-transparent hover:border-[#c7c7c7] rounded h-7 ml-0.5 bg-transparent hover:bg-background transition-colors">
+            <button
+              className="px-1.5 text-[13px] text-[#444746] cursor-pointer hover:bg-muted h-full flex items-center"
+              onClick={() => changeFontSize(-1)}
+            >
+              <Minus className="w-[14px] h-[14px]" />
+            </button>
+            <input
+              className="px-1 text-[13px] text-[#444746] dark:text-[#e3e3e3] w-8 text-center bg-transparent outline-none"
+              value={activeCellStyle.fontSize || 10}
+              onChange={(e) => {
+                const v = parseInt(e.target.value);
+                if (!isNaN(v) && v >= 6 && v <= 72)
+                  applyToSelection({ fontSize: v });
+              }}
+              onMouseDown={(e) => e.stopPropagation()}
+            />
+            <button
+              className="px-1.5 text-[13px] text-[#444746] cursor-pointer hover:bg-muted h-full flex items-center"
+              onClick={() => changeFontSize(1)}
+            >
+              <Plus className="w-[14px] h-[14px]" />
+            </button>
+          </div>
+          <Sep />
+          <TBtn
+            onClick={() => toggleBoolFormat("bold")}
+            active={activeCellStyle.bold}
+            title="Gras (Ctrl+B)"
+            className="font-serif font-bold"
+          >
+            B
+          </TBtn>
+          <TBtn
+            onClick={() => toggleBoolFormat("italic")}
+            active={activeCellStyle.italic}
+            title="Italique (Ctrl+I)"
+            className="font-serif italic"
+          >
+            I
+          </TBtn>
+          <TBtn
+            onClick={() => toggleBoolFormat("underline")}
+            active={activeCellStyle.underline}
+            title="Soulign\u00E9 (Ctrl+U)"
+            className="font-serif underline"
+          >
+            U
+          </TBtn>
+          <TBtn
+            onClick={() => toggleBoolFormat("strikethrough")}
+            active={activeCellStyle.strikethrough}
+            title="Barr\u00E9"
+          >
+            <Strikethrough className="w-[18px] h-[18px]" />
+          </TBtn>
+          {/* Text Color */}
+          <Popover open={showTextColor} onOpenChange={setShowTextColor}>
+            <PopoverTrigger asChild>
+              <button
+                className="p-1 px-1.5 hover:bg-[#e8f0fe] dark:hover:bg-[#3c4043] text-[#444746] dark:text-[#e3e3e3] rounded flex items-center justify-center transition-colors relative"
+                title="Couleur du texte"
+                onClick={() => setShowFillColor(false)}
+              >
+                <Type className="w-[18px] h-[18px]" />
+                <div
+                  className="absolute bottom-0.5 left-1.5 right-1.5 h-[3px] rounded-sm"
+                  style={{
+                    backgroundColor: activeCellStyle.textColor || "#000000",
+                  }}
+                />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent
+              className="w-[220px] p-2"
+              align="start"
+              sideOffset={8}
+            >
+              <div className="grid grid-cols-10 gap-1">
+                {PRESET_COLORS.map((color) => (
+                  <button
+                    key={color}
+                    className="w-5 h-5 rounded-sm border border-border hover:scale-125 transition-transform"
+                    style={{ backgroundColor: color }}
+                    onClick={() => {
+                      applyToSelection({ textColor: color });
+                      setShowTextColor(false);
+                    }}
+                  />
+                ))}
+              </div>
+              <button
+                className="mt-2 text-xs text-[#1a73e8] hover:underline"
+                onClick={() => {
+                  applyToSelection({ textColor: undefined });
+                  setShowTextColor(false);
+                }}
+              >
+                R\u00E9initialiser
+              </button>
+            </PopoverContent>
+          </Popover>
+          {/* Fill Color */}
+          <Popover open={showFillColor} onOpenChange={setShowFillColor}>
+            <PopoverTrigger asChild>
+              <button
+                className="p-1 px-1.5 hover:bg-[#e8f0fe] dark:hover:bg-[#3c4043] text-[#444746] dark:text-[#e3e3e3] rounded flex items-center justify-center transition-colors relative"
+                title="Couleur de remplissage"
+                onClick={() => setShowTextColor(false)}
+              >
+                <PaintBucket className="w-[18px] h-[18px]" />
+                <div
+                  className="absolute bottom-0.5 left-1.5 right-1.5 h-[3px] rounded-sm"
+                  style={{
+                    backgroundColor: activeCellStyle.fillColor || "transparent",
+                  }}
+                />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent
+              className="w-[220px] p-2"
+              align="start"
+              sideOffset={8}
+            >
+              <div className="grid grid-cols-10 gap-1">
+                {PRESET_COLORS.map((color) => (
+                  <button
+                    key={color}
+                    className="w-5 h-5 rounded-sm border border-border hover:scale-125 transition-transform"
+                    style={{ backgroundColor: color }}
+                    onClick={() => {
+                      applyToSelection({ fillColor: color });
+                      setShowFillColor(false);
+                    }}
+                  />
+                ))}
+              </div>
+              <button
+                className="mt-2 text-xs text-[#1a73e8] hover:underline"
+                onClick={() => {
+                  applyToSelection({ fillColor: undefined });
+                  setShowFillColor(false);
+                }}
+              >
+                Aucun
+              </button>
+            </PopoverContent>
+          </Popover>
+          <Sep />
+          {/* Borders */}
+          <Popover open={showBorderPicker} onOpenChange={setShowBorderPicker}>
+            <PopoverTrigger asChild>
+              <TBtn title="Bordures">
+                <Grid3X3 className="w-[18px] h-[18px]" />
+              </TBtn>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-1" align="start" sideOffset={8}>
+              <BorderPicker
+                onSelect={applyBorders}
+                onClose={() => setShowBorderPicker(false)}
+              />
+            </PopoverContent>
+          </Popover>
+          <TBtn
+            onClick={handleMerge}
+            active={!!activeCellStyle.mergeRows}
+            title="Fusionner"
+          >
+            <Maximize className="w-[18px] h-[18px]" />
+          </TBtn>
+          <Sep />
+          <TBtn
+            onClick={cycleAlign}
+            title={`Alignement: ${activeCellStyle.align || "left"}`}
+          >
+            {activeCellStyle.align === "center" ? (
+              <AlignCenter className="w-[18px] h-[18px]" />
+            ) : activeCellStyle.align === "right" ? (
+              <AlignRight className="w-[18px] h-[18px]" />
+            ) : (
+              <AlignLeft className="w-[18px] h-[18px]" />
+            )}
+          </TBtn>
+          <TBtn
+            onClick={cycleVerticalAlign}
+            title={`V-Align: ${activeCellStyle.verticalAlign || "middle"}`}
+          >
+            <AlignVerticalJustifyCenter className="w-[18px] h-[18px]" />
+          </TBtn>
+          <TBtn
+            onClick={() => toggleBoolFormat("wrap")}
+            active={activeCellStyle.wrap}
+            title="Retour \u00E0 la ligne"
+          >
+            <WrapText className="w-[18px] h-[18px]" />
+          </TBtn>
+          <Popover open={showRotationInput} onOpenChange={setShowRotationInput}>
+            <PopoverTrigger asChild>
+              <TBtn
+                active={!!activeCellStyle.rotation}
+                title="Rotation du texte"
+              >
+                <RotateCw className="w-[18px] h-[18px]" />
+              </TBtn>
+            </PopoverTrigger>
+            <PopoverContent className="w-48 p-3" align="start" sideOffset={8}>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[12px] font-medium">Angle</span>
+                <button onClick={() => setShowRotationInput(false)}>
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
+              <div className="flex gap-1 mb-2">
+                {[0, 45, 90, -45, -90, 180].map((deg) => (
+                  <button
+                    key={deg}
+                    className={cn(
+                      "px-2 py-1 text-[11px] rounded border",
+                      activeCellStyle.rotation === deg
+                        ? "bg-[#e8f0fe] border-[#1a73e8]"
+                        : "border-border hover:bg-muted",
+                    )}
+                    onClick={() => {
+                      applyToSelection({
+                        rotation: deg === 0 ? undefined : deg,
+                      });
+                      setShowRotationInput(false);
+                    }}
+                  >
+                    {deg}°
+                  </button>
+                ))}
+              </div>
+              <input
+                type="range"
+                min={-90}
+                max={90}
+                value={activeCellStyle.rotation || 0}
+                className="w-full"
+                onChange={(e) =>
+                  applyToSelection({
+                    rotation: Number(e.target.value) || undefined,
+                  })
+                }
+              />
+            </PopoverContent>
+          </Popover>
+          <Sep />
+          <TBtn
+            onClick={() => {
               const url = prompt("URL:");
               if (url && activeCell) {
                 setCell(activeCell.r, activeCell.c, url);
-                toast.success("Lien inséré");
+                toast.success("Lien ins\u00E9r\u00E9");
               }
-            }
-            if (action === "comment") {
-              if (activeCell) {
-                const existing =
-                  data[`${activeCell.r},${activeCell.c}`]?.comment || "";
-                const c = prompt("Commentaire:", existing);
-                if (c !== null) {
-                  setCellComment(activeCell.r, activeCell.c, c || undefined);
-                  toast.success(
-                    c ? "Commentaire ajouté" : "Commentaire supprimé",
-                  );
-                }
-              }
-            }
-            if (action === "bold") toggleBoolFormat("bold");
-            if (action === "italic") toggleBoolFormat("italic");
-            if (action === "underline") toggleBoolFormat("underline");
-            if (action === "strikethrough") toggleBoolFormat("strikethrough");
-            if (action === "alignLeft") applyToSelection({ align: "left" });
-            if (action === "alignCenter") applyToSelection({ align: "center" });
-            if (action === "alignRight") applyToSelection({ align: "right" });
-            if (action === "clearFormat")
-              applyToSelection({
-                bold: false,
-                italic: false,
-                underline: false,
-                strikethrough: false,
-                textColor: undefined,
-                fillColor: undefined,
-                align: undefined,
-                verticalAlign: undefined,
-                fontFamily: undefined,
-                fontSize: undefined,
-                numberFormat: "auto",
-              });
-            if (action === "unfreezeRow") {
-              setFreezeRows(0);
-              toast.info("Lignes libérées");
-            }
-            if (action === "unfreezeCol") {
-              setFreezeCols(0);
-              toast.info("Colonnes libérées");
-            }
-            if (action === "toggleFormulaBar") {
-              setShowFormulaBar((v) => {
-                toast.info(
-                  v
-                    ? "Barre de formules masquée"
-                    : "Barre de formules affichée",
-                );
-                return !v;
-              });
-              return;
-            }
-            if (action === "zoom50") {
-              setZoomLevel(50);
-              toast.success("Zoom à 50%");
-              return;
-            }
-            if (action === "zoom75") {
-              setZoomLevel(75);
-              toast.success("Zoom à 75%");
-              return;
-            }
-            if (action === "zoom100") {
-              setZoomLevel(100);
-              toast.success("Zoom à 100%");
-              return;
-            }
-            if (action === "zoom125") {
-              setZoomLevel(125);
-              toast.success("Zoom à 125%");
-              return;
-            }
-            if (action === "zoom150") {
-              setZoomLevel(150);
-              toast.success("Zoom à 150%");
-              return;
-            }
-            if (action === "zoom200") {
-              setZoomLevel(200);
-              toast.success("Zoom à 200%");
-              return;
-            }
-            if (action === "insertSum") {
-              if (activeCell) {
-                setCell(activeCell.r, activeCell.c, "=SUM()");
-                setIsEditing(true);
-                setTimeout(() => formulaBarRef.current?.focus(), 0);
-              }
-            }
-            if (action === "insertAvg") {
-              if (activeCell) {
-                setCell(activeCell.r, activeCell.c, "=AVERAGE()");
-                setIsEditing(true);
-                setTimeout(() => formulaBarRef.current?.focus(), 0);
-              }
-            }
-            if (action === "insertCount") {
-              if (activeCell) {
-                setCell(activeCell.r, activeCell.c, "=COUNT()");
-                setIsEditing(true);
-                setTimeout(() => formulaBarRef.current?.focus(), 0);
-              }
-            }
-            if (action === "insertMax") {
-              if (activeCell) {
-                setCell(activeCell.r, activeCell.c, "=MAX()");
-                setIsEditing(true);
-                setTimeout(() => formulaBarRef.current?.focus(), 0);
-              }
-            }
-            if (action === "insertMin") {
-              if (activeCell) {
-                setCell(activeCell.r, activeCell.c, "=MIN()");
-                setIsEditing(true);
-                setTimeout(() => formulaBarRef.current?.focus(), 0);
-              }
-            }
-            if (action === "condFormat") setShowCondFormat(true);
-            if (action === "bandedRows") setBandedRows(!bandedRows);
-            if (action === "sortAsc") handleContextAction("sortAsc");
-            if (action === "sortDesc") handleContextAction("sortDesc");
-            if (action === "filter") toggleFilter();
-            if (action === "validation") {
+            }}
+            title="Lien"
+          >
+            <Link className="w-[18px] h-[18px]" />
+          </TBtn>
+          <TBtn
+            onClick={() => {
               if (!activeCell) return;
-              const vals = prompt(
-                "Valeurs de la liste (séparées par des virgules):",
-              );
-              if (vals) {
-                setCellValidation(activeCell.r, activeCell.c, {
-                  type: "list",
-                  values: vals.split(",").map((v) => v.trim()),
-                });
-                toast.success("Validation ajoutée");
+              const existing =
+                data[`${activeCell.r},${activeCell.c}`]?.comment || "";
+              const c = prompt("Commentaire:", existing);
+              if (c !== null) {
+                setCellComment(activeCell.r, activeCell.c, c || undefined);
+                toast.success(
+                  c ? "Commentaire ajouté" : "Commentaire supprimé",
+                );
               }
-            }
-            if (action === "insertSheet") {
-              addSheet(`Sheet${sheets.length + 1}`);
-              toast.success("Nouvelle feuille ajoutée");
-              return;
-            }
-            if (action === "pivot_table") {
-              setShowPivotDialog(true);
-              return;
-            }
-            if (action === "chartDialog") {
-              setShowChartDialog(true);
-              return;
-            }
-            if (action === "macroEditor") {
-              setShowMacroEditor(true);
-              return;
-            }
-            // IDEA-018: Named ranges
-            if (action === "named_ranges") {
-              setShowNamedRanges(true);
-              return;
-            }
-            // IDEA-020: Print preview
-            if (action === "print_preview") {
-              setShowPrintPreview(true);
-              return;
-            }
-            // IDEA-021: Advanced data validation
-            if (action === "advanced_validation") {
-              setShowAdvancedValidation(true);
-              return;
-            }
-            // IDEA-022: Advanced conditional formatting
-            if (action === "advanced_cond_format") {
-              setShowAdvCondFormat(true);
-              return;
-            }
-          }}
-        />
-      </div>
-
-      {/* ===== TOOLBAR ===== */}
-      <Toolbar
-        data-print-hide
-        className="overflow-x-auto custom-scrollbar flex-nowrap min-h-[44px]"
-      >
-        <TBtn onClick={undo} title="Annuler (Ctrl+Z)">
-          <Undo className="w-[18px] h-[18px]" />
-        </TBtn>
-        <TBtn onClick={redo} title="R\u00E9tablir (Ctrl+Y)">
-          <Redo className="w-[18px] h-[18px]" />
-        </TBtn>
-        <TBtn onClick={() => window.print()} title="Imprimer (Ctrl+P)">
-          <Printer className="w-[18px] h-[18px]" />
-        </TBtn>
-        <TBtn
-          onClick={() => {
-            if (paintFormat) setPaintFormat(null);
-            else if (activeCell) {
-              setPaintFormat({ ...activeCellStyle });
-              toast.info("Cliquez sur une cellule");
-            }
-          }}
-          active={!!paintFormat}
-          title="Reproduire la mise en forme"
-        >
-          <Paintbrush className="w-[18px] h-[18px]" />
-        </TBtn>
-        <Sep />
-        <TBtn
-          onClick={() =>
-            applyToSelection({
-              numberFormat:
-                activeCellStyle.numberFormat === "currency"
-                  ? "auto"
-                  : "currency",
-            })
-          }
-          active={activeCellStyle.numberFormat === "currency"}
-          title="Format mon\u00E9taire"
-          className="font-serif font-medium"
-        >
-          {"\u20AC"}
-        </TBtn>
-        <TBtn
-          onClick={() =>
-            applyToSelection({
-              numberFormat:
-                activeCellStyle.numberFormat === "percent" ? "auto" : "percent",
-            })
-          }
-          active={activeCellStyle.numberFormat === "percent"}
-          title="Format pourcentage"
-        >
-          <Percent className="w-[18px] h-[18px]" />
-        </TBtn>
-        <TBtn
-          onClick={() => changeDecimals(-1)}
-          title="R\u00E9duire d\u00E9cimales"
-          className="tracking-tighter font-semibold text-xs"
-        >
-          {".0\u2190"}
-        </TBtn>
-        <TBtn
-          onClick={() => changeDecimals(1)}
-          title="Augmenter d\u00E9cimales"
-          className="tracking-tighter font-semibold text-xs"
-        >
-          {".00\u2192"}
-        </TBtn>
-        {/* Number Format Dropdown */}
-        <Popover open={showNumberFormat} onOpenChange={setShowNumberFormat}>
-          <PopoverTrigger asChild>
-            <TBtn title="Format num\u00E9rique">
-              <Hash className="w-[18px] h-[18px]" />
-            </TBtn>
-          </PopoverTrigger>
-          <PopoverContent className="w-44 p-1" align="start" sideOffset={8}>
-            {(
-              [
-                { fmt: "auto", label: "Automatique" },
-                { fmt: "number", label: "Nombre (1 000,00)" },
-                { fmt: "currency", label: "Mon\u00E9taire (\u20AC)" },
-                { fmt: "accounting", label: "Comptabilit\u00E9" },
-                { fmt: "percent", label: "Pourcentage (%)" },
-                { fmt: "scientific", label: "Scientifique (1E+3)" },
-                { fmt: "date", label: "Date (AAAA-MM-JJ)" },
-                { fmt: "time", label: "Heure (HH:MM:SS)" },
-              ] as { fmt: CellStyle["numberFormat"]; label: string }[]
-            ).map(({ fmt, label }) => (
-              <button
-                key={fmt}
-                className={cn(
-                  "w-full text-left px-3 py-1.5 text-[12px] hover:bg-[#f1f3f4] dark:hover:bg-[#3c4043] rounded-sm",
-                  activeCellStyle.numberFormat === fmt &&
-                    "bg-[#e8f0fe] dark:bg-[#3c4043] font-medium",
-                )}
-                onClick={() => {
-                  applyToSelection({ numberFormat: fmt });
-                  setShowNumberFormat(false);
-                }}
-              >
-                {label}
-              </button>
-            ))}
-          </PopoverContent>
-        </Popover>
-        <Sep />
-        {/* Font Picker */}
-        <Popover open={showFontPicker} onOpenChange={setShowFontPicker}>
-          <PopoverTrigger asChild>
-            <button className="px-2 text-[13px] text-[#444746] dark:text-[#e3e3e3] border border-transparent hover:border-[#c7c7c7] border hover:bg-background rounded flex items-center cursor-pointer h-7 w-24 justify-between mx-0.5">
-              <span className="truncate">
-                {activeCellStyle.fontFamily || "Arial"}
-              </span>
-              <ChevronDown className="w-3 h-3 ml-1 shrink-0" />
-            </button>
-          </PopoverTrigger>
-          <PopoverContent
-            className="w-48 max-h-64 p-1 overflow-y-auto"
-            align="start"
-            sideOffset={8}
-          >
-            {FONTS.map((font) => (
-              <button
-                key={font}
-                className={cn(
-                  "w-full px-3 py-1.5 text-left text-[13px] hover:bg-[#f1f3f4] dark:hover:bg-[#3c4043] rounded-sm",
-                  activeCellStyle.fontFamily === font &&
-                    "bg-[#e8f0fe] dark:bg-[#3c4043]",
-                )}
-                style={{ fontFamily: font }}
-                onClick={() => {
-                  applyToSelection({ fontFamily: font });
-                  setShowFontPicker(false);
-                }}
-              >
-                {font}
-              </button>
-            ))}
-          </PopoverContent>
-        </Popover>
-        {/* Font Size */}
-        <div className="flex items-center border border-transparent hover:border-[#c7c7c7] rounded h-7 ml-0.5 bg-transparent hover:bg-background transition-colors">
-          <button
-            className="px-1.5 text-[13px] text-[#444746] cursor-pointer hover:bg-muted h-full flex items-center"
-            onClick={() => changeFontSize(-1)}
-          >
-            <Minus className="w-[14px] h-[14px]" />
-          </button>
-          <input
-            className="px-1 text-[13px] text-[#444746] dark:text-[#e3e3e3] w-8 text-center bg-transparent outline-none"
-            value={activeCellStyle.fontSize || 10}
-            onChange={(e) => {
-              const v = parseInt(e.target.value);
-              if (!isNaN(v) && v >= 6 && v <= 72)
-                applyToSelection({ fontSize: v });
             }}
-            onMouseDown={(e) => e.stopPropagation()}
-          />
-          <button
-            className="px-1.5 text-[13px] text-[#444746] cursor-pointer hover:bg-muted h-full flex items-center"
-            onClick={() => changeFontSize(1)}
+            title="Commentaire"
           >
-            <Plus className="w-[14px] h-[14px]" />
-          </button>
-        </div>
-        <Sep />
-        <TBtn
-          onClick={() => toggleBoolFormat("bold")}
-          active={activeCellStyle.bold}
-          title="Gras (Ctrl+B)"
-          className="font-serif font-bold"
-        >
-          B
-        </TBtn>
-        <TBtn
-          onClick={() => toggleBoolFormat("italic")}
-          active={activeCellStyle.italic}
-          title="Italique (Ctrl+I)"
-          className="font-serif italic"
-        >
-          I
-        </TBtn>
-        <TBtn
-          onClick={() => toggleBoolFormat("underline")}
-          active={activeCellStyle.underline}
-          title="Soulign\u00E9 (Ctrl+U)"
-          className="font-serif underline"
-        >
-          U
-        </TBtn>
-        <TBtn
-          onClick={() => toggleBoolFormat("strikethrough")}
-          active={activeCellStyle.strikethrough}
-          title="Barr\u00E9"
-        >
-          <Strikethrough className="w-[18px] h-[18px]" />
-        </TBtn>
-        {/* Text Color */}
-        <Popover open={showTextColor} onOpenChange={setShowTextColor}>
-          <PopoverTrigger asChild>
-            <button
-              className="p-1 px-1.5 hover:bg-[#e8f0fe] dark:hover:bg-[#3c4043] text-[#444746] dark:text-[#e3e3e3] rounded flex items-center justify-center transition-colors relative"
-              title="Couleur du texte"
-              onClick={() => setShowFillColor(false)}
-            >
-              <Type className="w-[18px] h-[18px]" />
-              <div
-                className="absolute bottom-0.5 left-1.5 right-1.5 h-[3px] rounded-sm"
-                style={{
-                  backgroundColor: activeCellStyle.textColor || "#000000",
+            <MessageSquare className="w-[18px] h-[18px]" />
+          </TBtn>
+          {/* Chart picker */}
+          <Popover open={showChartPicker} onOpenChange={setShowChartPicker}>
+            <PopoverTrigger asChild>
+              <TBtn title="Graphique">
+                <BarChart2 className="w-[18px] h-[18px]" />
+              </TBtn>
+            </PopoverTrigger>
+            <PopoverContent className="w-36 p-1" align="end" sideOffset={8}>
+              <button
+                className="w-full text-left px-2 py-1 text-[12px] hover:bg-[#f1f3f4] rounded"
+                onClick={() => {
+                  openChart("bar");
+                  setShowChartPicker(false);
                 }}
-              />
-            </button>
-          </PopoverTrigger>
-          <PopoverContent
-            className="w-[220px] p-2"
-            align="start"
-            sideOffset={8}
-          >
-            <div className="grid grid-cols-10 gap-1">
-              {PRESET_COLORS.map((color) => (
-                <button
-                  key={color}
-                  className="w-5 h-5 rounded-sm border border-border hover:scale-125 transition-transform"
-                  style={{ backgroundColor: color }}
-                  onClick={() => {
-                    applyToSelection({ textColor: color });
-                    setShowTextColor(false);
-                  }}
-                />
-              ))}
-            </div>
-            <button
-              className="mt-2 text-xs text-[#1a73e8] hover:underline"
-              onClick={() => {
-                applyToSelection({ textColor: undefined });
-                setShowTextColor(false);
-              }}
-            >
-              R\u00E9initialiser
-            </button>
-          </PopoverContent>
-        </Popover>
-        {/* Fill Color */}
-        <Popover open={showFillColor} onOpenChange={setShowFillColor}>
-          <PopoverTrigger asChild>
-            <button
-              className="p-1 px-1.5 hover:bg-[#e8f0fe] dark:hover:bg-[#3c4043] text-[#444746] dark:text-[#e3e3e3] rounded flex items-center justify-center transition-colors relative"
-              title="Couleur de remplissage"
-              onClick={() => setShowTextColor(false)}
-            >
-              <PaintBucket className="w-[18px] h-[18px]" />
-              <div
-                className="absolute bottom-0.5 left-1.5 right-1.5 h-[3px] rounded-sm"
-                style={{
-                  backgroundColor: activeCellStyle.fillColor || "transparent",
-                }}
-              />
-            </button>
-          </PopoverTrigger>
-          <PopoverContent
-            className="w-[220px] p-2"
-            align="start"
-            sideOffset={8}
-          >
-            <div className="grid grid-cols-10 gap-1">
-              {PRESET_COLORS.map((color) => (
-                <button
-                  key={color}
-                  className="w-5 h-5 rounded-sm border border-border hover:scale-125 transition-transform"
-                  style={{ backgroundColor: color }}
-                  onClick={() => {
-                    applyToSelection({ fillColor: color });
-                    setShowFillColor(false);
-                  }}
-                />
-              ))}
-            </div>
-            <button
-              className="mt-2 text-xs text-[#1a73e8] hover:underline"
-              onClick={() => {
-                applyToSelection({ fillColor: undefined });
-                setShowFillColor(false);
-              }}
-            >
-              Aucun
-            </button>
-          </PopoverContent>
-        </Popover>
-        <Sep />
-        {/* Borders */}
-        <Popover open={showBorderPicker} onOpenChange={setShowBorderPicker}>
-          <PopoverTrigger asChild>
-            <TBtn title="Bordures">
-              <Grid3X3 className="w-[18px] h-[18px]" />
-            </TBtn>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-1" align="start" sideOffset={8}>
-            <BorderPicker
-              onSelect={applyBorders}
-              onClose={() => setShowBorderPicker(false)}
-            />
-          </PopoverContent>
-        </Popover>
-        <TBtn
-          onClick={handleMerge}
-          active={!!activeCellStyle.mergeRows}
-          title="Fusionner"
-        >
-          <Maximize className="w-[18px] h-[18px]" />
-        </TBtn>
-        <Sep />
-        <TBtn
-          onClick={cycleAlign}
-          title={`Alignement: ${activeCellStyle.align || "left"}`}
-        >
-          {activeCellStyle.align === "center" ? (
-            <AlignCenter className="w-[18px] h-[18px]" />
-          ) : activeCellStyle.align === "right" ? (
-            <AlignRight className="w-[18px] h-[18px]" />
-          ) : (
-            <AlignLeft className="w-[18px] h-[18px]" />
-          )}
-        </TBtn>
-        <TBtn
-          onClick={cycleVerticalAlign}
-          title={`V-Align: ${activeCellStyle.verticalAlign || "middle"}`}
-        >
-          <AlignVerticalJustifyCenter className="w-[18px] h-[18px]" />
-        </TBtn>
-        <TBtn
-          onClick={() => toggleBoolFormat("wrap")}
-          active={activeCellStyle.wrap}
-          title="Retour \u00E0 la ligne"
-        >
-          <WrapText className="w-[18px] h-[18px]" />
-        </TBtn>
-        <Popover open={showRotationInput} onOpenChange={setShowRotationInput}>
-          <PopoverTrigger asChild>
-            <TBtn active={!!activeCellStyle.rotation} title="Rotation du texte">
-              <RotateCw className="w-[18px] h-[18px]" />
-            </TBtn>
-          </PopoverTrigger>
-          <PopoverContent className="w-48 p-3" align="start" sideOffset={8}>
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[12px] font-medium">Angle</span>
-              <button onClick={() => setShowRotationInput(false)}>
-                <X className="w-3 h-3" />
+              >
+                Barres
               </button>
-            </div>
-            <div className="flex gap-1 mb-2">
-              {[0, 45, 90, -45, -90, 180].map((deg) => (
-                <button
-                  key={deg}
-                  className={cn(
-                    "px-2 py-1 text-[11px] rounded border",
-                    activeCellStyle.rotation === deg
-                      ? "bg-[#e8f0fe] border-[#1a73e8]"
-                      : "border-border hover:bg-muted",
-                  )}
-                  onClick={() => {
-                    applyToSelection({ rotation: deg === 0 ? undefined : deg });
-                    setShowRotationInput(false);
-                  }}
-                >
-                  {deg}°
+              <button
+                className="w-full text-left px-2 py-1 text-[12px] hover:bg-[#f1f3f4] rounded"
+                onClick={() => {
+                  openChart("line");
+                  setShowChartPicker(false);
+                }}
+              >
+                Ligne
+              </button>
+              <button
+                className="w-full text-left px-2 py-1 text-[12px] hover:bg-[#f1f3f4] rounded"
+                onClick={() => {
+                  openChart("pie");
+                  setShowChartPicker(false);
+                }}
+              >
+                Circulaire
+              </button>
+            </PopoverContent>
+          </Popover>
+          <TBtn
+            onClick={() => setShowChartDialog(true)}
+            title="Graphique avance"
+          >
+            <BarChart2 className="w-[18px] h-[18px] text-[#1a73e8]" />
+          </TBtn>
+          <TBtn
+            onClick={() => setShowPivotDialog(true)}
+            title="Tableau croise dynamique"
+          >
+            <Table2 className="w-[18px] h-[18px]" />
+          </TBtn>
+          <TBtn onClick={() => setShowMacroEditor(true)} title="Macros">
+            <FileCode className="w-[18px] h-[18px]" />
+          </TBtn>
+          <Sep />
+          <TBtn
+            onClick={toggleFilter}
+            active={filterCol !== null}
+            title="Filtre"
+          >
+            <Filter className="w-[18px] h-[18px]" />
+          </TBtn>
+          <TBtn
+            onClick={toggleFreeze}
+            active={freezeRows > 0 || freezeCols > 0}
+            title="Figer lignes/colonnes"
+          >
+            <Snowflake className="w-[18px] h-[18px]" />
+          </TBtn>
+          <TBtn
+            onClick={() => setShowCondFormat(true)}
+            active={condRules.length > 0}
+            title="Mise en forme conditionnelle"
+          >
+            <Palette className="w-[18px] h-[18px]" />
+          </TBtn>
+
+          {/* Functions helper */}
+          <Popover
+            open={showFunctionHelper}
+            onOpenChange={setShowFunctionHelper}
+          >
+            <PopoverTrigger asChild>
+              <TBtn title="Fonctions">
+                <Sigma className="w-[18px] h-[18px]" />
+              </TBtn>
+            </PopoverTrigger>
+            <PopoverContent
+              className="w-64 max-h-72 p-1 overflow-y-auto"
+              align="end"
+              sideOffset={8}
+            >
+              <div className="flex items-center justify-between mb-2 px-2 pt-1">
+                <span className="font-medium text-[13px]">Fonctions</span>
+                <button onClick={() => setShowFunctionHelper(false)}>
+                  <X className="w-4 h-4" />
                 </button>
-              ))}
-            </div>
-            <input
-              type="range"
-              min={-90}
-              max={90}
-              value={activeCellStyle.rotation || 0}
-              className="w-full"
-              onChange={(e) =>
-                applyToSelection({
-                  rotation: Number(e.target.value) || undefined,
-                })
-              }
-            />
-          </PopoverContent>
-        </Popover>
-        <Sep />
-        <TBtn
-          onClick={() => {
-            const url = prompt("URL:");
-            if (url && activeCell) {
-              setCell(activeCell.r, activeCell.c, url);
-              toast.success("Lien ins\u00E9r\u00E9");
-            }
-          }}
-          title="Lien"
-        >
-          <Link className="w-[18px] h-[18px]" />
-        </TBtn>
-        <TBtn
-          onClick={() => {
-            if (!activeCell) return;
-            const existing =
-              data[`${activeCell.r},${activeCell.c}`]?.comment || "";
-            const c = prompt("Commentaire:", existing);
-            if (c !== null) {
-              setCellComment(activeCell.r, activeCell.c, c || undefined);
-              toast.success(c ? "Commentaire ajouté" : "Commentaire supprimé");
-            }
-          }}
-          title="Commentaire"
-        >
-          <MessageSquare className="w-[18px] h-[18px]" />
-        </TBtn>
-        {/* Chart picker */}
-        <Popover open={showChartPicker} onOpenChange={setShowChartPicker}>
-          <PopoverTrigger asChild>
-            <TBtn title="Graphique">
-              <BarChart2 className="w-[18px] h-[18px]" />
-            </TBtn>
-          </PopoverTrigger>
-          <PopoverContent className="w-36 p-1" align="end" sideOffset={8}>
-            <button
-              className="w-full text-left px-2 py-1 text-[12px] hover:bg-[#f1f3f4] rounded"
-              onClick={() => {
-                openChart("bar");
-                setShowChartPicker(false);
-              }}
-            >
-              Barres
-            </button>
-            <button
-              className="w-full text-left px-2 py-1 text-[12px] hover:bg-[#f1f3f4] rounded"
-              onClick={() => {
-                openChart("line");
-                setShowChartPicker(false);
-              }}
-            >
-              Ligne
-            </button>
-            <button
-              className="w-full text-left px-2 py-1 text-[12px] hover:bg-[#f1f3f4] rounded"
-              onClick={() => {
-                openChart("pie");
-                setShowChartPicker(false);
-              }}
-            >
-              Circulaire
-            </button>
-          </PopoverContent>
-        </Popover>
-        <TBtn onClick={() => setShowChartDialog(true)} title="Graphique avance">
-          <BarChart2 className="w-[18px] h-[18px] text-[#1a73e8]" />
-        </TBtn>
-        <TBtn
-          onClick={() => setShowPivotDialog(true)}
-          title="Tableau croise dynamique"
-        >
-          <Table2 className="w-[18px] h-[18px]" />
-        </TBtn>
-        <TBtn onClick={() => setShowMacroEditor(true)} title="Macros">
-          <FileCode className="w-[18px] h-[18px]" />
-        </TBtn>
-        <Sep />
-        <TBtn onClick={toggleFilter} active={filterCol !== null} title="Filtre">
-          <Filter className="w-[18px] h-[18px]" />
-        </TBtn>
-        <TBtn
-          onClick={toggleFreeze}
-          active={freezeRows > 0 || freezeCols > 0}
-          title="Figer lignes/colonnes"
-        >
-          <Snowflake className="w-[18px] h-[18px]" />
-        </TBtn>
-        <TBtn
-          onClick={() => setShowCondFormat(true)}
-          active={condRules.length > 0}
-          title="Mise en forme conditionnelle"
-        >
-          <Palette className="w-[18px] h-[18px]" />
-        </TBtn>
-
-        {/* Functions helper */}
-        <Popover open={showFunctionHelper} onOpenChange={setShowFunctionHelper}>
-          <PopoverTrigger asChild>
-            <TBtn title="Fonctions">
-              <Sigma className="w-[18px] h-[18px]" />
-            </TBtn>
-          </PopoverTrigger>
-          <PopoverContent
-            className="w-64 max-h-72 p-1 overflow-y-auto"
-            align="end"
-            sideOffset={8}
-          >
-            <div className="flex items-center justify-between mb-2 px-2 pt-1">
-              <span className="font-medium text-[13px]">Fonctions</span>
-              <button onClick={() => setShowFunctionHelper(false)}>
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-            {[
-              { fn: "=SUM(A1:A10)", desc: "Somme" },
-              { fn: "=AVERAGE(A1:A10)", desc: "Moyenne" },
-              { fn: "=COUNT(A1:A10)", desc: "Nombre" },
-              { fn: "=MAX(A1:A10)", desc: "Maximum" },
-              { fn: "=MIN(A1:A10)", desc: "Minimum" },
-              { fn: '=IF(A1>5,"Oui","Non")', desc: "Condition" },
-              { fn: "=VLOOKUP(A1,B1:C10,2)", desc: "Recherche V" },
-              { fn: "=CONCATENATE(A1,B1)", desc: "Concat\u00E9ner" },
-              { fn: "=ROUND(A1,2)", desc: "Arrondir" },
-              { fn: '=COUNTIF(A1:A10,">5")', desc: "NB.SI" },
-              { fn: '=SUMIF(A1:A10,">5")', desc: "SOMME.SI" },
-              { fn: "=TODAY()", desc: "Date du jour" },
-              { fn: "=LEN(A1)", desc: "Longueur" },
-              { fn: "=UPPER(A1)", desc: "Majuscules" },
-              { fn: "=IFERROR(A1/B1,0)", desc: "Si erreur" },
-            ].map(({ fn, desc }) => (
-              <button
-                key={fn}
-                className="w-full text-left px-2 py-1 text-[12px] hover:bg-[#f1f3f4] dark:hover:bg-[#3c4043] rounded"
-                onClick={() => {
-                  if (activeCell) {
-                    setEditValue(fn);
-                    setCell(activeCell.r, activeCell.c, fn);
-                    setIsEditing(true);
-                    setShowFunctionHelper(false);
-                    setTimeout(() => formulaBarRef.current?.focus(), 0);
-                  }
-                }}
-              >
-                <span className="font-mono text-[#1a73e8]">{fn}</span>
-                <span className="ml-2 text-[#5f6368]">{desc}</span>
-              </button>
-            ))}
-          </PopoverContent>
-        </Popover>
-        <div className="ml-auto flex items-center pr-1 shrink-0 relative">
-          <button
-            className={cn(
-              "flex items-center gap-1.5 px-3 py-1.5 rounded font-medium text-[13px] shadow-sm transition-all border",
-              showAiDialog
-                ? "bg-gradient-to-r from-purple-600 to-indigo-600 text-white border-transparent scale-95"
-                : "bg-gradient-to-r from-purple-50 to-indigo-50 hover:from-purple-100 hover:to-indigo-100 text-purple-700 dark:from-purple-900/30 dark:to-indigo-900/30 dark:hover:from-purple-900/50 dark:hover:to-indigo-900/50 dark:text-purple-300 border-purple-200 dark:border-purple-800",
-            )}
-            onClick={() => setShowAiDialog(!showAiDialog)}
-          >
-            <Sparkles
-              className={cn("w-3.5 h-3.5", showAiDialog ? "animate-pulse" : "")}
-            />{" "}
-            Tools IA
-          </button>
-        </div>
-        {/* RT4: History button */}
-        <button
-          onClick={() => setShowHistory((s) => !s)}
-          className={cn(
-            "flex items-center gap-1 px-2 py-1 rounded text-[12px] font-medium transition-colors",
-            showHistory
-              ? "bg-[#e8f0fe] dark:bg-[#3c4043] text-[#1a73e8]"
-              : "hover:bg-[#f1f3f4] dark:hover:bg-[#3c4043] text-[#5f6368]",
-          )}
-          title="Historique des modifications"
-        >
-          <History className="w-3.5 h-3.5" />
-        </button>
-        {/* RT2: Collaborator presence avatars */}
-        {collaborators.length > 0 && (
-          <div
-            className="flex items-center -space-x-2 ml-2 shrink-0"
-            title="Utilisateurs connectés"
-          >
-            {collaborators.slice(0, 5).map((u) => (
-              <div
-                key={u.clientId}
-                className="h-7 w-7 rounded-full flex items-center justify-center text-[10px] font-semibold text-white ring-2 ring-background shrink-0"
-                style={{ backgroundColor: u.color }}
-                title={u.name}
-              >
-                {u.name.slice(0, 2).toUpperCase()}
               </div>
-            ))}
-            {collaborators.length > 5 && (
-              <div className="h-7 w-7 rounded-full flex items-center justify-center text-[10px] font-semibold bg-muted ring-2 ring-background shrink-0">
-                +{collaborators.length - 5}
-              </div>
-            )}
-          </div>
-        )}
-      </Toolbar>
-
-      {/* ===== FORMULA BAR ===== */}
-      {showFormulaBar && (
-        <div
-          data-testid="sheet-formula-bar"
-          data-print-hide
-          className="flex items-center gap-2 px-4 py-2 border-b border-[#e3e3e3] dark:border-[#3c4043] bg-background dark:bg-[#1a1a1a] shrink-0 h-10 shadow-[0_1px_2px_rgba(0,0,0,0.02)] z-10"
-        >
-          <div
-            data-testid="sheet-cell-ref"
-            className="w-12 h-6 flex items-center justify-center bg-[#f1f3f4] dark:bg-[#3c4043] rounded font-medium text-[12px] shrink-0 tracking-wide select-text border border-[#e3e3e3] dark:border-[#5f6368]"
-          >
-            {activeCell ? `${indexToCol(activeCell.c)}${activeCell.r + 1}` : ""}
-          </div>
-          <div className="w-px h-5 bg-[#e3e3e3] dark:bg-[#5f6368] shrink-0 mx-1" />
-          <div className="text-[#9aa0a6] font-serif italic shrink-0 text-base px-1 pointer-events-none select-none">
-            ƒ
-            <span className="text-[12px] font-sans italic relative -top-0.5 -left-0.5">
-              x
-            </span>
-          </div>
-          <input
-            ref={formulaBarRef}
-            data-testid="sheet-formula-input"
-            className="flex-1 outline-none text-[13px] bg-transparent font-mono text-[#202124] dark:text-[#e8eaed] placeholder:text-[#9aa0a6] placeholder:font-sans"
-            placeholder={activeCell ? "Saisir une formule ou un texte..." : ""}
-            value={activeCell ? editValue : ""}
-            onChange={(e) => {
-              setEditValue(e.target.value);
-              if (activeCell)
-                setCell(activeCell.r, activeCell.c, e.target.value);
-            }}
-            onFocus={() => {
-              if (activeCell) setIsEditing(true);
-            }}
-            disabled={!activeCell}
-          />
-        </div>
-      )}
-
-      {/* RT4: History panel (absolute overlay on the right) */}
-      {showHistory && (
-        <div className="absolute top-0 right-0 z-40 h-full" style={{ top: 88 }}>
-          <HistoryPanel
-            open={showHistory}
-            onClose={() => setShowHistory(false)}
-            entries={historyEntries}
-            className="shadow-xl border-l"
-          />
-        </div>
-      )}
-
-      {/* ===== GRID (Virtualized) ===== */}
-      <div
-        ref={gridRef}
-        data-testid="sheet-grid"
-        data-rows={effectiveRows}
-        data-cols={COLS}
-        className="relative flex-1 overflow-auto bg-background dark:bg-[#1f1f1f] will-change-transform"
-        style={{
-          transform: `scale(${zoomLevel / 100})`,
-          transformOrigin: "top left",
-        }}
-        onScroll={handleScroll}
-        onDragOver={handleGridDragOver}
-        onDragLeave={handleGridDragLeave}
-        onDrop={handleGridDrop}
-      >
-        {/* IDEA-017: CSV drag-drop overlay */}
-        {isDragOver && (
-          <div className="absolute inset-0 z-[500] bg-[#1a73e8]/10 border-4 border-dashed border-[#1a73e8] flex items-center justify-center pointer-events-none rounded">
-            <div className="bg-background rounded-xl shadow-xl px-6 py-4 text-center">
-              <p className="font-semibold text-[#1a73e8]">
-                Déposer le fichier CSV
-              </p>
-              <p className="text-[12px] text-muted-foreground mt-1">
-                Le contenu sera inséré à la cellule active
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* Find & Replace */}
-        {showFind && (
-          <FindReplaceBar
-            findText={findText}
-            replaceText={replaceText}
-            matchCount={findMatches.length}
-            currentMatch={currentFindIdx}
-            showReplace={showReplaceToggle}
-            searchAllSheets={findAllSheets}
-            onFindChange={setFindText}
-            onReplaceChange={setReplaceText}
-            onNext={() => navigateToFind(currentFindIdx + 1)}
-            onPrev={() => navigateToFind(currentFindIdx - 1)}
-            onReplace={doReplace}
-            onReplaceAll={doReplaceAll}
-            onToggleReplace={() => setShowReplaceToggle(!showReplaceToggle)}
-            onToggleAllSheets={() => setFindAllSheets((prev) => !prev)}
-            onClose={() => {
-              setShowFind(false);
-              setFindText("");
-              setFindAllSheets(false);
-            }}
-          />
-        )}
-
-        {/* Total grid size (for scrollbar) */}
-        <div
-          style={{
-            width: totalWidth + ROW_HEADER_WIDTH,
-            height: totalHeight + COL_HEADER_HEIGHT,
-            position: "relative",
-          }}
-        >
-          {/* Column headers */}
-          <div
-            className="flex sticky top-0 z-30 select-none"
-            style={{ height: COL_HEADER_HEIGHT }}
-          >
-            <div
-              data-testid="sheet-select-all"
-              aria-label="Tout sélectionner"
-              className="bg-[#f8f9fa] dark:bg-[#202124] border-r border-b border-[#c0c0c0] dark:border-[#5f6368] shrink-0 sticky left-0 z-40 relative cursor-pointer hover:bg-[#e8f0fe] dark:hover:bg-[#3c4043] transition-colors"
-              style={{
-                width: ROW_HEADER_WIDTH,
-                minWidth: ROW_HEADER_WIDTH,
-                height: COL_HEADER_HEIGHT,
-              }}
-              onClick={() => {
-                setSelectedRange({
-                  start: { r: 0, c: 0 },
-                  end: { r: effectiveRows - 1, c: COLS - 1 },
-                });
-                setActiveCell({ r: 0, c: 0 });
-              }}
-              title="Tout sélectionner"
-            >
-              <div
-                className={cn(
-                  "absolute top-1 left-1 h-1.5 w-1.5 rounded-full shadow-sm",
-                  isConnecté ? "bg-[#1e8e3e]" : "bg-[#d93025] animate-pulse",
-                )}
-              />
-            </div>
-            {/* Spacer for cols before visible range */}
-            {startC > 0 && (
-              <div
-                style={{
-                  width: colOffsets[startC],
-                  minWidth: colOffsets[startC],
-                }}
-              />
-            )}
-            {Array.from({ length: endC - startC + 1 }).map((_, i) => {
-              const c = startC + i;
-              const inSel =
-                selectionBounds &&
-                c >= selectionBounds.minC &&
-                c <= selectionBounds.maxC;
-              const w = getColWidth(c);
-              const isFrozen = c < freezeCols;
-              return (
-                <div
-                  key={c}
-                  data-testid={`sheet-col-header-${c}`}
-                  data-col={c}
-                  data-col-label={indexToCol(c)}
-                  data-col-selected={inSel ? "true" : "false"}
-                  className={cn(
-                    "flex items-center justify-center border-r border-b border-[#c0c0c0] dark:border-[#5f6368] text-[12px] font-medium shrink-0 transition-colors relative group cursor-pointer",
-                    inSel
-                      ? "bg-[#e8f0fe] dark:bg-[#3c4043] text-[#1a73e8]"
-                      : "bg-[#f8f9fa] dark:bg-[#202124] text-[#444746] dark:text-[#9aa0a6] hover:bg-[#e8f0fe] dark:hover:bg-[#3c4043]",
-                    isFrozen && "bg-[#e8f0fe]/50",
-                  )}
-                  style={{
-                    width: w,
-                    minWidth: w,
-                    maxWidth: w,
-                    height: COL_HEADER_HEIGHT,
-                    ...(isFrozen
-                      ? {
-                          position: "sticky",
-                          left: ROW_HEADER_WIDTH + colOffsets[c],
-                          zIndex: 41,
-                        }
-                      : {}),
-                  }}
-                  onClick={(e) => {
-                    if (e.shiftKey && activeCell) {
-                      setSelectedRange({
-                        start: { r: 0, c: activeCell.c },
-                        end: { r: effectiveRows - 1, c },
-                      });
-                    } else {
-                      setSelectedRange({
-                        start: { r: 0, c },
-                        end: { r: effectiveRows - 1, c },
-                      });
-                      setActiveCell({ r: 0, c });
+              {[
+                { fn: "=SUM(A1:A10)", desc: "Somme" },
+                { fn: "=AVERAGE(A1:A10)", desc: "Moyenne" },
+                { fn: "=COUNT(A1:A10)", desc: "Nombre" },
+                { fn: "=MAX(A1:A10)", desc: "Maximum" },
+                { fn: "=MIN(A1:A10)", desc: "Minimum" },
+                { fn: '=IF(A1>5,"Oui","Non")', desc: "Condition" },
+                { fn: "=VLOOKUP(A1,B1:C10,2)", desc: "Recherche V" },
+                { fn: "=CONCATENATE(A1,B1)", desc: "Concat\u00E9ner" },
+                { fn: "=ROUND(A1,2)", desc: "Arrondir" },
+                { fn: '=COUNTIF(A1:A10,">5")', desc: "NB.SI" },
+                { fn: '=SUMIF(A1:A10,">5")', desc: "SOMME.SI" },
+                { fn: "=TODAY()", desc: "Date du jour" },
+                { fn: "=LEN(A1)", desc: "Longueur" },
+                { fn: "=UPPER(A1)", desc: "Majuscules" },
+                { fn: "=IFERROR(A1/B1,0)", desc: "Si erreur" },
+              ].map(({ fn, desc }) => (
+                <button
+                  key={fn}
+                  className="w-full text-left px-2 py-1 text-[12px] hover:bg-[#f1f3f4] dark:hover:bg-[#3c4043] rounded"
+                  onClick={() => {
+                    if (activeCell) {
+                      setEditValue(fn);
+                      setCell(activeCell.r, activeCell.c, fn);
+                      setIsEditing(true);
+                      setShowFunctionHelper(false);
+                      setTimeout(() => formulaBarRef.current?.focus(), 0);
                     }
                   }}
                 >
-                  {indexToCol(c)}
+                  <span className="font-mono text-[#1a73e8]">{fn}</span>
+                  <span className="ml-2 text-[#5f6368]">{desc}</span>
+                </button>
+              ))}
+            </PopoverContent>
+          </Popover>
+          <div className="ml-auto flex items-center pr-1 shrink-0 relative">
+            <button
+              className={cn(
+                "flex items-center gap-1.5 px-3 py-1.5 rounded font-medium text-[13px] shadow-sm transition-all border",
+                showAiDialog
+                  ? "bg-gradient-to-r from-purple-600 to-indigo-600 text-white border-transparent scale-95"
+                  : "bg-gradient-to-r from-purple-50 to-indigo-50 hover:from-purple-100 hover:to-indigo-100 text-purple-700 dark:from-purple-900/30 dark:to-indigo-900/30 dark:hover:from-purple-900/50 dark:hover:to-indigo-900/50 dark:text-purple-300 border-purple-200 dark:border-purple-800",
+              )}
+              onClick={() => setShowAiDialog(!showAiDialog)}
+            >
+              <Sparkles
+                className={cn(
+                  "w-3.5 h-3.5",
+                  showAiDialog ? "animate-pulse" : "",
+                )}
+              />{" "}
+              Tools IA
+            </button>
+          </div>
+          {/* RT4: History button */}
+          <button
+            onClick={() => setShowHistory((s) => !s)}
+            className={cn(
+              "flex items-center gap-1 px-2 py-1 rounded text-[12px] font-medium transition-colors",
+              showHistory
+                ? "bg-[#e8f0fe] dark:bg-[#3c4043] text-[#1a73e8]"
+                : "hover:bg-[#f1f3f4] dark:hover:bg-[#3c4043] text-[#5f6368]",
+            )}
+            title="Historique des modifications"
+          >
+            <History className="w-3.5 h-3.5" />
+          </button>
+          {/* RT2: Collaborator presence avatars */}
+          {collaborators.length > 0 && (
+            <div
+              className="flex items-center -space-x-2 ml-2 shrink-0"
+              title="Utilisateurs connectés"
+            >
+              {collaborators.slice(0, 5).map((u) => (
+                <div
+                  key={u.clientId}
+                  className="h-7 w-7 rounded-full flex items-center justify-center text-[10px] font-semibold text-white ring-2 ring-background shrink-0"
+                  style={{ backgroundColor: u.color }}
+                  title={u.name}
+                >
+                  {u.name.slice(0, 2).toUpperCase()}
+                </div>
+              ))}
+              {collaborators.length > 5 && (
+                <div className="h-7 w-7 rounded-full flex items-center justify-center text-[10px] font-semibold bg-muted ring-2 ring-background shrink-0">
+                  +{collaborators.length - 5}
+                </div>
+              )}
+            </div>
+          )}
+        </Toolbar>
+
+        {/* ===== FORMULA BAR ===== */}
+        {showFormulaBar && (
+          <div
+            data-testid="sheet-formula-bar"
+            data-print-hide
+            className="flex items-center gap-2 px-4 py-2 border-b border-[#e3e3e3] dark:border-[#3c4043] bg-background dark:bg-[#1a1a1a] shrink-0 h-10 shadow-[0_1px_2px_rgba(0,0,0,0.02)] z-10"
+          >
+            <div
+              data-testid="sheet-cell-ref"
+              className="w-12 h-6 flex items-center justify-center bg-[#f1f3f4] dark:bg-[#3c4043] rounded font-medium text-[12px] shrink-0 tracking-wide select-text border border-[#e3e3e3] dark:border-[#5f6368]"
+            >
+              {activeCell
+                ? `${indexToCol(activeCell.c)}${activeCell.r + 1}`
+                : ""}
+            </div>
+            <div className="w-px h-5 bg-[#e3e3e3] dark:bg-[#5f6368] shrink-0 mx-1" />
+            <div className="text-[#9aa0a6] font-serif italic shrink-0 text-base px-1 pointer-events-none select-none">
+              ƒ
+              <span className="text-[12px] font-sans italic relative -top-0.5 -left-0.5">
+                x
+              </span>
+            </div>
+            <input
+              ref={formulaBarRef}
+              data-testid="sheet-formula-input"
+              className="flex-1 outline-none text-[13px] bg-transparent font-mono text-[#202124] dark:text-[#e8eaed] placeholder:text-[#9aa0a6] placeholder:font-sans"
+              placeholder={
+                activeCell ? "Saisir une formule ou un texte..." : ""
+              }
+              value={activeCell ? editValue : ""}
+              onChange={(e) => {
+                setEditValue(e.target.value);
+                if (activeCell)
+                  setCell(activeCell.r, activeCell.c, e.target.value);
+              }}
+              onFocus={() => {
+                if (activeCell) setIsEditing(true);
+              }}
+              disabled={!activeCell}
+            />
+          </div>
+        )}
+
+        {/* RT4: History panel (absolute overlay on the right) */}
+        {showHistory && (
+          <div
+            className="absolute top-0 right-0 z-40 h-full"
+            style={{ top: 88 }}
+          >
+            <HistoryPanel
+              open={showHistory}
+              onClose={() => setShowHistory(false)}
+              entries={historyEntries}
+              className="shadow-xl border-l"
+            />
+          </div>
+        )}
+
+        {/* ===== GRID (Virtualized) ===== */}
+        <div
+          ref={gridRef}
+          data-testid="sheet-grid"
+          data-rows={effectiveRows}
+          data-cols={COLS}
+          className="relative flex-1 overflow-auto bg-background dark:bg-[#1f1f1f] will-change-transform"
+          style={{
+            transform: `scale(${zoomLevel / 100})`,
+            transformOrigin: "top left",
+          }}
+          onScroll={handleScroll}
+          onDragOver={handleGridDragOver}
+          onDragLeave={handleGridDragLeave}
+          onDrop={handleGridDrop}
+        >
+          {/* IDEA-017: CSV drag-drop overlay */}
+          {isDragOver && (
+            <div className="absolute inset-0 z-[500] bg-[#1a73e8]/10 border-4 border-dashed border-[#1a73e8] flex items-center justify-center pointer-events-none rounded">
+              <div className="bg-background rounded-xl shadow-xl px-6 py-4 text-center">
+                <p className="font-semibold text-[#1a73e8]">
+                  Déposer le fichier CSV
+                </p>
+                <p className="text-[12px] text-muted-foreground mt-1">
+                  Le contenu sera inséré à la cellule active
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Find & Replace */}
+          {showFind && (
+            <FindReplaceBar
+              findText={findText}
+              replaceText={replaceText}
+              matchCount={findMatches.length}
+              currentMatch={currentFindIdx}
+              showReplace={showReplaceToggle}
+              searchAllSheets={findAllSheets}
+              onFindChange={setFindText}
+              onReplaceChange={setReplaceText}
+              onNext={() => navigateToFind(currentFindIdx + 1)}
+              onPrev={() => navigateToFind(currentFindIdx - 1)}
+              onReplace={doReplace}
+              onReplaceAll={doReplaceAll}
+              onToggleReplace={() => setShowReplaceToggle(!showReplaceToggle)}
+              onToggleAllSheets={() => setFindAllSheets((prev) => !prev)}
+              onClose={() => {
+                setShowFind(false);
+                setFindText("");
+                setFindAllSheets(false);
+              }}
+            />
+          )}
+
+          {/* Total grid size (for scrollbar) */}
+          <div
+            style={{
+              width: totalWidth + ROW_HEADER_WIDTH,
+              height: totalHeight + COL_HEADER_HEIGHT,
+              position: "relative",
+            }}
+          >
+            {/* Column headers */}
+            <div
+              className="flex sticky top-0 z-30 select-none"
+              style={{ height: COL_HEADER_HEIGHT }}
+            >
+              <div
+                data-testid="sheet-select-all"
+                aria-label="Tout sélectionner"
+                className="bg-[#f8f9fa] dark:bg-[#202124] border-r border-b border-[#c0c0c0] dark:border-[#5f6368] shrink-0 sticky left-0 z-40 relative cursor-pointer hover:bg-[#e8f0fe] dark:hover:bg-[#3c4043] transition-colors"
+                style={{
+                  width: ROW_HEADER_WIDTH,
+                  minWidth: ROW_HEADER_WIDTH,
+                  height: COL_HEADER_HEIGHT,
+                }}
+                onClick={() => {
+                  setSelectedRange({
+                    start: { r: 0, c: 0 },
+                    end: { r: effectiveRows - 1, c: COLS - 1 },
+                  });
+                  setActiveCell({ r: 0, c: 0 });
+                }}
+                title="Tout sélectionner"
+              >
+                <div
+                  className={cn(
+                    "absolute top-1 left-1 h-1.5 w-1.5 rounded-full shadow-sm",
+                    isConnecté ? "bg-[#1e8e3e]" : "bg-[#d93025] animate-pulse",
+                  )}
+                />
+              </div>
+              {/* Spacer for cols before visible range */}
+              {startC > 0 && (
+                <div
+                  style={{
+                    width: colOffsets[startC],
+                    minWidth: colOffsets[startC],
+                  }}
+                />
+              )}
+              {Array.from({ length: endC - startC + 1 }).map((_, i) => {
+                const c = startC + i;
+                const inSel =
+                  selectionBounds &&
+                  c >= selectionBounds.minC &&
+                  c <= selectionBounds.maxC;
+                const w = getColWidth(c);
+                const isFrozen = c < freezeCols;
+                return (
                   <div
-                    data-testid={`sheet-col-resize-${c}`}
-                    className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-[#1a73e8] opacity-0 group-hover:opacity-100 transition-opacity z-10"
-                    onMouseDown={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      resizeRef.current = {
-                        type: "col",
-                        index: c,
-                        startPos: e.clientX,
-                        startSize: w,
+                    key={c}
+                    data-testid={`sheet-col-header-${c}`}
+                    data-col={c}
+                    data-col-label={indexToCol(c)}
+                    data-col-selected={inSel ? "true" : "false"}
+                    className={cn(
+                      "flex items-center justify-center border-r border-b border-[#c0c0c0] dark:border-[#5f6368] text-[12px] font-medium shrink-0 transition-colors relative group cursor-pointer",
+                      inSel
+                        ? "bg-[#e8f0fe] dark:bg-[#3c4043] text-[#1a73e8]"
+                        : "bg-[#f8f9fa] dark:bg-[#202124] text-[#444746] dark:text-[#9aa0a6] hover:bg-[#e8f0fe] dark:hover:bg-[#3c4043]",
+                      isFrozen && "bg-[#e8f0fe]/50",
+                    )}
+                    style={{
+                      width: w,
+                      minWidth: w,
+                      maxWidth: w,
+                      height: COL_HEADER_HEIGHT,
+                      ...(isFrozen
+                        ? {
+                            position: "sticky",
+                            left: ROW_HEADER_WIDTH + colOffsets[c],
+                            zIndex: 41,
+                          }
+                        : {}),
+                    }}
+                    onClick={(e) => {
+                      if (e.shiftKey && activeCell) {
+                        setSelectedRange({
+                          start: { r: 0, c: activeCell.c },
+                          end: { r: effectiveRows - 1, c },
+                        });
+                      } else {
+                        setSelectedRange({
+                          start: { r: 0, c },
+                          end: { r: effectiveRows - 1, c },
+                        });
+                        setActiveCell({ r: 0, c });
+                      }
+                    }}
+                  >
+                    {indexToCol(c)}
+                    <div
+                      data-testid={`sheet-col-resize-${c}`}
+                      className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-[#1a73e8] opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        resizeRef.current = {
+                          type: "col",
+                          index: c,
+                          startPos: e.clientX,
+                          startSize: w,
+                        };
+                      }}
+                      onDoubleClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        autoFitColumn(c);
+                      }}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* IDEA-016: Freeze pane visual indicator — blue lines at frozen boundaries */}
+            {freezeRows > 0 && (
+              <div
+                className="absolute z-30 pointer-events-none"
+                style={{
+                  left: 0,
+                  right: 0,
+                  top: COL_HEADER_HEIGHT + rowOffsets[freezeRows] - scrollTop,
+                  height: 2,
+                  background:
+                    "linear-gradient(to right, transparent, #1a73e8 20%, #1a73e8 80%, transparent)",
+                  boxShadow: "0 0 6px rgba(26,115,232,0.5)",
+                }}
+              />
+            )}
+            {freezeCols > 0 && (
+              <div
+                className="absolute z-30 pointer-events-none"
+                style={{
+                  top: 0,
+                  bottom: 0,
+                  left: ROW_HEADER_WIDTH + colOffsets[freezeCols] - scrollLeft,
+                  width: 2,
+                  background:
+                    "linear-gradient(to bottom, transparent, #1a73e8 20%, #1a73e8 80%, transparent)",
+                  boxShadow: "0 0 6px rgba(26,115,232,0.5)",
+                }}
+              />
+            )}
+
+            {/* Rows (virtualized) */}
+            {/* Spacer for rows before visible range */}
+            {startR > 0 && <div style={{ height: rowOffsets[startR] }} />}
+            {Array.from({ length: endR - startR + 1 }).map((_, ri) => {
+              const r = startR + ri;
+              if (!isRowVisible(r)) return null;
+              const inSelRow =
+                selectionBounds &&
+                r >= selectionBounds.minR &&
+                r <= selectionBounds.maxR;
+              const rh = getRowHeight(r);
+              const isFrozenRow = r < freezeRows;
+
+              return (
+                <div
+                  key={r}
+                  className="flex"
+                  style={{
+                    height: rh,
+                    position: "absolute",
+                    top: COL_HEADER_HEIGHT + rowOffsets[r],
+                    left: 0,
+                    width: totalWidth + ROW_HEADER_WIDTH,
+                    ...(isFrozenRow
+                      ? {
+                          position: "sticky",
+                          top: COL_HEADER_HEIGHT + rowOffsets[r],
+                          zIndex: 25,
+                        }
+                      : {}),
+                  }}
+                >
+                  {/* Row header */}
+                  <div
+                    data-testid={`sheet-row-header-${r}`}
+                    data-row={r}
+                    data-row-label={r + 1}
+                    data-row-selected={inSelRow ? "true" : "false"}
+                    className={cn(
+                      "flex items-center justify-center border-r border-b border-[#c0c0c0] dark:border-[#5f6368] text-[12px] shrink-0 sticky left-0 z-20 transition-colors relative group cursor-pointer",
+                      inSelRow
+                        ? "bg-[#e8f0fe] dark:bg-[#3c4043] text-[#1a73e8]"
+                        : "bg-[#f8f9fa] dark:bg-[#202124] text-[#444746] dark:text-[#9aa0a6] hover:bg-[#e8f0fe] dark:hover:bg-[#3c4043]",
+                    )}
+                    style={{
+                      width: ROW_HEADER_WIDTH,
+                      minWidth: ROW_HEADER_WIDTH,
+                      height: rh,
+                    }}
+                    onClick={(e) => {
+                      if (e.shiftKey && activeCell) {
+                        setSelectedRange({
+                          start: { r: activeCell.r, c: 0 },
+                          end: { r, c: COLS - 1 },
+                        });
+                      } else {
+                        setSelectedRange({
+                          start: { r, c: 0 },
+                          end: { r, c: COLS - 1 },
+                        });
+                        setActiveCell({ r, c: 0 });
+                      }
+                    }}
+                  >
+                    {r + 1}
+                    <div
+                      data-testid={`sheet-row-resize-${r}`}
+                      className="absolute left-0 right-0 bottom-0 h-1.5 cursor-row-resize hover:bg-[#1a73e8] opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        resizeRef.current = {
+                          type: "row",
+                          index: r,
+                          startPos: e.clientY,
+                          startSize: rh,
+                        };
+                      }}
+                    />
+                  </div>
+
+                  {/* Spacer for cols before visible range */}
+                  {startC > 0 && (
+                    <div
+                      style={{
+                        width: colOffsets[startC],
+                        minWidth: colOffsets[startC],
+                      }}
+                    />
+                  )}
+
+                  {/* Cells */}
+                  {Array.from({ length: endC - startC + 1 }).map((_, ci) => {
+                    const c = startC + ci;
+                    const cellData = data[`${r},${c}`];
+                    const style = cellData?.style;
+                    if (style?.mergedInto) return null;
+
+                    const isActive = activeCell?.r === r && activeCell?.c === c;
+                    const inRect =
+                      selectionBounds &&
+                      r >= selectionBounds.minR &&
+                      r <= selectionBounds.maxR &&
+                      c >= selectionBounds.minC &&
+                      c <= selectionBounds.maxC;
+                    const isBottomRight =
+                      selectionBounds &&
+                      r === selectionBounds.maxR &&
+                      c === selectionBounds.maxC;
+                    const isFindMatch = findMatches.some(
+                      (m) => m.r === r && m.c === c,
+                    );
+                    const isCurrentFind =
+                      findMatches.length > 0 &&
+                      findMatches[currentFindIdx]?.r === r &&
+                      findMatches[currentFindIdx]?.c === c;
+
+                    let rawValue: string =
+                      typeof cellData?.value === "string" ? cellData.value : "";
+                    // Safety: if Yjs stored an object instead of string, convert it
+                    if (cellData?.value && typeof cellData.value !== "string") {
+                      const v = cellData.value as unknown as Record<
+                        string,
+                        unknown
+                      > & {
+                        toISOString?: () => string;
+                        richText?: { text?: string }[];
                       };
-                    }}
-                    onDoubleClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      autoFitColumn(c);
-                    }}
-                  />
+                      try {
+                        if (
+                          v instanceof Date ||
+                          typeof v.toISOString === "function"
+                        )
+                          rawValue = (v.toISOString?.() || "").split("T")[0];
+                        else if (
+                          typeof v === "number" ||
+                          typeof v === "boolean"
+                        )
+                          rawValue = String(v);
+                        else if (v.result !== undefined)
+                          rawValue = String(v.result ?? "");
+                        else if (v.text !== undefined)
+                          rawValue = String(v.text ?? "");
+                        else if (v.richText)
+                          rawValue = v.richText
+                            .map((r) => r?.text || "")
+                            .join("");
+                        else rawValue = JSON.stringify(v);
+                      } catch {
+                        rawValue = "";
+                      }
+                    }
+                    const evaluated = evaluatedData[`${r},${c}`] || rawValue;
+                    const displayValue = formatDisplayValue(evaluated, style);
+                    const isErrorVal =
+                      (displayValue.startsWith("#") &&
+                        displayValue.endsWith("!")) ||
+                      displayValue === "#NAME?" ||
+                      displayValue === "#N/A";
+                    const isNumber =
+                      !isErrorVal &&
+                      !isNaN(Number(evaluated)) &&
+                      evaluated.trim() !== "";
+
+                    const mergeRows = style?.mergeRows || 1;
+                    const mergeCols2 = style?.mergeCols || 1;
+                    let cellW = 0;
+                    for (let mc = 0; mc < mergeCols2; mc++)
+                      cellW += getColWidth(c + mc);
+                    let cellH = 0;
+                    for (let mr = 0; mr < mergeRows; mr++)
+                      cellH += getRowHeight(r + mr);
+
+                    const condColor = condFormatColor(r, c);
+                    const advOverlay = advCondFormatOverlay(r, c);
+                    const isFrozenCell = c < freezeCols;
+
+                    const bandedBg =
+                      bandedRows &&
+                      !style?.fillColor &&
+                      !condColor &&
+                      !inRect &&
+                      !isActive &&
+                      r % 2 === 0
+                        ? "#f8f9fa"
+                        : undefined;
+                    const isUrl =
+                      !isErrorVal && /^https?:\/\/\S+/.test(evaluated);
+                    const isSparkline = evaluated.startsWith("__SPARKLINE__:");
+                    const isLocked = !!style?.locked;
+                    const hasComment = !!cellData?.comment;
+                    const hasValidation = !!cellData?.validation;
+                    const isCheckbox =
+                      cellData?.validation?.type === "boolean" ||
+                      displayValue === "true" ||
+                      displayValue === "false" ||
+                      displayValue === "TRUE" ||
+                      displayValue === "FALSE";
+
+                    const isMerged = mergeRows > 1 || mergeCols2 > 1;
+                    const cellStyle: React.CSSProperties = {
+                      width: cellW,
+                      minWidth: cellW,
+                      maxWidth: cellW,
+                      height: cellH,
+                      fontWeight: style?.bold ? 700 : undefined,
+                      fontStyle: style?.italic ? "italic" : undefined,
+                      textDecoration: style?.strikethrough
+                        ? "line-through"
+                        : isUrl
+                          ? "underline"
+                          : undefined,
+                      textAlign: style?.align || (isNumber ? "right" : "left"),
+                      fontFamily: style?.fontFamily,
+                      fontSize: style?.fontSize
+                        ? `${style.fontSize}px`
+                        : undefined,
+                      color: isUrl ? "#1a73e8" : style?.textColor,
+                      backgroundColor: advOverlay?.bgColor
+                        ? advOverlay.bgColor
+                        : condColor
+                          ? `${condColor}22`
+                          : style?.fillColor ||
+                            (inRect && !isActive
+                              ? "rgba(66,133,244,0.08)"
+                              : bandedBg),
+                      whiteSpace: style?.wrap ? "pre-wrap" : "nowrap",
+                      borderTopWidth: style?.borderTop ? 2 : undefined,
+                      borderRightWidth: style?.borderRight ? 2 : undefined,
+                      borderBottomWidth: style?.borderBottom ? 2 : undefined,
+                      borderLeftWidth: style?.borderLeft ? 2 : undefined,
+                      borderColor:
+                        style?.borderTop ||
+                        style?.borderRight ||
+                        style?.borderBottom ||
+                        style?.borderLeft
+                          ? "#202124"
+                          : undefined,
+                      borderStyle: "solid",
+                      // Merged cells that span rows need z-index to not be painted over by subsequent rows
+                      ...(isMerged && mergeRows > 1
+                        ? { position: "relative", zIndex: 5 }
+                        : {}),
+                      ...(isFrozenCell
+                        ? {
+                            position: "sticky",
+                            left: ROW_HEADER_WIDTH + colOffsets[c],
+                            zIndex: 21,
+                          }
+                        : {}),
+                    };
+
+                    const inDragFill =
+                      isDragFilling &&
+                      dragFillEnd &&
+                      selectionBounds &&
+                      ((dragFillEnd.r > selectionBounds.maxR &&
+                        r > selectionBounds.maxR &&
+                        r <= dragFillEnd.r &&
+                        c >= selectionBounds.minC &&
+                        c <= selectionBounds.maxC) ||
+                        (dragFillEnd.c > selectionBounds.maxC &&
+                          c > selectionBounds.maxC &&
+                          c <= dragFillEnd.c &&
+                          r >= selectionBounds.minR &&
+                          r <= selectionBounds.maxR));
+
+                    return (
+                      <div
+                        key={c}
+                        data-testid={`sheet-cell-${r}-${c}`}
+                        data-row={r}
+                        data-col={c}
+                        data-cell-ref={`${indexToCol(c)}${r + 1}`}
+                        data-active={isActive ? "true" : "false"}
+                        data-in-selection={inRect ? "true" : "false"}
+                        data-editing={isActive && isEditing ? "true" : "false"}
+                        data-has-formula={
+                          cellData?.formula ||
+                          (typeof cellData?.value === "string" &&
+                            cellData.value.startsWith("="))
+                            ? "true"
+                            : "false"
+                        }
+                        data-display-value={displayValue}
+                        data-error={isErrorVal ? "true" : "false"}
+                        className={cn(
+                          "border-r border-b text-[13px] px-1 flex items-center outline-none relative shrink-0 overflow-hidden",
+                          showGridlines
+                            ? "border-[#e3e3e3] dark:border-[#5f6368]"
+                            : "border-transparent",
+                          !style?.fillColor &&
+                            !condColor &&
+                            !inRect &&
+                            !inDragFill &&
+                            !bandedBg &&
+                            "bg-background dark:bg-[#1a1a1a]",
+                          inDragFill && "bg-[#e8f0fe]/40",
+                          isFindMatch &&
+                            !isCurrentFind &&
+                            "ring-1 ring-inset ring-yellow-400",
+                          isCurrentFind && "ring-2 ring-inset ring-orange-500",
+                        )}
+                        style={cellStyle}
+                        onMouseDown={(e) => {
+                          if (!isReadOnly) handleCellMouseDown(r, c, e);
+                        }}
+                        onMouseEnter={() => {
+                          if (!isReadOnly) handleCellMouseEnter(r, c);
+                          if (hasComment)
+                            setHoveredComment({
+                              r,
+                              c,
+                              x: ROW_HEADER_WIDTH + colOffsets[c] + cellW,
+                              y: COL_HEADER_HEIGHT + rowOffsets[r],
+                            });
+                        }}
+                        onMouseLeave={() => {
+                          if (
+                            hoveredComment?.r === r &&
+                            hoveredComment?.c === c
+                          )
+                            setHoveredComment(null);
+                        }}
+                        onDoubleClick={() => {
+                          if (!isReadOnly) handleDoubleClick(r, c);
+                        }}
+                        onContextMenu={(e) => {
+                          if (!isReadOnly) handleContextMenu(r, c, e);
+                        }}
+                      >
+                        {/* Comment indicator triangle */}
+                        {hasComment && (
+                          <div
+                            className="absolute top-0 right-0 w-0 h-0 z-[6]"
+                            style={{
+                              borderLeft: "6px solid transparent",
+                              borderTop: "6px solid #ff9900",
+                            }}
+                          />
+                        )}
+                        {/* Lock indicator */}
+                        {isLocked && (
+                          <div className="absolute bottom-0 left-0 z-[6] opacity-30 pointer-events-none">
+                            <Lock className="w-2.5 h-2.5" />
+                          </div>
+                        )}
+                        {/* Validation dropdown arrow */}
+                        {hasValidation && !isEditing && (
+                          <button
+                            className="absolute right-0.5 top-1/2 -translate-y-1/2 w-4 h-4 flex items-center justify-center text-[#5f6368] hover:text-[#202124] z-[6] opacity-0 hover:opacity-100 group-hover:opacity-100"
+                            style={{
+                              opacity:
+                                isActive ||
+                                (validationDropdown?.r === r &&
+                                  validationDropdown?.c === c)
+                                  ? 1
+                                  : undefined,
+                            }}
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              setValidationDropdown(
+                                validationDropdown?.r === r &&
+                                  validationDropdown?.c === c
+                                  ? null
+                                  : { r, c },
+                              );
+                            }}
+                          >
+                            <ChevronDown className="w-3 h-3" />
+                          </button>
+                        )}
+                        {condColor && (
+                          <div
+                            className="absolute inset-0 border-l-[3px] pointer-events-none z-[5]"
+                            style={{ borderColor: condColor }}
+                          />
+                        )}
+                        {/* IDEA-022: Advanced cond format — data bar */}
+                        {advOverlay?.dataBar && (
+                          <div className="absolute inset-0 flex items-center pointer-events-none z-[4]">
+                            <div
+                              style={{
+                                width: `${advOverlay.dataBar.pct}%`,
+                                height: "70%",
+                                backgroundColor: advOverlay.dataBar.color,
+                                opacity: 0.45,
+                                borderRadius: 2,
+                              }}
+                            />
+                          </div>
+                        )}
+                        {/* IDEA-022: Advanced cond format — icon set */}
+                        {advOverlay?.icon && (
+                          <span className="absolute left-0.5 top-1/2 -translate-y-1/2 text-[11px] pointer-events-none z-[6] leading-none">
+                            {advOverlay.icon}
+                          </span>
+                        )}
+                        {inRect && (
+                          <>
+                            {r === selectionBounds!.minR && (
+                              <div className="absolute top-0 left-0 right-[-1px] h-[2px] bg-[#1a73e8] z-10" />
+                            )}
+                            {r === selectionBounds!.maxR && (
+                              <div className="absolute bottom-[-1px] left-0 right-[-1px] h-[2px] bg-[#1a73e8] z-10" />
+                            )}
+                            {c === selectionBounds!.minC && (
+                              <div className="absolute top-0 bottom-[-1px] left-0 w-[2px] bg-[#1a73e8] z-10" />
+                            )}
+                            {c === selectionBounds!.maxC && (
+                              <div className="absolute top-0 bottom-[-1px] right-[-1px] w-[2px] bg-[#1a73e8] z-10" />
+                            )}
+                          </>
+                        )}
+                        {isActive && (
+                          <div className="absolute inset-[-1px] border-2 border-[#1a73e8] z-20 pointer-events-none" />
+                        )}
+                        {isActive && isEditing ? (
+                          <input
+                            ref={inputRef}
+                            data-testid="sheet-cell-editor"
+                            className="w-full h-full border-none outline-none bg-background dark:bg-[#2d2e30] px-0.5 m-0 text-[13px] z-30 relative text-[#202124] dark:text-white"
+                            value={editValue}
+                            onChange={(e) => setEditValue(e.target.value)}
+                            onBlur={commitEdit}
+                            spellCheck={false}
+                          />
+                        ) : isCheckbox ? (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <input
+                              type="checkbox"
+                              className="w-[15px] h-[15px] cursor-pointer accent-[#1a73e8]"
+                              checked={rawValue.toUpperCase() === "TRUE"}
+                              onChange={(e) => {
+                                e.stopPropagation();
+                                setCell(
+                                  r,
+                                  c,
+                                  e.target.checked ? "TRUE" : "FALSE",
+                                );
+                              }}
+                              onMouseDown={(e) => e.stopPropagation()}
+                              onDoubleClick={(e) => e.stopPropagation()}
+                            />
+                          </div>
+                        ) : isSparkline ? (
+                          <SparklineCell
+                            value={evaluated}
+                            width={cellW - 4}
+                            height={cellH - 4}
+                          />
+                        ) : isUrl ? (
+                          <a
+                            href={evaluated}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="truncate w-full cursor-pointer hover:underline"
+                            onClick={(e) => e.stopPropagation()}
+                            style={
+                              style?.rotation
+                                ? {
+                                    transform: `rotate(${style.rotation}deg)`,
+                                    display: "inline-block",
+                                  }
+                                : undefined
+                            }
+                          >
+                            <ExternalLink className="w-3 h-3 inline mr-1 opacity-60" />
+                            {displayValue}
+                          </a>
+                        ) : (
+                          <span
+                            className={cn(
+                              style?.wrap
+                                ? "w-full select-text break-words"
+                                : "truncate w-full select-text",
+                              isErrorVal &&
+                                "text-[#d93025] font-semibold text-center",
+                              displayValue === "" && "opacity-0",
+                            )}
+                            title={
+                              hasComment
+                                ? `💬 ${cellData!.comment}\n${rawValue}`
+                                : isErrorVal
+                                  ? "Erreur"
+                                  : rawValue
+                            }
+                            style={
+                              style?.rotation
+                                ? {
+                                    transform: `rotate(${style.rotation}deg)`,
+                                    display: "inline-block",
+                                    transformOrigin: "left center",
+                                  }
+                                : undefined
+                            }
+                          >
+                            {displayValue}
+                          </span>
+                        )}
+                        {isBottomRight && !isEditing && (
+                          <div
+                            data-testid="sheet-autofill-handle"
+                            aria-label="Poignée de recopie"
+                            className="absolute -bottom-1 -right-1 w-2 h-2 bg-[#1a73e8] border border-white dark:border-[#1a1a1a] rounded-sm cursor-crosshair z-30"
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              setIsDragFilling(true);
+                            }}
+                          />
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               );
             })}
           </div>
 
-          {/* IDEA-016: Freeze pane visual indicator — blue lines at frozen boundaries */}
-          {freezeRows > 0 && (
-            <div
-              className="absolute z-30 pointer-events-none"
-              style={{
-                left: 0,
-                right: 0,
-                top: COL_HEADER_HEIGHT + rowOffsets[freezeRows] - scrollTop,
-                height: 2,
-                background:
-                  "linear-gradient(to right, transparent, #1a73e8 20%, #1a73e8 80%, transparent)",
-                boxShadow: "0 0 6px rgba(26,115,232,0.5)",
-              }}
+          {/* Floating Charts */}
+          {floatingCharts.map((fc) => (
+            <FloatingChart
+              key={fc.id}
+              id={fc.id}
+              type={fc.type}
+              title={fc.title}
+              chartData={fc.chartData}
+              seriesNames={fc.seriesNames}
+              colors={fc.colors}
+              showLegend={fc.showLegend}
+              onRemove={handleRemoveFloatingChart}
             />
-          )}
-          {freezeCols > 0 && (
-            <div
-              className="absolute z-30 pointer-events-none"
-              style={{
-                top: 0,
-                bottom: 0,
-                left: ROW_HEADER_WIDTH + colOffsets[freezeCols] - scrollLeft,
-                width: 2,
-                background:
-                  "linear-gradient(to bottom, transparent, #1a73e8 20%, #1a73e8 80%, transparent)",
-                boxShadow: "0 0 6px rgba(26,115,232,0.5)",
-              }}
-            />
-          )}
-
-          {/* Rows (virtualized) */}
-          {/* Spacer for rows before visible range */}
-          {startR > 0 && <div style={{ height: rowOffsets[startR] }} />}
-          {Array.from({ length: endR - startR + 1 }).map((_, ri) => {
-            const r = startR + ri;
-            if (!isRowVisible(r)) return null;
-            const inSelRow =
-              selectionBounds &&
-              r >= selectionBounds.minR &&
-              r <= selectionBounds.maxR;
-            const rh = getRowHeight(r);
-            const isFrozenRow = r < freezeRows;
-
-            return (
-              <div
-                key={r}
-                className="flex"
-                style={{
-                  height: rh,
-                  position: "absolute",
-                  top: COL_HEADER_HEIGHT + rowOffsets[r],
-                  left: 0,
-                  width: totalWidth + ROW_HEADER_WIDTH,
-                  ...(isFrozenRow
-                    ? {
-                        position: "sticky",
-                        top: COL_HEADER_HEIGHT + rowOffsets[r],
-                        zIndex: 25,
-                      }
-                    : {}),
-                }}
-              >
-                {/* Row header */}
-                <div
-                  data-testid={`sheet-row-header-${r}`}
-                  data-row={r}
-                  data-row-label={r + 1}
-                  data-row-selected={inSelRow ? "true" : "false"}
-                  className={cn(
-                    "flex items-center justify-center border-r border-b border-[#c0c0c0] dark:border-[#5f6368] text-[12px] shrink-0 sticky left-0 z-20 transition-colors relative group cursor-pointer",
-                    inSelRow
-                      ? "bg-[#e8f0fe] dark:bg-[#3c4043] text-[#1a73e8]"
-                      : "bg-[#f8f9fa] dark:bg-[#202124] text-[#444746] dark:text-[#9aa0a6] hover:bg-[#e8f0fe] dark:hover:bg-[#3c4043]",
-                  )}
-                  style={{
-                    width: ROW_HEADER_WIDTH,
-                    minWidth: ROW_HEADER_WIDTH,
-                    height: rh,
-                  }}
-                  onClick={(e) => {
-                    if (e.shiftKey && activeCell) {
-                      setSelectedRange({
-                        start: { r: activeCell.r, c: 0 },
-                        end: { r, c: COLS - 1 },
-                      });
-                    } else {
-                      setSelectedRange({
-                        start: { r, c: 0 },
-                        end: { r, c: COLS - 1 },
-                      });
-                      setActiveCell({ r, c: 0 });
-                    }
-                  }}
-                >
-                  {r + 1}
-                  <div
-                    data-testid={`sheet-row-resize-${r}`}
-                    className="absolute left-0 right-0 bottom-0 h-1.5 cursor-row-resize hover:bg-[#1a73e8] opacity-0 group-hover:opacity-100 transition-opacity z-10"
-                    onMouseDown={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      resizeRef.current = {
-                        type: "row",
-                        index: r,
-                        startPos: e.clientY,
-                        startSize: rh,
-                      };
-                    }}
-                  />
-                </div>
-
-                {/* Spacer for cols before visible range */}
-                {startC > 0 && (
-                  <div
-                    style={{
-                      width: colOffsets[startC],
-                      minWidth: colOffsets[startC],
-                    }}
-                  />
-                )}
-
-                {/* Cells */}
-                {Array.from({ length: endC - startC + 1 }).map((_, ci) => {
-                  const c = startC + ci;
-                  const cellData = data[`${r},${c}`];
-                  const style = cellData?.style;
-                  if (style?.mergedInto) return null;
-
-                  const isActive = activeCell?.r === r && activeCell?.c === c;
-                  const inRect =
-                    selectionBounds &&
-                    r >= selectionBounds.minR &&
-                    r <= selectionBounds.maxR &&
-                    c >= selectionBounds.minC &&
-                    c <= selectionBounds.maxC;
-                  const isBottomRight =
-                    selectionBounds &&
-                    r === selectionBounds.maxR &&
-                    c === selectionBounds.maxC;
-                  const isFindMatch = findMatches.some(
-                    (m) => m.r === r && m.c === c,
-                  );
-                  const isCurrentFind =
-                    findMatches.length > 0 &&
-                    findMatches[currentFindIdx]?.r === r &&
-                    findMatches[currentFindIdx]?.c === c;
-
-                  let rawValue: string =
-                    typeof cellData?.value === "string" ? cellData.value : "";
-                  // Safety: if Yjs stored an object instead of string, convert it
-                  if (cellData?.value && typeof cellData.value !== "string") {
-                    const v = cellData.value as unknown as Record<
-                      string,
-                      unknown
-                    > & {
-                      toISOString?: () => string;
-                      richText?: { text?: string }[];
-                    };
-                    try {
-                      if (
-                        v instanceof Date ||
-                        typeof v.toISOString === "function"
-                      )
-                        rawValue = (v.toISOString?.() || "").split("T")[0];
-                      else if (typeof v === "number" || typeof v === "boolean")
-                        rawValue = String(v);
-                      else if (v.result !== undefined)
-                        rawValue = String(v.result ?? "");
-                      else if (v.text !== undefined)
-                        rawValue = String(v.text ?? "");
-                      else if (v.richText)
-                        rawValue = v.richText
-                          .map((r) => r?.text || "")
-                          .join("");
-                      else rawValue = JSON.stringify(v);
-                    } catch {
-                      rawValue = "";
-                    }
-                  }
-                  const evaluated = evaluatedData[`${r},${c}`] || rawValue;
-                  const displayValue = formatDisplayValue(evaluated, style);
-                  const isErrorVal =
-                    (displayValue.startsWith("#") &&
-                      displayValue.endsWith("!")) ||
-                    displayValue === "#NAME?" ||
-                    displayValue === "#N/A";
-                  const isNumber =
-                    !isErrorVal &&
-                    !isNaN(Number(evaluated)) &&
-                    evaluated.trim() !== "";
-
-                  const mergeRows = style?.mergeRows || 1;
-                  const mergeCols2 = style?.mergeCols || 1;
-                  let cellW = 0;
-                  for (let mc = 0; mc < mergeCols2; mc++)
-                    cellW += getColWidth(c + mc);
-                  let cellH = 0;
-                  for (let mr = 0; mr < mergeRows; mr++)
-                    cellH += getRowHeight(r + mr);
-
-                  const condColor = condFormatColor(r, c);
-                  const advOverlay = advCondFormatOverlay(r, c);
-                  const isFrozenCell = c < freezeCols;
-
-                  const bandedBg =
-                    bandedRows &&
-                    !style?.fillColor &&
-                    !condColor &&
-                    !inRect &&
-                    !isActive &&
-                    r % 2 === 0
-                      ? "#f8f9fa"
-                      : undefined;
-                  const isUrl =
-                    !isErrorVal && /^https?:\/\/\S+/.test(evaluated);
-                  const isSparkline = evaluated.startsWith("__SPARKLINE__:");
-                  const isLocked = !!style?.locked;
-                  const hasComment = !!cellData?.comment;
-                  const hasValidation = !!cellData?.validation;
-                  const isCheckbox =
-                    cellData?.validation?.type === "boolean" ||
-                    displayValue === "true" ||
-                    displayValue === "false" ||
-                    displayValue === "TRUE" ||
-                    displayValue === "FALSE";
-
-                  const isMerged = mergeRows > 1 || mergeCols2 > 1;
-                  const cellStyle: React.CSSProperties = {
-                    width: cellW,
-                    minWidth: cellW,
-                    maxWidth: cellW,
-                    height: cellH,
-                    fontWeight: style?.bold ? 700 : undefined,
-                    fontStyle: style?.italic ? "italic" : undefined,
-                    textDecoration: style?.strikethrough
-                      ? "line-through"
-                      : isUrl
-                        ? "underline"
-                        : undefined,
-                    textAlign: style?.align || (isNumber ? "right" : "left"),
-                    fontFamily: style?.fontFamily,
-                    fontSize: style?.fontSize
-                      ? `${style.fontSize}px`
-                      : undefined,
-                    color: isUrl ? "#1a73e8" : style?.textColor,
-                    backgroundColor: advOverlay?.bgColor
-                      ? advOverlay.bgColor
-                      : condColor
-                        ? `${condColor}22`
-                        : style?.fillColor ||
-                          (inRect && !isActive
-                            ? "rgba(66,133,244,0.08)"
-                            : bandedBg),
-                    whiteSpace: style?.wrap ? "pre-wrap" : "nowrap",
-                    borderTopWidth: style?.borderTop ? 2 : undefined,
-                    borderRightWidth: style?.borderRight ? 2 : undefined,
-                    borderBottomWidth: style?.borderBottom ? 2 : undefined,
-                    borderLeftWidth: style?.borderLeft ? 2 : undefined,
-                    borderColor:
-                      style?.borderTop ||
-                      style?.borderRight ||
-                      style?.borderBottom ||
-                      style?.borderLeft
-                        ? "#202124"
-                        : undefined,
-                    borderStyle: "solid",
-                    // Merged cells that span rows need z-index to not be painted over by subsequent rows
-                    ...(isMerged && mergeRows > 1
-                      ? { position: "relative", zIndex: 5 }
-                      : {}),
-                    ...(isFrozenCell
-                      ? {
-                          position: "sticky",
-                          left: ROW_HEADER_WIDTH + colOffsets[c],
-                          zIndex: 21,
-                        }
-                      : {}),
-                  };
-
-                  const inDragFill =
-                    isDragFilling &&
-                    dragFillEnd &&
-                    selectionBounds &&
-                    ((dragFillEnd.r > selectionBounds.maxR &&
-                      r > selectionBounds.maxR &&
-                      r <= dragFillEnd.r &&
-                      c >= selectionBounds.minC &&
-                      c <= selectionBounds.maxC) ||
-                      (dragFillEnd.c > selectionBounds.maxC &&
-                        c > selectionBounds.maxC &&
-                        c <= dragFillEnd.c &&
-                        r >= selectionBounds.minR &&
-                        r <= selectionBounds.maxR));
-
-                  return (
-                    <div
-                      key={c}
-                      data-testid={`sheet-cell-${r}-${c}`}
-                      data-row={r}
-                      data-col={c}
-                      data-cell-ref={`${indexToCol(c)}${r + 1}`}
-                      data-active={isActive ? "true" : "false"}
-                      data-in-selection={inRect ? "true" : "false"}
-                      data-editing={isActive && isEditing ? "true" : "false"}
-                      data-has-formula={
-                        cellData?.formula ||
-                        (typeof cellData?.value === "string" &&
-                          cellData.value.startsWith("="))
-                          ? "true"
-                          : "false"
-                      }
-                      data-display-value={displayValue}
-                      data-error={isErrorVal ? "true" : "false"}
-                      className={cn(
-                        "border-r border-b text-[13px] px-1 flex items-center outline-none relative shrink-0 overflow-hidden",
-                        showGridlines
-                          ? "border-[#e3e3e3] dark:border-[#5f6368]"
-                          : "border-transparent",
-                        !style?.fillColor &&
-                          !condColor &&
-                          !inRect &&
-                          !inDragFill &&
-                          !bandedBg &&
-                          "bg-background dark:bg-[#1a1a1a]",
-                        inDragFill && "bg-[#e8f0fe]/40",
-                        isFindMatch &&
-                          !isCurrentFind &&
-                          "ring-1 ring-inset ring-yellow-400",
-                        isCurrentFind && "ring-2 ring-inset ring-orange-500",
-                      )}
-                      style={cellStyle}
-                      onMouseDown={(e) => {
-                        if (!isReadOnly) handleCellMouseDown(r, c, e);
-                      }}
-                      onMouseEnter={() => {
-                        if (!isReadOnly) handleCellMouseEnter(r, c);
-                        if (hasComment)
-                          setHoveredComment({
-                            r,
-                            c,
-                            x: ROW_HEADER_WIDTH + colOffsets[c] + cellW,
-                            y: COL_HEADER_HEIGHT + rowOffsets[r],
-                          });
-                      }}
-                      onMouseLeave={() => {
-                        if (hoveredComment?.r === r && hoveredComment?.c === c)
-                          setHoveredComment(null);
-                      }}
-                      onDoubleClick={() => {
-                        if (!isReadOnly) handleDoubleClick(r, c);
-                      }}
-                      onContextMenu={(e) => {
-                        if (!isReadOnly) handleContextMenu(r, c, e);
-                      }}
-                    >
-                      {/* Comment indicator triangle */}
-                      {hasComment && (
-                        <div
-                          className="absolute top-0 right-0 w-0 h-0 z-[6]"
-                          style={{
-                            borderLeft: "6px solid transparent",
-                            borderTop: "6px solid #ff9900",
-                          }}
-                        />
-                      )}
-                      {/* Lock indicator */}
-                      {isLocked && (
-                        <div className="absolute bottom-0 left-0 z-[6] opacity-30 pointer-events-none">
-                          <Lock className="w-2.5 h-2.5" />
-                        </div>
-                      )}
-                      {/* Validation dropdown arrow */}
-                      {hasValidation && !isEditing && (
-                        <button
-                          className="absolute right-0.5 top-1/2 -translate-y-1/2 w-4 h-4 flex items-center justify-center text-[#5f6368] hover:text-[#202124] z-[6] opacity-0 hover:opacity-100 group-hover:opacity-100"
-                          style={{
-                            opacity:
-                              isActive ||
-                              (validationDropdown?.r === r &&
-                                validationDropdown?.c === c)
-                                ? 1
-                                : undefined,
-                          }}
-                          onMouseDown={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            setValidationDropdown(
-                              validationDropdown?.r === r &&
-                                validationDropdown?.c === c
-                                ? null
-                                : { r, c },
-                            );
-                          }}
-                        >
-                          <ChevronDown className="w-3 h-3" />
-                        </button>
-                      )}
-                      {condColor && (
-                        <div
-                          className="absolute inset-0 border-l-[3px] pointer-events-none z-[5]"
-                          style={{ borderColor: condColor }}
-                        />
-                      )}
-                      {/* IDEA-022: Advanced cond format — data bar */}
-                      {advOverlay?.dataBar && (
-                        <div className="absolute inset-0 flex items-center pointer-events-none z-[4]">
-                          <div
-                            style={{
-                              width: `${advOverlay.dataBar.pct}%`,
-                              height: "70%",
-                              backgroundColor: advOverlay.dataBar.color,
-                              opacity: 0.45,
-                              borderRadius: 2,
-                            }}
-                          />
-                        </div>
-                      )}
-                      {/* IDEA-022: Advanced cond format — icon set */}
-                      {advOverlay?.icon && (
-                        <span className="absolute left-0.5 top-1/2 -translate-y-1/2 text-[11px] pointer-events-none z-[6] leading-none">
-                          {advOverlay.icon}
-                        </span>
-                      )}
-                      {inRect && (
-                        <>
-                          {r === selectionBounds!.minR && (
-                            <div className="absolute top-0 left-0 right-[-1px] h-[2px] bg-[#1a73e8] z-10" />
-                          )}
-                          {r === selectionBounds!.maxR && (
-                            <div className="absolute bottom-[-1px] left-0 right-[-1px] h-[2px] bg-[#1a73e8] z-10" />
-                          )}
-                          {c === selectionBounds!.minC && (
-                            <div className="absolute top-0 bottom-[-1px] left-0 w-[2px] bg-[#1a73e8] z-10" />
-                          )}
-                          {c === selectionBounds!.maxC && (
-                            <div className="absolute top-0 bottom-[-1px] right-[-1px] w-[2px] bg-[#1a73e8] z-10" />
-                          )}
-                        </>
-                      )}
-                      {isActive && (
-                        <div className="absolute inset-[-1px] border-2 border-[#1a73e8] z-20 pointer-events-none" />
-                      )}
-                      {isActive && isEditing ? (
-                        <input
-                          ref={inputRef}
-                          data-testid="sheet-cell-editor"
-                          className="w-full h-full border-none outline-none bg-background dark:bg-[#2d2e30] px-0.5 m-0 text-[13px] z-30 relative text-[#202124] dark:text-white"
-                          value={editValue}
-                          onChange={(e) => setEditValue(e.target.value)}
-                          onBlur={commitEdit}
-                          spellCheck={false}
-                        />
-                      ) : isCheckbox ? (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <input
-                            type="checkbox"
-                            className="w-[15px] h-[15px] cursor-pointer accent-[#1a73e8]"
-                            checked={rawValue.toUpperCase() === "TRUE"}
-                            onChange={(e) => {
-                              e.stopPropagation();
-                              setCell(
-                                r,
-                                c,
-                                e.target.checked ? "TRUE" : "FALSE",
-                              );
-                            }}
-                            onMouseDown={(e) => e.stopPropagation()}
-                            onDoubleClick={(e) => e.stopPropagation()}
-                          />
-                        </div>
-                      ) : isSparkline ? (
-                        <SparklineCell
-                          value={evaluated}
-                          width={cellW - 4}
-                          height={cellH - 4}
-                        />
-                      ) : isUrl ? (
-                        <a
-                          href={evaluated}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="truncate w-full cursor-pointer hover:underline"
-                          onClick={(e) => e.stopPropagation()}
-                          style={
-                            style?.rotation
-                              ? {
-                                  transform: `rotate(${style.rotation}deg)`,
-                                  display: "inline-block",
-                                }
-                              : undefined
-                          }
-                        >
-                          <ExternalLink className="w-3 h-3 inline mr-1 opacity-60" />
-                          {displayValue}
-                        </a>
-                      ) : (
-                        <span
-                          className={cn(
-                            style?.wrap
-                              ? "w-full select-text break-words"
-                              : "truncate w-full select-text",
-                            isErrorVal &&
-                              "text-[#d93025] font-semibold text-center",
-                            displayValue === "" && "opacity-0",
-                          )}
-                          title={
-                            hasComment
-                              ? `💬 ${cellData!.comment}\n${rawValue}`
-                              : isErrorVal
-                                ? "Erreur"
-                                : rawValue
-                          }
-                          style={
-                            style?.rotation
-                              ? {
-                                  transform: `rotate(${style.rotation}deg)`,
-                                  display: "inline-block",
-                                  transformOrigin: "left center",
-                                }
-                              : undefined
-                          }
-                        >
-                          {displayValue}
-                        </span>
-                      )}
-                      {isBottomRight && !isEditing && (
-                        <div
-                          data-testid="sheet-autofill-handle"
-                          aria-label="Poignée de recopie"
-                          className="absolute -bottom-1 -right-1 w-2 h-2 bg-[#1a73e8] border border-white dark:border-[#1a1a1a] rounded-sm cursor-crosshair z-30"
-                          onMouseDown={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            setIsDragFilling(true);
-                          }}
-                        />
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            );
-          })}
+          ))}
         </div>
 
-        {/* Floating Charts */}
-        {floatingCharts.map((fc) => (
-          <FloatingChart
-            key={fc.id}
-            id={fc.id}
-            type={fc.type}
-            title={fc.title}
-            chartData={fc.chartData}
-            seriesNames={fc.seriesNames}
-            colors={fc.colors}
-            showLegend={fc.showLegend}
-            onRemove={handleRemoveFloatingChart}
-          />
-        ))}
-      </div>
-
-      {/* ===== SHEET TABS + STATUS BAR ===== */}
-      <div
-        data-testid="sheet-tabs"
-        data-sheet-tabs
-        role="tablist"
-        aria-label="Feuilles du classeur"
-        className="flex items-center h-10 border-t border-[#e3e3e3] dark:border-[#3c4043] bg-[#f8f9fa] dark:bg-[#202124] px-1 shrink-0 z-20 shadow-[0_-1px_3px_0_rgba(0,0,0,0.05)]"
-      >
-        <button
-          data-testid="sheet-tab-add"
-          aria-label="Ajouter une feuille"
-          className="p-2 hover:bg-[#e8eaed] dark:hover:bg-[#303134] rounded-full text-[#5f6368] mx-1 transition-colors"
-          onClick={() => addSheet(`Sheet${sheets.length + 1}`)}
+        {/* ===== SHEET TABS + STATUS BAR ===== */}
+        <div
+          data-testid="sheet-tabs"
+          data-sheet-tabs
+          role="tablist"
+          aria-label="Feuilles du classeur"
+          className="flex items-center h-10 border-t border-[#e3e3e3] dark:border-[#3c4043] bg-[#f8f9fa] dark:bg-[#202124] px-1 shrink-0 z-20 shadow-[0_-1px_3px_0_rgba(0,0,0,0.05)]"
         >
-          <Plus className="w-5 h-5" />
-        </button>
-        {sheets.map((sheet, i) => (
-          <div
-            key={i}
-            data-testid={`sheet-tab-${i}`}
-            data-sheet-id={sheet.id}
-            data-sheet-index={i}
-            data-sheet-name={sheet.name}
-            data-active={i === activeSheetIndex ? "true" : "false"}
-            role="tab"
-            aria-selected={i === activeSheetIndex}
-            aria-label={`Feuille ${sheet.name}`}
-            tabIndex={i === activeSheetIndex ? 0 : -1}
-            className={cn(
-              "px-5 py-2.5 text-[13px] font-medium transition-colors h-10 flex items-center mb-0 mt-auto relative group",
-              i === activeSheetIndex
-                ? "bg-background dark:bg-[#1f1f1f] text-[#1a73e8] dark:text-[#8ab4f8] border-x border-t border-[#e3e3e3] dark:border-[#3c4043] shadow-[0_-1px_3px_rgba(0,0,0,0.05)] rounded-t-sm"
-                : "text-[#5f6368] hover:bg-[#e8eaed] dark:hover:bg-[#303134] cursor-pointer",
-            )}
-            style={
-              sheet.color
-                ? { borderBottom: `3px solid ${sheet.color}` }
-                : undefined
-            }
-            onClick={() => setActiveSheetIndex(i)}
-            onDoubleClick={() => {
-              setEditingTabIndex(i);
-              setEditingTabName(sheet.name);
-            }}
-            onContextMenu={(e) => {
-              e.preventDefault();
-              setShowTabColorPicker(showTabColorPicker === i ? null : i);
-            }}
+          <button
+            data-testid="sheet-tab-add"
+            aria-label="Ajouter une feuille"
+            className="p-2 hover:bg-[#e8eaed] dark:hover:bg-[#303134] rounded-full text-[#5f6368] mx-1 transition-colors"
+            onClick={() => addSheet(`Sheet${sheets.length + 1}`)}
           >
-            {editingTabIndex === i ? (
-              <input
-                data-testid="sheet-tab-rename-input"
-                className="bg-transparent outline-none text-[13px] w-20 text-center"
-                value={editingTabName}
-                onChange={(e) => setEditingTabName(e.target.value)}
-                onBlur={() => {
-                  renameSheet(i, editingTabName);
-                  setEditingTabIndex(null);
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
+            <Plus className="w-5 h-5" />
+          </button>
+          {sheets.map((sheet, i) => (
+            <div
+              key={i}
+              data-testid={`sheet-tab-${i}`}
+              data-sheet-id={sheet.id}
+              data-sheet-index={i}
+              data-sheet-name={sheet.name}
+              data-active={i === activeSheetIndex ? "true" : "false"}
+              role="tab"
+              aria-selected={i === activeSheetIndex}
+              aria-label={`Feuille ${sheet.name}`}
+              tabIndex={i === activeSheetIndex ? 0 : -1}
+              className={cn(
+                "px-5 py-2.5 text-[13px] font-medium transition-colors h-10 flex items-center mb-0 mt-auto relative group",
+                i === activeSheetIndex
+                  ? "bg-background dark:bg-[#1f1f1f] text-[#1a73e8] dark:text-[#8ab4f8] border-x border-t border-[#e3e3e3] dark:border-[#3c4043] shadow-[0_-1px_3px_rgba(0,0,0,0.05)] rounded-t-sm"
+                  : "text-[#5f6368] hover:bg-[#e8eaed] dark:hover:bg-[#303134] cursor-pointer",
+              )}
+              style={
+                sheet.color
+                  ? { borderBottom: `3px solid ${sheet.color}` }
+                  : undefined
+              }
+              onClick={() => setActiveSheetIndex(i)}
+              onDoubleClick={() => {
+                setEditingTabIndex(i);
+                setEditingTabName(sheet.name);
+              }}
+              onContextMenu={(e) => {
+                e.preventDefault();
+                setShowTabColorPicker(showTabColorPicker === i ? null : i);
+              }}
+            >
+              {editingTabIndex === i ? (
+                <input
+                  data-testid="sheet-tab-rename-input"
+                  className="bg-transparent outline-none text-[13px] w-20 text-center"
+                  value={editingTabName}
+                  onChange={(e) => setEditingTabName(e.target.value)}
+                  onBlur={() => {
                     renameSheet(i, editingTabName);
                     setEditingTabIndex(null);
-                  }
-                }}
-                autoFocus
-              />
-            ) : (
-              sheet.name
-            )}
-            {sheets.length > 1 && i === activeSheetIndex && (
-              <button
-                data-testid={`sheet-tab-close-${i}`}
-                aria-label={`Supprimer la feuille ${sheet.name}`}
-                className="ml-2 opacity-0 group-hover:opacity-100 text-[#5f6368] hover:text-red-500 transition-all"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  removeSheet(i);
-                }}
-              >
-                <X className="w-3 h-3" />
-              </button>
-            )}
-            {/* Tab color picker */}
-            {showTabColorPicker === i && (
-              <div
-                className="absolute bottom-10 left-0 bg-background dark:bg-[#2d2e30] border border-[#dadce0] dark:border-[#5f6368] rounded-lg shadow-lg z-50 p-2 w-36"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <div className="grid grid-cols-5 gap-1 mb-1">
-                  {TAB_COLORS.map((color) => (
-                    <button
-                      key={color}
-                      className="w-5 h-5 rounded-sm border border-border hover:scale-125 transition-transform"
-                      style={{ backgroundColor: color }}
-                      onClick={() => {
-                        setSheetColor(sheet.id, color);
-                        setShowTabColorPicker(null);
-                      }}
-                    />
-                  ))}
-                </div>
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      renameSheet(i, editingTabName);
+                      setEditingTabIndex(null);
+                    }
+                  }}
+                  autoFocus
+                />
+              ) : (
+                sheet.name
+              )}
+              {sheets.length > 1 && i === activeSheetIndex && (
                 <button
-                  className="text-[10px] text-[#1a73e8] hover:underline"
-                  onClick={() => {
-                    setSheetColor(sheet.id, undefined);
-                    setShowTabColorPicker(null);
+                  data-testid={`sheet-tab-close-${i}`}
+                  aria-label={`Supprimer la feuille ${sheet.name}`}
+                  className="ml-2 opacity-0 group-hover:opacity-100 text-[#5f6368] hover:text-red-500 transition-all"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    removeSheet(i);
                   }}
                 >
-                  Aucune
+                  <X className="w-3 h-3" />
                 </button>
-              </div>
-            )}
-          </div>
-        ))}
-        {/* Status bar */}
-        <div className="ml-auto px-4 flex items-center gap-4 text-[12px] text-[#5f6368] dark:text-[#9aa0a6]">
-          <AutoSaveIndicator status={saveStatus} />
-          {selectionStats && (
-            <>
-              {selectionStats.sum !== undefined && (
-                <>
-                  <span>
-                    Somme:{" "}
-                    <strong className="text-[#202124] dark:text-[#e8eaed]">
-                      {Math.round(selectionStats.sum * 100) / 100}
-                    </strong>
-                  </span>
-                  <span>
-                    Moy:{" "}
-                    <strong className="text-[#202124] dark:text-[#e8eaed]">
-                      {Math.round(selectionStats.avg! * 100) / 100}
-                    </strong>
-                  </span>
-                  <span>
-                    Min:{" "}
-                    <strong className="text-[#202124] dark:text-[#e8eaed]">
-                      {selectionStats.min}
-                    </strong>
-                  </span>
-                  <span>
-                    Max:{" "}
-                    <strong className="text-[#202124] dark:text-[#e8eaed]">
-                      {selectionStats.max}
-                    </strong>
-                  </span>
-                </>
               )}
-              <span>
-                Nb:{" "}
-                <strong className="text-[#202124] dark:text-[#e8eaed]">
-                  {selectionStats.count}
-                </strong>
-              </span>
-            </>
-          )}
-          {!selectionStats && selectionBounds && (
-            <span>
-              {indexToCol(selectionBounds.minC)}
-              {selectionBounds.minR + 1}
-              {selectionBounds.minR !== selectionBounds.maxR ||
-              selectionBounds.minC !== selectionBounds.maxC
-                ? `:${indexToCol(selectionBounds.maxC)}${selectionBounds.maxR + 1}`
-                : ""}
-            </span>
-          )}
-        </div>
-      </div>
-
-      {/* ===== OVERLAYS ===== */}
-      {contextMenu && (
-        <ContextMenu
-          x={contextMenu.x}
-          y={contextMenu.y}
-          onAction={handleContextAction}
-          onClose={() => setContextMenu(null)}
-        />
-      )}
-      {chart && (
-        <MiniChart
-          type={chart.type}
-          values={chart.values}
-          onClose={() => setChart(null)}
-        />
-      )}
-      {showCondFormat && (
-        <CondFormatDialog
-          rules={condRules}
-          onAdd={(rule) => setCondRules((prev) => [...prev, rule])}
-          onRemove={(i) =>
-            setCondRules((prev) => prev.filter((_, idx) => idx !== i))
-          }
-          onClose={() => setShowCondFormat(false)}
-        />
-      )}
-      {showFilterDialog && filterCol !== null && (
-        <FilterDialog
-          col={filterCol}
-          data={data}
-          onApply={(values) => {
-            setFilterValues(values);
-            toast.success(`Filtre appliqu\u00E9 sur ${indexToCol(filterCol)}`);
-          }}
-          onClose={() => setShowFilterDialog(false)}
-        />
-      )}
-
-      {/* AI Dialog */}
-      {showAiDialog && (
-        <AiSheetsDialog
-          onClose={() => setShowAiDialog(false)}
-          selectionBounds={selectionBounds}
-          data={data}
-          onApplyResult={(val, r, c) => {
-            setEditValue(val);
-            setCell(r, c, val);
-          }}
-          activeCell={activeCell}
-        />
-      )}
-
-      {/* Pivot Table Dialog */}
-      {showPivotDialog && (
-        <PivotTableDialog
-          data={data}
-          onClose={() => setShowPivotDialog(false)}
-          onInsertSheet={handlePivotInsert}
-        />
-      )}
-
-      {/* Advanced Chart Dialog */}
-      {showChartDialog && (
-        <ChartDialog
-          data={data}
-          evaluatedData={evaluatedData}
-          selectionBounds={selectionBounds}
-          onClose={() => setShowChartDialog(false)}
-          onInsertChart={handleInsertChart}
-        />
-      )}
-
-      {/* Macro Editor */}
-      {showMacroEditor && (
-        <MacroEditor
-          data={data}
-          evaluatedData={evaluatedData}
-          sheetId={sheets[activeSheetIndex]?.id || "default"}
-          sheetName={sheets[activeSheetIndex]?.name || "Sheet1"}
-          setCell={setCell}
-          transact={transact}
-          onClose={() => setShowMacroEditor(false)}
-        />
-      )}
-
-      {/* Comment tooltip */}
-      {hoveredComment &&
-        gridRef.current &&
-        (() => {
-          const cellData = data[`${hoveredComment.r},${hoveredComment.c}`];
-          if (!cellData?.comment) return null;
-          const rect = gridRef.current!.getBoundingClientRect();
-          return (
-            <div
-              className="fixed z-[250] bg-[#fff9c4] dark:bg-[#554800] border border-[#fbc02d] rounded shadow-lg px-3 py-2 max-w-[250px] text-[12px] text-[#202124] dark:text-[#e8eaed] pointer-events-none"
-              style={{
-                left:
-                  rect.left + hoveredComment.x - gridRef.current!.scrollLeft,
-                top: rect.top + hoveredComment.y - gridRef.current!.scrollTop,
-              }}
-            >
-              {cellData.comment}
-            </div>
-          );
-        })()}
-
-      {/* Validation dropdown */}
-      {validationDropdown &&
-        gridRef.current &&
-        (() => {
-          const cellData =
-            data[`${validationDropdown.r},${validationDropdown.c}`];
-          if (!cellData?.validation) return null;
-          const rect = gridRef.current!.getBoundingClientRect();
-          const x =
-            rect.left +
-            ROW_HEADER_WIDTH +
-            colOffsets[validationDropdown.c] -
-            gridRef.current!.scrollLeft;
-          const y =
-            rect.top +
-            COL_HEADER_HEIGHT +
-            rowOffsets[validationDropdown.r] +
-            getRowHeight(validationDropdown.r) -
-            gridRef.current!.scrollTop;
-          return (
-            <div
-              className="fixed z-[250] bg-background dark:bg-[#2d2e30] border border-[#dadce0] dark:border-[#5f6368] rounded-lg shadow-xl py-1 min-w-[140px] text-[13px]"
-              style={{ left: x, top: y }}
-            >
-              {cellData.validation.type === "list" &&
-                cellData.validation.values.map((val: string) => (
+              {/* Tab color picker */}
+              {showTabColorPicker === i && (
+                <div
+                  className="absolute bottom-10 left-0 bg-background dark:bg-[#2d2e30] border border-[#dadce0] dark:border-[#5f6368] rounded-lg shadow-lg z-50 p-2 w-36"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="grid grid-cols-5 gap-1 mb-1">
+                    {TAB_COLORS.map((color) => (
+                      <button
+                        key={color}
+                        className="w-5 h-5 rounded-sm border border-border hover:scale-125 transition-transform"
+                        style={{ backgroundColor: color }}
+                        onClick={() => {
+                          setSheetColor(sheet.id, color);
+                          setShowTabColorPicker(null);
+                        }}
+                      />
+                    ))}
+                  </div>
                   <button
-                    key={val}
-                    className={cn(
-                      "w-full text-left px-3 py-1.5 hover:bg-[#f1f3f4] dark:hover:bg-[#3c4043]",
-                      cellData.value === val &&
-                        "bg-[#e8f0fe] dark:bg-[#3c4043] font-medium",
-                    )}
+                    className="text-[10px] text-[#1a73e8] hover:underline"
                     onClick={() => {
-                      setCell(validationDropdown.r, validationDropdown.c, val);
-                      setValidationDropdown(null);
+                      setSheetColor(sheet.id, undefined);
+                      setShowTabColorPicker(null);
                     }}
                   >
-                    {val}
+                    Aucune
                   </button>
-                ))}
+                </div>
+              )}
             </div>
-          );
-        })()}
-
-      {/* Formula Autocomplete Dropdown */}
-      {isEditing && autocompleteSuggestions.length > 0 && activeCell && (
-        <div
-          className="fixed z-[300] bg-background dark:bg-[#2d2e30] border border-[#dadce0] dark:border-[#5f6368] rounded-lg shadow-xl py-1 min-w-[280px] text-[13px]"
-          style={{
-            left: (() => {
-              if (!gridRef.current) return 100;
-              const rect = gridRef.current.getBoundingClientRect();
-              return (
-                rect.left +
-                ROW_HEADER_WIDTH +
-                colOffsets[activeCell.c] -
-                gridRef.current.scrollLeft
-              );
-            })(),
-            top: (() => {
-              if (!gridRef.current) return 100;
-              const rect = gridRef.current.getBoundingClientRect();
-              return (
-                rect.top +
-                COL_HEADER_HEIGHT +
-                rowOffsets[activeCell.r] +
-                getRowHeight(activeCell.r) -
-                gridRef.current.scrollTop
-              );
-            })(),
-          }}
-        >
-          {autocompleteSuggestions.map((fn, i) => {
-            const fnInfo = ALL_FUNCTIONS.find((f) => f.name === fn);
-            return (
-              <button
-                key={fn}
-                className={cn(
-                  "w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-[#f1f3f4] dark:hover:bg-[#3c4043]",
-                  i === autocompleteIdx && "bg-[#e8f0fe] dark:bg-[#3c4043]",
+          ))}
+          {/* Status bar */}
+          <div className="ml-auto px-4 flex items-center gap-4 text-[12px] text-[#5f6368] dark:text-[#9aa0a6]">
+            <AutoSaveIndicator status={saveStatus} />
+            {selectionStats && (
+              <>
+                {selectionStats.sum !== undefined && (
+                  <>
+                    <span>
+                      Somme:{" "}
+                      <strong className="text-[#202124] dark:text-[#e8eaed]">
+                        {Math.round(selectionStats.sum * 100) / 100}
+                      </strong>
+                    </span>
+                    <span>
+                      Moy:{" "}
+                      <strong className="text-[#202124] dark:text-[#e8eaed]">
+                        {Math.round(selectionStats.avg! * 100) / 100}
+                      </strong>
+                    </span>
+                    <span>
+                      Min:{" "}
+                      <strong className="text-[#202124] dark:text-[#e8eaed]">
+                        {selectionStats.min}
+                      </strong>
+                    </span>
+                    <span>
+                      Max:{" "}
+                      <strong className="text-[#202124] dark:text-[#e8eaed]">
+                        {selectionStats.max}
+                      </strong>
+                    </span>
+                  </>
                 )}
-                onMouseDown={(e) => {
-                  e.preventDefault();
-                  insertAutocomplete(fn);
-                }}
-              >
-                <span className="font-mono text-[#1a73e8] font-medium">
-                  {fn}
+                <span>
+                  Nb:{" "}
+                  <strong className="text-[#202124] dark:text-[#e8eaed]">
+                    {selectionStats.count}
+                  </strong>
                 </span>
-                <span className="text-[#5f6368] dark:text-[#9aa0a6] text-[11px] truncate">
-                  {fnInfo?.desc}
-                </span>
-              </button>
-            );
-          })}
-          <div className="px-3 py-1 text-[10px] text-[#9aa0a6] border-t border-[#e3e3e3] dark:border-[#5f6368] mt-0.5">
-            Tab pour insérer
+              </>
+            )}
+            {!selectionStats && selectionBounds && (
+              <span>
+                {indexToCol(selectionBounds.minC)}
+                {selectionBounds.minR + 1}
+                {selectionBounds.minR !== selectionBounds.maxR ||
+                selectionBounds.minC !== selectionBounds.maxC
+                  ? `:${indexToCol(selectionBounds.maxC)}${selectionBounds.maxR + 1}`
+                  : ""}
+              </span>
+            )}
           </div>
         </div>
-      )}
 
-      {/* IDEA-018: Named ranges dialog */}
-      {showNamedRanges && (
-        <NamedRangesDialog
-          namedRanges={namedRanges}
-          onAdd={(nr) => setNamedRanges((prev) => [...prev, nr])}
-          onRemove={(name) =>
-            setNamedRanges((prev) => prev.filter((n) => n.name !== name))
-          }
-          onUpdate={(oldName, nr) =>
-            setNamedRanges((prev) =>
-              prev.map((n) => (n.name === oldName ? nr : n)),
-            )
-          }
-          onClose={() => setShowNamedRanges(false)}
-        />
-      )}
-
-      {/* IDEA-020: Print preview */}
-      {showPrintPreview && (
-        <PrintPreviewDialog
-          data={data}
-          evaluatedData={evaluatedData}
-          colWidths={colWidths}
-          rowHeights={rowHeights}
-          sheetName={sheets[activeSheetIndex]?.name || "Sheet1"}
-          onClose={() => setShowPrintPreview(false)}
-        />
-      )}
-
-      {/* IDEA-021: Advanced data validation */}
-      {showAdvancedValidation && activeCell && (
-        <AdvancedValidationDialog
-          current={
-            data[`${activeCell.r},${activeCell.c}`]?.validation as
-              | AdvancedValidation
-              | undefined
-          }
-          onApply={(v) => {
-            if (activeCell)
-              setCellValidation(
-                activeCell.r,
-                activeCell.c,
-                v as unknown as CellValidation,
+        {/* ===== OVERLAYS ===== */}
+        {contextMenu && (
+          <ContextMenu
+            x={contextMenu.x}
+            y={contextMenu.y}
+            onAction={handleContextAction}
+            onClose={() => setContextMenu(null)}
+          />
+        )}
+        {chart && (
+          <MiniChart
+            type={chart.type}
+            values={chart.values}
+            onClose={() => setChart(null)}
+          />
+        )}
+        {showCondFormat && (
+          <CondFormatDialog
+            rules={condRules}
+            onAdd={(rule) => setCondRules((prev) => [...prev, rule])}
+            onRemove={(i) =>
+              setCondRules((prev) => prev.filter((_, idx) => idx !== i))
+            }
+            onClose={() => setShowCondFormat(false)}
+          />
+        )}
+        {showFilterDialog && filterCol !== null && (
+          <FilterDialog
+            col={filterCol}
+            data={data}
+            onApply={(values) => {
+              setFilterValues(values);
+              toast.success(
+                `Filtre appliqu\u00E9 sur ${indexToCol(filterCol)}`,
               );
-          }}
-          onClose={() => setShowAdvancedValidation(false)}
+            }}
+            onClose={() => setShowFilterDialog(false)}
+          />
+        )}
+
+        {/* AI Dialog */}
+        {showAiDialog && (
+          <AiSheetsDialog
+            onClose={() => setShowAiDialog(false)}
+            selectionBounds={selectionBounds}
+            data={data}
+            onApplyResult={(val, r, c) => {
+              setEditValue(val);
+              setCell(r, c, val);
+            }}
+            activeCell={activeCell}
+          />
+        )}
+
+        {/* Pivot Table Dialog */}
+        {showPivotDialog && (
+          <PivotTableDialog
+            data={data}
+            onClose={() => setShowPivotDialog(false)}
+            onInsertSheet={handlePivotInsert}
+          />
+        )}
+
+        {/* Advanced Chart Dialog */}
+        {showChartDialog && (
+          <ChartDialog
+            data={data}
+            evaluatedData={evaluatedData}
+            selectionBounds={selectionBounds}
+            onClose={() => setShowChartDialog(false)}
+            onInsertChart={handleInsertChart}
+          />
+        )}
+
+        {/* Macro Editor */}
+        {showMacroEditor && (
+          <MacroEditor
+            data={data}
+            evaluatedData={evaluatedData}
+            sheetId={sheets[activeSheetIndex]?.id || "default"}
+            sheetName={sheets[activeSheetIndex]?.name || "Sheet1"}
+            setCell={setCell}
+            transact={transact}
+            onClose={() => setShowMacroEditor(false)}
+          />
+        )}
+
+        {/* Comment tooltip */}
+        {hoveredComment &&
+          gridRef.current &&
+          (() => {
+            const cellData = data[`${hoveredComment.r},${hoveredComment.c}`];
+            if (!cellData?.comment) return null;
+            const rect = gridRef.current!.getBoundingClientRect();
+            return (
+              <div
+                className="fixed z-[250] bg-[#fff9c4] dark:bg-[#554800] border border-[#fbc02d] rounded shadow-lg px-3 py-2 max-w-[250px] text-[12px] text-[#202124] dark:text-[#e8eaed] pointer-events-none"
+                style={{
+                  left:
+                    rect.left + hoveredComment.x - gridRef.current!.scrollLeft,
+                  top: rect.top + hoveredComment.y - gridRef.current!.scrollTop,
+                }}
+              >
+                {cellData.comment}
+              </div>
+            );
+          })()}
+
+        {/* Validation dropdown */}
+        {validationDropdown &&
+          gridRef.current &&
+          (() => {
+            const cellData =
+              data[`${validationDropdown.r},${validationDropdown.c}`];
+            if (!cellData?.validation) return null;
+            const rect = gridRef.current!.getBoundingClientRect();
+            const x =
+              rect.left +
+              ROW_HEADER_WIDTH +
+              colOffsets[validationDropdown.c] -
+              gridRef.current!.scrollLeft;
+            const y =
+              rect.top +
+              COL_HEADER_HEIGHT +
+              rowOffsets[validationDropdown.r] +
+              getRowHeight(validationDropdown.r) -
+              gridRef.current!.scrollTop;
+            return (
+              <div
+                className="fixed z-[250] bg-background dark:bg-[#2d2e30] border border-[#dadce0] dark:border-[#5f6368] rounded-lg shadow-xl py-1 min-w-[140px] text-[13px]"
+                style={{ left: x, top: y }}
+              >
+                {cellData.validation.type === "list" &&
+                  cellData.validation.values.map((val: string) => (
+                    <button
+                      key={val}
+                      className={cn(
+                        "w-full text-left px-3 py-1.5 hover:bg-[#f1f3f4] dark:hover:bg-[#3c4043]",
+                        cellData.value === val &&
+                          "bg-[#e8f0fe] dark:bg-[#3c4043] font-medium",
+                      )}
+                      onClick={() => {
+                        setCell(
+                          validationDropdown.r,
+                          validationDropdown.c,
+                          val,
+                        );
+                        setValidationDropdown(null);
+                      }}
+                    >
+                      {val}
+                    </button>
+                  ))}
+              </div>
+            );
+          })()}
+
+        {/* Formula Autocomplete Dropdown */}
+        {isEditing && autocompleteSuggestions.length > 0 && activeCell && (
+          <div
+            className="fixed z-[300] bg-background dark:bg-[#2d2e30] border border-[#dadce0] dark:border-[#5f6368] rounded-lg shadow-xl py-1 min-w-[280px] text-[13px]"
+            style={{
+              left: (() => {
+                if (!gridRef.current) return 100;
+                const rect = gridRef.current.getBoundingClientRect();
+                return (
+                  rect.left +
+                  ROW_HEADER_WIDTH +
+                  colOffsets[activeCell.c] -
+                  gridRef.current.scrollLeft
+                );
+              })(),
+              top: (() => {
+                if (!gridRef.current) return 100;
+                const rect = gridRef.current.getBoundingClientRect();
+                return (
+                  rect.top +
+                  COL_HEADER_HEIGHT +
+                  rowOffsets[activeCell.r] +
+                  getRowHeight(activeCell.r) -
+                  gridRef.current.scrollTop
+                );
+              })(),
+            }}
+          >
+            {autocompleteSuggestions.map((fn, i) => {
+              const fnInfo = ALL_FUNCTIONS.find((f) => f.name === fn);
+              return (
+                <button
+                  key={fn}
+                  className={cn(
+                    "w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-[#f1f3f4] dark:hover:bg-[#3c4043]",
+                    i === autocompleteIdx && "bg-[#e8f0fe] dark:bg-[#3c4043]",
+                  )}
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    insertAutocomplete(fn);
+                  }}
+                >
+                  <span className="font-mono text-[#1a73e8] font-medium">
+                    {fn}
+                  </span>
+                  <span className="text-[#5f6368] dark:text-[#9aa0a6] text-[11px] truncate">
+                    {fnInfo?.desc}
+                  </span>
+                </button>
+              );
+            })}
+            <div className="px-3 py-1 text-[10px] text-[#9aa0a6] border-t border-[#e3e3e3] dark:border-[#5f6368] mt-0.5">
+              Tab pour insérer
+            </div>
+          </div>
+        )}
+
+        {/* IDEA-018: Named ranges dialog */}
+        {showNamedRanges && (
+          <NamedRangesDialog
+            namedRanges={namedRanges}
+            onAdd={(nr) => setNamedRanges((prev) => [...prev, nr])}
+            onRemove={(name) =>
+              setNamedRanges((prev) => prev.filter((n) => n.name !== name))
+            }
+            onUpdate={(oldName, nr) =>
+              setNamedRanges((prev) =>
+                prev.map((n) => (n.name === oldName ? nr : n)),
+              )
+            }
+            onClose={() => setShowNamedRanges(false)}
+          />
+        )}
+
+        {/* IDEA-020: Print preview */}
+        {showPrintPreview && (
+          <PrintPreviewDialog
+            data={data}
+            evaluatedData={evaluatedData}
+            colWidths={colWidths}
+            rowHeights={rowHeights}
+            sheetName={sheets[activeSheetIndex]?.name || "Sheet1"}
+            onClose={() => setShowPrintPreview(false)}
+          />
+        )}
+
+        {/* IDEA-021: Advanced data validation */}
+        {showAdvancedValidation && activeCell && (
+          <AdvancedValidationDialog
+            current={
+              data[`${activeCell.r},${activeCell.c}`]?.validation as
+                | AdvancedValidation
+                | undefined
+            }
+            onApply={(v) => {
+              if (activeCell)
+                setCellValidation(
+                  activeCell.r,
+                  activeCell.c,
+                  v as unknown as CellValidation,
+                );
+            }}
+            onClose={() => setShowAdvancedValidation(false)}
+          />
+        )}
+
+        {/* IDEA-022: Advanced conditional formatting */}
+        {showAdvCondFormat && (
+          <AdvancedCondFormatDialog
+            rules={advCondRules}
+            onAdd={(rule) => setAdvCondRules((prev) => [...prev, rule])}
+            onRemove={(id) =>
+              setAdvCondRules((prev) => prev.filter((r) => r.id !== id))
+            }
+            onClose={() => setShowAdvCondFormat(false)}
+          />
+        )}
+
+        {/* Hidden CSV/XLSX import input */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".csv,.tsv,.txt,.xlsx,.xls"
+          className="hidden"
+          onChange={importFile}
         />
-      )}
 
-      {/* IDEA-022: Advanced conditional formatting */}
-      {showAdvCondFormat && (
-        <AdvancedCondFormatDialog
-          rules={advCondRules}
-          onAdd={(rule) => setAdvCondRules((prev) => [...prev, rule])}
-          onRemove={(id) =>
-            setAdvCondRules((prev) => prev.filter((r) => r.id !== id))
-          }
-          onClose={() => setShowAdvCondFormat(false)}
+        <GenericFeatureModal
+          isOpen={!!activeModal}
+          actionId={activeModal?.id || null}
+          actionLabel={activeModal?.label}
+          onClose={() => setActiveModal(null)}
         />
-      )}
-
-      {/* Hidden CSV/XLSX import input */}
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept=".csv,.tsv,.txt,.xlsx,.xls"
-        className="hidden"
-        onChange={importFile}
-      />
-
-      <GenericFeatureModal
-        isOpen={!!activeModal}
-        actionId={activeModal?.id || null}
-        actionLabel={activeModal?.label}
-        onClose={() => setActiveModal(null)}
-      />
-    </div>
+      </div>
       {/* eslint-enable jsx-a11y/no-noninteractive-element-interactions, jsx-a11y/no-noninteractive-tabindex */}
     </>
   );
