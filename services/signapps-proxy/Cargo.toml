@@ -6,6 +6,11 @@ rust-version.workspace = true
 authors.workspace = true
 license.workspace = true
 description = "Reverse proxy control plane for SignApps Platform"
+default-run = "signapps-proxy"
+
+[lib]
+name = "signapps_proxy"
+path = "src/lib.rs"
 
 [[bin]]
 name = "signapps-proxy"
@@ -15,6 +20,7 @@ path = "src/main.rs"
 mimalloc = { workspace = true }
 signapps-common = { path = "../../crates/signapps-common" }
 signapps-db = { path = "../../crates/signapps-db", features = ["openapi"] }
+signapps-service = { path = "../../crates/signapps-service" }
 signapps-cache = { path = "../../crates/signapps-cache" }
 axum = { workspace = true }
 tokio = { workspace = true }

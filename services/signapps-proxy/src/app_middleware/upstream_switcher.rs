@@ -125,7 +125,10 @@ mod tests {
         // Lock now returns Err(PoisonError) — but the pattern used in
         // upstream_switcher must still extract the inner value.
         let res = m.lock();
-        assert!(res.is_err(), "mutex must be poisoned after panicking holder");
+        assert!(
+            res.is_err(),
+            "mutex must be poisoned after panicking holder"
+        );
         let guard = match res {
             Ok(g) => g,
             Err(poisoned) => poisoned.into_inner(),
