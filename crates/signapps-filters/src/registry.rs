@@ -96,6 +96,12 @@ impl Default for FilterRegistry {
             Box::new(crate::formats::markdown::MarkdownFilter),
         );
         registry.register(Format::Html, Box::new(crate::formats::html::HtmlFilter));
+        registry.register(Format::Csv, Box::new(crate::formats::csv::CsvFilter));
+        registry.register(Format::Docx, Box::new(crate::formats::docx::DocxFilter));
+        registry.register(Format::Xlsx, Box::new(crate::formats::xlsx::XlsxFilter));
+        registry.register(Format::Ods, Box::new(crate::formats::ods::OdsFilter));
+        registry.register(Format::Pdf, Box::new(crate::formats::pdf::PdfFilter));
+        registry.register(Format::Pptx, Box::new(crate::formats::pptx::PptxFilter));
         registry
     }
 }
@@ -112,12 +118,18 @@ mod tests {
     }
 
     #[test]
-    fn default_registry_has_text_markdown_html() {
+    fn default_registry_has_all_filters() {
         let registry = FilterRegistry::default();
         let formats = registry.supported_formats();
         assert!(formats.contains(&Format::Text));
         assert!(formats.contains(&Format::Markdown));
         assert!(formats.contains(&Format::Html));
-        assert_eq!(formats.len(), 3);
+        assert!(formats.contains(&Format::Csv));
+        assert!(formats.contains(&Format::Docx));
+        assert!(formats.contains(&Format::Xlsx));
+        assert!(formats.contains(&Format::Ods));
+        assert!(formats.contains(&Format::Pdf));
+        assert!(formats.contains(&Format::Pptx));
+        assert_eq!(formats.len(), 9);
     }
 }
