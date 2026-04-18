@@ -27,6 +27,7 @@ pub fn declare(shared: SharedState) -> Vec<ServiceSpec> {
         spec_org(shared.clone()),
         spec_tenant_config(shared.clone()),
         spec_billing(shared.clone()),
+        spec_signatures(shared.clone()),
     ]
 }
 
@@ -251,6 +252,16 @@ fn spec_billing(shared: SharedState) -> ServiceSpec {
             // tokio task tied to this factory scope.
             let router = signapps_billing::router(shared).await?;
             run_server_on_addr(router, "0.0.0.0", 8096).await
+        }
+    })
+}
+
+fn spec_signatures(shared: SharedState) -> ServiceSpec {
+    ServiceSpec::new("signapps-signatures", 3028, move || {
+        let shared = shared.clone();
+        async move {
+            let router = signapps_signatures::router(shared).await?;
+            run_server_on_addr(router, "0.0.0.0", 3028).await
         }
     })
 }
