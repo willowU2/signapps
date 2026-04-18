@@ -447,9 +447,23 @@ Notes:
 - Measured via `client/e2e/p2-cold-compile.spec.ts` (requires running services stack).
 - `/dashboard` first hit: Turbopack dev server reported "Ready in 444 ms" at startup (Wave A). Actual per-route cold compile to be measured on a real CI run.
 
-### 14.3 LCP (Lighthouse) — TODO on real environment
+### 14.3 LCP (Lighthouse)
 
-Lighthouse run requires full service stack up. Record in a follow-up once available; Playwright test `p2-rsc-dashboard.spec.ts` asserts LCP < 3500 ms on the dev machine as a smoke gate.
+Attempted run on 2026-04-18 against `http://localhost:3000/dashboard` (Next dev + Turbopack), Chrome headless via `npx lighthouse`:
+
+| Metric | Value |
+|---|---|
+| Performance score | 0.40 |
+| FCP | 1961 ms |
+| LCP | 37212 ms (invalid — see note) |
+| TBT | 2546 ms |
+| CLS | 0 |
+| Speed Index | 5507 ms |
+| Final URL | `http://localhost:3000/login?redirect=%2Fdashboard` |
+
+Note: backend services were not running at measurement time, so Lighthouse was redirected to `/login` (no JWT). The LCP figure above therefore reflects the login page waiting for a long-running network task, not the RSC `/dashboard` page. To obtain a valid measurement, run with the full service stack up (`just db-start` + `just run identity` + `just run gateway` + authenticated session, e.g. via `?auto=admin` URL when services are up).
+
+Target per spec: LCP < 2500 ms on RSC pages. Playwright test `p2-rsc-dashboard.spec.ts` asserts LCP < 3500 ms on the dev machine as a smoke gate; this remains the interim signal until a proper Lighthouse-with-stack run can be scheduled.
 
 ---
 
