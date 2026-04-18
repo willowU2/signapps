@@ -19,6 +19,7 @@ signapps-db      = { path = "../../crates/signapps-db" }
 signapps-service = { path = "../../crates/signapps-service" }
 
 signapps-identity = { path = "../signapps-identity" }
+signapps-contacts = { path = "../signapps-contacts" }
 
 anyhow  = { workspace = true }
 axum    = { workspace = true }

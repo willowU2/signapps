@@ -6,6 +6,11 @@ rust-version.workspace = true
 authors.workspace = true
 license.workspace = true
 description = "Contacts and address book service for SignApps Platform"
+default-run = "signapps-contacts"
+
+[lib]
+name = "signapps_contacts"
+path = "src/lib.rs"
 
 [[bin]]
 name = "signapps-contacts"
@@ -15,6 +20,7 @@ path = "src/main.rs"
 mimalloc = { workspace = true }
 signapps-common = { path = "../../crates/signapps-common" }
 signapps-db = { path = "../../crates/signapps-db", features = ["openapi"] }
+signapps-service = { path = "../../crates/signapps-service" }
 signapps-sharing = { path = "../../crates/signapps-sharing" }
 signapps-cache = { path = "../../crates/signapps-cache" }
 axum = { workspace = true }
