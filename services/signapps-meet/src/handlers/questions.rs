@@ -355,7 +355,10 @@ pub async fn answer_question(
 
     let answer = req.answer.trim();
     if answer.is_empty() {
-        return Err((StatusCode::BAD_REQUEST, "Answer cannot be empty".to_string()));
+        return Err((
+            StatusCode::BAD_REQUEST,
+            "Answer cannot be empty".to_string(),
+        ));
     }
 
     let updated: Question = sqlx::query_as(

@@ -354,7 +354,10 @@ pub async fn ingest_transcription(
 ) -> Result<Json<IngestTranscriptionResponse>, (StatusCode, String)> {
     let trimmed = body.text.trim();
     if trimmed.is_empty() {
-        return Err((StatusCode::BAD_REQUEST, "text must not be empty".to_string()));
+        return Err((
+            StatusCode::BAD_REQUEST,
+            "text must not be empty".to_string(),
+        ));
     }
     let room = fetch_room_by_code_any(&state, &code).await?;
 
@@ -511,12 +514,8 @@ pub async fn export_transcription(
     let mut headers = HeaderMap::new();
     headers.insert(
         header::CONTENT_TYPE,
-        HeaderValue::from_str(mime).map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                format!("bad mime: {e}"),
-            )
-        })?,
+        HeaderValue::from_str(mime)
+            .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, format!("bad mime: {e}")))?,
     );
     headers.insert(
         header::CONTENT_DISPOSITION,
@@ -535,7 +534,14 @@ pub async fn export_transcription(
 
 fn render_txt(rows: &[TranscriptionEntry]) -> String {
     rows.iter()
-        .map(|r| format!("[{}] {}: {}", format_clock(r.timestamp_ms), r.speaker_identity, r.text))
+        .map(|r| {
+            format!(
+                "[{}] {}: {}",
+                format_clock(r.timestamp_ms),
+                r.speaker_identity,
+                r.text
+            )
+        })
         .collect::<Vec<_>>()
         .join("\n")
 }

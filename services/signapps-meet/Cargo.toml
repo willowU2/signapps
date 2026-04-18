@@ -3,9 +3,20 @@ name = "signapps-meet"
 version = "0.1.0"
 edition = "2021"
 license.workspace = true
+default-run = "signapps-meet"
+
+[lib]
+name = "signapps_meet"
+path = "src/lib.rs"
+
+[[bin]]
+name = "signapps-meet"
+path = "src/main.rs"
 
 [dependencies]
 mimalloc = { workspace = true }
+signapps-db = { path = "../../crates/signapps-db" }
+signapps-service = { path = "../../crates/signapps-service" }
 # Web framework
 tokio = { version = "1.0", features = ["full"] }
 axum = { version = "0.7", features = ["ws"] }

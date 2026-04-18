@@ -245,7 +245,10 @@ pub async fn mute_participant(
     if req.audio.is_some() || req.video.is_some() {
         match state.livekit.list_participants(&room.room_code).await {
             Ok(participants) => {
-                if let Some(p) = participants.into_iter().find(|p| p.identity == user_id.to_string()) {
+                if let Some(p) = participants
+                    .into_iter()
+                    .find(|p| p.identity == user_id.to_string())
+                {
                     for track in &p.tracks {
                         let desired = match track.track_type.as_str() {
                             "AUDIO" => req.audio,
@@ -274,14 +277,14 @@ pub async fn mute_participant(
                         }
                     }
                 }
-            }
+            },
             Err(err) => {
                 tracing::warn!(
                     ?err,
                     room = %room.room_code,
                     "LiveKit list_participants failed — skipping SFU mute"
                 );
-            }
+            },
         }
     }
 
