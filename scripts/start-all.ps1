@@ -65,9 +65,9 @@ $AllServices = @(
     @{ Short = "office";        Port = 3018;  Desc = "Office suite (import/export)" },
     @{ Short = "social";        Port = 3019;  Desc = "Social media management" },
     @{ Short = "chat";          Port = 3020;  Desc = "Team messaging & channels" },
-    @{ Short = "workforce";     Port = 3019;  Desc = "HR & workforce management" },
-    @{ Short = "it-assets";     Port = 3015;  Desc = "IT asset management" },
-    @{ Short = "contacts";      Port = 3014;  Desc = "Contact management" },
+    @{ Short = "workforce";     Port = 3024;  Desc = "HR & workforce management" },
+    @{ Short = "it-assets";     Port = 3022;  Desc = "IT asset management" },
+    @{ Short = "contacts";      Port = 3021;  Desc = "Contact management" },
     @{ Short = "vault";          Port = 3025;  Desc = "Encrypted secrets vault" },
     @{ Short = "org";            Port = 3026;  Desc = "Organization structure & GPO" },
     @{ Short = "webhooks";       Port = 3027;  Desc = "Webhook dispatch & management" },
@@ -248,10 +248,10 @@ if (-not $SkipFrontend) {
     Write-Host --
     Write-Host -  Starting frontend...- -ForegroundColor White
 
-    $clientDir = Join-Path $BaseDir -client-
+    $clientDir = Join-Path $BaseDir "client"
     if (Test-Path $clientDir) {
-        $frontLog = Join-Path $LogDir -frontend.log-
-        $frontErr = Join-Path $LogDir -frontend.err.log-
+        $frontLog = Join-Path $LogDir "frontend.log"
+        $frontErr = Join-Path $LogDir "frontend.err.log"
 
         $env:PORT = "3000"
         $frontProc = Start-Process -FilePath "npm" -ArgumentList "run", "dev" -WorkingDirectory $clientDir -RedirectStandardOutput $frontLog -RedirectStandardError $frontErr -PassThru -WindowStyle Hidden
