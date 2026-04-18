@@ -61,7 +61,8 @@ pub fn preset(api_key: &str, api_secret: &str) -> Result<ContainerConfig, &'stat
     // LiveKit expects the exact format "key: secret" (space after colon).
     let livekit_keys = format!("LIVEKIT_KEYS={api_key}: {api_secret}");
 
-    let mut ports: Vec<PortMapping> = Vec::with_capacity(2 + (UDP_PORT_END - UDP_PORT_START + 1) as usize);
+    let mut ports: Vec<PortMapping> =
+        Vec::with_capacity(2 + (UDP_PORT_END - UDP_PORT_START + 1) as usize);
     ports.push(PortMapping {
         host: 7880,
         container: 7880,
@@ -139,6 +140,9 @@ mod tests {
     fn preset_has_auto_start_flag() {
         let cfg = preset("k", "s").expect("valid");
         assert_eq!(cfg.auto_update, Some(true));
-        assert!(matches!(cfg.restart_policy, Some(RestartPolicy::UnlessStopped)));
+        assert!(matches!(
+            cfg.restart_policy,
+            Some(RestartPolicy::UnlessStopped)
+        ));
     }
 }

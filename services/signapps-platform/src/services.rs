@@ -35,6 +35,7 @@ pub fn declare(shared: SharedState) -> Vec<ServiceSpec> {
         spec_calendar(shared.clone()),
         spec_mail(shared.clone()),
         spec_docs(shared.clone()),
+        spec_containers(shared.clone()),
     ]
 }
 
@@ -356,6 +357,21 @@ fn spec_docs(shared: SharedState) -> ServiceSpec {
             // handlers can extract peer info if needed.
             let router = signapps_docs::router(shared).await?;
             run_server_on_addr(router, "0.0.0.0", 3010).await
+        }
+    })
+}
+
+fn spec_containers(shared: SharedState) -> ServiceSpec {
+    ServiceSpec::new("signapps-containers", 3002, move || {
+        let shared = shared.clone();
+        async move {
+            // The bollard `Docker::connect_with_local_defaults()` call is
+            // lazy. The eager Docker probe (ping + version) is gated
+            // behind the CONTAINERS_ENABLED env flag (default-on); set
+            // CONTAINERS_ENABLED=false on dev/CI boxes without Docker
+            // and the :3002 admin API still serves.
+            let router = signapps_containers::router(shared).await?;
+            run_server_on_addr(router, "0.0.0.0", 3002).await
         }
     })
 }
