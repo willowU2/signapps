@@ -558,6 +558,10 @@ See `docs/architecture/inter-service-communication.md` for details and patterns.
 - **Runtime backend (legacy)** : `just start-legacy` → 33 binaires séparés (debug isolé d'un service)
 - **Smoke check** : `just smoke` (ping 5 /health critiques)
 - **Bench** : `./scripts/bench-coldstart.sh` (échec si boot > 3 s)
+- **Web Workers** : formula evaluator, markdown (turndown) isolés hors main thread → `client/src/workers/*`. VAD déjà worker-native.
+- **Virtualisation** : listes massives (chat, mail, storage list, notifs popover) utilisent `<VirtualList>` (`client/src/components/common/virtual-list.tsx`).
+- **Lighthouse CI** : CI bloque PR si une des 10 pages clés passe sous seuil (voir `client/lighthouse/config.json`).
+- **CSP** : `unsafe-eval` retiré — l'évaluateur de formules sheets est désormais un parser récursif-descendant pur.
 - **Conventional Commits** : obligatoires (`feat:`, `fix:`, `perf:`, `refactor:`, `docs:`, `test:`, `chore:`, `ci:`)
 - **Changelog** : `just changelog` après chaque release
 
