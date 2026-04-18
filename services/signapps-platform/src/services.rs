@@ -18,6 +18,7 @@ pub fn declare(shared: SharedState) -> Vec<ServiceSpec> {
         spec_proxy(shared.clone()),
         spec_media(shared.clone()),
         spec_securelink(shared.clone()),
+        spec_metrics(shared.clone()),
     ]
 }
 
@@ -133,6 +134,16 @@ fn spec_securelink(shared: SharedState) -> ServiceSpec {
         async move {
             let router = signapps_securelink::router(shared).await?;
             run_server_on_addr(router, "0.0.0.0", 3006).await
+        }
+    })
+}
+
+fn spec_metrics(shared: SharedState) -> ServiceSpec {
+    ServiceSpec::new("signapps-metrics", 3008, move || {
+        let shared = shared.clone();
+        async move {
+            let router = signapps_metrics::router(shared).await?;
+            run_server_on_addr(router, "0.0.0.0", 3008).await
         }
     })
 }

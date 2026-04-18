@@ -29,6 +29,7 @@ signapps-meet     = { path = "../signapps-meet" }
 signapps-proxy    = { path = "../signapps-proxy" }
 signapps-media    = { path = "../signapps-media" }
 signapps-securelink = { path = "../signapps-securelink" }
+signapps-metrics  = { path = "../signapps-metrics" }
 
 anyhow  = { workspace = true }
 axum    = { workspace = true }
