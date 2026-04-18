@@ -4,7 +4,7 @@
 
 BEGIN;
 
-CREATE TABLE maintenance_flags (
+CREATE TABLE IF NOT EXISTS maintenance_flags (
     env TEXT PRIMARY KEY CHECK (env IN ('prod', 'dev')),
     enabled BOOLEAN NOT NULL DEFAULT false,
     set_by UUID REFERENCES identity.users(id),

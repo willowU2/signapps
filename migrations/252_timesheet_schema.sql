@@ -1,7 +1,7 @@
 -- Timesheet schema: time tracking entries with timer support
 CREATE SCHEMA IF NOT EXISTS timesheet;
 
-CREATE TABLE timesheet.entries (
+CREATE TABLE IF NOT EXISTS timesheet.entries (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     task_name VARCHAR(200),
     start_time TIMESTAMPTZ NOT NULL,
@@ -13,5 +13,5 @@ CREATE TABLE timesheet.entries (
     tenant_id UUID,
     created_at TIMESTAMPTZ DEFAULT now()
 );
-CREATE INDEX idx_timesheet_owner ON timesheet.entries(owner_id);
-CREATE INDEX idx_timesheet_date ON timesheet.entries(start_time);
+CREATE INDEX IF NOT EXISTS idx_timesheet_owner ON timesheet.entries(owner_id);
+CREATE INDEX IF NOT EXISTS idx_timesheet_date ON timesheet.entries(start_time);

@@ -3,7 +3,7 @@
 
 BEGIN;
 
-CREATE TABLE feature_flags (
+CREATE TABLE IF NOT EXISTS feature_flags (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     key TEXT NOT NULL,
     env TEXT NOT NULL CHECK (env IN ('prod', 'dev', 'all')),
@@ -18,9 +18,9 @@ CREATE TABLE feature_flags (
     UNIQUE (key, env)
 );
 
-CREATE INDEX idx_feature_flags_key ON feature_flags (key);
+CREATE INDEX IF NOT EXISTS idx_feature_flags_key ON feature_flags (key);
 
-CREATE TABLE runtime_config (
+CREATE TABLE IF NOT EXISTS runtime_config (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     key TEXT NOT NULL,
     env TEXT NOT NULL CHECK (env IN ('prod', 'dev', 'all')),
@@ -31,6 +31,6 @@ CREATE TABLE runtime_config (
     UNIQUE (key, env)
 );
 
-CREATE INDEX idx_runtime_config_key ON runtime_config (key);
+CREATE INDEX IF NOT EXISTS idx_runtime_config_key ON runtime_config (key);
 
 COMMIT;

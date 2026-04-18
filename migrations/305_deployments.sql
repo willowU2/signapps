@@ -3,7 +3,7 @@
 
 BEGIN;
 
-CREATE TABLE deployments (
+CREATE TABLE IF NOT EXISTS deployments (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     env TEXT NOT NULL CHECK (env IN ('prod', 'dev')),
     version TEXT NOT NULL,
@@ -20,10 +20,10 @@ CREATE TABLE deployments (
     logs_path TEXT
 );
 
-CREATE INDEX idx_deployments_env_time ON deployments (env, triggered_at DESC);
-CREATE INDEX idx_deployments_status ON deployments (status) WHERE status IN ('pending', 'running');
+CREATE INDEX IF NOT EXISTS idx_deployments_env_time ON deployments (env, triggered_at DESC);
+CREATE INDEX IF NOT EXISTS idx_deployments_status ON deployments (status) WHERE status IN ('pending', 'running');
 
-CREATE TABLE deployment_audit_log (
+CREATE TABLE IF NOT EXISTS deployment_audit_log (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     deployment_id UUID REFERENCES deployments(id) ON DELETE CASCADE,
     action TEXT NOT NULL,
@@ -34,7 +34,7 @@ CREATE TABLE deployment_audit_log (
     timestamp TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX idx_audit_deployment ON deployment_audit_log (deployment_id);
-CREATE INDEX idx_audit_actor_time ON deployment_audit_log (actor_id, timestamp DESC);
+CREATE INDEX IF NOT EXISTS idx_audit_deployment ON deployment_audit_log (deployment_id);
+CREATE INDEX IF NOT EXISTS idx_audit_actor_time ON deployment_audit_log (actor_id, timestamp DESC);
 
 COMMIT;

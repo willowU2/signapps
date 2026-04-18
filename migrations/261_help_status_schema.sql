@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS status.health_checks (
     latency_ms INT,
     checked_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
-CREATE INDEX idx_health_checks_service ON status.health_checks(service_name, checked_at DESC);
+CREATE INDEX IF NOT EXISTS idx_health_checks_service ON status.health_checks(service_name, checked_at DESC);
 
 CREATE TABLE IF NOT EXISTS status.incidents (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

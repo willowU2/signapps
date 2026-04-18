@@ -1,7 +1,7 @@
 -- Expenses schema: expense reports with approval workflow
 CREATE SCHEMA IF NOT EXISTS expenses;
 
-CREATE TABLE expenses.expense_reports (
+CREATE TABLE IF NOT EXISTS expenses.expense_reports (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     title VARCHAR(200) NOT NULL,
     description TEXT,
@@ -17,5 +17,5 @@ CREATE TABLE expenses.expense_reports (
     created_at TIMESTAMPTZ DEFAULT now(),
     updated_at TIMESTAMPTZ DEFAULT now()
 );
-CREATE INDEX idx_expenses_owner ON expenses.expense_reports(owner_id);
-CREATE INDEX idx_expenses_status ON expenses.expense_reports(status);
+CREATE INDEX IF NOT EXISTS idx_expenses_owner ON expenses.expense_reports(owner_id);
+CREATE INDEX IF NOT EXISTS idx_expenses_status ON expenses.expense_reports(status);
