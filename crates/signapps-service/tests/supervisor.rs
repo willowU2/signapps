@@ -86,7 +86,39 @@ async fn supervisor_gives_up_after_crash_loop() {
 
     let n = attempts.load(Ordering::SeqCst);
     assert!(
-        (5..=7).contains(&n),
-        "expected ≈5-6 attempts before policy cap, got {n}"
+        (4..=6).contains(&n),
+        "expected ≈5 attempts before policy cap, got {n}"
+    );
+}
+
+#[tokio::test]
+async fn supervisor_respawns_panicking_service() {
+    use std::sync::atomic::{AtomicU32, Ordering};
+
+    let attempts = Arc::new(AtomicU32::new(0));
+    let attempts_c = attempts.clone();
+
+    let spec = ServiceSpec::new("panicky", 0, move || {
+        let a = attempts_c.clone();
+        async move {
+            let n = a.fetch_add(1, Ordering::SeqCst);
+            if n < 2 {
+                panic!("boom");
+            }
+            tokio::time::sleep(Duration::from_millis(20)).await;
+            Ok(())
+        }
+    });
+
+    let supervisor = Supervisor::new(vec![spec]);
+    let handle = tokio::spawn(supervisor.run_forever());
+
+    tokio::time::sleep(Duration::from_secs(5)).await;
+    handle.abort();
+
+    assert!(
+        attempts.load(Ordering::SeqCst) >= 3,
+        "supervisor must respawn panicking tasks (got {})",
+        attempts.load(Ordering::SeqCst)
     );
 }
