@@ -14,9 +14,6 @@ static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 async fn main() -> Result<()> {
     init_tracing("signapps_meet");
     let shared = SharedState::init_once().await?;
-    signapps_db::run_migrations(&shared.pool)
-        .await
-        .unwrap_or_else(|e| tracing::warn!(?e, "migrations warning (non-fatal)"));
     let router = signapps_meet::router(shared).await?;
     let config = ServiceConfig::from_env("signapps-meet", 3014);
     config.log_startup();
