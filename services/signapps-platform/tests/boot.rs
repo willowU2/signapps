@@ -15,7 +15,7 @@ async fn platform_boots_in_under_three_seconds() {
         "0000000000000000000000000000000000000000000000000000000000000000",
     );
 
-    let expected_ports: &[u16] = &[3001];
+    let expected_ports: &[u16] = &[3001, 3004, 3015, 3020, 3021, 8095];
     let start = Instant::now();
 
     let mut child = std::process::Command::new(env!("CARGO_BIN_EXE_signapps-platform"))
