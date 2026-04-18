@@ -1,14 +1,23 @@
 # LT-05: Single-Binary Deployment - Design Document
 
-**Status**: Prototype / Evaluation
+**Status**: Implemented in Phase D2 P1 (see docs/superpowers/specs/2026-04-18-phase-d2-architectural-perf-design.md)
 **Date**: 2026-03-22
 **Author**: AgentIQ
 
 ---
 
+**Implementation delivered:** 2026-04-18. See:
+- Spec: `docs/superpowers/specs/2026-04-18-phase-d2-architectural-perf-design.md`
+- Plan: `docs/superpowers/plans/2026-04-18-phase-d2-p1-single-binary.md`
+- Debug skill: `.claude/skills/single-binary-debug/` (Task 34)
+
+Cold start benchmark: `./scripts/bench-coldstart.sh` — currently ~1.7 s on a dev box (target < 3 s).
+
+---
+
 ## 1. Current Architecture
 
-SignApps Platform is a workspace of **19 backend services** + **5 shared crates** + a **Tauri desktop shell** + a **Next.js 16 frontend**:
+SignApps Platform is a workspace of **33 backend services** (+ `signapps-ai` with lazy providers) + **5 shared crates** + a **Tauri desktop shell** + a **Next.js 16 frontend**:
 
 ### Backend Services (separate binaries)
 
