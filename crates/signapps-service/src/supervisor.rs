@@ -8,16 +8,15 @@
 //! under 60 s — which is logged via `tracing::error!` and leaves the
 //! other tasks running.
 //!
-//! # Errors
-//!
-//! [`Supervisor::run_until_all_done`] is a test helper; it waits until
-//! every task has completed cleanly and returns the last error seen if any.
-//!
 //! # Panics
 //!
-//! Aucun panic possible — les panics à l'intérieur d'une task sont
-//! capturés par `tokio::task::JoinSet` et traités comme une erreur pour
-//! le compteur de backoff.
+//! Panics happening inside a supervised task are wrapped into
+//! `tokio::task::JoinError` by the [`JoinSet`] runtime and therefore
+//! abort that single task without unwinding the supervisor thread.  The
+//! current implementation does **not** count `JoinError` toward the
+//! crash-loop budget — a service that panics every tick is logged but
+//! will not re-enter the backoff loop; it stops on the first panic.
+//! Future work: fold `JoinError` back into the crash counter.
 
 use std::future::Future;
 use std::pin::Pin;
@@ -138,13 +137,15 @@ impl Supervisor {
     ///
     /// # Errors
     ///
-    /// Returns the last non-fatal error encountered, once every task has
-    /// either exited cleanly or been escalated to `failed`.
+    /// The signature returns `Result<()>` for forward compatibility, but
+    /// the current implementation always completes with `Ok(())` — every
+    /// crash is logged and either respawned or escalated to `failed`
+    /// from within the individual task, without propagating out.
     ///
     /// # Panics
     ///
-    /// Aucun panic possible — les panics des tasks sont capturés par
-    /// `tokio::task::JoinSet` et traités comme une erreur.
+    /// Task panics are surfaced by [`JoinSet`] as `JoinError` and
+    /// silently swallowed by the current loop (see module-level doc).
     #[tracing::instrument(skip(self), fields(count = self.specs.len()))]
     pub async fn run_forever(self) -> Result<()> {
         let mut set = JoinSet::new();
