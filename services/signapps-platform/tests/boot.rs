@@ -24,8 +24,16 @@ async fn platform_boots_in_under_three_seconds() {
     std::env::set_var("PXE_ENABLE_TFTP", "false");
     std::env::set_var("PXE_ENABLE_PROXY_DHCP", "false");
     std::env::set_var("PXE_ENABLE_DC", "false");
+    // Keep Batch #5 side-channels off:
+    // - containers needs the Docker daemon for the eager ping/version probe;
+    //   skip it so the :3002 admin API still serves on dev boxes without Docker
+    // - mail SMTP/IMAP/DAV/Sieve need privileged ports + TLS certs
+    // - deploy /api/v1/deploy/* is dormant by default; /health stays public
+    std::env::set_var("CONTAINERS_ENABLED", "false");
+    std::env::set_var("MAIL_PROTOCOLS_ENABLED", "false");
+    std::env::set_var("DEPLOY_API_ENABLED", "false");
 
-    // Ports that every batch up to and including W2.T14 (batch #4) must
+    // Ports that every batch up to and including W2.T15 (batch #5) must
     // bind on a clean process. Note: collaboration historically binds
     // :3034 (the spec's mention of :3013 referred to a service that
     // does not yet exist in the codebase).
@@ -37,13 +45,24 @@ async fn platform_boots_in_under_three_seconds() {
     //
     // Batch #4 adds :3022 (it-assets), :3024 (workforce), :3025 (vault),
     // :3026 (org), :3029 (tenant-config).
+    //
+    // Batch #5 adds :3002 (containers — Docker probe gated off via
+    // CONTAINERS_ENABLED), :3010 (docs), :3011 (calendar), :3012 (mail —
+    // SMTP/IMAP/DAV/Sieve listeners gated off via MAIL_PROTOCOLS_ENABLED),
+    // :3028 (signatures), :3030 (integrations), :3031 (backup),
+    // :3032 (compliance), :3033 (gamification), :3700 (deploy — protected
+    // /api/v1/deploy/* gated off via DEPLOY_API_ENABLED), :8096 (billing).
     let expected_ports: &[u16] = &[
         3001, // identity
+        3002, // containers (Docker probe disabled for the test)
         3003, // proxy (admin only — engine disabled for the test)
         3004, // storage
         3006, // securelink
         3008, // metrics
         3009, // media
+        3010, // docs
+        3011, // calendar
+        3012, // mail (SMTP/IMAP/DAV/Sieve disabled for the test)
         3014, // meet
         3015, // forms
         3016, // pxe (admin only — TFTP/DHCP/DC disabled for the test)
@@ -54,9 +73,16 @@ async fn platform_boots_in_under_three_seconds() {
         3024, // workforce
         3025, // vault
         3026, // org
+        3028, // signatures
         3029, // tenant-config
+        3030, // integrations
+        3031, // backup
+        3032, // compliance
+        3033, // gamification
         3034, // collaboration
+        3700, // deploy (protected /api/v1/deploy/* dormant for the test)
         8095, // notifications
+        8096, // billing
     ];
     let start = Instant::now();
 
