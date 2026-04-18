@@ -6,19 +6,21 @@ rust-version.workspace = true
 authors.workspace = true
 license.workspace = true
 description = "Calendar and task management service for SignApps Platform"
-
-[[bin]]
-name = "signapps-calendar"
-path = "src/main.rs"
+default-run = "signapps-calendar"
 
 [lib]
 name = "signapps_calendar"
 path = "src/lib.rs"
 
+[[bin]]
+name = "signapps-calendar"
+path = "src/main.rs"
+
 [dependencies]
 mimalloc = { workspace = true }
 signapps-common = { path = "../../crates/signapps-common" }
 signapps-db = { path = "../../crates/signapps-db", features = ["openapi"] }
+signapps-service = { path = "../../crates/signapps-service" }
 signapps-sharing = { path = "../../crates/signapps-sharing" }
 signapps-cache = { path = "../../crates/signapps-cache" }
 signapps-oauth = { path = "../../crates/signapps-oauth" }

@@ -41,8 +41,8 @@ impl MeetServiceClient {
     /// Build a new client from the `MEET_SERVICE_URL` environment variable
     /// (defaults to `http://localhost:3014`).
     pub fn new() -> Self {
-        let base_url = std::env::var("MEET_SERVICE_URL")
-            .unwrap_or_else(|_| "http://localhost:3014".into());
+        let base_url =
+            std::env::var("MEET_SERVICE_URL").unwrap_or_else(|_| "http://localhost:3014".into());
 
         Self {
             client: Client::builder()

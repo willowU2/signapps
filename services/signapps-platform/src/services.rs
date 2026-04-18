@@ -32,6 +32,7 @@ pub fn declare(shared: SharedState) -> Vec<ServiceSpec> {
         spec_compliance(shared.clone()),
         spec_backup(shared.clone()),
         spec_integrations(shared.clone()),
+        spec_calendar(shared.clone()),
     ]
 }
 
@@ -308,6 +309,20 @@ fn spec_integrations(shared: SharedState) -> ServiceSpec {
         async move {
             let router = signapps_integrations::router(shared).await?;
             run_server_on_addr(router, "0.0.0.0", 3030).await
+        }
+    })
+}
+
+fn spec_calendar(shared: SharedState) -> ServiceSpec {
+    ServiceSpec::new("signapps-calendar", 3011, move || {
+        let shared = shared.clone();
+        async move {
+            // router() spawns the notification scheduler, OAuth consumer
+            // (oauth.tokens.acquired → calendar.provider_connections), and
+            // the cross-service mail.received → ICS auto-import listener
+            // as detached tokio tasks tied to this factory scope.
+            let router = signapps_calendar::router(shared).await?;
+            run_server_on_addr(router, "0.0.0.0", 3011).await
         }
     })
 }
