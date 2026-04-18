@@ -32,7 +32,14 @@ export async function fetchServer<T>(
   const token = cookieStore.get("auth_token")?.value;
 
   const base = opts.baseUrl ?? BACKEND_BASE_URL;
-  const url = path.startsWith("http") ? path : `${base}${path}`;
+  // Safety: avoid accidental double /api/v1 when baseUrl already contains it
+  // and path starts with /api/v1 (common bug when lib/server callers follow
+  // the same "/api/v1/..." convention as the browser axios clients).
+  const normalizedPath =
+    base.endsWith("/api/v1") && path.startsWith("/api/v1/")
+      ? path.slice("/api/v1".length)
+      : path;
+  const url = path.startsWith("http") ? path : `${base}${normalizedPath}`;
 
   const res = await fetch(url, {
     headers: {
