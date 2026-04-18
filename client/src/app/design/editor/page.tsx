@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import { usePageTitle } from "@/hooks/use-page-title";
 
 const DesignEditor = dynamic(
-  () => import("@/components/design/design-editor"),
+  () => import("@/components/design/design-editor-v2"),
   { ssr: false },
 );
 

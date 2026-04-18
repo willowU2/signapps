@@ -33,7 +33,7 @@ import DesignBrandKit from "./design-brand-kit";
 import DesignPhotoFilters from "./design-photo-filters";
 import DesignHistoryPanel from "./design-history-panel";
 import DesignFontsLibrary from "./design-fonts-library";
-import DesignLayerEffects from "./design-layer-effects";
+import DesignLayerEffects from "./design-effects-v2";
 import DesignGradientEditor from "./design-gradient-editor";
 import DesignImageCrop from "./design-image-crop";
 

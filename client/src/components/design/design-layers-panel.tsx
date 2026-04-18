@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   useDesignStore,
   useDesignObjects,
@@ -43,6 +43,9 @@ export default function DesignLayersPanel({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
   const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+  /** Stable ID of the object being dragged — survives array reorders */
+  const dragIdRef = useRef<string | null>(null);
 
   const handleSelect = (id: string, e: React.MouseEvent) => {
     const canvas = fabricCanvasRef.current;
@@ -87,19 +90,63 @@ export default function DesignLayersPanel({
     removeObject(id);
   };
 
-  const handleDragStart = (index: number) => {
+  /** Sync a specific Fabric object's z-stack position by its stable ID. */
+  const syncCanvasZOrder = (objId: string, toIndex: number) => {
+    const canvas = fabricCanvasRef.current;
+    if (!canvas) return;
+    const fObj = canvas.getObjects().find((o: any) => o.id === objId);
+    if (!fObj) return;
+    if (typeof canvas.moveObjectTo === "function") {
+      canvas.moveObjectTo(fObj, toIndex);
+    } else if (typeof (fObj as any).moveTo === "function") {
+      (fObj as any).moveTo(toIndex);
+    }
+    canvas.requestRenderAll();
+  };
+
+  const handleDragStart = (obj: { id: string }, index: number) => {
+    dragIdRef.current = obj.id;
     setDragIndex(index);
+    setDragOverIndex(index);
   };
 
-  const handleDragOver = (e: React.DragEvent, index: number) => {
+  const handleDragOver = (e: React.DragEvent, overIndex: number) => {
     e.preventDefault();
-    if (dragIndex === null || dragIndex === index) return;
+    const id = dragIdRef.current;
+    if (!id) return;
+    // Re-resolve the current index from the latest `objects` array each time
+    // (index prop may be stale after a previous reorder in the same drag).
+    const currentIndex = objects.findIndex((o) => o.id === id);
+    if (currentIndex === -1 || currentIndex === overIndex) {
+      setDragOverIndex(overIndex);
+      return;
+    }
+    reorderObjects(currentIndex, overIndex);
+    syncCanvasZOrder(id, overIndex);
+    setDragIndex(overIndex);
+    setDragOverIndex(overIndex);
   };
 
-  const handleDrop = (index: number) => {
-    if (dragIndex === null || dragIndex === index) return;
-    reorderObjects(dragIndex, index);
+  const handleDragEnd = () => {
+    dragIdRef.current = null;
     setDragIndex(null);
+    setDragOverIndex(null);
+  };
+
+  const handleDrop = (overIndex: number) => {
+    const id = dragIdRef.current;
+    if (!id) {
+      setDragOverIndex(null);
+      return;
+    }
+    const currentIndex = objects.findIndex((o) => o.id === id);
+    if (currentIndex !== -1 && currentIndex !== overIndex) {
+      reorderObjects(currentIndex, overIndex);
+      syncCanvasZOrder(id, overIndex);
+    }
+    dragIdRef.current = null;
+    setDragIndex(null);
+    setDragOverIndex(null);
   };
 
   const getIcon = (type: string) => {
@@ -139,17 +186,23 @@ export default function DesignLayersPanel({
                 <div
                   key={obj.id}
                   draggable
-                  onDragStart={() => handleDragStart(realIdx)}
+                  onDragStart={() => handleDragStart(obj, realIdx)}
                   onDragOver={(e) => handleDragOver(e, realIdx)}
+                  onDragEnd={handleDragEnd}
                   onDrop={() => handleDrop(realIdx)}
                   onClick={(e) => handleSelect(obj.id, e)}
                   onDoubleClick={() => handleDoubleClick(obj.id, obj.name)}
                   className={cn(
-                    "flex items-center gap-1.5 px-2 py-1.5 text-xs cursor-pointer transition-colors group",
+                    "relative flex items-center gap-1.5 px-2 py-1.5 text-xs cursor-pointer transition-all duration-150 group",
                     isSelected
                       ? "bg-primary/10 text-primary"
                       : "hover:bg-muted/50",
                     !obj.visible && "opacity-40",
+                    dragIndex === realIdx &&
+                      "opacity-60 ring-1 ring-primary/40 bg-primary/5",
+                    dragOverIndex === realIdx &&
+                      dragIndex !== realIdx &&
+                      "before:content-[''] before:absolute before:left-0 before:right-0 before:-top-px before:h-0.5 before:bg-primary before:rounded-full",
                   )}
                 >
                   <GripVertical className="h-3 w-3 text-muted-foreground/50 cursor-grab shrink-0" />
