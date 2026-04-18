@@ -21,7 +21,8 @@
     "test:e2e:chromium": "npm run test:e2e:seed && playwright test --project=chromium",
     "test:e2e:report": "playwright show-report",
     "license-check": "node scripts/check-licenses.js --summary",
-    "license-check:strict": "node scripts/check-licenses.js"
+    "license-check:strict": "node scripts/check-licenses.js",
+    "budget": "next build && node scripts/check-bundle-budget.js"
   },
   "dependencies": {
     "@base-ui-components/react": "^1.0.0-rc.0",
