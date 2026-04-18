@@ -14,13 +14,40 @@ import { PreferencesProvider } from "@/lib/preferences";
 import { AccessibilityProvider } from "@/components/accessibility/a11y-provider";
 
 import { ErrorBoundary } from "@/components/error-boundary";
-import { NotificationPermissionDialog } from "@/components/notifications/notification-permission-dialog";
-import { CommandBar } from "@/components/layout/command-bar";
-import { RadialMenu } from "@/components/layout/radial-menu";
 import { ThemeProvider } from "@/components/theme-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { GlobalModals } from "@/components/global-modals";
 import { GlobalHooks } from "@/components/global-hooks";
+import { useServiceWorker } from "@/hooks/use-service-worker";
+import { GlobalPolling } from "@/components/global-polling";
+import { ThemeInitializer } from "@/components/theme-initializer";
+import { RouteProgressBar } from "@/components/layout/route-progress-bar";
+import { PasswordExpiryBanner } from "@/components/auth/password-expiry-banner";
+import dynamic from "next/dynamic";
+
+// AQ-PERF (J1 2026-04-18): these components are always rendered on the
+// full-app shell (after /login) but none of them is visible on first paint.
+// Loading them dynamically with `ssr: false` keeps the main shared chunk
+// slim — saves ~110 kB gzipped of `cmdk` + `lucide-react` icons from the
+// per-route first-load across the whole app.
+const NotificationPermissionDialog = dynamic(
+  () =>
+    import("@/components/notifications/notification-permission-dialog").then(
+      (m) => m.NotificationPermissionDialog,
+    ),
+  { ssr: false },
+);
+const CommandBar = dynamic(
+  () => import("@/components/layout/command-bar").then((m) => m.CommandBar),
+  { ssr: false },
+);
+const RadialMenu = dynamic(
+  () => import("@/components/layout/radial-menu").then((m) => m.RadialMenu),
+  { ssr: false },
+);
+const GlobalModals = dynamic(
+  () => import("@/components/global-modals").then((m) => m.GlobalModals),
+  { ssr: false },
+);
 const OnboardingWizard = dynamic(
   () =>
     import("@/components/onboarding/onboarding-wizard").then(
@@ -28,16 +55,31 @@ const OnboardingWizard = dynamic(
     ),
   { ssr: false },
 );
-import { RouteProgressBar } from "@/components/layout/route-progress-bar";
-import { PasswordExpiryBanner } from "@/components/auth/password-expiry-banner";
-import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav";
-import { PwaInstallPrompt } from "@/components/pwa/pwa-install-prompt";
-import { useServiceWorker } from "@/hooks/use-service-worker";
-import { DragDropOverlay } from "@/components/drag-drop-overlay";
-import { GlobalPolling } from "@/components/global-polling";
-import { ThemeInitializer } from "@/components/theme-initializer";
-import { QuickDocumentSwitcher } from "@/components/layout/quick-switcher";
-import dynamic from "next/dynamic";
+const MobileBottomNav = dynamic(
+  () =>
+    import("@/components/layout/mobile-bottom-nav").then(
+      (m) => m.MobileBottomNav,
+    ),
+  { ssr: false },
+);
+const PwaInstallPrompt = dynamic(
+  () =>
+    import("@/components/pwa/pwa-install-prompt").then(
+      (m) => m.PwaInstallPrompt,
+    ),
+  { ssr: false },
+);
+const DragDropOverlay = dynamic(
+  () => import("@/components/drag-drop-overlay").then((m) => m.DragDropOverlay),
+  { ssr: false },
+);
+const QuickDocumentSwitcher = dynamic(
+  () =>
+    import("@/components/layout/quick-switcher").then(
+      (m) => m.QuickDocumentSwitcher,
+    ),
+  { ssr: false },
+);
 const FirstRunDialog = dynamic(
   () => import("@/components/first-run-dialog").then((m) => m.FirstRunDialog),
   { ssr: false },

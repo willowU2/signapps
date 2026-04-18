@@ -20,6 +20,11 @@ const nextConfig = {
   // Auto tree-shake large barrel-imported packages (Next.js 15+ feature).
   // Saves ~300-600kB on the main JS bundle for this app.
   experimental: {
+    // AQ-PERF: Next.js tree-shakes these packages' barrel exports even when
+    // callers `import { X } from "pkg"`.  Keep the list exhaustive — adding
+    // a package that ends up not barrel-imported is a no-op, but forgetting
+    // one that is used widely (like `@dnd-kit/*`, `react-aria*`, `jotai`)
+    // eagerly pulls the whole barrel into the first-load chunk.
     optimizePackageImports: [
       "lucide-react",
       "@radix-ui/react-icons",
@@ -27,9 +32,13 @@ const nextConfig = {
       "date-fns",
       "lodash",
       "framer-motion",
+      "motion",
       "@tiptap/core",
       "@tiptap/react",
       "@tiptap/starter-kit",
+      "@tiptap/suggestion",
+      "@tiptap/pm",
+      "@tiptap/y-tiptap",
       "@radix-ui/react-alert-dialog",
       "@radix-ui/react-checkbox",
       "@radix-ui/react-popover",
@@ -37,8 +46,28 @@ const nextConfig = {
       "@base-ui-components/react",
       "@livekit/components-react",
       "@tanstack/react-query",
+      "@tanstack/react-query-persist-client",
       "@tanstack/react-table",
       "@tanstack/react-virtual",
+      "@dnd-kit/core",
+      "@dnd-kit/sortable",
+      "@dnd-kit/utilities",
+      "@floating-ui/dom",
+      "react-aria",
+      "react-aria-components",
+      "radix-ui",
+      "jotai",
+      "cmdk",
+      "sonner",
+      "tippy.js",
+      "fuse.js",
+      "class-variance-authority",
+      "tailwind-merge",
+      "@xyflow/react",
+      "@hookform/resolvers",
+      "react-hook-form",
+      "zustand",
+      "zod",
     ],
   },
   async headers() {

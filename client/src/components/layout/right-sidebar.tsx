@@ -24,8 +24,12 @@ import {
   CreditCard,
   Share2,
   Clock,
+  Grid,
 } from "lucide-react";
-import * as LucideIcons from "lucide-react";
+// AQ-PERF: lazy-load arbitrary lucide icons by name without pulling the
+// full ~1.5k-icon barrel into the client bundle.  See sidebar.tsx for
+// the same pattern.
+import { DynamicIcon, type IconName } from "lucide-react/dynamic";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { TooltipIconButton } from "@/components/ui/tooltip-icon-button";
 
@@ -36,14 +40,17 @@ import { APP_CATEGORIES } from "@/lib/app-registry";
 import { useAppRegistry } from "@/hooks/use-app-registry";
 
 function DynIcon({ name, className }: { name: string; className?: string }) {
-  const Icon = (
-    LucideIcons as unknown as Record<
-      string,
-      React.ComponentType<{ className?: string }> | undefined
-    >
-  )[name];
-  if (!Icon) return <LucideIcons.Grid className={className} />;
-  return <Icon className={className} />;
+  const kebab = name
+    .replace(/([A-Z])/g, "-$1")
+    .replace(/^-/, "")
+    .toLowerCase();
+  return (
+    <DynamicIcon
+      name={kebab as IconName}
+      className={className}
+      fallback={() => <Grid className={className} />}
+    />
+  );
 }
 
 const widgetItems = [

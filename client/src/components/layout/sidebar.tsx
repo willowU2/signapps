@@ -53,8 +53,17 @@ import {
   FileSignature,
   Webhook,
   ClipboardCheck,
+  PanelLeftOpen,
+  PanelLeftClose,
+  ChevronRight,
+  Folder,
+  FolderOpen,
 } from "lucide-react";
-import * as LucideIcons from "lucide-react";
+// AQ-PERF: lucide-react/dynamic lazy-loads each icon SVG as a separate
+// chunk on demand.  Used here for the pinned-app rendering (arbitrary
+// icon names from user data) — avoids pulling the full ~1.5k-icon
+// barrel into the app-shell first-load chunk.
+import { DynamicIcon, type IconName } from "lucide-react/dynamic";
 import {
   Tooltip,
   TooltipContent,
@@ -75,14 +84,21 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 function DynIcon({ name, className }: { name: string; className?: string }) {
-  const Icon = (
-    LucideIcons as unknown as Record<
-      string,
-      React.ComponentType<{ className?: string }> | undefined
-    >
-  )[name];
-  if (!Icon) return <LucideIcons.Grid className={className} />;
-  return <Icon className={className} />;
+  // `DynamicIcon` from lucide-react/dynamic accepts a kebab-case icon
+  // name ("layout-dashboard") and lazy-loads just that icon's SVG.
+  // We keep a <Grid /> fallback while the chunk is fetched or when
+  // the provided name is not a valid lucide icon.
+  const kebab = name
+    .replace(/([A-Z])/g, "-$1")
+    .replace(/^-/, "")
+    .toLowerCase();
+  return (
+    <DynamicIcon
+      name={kebab as IconName}
+      className={className}
+      fallback={() => <Grid className={className} />}
+    />
+  );
 }
 
 const quickActions = [
@@ -762,9 +778,9 @@ export function Sidebar({ portalMode }: SidebarProps = {}) {
                 title={sidebarCollapsed ? "Développer" : "Réduire"}
               >
                 {sidebarCollapsed ? (
-                  <LucideIcons.PanelLeftOpen className="h-4 w-4" />
+                  <PanelLeftOpen className="h-4 w-4" />
                 ) : (
-                  <LucideIcons.PanelLeftClose className="h-4 w-4" />
+                  <PanelLeftClose className="h-4 w-4" />
                 )}
                 <span className="sr-only">
                   {sidebarCollapsed ? "Développer" : "Réduire"}
@@ -920,7 +936,7 @@ export function Sidebar({ portalMode }: SidebarProps = {}) {
           {isDragOver && isExpanded && (
             <div className="mx-4 my-3 pointer-events-none flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-primary/50 bg-primary/5 p-4 text-center text-sm font-medium text-primary shadow-sm animate-in zoom-in-95 duration-200">
               <div className="p-3 bg-primary/10 rounded-full animate-pulse">
-                <LucideIcons.Pin className="h-5 w-5 text-primary" />
+                <Pin className="h-5 w-5 text-primary" />
               </div>
               <div className="flex flex-col">
                 <span className="font-semibold">Déposer ici</span>
@@ -1027,13 +1043,13 @@ export function Sidebar({ portalMode }: SidebarProps = {}) {
                         }}
                         onDragOver={(e) => e.preventDefault()}
                       >
-                        <LucideIcons.ChevronRight
+                        <ChevronRight
                           className={cn(
                             "h-3 w-3 transition-transform",
                             !folder.collapsed && "rotate-90",
                           )}
                         />
-                        <LucideIcons.Folder className="h-3.5 w-3.5 text-amber-500" />
+                        <Folder className="h-3.5 w-3.5 text-amber-500" />
                         {renamingFolder === folder.id ? (
                           <input
                             autoFocus
@@ -1113,13 +1129,13 @@ export function Sidebar({ portalMode }: SidebarProps = {}) {
                                   }}
                                   onDragOver={(e) => e.preventDefault()}
                                 >
-                                  <LucideIcons.ChevronRight
+                                  <ChevronRight
                                     className={cn(
                                       "h-2.5 w-2.5 transition-transform",
                                       !sub.collapsed && "rotate-90",
                                     )}
                                   />
-                                  <LucideIcons.FolderOpen className="h-3 w-3 text-amber-400" />
+                                  <FolderOpen className="h-3 w-3 text-amber-400" />
                                   <span className="flex-1 truncate">
                                     {sub.name}
                                   </span>
