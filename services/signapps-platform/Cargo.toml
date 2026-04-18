@@ -24,6 +24,11 @@ signapps-forms    = { path = "../signapps-forms" }
 signapps-storage  = { path = "../signapps-storage" }
 signapps-notifications = { path = "../signapps-notifications" }
 signapps-chat     = { path = "../signapps-chat" }
+signapps-collaboration = { path = "../signapps-collaboration" }
+signapps-meet     = { path = "../signapps-meet" }
+signapps-proxy    = { path = "../signapps-proxy" }
+signapps-media    = { path = "../signapps-media" }
+signapps-securelink = { path = "../signapps-securelink" }
 
 anyhow  = { workspace = true }
 axum    = { workspace = true }
