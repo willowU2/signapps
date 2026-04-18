@@ -6,6 +6,11 @@ rust-version.workspace = true
 authors.workspace = true
 license.workspace = true
 description = "Forms builder service for SignApps Platform (Google Forms equivalent)"
+default-run = "signapps-forms"
+
+[lib]
+name = "signapps_forms"
+path = "src/lib.rs"
 
 [[bin]]
 name = "signapps-forms"
@@ -15,6 +20,7 @@ path = "src/main.rs"
 mimalloc = { workspace = true }
 signapps-common = { path = "../../crates/signapps-common" }
 signapps-db = { path = "../../crates/signapps-db", features = ["openapi"] }
+signapps-service = { path = "../../crates/signapps-service" }
 signapps-sharing = { path = "../../crates/signapps-sharing" }
 signapps-cache = { path = "../../crates/signapps-cache" }
 sqlx = { workspace = true }

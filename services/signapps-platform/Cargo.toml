@@ -20,6 +20,7 @@ signapps-service = { path = "../../crates/signapps-service" }
 
 signapps-identity = { path = "../signapps-identity" }
 signapps-contacts = { path = "../signapps-contacts" }
+signapps-forms    = { path = "../signapps-forms" }
 
 anyhow  = { workspace = true }
 axum    = { workspace = true }
