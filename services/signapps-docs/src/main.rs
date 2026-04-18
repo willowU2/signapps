@@ -53,6 +53,11 @@ fn office_router() -> Router<OfficeState> {
         // Async job queue routes
         .route("/api/v1/office/jobs/convert", post(handlers::jobs::submit_convert_job))
         .route("/api/v1/office/jobs/:id", get(handlers::jobs::get_job_status))
+        // Unified filter pipeline routes (FilterRegistry)
+        .route("/api/v1/filters/formats", get(handlers::filters::list_formats))
+        .route("/api/v1/filters/import", post(handlers::filters::import_file))
+        .route("/api/v1/filters/export", post(handlers::filters::export_file))
+        .route("/api/v1/filters/convert", post(handlers::filters::convert_file))
 }
 use signapps_cache::CacheService;
 use signapps_common::bootstrap::{init_tracing, load_env, ServiceConfig};
@@ -207,6 +212,11 @@ async fn main() -> anyhow::Result<()> {
         .route("/api/v1/keep/notes", post(create_note))
         .route("/api/v1/keep/notes/:id", put(update_note))
         .route("/api/v1/keep/notes/:id", delete(delete_note))
+        // Style definitions (cascade inheritance for docs, sheets, slides)
+        .route("/api/v1/styles", get(handlers::styles::list_styles).post(handlers::styles::create_style))
+        .route("/api/v1/styles/templates/:template_id", get(handlers::styles::list_template_styles))
+        .route("/api/v1/styles/:id", get(handlers::styles::get_style).put(handlers::styles::update_style).delete(handlers::styles::delete_style))
+        .route("/api/v1/styles/:id/resolved", get(handlers::styles::get_resolved_style))
         // Collab WebSocket alias — originally signapps-collab (port 3013), now served from port 3010
         // Old URL: ws://localhost:3013/api/v1/collab/ws/:doc_id
         // New URL: ws://localhost:3010/api/v1/collab/ws/:doc_id

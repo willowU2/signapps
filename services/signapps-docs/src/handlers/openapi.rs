@@ -73,6 +73,14 @@ impl Modify for SecurityAddon {
         crate::handlers::notes::create_note,
         crate::handlers::notes::update_note,
         crate::handlers::notes::delete_note,
+        // Styles
+        crate::handlers::styles::list_styles,
+        crate::handlers::styles::get_style,
+        crate::handlers::styles::get_resolved_style,
+        crate::handlers::styles::create_style,
+        crate::handlers::styles::update_style,
+        crate::handlers::styles::delete_style,
+        crate::handlers::styles::list_template_styles,
         // Chat channels
         crate::handlers::types::chat::create_channel,
         crate::handlers::types::chat::get_channels,
@@ -124,6 +132,11 @@ impl Modify for SecurityAddon {
         crate::handlers::types::slide::PresentationResponse,
         crate::handlers::types::board::CreateBoardRequest,
         crate::handlers::types::board::BoardResponse,
+        // Styles
+        signapps_db::models::StyleDefinition,
+        signapps_db::models::CreateStyle,
+        signapps_db::models::UpdateStyle,
+        signapps_db::models::ResolvedStyle,
         // Chat
         crate::handlers::types::chat::CreateChannelRequest,
         crate::handlers::types::chat::ChannelResponse,
@@ -142,6 +155,7 @@ impl Modify for SecurityAddon {
         (name = "Macros", description = "Spreadsheet macro management"),
         (name = "Designs", description = "Design file management"),
         (name = "Notes", description = "Quick notes (Google Keep style)"),
+        (name = "Styles", description = "Style definitions with cascade inheritance"),
         (name = "Chat", description = "Chat channels and direct messages"),
     ),
     modifiers(&SecurityAddon),
