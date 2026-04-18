@@ -8,6 +8,10 @@ license.workspace = true
 description = "Identity and authentication service for SignApps Platform"
 default-run = "signapps-identity"
 
+[lib]
+name = "signapps_identity"
+path = "src/lib.rs"
+
 [[bin]]
 name = "signapps-identity"
 path = "src/main.rs"
@@ -24,6 +28,7 @@ signapps-common = { path = "../../crates/signapps-common" }
 signapps-db = { path = "../../crates/signapps-db", features = ["openapi"] }
 signapps-keystore = { path = "../../crates/signapps-keystore" }
 signapps-oauth = { path = "../../crates/signapps-oauth" }
+signapps-service = { path = "../../crates/signapps-service" }
 
 # Web framework
 axum = { workspace = true }
