@@ -28,15 +28,24 @@ fn main() {
             Regex::new(r"(?im)^\s*CREATE\s+(UNIQUE\s+)?INDEX\s+(?!IF\s+NOT\s+EXISTS)").unwrap(),
         ),
         (
-            "ADD CONSTRAINT without IF NOT EXISTS",
+            "ADD CONSTRAINT without DO-block guard",
+            // Postgres 16 lacks IF NOT EXISTS for ADD CONSTRAINT, so idempotence
+            // requires wrapping in DO $$ BEGIN … EXCEPTION WHEN duplicate_object.
+            // Flag only lines that START with ALTER TABLE (column 0). A line that
+            // begins with `DO $$ BEGIN ALTER TABLE …` or is indented inside a
+            // DO-block is considered already safe.
             Regex::new(
-                r"(?im)^\s*ALTER\s+TABLE\s+[^\n]+\s+ADD\s+CONSTRAINT\s+(?!IF\s+NOT\s+EXISTS)",
+                r"(?im)^ALTER\s+TABLE\s+[^\n]+\s+ADD\s+CONSTRAINT\s+",
             )
             .unwrap(),
         ),
         (
+            // A CREATE TYPE is only safe when wrapped in a DO-block that traps
+            // duplicate_object. We treat any top-level (non-indented) CREATE TYPE
+            // as offending; indented ones are assumed to already sit inside a
+            // `DO $$ BEGIN … END $$;` block (the standard pattern in this repo).
             "CREATE TYPE without DO-block guard",
-            Regex::new(r"(?im)^\s*CREATE\s+TYPE\s+").unwrap(),
+            Regex::new(r"(?im)^CREATE\s+TYPE\s+").unwrap(),
         ),
     ];
 
