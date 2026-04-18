@@ -88,3 +88,4 @@ urlencoding = "2"
 
 [dev-dependencies]
 tokio-test = { workspace = true }
+tower = { workspace = true }
