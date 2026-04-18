@@ -7,6 +7,8 @@ pub mod macros;
 pub mod notes;
 pub mod openapi;
 pub mod persistence;
+pub mod presentations;
+pub mod sheet_formats;
 pub mod styles;
 pub mod templates;
 pub mod types;

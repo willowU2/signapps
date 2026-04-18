@@ -84,6 +84,10 @@ use handlers::health::health_handler;
 use handlers::macros::{create_macro, delete_macro, list_macros, update_macro};
 use handlers::notes::{create_note, delete_note, list_notes, update_note};
 use handlers::templates::{create_template, delete_template, get_template, list_templates};
+use handlers::sheet_formats::{
+    batch_upsert_formats, delete_format, get_metadata, list_formats, upsert_format,
+    upsert_metadata,
+};
 use handlers::types::{board, chat, sheet, slide, text};
 use handlers::websocket::websocket_handler;
 use signapps_common::AiIndexerClient;
@@ -217,6 +221,20 @@ async fn main() -> anyhow::Result<()> {
         .route("/api/v1/styles/templates/:template_id", get(handlers::styles::list_template_styles))
         .route("/api/v1/styles/:id", get(handlers::styles::get_style).put(handlers::styles::update_style).delete(handlers::styles::delete_style))
         .route("/api/v1/styles/:id/resolved", get(handlers::styles::get_resolved_style))
+        // Presentations persistence (slides CRUD)
+        .route("/api/v1/presentations", post(handlers::presentations::create_presentation))
+        .route("/api/v1/presentations/:doc_id", get(handlers::presentations::get_presentation).put(handlers::presentations::update_presentation))
+        .route("/api/v1/presentations/:doc_id/layouts", get(handlers::presentations::list_layouts))
+        .route("/api/v1/presentations/:doc_id/slides", get(handlers::presentations::list_slides).post(handlers::presentations::create_slide))
+        .route("/api/v1/presentations/:doc_id/slides/reorder", put(handlers::presentations::reorder_slides))
+        .route("/api/v1/presentations/:doc_id/slides/:slide_id", put(handlers::presentations::update_slide).delete(handlers::presentations::delete_slide))
+        // Sheet format persistence (cell formats + sheet metadata)
+        .route("/api/v1/sheets/:doc_id/formats", get(list_formats))
+        .route("/api/v1/sheets/:doc_id/formats/batch", post(batch_upsert_formats))
+        .route("/api/v1/sheets/:doc_id/formats/:cell_ref", put(upsert_format))
+        .route("/api/v1/sheets/:doc_id/formats/:cell_ref", delete(delete_format))
+        .route("/api/v1/sheets/:doc_id/metadata", get(get_metadata))
+        .route("/api/v1/sheets/:doc_id/metadata", put(upsert_metadata))
         // Collab WebSocket alias — originally signapps-collab (port 3013), now served from port 3010
         // Old URL: ws://localhost:3013/api/v1/collab/ws/:doc_id
         // New URL: ws://localhost:3010/api/v1/collab/ws/:doc_id
