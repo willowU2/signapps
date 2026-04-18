@@ -1,0 +1,25 @@
+[package]
+name = "signapps-platform"
+version.workspace = true
+edition = "2021"
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Single-binary runtime assembling every SignApps service as tokio tasks"
+
+[[bin]]
+name = "signapps-platform"
+path = "src/main.rs"
+
+[dependencies]
+mimalloc = { workspace = true }
+
+signapps-common  = { path = "../../crates/signapps-common" }
+signapps-db      = { path = "../../crates/signapps-db" }
+signapps-service = { path = "../../crates/signapps-service" }
+
+anyhow  = { workspace = true }
+axum    = { workspace = true }
+tokio   = { workspace = true, features = ["full"] }
+tracing = { workspace = true }
+futures = { workspace = true }

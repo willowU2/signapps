@@ -96,6 +96,7 @@ members = [
     "services/signapps-chat",
     "services/signapps-billing",
     "services/signapps-notifications",
+    "services/signapps-platform",
     "services/signapps-social",
     "services/signapps-vault",
     "services/signapps-org",
