@@ -1,9 +1,9 @@
 "use client";
 
 import { Suspense, useEffect, useState } from "react";
-import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
 import { EditorLayout } from "@/components/layout/editor-layout";
+import { TiptapEditor as Editor } from "@/components/editor/tiptap-lazy";
 import { FileText, ArrowLeft } from "lucide-react";
 import { useAuthStore } from "@/lib/store";
 import { EntityLinks } from "@/components/crosslinks/EntityLinks";
@@ -45,10 +45,6 @@ function EditorSkeleton() {
     </div>
   );
 }
-
-const Editor = dynamic(() => import("@/components/docs/editor"), {
-  ssr: false,
-});
 
 import {
   ChevronDown,

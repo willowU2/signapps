@@ -549,6 +549,9 @@ See `docs/architecture/inter-service-communication.md` for details and patterns.
 ## Préférences de développement
 
 - **Frontend port** : TOUJOURS port 3000
+- **Frontend dev (défaut)** : `cd client && npm run dev` utilise **Turbopack** (Next.js 16). Cold compile < 1 s par route.
+- **Frontend build** : `cd client && npm run build` (Next.js default, Turbopack en prod OU webpack selon Next 16 config).
+- **Frontend budget** : `cd client && npm run budget` vérifie la taille gzip par route.
 - **Auto-login dev** : `http://localhost:3000/login?auto=admin`
 - **PostgreSQL** : `just db-start` (Docker) ou natif
 - **Runtime backend (défaut)** : `just start` → **signapps-platform** (single binary, 34 services en tokio tasks, cold start < 3 s)

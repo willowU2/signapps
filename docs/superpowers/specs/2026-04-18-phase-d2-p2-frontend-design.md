@@ -418,6 +418,55 @@ Update des `product-specs` et du debug skill `turbopack-debug` à chaque commit 
 
 ---
 
+## 14. Baseline measured after P2 (2026-04-18)
+
+### 14.1 Bundle budget snapshot
+
+Bundle sizes (gzipped) measured via `npm run budget` after Waves A-D complete. Routes shown in order of budget utilization, worst first.
+
+| Route | Size (gzip) | Budget | Utilization | Status |
+|---|---|---|---|---|
+| `/dashboard` | 892.7 kB | 400 kB | 223% | FAIL |
+| `/contacts` | 763.1 kB | 500 kB | 153% | FAIL |
+| `/mail` | 741.8 kB | 500 kB | 148% | FAIL |
+| `/projects` | 703.3 kB | 500 kB | 141% | FAIL |
+| `/forms` | 694.1 kB | 500 kB | 139% | FAIL |
+| `/` | 393.7 kB | 250 kB | 157% | FAIL |
+| `/sheets/editor` | 1025.7 kB | 800 kB | 128% | FAIL |
+| `/docs/editor` | 887.1 kB | 800 kB | 111% | FAIL |
+| `/design/editor` | 879.7 kB | 800 kB | 110% | FAIL |
+| `/meet/[code]` | 689.0 kB | 800 kB | 86% | ok |
+
+Notes:
+- Routes that still exceed budget after P2 are tracked as follow-up issues. Main levers that remain: (a) prune remaining direct Tiptap imports in component graph, (b) virtualize heavy lists, (c) extract more client islands out of RSC pages.
+- The CI job `bundle-budget` enforces these budgets on every PR.
+- The overall workspace build still reports many routes in the 600-700 kB range hitting the default 500 kB budget; this reflects a shared client vendor chunk common to most `/app/*` routes and is the top lever for a follow-up pass.
+
+### 14.2 Cold compile (Turbopack)
+
+- Measured via `client/e2e/p2-cold-compile.spec.ts` (requires running services stack).
+- `/dashboard` first hit: Turbopack dev server reported "Ready in 444 ms" at startup (Wave A). Actual per-route cold compile to be measured on a real CI run.
+
+### 14.3 LCP (Lighthouse)
+
+Attempted run on 2026-04-18 against `http://localhost:3000/dashboard` (Next dev + Turbopack), Chrome headless via `npx lighthouse`:
+
+| Metric | Value |
+|---|---|
+| Performance score | 0.40 |
+| FCP | 1961 ms |
+| LCP | 37212 ms (invalid — see note) |
+| TBT | 2546 ms |
+| CLS | 0 |
+| Speed Index | 5507 ms |
+| Final URL | `http://localhost:3000/login?redirect=%2Fdashboard` |
+
+Note: backend services were not running at measurement time, so Lighthouse was redirected to `/login` (no JWT). The LCP figure above therefore reflects the login page waiting for a long-running network task, not the RSC `/dashboard` page. To obtain a valid measurement, run with the full service stack up (`just db-start` + `just run identity` + `just run gateway` + authenticated session, e.g. via `?auto=admin` URL when services are up).
+
+Target per spec: LCP < 2500 ms on RSC pages. Playwright test `p2-rsc-dashboard.spec.ts` asserts LCP < 3500 ms on the dev machine as a smoke gate; this remains the interim signal until a proper Lighthouse-with-stack run can be scheduled.
+
+---
+
 ## 13. Références
 
 - Spec parent : `docs/superpowers/specs/2026-04-18-phase-d2-architectural-perf-design.md` §5.

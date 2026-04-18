@@ -331,3 +331,38 @@ jobs:
           elapsed=$((end - start))
           echo "elapsed=${elapsed}ms"
           [ "$elapsed" -lt 3000 ]
+
+  # ─────────────────────────────────────────────────────────
+  # Job 7: bundle-budget — per-route gzipped size gate
+  # ─────────────────────────────────────────────────────────
+  bundle-budget:
+    name: Bundle Budget (per-route)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: [frontend]
+
+    defaults:
+      run:
+        working-directory: client
+
+    env:
+      NODE_ENV: production
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: client/pnpm-lock.yaml
+
+      - name: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile
+
+      - name: Build + budget
+        run: pnpm run budget
