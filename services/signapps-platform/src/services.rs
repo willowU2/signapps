@@ -19,6 +19,7 @@ pub fn declare(shared: SharedState) -> Vec<ServiceSpec> {
         spec_media(shared.clone()),
         spec_securelink(shared.clone()),
         spec_metrics(shared.clone()),
+        spec_social(shared.clone()),
     ]
 }
 
@@ -144,6 +145,19 @@ fn spec_metrics(shared: SharedState) -> ServiceSpec {
         async move {
             let router = signapps_metrics::router(shared).await?;
             run_server_on_addr(router, "0.0.0.0", 3008).await
+        }
+    })
+}
+
+fn spec_social(shared: SharedState) -> ServiceSpec {
+    ServiceSpec::new("signapps-social", 3019, move || {
+        let shared = shared.clone();
+        async move {
+            // router() spawns the OAuth consumer + scheduled-post
+            // publisher as detached tokio tasks tied to this factory
+            // scope, so they die with the service on supervisor restart.
+            let router = signapps_social::router(shared).await?;
+            run_server_on_addr(router, "0.0.0.0", 3019).await
         }
     })
 }
