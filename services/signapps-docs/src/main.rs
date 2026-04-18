@@ -156,7 +156,11 @@ async fn main() -> anyhow::Result<()> {
         .route(
             "/api/v1/fonts/files/:family/:variant",
             get(handlers::fonts::get_font_file),
-        );
+        )
+        // Drawing endpoints — stateless rendering, no auth required
+        .route("/api/v1/drawing/render/svg", post(handlers::drawing::render_svg))
+        .route("/api/v1/drawing/render/png", post(handlers::drawing::render_png))
+        .route("/api/v1/drawing/charts", post(handlers::drawing::generate_chart));
 
     // Protected routes (auth required)
     let protected_routes = Router::new()

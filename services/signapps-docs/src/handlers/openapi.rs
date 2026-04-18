@@ -126,6 +126,10 @@ impl Modify for SecurityAddon {
         crate::handlers::sheet_formats::batch_upsert_formats,
         crate::handlers::sheet_formats::get_metadata,
         crate::handlers::sheet_formats::upsert_metadata,
+        // Drawing
+        crate::handlers::drawing::render_svg,
+        crate::handlers::drawing::render_png,
+        crate::handlers::drawing::generate_chart,
     ),
     components(schemas(
         // Classify
@@ -200,6 +204,10 @@ impl Modify for SecurityAddon {
         signapps_db::models::CreateSnapshot,
         signapps_db::models::DiffEntry,
         crate::handlers::versions::DiffSnapshotsBody,
+        // Drawing
+        crate::handlers::drawing::RenderRequest,
+        crate::handlers::drawing::ChartRequest,
+        crate::handlers::drawing::ChartSeriesInput,
     )),
     tags(
         (name = "System", description = "Health and system endpoints"),
@@ -213,6 +221,7 @@ impl Modify for SecurityAddon {
         (name = "Presentations", description = "Slides persistence API (presentations, layouts, slides CRUD)"),
         (name = "Sheet Formats", description = "Spreadsheet cell formats and sheet metadata persistence"),
         (name = "Versions", description = "Document versioning -- command log, snapshots, undo, and diff"),
+        (name = "Drawing", description = "Drawing primitive rendering (SVG/PNG) and chart generation"),
     ),
     modifiers(&SecurityAddon),
 )]

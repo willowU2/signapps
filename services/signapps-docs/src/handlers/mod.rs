@@ -1,6 +1,7 @@
 pub mod classify;
 pub mod collab;
 pub mod designs;
+pub mod drawing;
 pub mod fonts;
 pub mod health;
 pub mod macros;
