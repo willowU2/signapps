@@ -438,8 +438,8 @@ export default function DesignCanvas({ fabricCanvasRef }: DesignCanvasProps) {
             setScrollPos({ x: -el.scrollLeft, y: -el.scrollTop });
           }}
         >
-          {/* Zoom controls */}
-          <div className="absolute bottom-4 right-4 z-10 flex items-center gap-1 bg-background/90 backdrop-blur-sm border rounded-lg shadow-sm px-1 py-1">
+          {/* Zoom controls — Figma-style floating card */}
+          <div className="absolute bottom-5 right-5 z-10 flex items-center gap-0.5 bg-background/95 backdrop-blur-md border border-border/60 rounded-xl shadow-xl px-1.5 py-1.5 ring-1 ring-black/5">
             <Button
               variant="ghost"
               size="icon"

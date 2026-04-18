@@ -890,3 +890,57 @@ fn create_router(state: AppState, sharing_engine: SharingEngine) -> Router {
         .layer(cors)
         .with_state(state)
 }
+
+// ---------------------------------------------------------------------------
+// Row-to-type helpers (used by carddav and carddav_sync submodules).
+// ---------------------------------------------------------------------------
+
+pub(crate) async fn fetch_group_ids(
+    pool: &sqlx::PgPool,
+    contact_id: uuid::Uuid,
+) -> Result<Vec<uuid::Uuid>, sqlx::Error> {
+    let rows: Vec<(uuid::Uuid,)> =
+        sqlx::query_as("SELECT group_id FROM contact_group_members WHERE contact_id = $1")
+            .bind(contact_id)
+            .fetch_all(pool)
+            .await?;
+    Ok(rows.into_iter().map(|(g,)| g).collect())
+}
+
+pub(crate) fn row_to_contact(row: &sqlx::postgres::PgRow, group_ids: Vec<uuid::Uuid>) -> Contact {
+    use sqlx::Row;
+    let created: chrono::DateTime<chrono::Utc> =
+        row.try_get("created_at").unwrap_or_else(|_| chrono::Utc::now());
+    let updated: chrono::DateTime<chrono::Utc> =
+        row.try_get("updated_at").unwrap_or_else(|_| chrono::Utc::now());
+    Contact {
+        id: row.try_get("id").unwrap_or_else(|_| uuid::Uuid::nil()),
+        owner_id: row.try_get("owner_id").unwrap_or_else(|_| uuid::Uuid::nil()),
+        first_name: row.try_get("first_name").unwrap_or_default(),
+        last_name: row.try_get("last_name").unwrap_or_default(),
+        email: row.try_get("email").ok(),
+        phone: row.try_get("phone").ok(),
+        organization: row.try_get("organization").ok(),
+        job_title: row.try_get("job_title").ok(),
+        group_ids,
+        created_at: created.to_rfc3339(),
+        updated_at: updated.to_rfc3339(),
+    }
+}
+
+pub(crate) fn row_to_group(row: &sqlx::postgres::PgRow) -> ContactGroup {
+    use sqlx::Row;
+    let created: chrono::DateTime<chrono::Utc> =
+        row.try_get("created_at").unwrap_or_else(|_| chrono::Utc::now());
+    let updated: chrono::DateTime<chrono::Utc> =
+        row.try_get("updated_at").unwrap_or_else(|_| chrono::Utc::now());
+    ContactGroup {
+        id: row.try_get("id").unwrap_or_else(|_| uuid::Uuid::nil()),
+        owner_id: row.try_get("owner_id").unwrap_or_else(|_| uuid::Uuid::nil()),
+        name: row.try_get("name").unwrap_or_default(),
+        description: row.try_get("description").ok(),
+        color: row.try_get("color").ok(),
+        created_at: created.to_rfc3339(),
+        updated_at: updated.to_rfc3339(),
+    }
+}

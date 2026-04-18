@@ -1,8 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useDesignStore } from "@/stores/design-store";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Square,
   Circle,
@@ -40,6 +47,7 @@ import {
   Check,
   X,
   Plus,
+  Loader2,
   type LucideIcon,
 } from "lucide-react";
 import type { DesignObject } from "./types";
@@ -256,12 +264,201 @@ const ICON_LIST: { name: string; icon: LucideIcon }[] = [
   { name: "Plus", icon: Plus },
 ];
 
+// ─── External icon libraries (FOSS) ───
+// Loaded lazily from jsdelivr CDN. No bundle impact.
+type LibraryId =
+  | "lineicons"
+  | "remix"
+  | "minicons"
+  | "lucide"
+  | "3dicons"
+  | "twemoji"
+  | "openmoji";
+type Icons3dStyle = "color" | "clay" | "gradient";
+type Icons3dAngle = "dynamic" | "front" | "iso";
+
+interface LibraryConfig {
+  id: LibraryId;
+  label: string;
+  description: string;
+  svgPathPrefix: string; // filter files starting with this path
+  listEndpoint: string; // jsdelivr listing endpoint
+  cdnBase: string; // base URL for raw file access
+}
+
+const ICON_LIBRARIES: LibraryConfig[] = [
+  {
+    id: "lucide",
+    label: "Lucide (local)",
+    description: "Icônes incluses dans l'app — instantanées",
+    svgPathPrefix: "",
+    listEndpoint: "",
+    cdnBase: "",
+  },
+  {
+    id: "lineicons",
+    label: "Lineicons",
+    description: "600+ icônes line-style Lineicons (MIT)",
+    svgPathPrefix: "/assets/svgs/regular/",
+    listEndpoint:
+      "https://data.jsdelivr.com/v1/package/gh/LineiconsHQ/Lineicons@main/flat",
+    cdnBase: "https://cdn.jsdelivr.net/gh/LineiconsHQ/Lineicons@main",
+  },
+  {
+    id: "remix",
+    label: "Remix Icon",
+    description: "3200+ icônes Remix Icon (Apache 2.0)",
+    svgPathPrefix: "/icons/",
+    listEndpoint:
+      "https://data.jsdelivr.com/v1/package/npm/remixicon@4.9.1/flat",
+    cdnBase: "https://cdn.jsdelivr.net/npm/remixicon@4.9.1",
+  },
+  {
+    id: "minicons",
+    label: "Minicons (dev brands)",
+    description: "546 logos de technologies (Paulo Archanjo)",
+    svgPathPrefix: "/",
+    listEndpoint:
+      "https://data.jsdelivr.com/v1/package/gh/pauloarchanjo/minicons@main/flat",
+    cdnBase: "https://cdn.jsdelivr.net/gh/pauloarchanjo/minicons@main",
+  },
+  {
+    id: "3dicons",
+    label: "3D Icons",
+    description: "120 icônes 3D (realvjy, CC-BY) — PNG couleur/argile/dégradé",
+    // Fetches .md metadata files from repo, then builds PNG URLs.
+    svgPathPrefix: "/content/3dicons-meta/",
+    listEndpoint:
+      "https://data.jsdelivr.com/v1/package/gh/realvjy/3dicons@develop/flat",
+    cdnBase: "https://3dicons.sgp1.cdn.digitaloceanspaces.com/v1",
+  },
+  {
+    id: "twemoji",
+    label: "Twemoji (Twitter)",
+    description: "3720 emojis style Twitter (CC-BY 4.0)",
+    svgPathPrefix: "/",
+    listEndpoint:
+      "https://data.jsdelivr.com/v1/package/npm/@twemoji/svg@15.0.0/flat",
+    cdnBase: "https://cdn.jsdelivr.net/npm/@twemoji/svg@15.0.0",
+  },
+  {
+    id: "openmoji",
+    label: "OpenMoji (color)",
+    description: "4284 emojis OpenMoji style couleur (CC-BY-SA 4.0)",
+    svgPathPrefix: "/color/svg/",
+    listEndpoint:
+      "https://data.jsdelivr.com/v1/package/npm/openmoji@15.1.0/flat",
+    cdnBase: "https://cdn.jsdelivr.net/npm/openmoji@15.1.0",
+  },
+];
+
+interface IconFile {
+  name: string;
+  path: string;
+  url: string;
+}
+
+async function fetchLibraryIndex(
+  lib: LibraryConfig,
+  icons3dStyle: Icons3dStyle = "color",
+  icons3dAngle: Icons3dAngle = "dynamic",
+): Promise<IconFile[]> {
+  if (!lib.listEndpoint) return [];
+  const r = await fetch(lib.listEndpoint);
+  if (!r.ok) throw new Error(`Index fetch failed: ${r.status}`);
+  const d = (await r.json()) as { files: { name: string }[] };
+
+  // 3D Icons — special handling: files are .md metadata, URLs built programmatically
+  if (lib.id === "3dicons") {
+    return (d.files ?? [])
+      .filter(
+        (f) => f.name.endsWith(".md") && f.name.startsWith(lib.svgPathPrefix),
+      )
+      .map((f) => {
+        const slug = f.name.replace(lib.svgPathPrefix, "").replace(/\.md$/, "");
+        return {
+          name: slug.replace(/[-_]/g, " "),
+          path: f.name,
+          url: `${lib.cdnBase}/${icons3dAngle}/${icons3dStyle}/${slug}-${icons3dAngle}-${icons3dStyle}.png`,
+        };
+      });
+  }
+
+  return (d.files ?? [])
+    .filter((f) => {
+      if (!f.name.endsWith(".svg")) return false;
+      if (!lib.svgPathPrefix || lib.svgPathPrefix === "/") return true;
+      return f.name.startsWith(lib.svgPathPrefix);
+    })
+    .map((f) => {
+      const base = f.name
+        .split("/")
+        .pop()!
+        .replace(/\.svg$/, "");
+      // For emoji libs, the filename is a hex codepoint sequence — convert
+      // it to the actual character for human-readable display / search.
+      if (lib.id === "twemoji" || lib.id === "openmoji") {
+        try {
+          const emoji = base
+            .split("-")
+            .filter((p) => !/^(fe0f|200d|20e3)$/i.test(p)) // drop variation selectors
+            .map((hex) => String.fromCodePoint(parseInt(hex, 16)))
+            .join("");
+          return {
+            name: emoji || base,
+            path: f.name,
+            url: `${lib.cdnBase}${f.name}`,
+          };
+        } catch {
+          // fall through
+        }
+      }
+      return {
+        name: base.replace(/^ln-/, "").replace(/[-_]/g, " "),
+        path: f.name,
+        url: `${lib.cdnBase}${f.name}`,
+      };
+    });
+}
+
 export default function DesignShapesLibrary({
   fabricCanvasRef,
 }: DesignShapesLibraryProps) {
   const { addObject, pushUndo } = useDesignStore();
   const [search, setSearch] = useState("");
   const [tab, setTab] = useState<"shapes" | "icons">("shapes");
+  const [library, setLibrary] = useState<LibraryId>("lucide");
+  const [libIcons, setLibIcons] = useState<IconFile[]>([]);
+  const [libLoading, setLibLoading] = useState(false);
+  const [libError, setLibError] = useState<string | null>(null);
+  const [insertLoading, setInsertLoading] = useState<string | null>(null);
+  const [icons3dStyle, setIcons3dStyle] = useState<Icons3dStyle>("color");
+  const [icons3dAngle, setIcons3dAngle] = useState<Icons3dAngle>("dynamic");
+
+  // Load library index when switching to non-local libraries
+  useEffect(() => {
+    if (library === "lucide") {
+      setLibIcons([]);
+      return;
+    }
+    const lib = ICON_LIBRARIES.find((l) => l.id === library)!;
+    let cancelled = false;
+    setLibLoading(true);
+    setLibError(null);
+    fetchLibraryIndex(lib, icons3dStyle, icons3dAngle)
+      .then((icons) => {
+        if (!cancelled) setLibIcons(icons);
+      })
+      .catch((e) => {
+        if (!cancelled) setLibError(e.message || "Erreur");
+      })
+      .finally(() => {
+        if (!cancelled) setLibLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [library, icons3dStyle, icons3dAngle]);
 
   const handleAddShape = async (shapeDef: ShapeDef) => {
     const fabricModule = await import("fabric");
@@ -286,47 +483,187 @@ export default function DesignShapesLibrary({
     addObject(newObj);
   };
 
-  const handleAddIcon = async (iconName: string, IconComponent: LucideIcon) => {
+  /**
+   * Rasterize an SVG string to a 512×512 PNG data URL.
+   * Rendering as raster (not vector Group) ensures ALL effects work:
+   * filters (brightness/contrast/saturation/hue/blur/pixelate/tint/presets),
+   * stroke, corner radius, and the image-only sections of the Effects panel.
+   */
+  const rasterizeSvg = async (svgString: string): Promise<string> => {
+    // Normalize currentColor → primary tint
+    const normalized = svgString.replace(/currentColor/g, "#4f46e5");
+    const blob = new Blob([normalized], { type: "image/svg+xml" });
+    const blobUrl = URL.createObjectURL(blob);
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.onload = () => {
+        const size = 512;
+        const canvas = document.createElement("canvas");
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+          URL.revokeObjectURL(blobUrl);
+          return reject(new Error("No canvas context"));
+        }
+        // Preserve aspect ratio, center within 512×512
+        const r = Math.min(size / img.width, size / img.height);
+        const w = img.width * r;
+        const h = img.height * r;
+        ctx.drawImage(img, (size - w) / 2, (size - h) / 2, w, h);
+        URL.revokeObjectURL(blobUrl);
+        resolve(canvas.toDataURL("image/png"));
+      };
+      img.onerror = () => {
+        URL.revokeObjectURL(blobUrl);
+        reject(new Error("SVG rasterize failed"));
+      };
+      img.src = blobUrl;
+    });
+  };
+
+  /**
+   * Insert an SVG string as a rasterized FabricImage so all Effects-panel
+   * filters + strokes + radius work. Renders at 512px then scaled down.
+   */
+  const insertSvgAsVector = async (svgString: string, name: string) => {
     const fabricModule = await import("fabric");
     const canvas = fabricCanvasRef.current;
     if (!canvas) return;
 
     pushUndo();
-    // Create icon as a text object with the icon name (since we can't easily render Lucide SVG directly)
-    // Instead, create a circle with the icon name as a simple representation
-    const group = new fabricModule.Circle({
-      left: 100,
-      top: 100,
-      radius: 30,
-      fill: "#4f46e5",
-      stroke: "",
-      strokeWidth: 0,
+    const dataUrl = await rasterizeSvg(svgString);
+    const img = await fabricModule.FabricImage.fromURL(dataUrl);
+
+    // Size & center
+    const maxSize = 160;
+    const scale = Math.min(
+      maxSize / (img.width || 1),
+      maxSize / (img.height || 1),
+      1,
+    );
+    img.set({
+      left: 120,
+      top: 120,
+      scaleX: scale,
+      scaleY: scale,
+      selectable: true,
+      evented: true,
+      hasControls: true,
     });
-    (group as FabricObjectWithId).id = crypto.randomUUID();
-    canvas.add(group);
-    canvas.setActiveObject(group);
+    (img as FabricObjectWithId).id = crypto.randomUUID();
+    canvas.add(img);
+    canvas.setActiveObject(img);
     canvas.requestRenderAll();
 
     const newObj: DesignObject = {
-      id: (group as FabricObjectWithId).id!,
-      type: "shape",
-      name: `Icon: ${iconName}`,
-      fabricData: group.toObject(["id"]),
+      id: (img as FabricObjectWithId).id!,
+      type: "image",
+      name: `Icon: ${name}`,
+      fabricData: img.toObject(["id"]),
       locked: false,
       visible: true,
     };
     addObject(newObj);
   };
 
+  /** Convert a Lucide React icon to SVG string by rendering + serializing. */
+  const handleAddLucideIcon = async (
+    iconName: string,
+    IconComponent: LucideIcon,
+  ) => {
+    setInsertLoading(iconName);
+    try {
+      // Render Lucide icon to offscreen SVG via react-dom/server
+      const { renderToStaticMarkup } = await import("react-dom/server");
+      const React = await import("react");
+      const svgString = renderToStaticMarkup(
+        React.createElement(IconComponent, {
+          size: 48,
+          stroke: "currentColor",
+          strokeWidth: 2,
+          color: "#4f46e5",
+        }),
+      );
+      await insertSvgAsVector(svgString, iconName);
+    } finally {
+      setInsertLoading(null);
+    }
+  };
+
+  /** Fetch remote SVG (or PNG for 3D icons) from CDN and insert it. */
+  const handleAddRemoteIcon = async (icon: IconFile) => {
+    setInsertLoading(icon.url);
+    try {
+      const isPng = icon.url.toLowerCase().endsWith(".png");
+      if (isPng) {
+        // 3D icons — insert as raster image
+        const fabricModule = await import("fabric");
+        const canvas = fabricCanvasRef.current;
+        if (!canvas) return;
+        pushUndo();
+        const img = await fabricModule.FabricImage.fromURL(icon.url, {
+          crossOrigin: "anonymous",
+        });
+        const maxSize = 180;
+        const scale = Math.min(
+          maxSize / (img.width || 1),
+          maxSize / (img.height || 1),
+          1,
+        );
+        img.set({ scaleX: scale, scaleY: scale, left: 120, top: 120 });
+        (img as FabricObjectWithId).id = crypto.randomUUID();
+        canvas.add(img);
+        canvas.setActiveObject(img);
+        canvas.requestRenderAll();
+        addObject({
+          id: (img as FabricObjectWithId).id!,
+          type: "image",
+          name: `3D: ${icon.name}`,
+          fabricData: img.toObject(["id"]),
+          locked: false,
+          visible: true,
+        });
+      } else {
+        const r = await fetch(icon.url);
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        const svg = await r.text();
+        await insertSvgAsVector(svg, icon.name);
+      }
+    } catch (e) {
+      console.error("Icon fetch failed:", e);
+    } finally {
+      setInsertLoading(null);
+    }
+  };
+
   const categories = [...new Set(SHAPES.map((s) => s.category))];
   const filteredShapes = search
     ? SHAPES.filter((s) => s.name.toLowerCase().includes(search.toLowerCase()))
     : SHAPES;
-  const filteredIcons = search
-    ? ICON_LIST.filter((i) =>
-        i.name.toLowerCase().includes(search.toLowerCase()),
-      )
-    : ICON_LIST;
+  const filteredLucide = useMemo(
+    () =>
+      search
+        ? ICON_LIST.filter((i) =>
+            i.name.toLowerCase().includes(search.toLowerCase()),
+          )
+        : ICON_LIST,
+    [search],
+  );
+  const filteredRemote = useMemo(
+    () =>
+      search
+        ? libIcons.filter((i) =>
+            i.name.toLowerCase().includes(search.toLowerCase()),
+          )
+        : libIcons,
+    [search, libIcons],
+  );
+  // Limit remote list display to avoid rendering 5000 DOM nodes
+  const MAX_DISPLAYED = 300;
+  const displayedRemote = filteredRemote.slice(0, MAX_DISPLAYED);
+  const activeLib = ICON_LIBRARIES.find((l) => l.id === library)!;
 
   return (
     <div className="space-y-3">
@@ -400,20 +737,168 @@ export default function DesignShapesLibrary({
           })}
         </div>
       ) : (
-        <div className="grid grid-cols-4 gap-1.5">
-          {filteredIcons.map(({ name, icon: Icon }) => (
-            <button
-              key={name}
-              onClick={() => handleAddIcon(name, Icon)}
-              className="flex flex-col items-center gap-1 rounded-lg border border-border hover:border-primary/50 hover:bg-muted/30 p-2 transition-all"
-              title={name}
+        <div className="space-y-3">
+          {/* Library selector */}
+          <div className="space-y-1">
+            <label className="text-[10px] font-medium text-muted-foreground">
+              Bibliothèque
+            </label>
+            <Select
+              value={library}
+              onValueChange={(v) => setLibrary(v as LibraryId)}
             >
-              <Icon className="h-4 w-4" />
-              <span className="text-[9px] truncate w-full text-center">
-                {name}
-              </span>
-            </button>
-          ))}
+              <SelectTrigger className="h-8 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {ICON_LIBRARIES.map((lib) => (
+                  <SelectItem key={lib.id} value={lib.id} className="text-xs">
+                    {lib.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-[10px] text-muted-foreground leading-tight">
+              {activeLib.description}
+            </p>
+          </div>
+
+          {/* 3D Icons — style & angle pickers */}
+          {library === "3dicons" && (
+            <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-1">
+                <label className="text-[10px] font-medium text-muted-foreground">
+                  Style
+                </label>
+                <Select
+                  value={icons3dStyle}
+                  onValueChange={(v) => setIcons3dStyle(v as Icons3dStyle)}
+                >
+                  <SelectTrigger className="h-7 text-[10px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="color" className="text-xs">
+                      Couleur
+                    </SelectItem>
+                    <SelectItem value="clay" className="text-xs">
+                      Argile
+                    </SelectItem>
+                    <SelectItem value="gradient" className="text-xs">
+                      Dégradé
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] font-medium text-muted-foreground">
+                  Angle
+                </label>
+                <Select
+                  value={icons3dAngle}
+                  onValueChange={(v) => setIcons3dAngle(v as Icons3dAngle)}
+                >
+                  <SelectTrigger className="h-7 text-[10px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="dynamic" className="text-xs">
+                      Dynamique
+                    </SelectItem>
+                    <SelectItem value="front" className="text-xs">
+                      Face
+                    </SelectItem>
+                    <SelectItem value="iso" className="text-xs">
+                      Isométrique
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
+
+          {library === "lucide" ? (
+            <div className="grid grid-cols-4 gap-1.5">
+              {filteredLucide.map(({ name, icon: Icon }) => (
+                <button
+                  key={name}
+                  onClick={() => handleAddLucideIcon(name, Icon)}
+                  disabled={insertLoading === name}
+                  className="flex flex-col items-center gap-1 rounded-lg border border-border hover:border-primary/50 hover:bg-muted/30 p-2 transition-all"
+                  title={name}
+                >
+                  {insertLoading === name ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Icon className="h-4 w-4" />
+                  )}
+                  <span className="text-[9px] truncate w-full text-center">
+                    {name}
+                  </span>
+                </button>
+              ))}
+            </div>
+          ) : (
+            <>
+              {libLoading && (
+                <div className="flex items-center justify-center py-6 text-xs text-muted-foreground gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Chargement de {activeLib.label}...
+                </div>
+              )}
+              {libError && (
+                <p className="text-[10px] text-destructive bg-destructive/5 border border-destructive/20 rounded-md px-2 py-1.5">
+                  {libError}
+                </p>
+              )}
+              {!libLoading && !libError && (
+                <>
+                  <p className="text-[10px] text-muted-foreground">
+                    {filteredRemote.length} icônes
+                    {filteredRemote.length > MAX_DISPLAYED && (
+                      <span>
+                        {" "}
+                        — {MAX_DISPLAYED} affichées (précise ta recherche)
+                      </span>
+                    )}
+                  </p>
+                  <div className="grid grid-cols-4 gap-1.5">
+                    {displayedRemote.map((icon) => (
+                      <button
+                        key={icon.path}
+                        onClick={() => handleAddRemoteIcon(icon)}
+                        disabled={insertLoading === icon.url}
+                        className="relative flex flex-col items-center gap-1 rounded-lg border border-border hover:border-primary/50 hover:bg-muted/30 p-2 transition-all aspect-square"
+                        title={icon.name}
+                      >
+                        {insertLoading === icon.url ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <object
+                            data={icon.url}
+                            type="image/svg+xml"
+                            className="h-5 w-5 pointer-events-none"
+                            aria-label={icon.name}
+                          >
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={icon.url}
+                              alt={icon.name}
+                              className="h-5 w-5"
+                              loading="lazy"
+                            />
+                          </object>
+                        )}
+                        <span className="text-[8px] truncate w-full text-center leading-none">
+                          {icon.name.slice(0, 12)}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </>
+          )}
         </div>
       )}
     </div>

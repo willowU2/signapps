@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo, FormEvent } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { formsApi } from "@/lib/api/forms";
 import type { Form, FormField, FormAnswer } from "@/lib/api/forms";
@@ -21,6 +21,13 @@ import { CheckCircle2, FileText } from "lucide-react";
 import { FileUploadField } from "@/components/forms/file-upload-field";
 import { SignatureField } from "@/components/forms/signature-field";
 import { MultiPageWizard } from "@/components/forms/multi-page-wizard";
+import {
+  loadBranding,
+  applyBranding,
+  brandingShadowClass,
+  FONT_CSS,
+  type FormBranding,
+} from "@/components/forms/form-branding-panel";
 import { toast } from "sonner";
 import { notify } from "@/lib/notify";
 
@@ -67,6 +74,8 @@ function validateField(field: FormField, value: any): string {
 export default function PublicFormPage() {
   usePageTitle("Formulaire");
   const params = useParams();
+  const searchParams = useSearchParams();
+  const isPreview = searchParams?.get("preview") === "1";
   const formId = params.id as string;
 
   const [form, setForm] = useState<Form | null>(null);
@@ -80,12 +89,17 @@ export default function PublicFormPage() {
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [currentPage, setCurrentPage] = useState(0);
+  const [branding, setBranding] = useState<FormBranding | null>(null);
+
+  useEffect(() => {
+    if (formId) setBranding(loadBranding(formId));
+  }, [formId]);
 
   useEffect(() => {
     const loadForm = async () => {
       try {
         const res = await formsApi.get(formId);
-        if (!res.data.is_published) {
+        if (!res.data.is_published && !isPreview) {
           setError("Ce formulaire n'est pas encore ouvert aux réponses.");
           setLoading(false);
           return;
@@ -113,7 +127,8 @@ export default function PublicFormPage() {
       }
     };
     if (formId) loadForm();
-  }, [formId]);
+     
+  }, [formId, isPreview]);
 
   // Split fields into pages by PageBreak sentinels
   const pages = useMemo(() => {
@@ -534,19 +549,62 @@ export default function PublicFormPage() {
 
   const currentPageFields = pages[currentPage] ?? [];
 
+  const brandingStyle = branding ? applyBranding(branding) : {};
+  const fontClass = branding ? FONT_CSS[branding.font] : "";
+  const shadowClass = branding ? brandingShadowClass(branding) : "shadow-md";
+  const radius = branding?.borderRadius ?? 8;
+
   return (
     <main
       id="main-content"
-      className="min-h-screen bg-slate-50 dark:bg-slate-950 p-4 sm:p-8 py-12"
+      className={`min-h-screen p-4 sm:p-8 py-12 transition-colors ${fontClass}`}
+      style={brandingStyle}
     >
+      {isPreview && (
+        <div className="max-w-2xl mx-auto mb-4 rounded-md bg-amber-100 border border-amber-300 text-amber-900 text-xs font-medium px-3 py-2 text-center">
+          ⚠ Mode aperçu — les réponses ne seront PAS enregistrées
+        </div>
+      )}
       <div className="max-w-2xl mx-auto space-y-6">
-        <Card className="border-t-4 border-t-primary shadow-md">
+        {branding?.coverImageUrl && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={branding.coverImageUrl}
+            alt="Cover"
+            className="w-full h-48 object-cover"
+            style={{ borderRadius: `${radius}px` }}
+          />
+        )}
+        <Card
+          className={shadowClass}
+          style={{
+            backgroundColor: branding?.backgroundColor,
+            borderRadius: `${radius}px`,
+            borderTop: branding?.primaryColor
+              ? `4px solid ${branding.primaryColor}`
+              : undefined,
+          }}
+        >
           <CardHeader className="pb-6">
-            <CardTitle className="text-2xl sm:text-3xl font-bold">
+            {branding?.logoUrl && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={branding.logoUrl}
+                alt="Logo"
+                className="h-10 w-auto mb-3"
+              />
+            )}
+            <CardTitle
+              className="text-2xl sm:text-3xl font-bold"
+              style={{ color: branding?.primaryColor }}
+            >
               {form?.title}
             </CardTitle>
             {form?.description && (
-              <CardDescription className="text-base mt-2 whitespace-pre-wrap text-foreground/80">
+              <CardDescription
+                className="text-base mt-2 whitespace-pre-wrap"
+                style={{ color: branding?.textColor }}
+              >
                 {form.description}
               </CardDescription>
             )}

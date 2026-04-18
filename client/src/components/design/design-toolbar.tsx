@@ -292,10 +292,10 @@ export default function DesignToolbar({
   };
 
   return (
-    <TooltipProvider delayDuration={0}>
-      <div className="flex items-center gap-1 px-3 py-1.5 border-b bg-background/95 backdrop-blur-sm shrink-0">
+    <TooltipProvider delayDuration={100}>
+      <div className="flex items-center gap-2 px-4 h-12 border-b bg-background/95 backdrop-blur-sm shrink-0 shadow-[0_1px_0_0_rgba(0,0,0,0.02)]">
         {/* Undo/Redo */}
-        <div className="flex items-center gap-0.5 border-r pr-2 mr-1">
+        <div className="flex items-center gap-0.5 pr-2 border-r border-border/60">
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
@@ -516,7 +516,7 @@ export default function DesignToolbar({
         <div className="flex-1" />
 
         {/* Grid & Snap */}
-        <div className="flex items-center gap-0.5 border-r pr-2 mr-1">
+        <div className="flex items-center gap-0.5 pr-2 border-r border-border/60">
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
