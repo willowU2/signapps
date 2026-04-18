@@ -6,9 +6,8 @@
 use anyhow::Result;
 use signapps_common::bootstrap::init_tracing;
 use signapps_db::run_migrations;
+use signapps_platform::services;
 use signapps_service::{shared_state::SharedState, supervisor::Supervisor};
-
-pub mod services;
 
 #[global_allocator]
 static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;

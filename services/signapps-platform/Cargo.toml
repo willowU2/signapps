@@ -7,6 +7,10 @@ authors.workspace = true
 license.workspace = true
 description = "Single-binary runtime assembling every SignApps service as tokio tasks"
 
+[lib]
+name = "signapps_platform"
+path = "src/lib.rs"
+
 [[bin]]
 name = "signapps-platform"
 path = "src/main.rs"
