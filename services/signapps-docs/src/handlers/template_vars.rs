@@ -137,13 +137,17 @@ pub async fn create_variable(
         return Err(StatusCode::BAD_REQUEST);
     }
 
-    let row =
-        TemplateVariableRepository::create_variable(state.pool.inner(), ctx.tenant_id, template_id, payload)
-            .await
-            .map_err(|e| {
-                tracing::error!("Failed to create template variable: {}", e);
-                StatusCode::INTERNAL_SERVER_ERROR
-            })?;
+    let row = TemplateVariableRepository::create_variable(
+        state.pool.inner(),
+        ctx.tenant_id,
+        template_id,
+        payload,
+    )
+    .await
+    .map_err(|e| {
+        tracing::error!("Failed to create template variable: {}", e);
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
 
     Ok((
         StatusCode::CREATED,
@@ -233,13 +237,15 @@ pub async fn resolve_variables(
         }
     }
 
-    let content = payload.content.unwrap_or(serde_json::Value::Object(
-        serde_json::Map::new(),
-    ));
+    let content = payload
+        .content
+        .unwrap_or(serde_json::Value::Object(serde_json::Map::new()));
 
     let resolved = resolve_template_content(&content, &effective);
 
-    Ok(Json(serde_json::json!({ "data": { "resolved": resolved } })))
+    Ok(Json(
+        serde_json::json!({ "data": { "resolved": resolved } }),
+    ))
 }
 
 /// POST /api/v1/templates/:id/batch-export -- resolve N rows of variables

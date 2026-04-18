@@ -34,6 +34,7 @@ pub fn declare(shared: SharedState) -> Vec<ServiceSpec> {
         spec_integrations(shared.clone()),
         spec_calendar(shared.clone()),
         spec_mail(shared.clone()),
+        spec_docs(shared.clone()),
     ]
 }
 
@@ -340,6 +341,21 @@ fn spec_mail(shared: SharedState) -> ServiceSpec {
             // and default-off in the test/dev runtime.
             let router = signapps_mail::router(shared).await?;
             run_server_on_addr(router, "0.0.0.0", 3012).await
+        }
+    })
+}
+
+fn spec_docs(shared: SharedState) -> ServiceSpec {
+    ServiceSpec::new("signapps-docs", 3010, move || {
+        let shared = shared.clone();
+        async move {
+            // The docs service hosts WebSocket upgrades for Tiptap / Y-CRDT
+            // collaboration (`/api/v1/docs/:doc_type/:doc_id/ws`,
+            // `/api/v1/collab/ws/:doc_id`). The shared `run_server_on_addr`
+            // helper already wires `ConnectInfo<SocketAddr>` so the WS
+            // handlers can extract peer info if needed.
+            let router = signapps_docs::router(shared).await?;
+            run_server_on_addr(router, "0.0.0.0", 3010).await
         }
     })
 }
