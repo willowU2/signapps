@@ -2,7 +2,7 @@
 -- Extends securelink DNS with authoritative zones for AD domains.
 -- Dynamic records have a timestamp for scavenging; static records have NULL timestamp.
 
-CREATE TABLE ad_dns_zones (
+CREATE TABLE IF NOT EXISTS ad_dns_zones (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     domain_id UUID NOT NULL REFERENCES ad_domains(id) ON DELETE CASCADE,
     zone_name TEXT NOT NULL,
@@ -19,9 +19,9 @@ CREATE TABLE ad_dns_zones (
     UNIQUE(domain_id, zone_name)
 );
 
-CREATE INDEX idx_ad_dns_zones_domain ON ad_dns_zones(domain_id);
+CREATE INDEX IF NOT EXISTS idx_ad_dns_zones_domain ON ad_dns_zones(domain_id);
 
-CREATE TABLE ad_dns_records (
+CREATE TABLE IF NOT EXISTS ad_dns_records (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     zone_id UUID NOT NULL REFERENCES ad_dns_zones(id) ON DELETE CASCADE,
     name TEXT NOT NULL,
@@ -34,6 +34,6 @@ CREATE TABLE ad_dns_records (
     created_at TIMESTAMPTZ DEFAULT now()
 );
 
-CREATE INDEX idx_dns_records_lookup ON ad_dns_records(zone_id, name, record_type);
-CREATE INDEX idx_dns_records_scavenge ON ad_dns_records(timestamp)
+CREATE INDEX IF NOT EXISTS idx_dns_records_lookup ON ad_dns_records(zone_id, name, record_type);
+CREATE INDEX IF NOT EXISTS idx_dns_records_scavenge ON ad_dns_records(timestamp)
     WHERE timestamp IS NOT NULL;

@@ -3,7 +3,7 @@
 
 CREATE SCHEMA IF NOT EXISTS accounting;
 
-CREATE TABLE accounting.accounts (
+CREATE TABLE IF NOT EXISTS accounting.accounts (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     parent_id UUID REFERENCES accounting.accounts(id),
     code VARCHAR(20) NOT NULL,
@@ -18,11 +18,11 @@ CREATE TABLE accounting.accounts (
     updated_at TIMESTAMPTZ DEFAULT now()
 );
 
-CREATE INDEX idx_accounts_owner ON accounting.accounts(owner_id);
+CREATE INDEX IF NOT EXISTS idx_accounts_owner ON accounting.accounts(owner_id);
 
-CREATE INDEX idx_accounts_parent ON accounting.accounts(parent_id);
+CREATE INDEX IF NOT EXISTS idx_accounts_parent ON accounting.accounts(parent_id);
 
-CREATE TABLE accounting.journal_entries (
+CREATE TABLE IF NOT EXISTS accounting.journal_entries (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     date DATE NOT NULL,
     reference VARCHAR(100),
@@ -33,7 +33,7 @@ CREATE TABLE accounting.journal_entries (
     created_at TIMESTAMPTZ DEFAULT now()
 );
 
-CREATE TABLE accounting.journal_lines (
+CREATE TABLE IF NOT EXISTS accounting.journal_lines (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     entry_id UUID NOT NULL REFERENCES accounting.journal_entries(id) ON DELETE CASCADE,
     account_id UUID NOT NULL REFERENCES accounting.accounts(id),
@@ -42,6 +42,6 @@ CREATE TABLE accounting.journal_lines (
     description TEXT
 );
 
-CREATE INDEX idx_journal_lines_entry ON accounting.journal_lines(entry_id);
+CREATE INDEX IF NOT EXISTS idx_journal_lines_entry ON accounting.journal_lines(entry_id);
 
-CREATE INDEX idx_journal_lines_account ON accounting.journal_lines(account_id);
+CREATE INDEX IF NOT EXISTS idx_journal_lines_account ON accounting.journal_lines(account_id);

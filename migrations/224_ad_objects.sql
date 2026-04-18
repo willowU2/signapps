@@ -1,7 +1,7 @@
 -- migrations/224_ad_objects.sql
 -- AD object tables: OUs, User Accounts, Computer Accounts
 
-CREATE TABLE ad_ous (
+CREATE TABLE IF NOT EXISTS ad_ous (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     domain_id UUID NOT NULL REFERENCES infrastructure.domains(id) ON DELETE CASCADE,
     node_id UUID NOT NULL REFERENCES core.org_nodes(id) ON DELETE CASCADE,
@@ -16,10 +16,10 @@ CREATE TABLE ad_ous (
     UNIQUE(domain_id, node_id)
 );
 
-CREATE INDEX idx_ad_ous_domain ON ad_ous(domain_id);
-CREATE INDEX idx_ad_ous_node ON ad_ous(node_id);
+CREATE INDEX IF NOT EXISTS idx_ad_ous_domain ON ad_ous(domain_id);
+CREATE INDEX IF NOT EXISTS idx_ad_ous_node ON ad_ous(node_id);
 
-CREATE TABLE ad_user_accounts (
+CREATE TABLE IF NOT EXISTS ad_user_accounts (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     domain_id UUID NOT NULL REFERENCES infrastructure.domains(id) ON DELETE CASCADE,
     person_id UUID NOT NULL REFERENCES core.persons(id) ON DELETE CASCADE,
@@ -45,11 +45,11 @@ CREATE TABLE ad_user_accounts (
     UNIQUE(domain_id, person_id)
 );
 
-CREATE INDEX idx_ad_users_domain ON ad_user_accounts(domain_id);
-CREATE INDEX idx_ad_users_person ON ad_user_accounts(person_id);
-CREATE INDEX idx_ad_users_ou ON ad_user_accounts(ou_id);
+CREATE INDEX IF NOT EXISTS idx_ad_users_domain ON ad_user_accounts(domain_id);
+CREATE INDEX IF NOT EXISTS idx_ad_users_person ON ad_user_accounts(person_id);
+CREATE INDEX IF NOT EXISTS idx_ad_users_ou ON ad_user_accounts(ou_id);
 
-CREATE TABLE ad_computer_accounts (
+CREATE TABLE IF NOT EXISTS ad_computer_accounts (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     domain_id UUID NOT NULL REFERENCES infrastructure.domains(id) ON DELETE CASCADE,
     hardware_id UUID,
@@ -67,4 +67,4 @@ CREATE TABLE ad_computer_accounts (
     UNIQUE(domain_id, sam_account_name)
 );
 
-CREATE INDEX idx_ad_computers_domain ON ad_computer_accounts(domain_id);
+CREATE INDEX IF NOT EXISTS idx_ad_computers_domain ON ad_computer_accounts(domain_id);

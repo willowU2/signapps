@@ -5,7 +5,7 @@
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
 
 -- ── Entities ──
-CREATE TABLE ai.kg_entities (
+CREATE TABLE IF NOT EXISTS ai.kg_entities (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     collection VARCHAR(256) NOT NULL REFERENCES ai.collections(name) ON DELETE CASCADE,
     name TEXT NOT NULL,
@@ -20,13 +20,13 @@ CREATE TABLE ai.kg_entities (
     UNIQUE(collection, name, entity_type)
 );
 
-CREATE INDEX idx_kg_entities_collection ON ai.kg_entities(collection);
-CREATE INDEX idx_kg_entities_type ON ai.kg_entities(entity_type);
-CREATE INDEX idx_kg_entities_name ON ai.kg_entities USING gin(name gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS idx_kg_entities_collection ON ai.kg_entities(collection);
+CREATE INDEX IF NOT EXISTS idx_kg_entities_type ON ai.kg_entities(entity_type);
+CREATE INDEX IF NOT EXISTS idx_kg_entities_name ON ai.kg_entities USING gin(name gin_trgm_ops);
 -- CREATE INDEX idx_kg_entities_embedding ON ai.kg_entities USING hnsw(embedding vector_cosine_ops) WITH (m = 16, ef_construction = 64);
 
 -- ── Relations ──
-CREATE TABLE ai.kg_relations (
+CREATE TABLE IF NOT EXISTS ai.kg_relations (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     collection VARCHAR(256) NOT NULL REFERENCES ai.collections(name) ON DELETE CASCADE,
     source_entity_id UUID NOT NULL REFERENCES ai.kg_entities(id) ON DELETE CASCADE,
@@ -41,14 +41,14 @@ CREATE TABLE ai.kg_relations (
     UNIQUE(collection, source_entity_id, target_entity_id, relation_type)
 );
 
-CREATE INDEX idx_kg_relations_collection ON ai.kg_relations(collection);
-CREATE INDEX idx_kg_relations_source ON ai.kg_relations(source_entity_id);
-CREATE INDEX idx_kg_relations_target ON ai.kg_relations(target_entity_id);
-CREATE INDEX idx_kg_relations_type ON ai.kg_relations(relation_type);
+CREATE INDEX IF NOT EXISTS idx_kg_relations_collection ON ai.kg_relations(collection);
+CREATE INDEX IF NOT EXISTS idx_kg_relations_source ON ai.kg_relations(source_entity_id);
+CREATE INDEX IF NOT EXISTS idx_kg_relations_target ON ai.kg_relations(target_entity_id);
+CREATE INDEX IF NOT EXISTS idx_kg_relations_type ON ai.kg_relations(relation_type);
 -- CREATE INDEX idx_kg_relations_embedding ON ai.kg_relations USING hnsw(embedding vector_cosine_ops) WITH (m = 16, ef_construction = 64);
 
 -- ── Communities (clusters of related entities) ──
-CREATE TABLE ai.kg_communities (
+CREATE TABLE IF NOT EXISTS ai.kg_communities (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     collection VARCHAR(256) NOT NULL REFERENCES ai.collections(name) ON DELETE CASCADE,
     level INT NOT NULL DEFAULT 0,          -- Hierarchy level (0=finest, higher=coarser)
@@ -59,6 +59,6 @@ CREATE TABLE ai.kg_communities (
     created_at TIMESTAMPTZ DEFAULT now()
 );
 
-CREATE INDEX idx_kg_communities_collection ON ai.kg_communities(collection);
-CREATE INDEX idx_kg_communities_level ON ai.kg_communities(level);
+CREATE INDEX IF NOT EXISTS idx_kg_communities_collection ON ai.kg_communities(collection);
+CREATE INDEX IF NOT EXISTS idx_kg_communities_level ON ai.kg_communities(level);
 -- CREATE INDEX idx_kg_communities_embedding ON ai.kg_communities USING hnsw(embedding vector_cosine_ops) WITH (m = 16, ef_construction = 64);

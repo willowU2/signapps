@@ -1,6 +1,6 @@
 -- Migration 219: Certificate management for infrastructure domains.
 
-CREATE TABLE infrastructure.certificates (
+CREATE TABLE IF NOT EXISTS infrastructure.certificates (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     domain_id UUID NOT NULL REFERENCES infrastructure.domains(id) ON DELETE CASCADE,
     subject TEXT NOT NULL,
@@ -20,5 +20,5 @@ CREATE TABLE infrastructure.certificates (
     created_at TIMESTAMPTZ DEFAULT now()
 );
 
-CREATE INDEX idx_certs_domain ON infrastructure.certificates(domain_id);
-CREATE INDEX idx_certs_expiry ON infrastructure.certificates(not_after) WHERE status = 'active';
+CREATE INDEX IF NOT EXISTS idx_certs_domain ON infrastructure.certificates(domain_id);
+CREATE INDEX IF NOT EXISTS idx_certs_expiry ON infrastructure.certificates(not_after) WHERE status = 'active';

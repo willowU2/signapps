@@ -1,7 +1,7 @@
 -- migrations/230_ad_mail.sql
 -- User mail aliases and shared OU/Group mailboxes (IMAP folders)
 
-CREATE TABLE ad_mail_aliases (
+CREATE TABLE IF NOT EXISTS ad_mail_aliases (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_account_id UUID NOT NULL REFERENCES ad_user_accounts(id) ON DELETE CASCADE,
     mail_address TEXT NOT NULL,
@@ -12,9 +12,9 @@ CREATE TABLE ad_mail_aliases (
     UNIQUE(mail_address)
 );
 
-CREATE INDEX idx_mail_aliases_user ON ad_mail_aliases(user_account_id);
+CREATE INDEX IF NOT EXISTS idx_mail_aliases_user ON ad_mail_aliases(user_account_id);
 
-CREATE TABLE ad_shared_mailboxes (
+CREATE TABLE IF NOT EXISTS ad_shared_mailboxes (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     ou_id UUID REFERENCES ad_ous(id) ON DELETE CASCADE,
     group_id UUID REFERENCES ad_security_groups(id) ON DELETE CASCADE,
@@ -28,10 +28,10 @@ CREATE TABLE ad_shared_mailboxes (
     CHECK (ou_id IS NOT NULL OR group_id IS NOT NULL)
 );
 
-CREATE INDEX idx_shared_mbox_ou ON ad_shared_mailboxes(ou_id);
-CREATE INDEX idx_shared_mbox_group ON ad_shared_mailboxes(group_id);
+CREATE INDEX IF NOT EXISTS idx_shared_mbox_ou ON ad_shared_mailboxes(ou_id);
+CREATE INDEX IF NOT EXISTS idx_shared_mbox_group ON ad_shared_mailboxes(group_id);
 
-CREATE TABLE ad_shared_mailbox_subscriptions (
+CREATE TABLE IF NOT EXISTS ad_shared_mailbox_subscriptions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     mailbox_id UUID NOT NULL REFERENCES ad_shared_mailboxes(id) ON DELETE CASCADE,
     user_account_id UUID NOT NULL REFERENCES ad_user_accounts(id) ON DELETE CASCADE,
@@ -42,5 +42,5 @@ CREATE TABLE ad_shared_mailbox_subscriptions (
     UNIQUE(mailbox_id, user_account_id)
 );
 
-CREATE INDEX idx_mbox_sub_user ON ad_shared_mailbox_subscriptions(user_account_id);
-CREATE INDEX idx_mbox_sub_mailbox ON ad_shared_mailbox_subscriptions(mailbox_id);
+CREATE INDEX IF NOT EXISTS idx_mbox_sub_user ON ad_shared_mailbox_subscriptions(user_account_id);
+CREATE INDEX IF NOT EXISTS idx_mbox_sub_mailbox ON ad_shared_mailbox_subscriptions(mailbox_id);

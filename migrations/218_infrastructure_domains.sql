@@ -3,7 +3,7 @@
 
 CREATE SCHEMA IF NOT EXISTS infrastructure;
 
-CREATE TABLE infrastructure.domains (
+CREATE TABLE IF NOT EXISTS infrastructure.domains (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id UUID NOT NULL REFERENCES identity.tenants(id) ON DELETE CASCADE,
     dns_name TEXT NOT NULL,
@@ -35,5 +35,5 @@ CREATE TABLE infrastructure.domains (
     UNIQUE(tenant_id, dns_name)
 );
 
-CREATE INDEX idx_infra_domains_tenant ON infrastructure.domains(tenant_id);
-CREATE INDEX idx_infra_domains_dns ON infrastructure.domains(dns_name);
+CREATE INDEX IF NOT EXISTS idx_infra_domains_tenant ON infrastructure.domains(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_infra_domains_dns ON infrastructure.domains(dns_name);

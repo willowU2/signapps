@@ -1,7 +1,7 @@
 -- migrations/226_ad_sync_queue.sql
 -- Event queue for org→AD synchronization
 
-CREATE TABLE ad_sync_queue (
+CREATE TABLE IF NOT EXISTS ad_sync_queue (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     domain_id UUID NOT NULL REFERENCES infrastructure.domains(id) ON DELETE CASCADE,
     event_type TEXT NOT NULL,
@@ -19,10 +19,10 @@ CREATE TABLE ad_sync_queue (
     processed_at TIMESTAMPTZ
 );
 
-CREATE INDEX idx_sync_queue_pending ON ad_sync_queue(status, priority, next_retry_at)
+CREATE INDEX IF NOT EXISTS idx_sync_queue_pending ON ad_sync_queue(status, priority, next_retry_at)
     WHERE status IN ('pending', 'retry');
-CREATE INDEX idx_sync_queue_domain ON ad_sync_queue(domain_id);
-CREATE INDEX idx_sync_queue_created ON ad_sync_queue(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_sync_queue_domain ON ad_sync_queue(domain_id);
+CREATE INDEX IF NOT EXISTS idx_sync_queue_created ON ad_sync_queue(created_at DESC);
 
 -- Notification function for real-time wakeup
 CREATE OR REPLACE FUNCTION ad_sync_notify() RETURNS TRIGGER AS $$

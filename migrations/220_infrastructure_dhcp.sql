@@ -1,6 +1,6 @@
 -- Migration 220: DHCP scopes, leases, and reservations.
 
-CREATE TABLE infrastructure.dhcp_scopes (
+CREATE TABLE IF NOT EXISTS infrastructure.dhcp_scopes (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     domain_id UUID NOT NULL REFERENCES infrastructure.domains(id) ON DELETE CASCADE,
     site_id UUID,
@@ -20,9 +20,9 @@ CREATE TABLE infrastructure.dhcp_scopes (
     created_at TIMESTAMPTZ DEFAULT now()
 );
 
-CREATE INDEX idx_dhcp_scopes_domain ON infrastructure.dhcp_scopes(domain_id);
+CREATE INDEX IF NOT EXISTS idx_dhcp_scopes_domain ON infrastructure.dhcp_scopes(domain_id);
 
-CREATE TABLE infrastructure.dhcp_leases (
+CREATE TABLE IF NOT EXISTS infrastructure.dhcp_leases (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     scope_id UUID NOT NULL REFERENCES infrastructure.dhcp_scopes(id) ON DELETE CASCADE,
     ip_address TEXT NOT NULL,
@@ -35,11 +35,11 @@ CREATE TABLE infrastructure.dhcp_leases (
     UNIQUE(scope_id, ip_address)
 );
 
-CREATE INDEX idx_leases_scope ON infrastructure.dhcp_leases(scope_id);
-CREATE INDEX idx_leases_mac ON infrastructure.dhcp_leases(mac_address);
-CREATE INDEX idx_leases_active ON infrastructure.dhcp_leases(lease_end) WHERE is_active = true;
+CREATE INDEX IF NOT EXISTS idx_leases_scope ON infrastructure.dhcp_leases(scope_id);
+CREATE INDEX IF NOT EXISTS idx_leases_mac ON infrastructure.dhcp_leases(mac_address);
+CREATE INDEX IF NOT EXISTS idx_leases_active ON infrastructure.dhcp_leases(lease_end) WHERE is_active = true;
 
-CREATE TABLE infrastructure.dhcp_reservations (
+CREATE TABLE IF NOT EXISTS infrastructure.dhcp_reservations (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     scope_id UUID NOT NULL REFERENCES infrastructure.dhcp_scopes(id) ON DELETE CASCADE,
     mac_address TEXT NOT NULL,

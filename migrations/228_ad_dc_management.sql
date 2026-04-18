@@ -1,7 +1,7 @@
 -- migrations/228_ad_dc_management.sql
 -- DC site topology and FSMO role tracking
 
-CREATE TABLE ad_dc_sites (
+CREATE TABLE IF NOT EXISTS ad_dc_sites (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     domain_id UUID NOT NULL REFERENCES infrastructure.domains(id) ON DELETE CASCADE,
     site_id UUID,
@@ -23,11 +23,11 @@ CREATE TABLE ad_dc_sites (
     UNIQUE(domain_id, dc_hostname)
 );
 
-CREATE INDEX idx_dc_sites_domain ON ad_dc_sites(domain_id);
-CREATE INDEX idx_dc_sites_site ON ad_dc_sites(site_id);
-CREATE INDEX idx_dc_sites_status ON ad_dc_sites(dc_status) WHERE dc_status = 'online';
+CREATE INDEX IF NOT EXISTS idx_dc_sites_domain ON ad_dc_sites(domain_id);
+CREATE INDEX IF NOT EXISTS idx_dc_sites_site ON ad_dc_sites(site_id);
+CREATE INDEX IF NOT EXISTS idx_dc_sites_status ON ad_dc_sites(dc_status) WHERE dc_status = 'online';
 
-CREATE TABLE ad_fsmo_roles (
+CREATE TABLE IF NOT EXISTS ad_fsmo_roles (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     domain_id UUID NOT NULL REFERENCES infrastructure.domains(id) ON DELETE CASCADE,
     role TEXT NOT NULL
