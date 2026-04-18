@@ -32,6 +32,7 @@ signapps-securelink = { path = "../signapps-securelink" }
 signapps-metrics  = { path = "../signapps-metrics" }
 signapps-social   = { path = "../signapps-social" }
 signapps-pxe      = { path = "../signapps-pxe" }
+signapps-it-assets = { path = "../signapps-it-assets" }
 
 anyhow  = { workspace = true }
 axum    = { workspace = true }

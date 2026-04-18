@@ -21,6 +21,7 @@ pub fn declare(shared: SharedState) -> Vec<ServiceSpec> {
         spec_metrics(shared.clone()),
         spec_social(shared.clone()),
         spec_pxe(shared.clone()),
+        spec_it_assets(shared.clone()),
     ]
 }
 
@@ -174,6 +175,16 @@ fn spec_pxe(shared: SharedState) -> ServiceSpec {
             // and default-off so the dev box boots without root.
             let router = signapps_pxe::router(shared).await?;
             run_server_on_addr(router, "0.0.0.0", 3016).await
+        }
+    })
+}
+
+fn spec_it_assets(shared: SharedState) -> ServiceSpec {
+    ServiceSpec::new("signapps-it-assets", 3022, move || {
+        let shared = shared.clone();
+        async move {
+            let router = signapps_it_assets::router(shared).await?;
+            run_server_on_addr(router, "0.0.0.0", 3022).await
         }
     })
 }
