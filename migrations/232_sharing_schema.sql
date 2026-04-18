@@ -4,7 +4,7 @@
 CREATE SCHEMA IF NOT EXISTS sharing;
 
 -- 1. GRANTS
-CREATE TABLE sharing.grants (
+CREATE TABLE IF NOT EXISTS sharing.grants (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id UUID NOT NULL REFERENCES identity.tenants(id) ON DELETE CASCADE,
     resource_type TEXT NOT NULL,
@@ -35,19 +35,19 @@ CREATE TABLE sharing.grants (
     )
 );
 
-CREATE UNIQUE INDEX idx_grants_unique
+CREATE UNIQUE INDEX IF NOT EXISTS idx_grants_unique
     ON sharing.grants (tenant_id, resource_type, resource_id, grantee_type, COALESCE(grantee_id, '00000000-0000-0000-0000-000000000000'::uuid));
-CREATE INDEX idx_grants_resource
+CREATE INDEX IF NOT EXISTS idx_grants_resource
     ON sharing.grants (tenant_id, resource_type, resource_id);
-CREATE INDEX idx_grants_grantee
+CREATE INDEX IF NOT EXISTS idx_grants_grantee
     ON sharing.grants (tenant_id, grantee_type, grantee_id)
     WHERE grantee_id IS NOT NULL;
-CREATE INDEX idx_grants_expires
+CREATE INDEX IF NOT EXISTS idx_grants_expires
     ON sharing.grants (expires_at)
     WHERE expires_at IS NOT NULL;
 
 -- 2. POLICIES
-CREATE TABLE sharing.policies (
+CREATE TABLE IF NOT EXISTS sharing.policies (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id UUID NOT NULL REFERENCES identity.tenants(id) ON DELETE CASCADE,
     container_type TEXT NOT NULL,
@@ -69,13 +69,13 @@ CREATE TABLE sharing.policies (
     CONSTRAINT chk_policy_role CHECK (default_role IN ('viewer', 'editor', 'manager'))
 );
 
-CREATE UNIQUE INDEX idx_policies_unique
+CREATE UNIQUE INDEX IF NOT EXISTS idx_policies_unique
     ON sharing.policies (tenant_id, container_type, container_id, grantee_type, COALESCE(grantee_id, '00000000-0000-0000-0000-000000000000'::uuid));
-CREATE INDEX idx_policies_container
+CREATE INDEX IF NOT EXISTS idx_policies_container
     ON sharing.policies (tenant_id, container_type, container_id);
 
 -- 3. TEMPLATES
-CREATE TABLE sharing.templates (
+CREATE TABLE IF NOT EXISTS sharing.templates (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id UUID NOT NULL REFERENCES identity.tenants(id) ON DELETE CASCADE,
     name TEXT NOT NULL,
@@ -87,11 +87,11 @@ CREATE TABLE sharing.templates (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE UNIQUE INDEX idx_templates_name
+CREATE UNIQUE INDEX IF NOT EXISTS idx_templates_name
     ON sharing.templates (tenant_id, name);
 
 -- 4. CAPABILITIES
-CREATE TABLE sharing.capabilities (
+CREATE TABLE IF NOT EXISTS sharing.capabilities (
     resource_type TEXT NOT NULL,
     role TEXT NOT NULL,
     actions TEXT[] NOT NULL DEFAULT '{}',
@@ -132,7 +132,7 @@ INSERT INTO sharing.capabilities (resource_type, role, actions) VALUES
     ('vault_entry', 'manager', ARRAY['read_metadata', 'read_secret', 'edit', 'rotate', 'delete', 'share', 'audit']);
 
 -- 5. DEFAULTS
-CREATE TABLE sharing.defaults (
+CREATE TABLE IF NOT EXISTS sharing.defaults (
     tenant_id UUID NOT NULL REFERENCES identity.tenants(id) ON DELETE CASCADE,
     resource_type TEXT NOT NULL,
     default_visibility TEXT NOT NULL DEFAULT 'private',
@@ -143,7 +143,7 @@ CREATE TABLE sharing.defaults (
 );
 
 -- 6. AUDIT LOG
-CREATE TABLE sharing.audit_log (
+CREATE TABLE IF NOT EXISTS sharing.audit_log (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id UUID NOT NULL,
     resource_type TEXT NOT NULL,
@@ -154,9 +154,9 @@ CREATE TABLE sharing.audit_log (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_audit_resource
+CREATE INDEX IF NOT EXISTS idx_audit_resource
     ON sharing.audit_log (tenant_id, resource_type, resource_id, created_at DESC);
-CREATE INDEX idx_audit_actor
+CREATE INDEX IF NOT EXISTS idx_audit_actor
     ON sharing.audit_log (tenant_id, actor_id, created_at DESC);
 
 CREATE OR REPLACE FUNCTION sharing.prevent_audit_mutation()

@@ -9,7 +9,7 @@ CREATE SCHEMA IF NOT EXISTS calendar;
 -- ============================================================================
 -- Calendars table
 -- ============================================================================
-CREATE TABLE calendar.calendars (
+CREATE TABLE IF NOT EXISTS calendar.calendars (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     owner_id UUID NOT NULL REFERENCES identity.users(id) ON DELETE CASCADE,
     name VARCHAR(255) NOT NULL,
@@ -22,13 +22,13 @@ CREATE TABLE calendar.calendars (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_calendars_owner_id ON calendar.calendars(owner_id);
-CREATE INDEX idx_calendars_is_shared ON calendar.calendars(is_shared);
+CREATE INDEX IF NOT EXISTS idx_calendars_owner_id ON calendar.calendars(owner_id);
+CREATE INDEX IF NOT EXISTS idx_calendars_is_shared ON calendar.calendars(is_shared);
 
 -- ============================================================================
 -- Calendar Members (sharing and permissions)
 -- ============================================================================
-CREATE TABLE calendar.calendar_members (
+CREATE TABLE IF NOT EXISTS calendar.calendar_members (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     calendar_id UUID NOT NULL REFERENCES calendar.calendars(id) ON DELETE CASCADE,
     user_id UUID NOT NULL REFERENCES identity.users(id) ON DELETE CASCADE,
@@ -38,13 +38,13 @@ CREATE TABLE calendar.calendar_members (
     UNIQUE(calendar_id, user_id)
 );
 
-CREATE INDEX idx_calendar_members_calendar_id ON calendar.calendar_members(calendar_id);
-CREATE INDEX idx_calendar_members_user_id ON calendar.calendar_members(user_id);
+CREATE INDEX IF NOT EXISTS idx_calendar_members_calendar_id ON calendar.calendar_members(calendar_id);
+CREATE INDEX IF NOT EXISTS idx_calendar_members_user_id ON calendar.calendar_members(user_id);
 
 -- ============================================================================
 -- Events table (supports recurring with RRULE RFC 5545)
 -- ============================================================================
-CREATE TABLE calendar.events (
+CREATE TABLE IF NOT EXISTS calendar.events (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     calendar_id UUID NOT NULL REFERENCES calendar.calendars(id) ON DELETE CASCADE,
     title VARCHAR(255) NOT NULL,
@@ -65,15 +65,15 @@ CREATE TABLE calendar.events (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_events_calendar_id ON calendar.events(calendar_id);
-CREATE INDEX idx_events_start_time ON calendar.events(start_time);
-CREATE INDEX idx_events_calendar_start_time ON calendar.events(calendar_id, start_time);
-CREATE INDEX idx_events_created_by ON calendar.events(created_by);
+CREATE INDEX IF NOT EXISTS idx_events_calendar_id ON calendar.events(calendar_id);
+CREATE INDEX IF NOT EXISTS idx_events_start_time ON calendar.events(start_time);
+CREATE INDEX IF NOT EXISTS idx_events_calendar_start_time ON calendar.events(calendar_id, start_time);
+CREATE INDEX IF NOT EXISTS idx_events_created_by ON calendar.events(created_by);
 
 -- ============================================================================
 -- Event Attendees (RSVP tracking)
 -- ============================================================================
-CREATE TABLE calendar.event_attendees (
+CREATE TABLE IF NOT EXISTS calendar.event_attendees (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     event_id UUID NOT NULL REFERENCES calendar.events(id) ON DELETE CASCADE,
     user_id UUID NOT NULL REFERENCES identity.users(id) ON DELETE CASCADE,
@@ -85,13 +85,13 @@ CREATE TABLE calendar.event_attendees (
     UNIQUE(event_id, user_id)
 );
 
-CREATE INDEX idx_event_attendees_event_id ON calendar.event_attendees(event_id);
-CREATE INDEX idx_event_attendees_user_id ON calendar.event_attendees(user_id);
+CREATE INDEX IF NOT EXISTS idx_event_attendees_event_id ON calendar.event_attendees(event_id);
+CREATE INDEX IF NOT EXISTS idx_event_attendees_user_id ON calendar.event_attendees(user_id);
 
 -- ============================================================================
 -- Event Metadata (iCalendar extensions, custom properties)
 -- ============================================================================
-CREATE TABLE calendar.event_metadata (
+CREATE TABLE IF NOT EXISTS calendar.event_metadata (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     event_id UUID NOT NULL REFERENCES calendar.events(id) ON DELETE CASCADE,
     key VARCHAR(255) NOT NULL,
@@ -100,12 +100,12 @@ CREATE TABLE calendar.event_metadata (
     UNIQUE(event_id, key)
 );
 
-CREATE INDEX idx_event_metadata_event_id ON calendar.event_metadata(event_id);
+CREATE INDEX IF NOT EXISTS idx_event_metadata_event_id ON calendar.event_metadata(event_id);
 
 -- ============================================================================
 -- Resources (rooms, equipment, vehicles)
 -- ============================================================================
-CREATE TABLE calendar.resources (
+CREATE TABLE IF NOT EXISTS calendar.resources (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name VARCHAR(255) NOT NULL,
     resource_type VARCHAR(64) NOT NULL,  -- room|equipment|vehicle
@@ -118,13 +118,13 @@ CREATE TABLE calendar.resources (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_resources_resource_type ON calendar.resources(resource_type);
-CREATE INDEX idx_resources_is_available ON calendar.resources(is_available);
+CREATE INDEX IF NOT EXISTS idx_resources_resource_type ON calendar.resources(resource_type);
+CREATE INDEX IF NOT EXISTS idx_resources_is_available ON calendar.resources(is_available);
 
 -- ============================================================================
 -- Event Resources (booking: event ↔ resource)
 -- ============================================================================
-CREATE TABLE calendar.event_resources (
+CREATE TABLE IF NOT EXISTS calendar.event_resources (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     event_id UUID NOT NULL REFERENCES calendar.events(id) ON DELETE CASCADE,
     resource_id UUID NOT NULL REFERENCES calendar.resources(id) ON DELETE CASCADE,
@@ -132,13 +132,13 @@ CREATE TABLE calendar.event_resources (
     UNIQUE(event_id, resource_id)
 );
 
-CREATE INDEX idx_event_resources_event_id ON calendar.event_resources(event_id);
-CREATE INDEX idx_event_resources_resource_id ON calendar.event_resources(resource_id);
+CREATE INDEX IF NOT EXISTS idx_event_resources_event_id ON calendar.event_resources(event_id);
+CREATE INDEX IF NOT EXISTS idx_event_resources_resource_id ON calendar.event_resources(resource_id);
 
 -- ============================================================================
 -- Tasks (hierarchical with parent_id)
 -- ============================================================================
-CREATE TABLE calendar.tasks (
+CREATE TABLE IF NOT EXISTS calendar.tasks (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     calendar_id UUID NOT NULL REFERENCES calendar.calendars(id) ON DELETE CASCADE,
     parent_task_id UUID REFERENCES calendar.tasks(id) ON DELETE CASCADE,
@@ -154,16 +154,16 @@ CREATE TABLE calendar.tasks (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_tasks_calendar_id ON calendar.tasks(calendar_id);
-CREATE INDEX idx_tasks_parent_task_id ON calendar.tasks(parent_task_id);
-CREATE INDEX idx_tasks_assigned_to ON calendar.tasks(assigned_to);
-CREATE INDEX idx_tasks_due_date ON calendar.tasks(due_date);
-CREATE INDEX idx_tasks_status ON calendar.tasks(status);
+CREATE INDEX IF NOT EXISTS idx_tasks_calendar_id ON calendar.tasks(calendar_id);
+CREATE INDEX IF NOT EXISTS idx_tasks_parent_task_id ON calendar.tasks(parent_task_id);
+CREATE INDEX IF NOT EXISTS idx_tasks_assigned_to ON calendar.tasks(assigned_to);
+CREATE INDEX IF NOT EXISTS idx_tasks_due_date ON calendar.tasks(due_date);
+CREATE INDEX IF NOT EXISTS idx_tasks_status ON calendar.tasks(status);
 
 -- ============================================================================
 -- Task Attachments (file references)
 -- ============================================================================
-CREATE TABLE calendar.task_attachments (
+CREATE TABLE IF NOT EXISTS calendar.task_attachments (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     task_id UUID NOT NULL REFERENCES calendar.tasks(id) ON DELETE CASCADE,
     file_url TEXT NOT NULL,
@@ -172,12 +172,12 @@ CREATE TABLE calendar.task_attachments (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_task_attachments_task_id ON calendar.task_attachments(task_id);
+CREATE INDEX IF NOT EXISTS idx_task_attachments_task_id ON calendar.task_attachments(task_id);
 
 -- ============================================================================
 -- Reminders / Notifications
 -- ============================================================================
-CREATE TABLE calendar.reminders (
+CREATE TABLE IF NOT EXISTS calendar.reminders (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     event_id UUID REFERENCES calendar.events(id) ON DELETE CASCADE,
     task_id UUID REFERENCES calendar.tasks(id) ON DELETE CASCADE,
@@ -190,15 +190,15 @@ CREATE TABLE calendar.reminders (
     CHECK ((event_id IS NOT NULL AND task_id IS NULL) OR (event_id IS NULL AND task_id IS NOT NULL))
 );
 
-CREATE INDEX idx_reminders_event_id ON calendar.reminders(event_id);
-CREATE INDEX idx_reminders_task_id ON calendar.reminders(task_id);
-CREATE INDEX idx_reminders_user_id ON calendar.reminders(user_id);
-CREATE INDEX idx_reminders_is_sent ON calendar.reminders(is_sent);
+CREATE INDEX IF NOT EXISTS idx_reminders_event_id ON calendar.reminders(event_id);
+CREATE INDEX IF NOT EXISTS idx_reminders_task_id ON calendar.reminders(task_id);
+CREATE INDEX IF NOT EXISTS idx_reminders_user_id ON calendar.reminders(user_id);
+CREATE INDEX IF NOT EXISTS idx_reminders_is_sent ON calendar.reminders(is_sent);
 
 -- ============================================================================
 -- Activity Log (audit trail)
 -- ============================================================================
-CREATE TABLE calendar.activity_log (
+CREATE TABLE IF NOT EXISTS calendar.activity_log (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     calendar_id UUID NOT NULL REFERENCES calendar.calendars(id) ON DELETE CASCADE,
     entity_type VARCHAR(64) NOT NULL,  -- 'event'|'task'|'calendar'|'resource'
@@ -209,6 +209,6 @@ CREATE TABLE calendar.activity_log (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_activity_log_calendar_id ON calendar.activity_log(calendar_id);
-CREATE INDEX idx_activity_log_entity_type_id ON calendar.activity_log(entity_type, entity_id);
-CREATE INDEX idx_activity_log_created_at ON calendar.activity_log(created_at);
+CREATE INDEX IF NOT EXISTS idx_activity_log_calendar_id ON calendar.activity_log(calendar_id);
+CREATE INDEX IF NOT EXISTS idx_activity_log_entity_type_id ON calendar.activity_log(entity_type, entity_id);
+CREATE INDEX IF NOT EXISTS idx_activity_log_created_at ON calendar.activity_log(created_at);

@@ -20,7 +20,9 @@ use uuid::Uuid;
 
 use crate::AppState;
 use signapps_common::Claims;
-use signapps_db::models::{AppendCommand, CreateSnapshot, DiffEntry, DocumentCommand, DocumentSnapshot};
+use signapps_db::models::{
+    AppendCommand, CreateSnapshot, DiffEntry, DocumentCommand, DocumentSnapshot,
+};
 use signapps_db::repositories::VersioningRepository;
 
 // ============================================================================
@@ -70,19 +72,17 @@ pub async fn append_command(
     Path(doc_id): Path<Uuid>,
     Json(payload): Json<AppendCommand>,
 ) -> Result<(StatusCode, Json<serde_json::Value>), StatusCode> {
-    let cmd = VersioningRepository::append_command(
-        state.pool.inner(),
-        doc_id,
-        claims.sub,
-        payload,
-    )
-    .await
-    .map_err(|e| {
-        tracing::error!("Failed to append command: {}", e);
-        StatusCode::INTERNAL_SERVER_ERROR
-    })?;
+    let cmd = VersioningRepository::append_command(state.pool.inner(), doc_id, claims.sub, payload)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to append command: {}", e);
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
 
-    Ok((StatusCode::CREATED, Json(serde_json::json!({ "data": cmd }))))
+    Ok((
+        StatusCode::CREATED,
+        Json(serde_json::json!({ "data": cmd })),
+    ))
 }
 
 /// GET /api/v1/versions/:doc_id/commands -- list recent commands
@@ -108,17 +108,12 @@ pub async fn list_commands(
     Query(params): Query<ListCommandsQuery>,
 ) -> Result<Json<serde_json::Value>, StatusCode> {
     let limit = params.limit.unwrap_or(50);
-    let rows = VersioningRepository::list_commands(
-        state.pool.inner(),
-        doc_id,
-        params.since,
-        limit,
-    )
-    .await
-    .map_err(|e| {
-        tracing::error!("Failed to list commands: {}", e);
-        StatusCode::INTERNAL_SERVER_ERROR
-    })?;
+    let rows = VersioningRepository::list_commands(state.pool.inner(), doc_id, params.since, limit)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to list commands: {}", e);
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
 
     Ok(Json(serde_json::json!({ "data": rows })))
 }
@@ -143,21 +138,17 @@ pub async fn undo_last_command(
     Extension(claims): Extension<Claims>,
     Path(doc_id): Path<Uuid>,
 ) -> Result<Json<serde_json::Value>, StatusCode> {
-    let cmd = VersioningRepository::undo_last_command(
-        state.pool.inner(),
-        doc_id,
-        claims.sub,
-    )
-    .await
-    .map_err(|e| {
-        let msg = e.to_string();
-        if msg.contains("not found") || msg.contains("NotFound") || msg.contains("No command") {
-            StatusCode::NOT_FOUND
-        } else {
-            tracing::error!("Failed to undo last command: {}", e);
-            StatusCode::INTERNAL_SERVER_ERROR
-        }
-    })?;
+    let cmd = VersioningRepository::undo_last_command(state.pool.inner(), doc_id, claims.sub)
+        .await
+        .map_err(|e| {
+            let msg = e.to_string();
+            if msg.contains("not found") || msg.contains("NotFound") || msg.contains("No command") {
+                StatusCode::NOT_FOUND
+            } else {
+                tracing::error!("Failed to undo last command: {}", e);
+                StatusCode::INTERNAL_SERVER_ERROR
+            }
+        })?;
 
     Ok(Json(serde_json::json!({ "data": cmd })))
 }
@@ -183,19 +174,18 @@ pub async fn create_snapshot(
     Path(doc_id): Path<Uuid>,
     Json(payload): Json<CreateSnapshot>,
 ) -> Result<(StatusCode, Json<serde_json::Value>), StatusCode> {
-    let snap = VersioningRepository::create_snapshot(
-        state.pool.inner(),
-        doc_id,
-        claims.sub,
-        payload,
-    )
-    .await
-    .map_err(|e| {
-        tracing::error!("Failed to create snapshot: {}", e);
-        StatusCode::INTERNAL_SERVER_ERROR
-    })?;
+    let snap =
+        VersioningRepository::create_snapshot(state.pool.inner(), doc_id, claims.sub, payload)
+            .await
+            .map_err(|e| {
+                tracing::error!("Failed to create snapshot: {}", e);
+                StatusCode::INTERNAL_SERVER_ERROR
+            })?;
 
-    Ok((StatusCode::CREATED, Json(serde_json::json!({ "data": snap }))))
+    Ok((
+        StatusCode::CREATED,
+        Json(serde_json::json!({ "data": snap })),
+    ))
 }
 
 /// GET /api/v1/versions/:doc_id/snapshots -- list all snapshots
@@ -285,21 +275,17 @@ pub async fn restore_snapshot(
     State(state): State<AppState>,
     Path((doc_id, snapshot_id)): Path<(Uuid, Uuid)>,
 ) -> Result<Json<serde_json::Value>, StatusCode> {
-    let snap = VersioningRepository::restore_snapshot(
-        state.pool.inner(),
-        doc_id,
-        snapshot_id,
-    )
-    .await
-    .map_err(|e| {
-        let msg = e.to_string();
-        if msg.contains("not found") || msg.contains("NotFound") {
-            StatusCode::NOT_FOUND
-        } else {
-            tracing::error!("Failed to restore snapshot: {}", e);
-            StatusCode::INTERNAL_SERVER_ERROR
-        }
-    })?;
+    let snap = VersioningRepository::restore_snapshot(state.pool.inner(), doc_id, snapshot_id)
+        .await
+        .map_err(|e| {
+            let msg = e.to_string();
+            if msg.contains("not found") || msg.contains("NotFound") {
+                StatusCode::NOT_FOUND
+            } else {
+                tracing::error!("Failed to restore snapshot: {}", e);
+                StatusCode::INTERNAL_SERVER_ERROR
+            }
+        })?;
 
     Ok(Json(serde_json::json!({ "data": snap })))
 }

@@ -3,7 +3,7 @@
 
 BEGIN;
 
-CREATE TABLE active_stack (
+CREATE TABLE IF NOT EXISTS active_stack (
     env TEXT PRIMARY KEY CHECK (env IN ('prod', 'dev')),
     active_color TEXT NOT NULL CHECK (active_color IN ('blue', 'green')),
     swapped_at TIMESTAMPTZ NOT NULL DEFAULT now(),

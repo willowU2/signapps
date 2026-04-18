@@ -224,7 +224,9 @@ pub async fn check_document(
 
     let issues = validate_document(&payload.document, &applicable);
 
-    Ok(Json(serde_json::json!({ "data": issues, "count": issues.len() })))
+    Ok(Json(
+        serde_json::json!({ "data": issues, "count": issues.len() }),
+    ))
 }
 
 // ============================================================================
@@ -232,7 +234,10 @@ pub async fn check_document(
 // ============================================================================
 
 /// Validate a document JSON against a set of active rules.
-fn validate_document(doc_json: &serde_json::Value, rules: &[&ValidationRule]) -> Vec<ValidationIssue> {
+fn validate_document(
+    doc_json: &serde_json::Value,
+    rules: &[&ValidationRule],
+) -> Vec<ValidationIssue> {
     let mut issues = Vec::new();
 
     for rule in rules {
@@ -253,15 +258,13 @@ fn validate_document(doc_json: &serde_json::Value, rules: &[&ValidationRule]) ->
                                 rule_name: rule.name.clone(),
                                 rule_type: rule.rule_type.clone(),
                                 severity: rule.severity.clone(),
-                                message: format!(
-                                    "Font size {size}px is below minimum {min}px"
-                                ),
+                                message: format!("Font size {size}px is below minimum {min}px"),
                                 element_path: Some(path),
                             });
                         }
                     }
                 });
-            }
+            },
             "max_font_size" => {
                 let max = rule
                     .config
@@ -275,15 +278,13 @@ fn validate_document(doc_json: &serde_json::Value, rules: &[&ValidationRule]) ->
                                 rule_name: rule.name.clone(),
                                 rule_type: rule.rule_type.clone(),
                                 severity: rule.severity.clone(),
-                                message: format!(
-                                    "Font size {size}px exceeds maximum {max}px"
-                                ),
+                                message: format!("Font size {size}px exceeds maximum {max}px"),
                                 element_path: Some(path),
                             });
                         }
                     }
                 });
-            }
+            },
             "max_text_length" => {
                 let max_len = rule
                     .config
@@ -306,7 +307,7 @@ fn validate_document(doc_json: &serde_json::Value, rules: &[&ValidationRule]) ->
                         }
                     }
                 });
-            }
+            },
             "allowed_fonts" => {
                 let allowed: Vec<String> = rule
                     .config
@@ -328,15 +329,13 @@ fn validate_document(doc_json: &serde_json::Value, rules: &[&ValidationRule]) ->
                                 rule_name: rule.name.clone(),
                                 rule_type: rule.rule_type.clone(),
                                 severity: rule.severity.clone(),
-                                message: format!(
-                                    "Font \"{font}\" is not in the allowed list"
-                                ),
+                                message: format!("Font \"{font}\" is not in the allowed list"),
                                 element_path: Some(path),
                             });
                         }
                     }
                 });
-            }
+            },
             "allowed_colors" => {
                 let allowed: Vec<String> = rule
                     .config
@@ -368,7 +367,7 @@ fn validate_document(doc_json: &serde_json::Value, rules: &[&ValidationRule]) ->
                         }
                     });
                 }
-            }
+            },
             "min_image_dpi" => {
                 let min_dpi = rule
                     .config
@@ -382,17 +381,15 @@ fn validate_document(doc_json: &serde_json::Value, rules: &[&ValidationRule]) ->
                                 rule_name: rule.name.clone(),
                                 rule_type: rule.rule_type.clone(),
                                 severity: rule.severity.clone(),
-                                message: format!(
-                                    "Image DPI {dpi} is below minimum {min_dpi}"
-                                ),
+                                message: format!("Image DPI {dpi} is below minimum {min_dpi}"),
                                 element_path: Some(path),
                             });
                         }
                     }
                 });
-            }
+            },
             // Unknown / custom rules are silently skipped
-            _ => {}
+            _ => {},
         }
     }
 
@@ -429,7 +426,7 @@ fn scan_json_for_key_inner(
                 }
                 scan_json_for_key_inner(v, key, child_path, callback);
             }
-        }
+        },
         serde_json::Value::Array(arr) => {
             for (i, v) in arr.iter().enumerate() {
                 let child_path = if path.is_empty() {
@@ -439,8 +436,8 @@ fn scan_json_for_key_inner(
                 };
                 scan_json_for_key_inner(v, key, child_path, callback);
             }
-        }
-        _ => {}
+        },
+        _ => {},
     }
 }
 

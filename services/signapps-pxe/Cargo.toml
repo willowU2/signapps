@@ -6,9 +6,19 @@ rust-version.workspace = true
 authors.workspace = true
 license.workspace = true
 repository.workspace = true
+default-run = "signapps-pxe"
+
+[lib]
+name = "signapps_pxe"
+path = "src/lib.rs"
+
+[[bin]]
+name = "signapps-pxe"
+path = "src/main.rs"
 
 [dependencies]
 mimalloc = { workspace = true }
+signapps-service = { path = "../../crates/signapps-service" }
 tokio.workspace = true
 axum.workspace = true
 serde.workspace = true

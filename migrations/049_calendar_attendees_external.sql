@@ -15,9 +15,9 @@ ALTER TABLE calendar.event_attendees
     ALTER COLUMN user_id DROP NOT NULL;
 
 -- Step 2: Ensure at least one identifier is present
-ALTER TABLE calendar.event_attendees
+DO $$ BEGIN ALTER TABLE calendar.event_attendees
     ADD CONSTRAINT chk_attendee_identifier
-    CHECK (user_id IS NOT NULL OR email IS NOT NULL);
+    CHECK (user_id IS NOT NULL OR email IS NOT NULL); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- Step 3: Unique index for external (email-only) attendees per event
 -- Partial index: only applies when user_id IS NULL to avoid conflicts with the
@@ -27,9 +27,9 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_event_attendees_event_email
     WHERE user_id IS NULL;
 
 -- Step 4: Constrain rsvp_status to known values
-ALTER TABLE calendar.event_attendees
+DO $$ BEGIN ALTER TABLE calendar.event_attendees
     ADD CONSTRAINT chk_attendee_rsvp_status
-    CHECK (rsvp_status IN ('pending', 'accepted', 'declined', 'tentative'));
+    CHECK (rsvp_status IN ('pending', 'accepted', 'declined', 'tentative')); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 COMMENT ON TABLE calendar.event_attendees IS
     'Tracks per-event attendees with RSVP status. '

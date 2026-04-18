@@ -12,4 +12,4 @@ BEGIN
     END IF;
 END $$;
 
-ALTER TABLE drive.nodes ADD CONSTRAINT "nodes_parent_id_name_node_type_deleted_at_key" UNIQUE NULLS NOT DISTINCT (parent_id, name, node_type, deleted_at);
+DO $$ BEGIN ALTER TABLE drive.nodes ADD CONSTRAINT "nodes_parent_id_name_node_type_deleted_at_key" UNIQUE NULLS NOT DISTINCT (parent_id, name, node_type, deleted_at); EXCEPTION WHEN duplicate_object THEN NULL; END $$;

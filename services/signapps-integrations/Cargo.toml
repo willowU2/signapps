@@ -6,6 +6,11 @@ rust-version.workspace = true
 authors.workspace = true
 license.workspace = true
 description = "External integrations service — Slack, Teams, Discord, and other third-party connectors for SignApps Platform"
+default-run = "signapps-integrations"
+
+[lib]
+name = "signapps_integrations"
+path = "src/lib.rs"
 
 [[bin]]
 name = "signapps-integrations"
@@ -16,6 +21,7 @@ mimalloc = { workspace = true }
 # Internal crates
 signapps-common = { path = "../../crates/signapps-common" }
 signapps-db = { path = "../../crates/signapps-db" }
+signapps-service = { path = "../../crates/signapps-service" }
 
 # Web framework
 axum = { workspace = true }

@@ -28,6 +28,7 @@ signapps-cache = { path = "../../crates/signapps-cache" }
 signapps-common = { path = "../../crates/signapps-common" }
 signapps-db = { path = "../../crates/signapps-db" }
 signapps-feature-flags = { path = "../../crates/signapps-feature-flags" }
+signapps-service = { path = "../../crates/signapps-service" }
 
 # Async runtime
 tokio = { workspace = true }

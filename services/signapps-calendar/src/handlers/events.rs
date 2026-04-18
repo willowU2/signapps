@@ -116,27 +116,27 @@ async fn sync_meet_room(
                                 "linked calendar event to Meet room"
                             );
                             updated
-                        }
+                        },
                         Err(e) => {
                             tracing::error!(?e, "failed to persist meet_room_code, rolling back");
                             // Best-effort rollback of the has_meet_room flag
                             let _ = repo.clear_meet_room_flag(event.id).await;
                             event
-                        }
+                        },
                     }
-                }
+                },
                 Err(e) => {
                     tracing::error!(?e, "signapps-meet call failed — rolling back has_meet_room");
                     let repo = EventRepository::new(&state.pool);
                     let _ = repo.clear_meet_room_flag(event.id).await;
                     event
-                }
+                },
             }
-        }
+        },
         Some(false) if event.has_meet_room => {
             let repo = EventRepository::new(&state.pool);
             repo.clear_meet_room_flag(event.id).await.unwrap_or(event)
-        }
+        },
         _ => event,
     }
 }

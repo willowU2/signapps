@@ -264,3 +264,70 @@ jobs:
       - uses: EmbarkStudios/cargo-deny-action@v2
         with:
           command: check advisories
+
+  # ─────────────────────────────────────────────────────────
+  # Job 6: cold-start-benchmark — signapps-platform boot < 3s
+  # ─────────────────────────────────────────────────────────
+  cold-start-benchmark:
+    name: Cold Start Benchmark (< 3s)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: [test]
+
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: signapps
+          POSTGRES_PASSWORD: signapps_dev
+          POSTGRES_DB: signapps
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgres://signapps:signapps_dev@localhost:5432/signapps
+      JWT_SECRET: thisisaverylongdevsecretatleast32bytes
+      KEYSTORE_MASTER_KEY: "0000000000000000000000000000000000000000000000000000000000000000"
+      PROXY_ENABLED: "false"
+      PXE_ENABLE_TFTP: "false"
+      PXE_ENABLE_PROXY_DHCP: "false"
+      PXE_ENABLE_DC: "false"
+      MAIL_PROTOCOLS_ENABLED: "false"
+      CONTAINERS_ENABLED: "false"
+      DEPLOY_API_ENABLED: "false"
+      SCHEDULER_TICK_ENABLED: "false"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Build signapps-platform (release)
+        run: cargo build --release -p signapps-platform
+
+      - name: Bench cold start
+        run: |
+          start=$(date +%s%3N)
+          ./target/release/signapps-platform &
+          pid=$!
+          deadline=$(($(date +%s) + 30))
+          until curl -fsS http://localhost:3099/health >/dev/null 2>&1; do
+            if [ "$(date +%s)" -gt "$deadline" ]; then
+              echo "timeout" >&2
+              kill $pid || true
+              exit 1
+            fi
+            sleep 0.05
+          done
+          end=$(date +%s%3N)
+          kill $pid || true
+          elapsed=$((end - start))
+          echo "elapsed=${elapsed}ms"
+          [ "$elapsed" -lt 3000 ]

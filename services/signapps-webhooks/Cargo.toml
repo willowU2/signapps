@@ -6,6 +6,11 @@ rust-version.workspace = true
 authors.workspace = true
 license.workspace = true
 description = "Webhooks service — outbound webhook management and incoming webhook receiver for SignApps Platform"
+default-run = "signapps-webhooks"
+
+[lib]
+name = "signapps_webhooks_svc"
+path = "src/lib.rs"
 
 [[bin]]
 name = "signapps-webhooks"
@@ -16,6 +21,7 @@ mimalloc = { workspace = true }
 # Internal crates
 signapps-common = { path = "../../crates/signapps-common" }
 signapps-db = { path = "../../crates/signapps-db" }
+signapps-service = { path = "../../crates/signapps-service" }
 
 # Web framework
 axum = { workspace = true }

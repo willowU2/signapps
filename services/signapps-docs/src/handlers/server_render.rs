@@ -137,20 +137,15 @@ pub async fn render_document(
                 bytes,
             )
                 .into_response())
-        }
+        },
         "png" => {
             let renderer = PngRenderer::default_dpi();
             let bytes = renderer
                 .render(&primitives, width, height)
                 .map_err(|e| (StatusCode::BAD_REQUEST, format!("PNG render failed: {e}")))?;
 
-            Ok((
-                StatusCode::OK,
-                [(header::CONTENT_TYPE, "image/png")],
-                bytes,
-            )
-                .into_response())
-        }
+            Ok((StatusCode::OK, [(header::CONTENT_TYPE, "image/png")], bytes).into_response())
+        },
         other => Err((
             StatusCode::BAD_REQUEST,
             format!("unsupported format: {other} (expected \"pdf\" or \"png\")"),
@@ -204,20 +199,15 @@ pub async fn render_slide(
                 bytes,
             )
                 .into_response())
-        }
+        },
         "png" => {
             let renderer = PngRenderer::default_dpi();
             let bytes = renderer
                 .render(&primitives, req.width, req.height)
                 .map_err(|e| (StatusCode::BAD_REQUEST, format!("PNG render failed: {e}")))?;
 
-            Ok((
-                StatusCode::OK,
-                [(header::CONTENT_TYPE, "image/png")],
-                bytes,
-            )
-                .into_response())
-        }
+            Ok((StatusCode::OK, [(header::CONTENT_TYPE, "image/png")], bytes).into_response())
+        },
         other => Err((
             StatusCode::BAD_REQUEST,
             format!("unsupported format: {other} (expected \"svg\" or \"png\")"),
@@ -312,14 +302,14 @@ pub async fn render_thumbnail(
     let renderer = PngRenderer::default_dpi();
     let bytes = renderer
         .render(&primitives, thumb_width, thumb_height)
-        .map_err(|e| (StatusCode::BAD_REQUEST, format!("thumbnail render failed: {e}")))?;
+        .map_err(|e| {
+            (
+                StatusCode::BAD_REQUEST,
+                format!("thumbnail render failed: {e}"),
+            )
+        })?;
 
-    Ok((
-        StatusCode::OK,
-        [(header::CONTENT_TYPE, "image/png")],
-        bytes,
-    )
-        .into_response())
+    Ok((StatusCode::OK, [(header::CONTENT_TYPE, "image/png")], bytes).into_response())
 }
 
 /// POST /api/v1/render/template -- resolve variables + render to PDF or PNG.
@@ -374,20 +364,15 @@ pub async fn render_template(
                 bytes,
             )
                 .into_response())
-        }
+        },
         "png" => {
             let renderer = PngRenderer::default_dpi();
             let bytes = renderer
                 .render(&primitives, width, height)
                 .map_err(|e| (StatusCode::BAD_REQUEST, format!("PNG render failed: {e}")))?;
 
-            Ok((
-                StatusCode::OK,
-                [(header::CONTENT_TYPE, "image/png")],
-                bytes,
-            )
-                .into_response())
-        }
+            Ok((StatusCode::OK, [(header::CONTENT_TYPE, "image/png")], bytes).into_response())
+        },
         other => Err((
             StatusCode::BAD_REQUEST,
             format!("unsupported format: {other} (expected \"pdf\" or \"png\")"),
@@ -448,7 +433,7 @@ fn tiptap_to_primitives(content: &serde_json::Value, page_width: f64) -> Vec<Dra
                         });
                     }
                     y += font_size * 1.5 + 8.0;
-                }
+                },
                 "paragraph" => {
                     let text = extract_text(node);
                     if !text.is_empty() {
@@ -465,7 +450,7 @@ fn tiptap_to_primitives(content: &serde_json::Value, page_width: f64) -> Vec<Dra
                     } else {
                         y += 14.0; // empty paragraph spacer
                     }
-                }
+                },
                 "horizontalRule" => {
                     primitives.push(DrawPrimitive::Line {
                         x1: left_margin,
@@ -480,7 +465,7 @@ fn tiptap_to_primitives(content: &serde_json::Value, page_width: f64) -> Vec<Dra
                         },
                     });
                     y += 16.0;
-                }
+                },
                 "bulletList" | "orderedList" => {
                     let is_ordered = node_type == "orderedList";
                     if let Some(items) = node.get("content").and_then(|c| c.as_array()) {
@@ -507,7 +492,7 @@ fn tiptap_to_primitives(content: &serde_json::Value, page_width: f64) -> Vec<Dra
                         }
                         y += 4.0; // extra spacing after list
                     }
-                }
+                },
                 "blockquote" => {
                     // Draw a left border bar
                     let quote_text = extract_deep_text(node);
@@ -535,7 +520,7 @@ fn tiptap_to_primitives(content: &serde_json::Value, page_width: f64) -> Vec<Dra
                         });
                         y += 14.0 * 1.6 + 8.0;
                     }
-                }
+                },
                 "codeBlock" => {
                     let code_text = extract_text(node);
                     if !code_text.is_empty() {
@@ -561,7 +546,7 @@ fn tiptap_to_primitives(content: &serde_json::Value, page_width: f64) -> Vec<Dra
                         });
                         y += block_height + 8.0;
                     }
-                }
+                },
                 "image" => {
                     // Render a placeholder rectangle for images
                     let src = node
@@ -611,10 +596,10 @@ fn tiptap_to_primitives(content: &serde_json::Value, page_width: f64) -> Vec<Dra
                         });
                     }
                     y += img_height + 8.0;
-                }
+                },
                 _ => {
                     y += 14.0; // skip unknown nodes with spacing
-                }
+                },
             }
         }
     }
@@ -757,9 +742,7 @@ fn spreadsheet_to_primitives(
                     let cell_val = if let Some(arr) = row.as_array() {
                         arr.get(col_idx)
                             .and_then(|v| {
-                                v.as_str()
-                                    .map(String::from)
-                                    .or_else(|| Some(v.to_string()))
+                                v.as_str().map(String::from).or_else(|| Some(v.to_string()))
                             })
                             .unwrap_or_default()
                     } else {
@@ -773,11 +756,7 @@ fn spreadsheet_to_primitives(
                         } else {
                             cell_val
                         };
-                        let color = if row_idx == 0 {
-                            "#111827"
-                        } else {
-                            "#374151"
-                        };
+                        let color = if row_idx == 0 { "#111827" } else { "#374151" };
                         primitives.push(DrawPrimitive::Text {
                             x: x + 3.0,
                             y: y + 14.0,
@@ -830,9 +809,7 @@ fn spreadsheet_to_primitives(
 /// # Errors
 ///
 /// Returns a `(400, message)` tuple if any element fails to deserialize.
-fn parse_primitives(
-    raw: &[serde_json::Value],
-) -> Result<Vec<DrawPrimitive>, (StatusCode, String)> {
+fn parse_primitives(raw: &[serde_json::Value]) -> Result<Vec<DrawPrimitive>, (StatusCode, String)> {
     raw.iter()
         .enumerate()
         .map(|(i, v)| {
@@ -861,19 +838,21 @@ fn resolve_template_content(
                 resolved = resolved.replace(&placeholder, value);
             }
             serde_json::Value::String(resolved)
-        }
+        },
         serde_json::Value::Object(map) => {
             let mut new_map = serde_json::Map::new();
             for (key, val) in map {
                 new_map.insert(key.clone(), resolve_template_content(val, values));
             }
             serde_json::Value::Object(new_map)
-        }
+        },
         serde_json::Value::Array(arr) => {
-            let resolved_arr: Vec<serde_json::Value> =
-                arr.iter().map(|v| resolve_template_content(v, values)).collect();
+            let resolved_arr: Vec<serde_json::Value> = arr
+                .iter()
+                .map(|v| resolve_template_content(v, values))
+                .collect();
             serde_json::Value::Array(resolved_arr)
-        }
+        },
         other => other.clone(),
     }
 }
@@ -965,7 +944,9 @@ mod tests {
         let mut vars = HashMap::new();
         vars.insert("name".to_string(), "Alice".to_string());
         let resolved = resolve_template_content(&content, &vars);
-        let text = resolved["content"][0]["content"][0]["text"].as_str().unwrap_or("");
+        let text = resolved["content"][0]["content"][0]["text"]
+            .as_str()
+            .unwrap_or("");
         assert_eq!(text, "Hello Alice");
     }
 

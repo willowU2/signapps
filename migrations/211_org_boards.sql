@@ -28,8 +28,8 @@ CREATE TABLE IF NOT EXISTS workforce_org_board_members (
     UNIQUE (board_id, person_id)
 );
 
-CREATE INDEX idx_board_members_board ON workforce_org_board_members(board_id);
-CREATE INDEX idx_board_members_person ON workforce_org_board_members(person_id);
+CREATE INDEX IF NOT EXISTS idx_board_members_board ON workforce_org_board_members(board_id);
+CREATE INDEX IF NOT EXISTS idx_board_members_person ON workforce_org_board_members(person_id);
 
 -- ── Update allowed_children to match spec hierarchy ─────────────────────────
 

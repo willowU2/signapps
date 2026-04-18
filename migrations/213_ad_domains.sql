@@ -1,7 +1,7 @@
 -- Migration 213: AD domain configuration
 -- Links a tenant's org tree to an Active Directory domain with SID, realm, and DNS name.
 
-CREATE TABLE ad_domains (
+CREATE TABLE IF NOT EXISTS ad_domains (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id UUID NOT NULL REFERENCES identity.tenants(id) ON DELETE CASCADE,
     tree_id UUID NOT NULL,
@@ -18,5 +18,5 @@ CREATE TABLE ad_domains (
     UNIQUE(tenant_id, dns_name)
 );
 
-CREATE INDEX idx_ad_domains_tenant ON ad_domains(tenant_id);
-CREATE INDEX idx_ad_domains_realm ON ad_domains(realm);
+CREATE INDEX IF NOT EXISTS idx_ad_domains_tenant ON ad_domains(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_ad_domains_realm ON ad_domains(realm);

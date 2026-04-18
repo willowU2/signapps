@@ -117,12 +117,7 @@ pub async fn render_png(Json(req): Json<RenderRequest>) -> Result<Response, (Sta
         .render(&primitives, req.width, req.height)
         .map_err(|e| (StatusCode::BAD_REQUEST, format!("PNG render failed: {e}")))?;
 
-    Ok((
-        StatusCode::OK,
-        [(header::CONTENT_TYPE, "image/png")],
-        bytes,
-    )
-        .into_response())
+    Ok((StatusCode::OK, [(header::CONTENT_TYPE, "image/png")], bytes).into_response())
 }
 
 /// Chart generation request body (re-exported from `signapps-drawing`).
@@ -195,7 +190,7 @@ pub async fn generate_chart(
                 StatusCode::BAD_REQUEST,
                 format!("unknown chart type: {other}"),
             ))
-        }
+        },
     };
 
     tracing::Span::current().record("chart_type", &req.chart_type);
@@ -241,9 +236,7 @@ pub async fn generate_chart(
 /// # Errors
 ///
 /// Returns a `(400, message)` tuple if any primitive fails to deserialize.
-fn parse_primitives(
-    raw: &[serde_json::Value],
-) -> Result<Vec<DrawPrimitive>, (StatusCode, String)> {
+fn parse_primitives(raw: &[serde_json::Value]) -> Result<Vec<DrawPrimitive>, (StatusCode, String)> {
     raw.iter()
         .enumerate()
         .map(|(i, v)| {

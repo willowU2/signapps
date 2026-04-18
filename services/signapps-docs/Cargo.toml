@@ -3,6 +3,15 @@ name = "signapps-docs"
 version = "0.1.0"
 edition = "2021"
 license.workspace = true
+default-run = "signapps-docs"
+
+[lib]
+name = "signapps_docs"
+path = "src/lib.rs"
+
+[[bin]]
+name = "signapps-docs"
+path = "src/main.rs"
 
 [dependencies]
 mimalloc = { workspace = true }
@@ -69,6 +78,7 @@ zip = { version = "2.0", default-features = false, features = ["deflate"] }
 # ─── Workspace crates ──────────────────────────────────────────────────────────
 signapps-common = { path = "../../crates/signapps-common" }
 signapps-db = { path = "../../crates/signapps-db", features = ["openapi"] }
+signapps-service = { path = "../../crates/signapps-service" }
 signapps-cache = { path = "../../crates/signapps-cache" }
 signapps-sharing = { path = "../../crates/signapps-sharing" }
 signapps-filters = { path = "../../crates/signapps-filters" }

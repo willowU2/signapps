@@ -1,7 +1,7 @@
 -- Collaborative editing documents (Y.js/Yrs)
 -- Supports: Text, Sheet, Slide, Board
 
-CREATE TABLE documents (
+CREATE TABLE IF NOT EXISTS documents (
     id UUID PRIMARY KEY,
     name TEXT NOT NULL DEFAULT 'Untitled',
     doc_type TEXT NOT NULL DEFAULT 'text' CHECK (doc_type IN ('text', 'sheet', 'slide', 'board', 'chat')),
@@ -13,12 +13,12 @@ CREATE TABLE documents (
     CONSTRAINT fk_created_by FOREIGN KEY (created_by) REFERENCES identity.users(id) ON DELETE SET NULL
 );
 
-CREATE INDEX idx_documents_created_at ON documents(created_at DESC);
-CREATE INDEX idx_documents_created_by ON documents(created_by);
-CREATE INDEX idx_documents_type ON documents(doc_type);
+CREATE INDEX IF NOT EXISTS idx_documents_created_at ON documents(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_documents_created_by ON documents(created_by);
+CREATE INDEX IF NOT EXISTS idx_documents_type ON documents(doc_type);
 
 -- Audit trail for document updates
-CREATE TABLE document_updates (
+CREATE TABLE IF NOT EXISTS document_updates (
     id BIGSERIAL PRIMARY KEY,
     doc_id UUID NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
     update BYTEA NOT NULL,
@@ -27,11 +27,11 @@ CREATE TABLE document_updates (
     client_id UUID
 );
 
-CREATE INDEX idx_document_updates_doc_id ON document_updates(doc_id);
-CREATE INDEX idx_document_updates_timestamp ON document_updates(timestamp DESC);
+CREATE INDEX IF NOT EXISTS idx_document_updates_doc_id ON document_updates(doc_id);
+CREATE INDEX IF NOT EXISTS idx_document_updates_timestamp ON document_updates(timestamp DESC);
 
 -- Document permissions (share with users/groups)
-CREATE TABLE document_permissions (
+CREATE TABLE IF NOT EXISTS document_permissions (
     id UUID PRIMARY KEY,
     doc_id UUID NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
     user_id UUID REFERENCES identity.users(id) ON DELETE CASCADE,
@@ -41,12 +41,12 @@ CREATE TABLE document_permissions (
     CONSTRAINT chk_user_or_group CHECK ((user_id IS NOT NULL AND group_id IS NULL) OR (user_id IS NULL AND group_id IS NOT NULL))
 );
 
-CREATE INDEX idx_document_permissions_doc_id ON document_permissions(doc_id);
-CREATE INDEX idx_document_permissions_user_id ON document_permissions(user_id);
-CREATE INDEX idx_document_permissions_group_id ON document_permissions(group_id);
+CREATE INDEX IF NOT EXISTS idx_document_permissions_doc_id ON document_permissions(doc_id);
+CREATE INDEX IF NOT EXISTS idx_document_permissions_user_id ON document_permissions(user_id);
+CREATE INDEX IF NOT EXISTS idx_document_permissions_group_id ON document_permissions(group_id);
 
 -- Presence/awareness (who is editing now)
-CREATE TABLE document_presence (
+CREATE TABLE IF NOT EXISTS document_presence (
     id UUID PRIMARY KEY,
     doc_id UUID NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
     user_id UUID NOT NULL REFERENCES identity.users(id) ON DELETE CASCADE,
@@ -56,12 +56,12 @@ CREATE TABLE document_presence (
     awareness_state JSONB
 );
 
-CREATE INDEX idx_document_presence_doc_id ON document_presence(doc_id);
-CREATE INDEX idx_document_presence_user_id ON document_presence(user_id);
-CREATE INDEX idx_document_presence_last_activity ON document_presence(last_activity DESC);
+CREATE INDEX IF NOT EXISTS idx_document_presence_doc_id ON document_presence(doc_id);
+CREATE INDEX IF NOT EXISTS idx_document_presence_user_id ON document_presence(user_id);
+CREATE INDEX IF NOT EXISTS idx_document_presence_last_activity ON document_presence(last_activity DESC);
 
 -- Type-specific metadata
-CREATE TABLE document_metadata (
+CREATE TABLE IF NOT EXISTS document_metadata (
     doc_id UUID PRIMARY KEY REFERENCES documents(id) ON DELETE CASCADE,
     metadata JSONB
 );

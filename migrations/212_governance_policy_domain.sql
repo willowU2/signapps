@@ -6,9 +6,9 @@
 ALTER TABLE workforce_org_policies
     DROP CONSTRAINT IF EXISTS workforce_org_policies_domain_check;
 
-ALTER TABLE workforce_org_policies
+DO $$ BEGIN ALTER TABLE workforce_org_policies
     ADD CONSTRAINT workforce_org_policies_domain_check
-    CHECK (domain IN ('security', 'modules', 'naming', 'delegation', 'compliance', 'governance', 'custom'));
+    CHECK (domain IN ('security', 'modules', 'naming', 'delegation', 'compliance', 'governance', 'custom')); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- ── Step 2: Seed default governance policy ─────────────────────────────────
 

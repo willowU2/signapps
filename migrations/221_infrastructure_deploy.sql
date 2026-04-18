@@ -1,6 +1,6 @@
 -- Migration 221: Deployment profiles, assignments, and history.
 
-CREATE TABLE infrastructure.deploy_profiles (
+CREATE TABLE IF NOT EXISTS infrastructure.deploy_profiles (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     domain_id UUID NOT NULL REFERENCES infrastructure.domains(id) ON DELETE CASCADE,
     name TEXT NOT NULL,
@@ -23,9 +23,9 @@ CREATE TABLE infrastructure.deploy_profiles (
     updated_at TIMESTAMPTZ DEFAULT now()
 );
 
-CREATE INDEX idx_deploy_profiles_domain ON infrastructure.deploy_profiles(domain_id);
+CREATE INDEX IF NOT EXISTS idx_deploy_profiles_domain ON infrastructure.deploy_profiles(domain_id);
 
-CREATE TABLE infrastructure.deploy_assignments (
+CREATE TABLE IF NOT EXISTS infrastructure.deploy_assignments (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     profile_id UUID NOT NULL REFERENCES infrastructure.deploy_profiles(id) ON DELETE CASCADE,
     target_type TEXT NOT NULL
@@ -35,7 +35,7 @@ CREATE TABLE infrastructure.deploy_assignments (
     UNIQUE(profile_id, target_type, target_id)
 );
 
-CREATE TABLE infrastructure.deploy_history (
+CREATE TABLE IF NOT EXISTS infrastructure.deploy_history (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     profile_id UUID NOT NULL REFERENCES infrastructure.deploy_profiles(id),
     computer_id UUID,
@@ -50,5 +50,5 @@ CREATE TABLE infrastructure.deploy_history (
     created_at TIMESTAMPTZ DEFAULT now()
 );
 
-CREATE INDEX idx_deploy_history_profile ON infrastructure.deploy_history(profile_id);
-CREATE INDEX idx_deploy_history_status ON infrastructure.deploy_history(status) WHERE status != 'completed';
+CREATE INDEX IF NOT EXISTS idx_deploy_history_profile ON infrastructure.deploy_history(profile_id);
+CREATE INDEX IF NOT EXISTS idx_deploy_history_status ON infrastructure.deploy_history(status) WHERE status != 'completed';

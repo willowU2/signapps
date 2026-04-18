@@ -598,7 +598,7 @@ mod tests {
 
     #[test]
     fn module_compiles() {
-        assert!(true, "{} handler module loaded", module_path!());
+        let _ = module_path!();
     }
 
     #[test]

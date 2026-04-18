@@ -13,4 +13,4 @@ CREATE TABLE IF NOT EXISTS mail.email_templates (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_email_templates_account ON mail.email_templates(account_id);
+CREATE INDEX IF NOT EXISTS idx_email_templates_account ON mail.email_templates(account_id);

@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS billing.invoices (
 -- id, invoice_id, description, quantity, unit_price_cents, total_cents,
 -- sort_order, created_at
 DROP TABLE IF EXISTS billing.line_items CASCADE;
-CREATE TABLE billing.line_items (
+CREATE TABLE IF NOT EXISTS billing.line_items (
     id               UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
     invoice_id       UUID        NOT NULL REFERENCES billing.invoices(id) ON DELETE CASCADE,
     description      TEXT        NOT NULL,
@@ -31,7 +31,7 @@ CREATE TABLE billing.line_items (
 -- id, invoice_id, amount_cents, currency, method, reference, paid_at,
 -- created_at
 DROP TABLE IF EXISTS billing.payments CASCADE;
-CREATE TABLE billing.payments (
+CREATE TABLE IF NOT EXISTS billing.payments (
     id           UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
     invoice_id   UUID        NOT NULL REFERENCES billing.invoices(id) ON DELETE CASCADE,
     amount_cents INTEGER     NOT NULL,

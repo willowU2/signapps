@@ -2,6 +2,7 @@
 
 pub mod anthropic;
 pub mod gemini;
+pub mod lazy;
 #[cfg(feature = "native-llm")]
 pub mod llamacpp;
 pub mod lmstudio;

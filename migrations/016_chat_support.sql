@@ -1,7 +1,7 @@
 -- Add 'chat' to allowed document types
 ALTER TABLE documents DROP CONSTRAINT documents_doc_type_check;
-ALTER TABLE documents ADD CONSTRAINT documents_doc_type_check 
-    CHECK (doc_type IN ('text', 'sheet', 'slide', 'board', 'chat'));
+DO $$ BEGIN ALTER TABLE documents ADD CONSTRAINT documents_doc_type_check 
+    CHECK (doc_type IN ('text', 'sheet', 'slide', 'board', 'chat')); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- Create channels table for easier querying (optional, but good for listing channels)
 -- Or just use documents with doc_type='chat'

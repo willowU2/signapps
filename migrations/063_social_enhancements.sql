@@ -9,7 +9,7 @@ ALTER TABLE social.posts
     ADD COLUMN thread_position INTEGER DEFAULT 0,
     ADD COLUMN thread_delay_seconds INTEGER DEFAULT 0;
 
-CREATE INDEX idx_social_posts_thread ON social.posts(thread_id) WHERE thread_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_social_posts_thread ON social.posts(thread_id) WHERE thread_id IS NOT NULL;
 
 -- ============================================================
 -- 2. Recurring / repeat posts
@@ -22,7 +22,7 @@ ALTER TABLE social.posts
 -- ============================================================
 -- 3. Post signatures
 -- ============================================================
-CREATE TABLE social.signatures (
+CREATE TABLE IF NOT EXISTS social.signatures (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL,
     name VARCHAR(255) NOT NULL,
@@ -32,12 +32,12 @@ CREATE TABLE social.signatures (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_social_signatures_user ON social.signatures(user_id);
+CREATE INDEX IF NOT EXISTS idx_social_signatures_user ON social.signatures(user_id);
 
 -- ============================================================
 -- 4. Media library
 -- ============================================================
-CREATE TABLE social.media (
+CREATE TABLE IF NOT EXISTS social.media (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL,
     filename VARCHAR(512) NOT NULL,
@@ -54,12 +54,12 @@ CREATE TABLE social.media (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_social_media_user ON social.media(user_id);
+CREATE INDEX IF NOT EXISTS idx_social_media_user ON social.media(user_id);
 
 -- ============================================================
 -- 5. Short URLs with click tracking
 -- ============================================================
-CREATE TABLE social.short_urls (
+CREATE TABLE IF NOT EXISTS social.short_urls (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL,
     short_code VARCHAR(16) NOT NULL UNIQUE,
@@ -69,13 +69,13 @@ CREATE TABLE social.short_urls (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE UNIQUE INDEX idx_social_short_urls_code ON social.short_urls(short_code);
-CREATE INDEX idx_social_short_urls_user ON social.short_urls(user_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_social_short_urls_code ON social.short_urls(short_code);
+CREATE INDEX IF NOT EXISTS idx_social_short_urls_user ON social.short_urls(user_id);
 
 -- ============================================================
 -- 6. Webhooks
 -- ============================================================
-CREATE TABLE social.webhooks (
+CREATE TABLE IF NOT EXISTS social.webhooks (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL,
     name VARCHAR(255) NOT NULL,
@@ -90,12 +90,12 @@ CREATE TABLE social.webhooks (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_social_webhooks_user ON social.webhooks(user_id);
+CREATE INDEX IF NOT EXISTS idx_social_webhooks_user ON social.webhooks(user_id);
 
 -- ============================================================
 -- 7. Workspaces (multi-brand / agency mode)
 -- ============================================================
-CREATE TABLE social.workspaces (
+CREATE TABLE IF NOT EXISTS social.workspaces (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     owner_id UUID NOT NULL,
     name VARCHAR(255) NOT NULL,
@@ -106,9 +106,9 @@ CREATE TABLE social.workspaces (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE UNIQUE INDEX idx_social_workspaces_slug ON social.workspaces(slug);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_social_workspaces_slug ON social.workspaces(slug);
 
-CREATE TABLE social.workspace_members (
+CREATE TABLE IF NOT EXISTS social.workspace_members (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     workspace_id UUID NOT NULL REFERENCES social.workspaces(id) ON DELETE CASCADE,
     user_id UUID NOT NULL,
@@ -129,7 +129,7 @@ ALTER TABLE social.posts
 -- ============================================================
 -- 8. Team comments on posts
 -- ============================================================
-CREATE TABLE social.post_comments (
+CREATE TABLE IF NOT EXISTS social.post_comments (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     post_id UUID NOT NULL REFERENCES social.posts(id) ON DELETE CASCADE,
     user_id UUID NOT NULL,
@@ -139,12 +139,12 @@ CREATE TABLE social.post_comments (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_social_post_comments_post ON social.post_comments(post_id);
+CREATE INDEX IF NOT EXISTS idx_social_post_comments_post ON social.post_comments(post_id);
 
 -- ============================================================
 -- 9. Posting time slots (preferred posting times per account)
 -- ============================================================
-CREATE TABLE social.time_slots (
+CREATE TABLE IF NOT EXISTS social.time_slots (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL,
     account_id UUID REFERENCES social.accounts(id) ON DELETE CASCADE,
@@ -155,13 +155,13 @@ CREATE TABLE social.time_slots (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_social_time_slots_user ON social.time_slots(user_id);
-CREATE UNIQUE INDEX idx_social_time_slots_unique ON social.time_slots(user_id, account_id, day_of_week, hour, minute);
+CREATE INDEX IF NOT EXISTS idx_social_time_slots_user ON social.time_slots(user_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_social_time_slots_unique ON social.time_slots(user_id, account_id, day_of_week, hour, minute);
 
 -- ============================================================
 -- 10. Content sets (full post configuration templates)
 -- ============================================================
-CREATE TABLE social.content_sets (
+CREATE TABLE IF NOT EXISTS social.content_sets (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL,
     name VARCHAR(255) NOT NULL,
@@ -176,12 +176,12 @@ CREATE TABLE social.content_sets (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_social_content_sets_user ON social.content_sets(user_id);
+CREATE INDEX IF NOT EXISTS idx_social_content_sets_user ON social.content_sets(user_id);
 
 -- ============================================================
 -- 11. Public API keys
 -- ============================================================
-CREATE TABLE social.api_keys (
+CREATE TABLE IF NOT EXISTS social.api_keys (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL,
     name VARCHAR(255) NOT NULL,
@@ -195,5 +195,5 @@ CREATE TABLE social.api_keys (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE UNIQUE INDEX idx_social_api_keys_hash ON social.api_keys(key_hash);
-CREATE INDEX idx_social_api_keys_user ON social.api_keys(user_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_social_api_keys_hash ON social.api_keys(key_hash);
+CREATE INDEX IF NOT EXISTS idx_social_api_keys_user ON social.api_keys(user_id);

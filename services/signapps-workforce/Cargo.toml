@@ -6,6 +6,11 @@ rust-version.workspace = true
 authors.workspace = true
 license.workspace = true
 description = "Workforce planning and organizational structure management for SignApps Platform"
+default-run = "signapps-workforce"
+
+[lib]
+name = "signapps_workforce"
+path = "src/lib.rs"
 
 [[bin]]
 name = "signapps-workforce"
@@ -15,6 +20,7 @@ path = "src/main.rs"
 mimalloc = { workspace = true }
 signapps-common = { path = "../../crates/signapps-common" }
 signapps-db = { path = "../../crates/signapps-db", features = ["openapi"] }
+signapps-service = { path = "../../crates/signapps-service" }
 signapps-ad-core = { path = "../../crates/signapps-ad-core" }
 axum = { workspace = true }
 tokio = { workspace = true }

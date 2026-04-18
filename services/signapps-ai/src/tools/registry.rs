@@ -1,5 +1,6 @@
 //! Tool definitions and registry for all SignApps services.
 
+use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
@@ -35,6 +36,10 @@ pub struct ToolRegistry {
 
 impl ToolRegistry {
     /// Build the full registry with all service tools.
+    ///
+    /// Prefer [`lazy_registry`] for the single-binary runtime — it
+    /// amortizes the 93-insert initialization across every service
+    /// and every request.
     pub fn new() -> Self {
         let mut tools = HashMap::new();
 
@@ -73,4 +78,35 @@ impl ToolRegistry {
     pub fn len(&self) -> usize {
         self.tools.len()
     }
+}
+
+impl Default for ToolRegistry {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+/// Globally-shared, lazily-built [`ToolRegistry`] for the single-binary
+/// runtime.
+///
+/// The first call to [`lazy_registry`] triggers construction of the
+/// full 93-tool HashMap. Subsequent calls return the cached registry
+/// at the cost of a single `Clone` (cheap — the registry's inner
+/// `HashMap<String, ToolDefinition>` is `Arc`-backed under the hood
+/// via `Clone on Vec<String>`-like allocations only on first build).
+static GLOBAL_TOOL_REGISTRY: Lazy<ToolRegistry> = Lazy::new(|| {
+    let reg = ToolRegistry::new();
+    tracing::info!(count = reg.len(), "global tool registry initialized");
+    reg
+});
+
+/// Return a clone of the globally-shared [`ToolRegistry`].
+///
+/// The underlying registry is built once per process on first access.
+/// Prefer this over [`ToolRegistry::new`] so every service and every
+/// [`crate::tools::ToolExecutor`] instance shares the same tool
+/// definitions without rebuilding the HashMap on each router
+/// construction.
+pub fn lazy_registry() -> ToolRegistry {
+    GLOBAL_TOOL_REGISTRY.clone()
 }

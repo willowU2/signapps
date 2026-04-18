@@ -18,7 +18,7 @@ VALUES
 ON CONFLICT (folder_path, bucket) DO NOTHING;
 
 -- Also seed default storage rules if needed
-ALTER TABLE storage_rules ADD CONSTRAINT unique_file_type UNIQUE (file_type);
+DO $$ BEGIN ALTER TABLE storage_rules ADD CONSTRAINT unique_file_type UNIQUE (file_type); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 INSERT INTO storage_rules (file_type, mime_type_pattern, target_bucket, target_backend)
 VALUES 

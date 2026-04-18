@@ -73,12 +73,14 @@ pub struct HardwareResponse {
 )]
 #[tracing::instrument(skip_all)]
 pub async fn list_local_models(
-    State(state): State<AppState>,
+    State(_state): State<AppState>,
 ) -> Result<Json<LocalModelsResponse>, (StatusCode, String)> {
-    let model_manager = state.model_manager.as_ref().ok_or((
-        StatusCode::SERVICE_UNAVAILABLE,
-        "Model manager not initialized".to_string(),
-    ))?;
+    let model_manager = crate::llm::lazy::ensure_model_manager().await.map_err(|e| {
+        (
+            StatusCode::SERVICE_UNAVAILABLE,
+            format!("Model manager initialization failed: {e}"),
+        )
+    })?;
 
     let models = model_manager
         .list_models(None)
@@ -108,12 +110,14 @@ pub async fn list_local_models(
 )]
 #[tracing::instrument(skip_all)]
 pub async fn list_available_models(
-    State(state): State<AppState>,
+    State(_state): State<AppState>,
 ) -> Result<Json<AvailableModelsResponse>, (StatusCode, String)> {
-    let model_manager = state.model_manager.as_ref().ok_or((
-        StatusCode::SERVICE_UNAVAILABLE,
-        "Model manager not initialized".to_string(),
-    ))?;
+    let model_manager = crate::llm::lazy::ensure_model_manager().await.map_err(|e| {
+        (
+            StatusCode::SERVICE_UNAVAILABLE,
+            format!("Model manager initialization failed: {e}"),
+        )
+    })?;
 
     let models = model_manager.list_models(None);
     Ok(Json(AvailableModelsResponse { models }))
@@ -122,13 +126,15 @@ pub async fn list_available_models(
 /// Dynamically search HuggingFace for models.
 #[tracing::instrument(skip_all)]
 pub async fn search_models(
-    State(state): State<AppState>,
+    State(_state): State<AppState>,
     Query(query): Query<SearchQuery>,
 ) -> Result<Json<AvailableModelsResponse>, (StatusCode, String)> {
-    let model_manager = state.model_manager.as_ref().ok_or((
-        StatusCode::SERVICE_UNAVAILABLE,
-        "Model manager not initialized".to_string(),
-    ))?;
+    let model_manager = crate::llm::lazy::ensure_model_manager().await.map_err(|e| {
+        (
+            StatusCode::SERVICE_UNAVAILABLE,
+            format!("Model manager initialization failed: {e}"),
+        )
+    })?;
 
     let models = model_manager
         .search_huggingface(&query.q)
@@ -159,13 +165,15 @@ pub async fn search_models(
 )]
 #[tracing::instrument(skip_all)]
 pub async fn download_model(
-    State(state): State<AppState>,
+    State(_state): State<AppState>,
     Json(request): Json<DownloadModelRequest>,
 ) -> Result<Json<DownloadModelResponse>, (StatusCode, String)> {
-    let model_manager = state.model_manager.as_ref().ok_or((
-        StatusCode::SERVICE_UNAVAILABLE,
-        "Model manager not initialized".to_string(),
-    ))?;
+    let model_manager = crate::llm::lazy::ensure_model_manager().await.map_err(|e| {
+        (
+            StatusCode::SERVICE_UNAVAILABLE,
+            format!("Model manager initialization failed: {e}"),
+        )
+    })?;
 
     // Verify model exists in registry
     let entry = model_manager.get_model(&request.model_id).ok_or((
@@ -218,13 +226,15 @@ pub async fn download_model(
 )]
 #[tracing::instrument(skip_all)]
 pub async fn get_model_status(
-    State(state): State<AppState>,
+    State(_state): State<AppState>,
     Path(model_id): Path<String>,
 ) -> Result<Json<ModelEntry>, (StatusCode, String)> {
-    let model_manager = state.model_manager.as_ref().ok_or((
-        StatusCode::SERVICE_UNAVAILABLE,
-        "Model manager not initialized".to_string(),
-    ))?;
+    let model_manager = crate::llm::lazy::ensure_model_manager().await.map_err(|e| {
+        (
+            StatusCode::SERVICE_UNAVAILABLE,
+            format!("Model manager initialization failed: {e}"),
+        )
+    })?;
 
     let entry = model_manager.get_model(&model_id).ok_or((
         StatusCode::NOT_FOUND,
@@ -251,13 +261,15 @@ pub async fn get_model_status(
 )]
 #[tracing::instrument(skip_all)]
 pub async fn delete_model(
-    State(state): State<AppState>,
+    State(_state): State<AppState>,
     Path(model_id): Path<String>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, String)> {
-    let model_manager = state.model_manager.as_ref().ok_or((
-        StatusCode::SERVICE_UNAVAILABLE,
-        "Model manager not initialized".to_string(),
-    ))?;
+    let model_manager = crate::llm::lazy::ensure_model_manager().await.map_err(|e| {
+        (
+            StatusCode::SERVICE_UNAVAILABLE,
+            format!("Model manager initialization failed: {e}"),
+        )
+    })?;
 
     model_manager.delete_model(&model_id).await.map_err(|e| {
         (
@@ -286,12 +298,14 @@ pub async fn delete_model(
 )]
 #[tracing::instrument(skip_all)]
 pub async fn get_hardware(
-    State(state): State<AppState>,
+    State(_state): State<AppState>,
 ) -> Result<Json<HardwareResponse>, (StatusCode, String)> {
-    let hardware = state.hardware.as_ref().ok_or((
-        StatusCode::SERVICE_UNAVAILABLE,
-        "Hardware detection not available".to_string(),
-    ))?;
+    let hardware = crate::llm::lazy::ensure_hardware().await.map_err(|e| {
+        (
+            StatusCode::SERVICE_UNAVAILABLE,
+            format!("Hardware detection failed: {e}"),
+        )
+    })?;
 
     Ok(Json(HardwareResponse {
         hardware: hardware.clone(),

@@ -3,6 +3,15 @@ name = "signapps-social"
 version = "0.1.0"
 edition = "2021"
 license.workspace = true
+default-run = "signapps-social"
+
+[lib]
+name = "signapps_social"
+path = "src/lib.rs"
+
+[[bin]]
+name = "signapps-social"
+path = "src/main.rs"
 
 [dependencies]
 mimalloc = { workspace = true }
@@ -31,5 +40,7 @@ urlencoding = "2.1"
 signapps-common = { path = "../../crates/signapps-common" }
 signapps-oauth = { path = "../../crates/signapps-oauth" }
 signapps-keystore = { path = "../../crates/signapps-keystore" }
+signapps-service = { path = "../../crates/signapps-service" }
+signapps-db = { path = "../../crates/signapps-db" }
 utoipa = { workspace = true }
 utoipa-swagger-ui = { workspace = true }

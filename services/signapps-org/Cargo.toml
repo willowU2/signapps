@@ -6,6 +6,11 @@ rust-version.workspace = true
 authors.workspace = true
 license.workspace = true
 description = "Organizational structure service — nodes, trees, assignments, orgchart for SignApps Platform"
+default-run = "signapps-org"
+
+[lib]
+name = "signapps_org"
+path = "src/lib.rs"
 
 [[bin]]
 name = "signapps-org"
@@ -16,6 +21,7 @@ mimalloc = { workspace = true }
 # Internal crates
 signapps-common = { path = "../../crates/signapps-common" }
 signapps-db = { path = "../../crates/signapps-db", features = ["openapi"] }
+signapps-service = { path = "../../crates/signapps-service" }
 
 # Web framework
 axum = { workspace = true }

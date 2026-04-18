@@ -1,0 +1,69 @@
+[package]
+name = "signapps-platform"
+version.workspace = true
+edition = "2021"
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Single-binary runtime assembling every SignApps service as tokio tasks"
+
+[lib]
+name = "signapps_platform"
+path = "src/lib.rs"
+
+[[bin]]
+name = "signapps-platform"
+path = "src/main.rs"
+
+[dependencies]
+mimalloc = { workspace = true }
+
+signapps-common  = { path = "../../crates/signapps-common" }
+signapps-db      = { path = "../../crates/signapps-db" }
+signapps-service = { path = "../../crates/signapps-service" }
+
+signapps-identity = { path = "../signapps-identity" }
+signapps-contacts = { path = "../signapps-contacts" }
+signapps-forms    = { path = "../signapps-forms" }
+signapps-storage  = { path = "../signapps-storage" }
+signapps-notifications = { path = "../signapps-notifications" }
+signapps-chat     = { path = "../signapps-chat" }
+signapps-collaboration = { path = "../signapps-collaboration" }
+signapps-meet     = { path = "../signapps-meet" }
+signapps-proxy    = { path = "../signapps-proxy" }
+signapps-media    = { path = "../signapps-media" }
+signapps-securelink = { path = "../signapps-securelink" }
+signapps-metrics  = { path = "../signapps-metrics" }
+signapps-social   = { path = "../signapps-social" }
+signapps-pxe      = { path = "../signapps-pxe" }
+signapps-it-assets = { path = "../signapps-it-assets" }
+signapps-workforce = { path = "../signapps-workforce" }
+signapps-vault    = { path = "../signapps-vault" }
+signapps-org      = { path = "../signapps-org" }
+signapps-tenant-config = { path = "../signapps-tenant-config" }
+signapps-billing  = { path = "../signapps-billing" }
+signapps-signatures = { path = "../signapps-signatures" }
+signapps-gamification = { path = "../signapps-gamification" }
+signapps-compliance = { path = "../signapps-compliance" }
+signapps-backup   = { path = "../signapps-backup" }
+signapps-integrations = { path = "../signapps-integrations" }
+signapps-calendar = { path = "../signapps-calendar" }
+signapps-mail     = { path = "../signapps-mail" }
+signapps-docs     = { path = "../signapps-docs" }
+signapps-containers = { path = "../signapps-containers" }
+signapps-deploy   = { path = "../signapps-deploy" }
+signapps-gateway  = { path = "../signapps-gateway" }
+signapps-scheduler = { path = "../signapps-scheduler" }
+signapps-webhooks-svc = { path = "../signapps-webhooks" }
+signapps-ai       = { path = "../signapps-ai" }
+
+anyhow  = { workspace = true }
+axum    = { workspace = true }
+tokio   = { workspace = true, features = ["full"] }
+tracing = { workspace = true }
+futures = { workspace = true }
+
+[dev-dependencies]
+reqwest    = { version = "0.12", default-features = false, features = ["json"] }
+serde_json = { workspace = true }
+anyhow     = { workspace = true }

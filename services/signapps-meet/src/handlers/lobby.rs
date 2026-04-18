@@ -553,7 +553,10 @@ mod tests {
 
     #[test]
     fn knock_status_round_trips() {
-        assert!(matches!(KnockStatus::parse("pending"), KnockStatus::Pending));
+        assert!(matches!(
+            KnockStatus::parse("pending"),
+            KnockStatus::Pending
+        ));
         assert!(matches!(
             KnockStatus::parse("admitted"),
             KnockStatus::Admitted

@@ -11,7 +11,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE SCHEMA IF NOT EXISTS identity;
 
 -- Users table
-CREATE TABLE identity.users (
+CREATE TABLE IF NOT EXISTS identity.users (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     username VARCHAR(64) UNIQUE NOT NULL,
     email VARCHAR(255) UNIQUE,
@@ -30,12 +30,12 @@ CREATE TABLE identity.users (
     last_login TIMESTAMPTZ
 );
 
-CREATE INDEX idx_users_username ON identity.users(username);
-CREATE INDEX idx_users_email ON identity.users(email);
-CREATE INDEX idx_users_auth_provider ON identity.users(auth_provider);
+CREATE INDEX IF NOT EXISTS idx_users_username ON identity.users(username);
+CREATE INDEX IF NOT EXISTS idx_users_email ON identity.users(email);
+CREATE INDEX IF NOT EXISTS idx_users_auth_provider ON identity.users(auth_provider);
 
 -- LDAP Configuration
-CREATE TABLE identity.ldap_config (
+CREATE TABLE IF NOT EXISTS identity.ldap_config (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     enabled BOOLEAN DEFAULT FALSE,
     server_url TEXT NOT NULL,
@@ -55,7 +55,7 @@ CREATE TABLE identity.ldap_config (
 );
 
 -- Sessions
-CREATE TABLE identity.sessions (
+CREATE TABLE IF NOT EXISTS identity.sessions (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID REFERENCES identity.users(id) ON DELETE CASCADE,
     token_hash TEXT NOT NULL,
@@ -65,11 +65,11 @@ CREATE TABLE identity.sessions (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_sessions_user_id ON identity.sessions(user_id);
-CREATE INDEX idx_sessions_expires_at ON identity.sessions(expires_at);
+CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON identity.sessions(user_id);
+CREATE INDEX IF NOT EXISTS idx_sessions_expires_at ON identity.sessions(expires_at);
 
 -- API Keys
-CREATE TABLE identity.api_keys (
+CREATE TABLE IF NOT EXISTS identity.api_keys (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID REFERENCES identity.users(id) ON DELETE CASCADE,
     name VARCHAR(255) NOT NULL,
@@ -79,10 +79,10 @@ CREATE TABLE identity.api_keys (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_api_keys_user_id ON identity.api_keys(user_id);
+CREATE INDEX IF NOT EXISTS idx_api_keys_user_id ON identity.api_keys(user_id);
 
 -- Groups (RBAC)
-CREATE TABLE identity.groups (
+CREATE TABLE IF NOT EXISTS identity.groups (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name VARCHAR(255) UNIQUE NOT NULL,
     description TEXT,
@@ -92,10 +92,10 @@ CREATE TABLE identity.groups (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_groups_parent_id ON identity.groups(parent_id);
+CREATE INDEX IF NOT EXISTS idx_groups_parent_id ON identity.groups(parent_id);
 
 -- Group Members
-CREATE TABLE identity.group_members (
+CREATE TABLE IF NOT EXISTS identity.group_members (
     group_id UUID REFERENCES identity.groups(id) ON DELETE CASCADE,
     user_id UUID REFERENCES identity.users(id) ON DELETE CASCADE,
     role VARCHAR(32) DEFAULT 'member',
@@ -104,7 +104,7 @@ CREATE TABLE identity.group_members (
 );
 
 -- Roles
-CREATE TABLE identity.roles (
+CREATE TABLE IF NOT EXISTS identity.roles (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name VARCHAR(255) UNIQUE NOT NULL,
     description TEXT,
@@ -114,14 +114,14 @@ CREATE TABLE identity.roles (
 );
 
 -- Group-Role assignments
-CREATE TABLE identity.group_roles (
+CREATE TABLE IF NOT EXISTS identity.group_roles (
     group_id UUID REFERENCES identity.groups(id) ON DELETE CASCADE,
     role_id UUID REFERENCES identity.roles(id) ON DELETE CASCADE,
     PRIMARY KEY (group_id, role_id)
 );
 
 -- Webhooks
-CREATE TABLE identity.webhooks (
+CREATE TABLE IF NOT EXISTS identity.webhooks (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name VARCHAR(255) NOT NULL,
     url TEXT NOT NULL,
@@ -141,7 +141,7 @@ CREATE TABLE identity.webhooks (
 CREATE SCHEMA IF NOT EXISTS containers;
 
 -- Managed containers
-CREATE TABLE containers.managed (
+CREATE TABLE IF NOT EXISTS containers.managed (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     docker_id VARCHAR(64) UNIQUE,
     name VARCHAR(255) NOT NULL,
@@ -155,11 +155,11 @@ CREATE TABLE containers.managed (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_containers_owner_id ON containers.managed(owner_id);
-CREATE INDEX idx_containers_status ON containers.managed(status);
+CREATE INDEX IF NOT EXISTS idx_containers_owner_id ON containers.managed(owner_id);
+CREATE INDEX IF NOT EXISTS idx_containers_status ON containers.managed(status);
 
 -- User quotas
-CREATE TABLE containers.user_quotas (
+CREATE TABLE IF NOT EXISTS containers.user_quotas (
     user_id UUID PRIMARY KEY REFERENCES identity.users(id) ON DELETE CASCADE,
     max_containers INT DEFAULT 10,
     max_cpu_cores DECIMAL(4,2) DEFAULT 4.0,
@@ -178,7 +178,7 @@ CREATE TABLE containers.user_quotas (
 CREATE SCHEMA IF NOT EXISTS proxy;
 
 -- Routes
-CREATE TABLE proxy.routes (
+CREATE TABLE IF NOT EXISTS proxy.routes (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name VARCHAR(255) UNIQUE NOT NULL,
     host VARCHAR(255) NOT NULL,
@@ -193,7 +193,7 @@ CREATE TABLE proxy.routes (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_routes_host ON proxy.routes(host);
+CREATE INDEX IF NOT EXISTS idx_routes_host ON proxy.routes(host);
 
 -- ============================================================================
 -- Schema: SecureLink (VPN)
@@ -201,7 +201,7 @@ CREATE INDEX idx_routes_host ON proxy.routes(host);
 CREATE SCHEMA IF NOT EXISTS securelink;
 
 -- Devices
-CREATE TABLE securelink.devices (
+CREATE TABLE IF NOT EXISTS securelink.devices (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name VARCHAR(255) UNIQUE NOT NULL,
     nickname VARCHAR(255),
@@ -220,7 +220,7 @@ CREATE TABLE securelink.devices (
 CREATE SCHEMA IF NOT EXISTS storage;
 
 -- RAID Arrays
-CREATE TABLE storage.raid_arrays (
+CREATE TABLE IF NOT EXISTS storage.raid_arrays (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name VARCHAR(255) UNIQUE NOT NULL,
     device_path TEXT NOT NULL,
@@ -234,7 +234,7 @@ CREATE TABLE storage.raid_arrays (
 );
 
 -- Disks
-CREATE TABLE storage.disks (
+CREATE TABLE IF NOT EXISTS storage.disks (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     device_path TEXT UNIQUE NOT NULL,
     serial_number VARCHAR(255),
@@ -249,11 +249,11 @@ CREATE TABLE storage.disks (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_disks_array_id ON storage.disks(array_id);
-CREATE INDEX idx_disks_status ON storage.disks(status);
+CREATE INDEX IF NOT EXISTS idx_disks_array_id ON storage.disks(array_id);
+CREATE INDEX IF NOT EXISTS idx_disks_status ON storage.disks(status);
 
 -- RAID Events
-CREATE TABLE storage.raid_events (
+CREATE TABLE IF NOT EXISTS storage.raid_events (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     array_id UUID REFERENCES storage.raid_arrays(id) ON DELETE CASCADE,
     event_type VARCHAR(64) NOT NULL,
@@ -263,8 +263,8 @@ CREATE TABLE storage.raid_events (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_raid_events_array_id ON storage.raid_events(array_id);
-CREATE INDEX idx_raid_events_created_at ON storage.raid_events(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_raid_events_array_id ON storage.raid_events(array_id);
+CREATE INDEX IF NOT EXISTS idx_raid_events_created_at ON storage.raid_events(created_at DESC);
 
 -- ============================================================================
 -- Schema: Documents (AI/RAG)
@@ -272,7 +272,7 @@ CREATE INDEX idx_raid_events_created_at ON storage.raid_events(created_at DESC);
 CREATE SCHEMA IF NOT EXISTS documents;
 
 -- Files
-CREATE TABLE documents.files (
+CREATE TABLE IF NOT EXISTS documents.files (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     filename VARCHAR(500) NOT NULL,
     path TEXT NOT NULL,
@@ -288,11 +288,11 @@ CREATE TABLE documents.files (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_files_path ON documents.files(path);
-CREATE INDEX idx_files_indexed ON documents.files(indexed);
+CREATE INDEX IF NOT EXISTS idx_files_path ON documents.files(path);
+CREATE INDEX IF NOT EXISTS idx_files_indexed ON documents.files(indexed);
 
 -- Chunks (for RAG)
-CREATE TABLE documents.chunks (
+CREATE TABLE IF NOT EXISTS documents.chunks (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     file_id UUID REFERENCES documents.files(id) ON DELETE CASCADE,
     chunk_index INT NOT NULL,
@@ -301,7 +301,7 @@ CREATE TABLE documents.chunks (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_chunks_file_id ON documents.chunks(file_id);
+CREATE INDEX IF NOT EXISTS idx_chunks_file_id ON documents.chunks(file_id);
 
 -- ============================================================================
 -- Schema: Scheduler
@@ -309,7 +309,7 @@ CREATE INDEX idx_chunks_file_id ON documents.chunks(file_id);
 CREATE SCHEMA IF NOT EXISTS scheduler;
 
 -- Jobs
-CREATE TABLE scheduler.jobs (
+CREATE TABLE IF NOT EXISTS scheduler.jobs (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name VARCHAR(255) NOT NULL,
     cron_expression VARCHAR(100) NOT NULL,
@@ -323,7 +323,7 @@ CREATE TABLE scheduler.jobs (
 );
 
 -- Job Runs
-CREATE TABLE scheduler.job_runs (
+CREATE TABLE IF NOT EXISTS scheduler.job_runs (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     job_id UUID REFERENCES scheduler.jobs(id) ON DELETE CASCADE,
     started_at TIMESTAMPTZ DEFAULT NOW(),
@@ -333,8 +333,8 @@ CREATE TABLE scheduler.job_runs (
     error TEXT
 );
 
-CREATE INDEX idx_job_runs_job_id ON scheduler.job_runs(job_id);
-CREATE INDEX idx_job_runs_started_at ON scheduler.job_runs(started_at DESC);
+CREATE INDEX IF NOT EXISTS idx_job_runs_job_id ON scheduler.job_runs(job_id);
+CREATE INDEX IF NOT EXISTS idx_job_runs_started_at ON scheduler.job_runs(started_at DESC);
 
 -- ============================================================================
 -- Insert default roles

@@ -22,6 +22,12 @@ tracing-subscriber = { workspace = true }
 # Utilities
 once_cell = { workspace = true }
 
+# Shared platform crates (for SharedState::init_once)
+signapps-common = { path = "../signapps-common" }
+signapps-db = { path = "../signapps-db" }
+signapps-cache = { path = "../signapps-cache" }
+signapps-keystore = { path = "../signapps-keystore" }
+
 # Windows service support
 [target.'cfg(windows)'.dependencies]
 windows-service = "0.7"

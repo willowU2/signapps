@@ -290,14 +290,12 @@ pub async fn join_by_code(
 ) -> Result<Json<TokenResponse>, (StatusCode, String)> {
     let body = body.map(|Json(b)| b);
 
-    let room = sqlx::query_as::<_, Room>(
-        "SELECT * FROM meet.rooms WHERE room_code = $1",
-    )
-    .bind(&code)
-    .fetch_optional(&state.pool)
-    .await
-    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
-    .ok_or((StatusCode::NOT_FOUND, "Room not found".to_string()))?;
+    let room = sqlx::query_as::<_, Room>("SELECT * FROM meet.rooms WHERE room_code = $1")
+        .bind(&code)
+        .fetch_optional(&state.pool)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
+        .ok_or((StatusCode::NOT_FOUND, "Room not found".to_string()))?;
 
     if room.status == "ended" {
         return Err((StatusCode::GONE, "Room has ended".to_string()));

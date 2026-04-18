@@ -1,7 +1,7 @@
 -- Gamification schema: XP tracking, badges, streaks
 CREATE SCHEMA IF NOT EXISTS gamification;
 
-CREATE TABLE gamification.user_xp (
+CREATE TABLE IF NOT EXISTS gamification.user_xp (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL UNIQUE,
     total_xp INTEGER DEFAULT 0,
@@ -12,7 +12,7 @@ CREATE TABLE gamification.user_xp (
     updated_at TIMESTAMPTZ DEFAULT now()
 );
 
-CREATE TABLE gamification.xp_events (
+CREATE TABLE IF NOT EXISTS gamification.xp_events (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL,
     action VARCHAR(50) NOT NULL,
@@ -21,12 +21,12 @@ CREATE TABLE gamification.xp_events (
     source_id UUID,
     created_at TIMESTAMPTZ DEFAULT now()
 );
-CREATE INDEX idx_xp_events_user ON gamification.xp_events(user_id);
+CREATE INDEX IF NOT EXISTS idx_xp_events_user ON gamification.xp_events(user_id);
 
-CREATE TABLE gamification.badges (
+CREATE TABLE IF NOT EXISTS gamification.badges (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL,
     badge_type VARCHAR(50) NOT NULL,
     earned_at TIMESTAMPTZ DEFAULT now()
 );
-CREATE INDEX idx_badges_user ON gamification.badges(user_id);
+CREATE INDEX IF NOT EXISTS idx_badges_user ON gamification.badges(user_id);

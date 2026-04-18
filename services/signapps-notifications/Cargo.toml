@@ -6,6 +6,11 @@ rust-version.workspace = true
 authors.workspace = true
 license.workspace = true
 description = "Notifications service for SignApps Platform — per-user notification feed"
+default-run = "signapps-notifications"
+
+[lib]
+name = "signapps_notifications"
+path = "src/lib.rs"
 
 [[bin]]
 name = "signapps-notifications"
@@ -15,6 +20,7 @@ path = "src/main.rs"
 mimalloc = { workspace = true }
 signapps-common = { path = "../../crates/signapps-common" }
 signapps-db = { path = "../../crates/signapps-db" }
+signapps-service = { path = "../../crates/signapps-service" }
 axum = { workspace = true }
 tokio = { workspace = true }
 serde = { workspace = true }

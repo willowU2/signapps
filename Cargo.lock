@@ -981,12 +981,27 @@ dependencies = [
 
 [[package]]
 name = "bit-set"
+version = "0.5.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0700ddab506f33b20a03b13996eccd309a48e5ff77d0d95926aa0210fb4e95f1"
+dependencies = [
+ "bit-vec 0.6.3",
+]
+
+[[package]]
+name = "bit-set"
 version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "08807e080ed7f9d5433fa9b275196cfc35414f66a0c79d864dc51a0d825231a3"
 dependencies = [
- "bit-vec",
+ "bit-vec 0.8.0",
 ]
+
+[[package]]
+name = "bit-vec"
+version = "0.6.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "349f9b6a179ed607305526ca489b34ad0a41aed5f7980fa90eb03160b69598fb"
 
 [[package]]
 name = "bit-vec"
@@ -3215,11 +3230,22 @@ checksum = "af9673d8203fcb076b19dfd17e38b3d4ae9f44959416ea532ce72415a6020365"
 
 [[package]]
 name = "fancy-regex"
+version = "0.13.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "531e46835a22af56d1e3b66f04844bed63158bc094a628bec1d321d9b4c44bf2"
+dependencies = [
+ "bit-set 0.5.3",
+ "regex-automata",
+ "regex-syntax",
+]
+
+[[package]]
+name = "fancy-regex"
 version = "0.16.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "998b056554fbe42e03ae0e152895cd1a7e1002aec800fdc6635d20270260c46f"
 dependencies = [
- "bit-set",
+ "bit-set 0.8.0",
  "regex-automata",
  "regex-syntax",
 ]
@@ -3230,7 +3256,7 @@ version = "0.17.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "72cf461f865c862bb7dc573f643dd6a2b6842f7c30b07882b56bd148cc2761b8"
 dependencies = [
- "bit-set",
+ "bit-set 0.8.0",
  "regex-automata",
  "regex-syntax",
 ]
@@ -6220,6 +6246,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "488016bfae457b036d996092f6cb448677611ce4449e970ceaf42695203f218a"
 dependencies = [
  "autocfg",
+]
+
+[[package]]
+name = "migrations-audit"
+version = "0.1.0"
+dependencies = [
+ "fancy-regex 0.13.0",
+ "walkdir",
 ]
 
 [[package]]
@@ -10184,6 +10218,7 @@ dependencies = [
  "llama-cpp-2",
  "mimalloc",
  "mime_guess",
+ "once_cell",
  "opendal",
  "ort",
  "rand 0.8.5",
@@ -10194,6 +10229,7 @@ dependencies = [
  "signapps-common",
  "signapps-db",
  "signapps-runtime",
+ "signapps-service",
  "sqlx",
  "tokenizers",
  "tokio",
@@ -10260,6 +10296,7 @@ dependencies = [
  "serde",
  "serde_json",
  "signapps-common",
+ "signapps-service",
  "tokio",
  "tokio-test",
  "tower 0.4.13",
@@ -10285,9 +10322,12 @@ dependencies = [
  "sha2",
  "signapps-common",
  "signapps-db",
+ "signapps-service",
  "sqlx",
  "thiserror 1.0.69",
  "tokio",
+ "tokio-test",
+ "tower 0.4.13",
  "tower-http 0.5.2",
  "tracing",
  "tracing-subscriber",
@@ -10342,6 +10382,7 @@ dependencies = [
  "signapps-db",
  "signapps-keystore",
  "signapps-oauth",
+ "signapps-service",
  "signapps-sharing",
  "sqlx",
  "thiserror 1.0.69",
@@ -10375,6 +10416,7 @@ dependencies = [
  "signapps-cache",
  "signapps-common",
  "signapps-db",
+ "signapps-service",
  "signapps-sharing",
  "sqlx",
  "thiserror 1.0.69",
@@ -10399,6 +10441,7 @@ dependencies = [
  "serde_json",
  "signapps-common",
  "signapps-db",
+ "signapps-service",
  "sqlx",
  "tokio",
  "tower-http 0.5.2",
@@ -10493,6 +10536,7 @@ dependencies = [
  "serde_json",
  "signapps-common",
  "signapps-db",
+ "signapps-service",
  "sqlx",
  "tokio",
  "tokio-test",
@@ -10520,6 +10564,7 @@ dependencies = [
  "signapps-cache",
  "signapps-common",
  "signapps-db",
+ "signapps-service",
  "signapps-sharing",
  "sqlx",
  "thiserror 1.0.69",
@@ -10555,6 +10600,7 @@ dependencies = [
  "serde_yaml",
  "signapps-common",
  "signapps-db",
+ "signapps-service",
  "sqlx",
  "tokio",
  "tokio-stream",
@@ -10848,6 +10894,7 @@ dependencies = [
  "signapps-common",
  "signapps-db",
  "signapps-feature-flags",
+ "signapps-service",
  "sqlx",
  "tempfile",
  "thiserror 1.0.69",
@@ -10937,7 +10984,9 @@ dependencies = [
  "signapps-cache",
  "signapps-common",
  "signapps-db",
+ "signapps-drawing",
  "signapps-filters",
+ "signapps-service",
  "signapps-sharing",
  "sqlx",
  "tempfile",
@@ -11049,6 +11098,7 @@ dependencies = [
  "signapps-cache",
  "signapps-common",
  "signapps-db",
+ "signapps-service",
  "signapps-sharing",
  "sqlx",
  "thiserror 1.0.69",
@@ -11074,8 +11124,11 @@ dependencies = [
  "serde_json",
  "signapps-common",
  "signapps-db",
+ "signapps-service",
  "sqlx",
  "tokio",
+ "tokio-test",
+ "tower 0.4.13",
  "tower-http 0.5.2",
  "tracing",
  "tracing-subscriber",
@@ -11102,6 +11155,7 @@ dependencies = [
  "signapps-common",
  "signapps-db",
  "signapps-runtime",
+ "signapps-service",
  "tokio",
  "tower 0.4.13",
  "tower-http 0.5.2",
@@ -11151,6 +11205,7 @@ dependencies = [
  "signapps-db",
  "signapps-keystore",
  "signapps-oauth",
+ "signapps-service",
  "sqlx",
  "tokio",
  "tokio-test",
@@ -11219,6 +11274,7 @@ dependencies = [
  "serde_json",
  "signapps-common",
  "signapps-db",
+ "signapps-service",
  "sqlx",
  "tokio",
  "tokio-test",
@@ -11226,6 +11282,7 @@ dependencies = [
  "tower-http 0.5.2",
  "tracing",
  "tracing-subscriber",
+ "uuid",
 ]
 
 [[package]]
@@ -11246,6 +11303,7 @@ dependencies = [
  "signapps-cache",
  "signapps-common",
  "signapps-db",
+ "signapps-service",
  "signapps-sharing",
  "sqlx",
  "tokio",
@@ -11388,6 +11446,7 @@ dependencies = [
  "signapps-keystore",
  "signapps-mime",
  "signapps-oauth",
+ "signapps-service",
  "signapps-sharing",
  "signapps-sieve",
  "signapps-smtp",
@@ -11443,7 +11502,9 @@ dependencies = [
  "serde",
  "serde_json",
  "signapps-common",
+ "signapps-db",
  "signapps-runtime",
+ "signapps-service",
  "signapps-transcription",
  "sqlx",
  "symphonia",
@@ -11482,7 +11543,9 @@ dependencies = [
  "serde",
  "serde_json",
  "signapps-common",
+ "signapps-db",
  "signapps-livekit-client",
+ "signapps-service",
  "signapps-transcription",
  "sqlx",
  "thiserror 1.0.69",
@@ -11514,6 +11577,7 @@ dependencies = [
  "serde_json",
  "signapps-common",
  "signapps-db",
+ "signapps-service",
  "sqlx",
  "sysinfo 0.30.13",
  "tokio",
@@ -11538,10 +11602,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "signapps-nexus"
-version = "0.1.0"
-
-[[package]]
 name = "signapps-notifications"
 version = "0.1.0"
 dependencies = [
@@ -11554,6 +11614,7 @@ dependencies = [
  "serde_json",
  "signapps-common",
  "signapps-db",
+ "signapps-service",
  "sqlx",
  "thiserror 1.0.69",
  "tokio",
@@ -11606,6 +11667,7 @@ dependencies = [
  "serde_json",
  "signapps-common",
  "signapps-db",
+ "signapps-service",
  "sqlx",
  "tokio",
  "tokio-test",
@@ -11624,6 +11686,57 @@ version = "0.1.0"
 dependencies = [
  "aes-gcm",
  "hex",
+]
+
+[[package]]
+name = "signapps-platform"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "axum 0.7.9",
+ "futures 0.3.31",
+ "mimalloc",
+ "reqwest 0.12.28",
+ "serde_json",
+ "signapps-ai",
+ "signapps-backup",
+ "signapps-billing",
+ "signapps-calendar",
+ "signapps-chat",
+ "signapps-collaboration",
+ "signapps-common",
+ "signapps-compliance",
+ "signapps-contacts",
+ "signapps-containers",
+ "signapps-db",
+ "signapps-deploy",
+ "signapps-docs",
+ "signapps-forms",
+ "signapps-gamification",
+ "signapps-gateway",
+ "signapps-identity",
+ "signapps-integrations",
+ "signapps-it-assets",
+ "signapps-mail",
+ "signapps-media",
+ "signapps-meet",
+ "signapps-metrics",
+ "signapps-notifications",
+ "signapps-org",
+ "signapps-proxy",
+ "signapps-pxe",
+ "signapps-scheduler",
+ "signapps-securelink",
+ "signapps-service",
+ "signapps-signatures",
+ "signapps-social",
+ "signapps-storage",
+ "signapps-tenant-config",
+ "signapps-vault",
+ "signapps-webhooks-svc",
+ "signapps-workforce",
+ "tokio",
+ "tracing",
 ]
 
 [[package]]
@@ -11669,6 +11782,7 @@ dependencies = [
  "signapps-cache",
  "signapps-common",
  "signapps-db",
+ "signapps-service",
  "sqlx",
  "tokio",
  "tokio-rustls 0.26.4",
@@ -11705,6 +11819,7 @@ dependencies = [
  "signapps-dns-server",
  "signapps-kerberos-kdc",
  "signapps-ldap-server",
+ "signapps-service",
  "sqlx",
  "thiserror 1.0.69",
  "tokio",
@@ -11778,6 +11893,7 @@ dependencies = [
  "serde_json",
  "signapps-common",
  "signapps-db",
+ "signapps-service",
  "sqlx",
  "tokio",
  "tokio-stream",
@@ -11803,6 +11919,7 @@ dependencies = [
 name = "signapps-securelink"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "axum 0.7.9",
  "chrono",
  "dotenvy",
@@ -11816,6 +11933,7 @@ dependencies = [
  "signapps-common",
  "signapps-db",
  "signapps-dns-server",
+ "signapps-service",
  "sqlx",
  "tokio",
  "tokio-tungstenite 0.24.0",
@@ -11850,6 +11968,10 @@ dependencies = [
  "eventlog",
  "log",
  "once_cell",
+ "signapps-cache",
+ "signapps-common",
+ "signapps-db",
+ "signapps-keystore",
  "thiserror 1.0.69",
  "tokio",
  "tracing",
@@ -11898,6 +12020,7 @@ dependencies = [
  "serde_json",
  "signapps-common",
  "signapps-db",
+ "signapps-service",
  "sqlx",
  "tokio",
  "tokio-test",
@@ -11955,8 +12078,10 @@ dependencies = [
  "serde_json",
  "sha2",
  "signapps-common",
+ "signapps-db",
  "signapps-keystore",
  "signapps-oauth",
+ "signapps-service",
  "sqlx",
  "thiserror 1.0.69",
  "tokio",
@@ -12029,6 +12154,7 @@ dependencies = [
  "signapps-cache",
  "signapps-common",
  "signapps-db",
+ "signapps-service",
  "signapps-sharing",
  "sqlx",
  "sysinfo 0.30.13",
@@ -12074,6 +12200,7 @@ dependencies = [
  "serde_json",
  "signapps-common",
  "signapps-db",
+ "signapps-service",
  "sqlx",
  "tokio",
  "tokio-test",
@@ -12141,6 +12268,7 @@ dependencies = [
  "signapps-common",
  "signapps-db",
  "signapps-db-vault",
+ "signapps-service",
  "sqlx",
  "tokio",
  "tokio-test",
@@ -12196,6 +12324,7 @@ dependencies = [
  "sha2",
  "signapps-common",
  "signapps-db",
+ "signapps-service",
  "sqlx",
  "tokio",
  "tokio-test",
@@ -12235,6 +12364,7 @@ dependencies = [
  "signapps-ad-core",
  "signapps-common",
  "signapps-db",
+ "signapps-service",
  "sqlx",
  "thiserror 1.0.69",
  "tokio",

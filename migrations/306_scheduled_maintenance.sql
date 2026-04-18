@@ -3,7 +3,7 @@
 
 BEGIN;
 
-CREATE TABLE scheduled_maintenance (
+CREATE TABLE IF NOT EXISTS scheduled_maintenance (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     env TEXT NOT NULL CHECK (env IN ('prod', 'dev')),
     scheduled_at TIMESTAMPTZ NOT NULL,
@@ -17,11 +17,11 @@ CREATE TABLE scheduled_maintenance (
     cancelled_reason TEXT
 );
 
-CREATE INDEX idx_scheduled_maintenance_env_status_time
+CREATE INDEX IF NOT EXISTS idx_scheduled_maintenance_env_status_time
     ON scheduled_maintenance (env, status, scheduled_at);
 
 -- Partial index for the scheduler worker's hot query (find next window to run)
-CREATE INDEX idx_scheduled_maintenance_next
+CREATE INDEX IF NOT EXISTS idx_scheduled_maintenance_next
     ON scheduled_maintenance (scheduled_at)
     WHERE status IN ('scheduled', 'active');
 

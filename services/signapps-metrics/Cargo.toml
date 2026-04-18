@@ -6,6 +6,11 @@ rust-version.workspace = true
 authors.workspace = true
 license.workspace = true
 description = "Monitoring and metrics service for SignApps Platform"
+default-run = "signapps-metrics"
+
+[lib]
+name = "signapps_metrics"
+path = "src/lib.rs"
 
 [[bin]]
 name = "signapps-metrics"
@@ -15,6 +20,7 @@ path = "src/main.rs"
 mimalloc = { workspace = true }
 signapps-common = { path = "../../crates/signapps-common" }
 signapps-db = { path = "../../crates/signapps-db", features = ["openapi"] }
+signapps-service = { path = "../../crates/signapps-service" }
 axum = { workspace = true }
 tokio = { workspace = true }
 serde = { workspace = true }

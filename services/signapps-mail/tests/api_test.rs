@@ -9,20 +9,7 @@ use axum::{
     body::Body,
     http::{Request, StatusCode},
 };
-use serde_json::{json, Value};
-use tower::ServiceExt;
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-/// Deserialize a response body to JSON.
-async fn body_to_json(body: axum::body::Body) -> Value {
-    let bytes = axum::body::to_bytes(body, usize::MAX)
-        .await
-        .expect("Failed to read body bytes");
-    serde_json::from_slice(&bytes).unwrap_or(json!(null))
-}
+use serde_json::json;
 
 // ---------------------------------------------------------------------------
 // List Emails — GET /api/v1/mail/emails

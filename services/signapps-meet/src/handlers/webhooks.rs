@@ -112,11 +112,15 @@ pub async fn receive_webhook(
             if let Some(egress) = evt.egress_info.as_ref() {
                 project_egress_event(&state, &evt.event, egress).await;
             }
-        }
+        },
         Err(err) => {
-            tracing::warn!(?err, raw_len = body.len(), "failed to parse livekit webhook");
+            tracing::warn!(
+                ?err,
+                raw_len = body.len(),
+                "failed to parse livekit webhook"
+            );
             return Err((StatusCode::BAD_REQUEST, "invalid webhook body".into()));
-        }
+        },
     }
 
     Ok(StatusCode::OK)
@@ -133,19 +137,18 @@ async fn project_egress_event(state: &AppState, event: &str, egress: &EgressInfo
     // (once real egress is wired — see recordings.rs module docs).
     let marker = format!("livekit:{}", egress.egress_id);
 
-    let row: Option<(uuid::Uuid,)> = match sqlx::query_as(
-        "SELECT id FROM meet.recordings WHERE storage_bucket = $1 LIMIT 1",
-    )
-    .bind(&marker)
-    .fetch_optional(&state.pool)
-    .await
-    {
-        Ok(r) => r,
-        Err(err) => {
-            tracing::warn!(?err, egress_id = %egress.egress_id, "lookup failed");
-            return;
-        }
-    };
+    let row: Option<(uuid::Uuid,)> =
+        match sqlx::query_as("SELECT id FROM meet.recordings WHERE storage_bucket = $1 LIMIT 1")
+            .bind(&marker)
+            .fetch_optional(&state.pool)
+            .await
+        {
+            Ok(r) => r,
+            Err(err) => {
+                tracing::warn!(?err, egress_id = %egress.egress_id, "lookup failed");
+                return;
+            },
+        };
 
     let Some((recording_id,)) = row else {
         tracing::warn!(
@@ -195,10 +198,10 @@ async fn project_egress_event(state: &AppState, event: &str, egress: &EgressInfo
                 new_status,
                 "recording projected from egress webhook"
             );
-        }
+        },
         Err(err) => {
             tracing::warn!(?err, %recording_id, "failed to project egress event");
-        }
+        },
     }
 
     // Fire meet.recording.ready / failed event bus notification for Phase 4.

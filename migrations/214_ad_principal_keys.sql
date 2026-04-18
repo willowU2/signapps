@@ -2,7 +2,7 @@
 -- Stores encryption keys for Kerberos principals (users, computers, services, krbtgt).
 -- key_data is encrypted at rest (AES-256-GCM with master key derived from JWT_SECRET + domain_sid).
 
-CREATE TABLE ad_principal_keys (
+CREATE TABLE IF NOT EXISTS ad_principal_keys (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     domain_id UUID NOT NULL REFERENCES ad_domains(id) ON DELETE CASCADE,
     principal_name TEXT NOT NULL,
@@ -17,5 +17,5 @@ CREATE TABLE ad_principal_keys (
     UNIQUE(domain_id, principal_name, enc_type, key_version)
 );
 
-CREATE INDEX idx_principal_keys_lookup ON ad_principal_keys(domain_id, principal_name);
-CREATE INDEX idx_principal_keys_entity ON ad_principal_keys(entity_id);
+CREATE INDEX IF NOT EXISTS idx_principal_keys_lookup ON ad_principal_keys(domain_id, principal_name);
+CREATE INDEX IF NOT EXISTS idx_principal_keys_entity ON ad_principal_keys(entity_id);

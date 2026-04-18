@@ -7,5 +7,5 @@ pub mod registry;
 pub mod service_clients;
 
 pub use executor::ToolExecutor;
-pub use registry::ToolRegistry;
+pub use registry::{lazy_registry, ToolRegistry};
 pub use service_clients::{ServiceClients, ServiceEndpoints};

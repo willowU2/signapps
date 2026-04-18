@@ -4,9 +4,20 @@ version = "0.1.0"
 edition = "2021"
 license.workspace = true
 description = "Media processing service for SignApps - OCR, TTS, STT"
+default-run = "signapps-media"
+
+[lib]
+name = "signapps_media"
+path = "src/lib.rs"
+
+[[bin]]
+name = "signapps-media"
+path = "src/main.rs"
 
 [dependencies]
 mimalloc = { workspace = true }
+signapps-db = { path = "../../crates/signapps-db" }
+signapps-service = { path = "../../crates/signapps-service" }
 # Web framework
 axum = { version = "0.7", features = ["multipart", "ws"] }
 tokio = { version = "1", features = ["full"] }

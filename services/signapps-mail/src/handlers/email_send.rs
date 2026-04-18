@@ -155,7 +155,10 @@ pub async fn send_email(
                 });
             },
             Err(e) => {
-                tracing::warn!(?e, "meet room creation failed — sending mail without invitation");
+                tracing::warn!(
+                    ?e,
+                    "meet room creation failed — sending mail without invitation"
+                );
             },
         }
     }
@@ -454,12 +457,9 @@ async fn create_meet_room_for_invitation(
     bearer: Option<&str>,
     inv: &MeetInvitationInput,
 ) -> Result<String, String> {
-    let meet_base = std::env::var("MEET_SERVICE_URL")
-        .unwrap_or_else(|_| "http://localhost:3014".to_string());
-    let url = format!(
-        "{}/api/v1/meet/rooms",
-        meet_base.trim_end_matches('/')
-    );
+    let meet_base =
+        std::env::var("MEET_SERVICE_URL").unwrap_or_else(|_| "http://localhost:3014".to_string());
+    let url = format!("{}/api/v1/meet/rooms", meet_base.trim_end_matches('/'));
 
     let body = serde_json::json!({
         "name": inv.title,

@@ -299,11 +299,7 @@ pub async fn vote_poll(
     }
 
     // Validate option_index.
-    let options_len = poll
-        .options
-        .as_array()
-        .map(|a| a.len() as i32)
-        .unwrap_or(0);
+    let options_len = poll.options.as_array().map(|a| a.len() as i32).unwrap_or(0);
     if req.option_index < 0 || req.option_index >= options_len {
         return Err((
             StatusCode::BAD_REQUEST,

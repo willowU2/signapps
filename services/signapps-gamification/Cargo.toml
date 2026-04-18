@@ -6,6 +6,11 @@ rust-version.workspace = true
 authors.workspace = true
 license.workspace = true
 description = "Gamification service for SignApps Platform — XP, badges, streaks, leaderboards"
+default-run = "signapps-gamification"
+
+[lib]
+name = "signapps_gamification"
+path = "src/lib.rs"
 
 [[bin]]
 name = "signapps-gamification"
@@ -15,6 +20,7 @@ path = "src/main.rs"
 mimalloc = { workspace = true }
 signapps-common = { path = "../../crates/signapps-common" }
 signapps-db = { path = "../../crates/signapps-db" }
+signapps-service = { path = "../../crates/signapps-service" }
 sqlx = { workspace = true }
 axum = { workspace = true }
 tokio = { workspace = true }
@@ -29,3 +35,7 @@ anyhow = { workspace = true }
 chrono = { workspace = true }
 utoipa = { workspace = true }
 utoipa-swagger-ui = { workspace = true }
+
+[dev-dependencies]
+tokio-test = { workspace = true }
+tower = { workspace = true }

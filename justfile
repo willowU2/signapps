@@ -100,9 +100,13 @@ dev:
 doctor:
     bash scripts/doctor.sh
 
-# Lancer tous les services (PowerShell, auto-loads .env)
-start:
+# Lancer tous les services (legacy: 33 process, PowerShell)
+start-legacy:
     powershell.exe -File scripts/start-all.ps1
+
+# Lancer tous les services (single-binary, single process)
+start:
+    powershell.exe -File scripts/start-platform.ps1
 
 # Stopper tous les services
 stop:
@@ -137,6 +141,14 @@ status:
     @echo "Frontend:  " && curl -s -o /dev/null -w "%{http_code}" http://localhost:3000 2>/dev/null || echo "down"
     @echo "Identity:  " && curl -s -o /dev/null -w "%{http_code}" http://localhost:3001/health 2>/dev/null || echo "down"
     @echo "Calendar:  " && curl -s -o /dev/null -w "%{http_code}" http://localhost:3011/health 2>/dev/null || echo "down"
+
+# Smoke check : ping 5 critical /health endpoints
+smoke:
+    #!/usr/bin/env bash
+    for port in 3001 3005 3011 3099 8095; do
+        printf "  :%-5s -> " "$port"
+        curl -s -o /dev/null -w "%{http_code}\n" "http://localhost:$port/health" || echo "DOWN"
+    done
 
 # ─────────────────────────── Database ────────────────────────
 

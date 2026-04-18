@@ -203,6 +203,6 @@ mod tests {
     fn module_compiles() {
         // Verify this handler module compiles correctly.
         // Integration tests require a running database and service.
-        assert!(true, "{} handler module loaded", module_path!());
+        let _ = module_path!();
     }
 }
