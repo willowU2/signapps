@@ -117,7 +117,10 @@ impl Transform {
     pub fn to_svg_attr(&self) -> String {
         let mut parts = Vec::new();
         if self.translate_x != 0.0 || self.translate_y != 0.0 {
-            parts.push(format!("translate({},{})", self.translate_x, self.translate_y));
+            parts.push(format!(
+                "translate({},{})",
+                self.translate_x, self.translate_y
+            ));
         }
         if self.rotate != 0.0 {
             parts.push(format!("rotate({})", self.rotate));

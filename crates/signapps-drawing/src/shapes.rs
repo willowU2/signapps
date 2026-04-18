@@ -110,9 +110,11 @@ impl Shape {
             ShapeType::Arrow { end_x, end_y } => self.decompose_arrow(*end_x, *end_y),
             ShapeType::TextBox => self.decompose_textbox(),
             ShapeType::StickyNote => self.decompose_sticky_note(),
-            ShapeType::Connector { end_x, end_y, label } => {
-                self.decompose_connector(*end_x, *end_y, label.as_deref())
-            }
+            ShapeType::Connector {
+                end_x,
+                end_y,
+                label,
+            } => self.decompose_connector(*end_x, *end_y, label.as_deref()),
         }
     }
 
@@ -200,7 +202,11 @@ impl Shape {
 
         let head_d = format!("M {end_x},{end_y} L {p1_x},{p1_y} L {p2_x},{p2_y} Z");
         let head_style = ShapeStyle {
-            fill: self.style.stroke.clone().or_else(|| Some("#000000".to_string())),
+            fill: self
+                .style
+                .stroke
+                .clone()
+                .or_else(|| Some("#000000".to_string())),
             stroke: None,
             stroke_width: 0.0,
             opacity: self.style.opacity,
@@ -348,7 +354,9 @@ mod tests {
             width: 100.0,
             height: 80.0,
             shape_type,
-            style: ShapeStyle::new().with_fill("#3b82f6").with_stroke("#1e40af", 2.0),
+            style: ShapeStyle::new()
+                .with_fill("#3b82f6")
+                .with_stroke("#1e40af", 2.0),
             text: None,
         }
     }
@@ -372,7 +380,7 @@ mod tests {
                 assert_eq!(*width, 100.0);
                 assert_eq!(*height, 80.0);
                 assert_eq!(*corner_radius, 0.0);
-            }
+            },
             other => panic!("expected Rect, got {other:?}"),
         }
     }
@@ -388,7 +396,7 @@ mod tests {
                 assert_eq!(*cy, 60.0); // 20 + 80/2
                 assert_eq!(*rx, 50.0); // 100/2
                 assert_eq!(*ry, 40.0); // 80/2
-            }
+            },
             other => panic!("expected Ellipse, got {other:?}"),
         }
     }
@@ -406,7 +414,7 @@ mod tests {
                 // Should contain 4 points (top, right, bottom, left)
                 let l_count = d.matches('L').count();
                 assert_eq!(l_count, 3);
-            }
+            },
             other => panic!("expected Path, got {other:?}"),
         }
     }
@@ -450,7 +458,7 @@ mod tests {
         match &prims[0] {
             DrawPrimitive::Rect { corner_radius, .. } => {
                 assert_eq!(*corner_radius, 4.0);
-            }
+            },
             other => panic!("expected Rect, got {other:?}"),
         }
     }
@@ -466,7 +474,7 @@ mod tests {
             DrawPrimitive::Text { text, anchor, .. } => {
                 assert_eq!(text, "Hello world");
                 assert_eq!(*anchor, TextAnchor::Middle);
-            }
+            },
             other => panic!("expected Text, got {other:?}"),
         }
     }
@@ -488,7 +496,7 @@ mod tests {
         match &prims[0] {
             DrawPrimitive::Rect { style, .. } => {
                 assert_eq!(style.fill.as_deref(), Some("#fef08a"));
-            }
+            },
             other => panic!("expected Rect, got {other:?}"),
         }
     }
@@ -528,7 +536,7 @@ mod tests {
             DrawPrimitive::Text { text, anchor, .. } => {
                 assert_eq!(text, "connects");
                 assert_eq!(*anchor, TextAnchor::Middle);
-            }
+            },
             other => panic!("expected Text, got {other:?}"),
         }
     }

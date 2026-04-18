@@ -74,13 +74,16 @@ fn render_primitive(buf: &mut String, prim: &DrawPrimitive) {
             style,
             corner_radius,
         } => {
-            let _ = write!(buf, r#"<rect x="{x}" y="{y}" width="{width}" height="{height}""#);
+            let _ = write!(
+                buf,
+                r#"<rect x="{x}" y="{y}" width="{width}" height="{height}""#
+            );
             if *corner_radius > 0.0 {
                 let _ = write!(buf, r#" rx="{corner_radius}""#);
             }
             write_style_attrs(buf, style);
             buf.push_str("/>");
-        }
+        },
 
         DrawPrimitive::Ellipse {
             cx,
@@ -92,7 +95,7 @@ fn render_primitive(buf: &mut String, prim: &DrawPrimitive) {
             let _ = write!(buf, r#"<ellipse cx="{cx}" cy="{cy}" rx="{rx}" ry="{ry}""#);
             write_style_attrs(buf, style);
             buf.push_str("/>");
-        }
+        },
 
         DrawPrimitive::Line {
             x1,
@@ -104,13 +107,13 @@ fn render_primitive(buf: &mut String, prim: &DrawPrimitive) {
             let _ = write!(buf, r#"<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}""#);
             write_style_attrs(buf, style);
             buf.push_str("/>");
-        }
+        },
 
         DrawPrimitive::Path { d, style } => {
             let _ = write!(buf, r#"<path d="{d}""#);
             write_style_attrs(buf, style);
             buf.push_str("/>");
-        }
+        },
 
         DrawPrimitive::Text {
             x,
@@ -133,7 +136,7 @@ fn render_primitive(buf: &mut String, prim: &DrawPrimitive) {
             // Escape XML special characters in text content
             push_xml_escaped(buf, text);
             buf.push_str("</text>");
-        }
+        },
 
         DrawPrimitive::Image {
             x,
@@ -146,7 +149,7 @@ fn render_primitive(buf: &mut String, prim: &DrawPrimitive) {
                 buf,
                 r#"<image x="{x}" y="{y}" width="{width}" height="{height}" href="{href}"/>"#,
             );
-        }
+        },
 
         DrawPrimitive::Group {
             children,
@@ -164,7 +167,7 @@ fn render_primitive(buf: &mut String, prim: &DrawPrimitive) {
                 render_primitive(buf, child);
             }
             buf.push_str("</g>");
-        }
+        },
     }
 }
 
@@ -230,7 +233,9 @@ mod tests {
             y: 20.0,
             width: 100.0,
             height: 50.0,
-            style: ShapeStyle::new().with_fill("#ff0000").with_stroke("#000", 2.0),
+            style: ShapeStyle::new()
+                .with_fill("#ff0000")
+                .with_stroke("#000", 2.0),
             corner_radius: 0.0,
         }];
         let svg = render_to_string(&prims);
@@ -462,7 +467,9 @@ mod tests {
                 width: 120.0,
                 height: 80.0,
                 shape_type: ShapeType::Rectangle,
-                style: ShapeStyle::new().with_fill("#3b82f6").with_stroke("#1e40af", 2.0),
+                style: ShapeStyle::new()
+                    .with_fill("#3b82f6")
+                    .with_stroke("#1e40af", 2.0),
                 text: None,
             },
             Shape {

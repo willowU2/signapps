@@ -1,10 +1,19 @@
 //! Multi-target rendering processors.
 //!
 //! This module defines the [`RenderProcessor`] trait and error types, plus concrete
-//! renderer implementations. Currently only SVG is implemented; PNG and PDF renderers
-//! will be added in future tasks when `resvg`/`tiny-skia`/`printpdf` dependencies land.
+//! renderer implementations:
+//!
+//! - **SVG** (`svg`) -- always available, produces SVG XML.
+//! - **PNG** (`png`, feature `png`) -- rasterizes via resvg/tiny-skia.
+//! - **PDF** (`pdf`, feature `pdf`) -- generates PDF via printpdf.
 
 pub mod svg;
+
+#[cfg(feature = "png")]
+pub mod png;
+
+#[cfg(feature = "pdf")]
+pub mod pdf;
 
 use crate::primitives::DrawPrimitive;
 use thiserror::Error;
