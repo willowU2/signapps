@@ -110,6 +110,15 @@ impl Modify for SecurityAddon {
         crate::handlers::presentations::update_slide,
         crate::handlers::presentations::delete_slide,
         crate::handlers::presentations::reorder_slides,
+        // Versions
+        crate::handlers::versions::append_command,
+        crate::handlers::versions::list_commands,
+        crate::handlers::versions::undo_last_command,
+        crate::handlers::versions::create_snapshot,
+        crate::handlers::versions::list_snapshots,
+        crate::handlers::versions::get_snapshot,
+        crate::handlers::versions::restore_snapshot,
+        crate::handlers::versions::diff_snapshots,
         // Sheet Formats
         crate::handlers::sheet_formats::list_formats,
         crate::handlers::sheet_formats::upsert_format,
@@ -184,6 +193,13 @@ impl Modify for SecurityAddon {
         crate::handlers::sheet_formats::UpsertFormatRequest,
         crate::handlers::sheet_formats::BatchUpsertRequest,
         crate::handlers::sheet_formats::UpsertMetadataRequest,
+        // Versions
+        signapps_db::models::DocumentCommand,
+        signapps_db::models::AppendCommand,
+        signapps_db::models::DocumentSnapshot,
+        signapps_db::models::CreateSnapshot,
+        signapps_db::models::DiffEntry,
+        crate::handlers::versions::DiffSnapshotsBody,
     )),
     tags(
         (name = "System", description = "Health and system endpoints"),
@@ -196,6 +212,7 @@ impl Modify for SecurityAddon {
         (name = "Chat", description = "Chat channels and direct messages"),
         (name = "Presentations", description = "Slides persistence API (presentations, layouts, slides CRUD)"),
         (name = "Sheet Formats", description = "Spreadsheet cell formats and sheet metadata persistence"),
+        (name = "Versions", description = "Document versioning -- command log, snapshots, undo, and diff"),
     ),
     modifiers(&SecurityAddon),
 )]

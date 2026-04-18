@@ -235,6 +235,13 @@ async fn main() -> anyhow::Result<()> {
         .route("/api/v1/sheets/:doc_id/formats/:cell_ref", delete(delete_format))
         .route("/api/v1/sheets/:doc_id/metadata", get(get_metadata))
         .route("/api/v1/sheets/:doc_id/metadata", put(upsert_metadata))
+        // Document versioning (command log + snapshots)
+        .route("/api/v1/versions/:doc_id/commands", post(handlers::versions::append_command).get(handlers::versions::list_commands))
+        .route("/api/v1/versions/:doc_id/undo", post(handlers::versions::undo_last_command))
+        .route("/api/v1/versions/:doc_id/snapshots", post(handlers::versions::create_snapshot).get(handlers::versions::list_snapshots))
+        .route("/api/v1/versions/:doc_id/snapshots/diff", post(handlers::versions::diff_snapshots))
+        .route("/api/v1/versions/:doc_id/snapshots/:id", get(handlers::versions::get_snapshot))
+        .route("/api/v1/versions/:doc_id/snapshots/:id/restore", post(handlers::versions::restore_snapshot))
         // Collab WebSocket alias — originally signapps-collab (port 3013), now served from port 3010
         // Old URL: ws://localhost:3013/api/v1/collab/ws/:doc_id
         // New URL: ws://localhost:3010/api/v1/collab/ws/:doc_id

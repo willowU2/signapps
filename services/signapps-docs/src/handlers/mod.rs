@@ -12,4 +12,5 @@ pub mod sheet_formats;
 pub mod styles;
 pub mod templates;
 pub mod types;
+pub mod versions;
 pub mod websocket;
