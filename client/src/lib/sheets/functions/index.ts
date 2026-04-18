@@ -2,6 +2,7 @@ import { registerDateFunctions } from "./date";
 import { registerLogicFunctions } from "./logic";
 import { registerMathFunctions } from "./math";
 import { registerTextFunctions } from "./text";
+import { registerExtendedFunctions } from "../functions-extended";
 
 export {
   executeFunctionOp,
@@ -18,5 +19,6 @@ export function initializeFunctionsRegistry() {
   registerDateFunctions();
   registerTextFunctions();
   registerLogicFunctions();
+  registerExtendedFunctions();
   registered = true;
 }
