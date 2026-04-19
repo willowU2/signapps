@@ -74,6 +74,11 @@ impl Modify for SecurityAddon {
         crate::handlers::boards::add_member,
         crate::handlers::boards::update_member,
         crate::handlers::boards::remove_member,
+        // ── AD / LDAP sync (W3) ──────────────────────────────────────────────
+        crate::handlers::ad::get_config,
+        crate::handlers::ad::put_config,
+        crate::handlers::ad::trigger_sync,
+        crate::handlers::ad::trigger_sync_dry_run,
     ),
     components(schemas(
         // Canonical models re-exported from signapps-db.
@@ -101,6 +106,11 @@ impl Modify for SecurityAddon {
         crate::handlers::boards::BoardWithMembers,
         crate::handlers::boards::AddMemberBody,
         crate::handlers::boards::UpdateMemberBody,
+        // AD / LDAP DTOs
+        crate::handlers::ad::AdConfigView,
+        crate::handlers::ad::PutConfigBody,
+        signapps_db::models::org::AdSyncMode,
+        signapps_db::models::org::ConflictStrategy,
     )),
     modifiers(&SecurityAddon),
     tags(
