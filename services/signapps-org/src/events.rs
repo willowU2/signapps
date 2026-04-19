@@ -9,6 +9,7 @@ use std::sync::Arc;
 
 use signapps_common::pg_events::{PgEventBus, PlatformEvent};
 
+use crate::handlers::rbac as rbac_viz;
 use crate::rbac_client::OrgClient;
 
 /// Spawn a background task that subscribes to the `org.*` topics we
@@ -27,6 +28,10 @@ pub fn spawn_invalidation_listener(
         "org.grant.revoked",
         "org.policy.updated",
         "org.assignment.changed",
+        // SO2 — delegation events also invalidate the RBAC visualizer cache.
+        "org.delegation.created",
+        "org.delegation.revoked",
+        "org.delegation.expired",
     ] {
         let bus = bus.clone();
         let resolver = resolver.clone();
@@ -69,7 +74,15 @@ pub async fn invalidate_on_event(resolver: &OrgClient, event: &PlatformEvent) {
             // Policy / assignment edits can affect arbitrarily many
             // resources.  Broad invalidation is cheaper than enumerating.
             resolver.cache().invalidate_all().await;
+            rbac_viz::invalidate_all().await;
             tracing::debug!(%event.event_type, "rbac cache: broad invalidation");
+        },
+        "org.delegation.created" | "org.delegation.revoked" | "org.delegation.expired" => {
+            // SO2 visualizer cache is keyed by person_id — easier to
+            // do broad invalidation than to chase delegator/delegate
+            // pairs here.
+            rbac_viz::invalidate_all().await;
+            tracing::debug!(%event.event_type, "rbac viz cache: broad invalidation (delegation)");
         },
         _ => {}, // ignore
     }

@@ -20,8 +20,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { UserPlus, X, Pencil, Share2 } from "lucide-react";
+import { UserPlus, X, Pencil, Share2, Shield } from "lucide-react";
 import { DelegationDialog } from "./dialogs/delegation-dialog";
+import { RbacVizPanel } from "./rbac-viz-panel";
 import { toast } from "sonner";
 import { orgApi } from "@/lib/api/org";
 import type {
@@ -86,6 +87,9 @@ export function PeopleTab({ nodeId, nodeName, persons }: PeopleTabProps) {
   const [editSaving, setEditSaving] = useState(false);
 
   // SO1 — delegation dialog
+  // SO2 — RBAC visualizer target person (opens a side-dialog).
+  const [rbacPerson, setRbacPerson] = useState<Person | null>(null);
+
   const [delegationDelegator, setDelegationDelegator] = useState<Person | null>(
     null,
   );
@@ -307,6 +311,16 @@ export function PeopleTab({ nodeId, nodeName, persons }: PeopleTabProps) {
                     >
                       <Share2 className="h-3.5 w-3.5" />
                     </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="shrink-0 h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+                      onClick={() => setRbacPerson(p)}
+                      title="Voir les permissions effectives"
+                      data-testid="rbac-viz-button"
+                    >
+                      <Shield className="h-3.5 w-3.5" />
+                    </Button>
                   </>
                 )}
                 <Button
@@ -509,6 +523,22 @@ export function PeopleTab({ nodeId, nodeName, persons }: PeopleTabProps) {
           toast.success("Délégation enregistrée");
         }}
       />
+
+      {/* SO2 — RBAC visualizer dialog */}
+      <Dialog
+        open={!!rbacPerson}
+        onOpenChange={(o) => !o && setRbacPerson(null)}
+      >
+        <DialogContent className="max-w-2xl p-0 h-[640px] flex flex-col">
+          {rbacPerson && (
+            <RbacVizPanel
+              personId={rbacPerson.id}
+              personName={`${rbacPerson.first_name} ${rbacPerson.last_name}`}
+              onClose={() => setRbacPerson(null)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

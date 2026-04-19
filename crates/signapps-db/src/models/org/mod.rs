@@ -12,6 +12,11 @@
 //! - [`AuditLogEntry`] : piste d'audit automatique (trigger SQL).
 //! - [`Delegation`] + [`DelegationScope`] : délégations temporaires.
 //!
+//! **SO2 addition (2026-04-19)** — gouvernance & permissions:
+//! - [`Raci`] + [`RaciRole`] : matrix R/A/C/I par projet (focus node).
+//! - [`BoardDecision`] + [`DecisionStatus`] : décisions d'un board.
+//! - [`BoardVote`] + [`VoteKind`] : votes nominatifs sur décisions.
+//!
 //! ## Design choices
 //!
 //! - Each entity carries `tenant_id` for multi-tenancy.
@@ -29,6 +34,8 @@ pub mod ad_sync_log;
 pub mod assignment;
 pub mod audit;
 pub mod board;
+pub mod board_decision;
+pub mod board_vote;
 pub mod delegation;
 pub mod node;
 pub mod person;
@@ -36,6 +43,7 @@ pub mod policy;
 pub mod position;
 pub mod position_incumbent;
 pub mod provisioning_log;
+pub mod raci;
 
 pub use access_grant::AccessGrant;
 pub use ad_config::{AdConfig, AdSyncMode, ConflictStrategy};
@@ -43,6 +51,8 @@ pub use ad_sync_log::AdSyncLog;
 pub use assignment::{Assignment, Axis};
 pub use audit::AuditLogEntry;
 pub use board::{Board, BoardMember};
+pub use board_decision::{BoardDecision, DecisionStatus};
+pub use board_vote::{BoardVote, VoteKind};
 pub use delegation::{Delegation, DelegationScope};
 pub use node::{NodeKind, OrgNode};
 pub use person::Person;
@@ -50,3 +60,4 @@ pub use policy::{PermissionSpec, Policy, PolicyBinding};
 pub use position::Position;
 pub use position_incumbent::PositionIncumbent;
 pub use provisioning_log::ProvisioningLog;
+pub use raci::{Raci, RaciRole};

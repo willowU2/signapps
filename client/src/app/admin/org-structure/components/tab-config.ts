@@ -14,6 +14,9 @@ export const ALL_TABS: TabDef[] = [
   { id: "people", label: "Personnes", category: "organisation" },
   { id: "positions", label: "Postes", category: "organisation" },
   { id: "governance", label: "Gouvernance", category: "organisation" },
+  // SO2 — gouvernance enrichie
+  { id: "raci", label: "RACI", category: "organisation" },
+  { id: "decisions", label: "Décisions", category: "organisation" },
   // Groupes & Politiques
   { id: "groups", label: "Groupes", category: "groupes_politiques" },
   { id: "sites", label: "Sites", category: "groupes_politiques" },
@@ -132,21 +135,29 @@ export const DEFAULT_TAB_VISIBILITY: Record<string, string[]> = {
 export function getVisibleTabs(
   nodeType: string,
   schema?: Record<string, unknown>,
+  extras?: { axisType?: string; hasBoard?: boolean },
 ): TabDef[] {
   // Check for override in schema.visible_tabs
   const override = schema?.visible_tabs as Record<string, string[]> | undefined;
-  if (override) {
-    const allIds = [
-      ...(override.organisation || []),
-      ...(override.groupes_politiques || []),
-      ...(override.infrastructure || []),
-    ];
-    return ALL_TABS.filter((t) => allIds.includes(t.id));
+  const ids: string[] = override
+    ? [
+        ...(override.organisation || []),
+        ...(override.groupes_politiques || []),
+        ...(override.infrastructure || []),
+      ]
+    : (DEFAULT_TAB_VISIBILITY[nodeType] ??
+      DEFAULT_TAB_VISIBILITY["department"]);
+
+  // SO2 — conditional tabs: RACI on project focus nodes, Décisions on
+  // any node that already has a board attached.
+  const withExtras = [...ids];
+  if (extras?.axisType === "project" && !withExtras.includes("raci")) {
+    withExtras.push("raci");
   }
-  // Default mapping
-  const defaultIds =
-    DEFAULT_TAB_VISIBILITY[nodeType] ?? DEFAULT_TAB_VISIBILITY["department"];
-  return ALL_TABS.filter((t) => defaultIds.includes(t.id));
+  if (extras?.hasBoard && !withExtras.includes("decisions")) {
+    withExtras.push("decisions");
+  }
+  return ALL_TABS.filter((t) => withExtras.includes(t.id));
 }
 
 // =============================================================================

@@ -630,4 +630,191 @@ export const orgApi = {
       return client.get<Assignment[]>("/org/assignments", { params });
     },
   },
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // SO2 governance — RBAC visualizer, RACI matrix, board decisions/votes.
+  // ═══════════════════════════════════════════════════════════════════════
+
+  /** RBAC visualizer API. */
+  rbac: {
+    /** Full effective permission map for a person. */
+    effective: async (personId: string) =>
+      client.get<RbacEffectivePermission[]>(`/org/rbac/person/${personId}`),
+    /** Filtered effective map (by user_id or resource). */
+    filtered: async (params: {
+      user_id?: string;
+      person_id?: string;
+      resource?: string;
+    }) =>
+      client.get<RbacEffectivePermission[]>("/org/rbac/effective", {
+        params,
+      }),
+    /** Simulate a specific action and get an allow/deny + chain. */
+    simulate: async (body: {
+      person_id: string;
+      action: string;
+      resource: string;
+    }) => client.post<RbacSimulateResponse>("/org/rbac/simulate", body),
+  },
+
+  /** RACI matrix API. */
+  raci: {
+    list: async (projectId: string) =>
+      client.get<OrgRaci[]>("/org/raci", { params: { project_id: projectId } }),
+    create: async (body: {
+      project_id: string;
+      person_id: string;
+      role: OrgRaciRole;
+    }) => {
+      const tenantId = getCurrentTenantId();
+      return client.post<OrgRaci>("/org/raci", {
+        tenant_id: tenantId,
+        ...body,
+      });
+    },
+    bulkSet: async (entries: OrgRaciBulkEntry[]) => {
+      const tenantId = getCurrentTenantId();
+      return client.post<OrgRaci[]>("/org/raci/bulk", {
+        tenant_id: tenantId,
+        entries,
+      });
+    },
+    delete: async (id: string) => client.delete(`/org/raci/${id}`),
+  },
+
+  /** Board decisions + votes API. */
+  decisions: {
+    list: async (boardId: string, params?: { status?: OrgDecisionStatus }) =>
+      client.get<OrgBoardDecision[]>(`/org/boards/${boardId}/decisions`, {
+        params,
+      }),
+    create: async (
+      boardId: string,
+      body: {
+        title: string;
+        description?: string;
+        attributes?: Record<string, unknown>;
+      },
+    ) => {
+      const tenantId = getCurrentTenantId();
+      return client.post<OrgBoardDecision>(`/org/boards/${boardId}/decisions`, {
+        tenant_id: tenantId,
+        ...body,
+      });
+    },
+    updateStatus: async (
+      boardId: string,
+      decisionId: string,
+      body: { status: OrgDecisionStatus; decided_by_person_id?: string },
+    ) =>
+      client.put<OrgBoardDecision>(
+        `/org/boards/${boardId}/decisions/${decisionId}/status`,
+        body,
+      ),
+    delete: async (boardId: string, decisionId: string) =>
+      client.delete(`/org/boards/${boardId}/decisions/${decisionId}`),
+    listVotes: async (decisionId: string) =>
+      client.get<OrgBoardVote[]>(`/org/decisions/${decisionId}/votes`),
+    upsertVote: async (
+      decisionId: string,
+      body: {
+        person_id: string;
+        vote: OrgVoteKind;
+        rationale?: string;
+      },
+    ) => {
+      const tenantId = getCurrentTenantId();
+      return client.post<OrgBoardVote>(`/org/decisions/${decisionId}/votes`, {
+        tenant_id: tenantId,
+        ...body,
+      });
+    },
+    deleteVote: async (decisionId: string, voteId: string) =>
+      client.delete(`/org/decisions/${decisionId}/votes/${voteId}`),
+  },
 };
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SO2 types
+// ═══════════════════════════════════════════════════════════════════════════
+
+/** Source of an effective permission. */
+export type RbacPermissionSource =
+  | { type: "direct"; ref_id: string; ref_name: string }
+  | { type: "node"; ref_id: string; ref_name: string }
+  | { type: "role"; ref_id: string; ref_name: string }
+  | { type: "delegation"; ref_id: string; ref_name: string };
+
+/** One effective permission with source tracing. */
+export interface RbacEffectivePermission {
+  action: string;
+  resource: string;
+  source: RbacPermissionSource;
+}
+
+/** Result of a /org/rbac/simulate call. */
+export interface RbacSimulateResponse {
+  allowed: boolean;
+  reason: string;
+  chain: RbacEffectivePermission[];
+}
+
+/** RACI role. */
+export type OrgRaciRole =
+  | "responsible"
+  | "accountable"
+  | "consulted"
+  | "informed";
+
+/** One RACI row. */
+export interface OrgRaci {
+  id: string;
+  tenant_id: string;
+  project_id: string;
+  person_id: string;
+  role: OrgRaciRole;
+  created_at: string;
+}
+
+/** One entry of the bulk-set payload (replace roles for a (project, person) pair). */
+export interface OrgRaciBulkEntry {
+  project_id: string;
+  person_id: string;
+  roles: OrgRaciRole[];
+}
+
+/** Board decision lifecycle status. */
+export type OrgDecisionStatus =
+  | "proposed"
+  | "approved"
+  | "rejected"
+  | "deferred";
+
+/** Board decision row. */
+export interface OrgBoardDecision {
+  id: string;
+  tenant_id: string;
+  board_id: string;
+  title: string;
+  description?: string | null;
+  status: OrgDecisionStatus;
+  decided_at?: string | null;
+  decided_by_person_id?: string | null;
+  attributes: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+}
+
+/** Vote kind. */
+export type OrgVoteKind = "for" | "against" | "abstain";
+
+/** Board vote row. */
+export interface OrgBoardVote {
+  id: string;
+  tenant_id: string;
+  decision_id: string;
+  person_id: string;
+  vote: OrgVoteKind;
+  rationale?: string | null;
+  voted_at: string;
+}

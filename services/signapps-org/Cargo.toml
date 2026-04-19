@@ -51,6 +51,10 @@ hmac = "0.12"
 sha2 = "0.10"
 thiserror = { workspace = true }
 
+# Cache for RBAC visualizer results (5 min TTL).
+moka = { workspace = true }
+once_cell = { workspace = true }
+
 # Async trait objects (RBAC resolver)
 async-trait = { workspace = true }
 

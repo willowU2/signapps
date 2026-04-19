@@ -328,6 +328,17 @@ pub fn create_router(state: AppState) -> Router {
         .nest("/api/v1/org/positions", handlers::positions::routes())
         .nest("/api/v1/org/history", handlers::history::routes())
         .nest("/api/v1/org/delegations", handlers::delegations::routes())
+        // SO2 governance — rbac visualizer + raci + board decisions/votes.
+        .nest("/api/v1/org/rbac", handlers::rbac::routes())
+        .nest("/api/v1/org/raci", handlers::raci::routes())
+        .nest(
+            "/api/v1/org/boards/:board_id/decisions",
+            handlers::decisions::board_decisions_routes(),
+        )
+        .nest(
+            "/api/v1/org/decisions/:decision_id",
+            handlers::decisions::decision_votes_routes(),
+        )
         .route_layer(axum_middleware::from_fn_with_state(
             state.clone(),
             auth_middleware::<AppState>,
