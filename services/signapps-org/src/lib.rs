@@ -17,6 +17,7 @@
 pub mod ad;
 pub mod handlers;
 pub mod middleware;
+pub mod rbac_client;
 
 use std::sync::Arc;
 
