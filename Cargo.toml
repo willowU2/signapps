@@ -116,6 +116,8 @@ members = [
     "services/signapps-agent",
     # Seeding service (demo data, single source of truth)
     "services/signapps-seed",
+    # Integration tests crate (cross-services scenarios, #[ignore] by default)
+    "services/signapps-integration-tests",
     # Developer tooling
     "tools/signapps-installer",
     "tools/migrations-audit",
