@@ -21,6 +21,10 @@ use context::SeedContext;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
+// Re-export common dependencies for external integration tests.
+pub use sqlx;
+pub use uuid as uuid_lib;
+
 /// Command-line arguments for the seed binary.
 /// Command-line arguments for the seed binary.
 #[derive(Parser, Debug, Clone)]
@@ -71,7 +75,12 @@ pub async fn run_seed(args: SeedArgs) -> anyhow::Result<()> {
         reset_acme_data(&pool).await?;
     }
 
-    let tenant_id = uuid::acme_uuid("tenant", "acme-corp");
+    // Resolve tenant id: prefer existing acme-corp tenant if any, else
+    // insert with our deterministic id. This lets the seed cohabit with
+    // pre-existing data (e.g. from legacy seed scripts).
+    let deterministic_id = uuid::acme_uuid("tenant", "acme-corp");
+    let tenant_id = resolve_or_create_tenant(&pool, deterministic_id).await?;
+
     let ctx = SeedContext {
         db: pool,
         tenant_id,
@@ -141,6 +150,34 @@ fn redact(url: &str) -> String {
         }
     }
     url.to_string()
+}
+
+async fn resolve_or_create_tenant(
+    pool: &signapps_db_shared::pool::DatabasePool,
+    deterministic_id: ::uuid::Uuid,
+) -> anyhow::Result<::uuid::Uuid> {
+    // If an acme-corp tenant already exists, reuse its id to avoid slug collisions.
+    let existing: Option<(::uuid::Uuid,)> =
+        sqlx::query_as("SELECT id FROM identity.tenants WHERE slug = 'acme-corp' LIMIT 1")
+            .fetch_optional(pool.inner())
+            .await?;
+    if let Some((id,)) = existing {
+        tracing::info!(tenant_id = %id, "using existing acme-corp tenant");
+        return Ok(id);
+    }
+
+    sqlx::query(
+        r#"
+        INSERT INTO identity.tenants (id, name, slug, domain, plan, is_active)
+        VALUES ($1, 'Acme Corp', 'acme-corp', 'acme.corp', 'enterprise', TRUE)
+        ON CONFLICT (id) DO NOTHING
+        "#,
+    )
+    .bind(deterministic_id)
+    .execute(pool.inner())
+    .await?;
+    tracing::info!(tenant_id = %deterministic_id, "created new acme-corp tenant");
+    Ok(deterministic_id)
 }
 
 async fn reset_acme_data(pool: &signapps_db_shared::pool::DatabasePool) -> anyhow::Result<()> {

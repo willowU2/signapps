@@ -21,6 +21,11 @@ signapps-db = { path = "../../crates/signapps-db" }
 signapps-db-shared = { path = "../../crates/signapps-db-shared" }
 argon2 = "0.5"
 
+[dev-dependencies]
+sqlx = { workspace = true, features = ["runtime-tokio", "postgres", "uuid", "chrono", "macros"] }
+uuid = { workspace = true }
+tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
+
 [[bin]]
 name = "signapps-seed"
 path = "src/main.rs"
