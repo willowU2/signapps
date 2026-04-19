@@ -21,6 +21,26 @@
       "purpose": "any maskable"
     }
   ],
+  "shortcuts": [
+    {
+      "name": "Annuaire",
+      "short_name": "Annuaire",
+      "description": "Rechercher et contacter une personne de l'entreprise",
+      "url": "/directory",
+      "icons": [
+        {
+          "src": "/icons/directory-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        },
+        {
+          "src": "/icons/directory-512.png",
+          "sizes": "512x512",
+          "type": "image/png"
+        }
+      ]
+    }
+  ],
   "categories": ["productivity", "business"],
   "lang": "fr"
 }
