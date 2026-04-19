@@ -534,6 +534,8 @@ LLM_PROVIDER=ollama|vllm|openai|anthropic|llamacpp
 MODELS_DIR=./data/models           # cache modèles AI
 GPU_BACKEND=auto                   # auto|cuda|rocm|metal|vulkan|cpu
 RUST_LOG=info,signapps=debug,sqlx=warn
+PXE_MODE=user                       # user (ports 6969/4011) ou root (69/67)
+PXE_AUTO_ENROLL=true                # auto-discovery DHCP dans pxe.assets
 ```
 
 Voir `.env.example` pour la liste complète.
@@ -553,6 +555,7 @@ See `docs/architecture/inter-service-communication.md` for details and patterns.
 - **Frontend build** : `cd client && npm run build` (Next.js default, Turbopack en prod OU webpack selon Next 16 config).
 - **Frontend budget** : `cd client && npm run budget` vérifie la taille gzip par route.
 - **Auto-login dev** : `http://localhost:3000/login?auto=admin`
+- **PXE démo** : `/pxe/wizard` (5 étapes), `/pxe/assets` (tabs), `/pxe/debug` (DHCP audit). SSE live : `GET /api/v1/pxe/deployments/:mac/stream`.
 - **PostgreSQL** : `just db-start` (Docker) ou natif
 - **Runtime backend (défaut)** : `just start` → **signapps-platform** (single binary, 34 services en tokio tasks, cold start < 3 s)
 - **Runtime backend (legacy)** : `just start-legacy` → 33 binaires séparés (debug isolé d'un service)
