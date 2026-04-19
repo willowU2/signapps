@@ -37,6 +37,10 @@ pub struct AppState {
     pub jwt_config: JwtConfig,
     /// In-memory RGPD data export job store (one active job per user).
     pub data_export: handlers::data_export::DataExportStore,
+    /// Shared RBAC resolver injected by the runtime. `None` in tests.
+    pub resolver: Option<
+        std::sync::Arc<dyn signapps_common::rbac::resolver::OrgPermissionResolver>,
+    >,
 }
 
 impl AuthState for AppState {
@@ -68,6 +72,7 @@ async fn build_state(shared: &SharedState) -> anyhow::Result<AppState> {
         pool: shared.pool.clone(),
         jwt_config: (*shared.jwt).clone(),
         data_export: handlers::data_export::DataExportStore::new(),
+        resolver: shared.resolver.clone(),
     })
 }
 

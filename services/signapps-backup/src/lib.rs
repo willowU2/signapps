@@ -29,6 +29,10 @@ use tower_http::{
 #[derive(Clone)]
 pub struct AppState {
     pub jwt_config: JwtConfig,
+    /// Shared RBAC resolver injected by the runtime. `None` in tests.
+    pub resolver: Option<
+        std::sync::Arc<dyn signapps_common::rbac::resolver::OrgPermissionResolver>,
+    >,
 }
 
 impl AuthState for AppState {
@@ -50,6 +54,7 @@ pub async fn router(shared: SharedState) -> anyhow::Result<Router> {
 async fn build_state(shared: &SharedState) -> anyhow::Result<AppState> {
     Ok(AppState {
         jwt_config: (*shared.jwt).clone(),
+        resolver: shared.resolver.clone(),
     })
 }
 
