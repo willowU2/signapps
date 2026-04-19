@@ -96,7 +96,12 @@ fn run_proxy_dhcp_loop(
     tokio_handle: tokio::runtime::Handle,
 ) -> anyhow::Result<()> {
     let socket = UdpSocket::bind(bind_addr)?;
-    socket.set_broadcast(true)?;
+    // Enable broadcast only when we're not bound exclusively to loopback —
+    // on Windows, SO_BROADCAST on a loopback socket can interfere with
+    // unicast delivery for integration tests.
+    if !bind_addr.ip().is_loopback() {
+        socket.set_broadcast(true)?;
+    }
     info!(
         "ProxyDHCP server listening on {} (TFTP: {}, file: {})",
         bind_addr, tftp_ip, boot_filename
@@ -192,8 +197,13 @@ fn handle_dhcp_packet(
     };
     let reply = build_pxe_offer(xid, chaddr, tftp_ip, boot_filename, reply_type)?;
 
-    // Send to broadcast or unicast depending on flags
-    let dest = if src.port() == 68 {
+    // Send to broadcast or unicast depending on flags.
+    // Special case: loopback source (integration tests) — always unicast
+    // back to the exact source port, since 255.255.255.255 can't reach
+    // a client socket bound on 127.0.0.1.
+    let dest = if src.ip().is_loopback() {
+        src
+    } else if src.port() == 68 {
         // Client port — send unicast
         src
     } else {

@@ -16,6 +16,10 @@ path = "src/lib.rs"
 name = "signapps-pxe"
 path = "src/main.rs"
 
+[[bin]]
+name = "signapps-pxe-sim"
+path = "src/bin/sim.rs"
+
 [dependencies]
 mimalloc = { workspace = true }
 signapps-service = { path = "../../crates/signapps-service" }
@@ -54,3 +58,4 @@ utoipa-swagger-ui.workspace = true
 [dev-dependencies]
 rand = "0.8"
 tokio = { version = "1", features = ["full", "test-util"] }
+tracing-subscriber = { workspace = true, features = ["env-filter"] }

@@ -34,7 +34,7 @@ use signapps_db::DatabasePool;
 ///
 /// # Examples
 ///
-/// ```ignore
+/// ```text
 /// record_dhcp_request(&pool, "aa:bb:cc:00:00:01", "DISCOVER",
 ///     Some("PXEClient"), Some("bios"), true, Some("ipxe.kpxe"), true).await?;
 /// ```
