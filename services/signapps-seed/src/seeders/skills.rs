@@ -33,6 +33,9 @@ const SKILLS: &[SkillSpec] = &[
     ("terraform", "Terraform", "tech"),
     ("ansible", "Ansible", "tech"),
     ("ci_cd", "CI/CD", "tech"),
+    ("security", "Security", "tech"),
+    ("sql", "SQL", "tech"),
+    ("data_engineering", "Data Engineering", "tech"),
     // ── Soft (8) ──────────────────────────────────────────────────
     ("leadership", "Leadership", "soft"),
     ("communication", "Communication", "soft"),
@@ -197,6 +200,51 @@ const PERSON_SKILLS: &[PersonSkill] = &[
     ("lea.perez", "python", 4),
     ("lea.perez", "ci_cd", 4),
     ("lea.perez", "docker", 4),
+    // ── Additions — security + sql/data coverage so SO7 dynamic groups resolve. ──
+    ("sophie.leroy", "security", 4),
+    ("sophie.leroy", "sql", 4),
+    ("thomas.petit", "sql", 4),
+    ("marc.fontaine", "security", 4),
+    ("marc.fontaine", "sql", 3),
+    ("julie.bernard", "security", 3),
+    ("leo.garnier", "sql", 4),
+    ("olivia.faure", "sql", 3),
+    ("raphael.benoit", "data_engineering", 5),
+    ("raphael.benoit", "sql", 4),
+    ("zoe.marchand", "data_engineering", 4),
+    ("zoe.marchand", "sql", 4),
+    ("ines.bourdon", "data_engineering", 5),
+    ("ines.bourdon", "sql", 5),
+    ("sacha.riviere", "sql", 3),
+    ("lea.perez", "sql", 3),
+    ("adam.bertrand", "data_engineering", 3),
+    ("noah.simon", "data_engineering", 3),
+    ("jean.martin", "security", 4),
+    // English coverage for sales / exec staff missing above.
+    ("david.clark", "english", 5),
+    ("david.clark", "saas", 4),
+    ("amanda.white", "english", 4),
+    ("amanda.white", "communication", 3),
+    ("ryan.patel", "english", 4),
+    ("olivia.garcia", "english", 4),
+    ("elise.vincent", "english", 4),
+    ("elise.vincent", "communication", 4),
+    ("mathis.muller", "english", 4),
+    ("antoine.bonnet", "english", 4),
+    ("antoine.bonnet", "leadership", 4),
+    ("antoine.bonnet", "communication", 5),
+    ("isabelle.noel", "english", 3),
+    ("isabelle.noel", "communication", 4),
+    // More engineers picking up typescript / react so the frontend guild resolves.
+    ("axel.morin", "typescript", 4),
+    ("axel.morin", "react", 4),
+    ("axel.morin", "javascript", 4),
+    ("lina.carpentier", "typescript", 3),
+    ("lina.carpentier", "react", 4),
+    ("hugo.dumont", "typescript", 2),
+    ("hugo.dumont", "react", 3),
+    ("alice.roche", "typescript", 2),
+    ("alice.roche", "react", 3),
 ];
 
 /// Seeds 40 skills + ~130 person-skill rows.
@@ -217,15 +265,21 @@ impl Seeder for SkillsSeeder {
         let pool = ctx.db.inner();
 
         // 1) Skills catalog — global skills (tenant_id NULL, deterministic UUIDs).
+        //
+        // NOTE: ON CONFLICT (id) rather than (tenant_id, slug) because PostgreSQL
+        // treats NULL tenant_ids as distinct for UNIQUE constraints, which would
+        // trigger PK collisions on idempotent replay with identical deterministic
+        // UUIDs.
         for (slug, name, category) in SKILLS {
             let id = acme_uuid("org-skill", slug);
             let res = sqlx::query(
                 r#"
                 INSERT INTO org_skills (id, tenant_id, slug, name, category)
                 VALUES ($1, NULL, $2, $3, $4)
-                ON CONFLICT (tenant_id, slug) DO UPDATE SET
+                ON CONFLICT (id) DO UPDATE SET
                     name     = EXCLUDED.name,
-                    category = EXCLUDED.category
+                    category = EXCLUDED.category,
+                    slug     = EXCLUDED.slug
                 "#,
             )
             .bind(id)
