@@ -20,7 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { UserPlus, X } from "lucide-react";
+import { UserPlus, X, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { orgApi } from "@/lib/api/org";
 import type {
@@ -29,6 +29,7 @@ import type {
   AssignmentType,
   ResponsibilityType,
 } from "@/types/org";
+import { personTitle, avatarTint, personInitials } from "./avatar-helpers";
 
 // =============================================================================
 // Local constants
@@ -73,6 +74,79 @@ export function PeopleTab({ nodeId, nodeName, persons }: PeopleTabProps) {
   const [assignStartDate, setAssignStartDate] = useState("");
   const [assignCreating, setAssignCreating] = useState(false);
   const [endingAssignment, setEndingAssignment] = useState<string | null>(null);
+
+  // Edit-person state
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editingPerson, setEditingPerson] = useState<Person | null>(null);
+  const [editFirstName, setEditFirstName] = useState("");
+  const [editLastName, setEditLastName] = useState("");
+  const [editEmail, setEditEmail] = useState("");
+  const [editTitle, setEditTitle] = useState("");
+  const [editSaving, setEditSaving] = useState(false);
+
+  const personsById = useMemo(() => {
+    const map: Record<string, Person> = {};
+    for (const p of persons) map[p.id] = p;
+    return map;
+  }, [persons]);
+
+  /** Assignments enriched with the full Person object resolved client-side. */
+  const enrichedAssignments = useMemo(
+    () =>
+      assignments.map((a) => ({
+        ...a,
+        person: a.person ?? personsById[a.person_id],
+      })),
+    [assignments, personsById],
+  );
+
+  const openEditDialog = (p: Person) => {
+    setEditingPerson(p);
+    setEditFirstName(p.first_name ?? "");
+    setEditLastName(p.last_name ?? "");
+    setEditEmail(p.email ?? "");
+    setEditTitle(personTitle(p) ?? "");
+    setEditDialogOpen(true);
+  };
+
+  const handleSavePerson = async () => {
+    if (!editingPerson) return;
+    setEditSaving(true);
+    try {
+      // Backend stores title inside `attributes` JSON, but the shared TS
+      // type still exposes `metadata`. We persist to both to stay
+      // compatible with either backend shape.
+      const raw = editingPerson as unknown as {
+        attributes?: Record<string, unknown>;
+        metadata?: Record<string, unknown>;
+      };
+      const mergedAttrs = {
+        ...(raw.attributes ?? raw.metadata ?? {}),
+        title: editTitle,
+      };
+      const body: Partial<Person> & {
+        attributes?: Record<string, unknown>;
+        metadata?: Record<string, unknown>;
+      } = {
+        first_name: editFirstName,
+        last_name: editLastName,
+        email: editEmail || undefined,
+        attributes: mergedAttrs,
+        metadata: mergedAttrs,
+      };
+      await orgApi.persons.update(editingPerson.id, body as Partial<Person>);
+      toast.success("Personne mise a jour");
+      setEditDialogOpen(false);
+      setEditingPerson(null);
+      // Refresh the node's assignments — the parent page will also
+      // refresh persons via its own store.
+      await loadAssignments();
+    } catch {
+      toast.error("Erreur lors de la mise a jour");
+    } finally {
+      setEditSaving(false);
+    }
+  };
 
   const loadAssignments = useCallback(async () => {
     setLoading(true);
@@ -172,44 +246,64 @@ export function PeopleTab({ nodeId, nodeName, persons }: PeopleTabProps) {
         </div>
       ) : (
         <div className="space-y-3">
-          {assignments.map((a) => (
-            <div
-              key={a.id}
-              className="flex items-center gap-3 p-3 rounded-lg bg-muted/50"
-            >
-              <Avatar className="h-8 w-8">
-                <AvatarFallback className="text-xs">
-                  {a.person
-                    ? `${a.person.first_name[0]}${a.person.last_name[0]}`
-                    : "?"}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">
-                  {a.person
-                    ? `${a.person.first_name} ${a.person.last_name}`
-                    : a.person_id}
-                </p>
-                {a.person?.email && (
-                  <p className="text-xs text-muted-foreground truncate">
-                    {a.person.email}
-                  </p>
-                )}
-              </div>
-              <Badge variant="outline" className="text-xs shrink-0">
-                {ASSIGNMENT_TYPE_LABELS[a.assignment_type] ?? a.assignment_type}
-              </Badge>
-              <Button
-                size="sm"
-                variant="ghost"
-                className="shrink-0 h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
-                onClick={() => handleEndAssignment(a.id)}
-                disabled={endingAssignment === a.id}
+          {enrichedAssignments.map((a) => {
+            const p = a.person;
+            const title = personTitle(p);
+            const displayName = p
+              ? `${p.first_name} ${p.last_name}`.trim()
+              : `Personne inconnue (${a.person_id.slice(0, 8)}…)`;
+            return (
+              <div
+                key={a.id}
+                className="flex items-center gap-3 p-3 rounded-lg bg-muted/50"
               >
-                <X className="h-3.5 w-3.5" />
-              </Button>
-            </div>
-          ))}
+                <Avatar className="h-9 w-9">
+                  <AvatarFallback
+                    className={
+                      p
+                        ? `text-xs font-semibold ${avatarTint(p.id)}`
+                        : "text-xs"
+                    }
+                  >
+                    {personInitials(p)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">{displayName}</p>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {[title, p?.email].filter(Boolean).join(" · ") ||
+                      (p ? "Pas de titre" : "Personne absente du tenant")}
+                  </p>
+                </div>
+                <Badge variant="outline" className="text-xs shrink-0">
+                  {ASSIGNMENT_TYPE_LABELS[a.assignment_type] ??
+                    a.assignment_type ??
+                    "—"}
+                </Badge>
+                {p && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="shrink-0 h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+                    onClick={() => openEditDialog(p)}
+                    title="Modifier cette personne"
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                  </Button>
+                )}
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="shrink-0 h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
+                  onClick={() => handleEndAssignment(a.id)}
+                  disabled={endingAssignment === a.id}
+                  title="Retirer de ce noeud"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            );
+          })}
         </div>
       )}
 
@@ -321,6 +415,69 @@ export function PeopleTab({ nodeId, nodeName, persons }: PeopleTabProps) {
               disabled={assignCreating || !assignPersonId}
             >
               {assignCreating ? "Affectation..." : "Affecter"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit person dialog */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              Modifier{" "}
+              {editingPerson
+                ? `${editingPerson.first_name} ${editingPerson.last_name}`
+                : "la personne"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-first-name">Prenom *</Label>
+                <Input
+                  id="edit-first-name"
+                  value={editFirstName}
+                  onChange={(e) => setEditFirstName(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-last-name">Nom *</Label>
+                <Input
+                  id="edit-last-name"
+                  value={editLastName}
+                  onChange={(e) => setEditLastName(e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-email">Email</Label>
+              <Input
+                id="edit-email"
+                type="email"
+                value={editEmail}
+                onChange={(e) => setEditEmail(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-title">Fonction / Titre</Label>
+              <Input
+                id="edit-title"
+                value={editTitle}
+                onChange={(e) => setEditTitle(e.target.value)}
+                placeholder="ex: Responsable Marketing"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
+              Annuler
+            </Button>
+            <Button
+              onClick={handleSavePerson}
+              disabled={editSaving || !editFirstName || !editLastName}
+            >
+              {editSaving ? "Enregistrement..." : "Enregistrer"}
             </Button>
           </DialogFooter>
         </DialogContent>
