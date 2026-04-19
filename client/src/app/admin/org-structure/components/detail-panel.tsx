@@ -40,6 +40,8 @@ import { CertificatesTabContent } from "./certificates-tab";
 import { DhcpTabContent } from "./dhcp-tab";
 import { NtpTabContent } from "./ntp-tab";
 import { DeploymentTabContent } from "./deployment-tab";
+import { RaciMatrixTab } from "./raci-matrix-tab";
+import { DecisionsTab } from "./decisions-tab";
 
 // =============================================================================
 // Helper: ancestor names breadcrumb
@@ -108,6 +110,9 @@ export function DetailPanel({
     inheritedFrom?: string;
   } | null>(null);
 
+  // SO2 — board id attached to this node (used by the Décisions tab).
+  const [boardId, setBoardId] = useState<string | null>(null);
+
   useEffect(() => {
     if (node) {
       setName(node.name);
@@ -116,12 +121,16 @@ export function DetailPanel({
       setDetailTab("details");
       // Load board decision maker for header display
       setBoardDecisionMaker(null);
+      setBoardId(null);
       if (typeof orgApi.nodes.board !== "function") return;
       orgApi.nodes
         .board(node.id)
         .then((res) => {
           const board = res.data;
           if (!board) return;
+          // SO2 — remember the board id so the Décisions tab can query it.
+          const maybeId = (board as unknown as { id?: string }).id;
+          if (typeof maybeId === "string") setBoardId(maybeId);
           const decisionMakers = (board.members ?? []).filter(
             (m: OrgBoardMember) => m.is_decision_maker,
           );
@@ -149,8 +158,15 @@ export function DetailPanel({
 
   const visibleTabs = useMemo(() => {
     if (!node) return ALL_TABS.filter((t) => t.id === "details");
-    return getVisibleTabs(node.node_type);
-  }, [node]);
+    const axisType =
+      typeof node.config?.axis_type === "string"
+        ? (node.config.axis_type as string)
+        : undefined;
+    return getVisibleTabs(node.node_type, undefined, {
+      axisType,
+      hasBoard: !!boardId,
+    });
+  }, [node, boardId]);
 
   const handleSave = async () => {
     if (!node) return;
@@ -333,6 +349,26 @@ export function DetailPanel({
               persons={persons}
               allNodes={allNodes}
             />
+          </TabsContent>
+
+          {/* SO2 — RACI matrix tab (visible on project focus nodes) */}
+          <TabsContent value="raci" className="mt-0">
+            <RaciMatrixTab
+              projectId={node.id}
+              projectName={node.name}
+              persons={persons}
+            />
+          </TabsContent>
+
+          {/* SO2 — Decisions tab (visible when a board is attached) */}
+          <TabsContent value="decisions" className="mt-0">
+            {boardId ? (
+              <DecisionsTab boardId={boardId} persons={persons} />
+            ) : (
+              <p className="p-4 text-xs text-muted-foreground">
+                Aucun board attaché à ce node.
+              </p>
+            )}
           </TabsContent>
 
           {/* Policies tab */}
