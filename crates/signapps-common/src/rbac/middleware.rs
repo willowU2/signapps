@@ -14,6 +14,8 @@
 //! service receives the same concrete impl (`OrgClient`) without
 //! needing to depend on `signapps-org`.
 
+use std::future::Future;
+use std::pin::Pin;
 use std::sync::Arc;
 
 use axum::{extract::Request, middleware::Next, response::Response};
@@ -152,4 +154,39 @@ pub fn org_node_from_path(req: &Request) -> Option<ResourceRef> {
 /// canonical enum wrap the first UUID in [`ResourceRef::Custom`].
 pub fn resource_from_path(kind: &'static str, req: &Request) -> Option<ResourceRef> {
     first_uuid_in_path(req).map(|id| ResourceRef::Custom { kind, id })
+}
+
+// ---------------------------------------------------------------------------
+// Layer builder — convenience wrapper used by every service
+// ---------------------------------------------------------------------------
+
+/// Build an Axum middleware closure compatible with
+/// [`axum::middleware::from_fn`] that enforces the RBAC check.
+///
+/// Example:
+///
+/// ```ignore
+/// use signapps_common::rbac::{rbac_layer, types::Action, middleware::document_from_path};
+/// let guard = rbac_layer(resolver.clone(), Action::Read, document_from_path);
+/// Router::new()
+///     .route("/api/v1/documents/:id", get(handler))
+///     .route_layer(axum::middleware::from_fn(guard));
+/// ```
+pub fn rbac_layer<F>(
+    resolver: SharedResolver,
+    action: Action,
+    extract_resource: F,
+) -> impl Fn(Request, Next) -> Pin<Box<dyn Future<Output = Result<Response, Error>> + Send>> + Clone
+       + Send
+       + Sync
+       + 'static
+where
+    F: Fn(&Request) -> Option<ResourceRef> + Clone + Send + Sync + 'static,
+{
+    let extractor: ResourceExtractor = Arc::new(extract_resource);
+    move |req, next| {
+        let resolver = resolver.clone();
+        let extractor = extractor.clone();
+        Box::pin(async move { require(resolver, action, extractor, req, next).await })
+    }
 }

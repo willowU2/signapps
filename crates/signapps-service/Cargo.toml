@@ -23,7 +23,7 @@ tracing-subscriber = { workspace = true }
 once_cell = { workspace = true }
 
 # Shared platform crates (for SharedState::init_once)
-signapps-common = { path = "../signapps-common" }
+signapps-common = { path = "../signapps-common", features = ["rbac"] }
 signapps-db = { path = "../signapps-db" }
 signapps-cache = { path = "../signapps-cache" }
 signapps-keystore = { path = "../signapps-keystore" }

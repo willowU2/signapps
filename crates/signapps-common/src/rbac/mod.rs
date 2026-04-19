@@ -16,7 +16,8 @@ pub mod types;
 pub use cache::{CacheKey, CachedDecision, DecisionCache};
 pub use middleware::{
     calendar_from_path, document_from_path, folder_from_path, form_from_path,
-    mail_folder_from_path, org_node_from_path, project_from_path, require, resource_from_path,
+    mail_folder_from_path, org_node_from_path, project_from_path, rbac_layer, require,
+    resource_from_path, SharedResolver,
 };
 pub use resolver::{OrgPermissionResolver, RbacError};
 pub use types::{Action, Decision, DecisionSource, DenyReason, PersonRef, ResourceRef};
