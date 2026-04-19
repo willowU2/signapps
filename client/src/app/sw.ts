@@ -58,6 +58,23 @@ const serwist = new Serwist({
         ],
       }),
     },
+    // SO5 — directory data (persons / nodes / skills). The mobile annuaire
+    // expects an instant first paint even with intermittent connectivity,
+    // so we reach for `StaleWhileRevalidate`: the cache responds now, a
+    // network request refreshes it in the background.
+    {
+      matcher: ({ request, url }) =>
+        request.method === "GET" &&
+        (/\/org\/persons(\?|$|\/)/.test(url.pathname) ||
+          /\/org\/nodes(\?|$|\/)/.test(url.pathname) ||
+          /\/org\/skills(\?|$|\/)/.test(url.pathname)),
+      handler: new StaleWhileRevalidate({
+        cacheName: "directory-cache",
+        plugins: [
+          new ExpirationPlugin({ maxEntries: 64, maxAgeSeconds: 5 * 60 }),
+        ],
+      }),
+    },
     // Rarely-changing config — CacheFirst.
     {
       matcher: ({ url }) =>
