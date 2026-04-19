@@ -34,6 +34,11 @@ use utoipa_swagger_ui::SwaggerUi;
         crate::handlers::register_asset,
         crate::handlers::update_asset,
         crate::handlers::delete_asset,
+        // Assets — auto-discovery (S2.T4)
+        crate::handlers::list_discovered,
+        crate::handlers::enroll_asset,
+        // DHCP debug (S2.T5)
+        crate::handlers::list_recent_dhcp,
         // Boot script
         crate::handlers::generate_ipxe_script,
         // Images (PX2)
@@ -59,6 +64,9 @@ use utoipa_swagger_ui::SwaggerUi;
             crate::models::PxeAsset,
             crate::models::RegisterPxeAssetRequest,
             crate::models::UpdatePxeAssetRequest,
+            crate::handlers::DiscoveredAsset,
+            crate::handlers::EnrollRequest,
+            crate::handlers::DhcpRequestLog,
             crate::images::PxeImage,
             crate::images::PxeDeployment,
             crate::images::GenerateTemplateRequest,
@@ -81,6 +89,7 @@ use utoipa_swagger_ui::SwaggerUi;
         (name = "pxe-templates", description = "Kickstart / Preseed / Unattend template generation"),
         (name = "pxe-deployments", description = "Deployment progress tracking"),
         (name = "pxe-catalog", description = "Built-in OS image catalog and download"),
+        (name = "pxe-debug", description = "Debug / observability endpoints (recent DHCP, catalog sha256 check)"),
     ),
     modifiers(&SecurityAddon),
 )]

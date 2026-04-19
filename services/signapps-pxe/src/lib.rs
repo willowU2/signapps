@@ -267,11 +267,26 @@ fn create_router(app_state: AppState, http_boot_dir: &str) -> Router {
             "/api/v1/pxe/assets",
             get(handlers::list_assets).post(handlers::register_asset),
         )
+        // S2.T4: auto-discovery surface (must be mounted BEFORE :id so the
+        // literal `discovered` path wins over the `:id` extractor).
+        .route(
+            "/api/v1/pxe/assets/discovered",
+            get(handlers::list_discovered),
+        )
+        .route(
+            "/api/v1/pxe/assets/:mac/enroll",
+            post(handlers::enroll_asset),
+        )
         .route(
             "/api/v1/pxe/assets/:id",
             get(handlers::get_asset)
                 .put(handlers::update_asset)
                 .delete(handlers::delete_asset),
+        )
+        // S2.T5: DHCP debug surface
+        .route(
+            "/api/v1/pxe/dhcp/recent",
+            get(handlers::list_recent_dhcp),
         )
         // Boot script
         .route("/api/v1/pxe/boot.ipxe", get(handlers::generate_ipxe_script))

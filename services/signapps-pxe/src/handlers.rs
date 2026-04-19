@@ -3,7 +3,9 @@ use axum::{
     http::StatusCode,
     Json,
 };
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
+use signapps_db::DatabasePool;
+use std::collections::HashMap;
 use uuid::Uuid;
 
 use crate::models::{
@@ -476,4 +478,211 @@ pub async fn generate_ipxe_script(
     Ok(String::from(
         "#!ipxe\necho No PXE Profile assigned for this MAC.\nexit\n",
     ))
+}
+
+// ============================================================================
+// Discovered assets — auto-discovery surface (S2.T4)
+// ============================================================================
+
+/// Minimal view of a PXE asset in `status='discovered'` state, as returned
+/// by `GET /api/v1/pxe/assets/discovered`.
+#[derive(Debug, Clone, Serialize, sqlx::FromRow, utoipa::ToSchema)]
+pub struct DiscoveredAsset {
+    /// Canonical lowercase MAC (`xx:xx:xx:xx:xx:xx`).
+    pub mac_address: String,
+    /// Lifecycle status — always `"discovered"` for this endpoint.
+    pub status: String,
+    /// How the asset was first seen (`manual` / `dhcp` / `api` / `import`).
+    pub discovered_via: String,
+    /// Last time the ProxyDHCP saw this MAC.
+    pub last_seen: Option<chrono::DateTime<chrono::Utc>>,
+    /// DHCP option 60 (vendor class identifier), if any.
+    pub dhcp_vendor_class: Option<String>,
+    /// Detected architecture label (e.g. `"bios"`, `"uefi"`).
+    pub arch_detected: Option<String>,
+}
+
+/// Pure-DB implementation of `GET /api/v1/pxe/assets/discovered`.
+///
+/// # Errors
+///
+/// Propagates any `sqlx::Error` from the underlying query.
+pub async fn list_discovered_impl(
+    db: &DatabasePool,
+) -> Result<Vec<DiscoveredAsset>, sqlx::Error> {
+    sqlx::query_as::<_, DiscoveredAsset>(
+        "SELECT mac_address, status, discovered_via, last_seen,
+                dhcp_vendor_class, arch_detected
+         FROM pxe.assets
+         WHERE status = 'discovered'
+         ORDER BY last_seen DESC NULLS LAST",
+    )
+    .fetch_all(db.inner())
+    .await
+}
+
+#[utoipa::path(
+    get,
+    path = "/api/v1/pxe/assets/discovered",
+    responses(
+        (status = 200, description = "List of assets in 'discovered' state", body = Vec<DiscoveredAsset>),
+        (status = 500, description = "Database error"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "pxe-assets"
+)]
+#[tracing::instrument(skip(state))]
+pub async fn list_discovered(
+    State(state): State<AppState>,
+) -> Result<Json<Vec<DiscoveredAsset>>, (StatusCode, String)> {
+    let rows = list_discovered_impl(&state.db).await.map_err(|e| {
+        tracing::error!("Failed to list discovered assets: {}", e);
+        (StatusCode::INTERNAL_SERVER_ERROR, "Database error".to_string())
+    })?;
+    Ok(Json(rows))
+}
+
+/// Request body for `POST /api/v1/pxe/assets/:mac/enroll`.
+#[derive(Debug, Clone, Deserialize, utoipa::ToSchema)]
+pub struct EnrollRequest {
+    /// Hostname to assign to the now-enrolled machine.
+    pub hostname: Option<String>,
+    /// Target deployment profile (nullable — fallback to default if None).
+    pub profile_id: Option<Uuid>,
+    /// Optional operator assignment (identity.users.id).
+    pub assigned_user_id: Option<Uuid>,
+}
+
+/// Pure-DB implementation of `POST /api/v1/pxe/assets/:mac/enroll`.
+///
+/// Transitions `status='discovered'` → `status='enrolled'` and applies
+/// the optional hostname/profile. The update is guarded by the current
+/// status so this is idempotent: calling `enroll` on an already-enrolled
+/// asset is a no-op.
+///
+/// # Errors
+///
+/// Propagates any `sqlx::Error` from the UPDATE.
+pub async fn enroll_asset_impl(
+    db: &DatabasePool,
+    mac: &str,
+    hostname: Option<&str>,
+    profile_id: Option<Uuid>,
+) -> Result<(), sqlx::Error> {
+    sqlx::query(
+        "UPDATE pxe.assets SET
+             status = 'enrolled',
+             hostname = COALESCE($2, hostname),
+             profile_id = COALESCE($3, profile_id),
+             updated_at = NOW()
+         WHERE mac_address = $1 AND status = 'discovered'",
+    )
+    .bind(mac)
+    .bind(hostname)
+    .bind(profile_id)
+    .execute(db.inner())
+    .await?;
+    Ok(())
+}
+
+#[utoipa::path(
+    post,
+    path = "/api/v1/pxe/assets/{mac}/enroll",
+    params(("mac" = String, Path, description = "Canonical MAC address (xx:xx:xx:xx:xx:xx)")),
+    request_body = EnrollRequest,
+    responses(
+        (status = 200, description = "Asset enrolled (no-op if already enrolled)"),
+        (status = 500, description = "Database error"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "pxe-assets"
+)]
+#[tracing::instrument(skip(state, req))]
+pub async fn enroll_asset(
+    State(state): State<AppState>,
+    Path(mac): Path<String>,
+    Json(req): Json<EnrollRequest>,
+) -> Result<StatusCode, (StatusCode, String)> {
+    enroll_asset_impl(
+        &state.db,
+        &mac,
+        req.hostname.as_deref(),
+        req.profile_id,
+    )
+    .await
+    .map_err(|e| {
+        tracing::error!("Failed to enroll asset {}: {}", mac, e);
+        (StatusCode::INTERNAL_SERVER_ERROR, "Database error".to_string())
+    })?;
+    Ok(StatusCode::OK)
+}
+
+// ============================================================================
+// Recent DHCP requests — debug surface (S2.T5)
+// ============================================================================
+
+/// A row from `pxe.dhcp_requests` as returned by
+/// `GET /api/v1/pxe/dhcp/recent`.
+#[derive(Debug, Clone, Serialize, sqlx::FromRow, utoipa::ToSchema)]
+pub struct DhcpRequestLog {
+    /// Monotonic serial id.
+    pub id: i64,
+    /// MAC address of the requesting client.
+    pub mac_address: String,
+    /// DHCP message type label (`"DISCOVER"` / `"REQUEST"` / ...).
+    pub msg_type: Option<String>,
+    /// DHCP option 60 (vendor class identifier), if captured.
+    pub vendor_class: Option<String>,
+    /// `true` if the ProxyDHCP actually emitted an OFFER/ACK for this request.
+    pub responded: bool,
+    /// When the request was received.
+    pub received_at: chrono::DateTime<chrono::Utc>,
+}
+
+/// Pure-DB implementation of `GET /api/v1/pxe/dhcp/recent`.
+///
+/// # Errors
+///
+/// Propagates any `sqlx::Error` from the query.
+pub async fn list_recent_dhcp_impl(
+    db: &DatabasePool,
+    limit: i64,
+) -> Result<Vec<DhcpRequestLog>, sqlx::Error> {
+    sqlx::query_as::<_, DhcpRequestLog>(
+        "SELECT id, mac_address, msg_type, vendor_class, responded, received_at
+         FROM pxe.dhcp_requests
+         ORDER BY received_at DESC
+         LIMIT $1",
+    )
+    .bind(limit)
+    .fetch_all(db.inner())
+    .await
+}
+
+#[utoipa::path(
+    get,
+    path = "/api/v1/pxe/dhcp/recent",
+    params(("limit" = Option<i64>, Query, description = "Max rows to return (default 100, capped at 500)")),
+    responses(
+        (status = 200, description = "Recent DHCP requests, most recent first", body = Vec<DhcpRequestLog>),
+        (status = 500, description = "Database error"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "pxe-debug"
+)]
+#[tracing::instrument(skip(state))]
+pub async fn list_recent_dhcp(
+    State(state): State<AppState>,
+    Query(params): Query<HashMap<String, String>>,
+) -> Result<Json<Vec<DhcpRequestLog>>, (StatusCode, String)> {
+    let limit = params
+        .get("limit")
+        .and_then(|s| s.parse::<i64>().ok())
+        .unwrap_or(100)
+        .clamp(1, 500);
+    let rows = list_recent_dhcp_impl(&state.db, limit).await.map_err(|e| {
+        tracing::error!("Failed to list recent DHCP requests: {}", e);
+        (StatusCode::INTERNAL_SERVER_ERROR, "Database error".to_string())
+    })?;
+    Ok(Json(rows))
 }
