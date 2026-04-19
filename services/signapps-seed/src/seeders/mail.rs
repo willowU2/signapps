@@ -1,4 +1,5 @@
-//! Mail seeder — 15 mail accounts + 30 demo emails between Acme users.
+//! Mail seeder — 80 mail accounts (1 per person) + ~200 demo messages
+//! forming realistic short threads between Nexus Industries collaborators.
 
 use crate::context::SeedContext;
 use crate::seeder::{SeedReport, Seeder};
@@ -7,8 +8,44 @@ use crate::uuid::acme_uuid;
 use async_trait::async_trait;
 use chrono::{Duration, Utc};
 
-/// Seeds mail accounts (one per user) then 30 inter-user demo messages.
+/// Seeds mail accounts (one per user) then demo threaded messages.
 pub struct MailSeeder;
+
+/// Small set of realistic subject seeds, picked deterministically by idx.
+const SUBJECTS: &[&str] = &[
+    "Revue de sprint",
+    "Proposition roadmap Q2",
+    "Question onboarding",
+    "Budget équipe",
+    "Incident prod 04/17",
+    "Démo produit client",
+    "Accord partenariat",
+    "Nouveau process recrutement",
+    "Feedback post-mortem",
+    "Planning congés été",
+    "Audit SOC2 prep",
+    "Review PR #1234",
+    "OKRs Q2 validation",
+    "Négociation fournisseur",
+    "Offre candidat senior",
+    "Politique télétravail",
+    "Formation obligatoire",
+    "Renouvellement contrat",
+    "Stratégie pricing",
+    "Compte-rendu board",
+];
+
+/// Seed body generator — deterministic content based on subject + index.
+fn mail_body(subject: &str, idx: usize, from_name: &str) -> String {
+    format!(
+        "Bonjour,\n\n\
+        Petit point concernant \"{}\" (#{}).\n\n\
+        Peux-tu me confirmer ta disponibilité pour avancer dessus cette semaine ?\n\n\
+        Je joins les éléments habituels, n'hésite pas à revenir vers moi si un détail manque.\n\n\
+        Bonne journée,\n{}",
+        subject, idx, from_name
+    )
+}
 
 #[async_trait]
 impl Seeder for MailSeeder {
@@ -24,7 +61,7 @@ impl Seeder for MailSeeder {
         let mut report = SeedReport::default();
         let pool = ctx.db.inner();
 
-        // 1 mail account per user
+        // 1 mail account per user (80 rows)
         for (username, first_name, last_name, email, _ou, _title) in PERSONS.iter() {
             let account_id = acme_uuid("mail-account", username);
             let user_id = ctx
@@ -37,7 +74,9 @@ impl Seeder for MailSeeder {
                 INSERT INTO mail.accounts
                     (id, user_id, email_address, display_name, provider, status)
                 VALUES ($1, $2, $3, $4, 'custom', 'active')
-                ON CONFLICT (id) DO NOTHING
+                ON CONFLICT (id) DO UPDATE SET
+                    email_address = EXCLUDED.email_address,
+                    display_name = EXCLUDED.display_name
                 "#,
             )
             .bind(account_id)
@@ -49,44 +88,81 @@ impl Seeder for MailSeeder {
             bump(&mut report, res, "mail-account");
         }
 
-        // 30 inter-user demo mails (from marie.dupont)
-        let from_account = acme_uuid("mail-account", "marie.dupont");
-        let to_list = [
-            "jean.martin",
-            "paul.durand",
-            "nicolas.robert",
-            "claire.moreau",
-            "sophie.leroy",
-        ];
+        // ~200 inter-user emails — build threads of 2–3 messages
+        // Pick deterministic (sender, recipient) pairs from PERSONS.
+        let n_persons = PERSONS.len();
+        let mut thread_idx = 0usize;
+        let mut total = 0usize;
+        let target = 200usize;
 
-        for i in 0..30 {
-            let to_user = to_list[i % to_list.len()];
-            let to_email = format!("{}@acme.corp", to_user);
-            let mail_id = acme_uuid("mail", &format!("m{}", i));
-            let sent_at = Utc::now() - Duration::hours((i * 2) as i64);
-            let subject = format!("[Démo] Point projet #{}", i + 1);
-            let body = format!(
-                "Bonjour,\n\nCeci est un mail de démo #{}.\n\nCordialement,\nMarie",
-                i + 1
-            );
+        while total < target {
+            // Rotate across persons; sender i, recipient (i+7) % n to avoid self.
+            let sender_pos = thread_idx % n_persons;
+            let recipient_pos = (sender_pos + 7 + thread_idx / n_persons) % n_persons;
+            if sender_pos == recipient_pos {
+                thread_idx += 1;
+                continue;
+            }
 
-            let res = sqlx::query(
-                r#"
-                INSERT INTO mail.emails
-                    (id, account_id, sender, sender_name, recipient, subject, body_text, sent_at, received_at, is_sent)
-                VALUES ($1, $2, 'marie.dupont@acme.corp', 'Marie Dupont', $3, $4, $5, $6, $6, TRUE)
-                ON CONFLICT (id) DO NOTHING
-                "#,
-            )
-            .bind(mail_id)
-            .bind(from_account)
-            .bind(&to_email)
-            .bind(&subject)
-            .bind(&body)
-            .bind(sent_at)
-            .execute(pool)
-            .await;
-            bump(&mut report, res, "mail");
+            let sender = &PERSONS[sender_pos];
+            let recipient = &PERSONS[recipient_pos];
+            let subject = SUBJECTS[thread_idx % SUBJECTS.len()];
+
+            let from_account = acme_uuid("mail-account", sender.0);
+            let sender_email = sender.3;
+            let sender_name = format!("{} {}", sender.1, sender.2);
+            let recipient_email = recipient.3;
+
+            // 2 or 3 messages per thread
+            let thread_len = if thread_idx % 3 == 0 { 3 } else { 2 };
+            for msg_pos in 0..thread_len {
+                if total >= target {
+                    break;
+                }
+                let mail_id = acme_uuid("mail", &format!("m{}-{}", thread_idx, msg_pos));
+                let sent_at = Utc::now() - Duration::hours((thread_idx * 4 + msg_pos) as i64);
+                // Reply subject prefix after position 0
+                let subj = if msg_pos == 0 {
+                    format!("[Démo] {} #{}", subject, thread_idx + 1)
+                } else {
+                    format!("Re: [Démo] {} #{}", subject, thread_idx + 1)
+                };
+                let body = mail_body(subject, thread_idx, &sender_name);
+
+                // Flip sender/recipient for replies
+                let (current_sender_email, current_sender_name, current_recipient_email) =
+                    if msg_pos % 2 == 0 {
+                        (sender_email, sender_name.clone(), recipient_email)
+                    } else {
+                        (
+                            recipient_email,
+                            format!("{} {}", recipient.1, recipient.2),
+                            sender_email,
+                        )
+                    };
+
+                let res = sqlx::query(
+                    r#"
+                    INSERT INTO mail.emails
+                        (id, account_id, sender, sender_name, recipient, subject, body_text, sent_at, received_at, is_sent)
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $8, TRUE)
+                    ON CONFLICT (id) DO NOTHING
+                    "#,
+                )
+                .bind(mail_id)
+                .bind(from_account)
+                .bind(current_sender_email)
+                .bind(&current_sender_name)
+                .bind(current_recipient_email)
+                .bind(&subj)
+                .bind(&body)
+                .bind(sent_at)
+                .execute(pool)
+                .await;
+                bump(&mut report, res, "mail");
+                total += 1;
+            }
+            thread_idx += 1;
         }
         Ok(report)
     }

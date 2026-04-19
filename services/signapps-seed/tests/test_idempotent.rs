@@ -1,7 +1,7 @@
 //! Full-seed idempotence test.
 //!
 //! Runs the full pipeline twice; second run must add 0 new rows for
-//! our Acme Corp tenant across all seeded tables. Requires a live
+//! our Nexus Industries tenant across all seeded tables. Requires a live
 //! localhost Postgres (skipped otherwise).
 
 use signapps_seed::{run_seed, SeedArgs};
@@ -16,13 +16,15 @@ async fn snapshot(pool: &sqlx::PgPool, tenant_id: uuid::Uuid) -> Vec<(String, i6
         ("org_persons", format!("SELECT COUNT(*) FROM org_persons WHERE tenant_id = '{}'", tenant_id)),
         ("org_assignments", format!("SELECT COUNT(*) FROM org_assignments WHERE tenant_id = '{}'", tenant_id)),
         ("ad_config", format!("SELECT COUNT(*) FROM org_ad_config WHERE tenant_id = '{}'", tenant_id)),
-        ("acme_users", "SELECT COUNT(*) FROM identity.users WHERE email LIKE '%@acme.corp'".to_string()),
+        ("nexus_users", "SELECT COUNT(*) FROM identity.users WHERE email LIKE '%@nexus.corp'".to_string()),
         ("calendars", format!("SELECT COUNT(*) FROM calendar.calendars WHERE tenant_id = '{}'", tenant_id)),
         ("events", format!("SELECT COUNT(*) FROM calendar.events WHERE tenant_id = '{}'", tenant_id)),
-        ("mail_emails", "SELECT COUNT(*) FROM mail.emails WHERE sender LIKE '%@acme.corp'".to_string()),
-        ("chat_channels", "SELECT COUNT(*) FROM chat.channels WHERE name IN ('Général','Engineering','Sales','Support','Random')".to_string()),
+        ("projects", format!("SELECT COUNT(*) FROM calendar.projects WHERE tenant_id = '{}'", tenant_id)),
+        ("tasks", format!("SELECT COUNT(*) FROM calendar.tasks WHERE tenant_id = '{}'", tenant_id)),
+        ("mail_emails", "SELECT COUNT(*) FROM mail.emails WHERE sender LIKE '%@nexus.corp'".to_string()),
+        ("chat_channels", "SELECT COUNT(*) FROM chat.channels WHERE name IN ('Général','Engineering','Platform Team','Frontend Team','AI Team','Sales EMEA','Sales US','Marketing','Support','Random','Announcements','CEO Office')".to_string()),
         ("pxe_profiles", "SELECT COUNT(*) FROM pxe.profiles WHERE description LIKE 'Profile démo%'".to_string()),
-        ("pxe_assets", "SELECT COUNT(*) FROM pxe.assets WHERE mac_address LIKE 'aa:bb:cc:00:00:0%'".to_string()),
+        ("pxe_assets", "SELECT COUNT(*) FROM pxe.assets WHERE mac_address LIKE 'aa:bb:cc:00:00:%'".to_string()),
     ];
     let mut out = Vec::new();
     for (name, sql) in queries {

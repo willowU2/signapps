@@ -38,12 +38,20 @@ impl Seeder for IdentitySeeder {
             let user_id = acme_uuid("user", username);
             let display_name = format!("{} {}", first_name, last_name);
 
+            // Upsert email + display_name + job_title so existing rows get
+            // migrated to the Nexus Industries naming (legacy @acme.corp →
+            // @nexus.corp). Password hash stays stable on conflict so
+            // sessions don't break.
             let res = sqlx::query(
                 r#"
                 INSERT INTO identity.users
                     (id, username, email, password_hash, role, auth_provider, display_name, tenant_id, job_title)
                 VALUES ($1, $2, $3, $4, 1, 'local', $5, $6, $7)
-                ON CONFLICT (id) DO NOTHING
+                ON CONFLICT (id) DO UPDATE SET
+                    email = EXCLUDED.email,
+                    display_name = EXCLUDED.display_name,
+                    job_title = EXCLUDED.job_title,
+                    tenant_id = EXCLUDED.tenant_id
                 "#,
             )
             .bind(user_id)
