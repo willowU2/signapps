@@ -564,6 +564,12 @@ See `docs/architecture/inter-service-communication.md` for details and patterns.
 - **CSP** : `unsafe-eval` retiré — l'évaluateur de formules sheets est désormais un parser récursif-descendant pur.
 - **Conventional Commits** : obligatoires (`feat:`, `fix:`, `perf:`, `refactor:`, `docs:`, `test:`, `chore:`, `ci:`)
 - **Changelog** : `just changelog` après chaque release
+- **Org source of truth** : `signapps-org` (PostgreSQL canonique). AD miroir via `org_ad_config` par tenant. `signapps-workforce` dégraissé en HR pur.
+- **RBAC unifié** : trait `OrgPermissionResolver` dans `signapps-common::rbac` (feature `rbac`), implémenté par `OrgClient` dans `signapps-org` avec cache moka 60s. Middleware `rbac::require(action, resource_extractor)` dans chaque service.
+- **AD sync bidirectionnel** : `signapps-org::ad::sync` avec `AdSyncMode = Off|OrgToAd|AdToOrg|Bidirectional`. Secrets via keystore. Debounce 30s anti-ping-pong.
+- **Provisioning événementiel** : événements `org.user.created|deactivated` via `PgEventBus`. Consumers dans mail/storage/calendar/chat créent/suspendent leurs ressources.
+- **Access grants** : HMAC-SHA256 par tenant (`Keystore::dek("org-grants-v1")` + tenant salt). Endpoint `/g/:token` redirect avec cookie `grant_token`.
+- **Pool DB** : 50 connexions par défaut (override `DB_MAX_CONNECTIONS`). Boot test budget 5s.
 
 ## graphify
 
