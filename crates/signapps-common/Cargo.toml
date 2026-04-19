@@ -66,6 +66,9 @@ tower-http = { workspace = true }
 tokio = { workspace = true }
 async-trait = { workspace = true }
 
+# RBAC feature dependencies (enabled via the `rbac` cargo feature).
+moka = { workspace = true, optional = true }
+
 # Observability
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true }
@@ -85,6 +88,13 @@ chrono = { workspace = true }
 dotenvy = { workspace = true }
 validator = { workspace = true }
 once_cell = { workspace = true }
+
+[features]
+default = []
+# Enables the unified RBAC contract (`signapps_common::rbac`).
+# Opt-in so crates that don't talk to the resolver don't pay the
+# `moka` compile cost.
+rbac = ["dep:moka"]
 
 [dev-dependencies]
 tokio-test = { workspace = true }
