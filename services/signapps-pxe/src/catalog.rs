@@ -6,6 +6,7 @@ use axum::{
     Json,
 };
 use serde::{Deserialize, Serialize};
+use sha2::Digest;
 use std::path::PathBuf;
 use tokio::io::AsyncWriteExt;
 use uuid::Uuid;
@@ -839,6 +840,93 @@ pub async fn download_catalog_image(
             message: "Download started in background. Check server logs for progress.".into(),
         }),
     ))
+}
+
+// ============================================================================
+// POST /api/v1/pxe/catalog/refresh — sha256 verification of on-disk ISOs
+// ============================================================================
+
+/// Summary payload for `POST /api/v1/pxe/catalog/refresh`.
+#[derive(Debug, Serialize, utoipa::ToSchema)]
+pub struct CatalogRefreshReport {
+    /// Number of ISOs whose on-disk sha256 matched the catalog entry.
+    pub verified: usize,
+    /// Number of catalog entries with a sha256 but no file on disk.
+    pub missing: usize,
+    /// Names of ISOs whose on-disk sha256 did NOT match the catalog.
+    pub corrupted: Vec<String>,
+    /// Total catalog entries that could be checked (i.e. have a non-empty sha256).
+    pub checkable: usize,
+}
+
+/// Walk the catalog and verify the sha256 of every entry that has a
+/// checksum AND a matching file on disk. Returns counts + a list of
+/// corrupted ISOs so an operator can decide to re-download.
+///
+/// Files are matched by convention: `{name_lower_snake}-{version}.iso`
+/// inside `data/pxe/tftpboot/images/`.
+#[utoipa::path(
+    post,
+    path = "/api/v1/pxe/catalog/refresh",
+    responses(
+        (status = 200, description = "sha256 verification report", body = CatalogRefreshReport),
+        (status = 500, description = "I/O error while reading an ISO file"),
+    ),
+    security(("bearerAuth" = [])),
+    tag = "pxe-catalog"
+)]
+#[tracing::instrument(skip(_state))]
+pub async fn refresh_catalog(
+    State(_state): State<AppState>,
+) -> Result<Json<CatalogRefreshReport>, (StatusCode, String)> {
+    let catalog = get_catalog();
+    let mut verified = 0usize;
+    let mut missing = 0usize;
+    let mut corrupted: Vec<String> = Vec::new();
+    let mut checkable = 0usize;
+
+    for image in catalog.iter().filter(|i| !i.sha256.is_empty()) {
+        checkable += 1;
+        let filename = format!(
+            "{}-{}.iso",
+            image.name.to_lowercase().replace(' ', "_"),
+            image.version.to_lowercase().replace(' ', "_")
+        );
+        let path = std::path::Path::new(IMAGES_DIR).join(&filename);
+        if !path.exists() {
+            missing += 1;
+            continue;
+        }
+
+        let bytes = tokio::fs::read(&path).await.map_err(|e| {
+            tracing::error!(
+                "Failed to read {} for sha256 check: {}",
+                path.display(),
+                e
+            );
+            (StatusCode::INTERNAL_SERVER_ERROR, e.to_string())
+        })?;
+        let hash = sha2::Sha256::digest(&bytes);
+        let hex_hash = hex::encode(hash);
+        if hex_hash.eq_ignore_ascii_case(&image.sha256) {
+            verified += 1;
+        } else {
+            tracing::warn!(
+                "sha256 mismatch for {} (expected {}, got {})",
+                image.name,
+                image.sha256,
+                hex_hash
+            );
+            corrupted.push(format!("{} {}", image.name, image.version));
+        }
+    }
+
+    Ok(Json(CatalogRefreshReport {
+        verified,
+        missing,
+        corrupted,
+        checkable,
+    }))
 }
 
 /// Streams an HTTP download to disk, returning the number of bytes written.

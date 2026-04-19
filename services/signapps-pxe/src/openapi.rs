@@ -55,6 +55,7 @@ use utoipa_swagger_ui::SwaggerUi;
         // Catalog
         crate::catalog::list_catalog,
         crate::catalog::download_catalog_image,
+        crate::catalog::refresh_catalog,
     ),
     components(
         schemas(
@@ -79,6 +80,7 @@ use utoipa_swagger_ui::SwaggerUi;
             crate::images::CaptureImageResponse,
             crate::catalog::OsImage,
             crate::catalog::DownloadStarted,
+            crate::catalog::CatalogRefreshReport,
         )
     ),
     tags(
