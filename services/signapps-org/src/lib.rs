@@ -1,13 +1,23 @@
-//! Public library interface for signapps-org.
+//! Public library interface for `signapps-org`.
 //!
 //! Exposes [`router`] so the single-binary runtime (`signapps-platform`)
-//! can mount the organizational structure routes (nodes, trees,
-//! assignments, orgchart) without owning its own pool or JWT config.
+//! can mount the organizational structure routes without owning its own
+//! pool, keystore or JWT config.
+//!
+//! As of the S1 org+RBAC refonte this service carries:
+//! - the pre-existing org-chart / tree / assignment endpoints used by
+//!   the admin UI,
+//! - the new canonical `/api/v1/org/*` surface consolidating nodes,
+//!   persons, assignments, policies, boards, grants, AD and
+//!   provisioning,
+//! - the public `/g/:token` grant-redirect route.
 
 #![allow(clippy::assertions_on_constants)]
 
 pub mod handlers;
 pub mod middleware;
+
+use std::sync::Arc;
 
 use axum::{
     middleware as axum_middleware,
@@ -15,8 +25,10 @@ use axum::{
     Router,
 };
 use signapps_common::middleware::{auth_middleware, AuthState};
+use signapps_common::pg_events::PgEventBus;
 use signapps_common::JwtConfig;
 use signapps_db::DatabasePool;
+use signapps_keystore::Keystore;
 use signapps_service::shared_state::SharedState;
 use tower_http::{
     cors::{AllowOrigin, CorsLayer},
@@ -28,10 +40,23 @@ use tower_http::{
 // ---------------------------------------------------------------------------
 
 /// Application state shared across org handlers.
+///
+/// `keystore` and `event_bus` are propagated from the runtime so that the
+/// W3 AD-sync workers and the W5 provisioning dispatcher can read the
+/// encrypted `org_ad_config.bind_password` and publish canonical events
+/// without spinning up their own subsystems.
 #[derive(Clone)]
 pub struct AppState {
+    /// Shared database pool.
     pub pool: DatabasePool,
+    /// JWT verification config.
     pub jwt_config: JwtConfig,
+    /// Shared keystore for AES-256-GCM decryption of AD bind passwords
+    /// and other sensitive fields.
+    pub keystore: Arc<Keystore>,
+    /// Shared PostgreSQL-backed event bus (`platform.events` table +
+    /// LISTEN/NOTIFY), used to publish `org.*` domain events.
+    pub event_bus: Arc<PgEventBus>,
 }
 
 impl AuthState for AppState {
@@ -44,9 +69,12 @@ impl AuthState for AppState {
 ///
 /// # Errors
 ///
-/// Returns an error if shared-state cloning fails (none currently, but reserved).
+/// Returns an error if shared-state cloning fails (none currently, but
+/// reserved for future fallible initialization).
 pub async fn router(shared: SharedState) -> anyhow::Result<Router> {
     let state = build_state(&shared).await?;
+    spawn_ad_sync_workers(&state);
+    spawn_provisioning_dispatcher(&state);
     Ok(create_router(state))
 }
 
@@ -54,13 +82,44 @@ async fn build_state(shared: &SharedState) -> anyhow::Result<AppState> {
     Ok(AppState {
         pool: shared.pool.clone(),
         jwt_config: (*shared.jwt).clone(),
+        keystore: shared.keystore.clone(),
+        event_bus: shared.event_bus.clone(),
     })
+}
+
+// ---------------------------------------------------------------------------
+// Background workers (W3 / W5 placeholders)
+// ---------------------------------------------------------------------------
+
+/// Spawn the AD / LDAP bidirectional sync workers.
+///
+/// **Placeholder** — the real implementation arrives in W3 (Tasks 16-21).
+/// For now this spawns a `tokio::spawn` task that simply logs once and
+/// parks forever, so operators see that the hook is wired.
+pub fn spawn_ad_sync_workers(_state: &AppState) {
+    tokio::spawn(async move {
+        tracing::info!("org AD sync workers: placeholder, no-op until W3");
+        // Park forever so the task does not exit and trip supervisors.
+        std::future::pending::<()>().await;
+    });
+}
+
+/// Spawn the canonical provisioning dispatcher.
+///
+/// **Placeholder** — the real implementation arrives in W5 (Tasks 30-34).
+pub fn spawn_provisioning_dispatcher(_state: &AppState) {
+    tokio::spawn(async move {
+        tracing::info!("org provisioning dispatcher: placeholder, no-op until W5");
+        std::future::pending::<()>().await;
+    });
 }
 
 // ---------------------------------------------------------------------------
 // Router
 // ---------------------------------------------------------------------------
 
+/// Assemble the full org router from CORS, pre-existing legacy endpoints
+/// and the new canonical `/api/v1/org/*` surface introduced in S1 W2.
 pub fn create_router(state: AppState) -> Router {
     let cors = CorsLayer::new()
         .allow_origin(AllowOrigin::list([
@@ -87,9 +146,14 @@ pub fn create_router(state: AppState) -> Router {
 
     let public_routes = Router::new()
         .route("/health", get(health_check))
-        .merge(signapps_common::version::router("signapps-org"));
+        .merge(signapps_common::version::router("signapps-org"))
+        // Public grant redirect — no auth, validates via token hash.
+        .nest("/g", handlers::grant_redirect::routes());
 
-    let org_routes = Router::new()
+    // Pre-existing org endpoints (admin UI). Preserved as-is — they already
+    // read the canonical `core.*` / `org_*` tables through the legacy
+    // repositories in `signapps-db-identity`.
+    let legacy_routes = Router::new()
         // Org structure — trees
         .route(
             "/api/v1/org/trees",
@@ -99,14 +163,13 @@ pub fn create_router(state: AppState) -> Router {
             "/api/v1/org/trees/:id/full",
             get(handlers::org_trees::get_full_tree),
         )
-        // Org structure — nodes
+        // Org structure — nodes (admin UI)
         .route(
             "/api/v1/org/nodes/:id",
             get(handlers::org_nodes::get_node)
                 .put(handlers::org_nodes::update_node)
                 .delete(handlers::org_nodes::delete_node),
         )
-        .route("/api/v1/org/nodes", post(handlers::org_nodes::create_node))
         .route(
             "/api/v1/org/nodes/:id/move",
             post(handlers::org_nodes::move_node),
@@ -142,7 +205,7 @@ pub fn create_router(state: AppState) -> Router {
             "/api/v1/org/context",
             get(handlers::org_context::get_context),
         )
-        // Assignments
+        // Legacy assignments surface (`/api/v1/assignments`).
         .route(
             "/api/v1/assignments",
             post(handlers::assignments::create_assignment),
@@ -161,8 +224,27 @@ pub fn create_router(state: AppState) -> Router {
             auth_middleware::<AppState>,
         ));
 
+    // Canonical S1 surface — nested routers, each auth-guarded.
+    let canonical_routes = Router::new()
+        .nest("/api/v1/org/nodes", handlers::nodes::routes())
+        .nest("/api/v1/org/persons", handlers::persons::routes())
+        .nest(
+            "/api/v1/org/assignments",
+            handlers::canonical_assignments::routes(),
+        )
+        .nest("/api/v1/org/policies", handlers::policies::routes())
+        .nest("/api/v1/org/boards", handlers::boards::routes())
+        .nest("/api/v1/org/grants", handlers::grants::routes())
+        .nest("/api/v1/org/ad", handlers::ad::routes())
+        .nest("/api/v1/org/provisioning", handlers::provisioning::routes())
+        .route_layer(axum_middleware::from_fn_with_state(
+            state.clone(),
+            auth_middleware::<AppState>,
+        ));
+
     public_routes
-        .merge(org_routes)
+        .merge(legacy_routes)
+        .merge(canonical_routes)
         .layer(TraceLayer::new_for_http())
         .layer(cors)
         .with_state(state)
@@ -172,6 +254,8 @@ pub fn create_router(state: AppState) -> Router {
 // Health check
 // ---------------------------------------------------------------------------
 
+/// Service health endpoint — also advertises the org app metadata for the
+/// platform launcher.
 pub async fn health_check() -> axum::Json<serde_json::Value> {
     axum::Json(serde_json::json!({
         "status": "ok",
@@ -202,26 +286,46 @@ mod tests {
     use axum::http::{Request, StatusCode};
     use tower::ServiceExt;
 
-    fn make_state() -> AppState {
+    async fn make_state() -> AppState {
         let pg_pool = sqlx::PgPool::connect_lazy("postgres://fake:fake@localhost/fake")
             .expect("connect_lazy never fails");
         let pool = signapps_db::DatabasePool::new(pg_pool);
         let jwt_config = JwtConfig::hs256("test-secret-that-is-at-least-32-bytes-long".to_string());
-        AppState { pool, jwt_config }
+        // Use an env-var-named backend so parallel tests do not clobber
+        // each other — seed the var with a stable 64-char hex key.
+        let var_name = "SIGNAPPS_ORG_TEST_MASTER_KEY";
+        std::env::set_var(var_name, "0".repeat(64));
+        let keystore = Arc::new(
+            Keystore::init(signapps_keystore::KeystoreBackend::EnvVarNamed(
+                var_name.to_string(),
+            ))
+            .await
+            .expect("keystore init in test"),
+        );
+        let event_bus = Arc::new(PgEventBus::new(
+            pool.inner().clone(),
+            "signapps-org-test".to_string(),
+        ));
+        AppState {
+            pool,
+            jwt_config,
+            keystore,
+            event_bus,
+        }
     }
 
     /// Verify the router can be constructed without panicking.
     /// Catches regressions like duplicate route registration or handler signature mismatches.
     #[tokio::test]
     async fn router_builds_successfully() {
-        let app = create_router(make_state());
+        let app = create_router(make_state().await);
         assert!(std::mem::size_of_val(&app) > 0);
     }
 
     /// Verify the health endpoint exists and returns 200.
     #[tokio::test]
     async fn health_endpoint_returns_200() {
-        let app = create_router(make_state());
+        let app = create_router(make_state().await);
         let response = app
             .oneshot(
                 Request::builder()
