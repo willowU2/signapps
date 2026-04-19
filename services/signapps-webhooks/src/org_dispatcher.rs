@@ -112,7 +112,7 @@ async fn deliver_with_retry(
         attempt += 1;
         let outcome = post_signed(&webhook.url, &body, &signature).await;
         let status_code: Option<i32> = outcome.as_ref().ok().map(|s| i32::from(*s));
-        let succeeded = status_code.map_or(false, |s| (200..300).contains(&s));
+        let succeeded = status_code.is_some_and(|s| (200..300).contains(&s));
         let error_message = outcome.as_ref().err().map(ToString::to_string);
 
         if let Err(e) = repo

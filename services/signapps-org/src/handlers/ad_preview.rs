@@ -165,7 +165,7 @@ pub async fn preview(
 
     let bound = cfg
         .as_ref()
-        .map_or(false, |c| !matches!(c.mode, AdSyncMode::Off));
+        .is_some_and(|c| !matches!(c.mode, AdSyncMode::Off));
 
     let bundle = if bound {
         // Real LDAP connections are out-of-scope for SO4 — even when
