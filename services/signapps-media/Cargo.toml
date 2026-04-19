@@ -35,7 +35,7 @@ reqwest = { version = "0.12", features = ["json", "multipart", "stream"] }
 sqlx = { version = "0.7", features = ["postgres", "runtime-tokio", "uuid", "chrono"] }
 
 # Auth & common
-signapps-common = { path = "../../crates/signapps-common" }
+signapps-common = { path = "../../crates/signapps-common", features = ["rbac"] }
 
 # Transcription types (shared with Tauri CapturePipeline)
 signapps-transcription = { path = "../../crates/signapps-transcription" }

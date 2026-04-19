@@ -36,6 +36,8 @@ pub struct AppState {
     pub collector: MetricsCollector,
     pub exporter: Arc<PrometheusExporter>,
     pub jwt_config: JwtConfig,
+    /// Shared RBAC resolver injected by the runtime. `None` in tests.
+    pub resolver: Option<Arc<dyn signapps_common::rbac::resolver::OrgPermissionResolver>>,
 }
 
 impl AuthState for AppState {
@@ -63,6 +65,7 @@ async fn build_state(shared: &SharedState) -> anyhow::Result<AppState> {
         collector,
         exporter,
         jwt_config: (*shared.jwt).clone(),
+        resolver: shared.resolver.clone(),
     })
 }
 

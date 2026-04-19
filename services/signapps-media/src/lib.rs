@@ -63,6 +63,8 @@ pub struct AppState {
     pub stt: Arc<dyn SttBackend>,
     pub model_manager: Arc<ModelManager>,
     pub job_store: JobStore,
+    /// Shared RBAC resolver injected by the runtime. `None` in tests.
+    pub resolver: Option<Arc<dyn signapps_common::rbac::resolver::OrgPermissionResolver>>,
 }
 
 #[derive(Clone, Debug)]
@@ -223,6 +225,7 @@ async fn build_state(shared: &SharedState) -> anyhow::Result<AppState> {
         stt,
         model_manager,
         job_store: Arc::new(DashMap::new()),
+        resolver: shared.resolver.clone(),
     })
 }
 
