@@ -5,7 +5,7 @@
  * assignments, boards, policies.
  *
  * After the S1 hard-cut the authoritative service is `signapps-org`
- * (port 3026) with paths under `/api/v1/org/*`. The legacy
+ * (port 3026) with paths under `/org/*`. The legacy
  * `/workforce/org/*` endpoints were removed.
  *
  * This module preserves the old `orgApi.*` shape (trees / nodes /
@@ -190,7 +190,7 @@ export const orgApi = {
     list: async () => {
       const tenantId = getCurrentTenantId();
       if (!tenantId) return shim<OrgNode[]>([]);
-      const res = await client.get<BackendOrgNode[]>("/api/v1/org/nodes", {
+      const res = await client.get<BackendOrgNode[]>("/org/nodes", {
         params: { tenant_id: tenantId },
       });
       return { ...res, data: mapNodeList(res.data) };
@@ -208,11 +208,11 @@ export const orgApi = {
         name: data.name,
         attributes: { tree_type: data.tree_type },
       };
-      const res = await client.post<BackendOrgNode>("/api/v1/org/nodes", body);
+      const res = await client.post<BackendOrgNode>("/org/nodes", body);
       return { ...res, data: mapNode(res.data) };
     },
     getFull: async (id: string) => {
-      const res = await client.get<unknown>(`/api/v1/org/nodes/${id}/subtree`);
+      const res = await client.get<unknown>(`/org/nodes/${id}/subtree`);
       return { ...res, data: mapNodeList(res.data) };
     },
   },
@@ -220,7 +220,7 @@ export const orgApi = {
   // ── Nodes ────────────────────────────────────────────────────────────────
   nodes: {
     get: async (id: string) => {
-      const res = await client.get<BackendOrgNode>(`/api/v1/org/nodes/${id}`);
+      const res = await client.get<BackendOrgNode>(`/org/nodes/${id}`);
       return { ...res, data: mapNode(res.data) };
     },
     create: async (data: Partial<OrgNode>) => {
@@ -233,7 +233,7 @@ export const orgApi = {
         slug: data.code,
         attributes: data.config ?? {},
       };
-      const res = await client.post<BackendOrgNode>("/api/v1/org/nodes", body);
+      const res = await client.post<BackendOrgNode>("/org/nodes", body);
       return { ...res, data: mapNode(res.data) };
     },
     update: async (id: string, data: Partial<OrgNode>) => {
@@ -245,18 +245,15 @@ export const orgApi = {
         attributes: data.config,
         active: data.is_active,
       };
-      const res = await client.put<BackendOrgNode>(
-        `/api/v1/org/nodes/${id}`,
-        body,
-      );
+      const res = await client.put<BackendOrgNode>(`/org/nodes/${id}`, body);
       return { ...res, data: mapNode(res.data) };
     },
-    delete: (id: string) => client.delete(`/api/v1/org/nodes/${id}`),
+    delete: (id: string) => client.delete(`/org/nodes/${id}`),
     deleteRecursive: (id: string) =>
-      client.delete(`/api/v1/org/nodes/${id}?recursive=true`),
+      client.delete(`/org/nodes/${id}?recursive=true`),
     move: async (id: string, parentId: string) => {
       // No dedicated move endpoint — reuse PUT with new parent_id.
-      return client.put<BackendOrgNode>(`/api/v1/org/nodes/${id}`, {
+      return client.put<BackendOrgNode>(`/org/nodes/${id}`, {
         parent_id: parentId,
       });
     },
@@ -264,18 +261,18 @@ export const orgApi = {
     // side filtering where needed; the store already consumes subtree
     // + the parent lookup.
     children: async (id: string) => {
-      const sub = await client.get<unknown>(`/api/v1/org/nodes/${id}/subtree`);
+      const sub = await client.get<unknown>(`/org/nodes/${id}/subtree`);
       const nodes = mapNodeList(sub.data);
       const direct = nodes.filter((n) => n.parent_id === id);
       return { ...sub, data: direct };
     },
     descendants: async (id: string) => {
-      const res = await client.get<unknown>(`/api/v1/org/nodes/${id}/subtree`);
+      const res = await client.get<unknown>(`/org/nodes/${id}/subtree`);
       return { ...res, data: mapNodeList(res.data) };
     },
     ancestors: async (_id: string) => shim<OrgNode[]>([]),
     assignments: async (id: string) => {
-      const res = await client.get<Assignment[]>(`/api/v1/org/assignments`, {
+      const res = await client.get<Assignment[]>(`/org/assignments`, {
         params: { node_id: id },
       });
       return res;
@@ -289,22 +286,19 @@ export const orgApi = {
     // exposes it.
     listBoards: async () => shim<BoardSummary[]>([]),
     board: async (id: string) =>
-      client.get<EffectiveBoard>(`/api/v1/org/boards/by-node/${id}`),
+      client.get<EffectiveBoard>(`/org/boards/by-node/${id}`),
     createBoard: async (id: string) =>
-      client.post<OrgBoard>(`/api/v1/org/boards`, { node_id: id }),
+      client.post<OrgBoard>(`/org/boards`, { node_id: id }),
     deleteBoard: async (_id: string) => shim<{ ok: true }>({ ok: true }),
     addBoardMember: async (boardId: string, data: Partial<OrgBoardMember>) =>
-      client.post<OrgBoardMember>(
-        `/api/v1/org/boards/${boardId}/members`,
-        data,
-      ),
+      client.post<OrgBoardMember>(`/org/boards/${boardId}/members`, data),
     updateBoardMember: async (
       _boardId: string,
       _memberId: string,
       _data: Partial<OrgBoardMember>,
     ) => shim<OrgBoardMember | null>(null),
     removeBoardMember: async (_boardId: string, memberId: string) =>
-      client.delete(`/api/v1/org/boards/members/${memberId}`),
+      client.delete(`/org/boards/members/${memberId}`),
   },
 
   // ── Persons ──────────────────────────────────────────────────────────────
@@ -321,21 +315,21 @@ export const orgApi = {
         tenant_id: tenantId,
         ...(params ?? {}),
       };
-      return client.get<Person[]>("/api/v1/org/persons", { params: query });
+      return client.get<Person[]>("/org/persons", { params: query });
     },
     create: async (data: Partial<Person> & { role_type?: string }) => {
       const tenantId = getCurrentTenantId();
       const body = { tenant_id: tenantId, ...data };
-      return client.post<Person>("/api/v1/org/persons", body);
+      return client.post<Person>("/org/persons", body);
     },
     update: (id: string, data: Partial<Person>) =>
-      client.put<Person>(`/api/v1/org/persons/${id}`, data),
+      client.put<Person>(`/org/persons/${id}`, data),
     get: async (id: string) =>
       client.get<Person & { roles: PersonRole[]; assignments: Assignment[] }>(
-        `/api/v1/org/persons/${id}`,
+        `/org/persons/${id}`,
       ),
     assignments: async (id: string) => {
-      return client.get<Assignment[]>(`/api/v1/org/assignments`, {
+      return client.get<Assignment[]>(`/org/assignments`, {
         params: { person_id: id },
       });
     },
@@ -349,11 +343,11 @@ export const orgApi = {
   // ── Assignments ──────────────────────────────────────────────────────────
   assignments: {
     create: (data: Partial<Assignment>) =>
-      client.post<Assignment>("/api/v1/org/assignments", data),
+      client.post<Assignment>("/org/assignments", data),
     update: (id: string, data: Partial<Assignment>) =>
-      client.put<Assignment>(`/api/v1/org/assignments/${id}`, data),
+      client.put<Assignment>(`/org/assignments/${id}`, data),
     end: async (id: string, _reason?: string) =>
-      client.delete(`/api/v1/org/assignments/${id}`),
+      client.delete(`/org/assignments/${id}`),
     history: async (_params?: Record<string, unknown>) =>
       shim<AssignmentHistory[]>([]),
   },
@@ -413,9 +407,9 @@ export const orgApi = {
       if (!nodeId) {
         return shim<OrgGroup | null>(null);
       }
-      return client.post<OrgGroup>("/api/v1/org/boards", { node_id: nodeId });
+      return client.post<OrgGroup>("/org/boards", { node_id: nodeId });
     },
-    get: async (id: string) => client.get<OrgGroup>(`/api/v1/org/boards/${id}`),
+    get: async (id: string) => client.get<OrgGroup>(`/org/boards/${id}`),
     update: async (_id: string, _data: Partial<OrgGroup>) =>
       shim<OrgGroup | null>(null),
     delete: async (_id: string) => shim<{ ok: true }>({ ok: true }),
@@ -423,11 +417,11 @@ export const orgApi = {
       groupId: string,
       data: { member_type: string; member_id: string },
     ) =>
-      client.post<OrgGroupMember>(`/api/v1/org/boards/${groupId}/members`, {
+      client.post<OrgGroupMember>(`/org/boards/${groupId}/members`, {
         person_id: data.member_id,
       }),
     removeMember: async (_groupId: string, memberId: string) =>
-      client.delete(`/api/v1/org/boards/members/${memberId}`),
+      client.delete(`/org/boards/members/${memberId}`),
     effectiveMembers: async (_groupId: string) => shim<string[]>([]),
   },
 
@@ -438,29 +432,25 @@ export const orgApi = {
       if (!tenantId) return shim<OrgPolicy[]>([]);
       const params: Record<string, unknown> = { tenant_id: tenantId };
       if (domain) params.domain = domain;
-      return client.get<OrgPolicy[]>("/api/v1/org/policies", { params });
+      return client.get<OrgPolicy[]>("/org/policies", { params });
     },
     create: async (data: Partial<OrgPolicy>) => {
       const tenantId = getCurrentTenantId();
       const body = { tenant_id: tenantId, ...data };
-      return client.post<OrgPolicy>("/api/v1/org/policies", body);
+      return client.post<OrgPolicy>("/org/policies", body);
     },
-    get: async (id: string) =>
-      client.get<OrgPolicy>(`/api/v1/org/policies/${id}`),
+    get: async (id: string) => client.get<OrgPolicy>(`/org/policies/${id}`),
     update: async (id: string, data: Partial<OrgPolicy>) =>
-      client.put<OrgPolicy>(`/api/v1/org/policies/${id}`, data),
-    delete: async (id: string) => client.delete(`/api/v1/org/policies/${id}`),
+      client.put<OrgPolicy>(`/org/policies/${id}`, data),
+    delete: async (id: string) => client.delete(`/org/policies/${id}`),
     addLink: async (policyId: string, data: Partial<OrgPolicyLink>) =>
-      client.post<OrgPolicyLink>(
-        `/api/v1/org/policies/${policyId}/bindings`,
-        data,
-      ),
+      client.post<OrgPolicyLink>(`/org/policies/${policyId}/bindings`, data),
     removeLink: async (_policyId: string, linkId: string) =>
-      client.delete(`/api/v1/org/policies/bindings/${linkId}`),
+      client.delete(`/org/policies/bindings/${linkId}`),
     resolvePerson: async (_personId: string) =>
       shim<EffectivePolicy>({ settings: {}, sources: [] }),
     resolveNode: async (nodeId: string) =>
-      client.get<EffectivePolicy>("/api/v1/org/policies/bindings/subtree", {
+      client.get<EffectivePolicy>("/org/policies/bindings/subtree", {
         params: { node_id: nodeId },
       }),
   },
