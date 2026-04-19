@@ -37,7 +37,7 @@ hex = "0.4"
 
 urlencoding = "2.1"
 
-signapps-common = { path = "../../crates/signapps-common" }
+signapps-common = { path = "../../crates/signapps-common", features = ["rbac"] }
 signapps-oauth = { path = "../../crates/signapps-oauth" }
 signapps-keystore = { path = "../../crates/signapps-keystore" }
 signapps-service = { path = "../../crates/signapps-service" }

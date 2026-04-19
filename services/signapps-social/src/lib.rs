@@ -48,6 +48,10 @@ pub struct AppState {
     pub pool: Pool<Postgres>,
     pub jwt_config: JwtConfig,
     pub event_bus: PgEventBus,
+    /// Shared RBAC resolver injected by the runtime. `None` in tests.
+    pub resolver: Option<
+        std::sync::Arc<dyn signapps_common::rbac::resolver::OrgPermissionResolver>,
+    >,
 }
 
 impl AuthState for AppState {
@@ -136,6 +140,7 @@ async fn build_state(shared: &SharedState) -> anyhow::Result<AppState> {
         pool,
         jwt_config: (*shared.jwt).clone(),
         event_bus,
+        resolver: shared.resolver.clone(),
     })
 }
 
