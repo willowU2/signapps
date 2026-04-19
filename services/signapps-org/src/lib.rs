@@ -15,6 +15,7 @@
 #![allow(clippy::assertions_on_constants)]
 
 pub mod ad;
+pub mod events;
 pub mod handlers;
 pub mod middleware;
 pub mod rbac_client;

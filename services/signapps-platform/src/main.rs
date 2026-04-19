@@ -35,6 +35,17 @@ async fn main() -> Result<()> {
         Arc::new(shared.pool.inner().clone()),
         60,
     ));
+
+    // Spawn the cache invalidation listener so `org.grant.*`,
+    // `org.policy.updated` and `org.assignment.changed` events wipe the
+    // affected decisions.  Uses the runtime event_bus so catch-up +
+    // LISTEN survive service restarts (bus consumers track their
+    // cursor in `platform.event_consumers`).
+    signapps_org::events::spawn_invalidation_listener(
+        shared.event_bus.clone(),
+        resolver.clone(),
+    );
+
     let shared = shared.with_resolver(resolver);
     tracing::info!("rbac resolver attached to shared state");
 
