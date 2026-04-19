@@ -22,6 +22,11 @@
 //! - [`HeadcountPlan`] + [`HeadcountRollup`] : planification effectifs.
 //! - [`Skill`] + [`SkillCategory`] + [`PersonSkill`] : compétences.
 //!
+//! **SO4 addition (2026-04-19)** — external integrations:
+//! - [`PublicLink`] + [`Visibility`] : partage public d'un sous-arbre.
+//! - [`Webhook`] : souscription sortante HMAC-signée par tenant.
+//! - [`WebhookDelivery`] : log d'audit des fan-outs.
+//!
 //! ## Design choices
 //!
 //! - Each entity carries `tenant_id` for multi-tenancy.
@@ -50,9 +55,12 @@ pub mod policy;
 pub mod position;
 pub mod position_incumbent;
 pub mod provisioning_log;
+pub mod public_link;
 pub mod raci;
 pub mod skill;
 pub mod template;
+pub mod webhook;
+pub mod webhook_delivery;
 
 pub use access_grant::AccessGrant;
 pub use ad_config::{AdConfig, AdSyncMode, ConflictStrategy};
@@ -71,6 +79,9 @@ pub use policy::{PermissionSpec, Policy, PolicyBinding};
 pub use position::Position;
 pub use position_incumbent::PositionIncumbent;
 pub use provisioning_log::ProvisioningLog;
+pub use public_link::{PublicLink, Visibility};
 pub use raci::{Raci, RaciRole};
 pub use skill::{Skill, SkillCategory};
 pub use template::{template_spec, Template};
+pub use webhook::{pattern_matches, Webhook};
+pub use webhook_delivery::WebhookDelivery;
