@@ -7,6 +7,7 @@ import { useUIStore } from "@/lib/store";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useOrgStore } from "@/stores/org-store";
+import { useTenantStore } from "@/stores/tenant-store";
 import { orgApi } from "@/lib/api/org";
 import type {
   OrgNode,
@@ -22,6 +23,7 @@ import { toast } from "sonner";
 // Components — always visible
 import { TreeNodeItem } from "./components/tree-node-item";
 import type { TreeNode, BoardInfo } from "./components/tree-node-item";
+import { UnassignedPeoplePanel } from "./components/unassigned-people-panel";
 import { DetailPanel } from "./components/detail-panel";
 import { GroupsNav } from "./components/groups-nav";
 import { SitesNav } from "./components/sites-nav";
@@ -142,7 +144,12 @@ export default function OrgStructurePage() {
   const [assignmentsByNode, setAssignmentsByNode] = useState<
     Record<
       string,
-      Array<{ personId: string; role?: string; isPrimary: boolean }>
+      Array<{
+        assignmentId: string;
+        personId: string;
+        role?: string;
+        isPrimary: boolean;
+      }>
     >
   >({});
 
@@ -205,39 +212,52 @@ export default function OrgStructurePage() {
     fetchPolicies();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Per-node assignments — batch fetch so tree can show avatars + roles
-  // on each node. Runs once per `nodes` change, guarded against stale
-  // responses by a version ref.
+  // Per-node assignments — batch fetch so the tree/orgchart can show
+  // avatars + roles on each node. Guarded against stale responses by a
+  // version ref. Exposed as a callback so mutations (assign / move /
+  // end) can refresh without duplicating the fan-out logic.
   const assignmentsVersionRef = React.useRef(0);
-  useEffect(() => {
-    if (nodes.length === 0) {
-      setAssignmentsByNode({});
-      return;
-    }
-    const version = ++assignmentsVersionRef.current;
-    Promise.all(
-      nodes.map((n) =>
-        orgApi.nodes
-          .assignments(n.id)
-          .then((res) => ({ nodeId: n.id, rows: res.data ?? [] }))
-          .catch(() => ({ nodeId: n.id, rows: [] as Assignment[] })),
-      ),
-    ).then((results) => {
+  const fetchAssignmentsForAllNodes = useCallback(
+    async (nodeList: OrgNode[]) => {
+      if (nodeList.length === 0) {
+        setAssignmentsByNode({});
+        return;
+      }
+      const version = ++assignmentsVersionRef.current;
+      const results = await Promise.all(
+        nodeList.map((n) =>
+          orgApi.nodes
+            .assignments(n.id)
+            .then((res) => ({ nodeId: n.id, rows: res.data ?? [] }))
+            .catch(() => ({ nodeId: n.id, rows: [] as Assignment[] })),
+        ),
+      );
       if (assignmentsVersionRef.current !== version) return;
       const map: Record<
         string,
-        Array<{ personId: string; role?: string; isPrimary: boolean }>
+        Array<{
+          assignmentId: string;
+          personId: string;
+          role?: string;
+          isPrimary: boolean;
+        }>
       > = {};
       for (const { nodeId, rows } of results) {
         map[nodeId] = rows.map((a) => ({
+          assignmentId: a.id,
           personId: a.person_id,
           role: (a as unknown as { role?: string }).role,
           isPrimary: Boolean(a.is_primary),
         }));
       }
       setAssignmentsByNode(map);
-    });
-  }, [nodes]);
+    },
+    [],
+  );
+
+  useEffect(() => {
+    void fetchAssignmentsForAllNodes(nodes);
+  }, [nodes, fetchAssignmentsForAllNodes]);
 
   // Board indicators — single batched request with version-guard against
   // stale overwrites when `nodes` changes while a fetch is in flight.
@@ -460,6 +480,78 @@ export default function OrgStructurePage() {
     [draggedId, currentTree, nodes, reloadTree],
   );
 
+  // Drop a person from the unassigned panel onto a node → create a new
+  // structure-axis member assignment. The backend enforces the at-most-
+  // one-primary-per-axis rule, so we always post `is_primary: false`.
+  const handlePersonDrop = useCallback(
+    async (targetNodeId: string, personId: string) => {
+      const tenantId = useTenantStore.getState().tenant?.id;
+      if (!tenantId) {
+        toast.error("Tenant inconnu — reconnectez-vous");
+        return;
+      }
+      const person = personsById[personId];
+      const targetNode = nodes.find((n) => n.id === targetNodeId);
+      try {
+        await orgApi.assignments.create({
+          // The canonical POST body is augmented with tenant_id, axis
+          // and role — fields the TS `Assignment` type doesn't declare,
+          // so we cross the boundary with an unknown cast.
+          ...({
+            tenant_id: tenantId,
+            person_id: personId,
+            node_id: targetNodeId,
+            axis: "structure",
+            role: "member",
+            is_primary: false,
+          } as unknown as Parameters<typeof orgApi.assignments.create>[0]),
+        });
+        toast.success(
+          person && targetNode
+            ? `${person.first_name} ${person.last_name} assigne(e) a ${targetNode.name}`
+            : "Personne assignee",
+        );
+        await fetchAssignmentsForAllNodes(nodes);
+      } catch (err) {
+        console.error("[DnD] assignment create failed:", err);
+        toast.error("Erreur lors de l'affectation");
+      }
+    },
+    [fetchAssignmentsForAllNodes, nodes, personsById],
+  );
+
+  // Move an already-assigned person onto a different node by dragging
+  // their avatar. Uses PUT /org/assignments/:id with the new node_id.
+  const handlePersonMove = useCallback(
+    async (
+      assignmentId: string,
+      personId: string,
+      sourceNodeId: string,
+      targetNodeId: string,
+    ) => {
+      if (sourceNodeId === targetNodeId) return;
+      const person = personsById[personId];
+      const targetNode = nodes.find((n) => n.id === targetNodeId);
+      try {
+        await orgApi.assignments.update(assignmentId, {
+          ...({ node_id: targetNodeId } as unknown as Parameters<
+            typeof orgApi.assignments.update
+          >[1]),
+        });
+        toast.success(
+          person && targetNode
+            ? `${person.first_name} ${person.last_name} deplace(e) vers ${targetNode.name}`
+            : "Affectation deplacee",
+        );
+        await fetchAssignmentsForAllNodes(nodes);
+      } catch (err) {
+        console.error("[DnD] assignment move failed:", err);
+        toast.error("Erreur lors du deplacement");
+      }
+    },
+    [fetchAssignmentsForAllNodes, nodes, personsById],
+  );
+
   const handleToolbarAddNode = useCallback(
     (nodeType: string, parent: OrgNode | null) => {
       setNewNodeType(nodeType);
@@ -589,6 +681,14 @@ export default function OrgStructurePage() {
 
         {currentTree ? (
           <div className="flex-1 flex flex-col lg:flex-row min-h-0 overflow-hidden">
+            {!focusMode && activeNavTab === "tree" && (
+              <UnassignedPeoplePanel
+                persons={persons}
+                assignmentsByNode={assignmentsByNode}
+                className="hidden lg:flex"
+              />
+            )}
+
             {!focusMode && (
               <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
                 <StatsBar
@@ -663,6 +763,8 @@ export default function OrgStructurePage() {
                           boardMap={boardMap}
                           assignmentsByNode={assignmentsByNode}
                           personsById={personsById}
+                          onPersonDrop={handlePersonDrop}
+                          onPersonMove={handlePersonMove}
                         />
                       ))}
                     </div>
@@ -673,6 +775,10 @@ export default function OrgStructurePage() {
                         selectedId={selectedNode?.id ?? null}
                         onSelect={handleSelectNode}
                         boardMap={boardMap}
+                        assignmentsByNode={assignmentsByNode}
+                        personsById={personsById}
+                        onPersonDrop={handlePersonDrop}
+                        onPersonMove={handlePersonMove}
                       />
                     </div>
                   ) : (
