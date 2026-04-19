@@ -567,7 +567,11 @@ mod tests {
         let pool = sqlx::PgPool::connect_lazy("postgres://fake:fake@localhost/fake")
             .expect("connect_lazy never fails");
         let jwt_config = JwtConfig::hs256("test-secret-that-is-at-least-32-bytes-long".to_string());
-        AppState { pool, jwt_config }
+        AppState {
+            pool,
+            jwt_config,
+            resolver: None,
+        }
     }
 
     #[tokio::test]

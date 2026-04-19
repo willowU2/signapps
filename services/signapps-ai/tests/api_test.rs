@@ -15,6 +15,7 @@ use serde_json::{json, Value};
 // ---------------------------------------------------------------------------
 
 /// Deserialize a response body to JSON.
+#[allow(dead_code)]
 async fn body_to_json(body: Body) -> Value {
     let bytes = axum::body::to_bytes(body, usize::MAX)
         .await

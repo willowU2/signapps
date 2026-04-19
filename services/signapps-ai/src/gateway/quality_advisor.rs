@@ -17,9 +17,11 @@ pub struct QualityAdvice {
 }
 
 /// Compares local and cloud worker quality to advise on optimal routing.
+#[derive(Default)]
 pub struct QualityAdvisor;
 
 impl QualityAdvisor {
+    /// Create a new advisor.
     pub fn new() -> Self {
         Self
     }

@@ -79,6 +79,30 @@ impl RateLimiter {
     }
 }
 
+/// Axum middleware for rate limiting by client IP.
+pub async fn rate_limit_middleware(
+    limiter: RateLimiter,
+    req: Request,
+    next: Next,
+) -> Result<Response, StatusCode> {
+    let key = req
+        .headers()
+        .get("x-forwarded-for")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("unknown")
+        .split(',')
+        .next()
+        .unwrap_or("unknown")
+        .trim()
+        .to_string();
+
+    if limiter.check(&key) {
+        Ok(next.run(req).await)
+    } else {
+        Err(StatusCode::TOO_MANY_REQUESTS)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -162,29 +186,5 @@ mod tests {
 
         // client_b is independent
         assert!(limiter.check("client_b"), "client_b should not be affected");
-    }
-}
-
-/// Axum middleware for rate limiting by client IP.
-pub async fn rate_limit_middleware(
-    limiter: RateLimiter,
-    req: Request,
-    next: Next,
-) -> Result<Response, StatusCode> {
-    let key = req
-        .headers()
-        .get("x-forwarded-for")
-        .and_then(|v| v.to_str().ok())
-        .unwrap_or("unknown")
-        .split(',')
-        .next()
-        .unwrap_or("unknown")
-        .trim()
-        .to_string();
-
-    if limiter.check(&key) {
-        Ok(next.run(req).await)
-    } else {
-        Err(StatusCode::TOO_MANY_REQUESTS)
     }
 }

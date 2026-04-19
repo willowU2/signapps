@@ -308,6 +308,7 @@ mod tests {
             pool,
             jwt_config,
             event_bus,
+            resolver: None,
         }
     }
 

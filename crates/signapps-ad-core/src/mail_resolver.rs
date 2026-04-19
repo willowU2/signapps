@@ -106,6 +106,6 @@ mod tests {
     #[test]
     fn module_compiles() {
         // Placeholder: real tests live in integration test suite
-        assert!(true);
+        let _ = module_path!();
     }
 }

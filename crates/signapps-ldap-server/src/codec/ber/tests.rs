@@ -1,5 +1,5 @@
 #[cfg(test)]
-mod tests {
+mod ber_roundtrip {
     use super::super::types::{BerData, BerError, BerTag};
     use super::super::{
         decode, decode_all, decode_boolean, decode_enumerated, decode_integer, decode_octet_string,
@@ -225,7 +225,7 @@ mod tests {
         let elems = decode_all(&buf).expect("decode_all should succeed");
         assert_eq!(elems.len(), 3);
         assert_eq!(decode_integer(&elems[0]).unwrap(), 10);
-        assert_eq!(decode_boolean(&elems[1]).unwrap(), false);
+        assert!(!decode_boolean(&elems[1]).unwrap());
         assert_eq!(decode_octet_string(&elems[2]).unwrap(), b"dn=foo");
     }
 

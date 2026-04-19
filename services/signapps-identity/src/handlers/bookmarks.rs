@@ -401,14 +401,17 @@ mod tests {
     fn module_compiles() {
         // Verify this handler module compiles correctly.
         // Integration tests require a running database and service.
-        assert!(true, "{} handler module loaded", module_path!());
+        // Placeholder: ensures the module compiles.
+        let _ = module_path!();
     }
 
     #[test]
     fn default_limit_is_capped() {
-        let limit: i64 = 200_i64.min(100);
+        let requested: i64 = 200;
+        let limit = requested.min(100);
         assert_eq!(limit, 100);
-        let limit: i64 = 50_i64.min(100);
+        let requested: i64 = 50;
+        let limit = requested.min(100);
         assert_eq!(limit, 50);
     }
 }

@@ -250,6 +250,7 @@ mod tests {
         AppState {
             pool,
             jwt_config,
+            resolver: None,
             data_export: handlers::data_export::DataExportStore::new(),
         }
     }

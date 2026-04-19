@@ -697,6 +697,6 @@ mod tests {
     fn dc_lifecycle_module_compiles() {
         // Integration tests require a live PostgreSQL instance.
         // See the DC integration test suite for full coverage.
-        assert!(true);
+        let _ = module_path!();
     }
 }

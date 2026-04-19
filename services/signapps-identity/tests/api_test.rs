@@ -7,7 +7,7 @@ use axum::{
     body::Body,
     http::{Request, StatusCode},
 };
-use serde_json::{json, Value};
+use serde_json::json;
 
 // ---------------------------------------------------------------------------
 // Login — POST /api/v1/auth/login

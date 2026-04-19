@@ -665,6 +665,7 @@ mod tests {
             tx_notifications,
             redis_client: None,
             backup_store: new_backup_store(pool),
+            resolver: None,
         }
     }
 

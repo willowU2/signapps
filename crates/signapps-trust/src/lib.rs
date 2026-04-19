@@ -55,6 +55,40 @@ impl std::fmt::Display for TrustLevel {
     }
 }
 
+/// Axum middleware that checks the user's trust level from request extensions.
+///
+/// Usage:
+/// ```rust,ignore
+/// use axum::middleware;
+/// use signapps_common::trust_level::{require_trust, TrustLevel};
+///
+/// let app = Router::new()
+///     .route("/admin/users", get(list_users))
+///     .layer(middleware::from_fn(|req, next| require_trust(TrustLevel::Admin, req, next)));
+/// ```
+pub async fn require_trust(
+    min_level: TrustLevel,
+    req: Request,
+    next: Next,
+) -> Result<Response, StatusCode> {
+    let user_level = req
+        .extensions()
+        .get::<TrustLevel>()
+        .copied()
+        .unwrap_or(TrustLevel::Guest);
+
+    if user_level >= min_level {
+        Ok(next.run(req).await)
+    } else {
+        tracing::warn!(
+            required = %min_level,
+            actual = %user_level,
+            "Insufficient trust level"
+        );
+        Err(StatusCode::FORBIDDEN)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -104,42 +138,8 @@ mod tests {
     #[test]
     fn test_insufficient_trust_rejected() {
         // User does NOT satisfy Editor requirement
-        assert!(!(TrustLevel::User >= TrustLevel::Editor));
+        assert!(TrustLevel::User < TrustLevel::Editor);
         // Guest does NOT satisfy User requirement
-        assert!(!(TrustLevel::Guest >= TrustLevel::User));
-    }
-}
-
-/// Axum middleware that checks the user's trust level from request extensions.
-///
-/// Usage:
-/// ```rust,ignore
-/// use axum::middleware;
-/// use signapps_common::trust_level::{require_trust, TrustLevel};
-///
-/// let app = Router::new()
-///     .route("/admin/users", get(list_users))
-///     .layer(middleware::from_fn(|req, next| require_trust(TrustLevel::Admin, req, next)));
-/// ```
-pub async fn require_trust(
-    min_level: TrustLevel,
-    req: Request,
-    next: Next,
-) -> Result<Response, StatusCode> {
-    let user_level = req
-        .extensions()
-        .get::<TrustLevel>()
-        .copied()
-        .unwrap_or(TrustLevel::Guest);
-
-    if user_level >= min_level {
-        Ok(next.run(req).await)
-    } else {
-        tracing::warn!(
-            required = %min_level,
-            actual = %user_level,
-            "Insufficient trust level"
-        );
-        Err(StatusCode::FORBIDDEN)
+        assert!(TrustLevel::Guest < TrustLevel::User);
     }
 }

@@ -203,7 +203,11 @@ mod tests {
             .expect("connect_lazy never fails");
         let pool = signapps_db::DatabasePool::new(pg_pool);
         let jwt_config = JwtConfig::hs256("test-secret-that-is-at-least-32-bytes-long".to_string());
-        AppState { pool, jwt_config }
+        AppState {
+            pool,
+            jwt_config,
+            resolver: None,
+        }
     }
 
     #[tokio::test]

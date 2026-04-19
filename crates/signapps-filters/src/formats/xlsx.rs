@@ -246,7 +246,7 @@ mod tests {
             matches!(calamine_to_cell_value(&Data::String("hi".into())), CellValue::Text(s) if s == "hi")
         );
         assert!(
-            matches!(calamine_to_cell_value(&Data::Float(3.14)), CellValue::Number(n) if (n - 3.14).abs() < f64::EPSILON)
+            matches!(calamine_to_cell_value(&Data::Float(1.5)), CellValue::Number(n) if (n - 1.5).abs() < f64::EPSILON)
         );
         assert!(matches!(
             calamine_to_cell_value(&Data::Bool(true)),

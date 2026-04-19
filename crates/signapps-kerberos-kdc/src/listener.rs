@@ -374,8 +374,8 @@ mod tests {
         let msg_type = "UNKNOWN-MSG";
         let expected = format!("Unknown KDC message type: {msg_type}");
         // Replicate the Err path inline to validate the format string.
-        let err: Result<(), String> = Err(format!("Unknown KDC message type: {msg_type}"));
-        assert_eq!(err.unwrap_err(), expected);
+        let err_msg = format!("Unknown KDC message type: {msg_type}");
+        assert_eq!(err_msg, expected);
     }
 
     #[test]
