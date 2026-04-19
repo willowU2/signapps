@@ -1,0 +1,21 @@
+{
+  "nodes": [
+    { "slug": "creative", "name": "Creative", "kind": "unit", "parent_slug": null },
+    { "slug": "tech", "name": "Tech", "kind": "unit", "parent_slug": null },
+    { "slug": "account", "name": "Account Management", "kind": "unit", "parent_slug": null },
+    { "slug": "production", "name": "Production", "kind": "unit", "parent_slug": null },
+    { "slug": "ops", "name": "Operations", "kind": "unit", "parent_slug": null }
+  ],
+  "positions": [
+    { "node_slug": "creative", "title": "Creative Director", "head_count": 1 },
+    { "node_slug": "creative", "title": "Art Director", "head_count": 2 },
+    { "node_slug": "creative", "title": "Designer", "head_count": 6 },
+    { "node_slug": "tech", "title": "Tech Lead", "head_count": 1 },
+    { "node_slug": "tech", "title": "Front-end Dev", "head_count": 4 },
+    { "node_slug": "tech", "title": "Full-stack Dev", "head_count": 3 },
+    { "node_slug": "account", "title": "Account Director", "head_count": 1 },
+    { "node_slug": "account", "title": "Account Manager", "head_count": 5 },
+    { "node_slug": "production", "title": "Producer", "head_count": 3 },
+    { "node_slug": "ops", "title": "Office Manager", "head_count": 1 }
+  ]
+}

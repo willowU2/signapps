@@ -31,10 +31,21 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Checkbox } from "@/components/ui/checkbox";
 import { AssignmentPanel } from "@/components/org/assignment-panel";
 import { orgApi } from "@/lib/api/org";
-import type { Person, PersonRole, PersonRoleType } from "@/types/org";
-import { Plus, Users, Search, Link2, Filter } from "lucide-react";
+import type { Person, PersonRole, PersonRoleType, OrgNode } from "@/types/org";
+import {
+  Plus,
+  Users,
+  Search,
+  Link2,
+  Filter,
+  Download,
+  Move,
+  Tags,
+  X,
+} from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { LoadingState } from "@/components/ui/loading-state";
@@ -79,6 +90,14 @@ export default function PersonsPage() {
   const [selectedPerson, setSelectedPerson] = useState<Person | null>(null);
   const [assignmentOpen, setAssignmentOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
+
+  // SO3 — bulk selection state
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkMoveOpen, setBulkMoveOpen] = useState(false);
+  const [bulkRoleOpen, setBulkRoleOpen] = useState(false);
+  const [targetNode, setTargetNode] = useState<string>("");
+  const [targetRole, setTargetRole] = useState<string>("");
+  const [availableNodes, setAvailableNodes] = useState<OrgNode[]>([]);
 
   // Create form
   const [newFirstName, setNewFirstName] = useState("");
@@ -153,6 +172,118 @@ export default function PersonsPage() {
       (p.email?.toLowerCase().includes(q) ?? false)
     );
   });
+
+  // ─── SO3 bulk selection helpers ────────────────────────────────────
+  const toggleSelected = useCallback((id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+  const selectAll = useCallback(() => {
+    setSelectedIds(new Set(filteredPersons.map((p) => p.id)));
+  }, [filteredPersons]);
+  const clearSelection = useCallback(() => setSelectedIds(new Set()), []);
+
+  const loadAvailableNodes = useCallback(async () => {
+    try {
+      const res = await orgApi.trees.list();
+      // Fetch subtree of first tree to flatten all nodes.
+      if (Array.isArray(res.data) && res.data.length > 0) {
+        const roots = res.data;
+        const all: OrgNode[] = [];
+        for (const root of roots) {
+          try {
+            const sub = await orgApi.trees.getFull(root.id);
+            if (Array.isArray(sub.data)) all.push(...sub.data);
+          } catch {
+            // ignore
+          }
+        }
+        setAvailableNodes(all);
+      }
+    } catch {
+      setAvailableNodes([]);
+    }
+  }, []);
+
+  const openBulkMove = useCallback(() => {
+    setTargetNode("");
+    loadAvailableNodes().catch(() => {});
+    setBulkMoveOpen(true);
+  }, [loadAvailableNodes]);
+
+  const runBulkMove = useCallback(async () => {
+    if (!targetNode) {
+      toast.error("Sélectionnez un noeud cible");
+      return;
+    }
+    try {
+      const res = await orgApi.bulk.move({
+        person_ids: Array.from(selectedIds),
+        target_node_id: targetNode,
+        axis: "structure",
+      });
+      toast.success(
+        `${res.data.created} assignment(s) créés (${res.data.errors.length} erreurs)`,
+      );
+      setBulkMoveOpen(false);
+      clearSelection();
+      await loadPersons();
+    } catch (err) {
+      toast.error(`Erreur bulk move: ${(err as Error).message}`);
+    }
+  }, [targetNode, selectedIds, clearSelection, loadPersons]);
+
+  const runBulkExport = useCallback(async () => {
+    try {
+      const res = await orgApi.bulk.exportCsv(Array.from(selectedIds));
+      // Axios returns the raw blob when responseType: "blob"; some versions
+      // still hand back the string body, so we normalise both.
+      const payload = res.data as unknown;
+      const blob =
+        payload instanceof Blob
+          ? payload
+          : new Blob(
+              [typeof payload === "string" ? payload : String(payload)],
+              {
+                type: "text/csv",
+              },
+            );
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "persons.csv";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      toast.success(`${selectedIds.size} personnes exportées`);
+    } catch (err) {
+      toast.error(`Erreur export: ${(err as Error).message}`);
+    }
+  }, [selectedIds]);
+
+  const runBulkAssignRole = useCallback(async () => {
+    if (!targetRole.trim()) {
+      toast.error("Saisissez un rôle");
+      return;
+    }
+    try {
+      const res = await orgApi.bulk.assignRole(
+        Array.from(selectedIds),
+        targetRole.trim(),
+      );
+      toast.success(`${res.data.updated} rôle(s) assigné(s)`);
+      setBulkRoleOpen(false);
+      clearSelection();
+      await loadPersons();
+    } catch (err) {
+      toast.error(`Erreur assign-role: ${(err as Error).message}`);
+    }
+  }, [targetRole, selectedIds, clearSelection, loadPersons]);
 
   if (loading) {
     return (
@@ -247,6 +378,19 @@ export default function PersonsPage() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-10">
+                  <Checkbox
+                    checked={
+                      selectedIds.size > 0 &&
+                      selectedIds.size === filteredPersons.length
+                    }
+                    onCheckedChange={(checked) => {
+                      if (checked) selectAll();
+                      else clearSelection();
+                    }}
+                    aria-label="Sélectionner tout"
+                  />
+                </TableHead>
                 <TableHead>Nom</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>Rôles</TableHead>
@@ -259,7 +403,7 @@ export default function PersonsPage() {
               {filteredPersons.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={6}
+                    colSpan={7}
                     className="h-32 text-center text-muted-foreground"
                   >
                     Aucune personne trouvée
@@ -275,6 +419,16 @@ export default function PersonsPage() {
                       setAssignmentOpen(true);
                     }}
                   >
+                    <TableCell
+                      className="w-10"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <Checkbox
+                        checked={selectedIds.has(person.id)}
+                        onCheckedChange={() => toggleSelected(person.id)}
+                        aria-label={`Sélectionner ${person.first_name} ${person.last_name}`}
+                      />
+                    </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <Avatar className="h-8 w-8">
@@ -353,6 +507,108 @@ export default function PersonsPage() {
           {filteredPersons.length} personne(s) affichée(s)
         </p>
       </div>
+
+      {/* ── SO3 bulk footer (sticky, visible when selection >0) ── */}
+      {selectedIds.size > 0 ? (
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3 rounded-full border border-border bg-card px-4 py-2 shadow-lg">
+          <span className="text-sm font-medium">
+            {selectedIds.size} sélectionné(s)
+          </span>
+          <div className="h-5 w-px bg-border" />
+          <Button size="sm" variant="ghost" onClick={openBulkMove}>
+            <Move className="mr-1 size-4" /> Déplacer vers OU
+          </Button>
+          <Button size="sm" variant="ghost" onClick={runBulkExport}>
+            <Download className="mr-1 size-4" /> Exporter CSV
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => {
+              setTargetRole("");
+              setBulkRoleOpen(true);
+            }}
+          >
+            <Tags className="mr-1 size-4" /> Assigner rôle
+          </Button>
+          <div className="h-5 w-px bg-border" />
+          <Button
+            size="icon"
+            variant="ghost"
+            className="size-7"
+            onClick={clearSelection}
+            aria-label="Effacer la sélection"
+          >
+            <X className="size-4" />
+          </Button>
+        </div>
+      ) : null}
+
+      {/* ── Bulk move dialog ── */}
+      <Dialog open={bulkMoveOpen} onOpenChange={setBulkMoveOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              Déplacer {selectedIds.size} personne(s) vers une OU
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="bulk-target">Noeud cible</Label>
+              <Select value={targetNode} onValueChange={setTargetNode}>
+                <SelectTrigger id="bulk-target">
+                  <SelectValue placeholder="Sélectionner…" />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableNodes.map((n) => (
+                    <SelectItem key={n.id} value={n.id}>
+                      {n.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBulkMoveOpen(false)}>
+              Annuler
+            </Button>
+            <Button onClick={runBulkMove} disabled={!targetNode}>
+              Déplacer
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Bulk assign-role dialog ── */}
+      <Dialog open={bulkRoleOpen} onOpenChange={setBulkRoleOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              Assigner un rôle à {selectedIds.size} personne(s)
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="bulk-role">Intitulé du rôle</Label>
+              <Input
+                id="bulk-role"
+                value={targetRole}
+                onChange={(e) => setTargetRole(e.target.value)}
+                placeholder="ex: Senior Engineer"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBulkRoleOpen(false)}>
+              Annuler
+            </Button>
+            <Button onClick={runBulkAssignRole} disabled={!targetRole.trim()}>
+              Assigner
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* ── Assignment panel ── */}
       <AssignmentPanel

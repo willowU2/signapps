@@ -682,6 +682,165 @@ export const orgApi = {
     delete: async (id: string) => client.delete(`/org/raci/${id}`),
   },
 
+  // ═══════════════════════════════════════════════════════════════════════
+  // SO3 scale & power — templates, headcount, skills, search, bulk.
+  // ═══════════════════════════════════════════════════════════════════════
+
+  /** Org templates catalog + clone. */
+  templates: {
+    list: async (industry?: string) => {
+      const params: Record<string, unknown> = {};
+      if (industry) params.industry = industry;
+      return client.get<OrgTemplate[]>("/org/templates", { params });
+    },
+    get: async (slug: string) =>
+      client.get<OrgTemplate>(`/org/templates/${slug}`),
+    clone: async (slug: string, body: { target_node_id: string }) => {
+      const tenantId = getCurrentTenantId();
+      return client.post<OrgTemplateCloneResponse>(
+        `/org/templates/${slug}/clone`,
+        { tenant_id: tenantId, ...body },
+      );
+    },
+  },
+
+  /** Headcount planning. */
+  headcount: {
+    list: async (params?: { node_id?: string }) => {
+      const tenantId = getCurrentTenantId();
+      if (!tenantId) return shim<OrgHeadcountList>({ plans: [], rollups: [] });
+      const query: Record<string, unknown> = { tenant_id: tenantId };
+      if (params?.node_id) query.node_id = params.node_id;
+      return client.get<OrgHeadcountList>("/org/headcount", { params: query });
+    },
+    rollup: async (nodeId: string) => {
+      const tenantId = getCurrentTenantId();
+      if (!tenantId) {
+        return shim<OrgHeadcountRollup>({
+          node_id: nodeId,
+          filled: 0,
+          positions_sum: 0,
+          target: null,
+          gap: null,
+          status: "no_plan",
+        });
+      }
+      return client.get<OrgHeadcountRollup>("/org/headcount/rollup", {
+        params: { tenant_id: tenantId, node_id: nodeId },
+      });
+    },
+    create: async (body: {
+      node_id: string;
+      target_head_count: number;
+      target_date: string;
+      notes?: string;
+    }) => {
+      const tenantId = getCurrentTenantId();
+      return client.post<OrgHeadcountPlan>("/org/headcount", {
+        tenant_id: tenantId,
+        ...body,
+      });
+    },
+    update: async (
+      id: string,
+      body: {
+        target_head_count?: number;
+        target_date?: string;
+        notes?: string;
+      },
+    ) => client.put<OrgHeadcountPlan>(`/org/headcount/${id}`, body),
+    delete: async (id: string) => client.delete(`/org/headcount/${id}`),
+  },
+
+  /** Skills catalog + person-skills. */
+  skills: {
+    list: async (params?: { category?: OrgSkillCategory }) => {
+      const tenantId = getCurrentTenantId();
+      const query: Record<string, unknown> = {};
+      if (tenantId) query.tenant_id = tenantId;
+      if (params?.category) query.category = params.category;
+      return client.get<OrgSkill[]>("/org/skills", { params: query });
+    },
+    create: async (body: {
+      slug: string;
+      name: string;
+      category: OrgSkillCategory;
+      description?: string;
+    }) => {
+      const tenantId = getCurrentTenantId();
+      return client.post<OrgSkill>("/org/skills", {
+        tenant_id: tenantId,
+        ...body,
+      });
+    },
+    listPersonSkills: async (personId: string) =>
+      client.get<OrgPersonSkill[]>(`/org/persons/${personId}/skills`),
+    tagPerson: async (
+      personId: string,
+      body: { skill_id: string; level: number },
+    ) =>
+      client.post<OrgPersonSkillRow>(`/org/persons/${personId}/skills`, body),
+    untagPerson: async (personId: string, skillId: string) =>
+      client.delete(`/org/persons/${personId}/skills/${skillId}`),
+    endorse: async (
+      personId: string,
+      skillId: string,
+      endorserPersonId: string,
+    ) =>
+      client.post<{ person_skill: OrgPersonSkillRow }>(
+        `/org/persons/${personId}/skills/${skillId}/endorse`,
+        { endorser_person_id: endorserPersonId },
+      ),
+  },
+
+  /** Global search (omnibox ⌘K). */
+  search: async (q: string, limit = 20) => {
+    const tenantId = getCurrentTenantId();
+    if (!tenantId || !q.trim()) {
+      return shim<OrgSearchResponse>({
+        persons: [],
+        nodes: [],
+        skills: [],
+        total: 0,
+      });
+    }
+    return client.get<OrgSearchResponse>("/org/search", {
+      params: { q, tenant_id: tenantId, limit },
+    });
+  },
+
+  /** Bulk operations. */
+  bulk: {
+    move: async (body: {
+      person_ids: string[];
+      target_node_id: string;
+      axis?: "structure" | "focus" | "group";
+      role?: string;
+    }) => {
+      const tenantId = getCurrentTenantId();
+      return client.post<OrgBulkMoveResponse>("/org/bulk/move", {
+        tenant_id: tenantId,
+        axis: body.axis ?? "structure",
+        ...body,
+      });
+    },
+    exportCsv: async (personIds: string[]) => {
+      const tenantId = getCurrentTenantId();
+      return client.post<string>(
+        "/org/bulk/export",
+        { tenant_id: tenantId, person_ids: personIds },
+        { responseType: "blob" },
+      );
+    },
+    assignRole: async (personIds: string[], role: string) => {
+      const tenantId = getCurrentTenantId();
+      return client.post<{ updated: number; errors: string[] }>(
+        "/org/bulk/assign-role",
+        { tenant_id: tenantId, person_ids: personIds, role },
+      );
+    },
+  },
+
   /** Board decisions + votes API. */
   decisions: {
     list: async (boardId: string, params?: { status?: OrgDecisionStatus }) =>
@@ -817,4 +976,136 @@ export interface OrgBoardVote {
   vote: OrgVoteKind;
   rationale?: string | null;
   voted_at: string;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SO3 types — templates, headcount, skills, search, bulk.
+// ═══════════════════════════════════════════════════════════════════════════
+
+/** One built-in or custom template row. */
+export interface OrgTemplate {
+  id: string;
+  slug: string;
+  name: string;
+  description?: string | null;
+  industry?: string | null;
+  size_range?: string | null;
+  spec_json: OrgTemplateSpec;
+  is_public: boolean;
+  created_by_tenant_id?: string | null;
+  created_at: string;
+}
+
+/** Template spec (nodes + positions). */
+export interface OrgTemplateSpec {
+  nodes: Array<{
+    slug: string;
+    name: string;
+    kind: string;
+    parent_slug: string | null;
+  }>;
+  positions: Array<{
+    node_slug: string;
+    title: string;
+    head_count: number;
+  }>;
+}
+
+/** Response to `POST /org/templates/:slug/clone`. */
+export interface OrgTemplateCloneResponse {
+  slug: string;
+  nodes: OrgNode[];
+  positions: OrgPosition[];
+}
+
+/** Headcount plan. */
+export interface OrgHeadcountPlan {
+  id: string;
+  tenant_id: string;
+  node_id: string;
+  target_head_count: number;
+  target_date: string;
+  notes?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+/** Rollup computed per node. */
+export interface OrgHeadcountRollup {
+  node_id: string;
+  filled: number;
+  positions_sum: number;
+  target: number | null;
+  gap: number | null;
+  status: "on_track" | "understaffed" | "over_plan" | "no_plan";
+}
+
+/** Combined GET /org/headcount response. */
+export interface OrgHeadcountList {
+  plans: OrgHeadcountPlan[];
+  rollups: OrgHeadcountRollup[];
+}
+
+/** Skill category. */
+export type OrgSkillCategory = "tech" | "soft" | "language" | "domain";
+
+/** Catalog skill row. */
+export interface OrgSkill {
+  id: string;
+  tenant_id?: string | null;
+  slug: string;
+  name: string;
+  category: OrgSkillCategory;
+  description?: string | null;
+  created_at: string;
+}
+
+/** Tagged skill on a person (joined with skill catalog for display). */
+export interface OrgPersonSkill {
+  skill_id: string;
+  slug: string;
+  name: string;
+  category: string;
+  level: number;
+  endorsed_by_person_id: string | null;
+}
+
+/** Raw row from `org_person_skills` (not joined). */
+export interface OrgPersonSkillRow {
+  person_id: string;
+  skill_id: string;
+  level: number;
+  endorsed_by_person_id: string | null;
+  created_at: string;
+}
+
+/** Omnibox match: person. */
+export interface OrgSearchPerson {
+  id: string;
+  first_name: string;
+  last_name: string;
+  email: string | null;
+}
+
+/** Omnibox match: node. */
+export interface OrgSearchNode {
+  id: string;
+  name: string;
+  slug: string | null;
+  kind: string;
+}
+
+/** Aggregated omnibox response. */
+export interface OrgSearchResponse {
+  persons: OrgSearchPerson[];
+  nodes: OrgSearchNode[];
+  skills: OrgSkill[];
+  total: number;
+}
+
+/** Response to `POST /org/bulk/move`. */
+export interface OrgBulkMoveResponse {
+  created: number;
+  assignment_ids: string[];
+  errors: string[];
 }

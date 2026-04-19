@@ -23,6 +23,12 @@ const AiChatBar = dynamic(
   () => import("./ai-chat-bar").then((m) => m.AiChatBar),
   { ssr: false },
 );
+// SO3 — Global ⌘K omnibox. Dynamic import to keep it out of first paint.
+const CommandPalette = dynamic(
+  () =>
+    import("@/components/common/command-palette").then((m) => m.CommandPalette),
+  { ssr: false },
+);
 
 export type PortalMode = "client" | "supplier" | null;
 
@@ -91,6 +97,8 @@ export function AppLayout({ children, portalMode }: AppLayoutProps) {
       </div>
 
       <AiChatBar />
+      {/* SO3 — Global ⌘K omnibox (mounted once) */}
+      <CommandPalette />
     </div>
   );
 }
