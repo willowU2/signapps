@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ReactFlow,
   Controls,
@@ -23,8 +23,10 @@ import { Badge } from "@/components/ui/badge";
 import { Shield, Maximize2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getNodeTypeConfig } from "./tab-config";
-import type { BoardInfo } from "./tree-node-item";
-import type { OrgNode } from "@/types/org";
+import type { BoardInfo, NodeAssignment } from "./tree-node-item";
+import { PERSON_ASSIGN_MIME, PERSON_MOVE_MIME } from "./tree-node-item";
+import { avatarTint, personInitials, personTitle } from "./avatar-helpers";
+import type { OrgNode, Person } from "@/types/org";
 
 // =============================================================================
 // Types
@@ -36,16 +38,25 @@ interface OrgNodeData extends Record<string, unknown> {
   onSelect: (node: OrgNode) => void;
   boardInfo?: BoardInfo;
   cfg: ReturnType<typeof getNodeTypeConfig>;
+  assignments?: NodeAssignment[];
+  personsById?: Record<string, Person>;
+  onPersonDrop?: (targetNodeId: string, personId: string) => void;
+  onPersonMove?: (
+    assignmentId: string,
+    personId: string,
+    sourceNodeId: string,
+    targetNodeId: string,
+  ) => void;
 }
 
 // =============================================================================
 // Layout algorithm — top-down tree
 // =============================================================================
 
-const NODE_WIDTH = 200;
-const NODE_HEIGHT = 76;
+const NODE_WIDTH = 220;
+const NODE_HEIGHT = 132;
 const GAP_X = 32;
-const GAP_Y = 64;
+const GAP_Y = 72;
 
 function computeSubtreeWidth(
   id: string,
@@ -145,20 +156,90 @@ function layoutTree(nodes: OrgNode[]): Map<string, { x: number; y: number }> {
 // =============================================================================
 
 function OrgNodeCard({ data }: { data: OrgNodeData }) {
-  const { orgNode, selectedId, onSelect, boardInfo, cfg } = data;
+  const {
+    orgNode,
+    selectedId,
+    onSelect,
+    boardInfo,
+    cfg,
+    assignments,
+    personsById,
+    onPersonDrop,
+    onPersonMove,
+  } = data;
+  const [dragOver, setDragOver] = useState(false);
   if (!orgNode?.node_type) return null;
   const isSelected = selectedId === orgNode.id;
+  const rows = assignments ?? [];
+  const manager = rows.find((a) => a.isPrimary);
+  const managerPerson = manager ? personsById?.[manager.personId] : undefined;
+  const others = manager
+    ? rows.filter((a) => a.personId !== manager.personId)
+    : rows;
+  const shown = others.slice(0, 3);
+  const overflow = others.length - shown.length;
+  const totalCount = rows.length;
 
   return (
     <div
       onClick={() => onSelect(orgNode)}
+      onDragOver={(e) => {
+        const types = e.dataTransfer.types;
+        if (
+          types.includes(PERSON_ASSIGN_MIME) ||
+          types.includes(PERSON_MOVE_MIME)
+        ) {
+          e.preventDefault();
+          e.stopPropagation();
+          e.dataTransfer.dropEffect = "copy";
+          setDragOver(true);
+        }
+      }}
+      onDragLeave={(e) => {
+        e.stopPropagation();
+        setDragOver(false);
+      }}
+      onDrop={(e) => {
+        const assignData = e.dataTransfer.getData(PERSON_ASSIGN_MIME);
+        const moveData = e.dataTransfer.getData(PERSON_MOVE_MIME);
+        if (!assignData && !moveData) return;
+        e.preventDefault();
+        e.stopPropagation();
+        setDragOver(false);
+        if (assignData) {
+          try {
+            const { personId } = JSON.parse(assignData) as { personId: string };
+            if (personId) onPersonDrop?.(orgNode.id, personId);
+          } catch {
+            // malformed payload — ignore
+          }
+          return;
+        }
+        if (moveData) {
+          try {
+            const { assignmentId, personId, sourceNodeId } = JSON.parse(
+              moveData,
+            ) as {
+              assignmentId: string;
+              personId: string;
+              sourceNodeId: string;
+            };
+            if (assignmentId && sourceNodeId !== orgNode.id) {
+              onPersonMove?.(assignmentId, personId, sourceNodeId, orgNode.id);
+            }
+          } catch {
+            // malformed payload — ignore
+          }
+        }
+      }}
       className={cn(
-        "relative px-3 py-2.5 rounded-xl border-2 cursor-pointer transition-all",
-        "min-w-[180px] max-w-[200px] text-center bg-card shadow-sm",
+        "relative px-3 py-2 rounded-xl border-2 cursor-pointer transition-all",
+        "text-center bg-card shadow-sm",
         cfg.border,
         isSelected && "ring-2 ring-primary shadow-lg",
+        dragOver && "ring-2 ring-primary bg-primary/5 shadow-md",
       )}
-      style={{ width: NODE_WIDTH }}
+      style={{ width: NODE_WIDTH, minHeight: NODE_HEIGHT }}
     >
       <Handle
         type="target"
@@ -167,7 +248,7 @@ function OrgNodeCard({ data }: { data: OrgNodeData }) {
       />
 
       {/* Badge row */}
-      <div className="flex items-center justify-center gap-1 mb-1">
+      <div className="flex items-center justify-between gap-1 mb-1">
         <Badge
           variant="secondary"
           className={cn(
@@ -178,41 +259,130 @@ function OrgNodeCard({ data }: { data: OrgNodeData }) {
         >
           {cfg.label}
         </Badge>
-        {boardInfo && (
-          <div
-            className="flex items-center gap-0.5"
-            title={
-              boardInfo.isInherited
-                ? "Gouvernance heritee"
-                : "Gouvernance propre"
-            }
-          >
-            <Shield
-              className={cn(
-                "h-3 w-3",
+        <div className="flex items-center gap-1">
+          {boardInfo && (
+            <div
+              className="flex items-center gap-0.5"
+              title={
                 boardInfo.isInherited
-                  ? "text-muted-foreground/50"
-                  : "text-blue-500",
-              )}
-            />
-            {boardInfo.decisionMakerName && (
-              <span className="text-[10px] bg-muted rounded-full w-5 h-5 flex items-center justify-center font-medium text-muted-foreground">
-                {boardInfo.decisionMakerName.slice(0, 2).toUpperCase()}
-              </span>
+                  ? "Gouvernance heritee"
+                  : "Gouvernance propre"
+              }
+            >
+              <Shield
+                className={cn(
+                  "h-3 w-3",
+                  boardInfo.isInherited
+                    ? "text-muted-foreground/50"
+                    : "text-blue-500",
+                )}
+              />
+            </div>
+          )}
+          {totalCount > 0 && (
+            <span
+              className="text-[9px] text-muted-foreground tabular-nums"
+              title={`${totalCount} personne${totalCount > 1 ? "s" : ""} sur ce noeud`}
+            >
+              {totalCount}p
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Manager row */}
+      {managerPerson && manager ? (
+        <div className="flex items-center gap-2 mb-1 min-w-0">
+          <span
+            draggable={Boolean(onPersonMove)}
+            onDragStart={(e) => {
+              e.stopPropagation();
+              e.dataTransfer.effectAllowed = "move";
+              e.dataTransfer.setData(
+                PERSON_MOVE_MIME,
+                JSON.stringify({
+                  assignmentId: manager.assignmentId,
+                  personId: manager.personId,
+                  sourceNodeId: orgNode.id,
+                }),
+              );
+            }}
+            onClick={(e) => e.stopPropagation()}
+            className={cn(
+              "text-[10px] rounded-full w-7 h-7 flex items-center justify-center font-semibold ring-2 ring-primary/60 shrink-0 cursor-grab active:cursor-grabbing",
+              avatarTint(managerPerson.id),
             )}
+            title={`Responsable : ${managerPerson.first_name} ${managerPerson.last_name}${personTitle(managerPerson) ? " — " + personTitle(managerPerson) : ""}`}
+          >
+            {personInitials(managerPerson)}
+          </span>
+          <div className="min-w-0 flex-1 text-left">
+            <div className="text-sm font-semibold truncate text-foreground">
+              {orgNode.name}
+            </div>
+            <div className="text-[10px] text-muted-foreground truncate">
+              {personTitle(managerPerson) ??
+                `${managerPerson.first_name} ${managerPerson.last_name}`}
+            </div>
           </div>
-        )}
-      </div>
+        </div>
+      ) : (
+        <div className="mb-1">
+          <div className="text-sm font-semibold truncate text-foreground">
+            {orgNode.name}
+          </div>
+          {orgNode.code && (
+            <div className="text-[10px] text-muted-foreground font-mono truncate">
+              {orgNode.code}
+            </div>
+          )}
+        </div>
+      )}
 
-      {/* Name */}
-      <div className="text-sm font-semibold truncate text-foreground">
-        {orgNode.name}
-      </div>
-
-      {/* Code */}
-      {orgNode.code && (
-        <div className="text-xs text-muted-foreground font-mono">
-          {orgNode.code}
+      {/* Other assignees */}
+      {shown.length > 0 && (
+        <div className="flex items-center justify-center -space-x-1.5">
+          {shown.map((a) => {
+            const p = personsById?.[a.personId];
+            return (
+              <span
+                key={a.assignmentId}
+                draggable={Boolean(onPersonMove)}
+                onDragStart={(e) => {
+                  e.stopPropagation();
+                  e.dataTransfer.effectAllowed = "move";
+                  e.dataTransfer.setData(
+                    PERSON_MOVE_MIME,
+                    JSON.stringify({
+                      assignmentId: a.assignmentId,
+                      personId: a.personId,
+                      sourceNodeId: orgNode.id,
+                    }),
+                  );
+                }}
+                onClick={(e) => e.stopPropagation()}
+                className={cn(
+                  "text-[9px] rounded-full w-5 h-5 flex items-center justify-center font-medium ring-1 ring-background cursor-grab active:cursor-grabbing",
+                  avatarTint(a.personId),
+                )}
+                title={
+                  p
+                    ? `${p.first_name} ${p.last_name}${personTitle(p) ? " — " + personTitle(p) : ""}`
+                    : a.personId
+                }
+              >
+                {personInitials(p)}
+              </span>
+            );
+          })}
+          {overflow > 0 && (
+            <span
+              className="text-[9px] rounded-full w-5 h-5 flex items-center justify-center font-medium bg-muted text-muted-foreground ring-1 ring-background"
+              title={`${overflow} autre${overflow > 1 ? "s" : ""}`}
+            >
+              +{overflow}
+            </span>
+          )}
         </div>
       )}
 
@@ -255,6 +425,15 @@ interface OrgChartFlowProps {
   selectedId: string | null;
   onSelect: (node: OrgNode) => void;
   boardMap?: Record<string, BoardInfo>;
+  assignmentsByNode?: Record<string, NodeAssignment[]>;
+  personsById?: Record<string, Person>;
+  onPersonDrop?: (targetNodeId: string, personId: string) => void;
+  onPersonMove?: (
+    assignmentId: string,
+    personId: string,
+    sourceNodeId: string,
+    targetNodeId: string,
+  ) => void;
 }
 
 function OrgChartFlow({
@@ -262,6 +441,10 @@ function OrgChartFlow({
   selectedId,
   onSelect,
   boardMap,
+  assignmentsByNode,
+  personsById,
+  onPersonDrop,
+  onPersonMove,
 }: OrgChartFlowProps) {
   const positions = useMemo(() => layoutTree(orgNodes), [orgNodes]);
 
@@ -281,11 +464,25 @@ function OrgChartFlow({
             onSelect,
             boardInfo: boardMap?.[orgNode.id],
             cfg,
+            assignments: assignmentsByNode?.[orgNode.id],
+            personsById,
+            onPersonDrop,
+            onPersonMove,
           },
           draggable: false,
         };
       });
-  }, [orgNodes, positions, selectedId, onSelect, boardMap]);
+  }, [
+    orgNodes,
+    positions,
+    selectedId,
+    onSelect,
+    boardMap,
+    assignmentsByNode,
+    personsById,
+    onPersonDrop,
+    onPersonMove,
+  ]);
 
   const initialEdges = useMemo<Edge[]>(() => {
     return orgNodes
@@ -325,12 +522,27 @@ function OrgChartFlow({
               onSelect,
               boardInfo: boardMap?.[orgNode.id],
               cfg,
+              assignments: assignmentsByNode?.[orgNode.id],
+              personsById,
+              onPersonDrop,
+              onPersonMove,
             },
             draggable: false,
           };
         }),
     );
-  }, [orgNodes, positions, selectedId, onSelect, boardMap, setNodes]);
+  }, [
+    orgNodes,
+    positions,
+    selectedId,
+    onSelect,
+    boardMap,
+    assignmentsByNode,
+    personsById,
+    onPersonDrop,
+    onPersonMove,
+    setNodes,
+  ]);
 
   // Same sync problem for edges: when orgNodes changes (initial fetch, new
   // parent relationships), the `initialEdges` captured by useEdgesState is
@@ -401,6 +613,22 @@ export interface OrgChartCardProps {
   selectedId: string | null;
   onSelect: (node: OrgNode) => void;
   boardMap?: Record<string, BoardInfo>;
+  /** Per-node person assignments (used to render avatars on each card). */
+  assignmentsByNode?: Record<string, NodeAssignment[]>;
+  /** Lookup table used to render initials/colours for each person. */
+  personsById?: Record<string, Person>;
+  /** Invoked when an unassigned person is dropped onto an org node card. */
+  onPersonDrop?: (targetNodeId: string, personId: string) => void;
+  /**
+   * Invoked when an already-assigned person is moved by dragging their
+   * avatar from one card to another.
+   */
+  onPersonMove?: (
+    assignmentId: string,
+    personId: string,
+    sourceNodeId: string,
+    targetNodeId: string,
+  ) => void;
 }
 
 export function OrgChartCard({
@@ -408,6 +636,10 @@ export function OrgChartCard({
   selectedId,
   onSelect,
   boardMap,
+  assignmentsByNode,
+  personsById,
+  onPersonDrop,
+  onPersonMove,
 }: OrgChartCardProps) {
   // Filter out any invalid nodes (missing id or node_type)
   const validNodes = useMemo(
@@ -431,6 +663,10 @@ export function OrgChartCard({
           selectedId={selectedId}
           onSelect={onSelect}
           boardMap={boardMap}
+          assignmentsByNode={assignmentsByNode}
+          personsById={personsById}
+          onPersonDrop={onPersonDrop}
+          onPersonMove={onPersonMove}
         />
       </ReactFlowProvider>
     </div>
