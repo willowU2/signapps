@@ -60,6 +60,8 @@ pub struct AppState {
     pub meet_client: Arc<crate::services::meet_service::MeetServiceClient>,
     pub event_bus: PgEventBus,
     pub sharing: SharingEngine,
+    /// Shared RBAC resolver injected by the runtime. `None` in tests.
+    pub resolver: Option<Arc<dyn signapps_common::rbac::resolver::OrgPermissionResolver>>,
 }
 
 impl AuthState for AppState {
@@ -162,6 +164,7 @@ async fn build_state(shared: &SharedState) -> anyhow::Result<(AppState, SharingE
         meet_client: Arc::new(crate::services::meet_service::MeetServiceClient::new()),
         event_bus,
         sharing: sharing_engine.clone(),
+        resolver: shared.resolver.clone(),
     };
 
     Ok((state, sharing_engine))

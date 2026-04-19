@@ -28,7 +28,7 @@ uuid = { version = "1.0", features = ["v4", "serde"] }
 chrono = { version = "0.4", features = ["serde"] }
 
 # Authentication
-signapps-common = { path = "../../crates/signapps-common" }
+signapps-common = { path = "../../crates/signapps-common", features = ["rbac"] }
 signapps-oauth = { path = "../../crates/signapps-oauth" }
 signapps-keystore = { path = "../../crates/signapps-keystore" }
 signapps-service = { path = "../../crates/signapps-service" }

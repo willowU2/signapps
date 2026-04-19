@@ -30,6 +30,7 @@ use signapps_common::middleware::{
 };
 use signapps_common::pg_events::PgEventBus;
 use signapps_common::rate_limit::{RateLimiter, RateLimiterConfig};
+use signapps_common::rbac::resolver::OrgPermissionResolver;
 use signapps_common::JwtConfig;
 use signapps_db::DatabasePool;
 use signapps_keystore::Keystore;
@@ -72,6 +73,9 @@ pub struct AppState {
     pub oauth_engine_state: Arc<OAuthEngineState>,
     /// Event bus for publishing platform events (Plan 4 / P4T8).
     pub event_bus: Arc<PgEventBus>,
+    /// Shared RBAC resolver injected by the runtime. `None` in tests
+    /// that construct AppState directly without a resolver.
+    pub resolver: Option<Arc<dyn OrgPermissionResolver>>,
     // data_export moved to signapps-compliance service (port 3032)
 }
 
@@ -185,6 +189,7 @@ async fn build_state(shared: &SharedState) -> anyhow::Result<AppState> {
         migration: handlers::migration::MigrationStore::new(),
         oauth_engine_state,
         event_bus: shared.event_bus.clone(),
+        resolver: shared.resolver.clone(),
     })
 }
 

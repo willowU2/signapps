@@ -24,7 +24,7 @@ path = "src/bin/seed.rs"
 mimalloc = { workspace = true }
 # Internal crates
 signapps-cache = { path = "../../crates/signapps-cache" }
-signapps-common = { path = "../../crates/signapps-common" }
+signapps-common = { path = "../../crates/signapps-common", features = ["rbac"] }
 signapps-db = { path = "../../crates/signapps-db", features = ["openapi"] }
 signapps-keystore = { path = "../../crates/signapps-keystore" }
 signapps-oauth = { path = "../../crates/signapps-oauth" }

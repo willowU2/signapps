@@ -70,6 +70,9 @@ pub struct AppState {
     pub jwt_config: JwtConfig,
     pub indexer: AiIndexerClient,
     pub event_bus: PgEventBus,
+    /// Shared RBAC resolver injected by the runtime. `None` in tests.
+    pub resolver:
+        Option<std::sync::Arc<dyn signapps_common::rbac::resolver::OrgPermissionResolver>>,
 }
 
 impl AuthState for AppState {
@@ -274,6 +277,7 @@ async fn build_state(
         jwt_config: (*shared.jwt).clone(),
         indexer: AiIndexerClient::from_env(),
         event_bus: event_bus.clone(),
+        resolver: shared.resolver.clone(),
     };
 
     let sharing_engine = SharingEngine::new(pool, CacheService::default_config());
