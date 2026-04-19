@@ -12,7 +12,7 @@ import { useState } from "react";
 import { MoreHorizontal } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -135,73 +135,71 @@ export function MainTabs({
     );
   }
 
+  // Side-effect flush for recentOverflow tracking (no JSX needed at wrapper level).
+  void activeId;
+  void onChange;
+
   return (
-    <Tabs
-      value={activeId}
-      onValueChange={onChange}
-      className="flex-1 flex flex-col min-h-0"
+    <TabsList
+      className={cn(
+        "mx-3 mt-2 pb-2 shrink-0 w-auto h-auto flex flex-wrap justify-start gap-0.5 bg-transparent p-0 border-b border-border",
+        wideMargin && "mx-6",
+      )}
     >
-      <TabsList
-        className={cn(
-          "mx-3 mt-2 pb-2 shrink-0 w-auto h-auto flex flex-wrap justify-start gap-0.5 bg-transparent p-0 border-b border-border",
-          wideMargin && "mx-6",
-        )}
-      >
-        {mainPrimary.map((t) => (
-          <TabsTrigger
-            key={t.id}
-            value={t.id}
-            className="text-xs px-2 py-1 h-7 data-[state=active]:bg-background data-[state=active]:shadow-sm whitespace-nowrap"
-          >
-            {t.label}
-          </TabsTrigger>
-        ))}
+      {mainPrimary.map((t) => (
+        <TabsTrigger
+          key={t.id}
+          value={t.id}
+          className="text-xs px-2 py-1 h-7 data-[state=active]:bg-background data-[state=active]:shadow-sm whitespace-nowrap"
+        >
+          {t.label}
+        </TabsTrigger>
+      ))}
 
-        {extraTabs.map((t) => (
-          <TabsTrigger
-            key={t.id}
-            value={t.id}
-            className="text-xs px-2 py-1 h-7 data-[state=active]:bg-background data-[state=active]:shadow-sm whitespace-nowrap"
-          >
-            {t.label}
-          </TabsTrigger>
-        ))}
+      {extraTabs.map((t) => (
+        <TabsTrigger
+          key={t.id}
+          value={t.id}
+          className="text-xs px-2 py-1 h-7 data-[state=active]:bg-background data-[state=active]:shadow-sm whitespace-nowrap"
+        >
+          {t.label}
+        </TabsTrigger>
+      ))}
 
-        {overflow.length > 0 && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-7 px-2 text-xs"
-                title="Plus d'onglets"
+      {overflow.length > 0 && (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 px-2 text-xs"
+              title="Plus d'onglets"
+            >
+              <MoreHorizontal className="h-3 w-3" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            {overflow.map((t) => (
+              <DropdownMenuItem
+                key={t.id}
+                onClick={() => {
+                  onChange(t.id);
+                  setRecentOverflow((prev) =>
+                    [t.id, ...prev.filter((x) => x !== t.id)].slice(0, 3),
+                  );
+                }}
+                className={cn(
+                  "text-sm",
+                  t.id === activeId && "bg-muted font-semibold",
+                )}
               >
-                <MoreHorizontal className="h-3 w-3" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              {overflow.map((t) => (
-                <DropdownMenuItem
-                  key={t.id}
-                  onClick={() => {
-                    onChange(t.id);
-                    setRecentOverflow((prev) =>
-                      [t.id, ...prev.filter((x) => x !== t.id)].slice(0, 3),
-                    );
-                  }}
-                  className={cn(
-                    "text-sm",
-                    t.id === activeId && "bg-muted font-semibold",
-                  )}
-                >
-                  {t.label}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
-      </TabsList>
-    </Tabs>
+                {t.label}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
+    </TabsList>
   );
 }
 

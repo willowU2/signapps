@@ -14,7 +14,7 @@
  */
 import React, { useEffect, useMemo, useState } from "react";
 import { Building2 } from "lucide-react";
-import { TabsContent } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { orgApi } from "@/lib/api/org";
 import { useAuthStore } from "@/lib/store";
 import { toast } from "sonner";
@@ -461,39 +461,45 @@ function NodeModeDetailPanel({
         focusMode={focusMode}
       />
 
-      <MainTabs
-        items={effectiveItems}
-        metaById={metaById}
-        hiddenIds={hiddenIds}
-        activeId={activeTab}
-        onChange={setActiveTab}
-        extraTabs={extraTabs}
-        wideMargin={focusMode}
-      />
+      <Tabs
+        value={activeTab}
+        onValueChange={setActiveTab}
+        className="flex-1 flex flex-col min-h-0"
+      >
+        <MainTabs
+          items={effectiveItems}
+          metaById={metaById}
+          hiddenIds={hiddenIds}
+          activeId={activeTab}
+          onChange={setActiveTab}
+          extraTabs={extraTabs}
+          wideMargin={focusMode}
+        />
 
-      <div className="flex-1 overflow-y-auto min-h-0 mt-3">
-        {visibleIds.map((id) => {
-          const item = effectiveItems.find((i) => {
-            if (i.type === "builtin") return i.id === id;
-            return id.startsWith("widget:");
-          });
-          if (!item) return null;
-          return (
-            <TabsContent key={id} value={id} className="mt-0">
-              <TabRenderer
-                item={item}
-                ctx={{ entityId: node.id, entityType: "node" }}
-                renderBuiltin={renderBuiltin}
-              />
+        <div className="flex-1 overflow-y-auto min-h-0 mt-3">
+          {visibleIds.map((id) => {
+            const item = effectiveItems.find((i) => {
+              if (i.type === "builtin") return i.id === id;
+              return id.startsWith("widget:");
+            });
+            if (!item) return null;
+            return (
+              <TabsContent key={id} value={id} className="mt-0">
+                <TabRenderer
+                  item={item}
+                  ctx={{ entityId: node.id, entityType: "node" }}
+                  renderBuiltin={renderBuiltin}
+                />
+              </TabsContent>
+            );
+          })}
+          {extraTabs.map((t) => (
+            <TabsContent key={t.id} value={t.id} className="mt-0">
+              {renderBuiltin(t.id)}
             </TabsContent>
-          );
-        })}
-        {extraTabs.map((t) => (
-          <TabsContent key={t.id} value={t.id} className="mt-0">
-            {renderBuiltin(t.id)}
-          </TabsContent>
-        ))}
-      </div>
+          ))}
+        </div>
+      </Tabs>
     </div>
   );
 }
@@ -615,34 +621,40 @@ function PersonModeDetailPanel({
         quickActions={heroQuickActions}
         onClose={onClose}
       />
-      <MainTabs
-        items={effectiveItems}
-        metaById={metaById}
-        hiddenIds={hiddenIds}
-        activeId={activeTab}
-        onChange={setActiveTab}
-      />
-      <div className="flex-1 overflow-y-auto min-h-0 mt-3">
-        {visibleIds.map((id) => {
-          const item = effectiveItems.find((i) => {
-            if (i.type === "builtin") return i.id === id;
-            return id.startsWith("widget:");
-          });
-          if (!item) return null;
-          return (
-            <TabsContent key={id} value={id} className="mt-0">
-              <TabRenderer
-                item={item}
-                ctx={{
-                  entityId: person.id,
-                  entityType: "person" as PanelEntitySlug,
-                }}
-                renderBuiltin={renderBuiltin}
-              />
-            </TabsContent>
-          );
-        })}
-      </div>
+      <Tabs
+        value={activeTab}
+        onValueChange={setActiveTab}
+        className="flex-1 flex flex-col min-h-0"
+      >
+        <MainTabs
+          items={effectiveItems}
+          metaById={metaById}
+          hiddenIds={hiddenIds}
+          activeId={activeTab}
+          onChange={setActiveTab}
+        />
+        <div className="flex-1 overflow-y-auto min-h-0 mt-3">
+          {visibleIds.map((id) => {
+            const item = effectiveItems.find((i) => {
+              if (i.type === "builtin") return i.id === id;
+              return id.startsWith("widget:");
+            });
+            if (!item) return null;
+            return (
+              <TabsContent key={id} value={id} className="mt-0">
+                <TabRenderer
+                  item={item}
+                  ctx={{
+                    entityId: person.id,
+                    entityType: "person" as PanelEntitySlug,
+                  }}
+                  renderBuiltin={renderBuiltin}
+                />
+              </TabsContent>
+            );
+          })}
+        </div>
+      </Tabs>
     </div>
   );
 }
