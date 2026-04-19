@@ -14,10 +14,11 @@ use axum::{
     Json, Router,
 };
 use chrono::NaiveDate;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use signapps_common::{Error, Result};
 use signapps_db::models::org::{Assignment, Axis};
 use signapps_db::repositories::org::AssignmentRepository;
+use sqlx::FromRow;
 use uuid::Uuid;
 
 use crate::event_publisher::OrgEventPublisher;
@@ -31,6 +32,7 @@ use crate::AppState;
 pub fn routes() -> Router<AppState> {
     Router::new()
         .route("/", get(list).post(create))
+        .route("/axes/summary", get(axes_summary))
         .route("/:id", axum::routing::delete(archive))
 }
 
@@ -54,6 +56,46 @@ pub struct ListQuery {
     pub node_id: Option<Uuid>,
     /// Optional axis filter (used with `person_id`).
     pub axis: Option<Axis>,
+}
+
+/// Query for the axes summary endpoint.
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
+pub struct AxesSummaryQuery {
+    /// Tenant propriétaire — required.
+    pub tenant_id: Uuid,
+}
+
+/// Response body for `GET /api/v1/org/assignments/axes/summary`.
+#[derive(Debug, Serialize, utoipa::ToSchema)]
+pub struct AxesSummary {
+    /// Counts par axe.
+    pub counts: AxesCounts,
+    /// Liste des nodes "focus" (projets).
+    pub focus_nodes: Vec<AxisNodeRef>,
+    /// Liste des nodes "group" (committees).
+    pub group_nodes: Vec<AxisNodeRef>,
+}
+
+/// Compteurs par axe.
+#[derive(Debug, Default, Serialize, utoipa::ToSchema)]
+pub struct AxesCounts {
+    /// Assignments axis='structure'.
+    pub structure: i64,
+    /// Assignments axis='focus'.
+    pub focus: i64,
+    /// Assignments axis='group'.
+    pub group: i64,
+}
+
+/// Référence compact d'un node (id/nom/slug) — utilisé dans l'AxesSummary.
+#[derive(Debug, Serialize, FromRow, utoipa::ToSchema)]
+pub struct AxisNodeRef {
+    /// Identifiant unique (UUID v4).
+    pub id: Uuid,
+    /// Nom affiché.
+    pub name: String,
+    /// Slug (segment LTREE).
+    pub slug: Option<String>,
 }
 
 /// Request body for `POST /api/v1/org/assignments`.
@@ -100,22 +142,110 @@ pub async fn list(
     Query(q): Query<ListQuery>,
 ) -> Result<Json<Vec<Assignment>>> {
     let repo = AssignmentRepository::new(st.pool.inner());
-    let result = match (q.person_id, q.node_id) {
-        (Some(pid), _) => repo
+    let result = match (q.person_id, q.node_id, q.tenant_id) {
+        (Some(pid), _, _) => repo
             .list_by_person(pid, q.axis)
             .await
             .map_err(|e| Error::Database(format!("list_by_person: {e}")))?,
-        (_, Some(nid)) => repo
+        (_, Some(nid), _) => repo
             .list_by_node(nid)
             .await
             .map_err(|e| Error::Database(format!("list_by_node: {e}")))?,
-        (None, None) => {
+        // SO1 : tenant-wide listing gated by tenant_id presence +
+        // optional axis filter. Indispensable pour la vue "Focus & Comités"
+        // du dashboard SO1.
+        (None, None, Some(tid)) => repo
+            .list_by_tenant(tid, q.axis)
+            .await
+            .map_err(|e| Error::Database(format!("list_by_tenant: {e}")))?,
+        (None, None, None) => {
             return Err(Error::Validation(
-                "query requires person_id or node_id".to_string(),
+                "query requires tenant_id, person_id or node_id".to_string(),
             ));
         },
     };
     Ok(Json(result))
+}
+
+/// GET /api/v1/org/assignments/axes/summary — counts par axe + liste nodes focus/group.
+///
+/// Renvoie un payload JSON :
+/// ```json
+/// {
+///   "counts": { "structure": 81, "focus": 15, "group": 10 },
+///   "focus_nodes": [ {"id": "...", "name": "Project Phoenix", "slug": "project-phoenix"}, ... ],
+///   "group_nodes": [ {"id": "...", "name": "CSR Committee", "slug": "committee-csr"}, ... ]
+/// }
+/// ```
+#[utoipa::path(
+    get,
+    path = "/api/v1/org/assignments/axes/summary",
+    tag = "Org",
+    params(AxesSummaryQuery),
+    responses(
+        (status = 200, description = "Axes summary", body = AxesSummary),
+    ),
+    security(("bearerAuth" = []))
+)]
+#[tracing::instrument(skip(st))]
+pub async fn axes_summary(
+    State(st): State<AppState>,
+    Query(q): Query<AxesSummaryQuery>,
+) -> Result<Json<AxesSummary>> {
+    let pool = st.pool.inner();
+
+    // 1. Counts par axis (single GROUP BY).
+    let rows: Vec<(String, i64)> = sqlx::query_as(
+        "SELECT axis, count(*)::bigint
+           FROM org_assignments
+          WHERE tenant_id = $1
+          GROUP BY axis",
+    )
+    .bind(q.tenant_id)
+    .fetch_all(pool)
+    .await
+    .map_err(|e| Error::Database(format!("axes counts: {e}")))?;
+
+    let mut counts = AxesCounts::default();
+    for (axis, n) in rows {
+        match axis.as_str() {
+            "structure" => counts.structure = n,
+            "focus" => counts.focus = n,
+            "group" => counts.group = n,
+            _ => tracing::warn!(axis = %axis, "unknown axis in counts query"),
+        }
+    }
+
+    // 2. Nodes focus / group identifiés par attributes.axis_type.
+    let focus_nodes: Vec<AxisNodeRef> = sqlx::query_as::<_, AxisNodeRef>(
+        "SELECT id, name, slug
+           FROM org_nodes
+          WHERE tenant_id = $1
+            AND attributes ->> 'axis_type' = 'project'
+          ORDER BY name",
+    )
+    .bind(q.tenant_id)
+    .fetch_all(pool)
+    .await
+    .map_err(|e| Error::Database(format!("focus nodes: {e}")))?;
+
+    let group_nodes: Vec<AxisNodeRef> = sqlx::query_as::<_, AxisNodeRef>(
+        "SELECT id, name, slug
+           FROM org_nodes
+          WHERE tenant_id = $1
+            AND attributes ->> 'axis_type' = 'committee'
+          ORDER BY name",
+    )
+    .bind(q.tenant_id)
+    .fetch_all(pool)
+    .await
+    .map_err(|e| Error::Database(format!("group nodes: {e}")))?;
+
+    Ok(Json(AxesSummary {
+        counts,
+        focus_nodes,
+        group_nodes,
+    }))
 }
 
 /// POST /api/v1/org/assignments — create a canonical assignment.

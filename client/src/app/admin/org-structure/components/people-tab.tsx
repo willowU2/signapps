@@ -20,7 +20,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { UserPlus, X, Pencil } from "lucide-react";
+import { UserPlus, X, Pencil, Share2 } from "lucide-react";
+import { DelegationDialog } from "./dialogs/delegation-dialog";
 import { toast } from "sonner";
 import { orgApi } from "@/lib/api/org";
 import type {
@@ -83,6 +84,11 @@ export function PeopleTab({ nodeId, nodeName, persons }: PeopleTabProps) {
   const [editEmail, setEditEmail] = useState("");
   const [editTitle, setEditTitle] = useState("");
   const [editSaving, setEditSaving] = useState(false);
+
+  // SO1 — delegation dialog
+  const [delegationDelegator, setDelegationDelegator] = useState<Person | null>(
+    null,
+  );
 
   const personsById = useMemo(() => {
     const map: Record<string, Person> = {};
@@ -281,15 +287,27 @@ export function PeopleTab({ nodeId, nodeName, persons }: PeopleTabProps) {
                     "—"}
                 </Badge>
                 {p && (
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="shrink-0 h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
-                    onClick={() => openEditDialog(p)}
-                    title="Modifier cette personne"
-                  >
-                    <Pencil className="h-3.5 w-3.5" />
-                  </Button>
+                  <>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="shrink-0 h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+                      onClick={() => openEditDialog(p)}
+                      title="Modifier cette personne"
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="shrink-0 h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+                      onClick={() => setDelegationDelegator(p)}
+                      title="Déléguer les responsabilités"
+                      data-testid="delegate-button"
+                    >
+                      <Share2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </>
                 )}
                 <Button
                   size="sm"
@@ -482,6 +500,15 @@ export function PeopleTab({ nodeId, nodeName, persons }: PeopleTabProps) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <DelegationDialog
+        delegator={delegationDelegator}
+        onClose={() => setDelegationDelegator(null)}
+        persons={persons}
+        onCreated={() => {
+          toast.success("Délégation enregistrée");
+        }}
+      />
     </div>
   );
 }

@@ -24,6 +24,7 @@ import { toast } from "sonner";
 import { TreeNodeItem } from "./components/tree-node-item";
 import type { TreeNode, BoardInfo } from "./components/tree-node-item";
 import { UnassignedPeoplePanel } from "./components/unassigned-people-panel";
+import { ActiveDelegationsPanel } from "./components/active-delegations-panel";
 import { DetailPanel } from "./components/detail-panel";
 import { GroupsNav } from "./components/groups-nav";
 import { SitesNav } from "./components/sites-nav";
@@ -137,6 +138,11 @@ export default function OrgStructurePage() {
   const debouncedSearchQuery = useDebounce(searchQuery, 200);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [detailOpen, setDetailOpen] = useState(false);
+  // SO1 — toolbar state
+  const [axisFilter, setAxisFilter] = useState<
+    "all" | "structure" | "focus" | "group"
+  >("all");
+  const [atDate, setAtDate] = useState<string | null>(null);
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
   const [selectedSiteId, setSelectedSiteId] = useState<string | null>(null);
@@ -682,11 +688,16 @@ export default function OrgStructurePage() {
         {currentTree ? (
           <div className="flex-1 flex flex-col lg:flex-row min-h-0 overflow-hidden">
             {!focusMode && activeNavTab === "tree" && (
-              <UnassignedPeoplePanel
-                persons={persons}
-                assignmentsByNode={assignmentsByNode}
-                className="hidden lg:flex"
-              />
+              <>
+                <UnassignedPeoplePanel
+                  persons={persons}
+                  assignmentsByNode={assignmentsByNode}
+                  className="hidden lg:flex"
+                />
+                <div className="hidden lg:flex flex-col w-[260px] shrink-0 border-r border-border bg-card p-2 overflow-y-auto">
+                  <ActiveDelegationsPanel personsById={personsById} />
+                </div>
+              </>
             )}
 
             {!focusMode && (
@@ -713,6 +724,10 @@ export default function OrgStructurePage() {
                   }}
                   onExport={handleExport}
                   onPrint={handlePrint}
+                  axisFilter={axisFilter}
+                  onAxisFilterChange={setAxisFilter}
+                  atDate={atDate}
+                  onAtDateChange={setAtDate}
                 />
 
                 <div className="flex-1 overflow-auto min-w-0">

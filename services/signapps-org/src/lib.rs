@@ -80,6 +80,7 @@ pub async fn router(shared: SharedState) -> anyhow::Result<Router> {
     let state = build_state(&shared).await?;
     spawn_ad_sync_workers(&state);
     spawn_provisioning_dispatcher(&state);
+    spawn_delegation_expire_worker(&state);
     Ok(create_router(state))
 }
 
@@ -141,6 +142,57 @@ pub fn spawn_provisioning_dispatcher(_state: &AppState) {
     tokio::spawn(async move {
         tracing::info!("org provisioning dispatcher: placeholder, no-op until W5");
         std::future::pending::<()>().await;
+    });
+}
+
+/// Spawn the SO1 delegation expiration cron (tick = 15 minutes).
+///
+/// À chaque tick :
+/// 1. [`DelegationRepository::expire_due`] flip `active = false` sur
+///    toutes les délégations dont `end_at < NOW()`.
+/// 2. Pour chaque id flipé, publie un event `org.delegation.expired`
+///    sur le [`PgEventBus`] (consumers : RBAC cache invalidation,
+///    notifications).
+///
+/// Tolérant aux erreurs — un échec DB log un warning sans crasher le
+/// superviseur, le tick suivant retentera.
+pub fn spawn_delegation_expire_worker(state: &AppState) {
+    use signapps_common::pg_events::NewEvent;
+    use signapps_db::repositories::org::DelegationRepository;
+
+    let pool = state.pool.clone();
+    let event_bus = state.event_bus.clone();
+    tokio::spawn(async move {
+        tracing::info!("org delegation expire worker started (tick = 15 min)");
+        let mut interval = tokio::time::interval(std::time::Duration::from_secs(15 * 60));
+        // First tick fires immediately — on veut un skip pour éviter de
+        // lancer pendant le boot et alourdir le budget de démarrage.
+        interval.tick().await;
+        loop {
+            interval.tick().await;
+            let repo = DelegationRepository::new(pool.inner());
+            match repo.expire_due(chrono::Utc::now()).await {
+                Ok(ids) => {
+                    if ids.is_empty() {
+                        tracing::debug!("delegation expire worker: no expired delegations");
+                        continue;
+                    }
+                    tracing::info!(count = ids.len(), "delegation expire worker: expired");
+                    for id in ids {
+                        let _ = event_bus
+                            .publish(NewEvent {
+                                event_type: "org.delegation.expired".to_string(),
+                                aggregate_id: Some(id),
+                                payload: serde_json::json!({ "id": id }),
+                            })
+                            .await;
+                    }
+                },
+                Err(e) => {
+                    tracing::warn!(?e, "delegation expire worker: query failed");
+                },
+            }
+        }
     });
 }
 
@@ -272,6 +324,10 @@ pub fn create_router(state: AppState) -> Router {
             handlers::provisioning::ad_sync_log_routes(),
         )
         .nest("/api/v1/org/provisioning", handlers::provisioning::routes())
+        // SO1 foundations — positions + history + delegations.
+        .nest("/api/v1/org/positions", handlers::positions::routes())
+        .nest("/api/v1/org/history", handlers::history::routes())
+        .nest("/api/v1/org/delegations", handlers::delegations::routes())
         .route_layer(axum_middleware::from_fn_with_state(
             state.clone(),
             auth_middleware::<AppState>,

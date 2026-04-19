@@ -314,3 +314,80 @@ export interface OrgNodeType {
   schema: Record<string, unknown>;
   is_active: boolean;
 }
+
+// ═════════════════════════════════════════════════════════════════════
+// SO1 foundations — 2026-04-19
+// ═════════════════════════════════════════════════════════════════════
+
+/** Canonical axis for org_assignments (matches backend enum). */
+export type OrgAxis = "structure" | "focus" | "group";
+
+/** `signapps-db::models::org::Position`. */
+export interface OrgPosition {
+  id: string;
+  tenant_id: string;
+  node_id: string;
+  title: string;
+  head_count: number;
+  attributes: Record<string, unknown>;
+  active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+/** PositionWithOccupancy DTO : Position + filled/vacant counters. */
+export interface OrgPositionWithOccupancy extends OrgPosition {
+  filled: number;
+  vacant: number;
+}
+
+/** `signapps-db::models::org::PositionIncumbent`. */
+export interface OrgPositionIncumbent {
+  id: string;
+  tenant_id: string;
+  position_id: string;
+  person_id: string;
+  start_date: string;
+  end_date?: string | null;
+  active: boolean;
+  created_at: string;
+}
+
+/** SO1 scope for org_delegations. */
+export type OrgDelegationScope = "manager" | "rbac" | "all";
+
+/** `signapps-db::models::org::Delegation` (SO1). */
+export interface OrgDelegationV2 {
+  id: string;
+  tenant_id: string;
+  delegator_person_id: string;
+  delegate_person_id: string;
+  node_id?: string | null;
+  scope: OrgDelegationScope;
+  start_at: string;
+  end_at: string;
+  reason?: string | null;
+  active: boolean;
+  created_by?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+/** `signapps-db::models::org::AuditLogEntry`. */
+export interface OrgAuditLogEntry {
+  id: number;
+  tenant_id: string;
+  actor_user_id?: string | null;
+  entity_type: string;
+  entity_id: string;
+  action: "insert" | "update" | "delete";
+  diff_json: Record<string, unknown>;
+  at: string;
+}
+
+/** Response of `/api/v1/org/assignments/axes/summary`. */
+export interface OrgAxesSummary {
+  counts: { structure: number; focus: number; group: number };
+  focus_nodes: Array<{ id: string; name: string; slug: string | null }>;
+  group_nodes: Array<{ id: string; name: string; slug: string | null }>;
+}

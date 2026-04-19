@@ -12,6 +12,7 @@ export const ALL_TABS: TabDef[] = [
   // Organisation
   { id: "details", label: "Details", category: "organisation" },
   { id: "people", label: "Personnes", category: "organisation" },
+  { id: "positions", label: "Postes", category: "organisation" },
   { id: "governance", label: "Gouvernance", category: "organisation" },
   // Groupes & Politiques
   { id: "groups", label: "Groupes", category: "groupes_politiques" },
@@ -39,6 +40,7 @@ export const DEFAULT_TAB_VISIBILITY: Record<string, string[]> = {
   group: [
     "details",
     "people",
+    "positions",
     "governance",
     "groups",
     "sites",
@@ -56,6 +58,7 @@ export const DEFAULT_TAB_VISIBILITY: Record<string, string[]> = {
   subsidiary: [
     "details",
     "people",
+    "positions",
     "governance",
     "groups",
     "sites",
@@ -70,6 +73,7 @@ export const DEFAULT_TAB_VISIBILITY: Record<string, string[]> = {
   bu: [
     "details",
     "people",
+    "positions",
     "governance",
     "groups",
     "sites",
@@ -82,6 +86,7 @@ export const DEFAULT_TAB_VISIBILITY: Record<string, string[]> = {
   department: [
     "details",
     "people",
+    "positions",
     "governance",
     "groups",
     "sites",
@@ -94,13 +99,22 @@ export const DEFAULT_TAB_VISIBILITY: Record<string, string[]> = {
   service: [
     "details",
     "people",
+    "positions",
     "groups",
     "policies",
     "gpo",
     "computers",
     "audit",
   ],
-  team: ["details", "people", "groups", "gpo", "computers", "audit"],
+  team: [
+    "details",
+    "people",
+    "positions",
+    "groups",
+    "gpo",
+    "computers",
+    "audit",
+  ],
   position: ["details", "people", "audit"],
   computer: [
     "details",

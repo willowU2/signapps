@@ -24,6 +24,7 @@ import {
   getVisibleTabs,
 } from "./tab-config";
 import { GovernanceTab } from "./governance-tab";
+import { PositionsTab } from "./positions-tab";
 import { ComputersTabContent } from "./computers-tab";
 import { GpoTabContent } from "./gpo-tab";
 import { KerberosTabContent } from "./kerberos-tab";
@@ -314,6 +315,14 @@ export function DetailPanel({
               nodeId={node.id}
               nodeName={node.name}
               persons={persons}
+            />
+          </TabsContent>
+
+          {/* SO1 — Positions tab */}
+          <TabsContent value="positions" className="mt-0 p-4">
+            <PositionsTab
+              nodeId={node.id}
+              personsById={Object.fromEntries(persons.map((p) => [p.id, p]))}
             />
           </TabsContent>
 

@@ -83,6 +83,37 @@ impl<'a> AssignmentRepository<'a> {
         Ok(rows)
     }
 
+    /// List assignments for a tenant, optionally filtered by axis.
+    ///
+    /// Utilisé par le endpoint `/org/assignments?tenant_id=X&axis=focus`
+    /// et le dashboard SO1 "focus & comités".
+    pub async fn list_by_tenant(
+        &self,
+        tenant_id: Uuid,
+        axis: Option<Axis>,
+    ) -> Result<Vec<Assignment>> {
+        let rows = match axis {
+            Some(a) => sqlx::query_as::<_, Assignment>(
+                "SELECT * FROM org_assignments
+                 WHERE tenant_id = $1 AND axis = $2
+                 ORDER BY created_at",
+            )
+            .bind(tenant_id)
+            .bind(a)
+            .fetch_all(self.pool)
+            .await?,
+            None => sqlx::query_as::<_, Assignment>(
+                "SELECT * FROM org_assignments
+                 WHERE tenant_id = $1
+                 ORDER BY axis, created_at",
+            )
+            .bind(tenant_id)
+            .fetch_all(self.pool)
+            .await?,
+        };
+        Ok(rows)
+    }
+
     /// List every assignment attached to one node.
     pub async fn list_by_node(&self, node_id: Uuid) -> Result<Vec<Assignment>> {
         let rows = sqlx::query_as::<_, Assignment>(
