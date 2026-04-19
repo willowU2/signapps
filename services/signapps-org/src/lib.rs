@@ -339,7 +339,7 @@ pub fn create_router(state: AppState) -> Router {
             "/api/v1/org/decisions/:decision_id",
             handlers::decisions::decision_votes_routes(),
         )
-        // SO3 scale & power — templates, headcount, skills, search.
+        // SO3 scale & power — templates, headcount, skills, search, bulk.
         .nest("/api/v1/org/templates", handlers::templates::routes())
         .nest("/api/v1/org/headcount", handlers::headcount::routes())
         .nest("/api/v1/org/skills", handlers::skills::routes_catalog())
@@ -348,6 +348,7 @@ pub fn create_router(state: AppState) -> Router {
             handlers::skills::routes_person(),
         )
         .nest("/api/v1/org/search", handlers::search::routes())
+        .nest("/api/v1/org/bulk", handlers::bulk::routes())
         .route_layer(axum_middleware::from_fn_with_state(
             state.clone(),
             auth_middleware::<AppState>,

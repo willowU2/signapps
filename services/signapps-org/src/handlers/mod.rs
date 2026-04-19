@@ -36,6 +36,7 @@ pub mod raci;
 pub mod rbac;
 
 // ── SO3 scale & power (templates, headcount, skills, search, bulk) ──────────
+pub mod bulk;
 pub mod headcount;
 pub mod search;
 pub mod skills;
