@@ -46,6 +46,9 @@ base64 = { workspace = true }
 # LDAP / AD sync (W3 use)
 ldap3 = "0.11"
 
+# Image processing for SO4 photos (resize 512x512).
+image = { version = "0.25", default-features = false, features = ["png", "jpeg", "webp"] }
+
 # HMAC for signed grant tokens (W5 use)
 hmac = "0.12"
 sha2 = "0.10"
