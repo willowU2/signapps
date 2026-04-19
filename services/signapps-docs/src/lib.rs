@@ -32,6 +32,9 @@ use axum::{
 use office::OfficeState;
 use signapps_cache::CacheService;
 use signapps_common::middleware::{auth_middleware, tenant_context_middleware};
+use signapps_common::rbac::{
+    document_from_path, rbac_layer, resolver::OrgPermissionResolver, types::Action,
+};
 use signapps_common::{AiIndexerClient, AuthState, JwtConfig};
 use signapps_service::shared_state::SharedState;
 use signapps_sharing::routes::sharing_routes;
@@ -64,6 +67,8 @@ pub struct AppState {
     pub indexer: AiIndexerClient,
     pub jwt_config: JwtConfig,
     pub sharing: SharingEngine,
+    /// Shared RBAC resolver injected by the runtime. `None` in tests.
+    pub resolver: Option<Arc<dyn OrgPermissionResolver>>,
 }
 
 impl AuthState for AppState {
@@ -94,6 +99,7 @@ async fn build_state(shared: &SharedState) -> anyhow::Result<AppState> {
         indexer: AiIndexerClient::from_env(),
         jwt_config: (*shared.jwt).clone(),
         sharing: sharing_engine,
+        resolver: shared.resolver.clone(),
     })
 }
 
@@ -269,6 +275,14 @@ pub fn create_router(app_state: AppState) -> Router {
             "/api/v1/render/template",
             post(handlers::server_render::render_template),
         );
+
+    // W4 unified RBAC — a narrow subset of routes with UUID in path get
+    // the resolver guard alongside the existing auth middleware. The
+    // resolver is optional so tests that build AppState directly don't
+    // need a live pool-backed resolver.
+    let rbac_guard = app_state.resolver.clone().map(|resolver| {
+        axum::middleware::from_fn(rbac_layer(resolver, Action::Read, document_from_path))
+    });
 
     let protected_routes = Router::new()
         .route("/api/v1/docs/:doc_type/:doc_id/ws", get(websocket_handler))
@@ -466,6 +480,12 @@ pub fn create_router(app_state: AppState) -> Router {
             app_state.clone(),
             auth_middleware::<AppState>,
         ));
+
+    let protected_routes = if let Some(guard) = rbac_guard {
+        protected_routes.route_layer(guard)
+    } else {
+        protected_routes
+    };
 
     let sharing_sub =
         sharing_routes("documents", ResourceType::Document).with_state(app_state.sharing.clone());

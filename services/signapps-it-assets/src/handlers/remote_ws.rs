@@ -41,6 +41,8 @@ pub struct AppState {
     pub frame_channels: Arc<DashMap<Uuid, broadcast::Sender<String>>>,
     /// Map of agent_id → recording file path (when recording is enabled).
     pub recording_paths: Arc<DashMap<Uuid, std::path::PathBuf>>,
+    /// Shared RBAC resolver injected by the runtime. `None` in tests.
+    pub resolver: Option<Arc<dyn signapps_common::rbac::resolver::OrgPermissionResolver>>,
 }
 
 impl AppState {
@@ -52,7 +54,17 @@ impl AppState {
             agent_channels: Arc::new(DashMap::new()),
             frame_channels: Arc::new(DashMap::new()),
             recording_paths: Arc::new(DashMap::new()),
+            resolver: None,
         }
+    }
+
+    /// Attach the shared RBAC resolver (called from lib.rs).
+    pub fn with_resolver(
+        mut self,
+        resolver: Option<Arc<dyn signapps_common::rbac::resolver::OrgPermissionResolver>>,
+    ) -> Self {
+        self.resolver = resolver;
+        self
     }
 }
 

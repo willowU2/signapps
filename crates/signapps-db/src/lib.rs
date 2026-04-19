@@ -31,18 +31,27 @@ use std::time::Duration;
 
 /// Create a new database connection pool.
 ///
-/// Pool size is intentionally kept low: with ~33 services × N instances the
-/// aggregate connection count must stay well below PostgreSQL's `max_connections`
-/// (default 100–200). At 10 connections per service, 33 services consume at most
-/// 330 connections, leaving headroom for direct admin connections and future
-/// scaling. Raise only if profiling shows pool exhaustion under realistic load.
+/// Pool sizing: the single-binary runtime shares **one** pool across 34
+/// services plus a growing set of background consumers (AD sync workers,
+/// RBAC cache invalidation listeners, provisioning consumers per-service,
+/// oauth refresh jobs, route cache refresh, event bus subscribers).
+/// With ~20 concurrent consumers in W5 + 34 request handlers, a 10-slot
+/// pool is immediately saturated — boot tests time out because /health
+/// cannot acquire a connection.  50 slots give comfortable headroom and
+/// stay well below PostgreSQL's default `max_connections = 100`.
+/// Override at runtime via `DB_MAX_CONNECTIONS`.
 ///
 /// The acquire timeout is set to 5 s for fail-fast behaviour: a tight timeout
 /// surfaces pool exhaustion immediately rather than queueing requests silently
 /// for 30 seconds.
 pub async fn create_pool(database_url: &str) -> Result<DatabasePool, sqlx::Error> {
+    let max_connections: u32 = std::env::var("DB_MAX_CONNECTIONS")
+        .ok()
+        .and_then(|s| s.parse().ok())
+        .unwrap_or(50);
+
     let pool = PgPoolOptions::new()
-        .max_connections(10)
+        .max_connections(max_connections)
         .acquire_timeout(Duration::from_secs(5))
         .idle_timeout(Duration::from_secs(600))
         .connect(database_url)

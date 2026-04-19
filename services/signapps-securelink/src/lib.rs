@@ -67,6 +67,8 @@ pub struct AppState {
     pub traffic_history: Arc<RwLock<std::collections::VecDeque<TrafficPoint>>>,
     /// JWT configuration for auth middleware.
     pub jwt_config: JwtConfig,
+    /// Shared RBAC resolver injected by the runtime. `None` in tests.
+    pub resolver: Option<Arc<dyn signapps_common::rbac::resolver::OrgPermissionResolver>>,
 }
 
 impl AuthState for AppState {
@@ -246,6 +248,7 @@ async fn build_state(shared: &SharedState) -> anyhow::Result<AppState> {
         dns_stats: Arc::new(RwLock::new(DnsStats::default())),
         traffic_history: Arc::new(RwLock::new(std::collections::VecDeque::with_capacity(60))),
         jwt_config: (*shared.jwt).clone(),
+        resolver: shared.resolver.clone(),
     })
 }
 

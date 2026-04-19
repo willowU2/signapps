@@ -110,6 +110,10 @@ pub struct AppState {
     pub event_bus: PgEventBus,
     /// FM3: in-memory webhook config store (form_id → WebhookConfig)
     pub webhooks: WebhookStore,
+    /// Shared RBAC resolver injected by the runtime. `None` in tests.
+    pub resolver: Option<
+        std::sync::Arc<dyn signapps_common::rbac::resolver::OrgPermissionResolver>,
+    >,
 }
 
 impl AuthState for AppState {
@@ -742,6 +746,7 @@ async fn build_state(shared: &SharedState) -> anyhow::Result<AppState> {
         pool: shared.pool.inner().clone(),
         event_bus: (*shared.event_bus).clone(),
         webhooks: new_webhook_store(),
+        resolver: shared.resolver.clone(),
     })
 }
 

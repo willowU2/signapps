@@ -76,7 +76,7 @@ base64 = "0.22"
 zip = { version = "2.0", default-features = false, features = ["deflate"] }
 
 # ─── Workspace crates ──────────────────────────────────────────────────────────
-signapps-common = { path = "../../crates/signapps-common" }
+signapps-common = { path = "../../crates/signapps-common", features = ["rbac"] }
 signapps-db = { path = "../../crates/signapps-db", features = ["openapi"] }
 signapps-service = { path = "../../crates/signapps-service" }
 signapps-cache = { path = "../../crates/signapps-cache" }

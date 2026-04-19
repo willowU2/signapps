@@ -1,4 +1,9 @@
-/// OpenAPI documentation for signapps-workforce.
+//! OpenAPI documentation for signapps-workforce (post S1 cutover).
+//!
+//! After the S1 org+RBAC refonte the workforce service keeps only
+//! HR-pure endpoints. Org hierarchy, AD, boards, groups, policies,
+//! delegations and employee CRUD are documented in `signapps-org`.
+
 use utoipa::{
     openapi::security::{HttpAuthScheme, HttpBuilder, SecurityScheme},
     Modify, OpenApi,
@@ -25,37 +30,6 @@ impl Modify for SecurityAddon {
 #[derive(OpenApi)]
 #[openapi(
     paths(
-        // ── Org ──────────────────────────────────────────────────────────────
-        crate::handlers::org::get_tree,
-        crate::handlers::org::create_node,
-        crate::handlers::org::get_node,
-        crate::handlers::org::update_node,
-        crate::handlers::org::delete_node,
-        crate::handlers::org::move_node,
-        crate::handlers::org::get_children,
-        crate::handlers::org::get_descendants,
-        crate::handlers::org::get_ancestors,
-        crate::handlers::org::list_node_types,
-        crate::handlers::org::create_node_type,
-        crate::handlers::org::delete_node_type,
-        // ── Employees ────────────────────────────────────────────────────────
-        crate::handlers::employees::list_employees,
-        crate::handlers::employees::create_employee,
-        crate::handlers::employees::get_employee,
-        crate::handlers::employees::update_employee,
-        crate::handlers::employees::delete_employee,
-        crate::handlers::employees::link_user,
-        crate::handlers::employees::unlink_user,
-        crate::handlers::employees::get_functions,
-        crate::handlers::employees::update_functions,
-        crate::handlers::employees::list_by_org_node,
-        crate::handlers::employees::search_employees,
-        crate::handlers::employees::import_employees,
-        // ── Function Definitions ─────────────────────────────────────────────
-        crate::handlers::employees::list_function_definitions,
-        crate::handlers::employees::create_function_definition,
-        crate::handlers::employees::update_function_definition,
-        crate::handlers::employees::delete_function_definition,
         // ── Coverage Templates ───────────────────────────────────────────────
         crate::handlers::coverage::list_templates,
         crate::handlers::coverage::create_template,
@@ -85,55 +59,12 @@ impl Modify for SecurityAddon {
         crate::handlers::learning::list_courses,
         crate::handlers::learning::get_course,
         crate::handlers::learning::update_progress,
-        // ── Groups ─────────────────────────────────────────────────────────────
-        crate::handlers::groups::list_groups,
-        crate::handlers::groups::create_group,
-        crate::handlers::groups::get_group,
-        crate::handlers::groups::update_group,
-        crate::handlers::groups::delete_group,
-        crate::handlers::groups::add_member,
-        crate::handlers::groups::remove_member,
-        crate::handlers::groups::get_effective_members,
-        crate::handlers::groups::get_person_groups,
-        // ── Policies ───────────────────────────────────────────────────────────
-        crate::handlers::policies::list_policies,
-        crate::handlers::policies::create_policy,
-        crate::handlers::policies::get_policy,
-        crate::handlers::policies::update_policy,
-        crate::handlers::policies::delete_policy,
-        crate::handlers::policies::add_link,
-        crate::handlers::policies::remove_link,
-        crate::handlers::policies::resolve_person,
-        crate::handlers::policies::resolve_node,
-        // ── Delegations ────────────────────────────────────────────────────────
-        crate::handlers::delegations::list_delegations,
-        crate::handlers::delegations::create_delegation,
-        crate::handlers::delegations::revoke_delegation,
-        crate::handlers::delegations::my_delegations,
-        crate::handlers::delegations::granted_delegations,
         // ── Audit ──────────────────────────────────────────────────────────────
         crate::handlers::audit::query_audit,
         crate::handlers::audit::entity_history,
         crate::handlers::audit::actor_history,
     ),
     components(schemas(
-        // Org
-        crate::handlers::org::OrgNode,
-        crate::handlers::org::OrgNodeType,
-        crate::handlers::org::CreateNodeRequest,
-        crate::handlers::org::UpdateNodeRequest,
-        crate::handlers::org::MoveNodeRequest,
-        crate::handlers::org::CreateNodeTypeRequest,
-        // Employees
-        crate::handlers::employees::Employee,
-        crate::handlers::employees::FunctionDefinition,
-        crate::handlers::employees::ImportResult,
-        crate::handlers::employees::CreateEmployeeRequest,
-        crate::handlers::employees::UpdateEmployeeRequest,
-        crate::handlers::employees::LinkUserRequest,
-        crate::handlers::employees::UpdateFunctionsRequest,
-        crate::handlers::employees::CreateFunctionDefinitionRequest,
-        crate::handlers::employees::UpdateFunctionDefinitionRequest,
         // Coverage
         crate::handlers::coverage::CoverageTemplate,
         crate::handlers::coverage::CoverageRule,
@@ -160,22 +91,17 @@ impl Modify for SecurityAddon {
     )),
     modifiers(&SecurityAddon),
     tags(
-        (name = "Workforce Org", description = "Organizational hierarchy management"),
-        (name = "Workforce Employees", description = "Employee CRUD and HR operations"),
-        (name = "Workforce Functions", description = "Job function/role definitions"),
         (name = "Workforce Coverage", description = "Coverage templates and rules"),
         (name = "Workforce Validation", description = "Gap analysis and leave simulation"),
         (name = "Workforce Attendance", description = "Clock-in/clock-out attendance tracking"),
         (name = "Workforce Learning", description = "Learning courses and progress"),
-        (name = "Workforce Groups", description = "Cross-functional group management"),
-        (name = "Workforce Policies", description = "GPO-style policy management and resolution"),
-        (name = "Workforce Delegations", description = "Scoped management delegation chains"),
         (name = "Workforce Audit", description = "Org structure audit log queries"),
     ),
     info(
         title = "SignApps Workforce API",
         version = "1.0.0",
-        description = "Workforce planning — org hierarchy, employees, coverage, validation, attendance, learning"
+        description = "Workforce HR (post S1 cutover) — coverage, validation, attendance, learning, audit. \
+                       Org hierarchy, AD, boards, groups, policies and delegations now live in signapps-org."
     )
 )]
 pub struct WorkforceApiDoc;

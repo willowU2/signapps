@@ -96,6 +96,12 @@ pub mod pg_events;
 /// PostgreSQL NOTIFY listener that forwards database events to a broadcast channel.
 pub mod pg_listener;
 pub mod portal;
+/// Unified RBAC contract — resolver trait, decision cache, middleware.
+///
+/// Gated behind the `rbac` cargo feature.  Depend on it by adding
+/// `signapps-common = { …, features = ["rbac"] }`.
+#[cfg(feature = "rbac")]
+pub mod rbac;
 // pii module extracted to signapps-pii crate
 pub use signapps_pii as pii;
 // plugins module extracted to signapps-plugins crate

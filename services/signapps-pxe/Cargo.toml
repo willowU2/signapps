@@ -35,7 +35,7 @@ tower.workspace = true
 config.workspace = true
 thiserror.workspace = true
 
-signapps-common = { path = "../../crates/signapps-common" }
+signapps-common = { path = "../../crates/signapps-common", features = ["rbac"] }
 signapps-db = { path = "../../crates/signapps-db" }
 # DC protocol crates (merged from signapps-dc)
 signapps-ad-core = { path = "../../crates/signapps-ad-core" }

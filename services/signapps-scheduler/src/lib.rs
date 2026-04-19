@@ -59,6 +59,10 @@ pub struct AppState {
     pub tx_notifications: broadcast::Sender<NotificationMessage>,
     pub redis_client: Option<redis::Client>,
     pub backup_store: SharedBackupStore,
+    /// Shared RBAC resolver injected by the runtime. `None` in tests.
+    pub resolver: Option<
+        std::sync::Arc<dyn signapps_common::rbac::resolver::OrgPermissionResolver>,
+    >,
 }
 
 impl AuthState for AppState {
@@ -205,6 +209,7 @@ async fn build_state(shared: &SharedState) -> anyhow::Result<AppState> {
         tx_notifications,
         redis_client,
         backup_store,
+        resolver: shared.resolver.clone(),
     })
 }
 

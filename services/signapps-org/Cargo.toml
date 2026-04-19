@@ -19,9 +19,10 @@ path = "src/main.rs"
 [dependencies]
 mimalloc = { workspace = true }
 # Internal crates
-signapps-common = { path = "../../crates/signapps-common" }
+signapps-common = { path = "../../crates/signapps-common", features = ["rbac"] }
 signapps-db = { path = "../../crates/signapps-db", features = ["openapi"] }
 signapps-service = { path = "../../crates/signapps-service" }
+signapps-keystore = { path = "../../crates/signapps-keystore" }
 
 # Web framework
 axum = { workspace = true }
@@ -40,6 +41,18 @@ sqlx = { workspace = true }
 # Utilities
 uuid = { workspace = true }
 chrono = { workspace = true }
+base64 = { workspace = true }
+
+# LDAP / AD sync (W3 use)
+ldap3 = "0.11"
+
+# HMAC for signed grant tokens (W5 use)
+hmac = "0.12"
+sha2 = "0.10"
+thiserror = { workspace = true }
+
+# Async trait objects (RBAC resolver)
+async-trait = { workspace = true }
 
 # Observability
 tracing = { workspace = true }

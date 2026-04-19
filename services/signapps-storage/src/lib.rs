@@ -6,6 +6,7 @@
 pub mod handlers;
 pub mod jobs;
 pub mod middleware;
+pub mod provisioning_consumer;
 pub mod services;
 pub mod storage;
 
@@ -14,12 +15,17 @@ use axum::{
     routing::{any, delete, get, post, put},
     Router,
 };
+use std::sync::Arc;
+
 use signapps_common::bootstrap::env_or;
 use signapps_common::middleware::{
     auth_middleware, logging_middleware, request_id_middleware, require_admin,
     tenant_context_middleware,
 };
 use signapps_common::pg_events::PgEventBus;
+use signapps_common::rbac::{
+    folder_from_path, rbac_layer, resolver::OrgPermissionResolver, types::Action,
+};
 use signapps_common::{AiIndexerClient, AuthState, JwtConfig};
 use signapps_db::DatabasePool;
 use signapps_service::shared_state::SharedState;
@@ -50,6 +56,9 @@ pub struct AppState {
     pub cache: signapps_cache::CacheService,
     pub event_bus: PgEventBus,
     pub sharing: SharingEngine,
+    /// Shared RBAC resolver injected by the runtime via `SharedState`.
+    /// `None` in tests that construct `AppState` directly.
+    pub resolver: Option<Arc<dyn OrgPermissionResolver>>,
 }
 
 impl AuthState for AppState {
@@ -83,6 +92,10 @@ pub async fn router(shared: SharedState) -> anyhow::Result<Router> {
     tokio::spawn(async move {
         services::backup_worker::run(backup_pool).await;
     });
+
+    // Org provisioning consumer — home folder + quota on user.created,
+    // quota freeze on user.deactivated.
+    provisioning_consumer::spawn(state.pool.inner().clone());
 
     let sharing_engine = state.sharing.clone();
     Ok(create_router(state, sharing_engine))
@@ -119,6 +132,7 @@ async fn build_state(shared: &SharedState) -> anyhow::Result<AppState> {
         cache,
         event_bus: (*shared.event_bus).clone(),
         sharing,
+        resolver: shared.resolver.clone(),
     })
 }
 
@@ -146,7 +160,7 @@ fn create_router(state: AppState, sharing_engine: SharingEngine) -> Router {
         .route("/buckets/:name", get(buckets::get))
         .route("/buckets/:name", delete(buckets::delete));
 
-    let drive_routes = Router::new()
+    let mut drive_routes = Router::new()
         .route(
             "/drive/nodes",
             post(drive::create_node).get(drive::list_nodes),
@@ -157,6 +171,17 @@ fn create_router(state: AppState, sharing_engine: SharingEngine) -> Router {
         .route("/drive/nodes/:id/share", post(drive::create_node_share))
         .route("/drive/nodes/:id", put(drive::update_node))
         .route("/drive/nodes/:id", delete(drive::delete_node));
+
+    // W4 unified RBAC — attach the resolver guard alongside the existing
+    // ACL middleware. Non-destructive: the ACL layer stays in place and
+    // both must allow the request to proceed.
+    if let Some(resolver) = state.resolver.clone() {
+        drive_routes = drive_routes.route_layer(axum_mw::from_fn(rbac_layer(
+            resolver,
+            Action::Read,
+            folder_from_path,
+        )));
+    }
 
     let acl_routes = Router::new()
         .route("/drive/nodes/:id/acl", get(acl::list_acl))

@@ -35,6 +35,8 @@ pub struct AppState {
     pub jwt_config: JwtConfig,
     /// Shared LiveKit Server client (token issuance, RoomService, Egress).
     pub livekit: Arc<LiveKitClient>,
+    /// Shared RBAC resolver injected by the runtime. `None` in tests.
+    pub resolver: Option<Arc<dyn signapps_common::rbac::resolver::OrgPermissionResolver>>,
 }
 
 impl AuthState for AppState {
@@ -112,6 +114,7 @@ async fn build_state(shared: &SharedState) -> anyhow::Result<AppState> {
         pool,
         jwt_config: (*shared.jwt).clone(),
         livekit,
+        resolver: shared.resolver.clone(),
     })
 }
 

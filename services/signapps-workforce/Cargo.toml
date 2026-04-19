@@ -18,10 +18,11 @@ path = "src/main.rs"
 
 [dependencies]
 mimalloc = { workspace = true }
-signapps-common = { path = "../../crates/signapps-common" }
+# Post S1 cutover: workforce is HR-only. AD / ldap3 / keystore deps
+# migrated to `signapps-org` along with the handlers that used them.
+signapps-common = { path = "../../crates/signapps-common", features = ["rbac"] }
 signapps-db = { path = "../../crates/signapps-db", features = ["openapi"] }
 signapps-service = { path = "../../crates/signapps-service" }
-signapps-ad-core = { path = "../../crates/signapps-ad-core" }
 axum = { workspace = true }
 tokio = { workspace = true }
 serde = { workspace = true }
@@ -34,8 +35,6 @@ tracing-subscriber = { workspace = true }
 dotenvy = { workspace = true }
 tower-http = { workspace = true }
 anyhow = { workspace = true }
-async-trait = { workspace = true }
-thiserror = { workspace = true }
 validator = { workspace = true }
 reqwest = { workspace = true }
 utoipa = { workspace = true }

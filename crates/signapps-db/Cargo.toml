@@ -24,6 +24,7 @@ async-trait = { workspace = true }
 uuid = { workspace = true }
 chrono = { workspace = true }
 tracing = { workspace = true }
+anyhow = { workspace = true }
 
 # Internal
 signapps-common = { path = "../signapps-common" }

@@ -26,7 +26,7 @@ dhcp-server = ["dep:signapps-db", "dep:signapps-dns-server", "dep:sqlx"]
 [dependencies]
 mimalloc = { workspace = true }
 # Common (error types, result)
-signapps-common = { path = "../../crates/signapps-common" }
+signapps-common = { path = "../../crates/signapps-common", features = ["rbac"] }
 # Always-on dependencies for the lib + legacy bin
 signapps-service = { path = "../../crates/signapps-service" }
 anyhow = { workspace = true }

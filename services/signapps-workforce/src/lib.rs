@@ -1,10 +1,10 @@
-//! SignApps Workforce Service - Organizational Structure & Workforce Planning
+//! SignApps Workforce Service — HR-pure subset (post S1 cutover).
 //!
-//! This service manages workforce planning including:
-//! - Organizational hierarchy (TreeList with closure table)
-//! - Employee management (distinct from Users)
-//! - Coverage rules and templates (trames)
-//! - Validation engine for scheduling gaps and leave simulation
+//! After the S1 org+RBAC refonte (2026-04-18) this service keeps only
+//! HR domains: attendance, audit, coverage, expenses, learning, LMS,
+//! my-team, supply chain, timesheets, validation. Everything related to
+//! the organizational hierarchy (nodes, persons, assignments, policies,
+//! boards, groups, delegations, AD) now lives in `signapps-org`.
 //!
 //! Exposes [`router`] so the single-binary runtime (`signapps-platform`)
 //! can mount the workforce routes without owning its own pool.
@@ -12,7 +12,6 @@
 #![allow(clippy::assertions_on_constants)]
 // Pre-existing lints in handler modules inherited from when this crate was
 // bin-only (compiled as `--bin` so clippy on the lib never reached them).
-// Allowed at the crate level rather than rewriting every handler.
 #![allow(clippy::type_complexity)]
 #![allow(clippy::useless_vec)]
 
@@ -39,6 +38,10 @@ pub struct AppState {
     pub http_client: reqwest::Client,
     /// Base URL of the scheduler service (env: SCHEDULER_URL, default: http://localhost:3007/api/v1)
     pub scheduler_base_url: String,
+    /// Shared RBAC resolver injected by the runtime. `None` in tests.
+    pub resolver: Option<
+        std::sync::Arc<dyn signapps_common::rbac::resolver::OrgPermissionResolver>,
+    >,
 }
 
 impl AuthState for AppState {
@@ -69,6 +72,7 @@ async fn build_state(shared: &SharedState) -> anyhow::Result<AppState> {
         jwt_config: (*shared.jwt).clone(),
         http_client,
         scheduler_base_url,
+        resolver: shared.resolver.clone(),
     })
 }
 
@@ -99,207 +103,6 @@ fn create_router(state: AppState) -> Router {
 
     // Health check
     let health_routes = Router::new().route("/", get(handlers::health_check));
-
-    // Organizational tree routes
-    let org_routes = Router::new()
-        .route("/tree", get(handlers::org::get_tree))
-        .route("/nodes", post(handlers::org::create_node))
-        .route("/nodes/:id", get(handlers::org::get_node))
-        .route("/nodes/:id", put(handlers::org::update_node))
-        .route("/nodes/:id", delete(handlers::org::delete_node))
-        .route(
-            "/nodes/:id/recursive",
-            delete(handlers::org::delete_node_recursive),
-        )
-        .route("/nodes/:id/move", post(handlers::org::move_node))
-        .route("/nodes/:id/children", get(handlers::org::get_children))
-        .route(
-            "/nodes/:id/descendants",
-            get(handlers::org::get_descendants),
-        )
-        .route("/nodes/:id/ancestors", get(handlers::org::get_ancestors))
-        .route(
-            "/nodes/:id/effective-policy",
-            get(handlers::policies::resolve_node),
-        )
-        .route("/node-types", get(handlers::org::list_node_types))
-        .route("/node-types", post(handlers::org::create_node_type))
-        .route("/node-types/:id", delete(handlers::org::delete_node_type))
-        // Board routes (batch endpoint BEFORE parameterized routes)
-        .route("/nodes/boards", get(handlers::boards::list_all_boards))
-        .route("/nodes/:id/board", get(handlers::boards::get_board))
-        .route("/nodes/:id/board", post(handlers::boards::create_board))
-        .route("/nodes/:id/board", put(handlers::boards::update_board))
-        .route("/nodes/:id/board", delete(handlers::boards::delete_board))
-        .route(
-            "/nodes/:id/board/members",
-            post(handlers::boards::add_member),
-        )
-        .route(
-            "/nodes/:id/board/members/:member_id",
-            put(handlers::boards::update_member),
-        )
-        .route(
-            "/nodes/:id/board/members/:member_id",
-            delete(handlers::boards::remove_member),
-        )
-        .route(
-            "/nodes/:id/effective-board",
-            get(handlers::boards::get_effective_board),
-        )
-        .layer(axum::middleware::from_fn(
-            signapps_common::middleware::tenant_context_middleware,
-        ))
-        .layer(axum::middleware::from_fn_with_state(
-            state.clone(),
-            signapps_common::middleware::auth_middleware::<AppState>,
-        ));
-
-    // AD domain routes
-    let ad_routes = Router::new()
-        .route("/domains", get(handlers::ad::list_domains))
-        .route("/domains", post(handlers::ad::create_domain))
-        .route("/domains/:id", delete(handlers::ad::delete_domain))
-        .route("/domains/:id/dns/zones", get(handlers::ad::list_dns_zones))
-        .route("/domains/:id/keys", get(handlers::ad::list_keys))
-        .route("/domains/:id/computers", get(handlers::ad::list_computers))
-        .route("/domains/:id/gpos", get(handlers::ad::list_gpos))
-        .route("/dns/zones/:zone_id/records", get(handlers::ad::list_dns_records))
-        .route("/status", get(handlers::ad::dc_status))
-        // ── Infrastructure extensions ──
-        .route("/domains/:id/certificates", get(handlers::ad::list_certificates))
-        .route("/domains/:id/dhcp/scopes", get(handlers::ad::list_dhcp_scopes))
-        .route("/dhcp/scopes/:id/leases", get(handlers::ad::list_dhcp_leases))
-        .route("/domains/:id/deploy/profiles", get(handlers::ad::list_deploy_profiles))
-        .route("/deploy/profiles/:id/history", get(handlers::ad::list_deploy_history))
-        // ── Infrastructure CRUD ──
-        .route("/domains/:id/dhcp/scopes", post(handlers::ad::create_dhcp_scope))
-        .route("/dhcp/scopes/:id", delete(handlers::ad::delete_dhcp_scope))
-        .route("/domains/:id/deploy/profiles", post(handlers::ad::create_deploy_profile))
-        .route("/deploy/profiles/:id", delete(handlers::ad::delete_deploy_profile))
-        .route("/domains/:id/config", put(handlers::ad::update_domain_config))
-        // ── Certificate lifecycle ──
-        .route("/domains/:id/certificates", post(handlers::ad::issue_certificate))
-        .route("/certificates/:id/revoke", post(handlers::ad::revoke_certificate))
-        .route("/certificates/:id/renew", post(handlers::ad::renew_certificate))
-        // ── DHCP reservations ──
-        .route("/dhcp/scopes/:id/reservations", get(handlers::ad::list_dhcp_reservations))
-        .route("/dhcp/scopes/:id/reservations", post(handlers::ad::create_dhcp_reservation))
-        .route("/dhcp/reservations/:id", delete(handlers::ad::delete_dhcp_reservation))
-        // ── Deploy assignments ──
-        .route("/deploy/profiles/:id/assignments", get(handlers::ad::list_deploy_assignments))
-        .route("/deploy/profiles/:id/assignments", post(handlers::ad::create_deploy_assignment))
-        .route("/deploy/assignments/:id", delete(handlers::ad::delete_deploy_assignment))
-        // ── AD Sync ──
-        .route("/domains/:id/sync/stats", get(handlers::ad_sync::sync_queue_stats))
-        .route("/domains/:id/sync/events", get(handlers::ad_sync::list_sync_events))
-        .route("/domains/:id/ad-ous", get(handlers::ad_sync::list_ad_ous))
-        .route("/domains/:id/ad-users", get(handlers::ad_sync::list_ad_users))
-        .route("/domains/:id/dc-sites", get(handlers::ad_sync::list_dc_sites))
-        .route("/org-nodes/:id/mail-domain", put(handlers::ad_sync::set_node_mail_domain))
-        .route("/org-nodes/:id/mail-domain", delete(handlers::ad_sync::remove_node_mail_domain))
-        .route("/sync/reconcile", post(handlers::ad_sync::trigger_reconciliation))
-        // ── Phase 5: mail aliases & shared mailboxes ──
-        .route(
-            "/ad-users/:id/mail-aliases",
-            get(handlers::ad_sync::list_user_mail_aliases),
-        )
-        .route(
-            "/domains/:id/shared-mailboxes",
-            get(handlers::ad_sync::list_shared_mailboxes),
-        )
-        .route(
-            "/shared-mailboxes/:id/config",
-            put(handlers::ad_sync::update_shared_mailbox_config),
-        )
-        // ── Phase 3: DC Lifecycle ──
-        .route(
-            "/domains/:id/dc-sites",
-            post(handlers::ad_sync::promote_dc),
-        )
-        .route(
-            "/dc-sites/:id/demote",
-            post(handlers::ad_sync::demote_dc),
-        )
-        .route(
-            "/domains/:id/fsmo/transfer",
-            post(handlers::ad_sync::transfer_fsmo),
-        )
-        // ── Phase 4: Snapshots ──
-        .route(
-            "/domains/:id/snapshots",
-            get(handlers::ad_sync::list_snapshots),
-        )
-        .route(
-            "/domains/:id/snapshots",
-            post(handlers::ad_sync::create_snapshot),
-        )
-        .route(
-            "/snapshots/:id/preview",
-            post(handlers::ad_sync::restore_preview),
-        )
-        .route(
-            "/snapshots/:id/restore",
-            post(handlers::ad_sync::restore_execute),
-        )
-        // ── Update endpoints ──
-        .route("/domains/:id", put(handlers::ad::update_domain))
-        .route("/deploy/profiles/:id", put(handlers::ad::update_deploy_profile))
-        .route("/dhcp/scopes/:id", put(handlers::ad::update_dhcp_scope))
-        // ── Maintenance & Monitoring ──
-        .route("/dhcp/leases/expire", post(handlers::ad::expire_dhcp_leases))
-        .route("/certificates/expiring", get(handlers::ad::check_expiring_certificates))
-        .route("/health/infrastructure", get(handlers::ad::infrastructure_health))
-        .layer(axum::middleware::from_fn(
-            signapps_common::middleware::tenant_context_middleware,
-        ))
-        .layer(axum::middleware::from_fn_with_state(
-            state.clone(),
-            signapps_common::middleware::auth_middleware::<AppState>,
-        ));
-
-    // Employee routes
-    let employee_routes = Router::new()
-        .route("/", get(handlers::employees::list_employees))
-        .route("/", post(handlers::employees::create_employee))
-        .route("/import", post(handlers::employees::import_employees))
-        .route("/:id", get(handlers::employees::get_employee))
-        .route("/:id", put(handlers::employees::update_employee))
-        .route("/:id", delete(handlers::employees::delete_employee))
-        .route("/:id/link-user", post(handlers::employees::link_user))
-        .route("/:id/unlink-user", post(handlers::employees::unlink_user))
-        .route("/:id/functions", get(handlers::employees::get_functions))
-        .route("/:id/functions", put(handlers::employees::update_functions))
-        .route(
-            "/by-node/:node_id",
-            get(handlers::employees::list_by_org_node),
-        )
-        .route("/search", get(handlers::employees::search_employees))
-        .route("/:id/memberof", get(handlers::groups::get_person_groups))
-        .layer(axum::middleware::from_fn(
-            signapps_common::middleware::tenant_context_middleware,
-        ))
-        .layer(axum::middleware::from_fn_with_state(
-            state.clone(),
-            signapps_common::middleware::auth_middleware::<AppState>,
-        ));
-
-    // Function definition routes
-    let function_routes = Router::new()
-        .route("/", get(handlers::employees::list_function_definitions))
-        .route("/", post(handlers::employees::create_function_definition))
-        .route("/:id", put(handlers::employees::update_function_definition))
-        .route(
-            "/:id",
-            delete(handlers::employees::delete_function_definition),
-        )
-        .layer(axum::middleware::from_fn(
-            signapps_common::middleware::tenant_context_middleware,
-        ))
-        .layer(axum::middleware::from_fn_with_state(
-            state.clone(),
-            signapps_common::middleware::auth_middleware::<AppState>,
-        ));
 
     // Coverage template routes
     let coverage_template_routes = Router::new()
@@ -390,76 +193,7 @@ fn create_router(state: AppState) -> Router {
             signapps_common::middleware::auth_middleware::<AppState>,
         ));
 
-    // Group routes
-    let group_routes = Router::new()
-        .route("/", get(handlers::groups::list_groups))
-        .route("/", post(handlers::groups::create_group))
-        .route("/:id", get(handlers::groups::get_group))
-        .route("/:id", put(handlers::groups::update_group))
-        .route("/:id", delete(handlers::groups::delete_group))
-        .route("/:id/members", post(handlers::groups::add_member))
-        .route(
-            "/:id/members/:member_id",
-            delete(handlers::groups::remove_member),
-        )
-        .route(
-            "/:id/effective-members",
-            get(handlers::groups::get_effective_members),
-        )
-        .layer(axum::middleware::from_fn(
-            signapps_common::middleware::tenant_context_middleware,
-        ))
-        .layer(axum::middleware::from_fn_with_state(
-            state.clone(),
-            signapps_common::middleware::auth_middleware::<AppState>,
-        ));
-
-    // Policy routes
-    let policy_routes = Router::new()
-        .route("/", get(handlers::policies::list_policies))
-        .route("/", post(handlers::policies::create_policy))
-        .route("/simulate", post(handlers::policies::simulate_policy))
-        .route("/:id", get(handlers::policies::get_policy))
-        .route("/:id", put(handlers::policies::update_policy))
-        .route("/:id", delete(handlers::policies::delete_policy))
-        .route("/:id/links", post(handlers::policies::add_link))
-        .route(
-            "/:id/links/:link_id",
-            delete(handlers::policies::remove_link),
-        )
-        .route(
-            "/resolve/:person_id",
-            get(handlers::policies::resolve_person),
-        )
-        .route(
-            "/resolve/node/:node_id",
-            get(handlers::policies::resolve_node),
-        )
-        .layer(axum::middleware::from_fn(
-            signapps_common::middleware::tenant_context_middleware,
-        ))
-        .layer(axum::middleware::from_fn_with_state(
-            state.clone(),
-            signapps_common::middleware::auth_middleware::<AppState>,
-        ));
-
-    // Delegation routes
-    let delegation_routes = Router::new()
-        .route("/", get(handlers::delegations::list_delegations))
-        .route("/", post(handlers::delegations::create_delegation))
-        .route("/:id", put(handlers::delegations::update_delegation))
-        .route("/:id", delete(handlers::delegations::revoke_delegation))
-        .route("/my", get(handlers::delegations::my_delegations))
-        .route("/granted", get(handlers::delegations::granted_delegations))
-        .layer(axum::middleware::from_fn(
-            signapps_common::middleware::tenant_context_middleware,
-        ))
-        .layer(axum::middleware::from_fn_with_state(
-            state.clone(),
-            signapps_common::middleware::auth_middleware::<AppState>,
-        ));
-
-    // Audit routes
+    // Audit routes (read-only queries over the canonical audit log)
     let audit_routes = Router::new()
         .route("/", get(handlers::audit::query_audit))
         .route(
@@ -551,69 +285,6 @@ fn create_router(state: AppState) -> Router {
             signapps_common::middleware::auth_middleware::<AppState>,
         ));
 
-    // AD Provisioning routes
-    let ad_provision_routes = Router::new()
-        // bulk BEFORE /:person_id to avoid path-param conflict
-        .route("/bulk", post(handlers::ad_provisioning::bulk_provision))
-        .route("/:person_id", post(handlers::ad_provisioning::provision_person))
-        .route("/:person_id/preview", get(handlers::ad_provisioning::preview_provision))
-        .layer(axum::middleware::from_fn(
-            signapps_common::middleware::tenant_context_middleware,
-        ))
-        .layer(axum::middleware::from_fn_with_state(
-            state.clone(),
-            signapps_common::middleware::auth_middleware::<AppState>,
-        ));
-
-    // AD Delegation routes (manager-scoped)
-    let ad_delegation_routes = Router::new()
-        .route(
-            "/my-team/ad-accounts",
-            get(handlers::ad_delegation::my_team_ad_accounts),
-        )
-        .route(
-            "/my-team/computers",
-            get(handlers::ad_delegation::my_team_computers),
-        )
-        .route("/my-team/gpo", get(handlers::ad_delegation::my_team_gpo))
-        .route(
-            "/my-team/ad-accounts/:id/disable",
-            post(handlers::ad_delegation::disable_account),
-        )
-        .route(
-            "/my-team/ad-accounts/:id/enable",
-            post(handlers::ad_delegation::enable_account),
-        )
-        .route(
-            "/my-team/ad-accounts/:id/reset-password",
-            post(handlers::ad_delegation::reset_password),
-        )
-        .route(
-            "/my-team/ad-accounts/:id/move",
-            put(handlers::ad_delegation::move_account),
-        )
-        .layer(axum::middleware::from_fn(
-            signapps_common::middleware::tenant_context_middleware,
-        ))
-        .layer(axum::middleware::from_fn_with_state(
-            state.clone(),
-            signapps_common::middleware::auth_middleware::<AppState>,
-        ));
-
-    // AD GPO resolution routes
-    let ad_gpo_routes = Router::new()
-        // /hierarchy/:node_id BEFORE /:node_id to avoid conflict
-        .route("/hierarchy/:node_id", get(handlers::ad_gpo::gpo_hierarchy))
-        .route("/no-inherit/:node_id", put(handlers::ad_gpo::toggle_no_inherit))
-        .route("/:node_id", get(handlers::ad_gpo::effective_gpo))
-        .layer(axum::middleware::from_fn(
-            signapps_common::middleware::tenant_context_middleware,
-        ))
-        .layer(axum::middleware::from_fn_with_state(
-            state.clone(),
-            signapps_common::middleware::auth_middleware::<AppState>,
-        ));
-
     // My Team routes (manager/direct-reports resolution)
     let my_team_routes = Router::new()
         .route("/", get(handlers::my_team::get_my_team))
@@ -642,23 +313,16 @@ fn create_router(state: AppState) -> Router {
             signapps_common::middleware::auth_middleware::<AppState>,
         ));
 
-    // Combine all routes
+    // Combine all routes — HR-only after S1 cutover.
     Router::new()
         .merge(signapps_common::version::router("signapps-workforce"))
-        .nest("/api/v1/workforce/ad", ad_routes)
-        .nest("/api/v1/workforce/org", org_routes)
-        .nest("/api/v1/workforce/employees", employee_routes)
         .nest("/api/v1/workforce/attendance", attendance_routes)
-        .nest("/api/v1/workforce/functions", function_routes)
         .nest(
             "/api/v1/workforce/coverage/templates",
             coverage_template_routes,
         )
         .nest("/api/v1/workforce/coverage/rules", coverage_rule_routes)
         .nest("/api/v1/workforce/validate", validation_routes)
-        .nest("/api/v1/workforce/groups", group_routes)
-        .nest("/api/v1/workforce/policies", policy_routes)
-        .nest("/api/v1/workforce/delegations", delegation_routes)
         .nest("/api/v1/workforce/audit", audit_routes)
         .nest("/api/v1/learning", learning_routes)
         .nest("/api/v1/lms", lms_routes)
@@ -666,9 +330,6 @@ fn create_router(state: AppState) -> Router {
         .nest("/api/v1/workforce/expenses", expenses_routes)
         .nest("/api/v1/workforce/timesheet", timesheet_routes)
         .nest("/api/v1/workforce/my-team", my_team_routes)
-        .nest("/api/v1/workforce/ad/provision", ad_provision_routes)
-        .nest("/api/v1/workforce/ad/delegation", ad_delegation_routes)
-        .nest("/api/v1/workforce/ad/gpo", ad_gpo_routes)
         .nest("/health", health_routes)
         .merge(handlers::openapi::swagger_router())
         .layer(TraceLayer::new_for_http())

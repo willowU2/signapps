@@ -46,6 +46,10 @@ use tower_http::trace::TraceLayer;
 pub struct AppState {
     pub db: DatabasePool,
     pub jwt_config: JwtConfig,
+    /// Shared RBAC resolver injected by the runtime. `None` in tests.
+    pub resolver: Option<
+        std::sync::Arc<dyn signapps_common::rbac::resolver::OrgPermissionResolver>,
+    >,
 }
 
 impl signapps_common::middleware::AuthState for AppState {
@@ -178,6 +182,7 @@ async fn build_state(shared: &SharedState) -> anyhow::Result<AppState> {
     Ok(AppState {
         db: shared.pool.clone(),
         jwt_config: (*shared.jwt).clone(),
+        resolver: shared.resolver.clone(),
     })
 }
 

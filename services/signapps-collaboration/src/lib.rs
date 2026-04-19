@@ -84,6 +84,10 @@ pub struct AppState {
     pub jwt_config: JwtConfig,
     /// Database pool.
     pub pool: sqlx::PgPool,
+    /// Shared RBAC resolver injected by the runtime. `None` in tests.
+    pub resolver: Option<
+        std::sync::Arc<dyn signapps_common::rbac::resolver::OrgPermissionResolver>,
+    >,
 }
 
 impl AuthState for AppState {
@@ -465,6 +469,7 @@ async fn build_state(shared: &SharedState) -> anyhow::Result<AppState> {
     Ok(AppState {
         jwt_config: (*shared.jwt).clone(),
         pool: shared.pool.inner().clone(),
+        resolver: shared.resolver.clone(),
     })
 }
 

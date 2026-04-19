@@ -20,6 +20,7 @@ use std::sync::Arc;
 
 use anyhow::{Context, Result};
 use signapps_cache::CacheService;
+use signapps_common::rbac::resolver::OrgPermissionResolver;
 use signapps_common::{bootstrap::load_env, pg_events::PgEventBus, JwtConfig};
 use signapps_db::{create_pool, DatabasePool};
 use signapps_keystore::{Keystore, KeystoreBackend};
@@ -53,6 +54,12 @@ pub struct SharedState {
     pub cache: Arc<CacheService>,
     /// Shared LISTEN/NOTIFY event bus, publishing as `signapps-platform`.
     pub event_bus: Arc<PgEventBus>,
+    /// Shared RBAC resolver used by the unified `rbac::require`
+    /// middleware in every service.  Populated by the platform binary
+    /// after `init_once` via [`SharedState::with_resolver`] — starts as
+    /// `None` so services that don't gate on resolver presence can
+    /// still boot for tests that never hit a protected route.
+    pub resolver: Option<Arc<dyn OrgPermissionResolver>>,
 }
 
 impl SharedState {
@@ -114,6 +121,17 @@ impl SharedState {
             keystore,
             cache,
             event_bus,
+            resolver: None,
         })
+    }
+
+    /// Return a fresh `SharedState` with the RBAC resolver attached.
+    ///
+    /// Used by the platform binary after `init_once`: it constructs the
+    /// concrete `OrgClient` (or any other impl) and swaps it into every
+    /// per-service clone before spawning the supervisors.
+    pub fn with_resolver(mut self, resolver: Arc<dyn OrgPermissionResolver>) -> Self {
+        self.resolver = Some(resolver);
+        self
     }
 }

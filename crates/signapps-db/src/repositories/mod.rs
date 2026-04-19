@@ -1,5 +1,12 @@
 //! Database repositories for SignApps Platform.
 
+// Canonical org repositories (S1 W1 of the org+RBAC refonte).
+// Reachable via `signapps_db::repositories::org::*` — kept inside
+// the umbrella crate so the canonical surface does not depend on
+// `signapps-db-identity` (which still owns the legacy
+// `core_org_repository` during the transition).
+pub mod org;
+
 // Infrastructure repositories — now live in signapps-db-infrastructure (Phase 5 split).
 pub use signapps_db_infrastructure::repositories::{
     AdDnsRepository, AdDomainRepository, AdOuRepository, AdPrincipalKeysRepository,

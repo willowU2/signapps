@@ -38,6 +38,7 @@ pub mod jmap;
 pub mod models;
 pub mod oauth_consumer;
 pub mod openapi;
+pub mod provisioning_consumer;
 pub mod queue;
 pub mod sieve;
 pub mod smtp;
@@ -70,6 +71,9 @@ pub struct AppState {
     pub jwt_config: JwtConfig,
     pub indexer: AiIndexerClient,
     pub event_bus: PgEventBus,
+    /// Shared RBAC resolver injected by the runtime. `None` in tests.
+    pub resolver:
+        Option<std::sync::Arc<dyn signapps_common::rbac::resolver::OrgPermissionResolver>>,
 }
 
 impl AuthState for AppState {
@@ -130,6 +134,10 @@ pub async fn router(shared: SharedState) -> anyhow::Result<axum::Router> {
             "signapps-mail".to_string(),
         )),
     );
+
+    // Org provisioning consumer — subscribes to org.user.created /
+    // .deactivated and records attempts in org_provisioning_log.
+    provisioning_consumer::spawn(state.pool.clone());
 
     // Ensure OAuth app configs table exists (auto-migrate).
     crate::auth::ensure_oauth_configs_table(&state.pool).await;
@@ -274,6 +282,7 @@ async fn build_state(
         jwt_config: (*shared.jwt).clone(),
         indexer: AiIndexerClient::from_env(),
         event_bus: event_bus.clone(),
+        resolver: shared.resolver.clone(),
     };
 
     let sharing_engine = SharingEngine::new(pool, CacheService::default_config());

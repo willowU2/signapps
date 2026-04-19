@@ -18,7 +18,7 @@ path = "src/main.rs"
 
 [dependencies]
 mimalloc = { workspace = true }
-signapps-common = { path = "../../crates/signapps-common" }
+signapps-common = { path = "../../crates/signapps-common", features = ["rbac"] }
 signapps-db = { path = "../../crates/signapps-db" }
 signapps-service = { path = "../../crates/signapps-service" }
 axum = { workspace = true }
