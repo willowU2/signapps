@@ -150,59 +150,60 @@ pub fn create_router(state: AppState) -> Router {
         // Public grant redirect — no auth, validates via token hash.
         .nest("/g", handlers::grant_redirect::routes());
 
-    // Pre-existing org endpoints (admin UI). Preserved as-is — they already
-    // read the canonical `core.*` / `org_*` tables through the legacy
-    // repositories in `signapps-db-identity`.
+    // Pre-existing org endpoints (admin UI). Preserved under
+    // `/api/v1/admin/org/*` to avoid clashing with the new canonical
+    // `/api/v1/org/*` surface registered below. These handlers read
+    // the legacy `core.*` tables through `signapps-db-identity`.
     let legacy_routes = Router::new()
         // Org structure — trees
         .route(
-            "/api/v1/org/trees",
+            "/api/v1/admin/org/trees",
             get(handlers::org_trees::list_trees).post(handlers::org_trees::create_tree),
         )
         .route(
-            "/api/v1/org/trees/:id/full",
+            "/api/v1/admin/org/trees/:id/full",
             get(handlers::org_trees::get_full_tree),
         )
         // Org structure — nodes (admin UI)
         .route(
-            "/api/v1/org/nodes/:id",
+            "/api/v1/admin/org/nodes/:id",
             get(handlers::org_nodes::get_node)
                 .put(handlers::org_nodes::update_node)
                 .delete(handlers::org_nodes::delete_node),
         )
         .route(
-            "/api/v1/org/nodes/:id/move",
+            "/api/v1/admin/org/nodes/:id/move",
             post(handlers::org_nodes::move_node),
         )
         .route(
-            "/api/v1/org/nodes/:id/children",
+            "/api/v1/admin/org/nodes/:id/children",
             get(handlers::org_nodes::get_children),
         )
         .route(
-            "/api/v1/org/nodes/:id/descendants",
+            "/api/v1/admin/org/nodes/:id/descendants",
             get(handlers::org_nodes::get_descendants),
         )
         .route(
-            "/api/v1/org/nodes/:id/ancestors",
+            "/api/v1/admin/org/nodes/:id/ancestors",
             get(handlers::org_nodes::get_ancestors),
         )
         .route(
-            "/api/v1/org/nodes/:id/assignments",
+            "/api/v1/admin/org/nodes/:id/assignments",
             get(handlers::org_nodes::get_node_assignments),
         )
         .route(
-            "/api/v1/org/nodes/:id/permissions",
+            "/api/v1/admin/org/nodes/:id/permissions",
             get(handlers::org_nodes::get_node_permissions)
                 .put(handlers::org_nodes::set_node_permissions),
         )
         // Orgchart
         .route(
-            "/api/v1/org/orgchart",
+            "/api/v1/admin/org/orgchart",
             get(handlers::org_nodes::get_orgchart),
         )
         // Org context (authenticated user's position in the org)
         .route(
-            "/api/v1/org/context",
+            "/api/v1/admin/org/context",
             get(handlers::org_context::get_context),
         )
         // Legacy assignments surface (`/api/v1/assignments`).
