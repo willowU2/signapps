@@ -17,6 +17,10 @@
 //!
 //! **SO6 addition (2026-04-19)** — [`PanelLayoutRepository`] pour la
 //! personnalisation du panneau droit `/admin/org-structure`.
+//!
+//! **SO7 addition (2026-04-19)** — [`GroupRepository`], [`SiteRepository`],
+//! [`BookingRepository`] pour les groupes transverses et la gestion des
+//! lieux physiques.
 
 pub mod access_grant_repository;
 pub mod ad_config_repository;
@@ -25,7 +29,9 @@ pub mod assignment_repository;
 pub mod audit_repository;
 pub mod board_decision_repository;
 pub mod board_repository;
+pub mod booking_repository;
 pub mod delegation_repository;
+pub mod group_repository;
 pub mod headcount_repository;
 pub mod node_repository;
 pub mod panel_layout_repository;
@@ -35,6 +41,7 @@ pub mod position_repository;
 pub mod provisioning_log_repository;
 pub mod public_link_repository;
 pub mod raci_repository;
+pub mod site_repository;
 pub mod skill_repository;
 pub mod template_repository;
 pub mod webhook_repository;
@@ -46,7 +53,9 @@ pub use assignment_repository::AssignmentRepository;
 pub use audit_repository::AuditRepository;
 pub use board_decision_repository::BoardDecisionRepository;
 pub use board_repository::BoardRepository;
+pub use booking_repository::{BookingRepository, OccupancyBucket};
 pub use delegation_repository::DelegationRepository;
+pub use group_repository::GroupRepository;
 pub use headcount_repository::HeadcountRepository;
 pub use node_repository::NodeRepository;
 pub use panel_layout_repository::{default_layout, PanelLayoutRepository, LEGACY_HIDDEN_TABS};
@@ -56,6 +65,7 @@ pub use position_repository::PositionRepository;
 pub use provisioning_log_repository::ProvisioningLogRepository;
 pub use public_link_repository::PublicLinkRepository;
 pub use raci_repository::RaciRepository;
+pub use site_repository::SiteRepository;
 pub use skill_repository::SkillRepository;
 pub use template_repository::{CloneOutcome, TemplateRepository};
 pub use webhook_repository::{WebhookRepository, MAX_CONSECUTIVE_FAILURES};

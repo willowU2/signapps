@@ -50,3 +50,8 @@ pub mod webhooks;
 
 // ── SO6 refonte DetailPanel (panel layouts + KPI metrics) ───────────────────
 pub mod panel_layouts;
+
+// ── SO7 groupes transverses & sites physiques ───────────────────────────────
+pub mod bookings;
+pub mod groups;
+pub mod sites;

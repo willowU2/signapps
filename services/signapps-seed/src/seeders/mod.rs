@@ -15,6 +15,7 @@ pub mod docs;
 pub mod drive;
 pub mod focus_nodes;
 pub mod forms;
+pub mod groups;
 pub mod headcount;
 pub mod identity;
 pub mod it_assets;
@@ -27,6 +28,7 @@ pub mod positions;
 pub mod public_links;
 pub mod pxe;
 pub mod raci;
+pub mod sites;
 pub mod skills;
 pub mod tasks;
 pub mod templates;
@@ -71,5 +73,10 @@ pub fn all() -> Vec<Box<dyn Seeder>> {
         Box::new(photos::PhotosSeeder),
         // SO6 - showcase 2 panel layouts (admin/node + manager/person).
         Box::new(panel_layouts::PanelLayoutsSeeder),
+        // SO7 - sites (building/floor/room/desk) + groups. Sites first
+        // because the paris-office dynamic group rule references the
+        // paris-hq site UUID.
+        Box::new(sites::SitesSeeder),
+        Box::new(groups::GroupsSeeder),
     ]
 }

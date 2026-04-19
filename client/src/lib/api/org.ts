@@ -49,6 +49,18 @@ import type {
   OrgDelegationV2,
   OrgAuditLogEntry,
   OrgAxesSummary,
+  // SO7
+  OrgGroupKind,
+  OrgGroupRecord,
+  OrgGroupMembership,
+  OrgGroupMembersResponse,
+  OrgSiteKind,
+  OrgSiteRecord,
+  OrgSitePersonLink,
+  OrgSitePersonsResponse,
+  OrgSiteBookingRecord,
+  OrgAvailabilityResponse,
+  OrgOccupancyResponse,
 } from "@/types/org";
 
 const client = getClient(ServiceName.ORG_SVC);
@@ -927,6 +939,147 @@ export const orgApi = {
     },
     deleteVote: async (decisionId: string, voteId: string) =>
       client.delete(`/org/decisions/${decisionId}/votes/${voteId}`),
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // SO7 groupes transverses
+  // ═══════════════════════════════════════════════════════════════════════
+  orgGroups: {
+    list: async (params?: { kind?: OrgGroupKind }) => {
+      const tenantId = getCurrentTenantId();
+      if (!tenantId) return shim<OrgGroupRecord[]>([]);
+      const p: Record<string, unknown> = { tenant_id: tenantId };
+      if (params?.kind) p.kind = params.kind;
+      return client.get<OrgGroupRecord[]>("/org/groups", { params: p });
+    },
+    get: async (id: string) => client.get<OrgGroupRecord>(`/org/groups/${id}`),
+    members: async (id: string) =>
+      client.get<OrgGroupMembersResponse>(`/org/groups/${id}/members`),
+    create: async (body: {
+      slug: string;
+      name: string;
+      description?: string;
+      kind: OrgGroupKind;
+      rule_json?: Record<string, unknown>;
+      source_node_id?: string;
+      attributes?: Record<string, unknown>;
+    }) => {
+      const tenantId = getCurrentTenantId();
+      return client.post<OrgGroupRecord>("/org/groups", {
+        tenant_id: tenantId,
+        ...body,
+      });
+    },
+    update: async (
+      id: string,
+      body: {
+        name: string;
+        description?: string | null;
+        rule_json?: Record<string, unknown> | null;
+        source_node_id?: string | null;
+        attributes?: Record<string, unknown>;
+      },
+    ) => client.put<OrgGroupRecord>(`/org/groups/${id}`, body),
+    delete: async (id: string) => client.delete(`/org/groups/${id}`),
+    addMember: async (
+      id: string,
+      body: { person_id: string; kind?: "include" | "exclude" },
+    ) => client.post<OrgGroupMembership>(`/org/groups/${id}/members`, body),
+    removeMember: async (id: string, personId: string) =>
+      client.delete(`/org/groups/${id}/members/${personId}`),
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // SO7 sites physiques
+  // ═══════════════════════════════════════════════════════════════════════
+  orgSites: {
+    list: async (params?: { kind?: OrgSiteKind }) => {
+      const tenantId = getCurrentTenantId();
+      if (!tenantId) return shim<OrgSiteRecord[]>([]);
+      const p: Record<string, unknown> = { tenant_id: tenantId };
+      if (params?.kind) p.kind = params.kind;
+      return client.get<OrgSiteRecord[]>("/org/sites", { params: p });
+    },
+    get: async (id: string) => client.get<OrgSiteRecord>(`/org/sites/${id}`),
+    tree: async (id: string) =>
+      client.get<OrgSiteRecord[]>(`/org/sites/${id}/tree`),
+    persons: async (id: string) =>
+      client.get<OrgSitePersonsResponse>(`/org/sites/${id}/persons`),
+    create: async (body: {
+      parent_id?: string | null;
+      slug: string;
+      name: string;
+      kind: OrgSiteKind;
+      address?: string;
+      gps?: { lat: number; lng: number };
+      timezone?: string;
+      capacity?: number;
+      equipment?: Record<string, unknown>;
+      bookable?: boolean;
+    }) => {
+      const tenantId = getCurrentTenantId();
+      return client.post<OrgSiteRecord>("/org/sites", {
+        tenant_id: tenantId,
+        ...body,
+      });
+    },
+    update: async (
+      id: string,
+      body: {
+        name: string;
+        address?: string | null;
+        gps?: { lat: number; lng: number } | null;
+        timezone?: string | null;
+        capacity?: number | null;
+        equipment?: Record<string, unknown>;
+        bookable?: boolean;
+      },
+    ) => client.put<OrgSiteRecord>(`/org/sites/${id}`, body),
+    delete: async (id: string) => client.delete(`/org/sites/${id}`),
+    attachPerson: async (
+      id: string,
+      body: {
+        person_id: string;
+        role?: "primary" | "secondary";
+        desk_id?: string;
+      },
+    ) => client.post<OrgSitePersonLink>(`/org/sites/${id}/persons`, body),
+    detachPerson: async (sp_id: string) =>
+      client.delete(`/org/sites/persons/${sp_id}`),
+
+    availability: async (
+      id: string,
+      params: { day: string; slot_minutes?: number },
+    ) =>
+      client.get<OrgAvailabilityResponse>(`/org/sites/${id}/availability`, {
+        params,
+      }),
+    occupancy: async (
+      id: string,
+      params: { since: string; until: string; granularity?: "day" | "hour" },
+    ) =>
+      client.get<OrgOccupancyResponse>(`/org/sites/${id}/occupancy`, {
+        params,
+      }),
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // SO7 bookings
+  // ═══════════════════════════════════════════════════════════════════════
+  orgBookings: {
+    list: async (params: { site_id: string; since: string; until: string }) =>
+      client.get<OrgSiteBookingRecord[]>("/org/site-bookings", { params }),
+    create: async (body: {
+      site_id: string;
+      person_id: string;
+      start_at: string;
+      end_at: string;
+      purpose?: string;
+      status?: "confirmed" | "tentative" | "cancelled";
+      link_meet?: boolean;
+    }) => client.post<OrgSiteBookingRecord>("/org/site-bookings", body),
+    cancel: async (id: string) =>
+      client.patch<void>(`/org/site-bookings/${id}/cancel`),
   },
 };
 

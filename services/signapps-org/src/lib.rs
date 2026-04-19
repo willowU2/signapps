@@ -18,6 +18,7 @@ pub mod ad;
 pub mod event_publisher;
 pub mod events;
 pub mod grants;
+pub mod groups;
 pub mod handlers;
 pub mod middleware;
 pub mod rbac_client;
@@ -358,6 +359,17 @@ pub fn create_router(state: AppState) -> Router {
         .nest(
             "/api/v1/org/panel-layouts",
             handlers::panel_layouts::routes(),
+        )
+        // ── SO7 groupes transverses & sites physiques ──────────────
+        .nest("/api/v1/org/groups", handlers::groups::routes())
+        .nest("/api/v1/org/sites", handlers::sites::routes())
+        .nest(
+            "/api/v1/org/sites/:id",
+            handlers::bookings::occupancy_routes(),
+        )
+        .nest(
+            "/api/v1/org/site-bookings",
+            handlers::bookings::routes(),
         )
         // Photos: nested with absolute paths to avoid clashing with the
         // canonical persons / nodes routers.

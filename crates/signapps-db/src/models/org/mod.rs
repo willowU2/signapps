@@ -32,6 +32,13 @@
 //!   [`PanelLayoutConfig`] : config personnalisable par (tenant, role,
 //!   entity_type) du panneau droit `/admin/org-structure`.
 //!
+//! **SO7 addition (2026-04-19)** — groupes transverses & sites physiques:
+//! - [`OrgGroup`] + [`GroupKind`] + [`OrgGroupMember`] +
+//!   [`MembershipKind`] : groupes (static | dynamic | hybrid | derived).
+//! - [`OrgSite`] + [`SiteKind`] + [`SitePerson`] + [`SitePersonRole`] +
+//!   [`SiteBooking`] + [`BookingStatus`] : hiérarchie building > floor >
+//!   room > desk + rattachements + réservations.
+//!
 //! ## Design choices
 //!
 //! - Each entity carries `tenant_id` for multi-tenancy.
@@ -52,6 +59,7 @@ pub mod board;
 pub mod board_decision;
 pub mod board_vote;
 pub mod delegation;
+pub mod group;
 pub mod headcount;
 pub mod node;
 pub mod panel_layout;
@@ -63,6 +71,7 @@ pub mod position_incumbent;
 pub mod provisioning_log;
 pub mod public_link;
 pub mod raci;
+pub mod site;
 pub mod skill;
 pub mod template;
 pub mod webhook;
@@ -77,6 +86,7 @@ pub use board::{Board, BoardMember};
 pub use board_decision::{BoardDecision, DecisionStatus};
 pub use board_vote::{BoardVote, VoteKind};
 pub use delegation::{Delegation, DelegationScope};
+pub use group::{GroupKind, MembershipKind, OrgGroup, OrgGroupMember};
 pub use headcount::{HeadcountPlan, HeadcountRollup};
 pub use node::{NodeKind, OrgNode};
 pub use panel_layout::{
@@ -90,6 +100,7 @@ pub use position_incumbent::PositionIncumbent;
 pub use provisioning_log::ProvisioningLog;
 pub use public_link::{PublicLink, Visibility};
 pub use raci::{Raci, RaciRole};
+pub use site::{BookingStatus, OrgSite, SiteBooking, SiteKind, SitePerson, SitePersonRole};
 pub use skill::{Skill, SkillCategory};
 pub use template::{template_spec, Template};
 pub use webhook::{pattern_matches, Webhook};

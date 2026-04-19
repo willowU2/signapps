@@ -14,7 +14,7 @@
  */
 import React, { useEffect, useMemo, useState } from "react";
 import { Building2 } from "lucide-react";
-import { TabsContent } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { orgApi } from "@/lib/api/org";
 import { useAuthStore } from "@/lib/store";
 import { toast } from "sonner";
@@ -134,6 +134,8 @@ const PERSON_TAB_LABELS: Record<string, string> = {
   permissions: "Permissions",
   delegations: "Délégations",
   audit: "Audit",
+  groups: "Groupes",
+  sites: "Sites",
 };
 
 /** Tabs marked as stubs (no real implementation yet). */
@@ -146,8 +148,6 @@ const STUB_TABS = new Set([
   "dhcp",
   "ntp",
   "deployment",
-  "groups",
-  "sites",
   "policies",
   "permissions",
   "assignments",
@@ -361,10 +361,6 @@ function NodeModeDetailPanel({
           return (
             <DeploymentTabContent nodeId={node.id} nodeType={node.node_type} />
           );
-        case "groups":
-          return <GroupsTab groups={groups} />;
-        case "sites":
-          return <SitesTab sites={sites} />;
         case "policies":
           return <PoliciesTab nodeId={node.id} allPolicies={allPolicies} />;
         default:
@@ -372,6 +368,10 @@ function NodeModeDetailPanel({
       }
     }
     switch (id) {
+      case "groups":
+        return <GroupsTab mode="node" node={node} />;
+      case "sites":
+        return <SitesTab mode="node" />;
       case "details":
         return (
           <DetailsTab
@@ -461,39 +461,45 @@ function NodeModeDetailPanel({
         focusMode={focusMode}
       />
 
-      <MainTabs
-        items={effectiveItems}
-        metaById={metaById}
-        hiddenIds={hiddenIds}
-        activeId={activeTab}
-        onChange={setActiveTab}
-        extraTabs={extraTabs}
-        wideMargin={focusMode}
-      />
+      <Tabs
+        value={activeTab}
+        onValueChange={setActiveTab}
+        className="flex-1 flex flex-col min-h-0"
+      >
+        <MainTabs
+          items={effectiveItems}
+          metaById={metaById}
+          hiddenIds={hiddenIds}
+          activeId={activeTab}
+          onChange={setActiveTab}
+          extraTabs={extraTabs}
+          wideMargin={focusMode}
+        />
 
-      <div className="flex-1 overflow-y-auto min-h-0 mt-3">
-        {visibleIds.map((id) => {
-          const item = effectiveItems.find((i) => {
-            if (i.type === "builtin") return i.id === id;
-            return id.startsWith("widget:");
-          });
-          if (!item) return null;
-          return (
-            <TabsContent key={id} value={id} className="mt-0">
-              <TabRenderer
-                item={item}
-                ctx={{ entityId: node.id, entityType: "node" }}
-                renderBuiltin={renderBuiltin}
-              />
+        <div className="flex-1 overflow-y-auto min-h-0 mt-3">
+          {visibleIds.map((id) => {
+            const item = effectiveItems.find((i) => {
+              if (i.type === "builtin") return i.id === id;
+              return id.startsWith("widget:");
+            });
+            if (!item) return null;
+            return (
+              <TabsContent key={id} value={id} className="mt-0">
+                <TabRenderer
+                  item={item}
+                  ctx={{ entityId: node.id, entityType: "node" }}
+                  renderBuiltin={renderBuiltin}
+                />
+              </TabsContent>
+            );
+          })}
+          {extraTabs.map((t) => (
+            <TabsContent key={t.id} value={t.id} className="mt-0">
+              {renderBuiltin(t.id)}
             </TabsContent>
-          );
-        })}
-        {extraTabs.map((t) => (
-          <TabsContent key={t.id} value={t.id} className="mt-0">
-            {renderBuiltin(t.id)}
-          </TabsContent>
-        ))}
-      </div>
+          ))}
+        </div>
+      </Tabs>
     </div>
   );
 }
@@ -594,6 +600,10 @@ function PersonModeDetailPanel({
             <SkillsSection personId={person.id} />
           </div>
         );
+      case "groups":
+        return <GroupsTab mode="person" personId={person.id} />;
+      case "sites":
+        return <SitesTab mode="person" personId={person.id} />;
       case "audit":
         return <AuditTab entityType="person" entityId={person.id} />;
       default:
@@ -615,34 +625,40 @@ function PersonModeDetailPanel({
         quickActions={heroQuickActions}
         onClose={onClose}
       />
-      <MainTabs
-        items={effectiveItems}
-        metaById={metaById}
-        hiddenIds={hiddenIds}
-        activeId={activeTab}
-        onChange={setActiveTab}
-      />
-      <div className="flex-1 overflow-y-auto min-h-0 mt-3">
-        {visibleIds.map((id) => {
-          const item = effectiveItems.find((i) => {
-            if (i.type === "builtin") return i.id === id;
-            return id.startsWith("widget:");
-          });
-          if (!item) return null;
-          return (
-            <TabsContent key={id} value={id} className="mt-0">
-              <TabRenderer
-                item={item}
-                ctx={{
-                  entityId: person.id,
-                  entityType: "person" as PanelEntitySlug,
-                }}
-                renderBuiltin={renderBuiltin}
-              />
-            </TabsContent>
-          );
-        })}
-      </div>
+      <Tabs
+        value={activeTab}
+        onValueChange={setActiveTab}
+        className="flex-1 flex flex-col min-h-0"
+      >
+        <MainTabs
+          items={effectiveItems}
+          metaById={metaById}
+          hiddenIds={hiddenIds}
+          activeId={activeTab}
+          onChange={setActiveTab}
+        />
+        <div className="flex-1 overflow-y-auto min-h-0 mt-3">
+          {visibleIds.map((id) => {
+            const item = effectiveItems.find((i) => {
+              if (i.type === "builtin") return i.id === id;
+              return id.startsWith("widget:");
+            });
+            if (!item) return null;
+            return (
+              <TabsContent key={id} value={id} className="mt-0">
+                <TabRenderer
+                  item={item}
+                  ctx={{
+                    entityId: person.id,
+                    entityType: "person" as PanelEntitySlug,
+                  }}
+                  renderBuiltin={renderBuiltin}
+                />
+              </TabsContent>
+            );
+          })}
+        </div>
+      </Tabs>
     </div>
   );
 }

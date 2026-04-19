@@ -391,3 +391,127 @@ export interface OrgAxesSummary {
   focus_nodes: Array<{ id: string; name: string; slug: string | null }>;
   group_nodes: Array<{ id: string; name: string; slug: string | null }>;
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SO7 — groupes transverses & sites physiques
+// ═══════════════════════════════════════════════════════════════════════════
+
+/** Kind canonique d'un groupe transverse. */
+export type OrgGroupKind = "static" | "dynamic" | "hybrid" | "derived";
+
+/** `org_groups` row. */
+export interface OrgGroupRecord {
+  id: string;
+  tenant_id: string;
+  slug: string;
+  name: string;
+  description?: string | null;
+  kind: OrgGroupKind;
+  rule_json?: Record<string, unknown> | null;
+  source_node_id?: string | null;
+  attributes: Record<string, unknown>;
+  archived: boolean;
+  created_by_user_id?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+/** `org_group_members` row. */
+export interface OrgGroupMembership {
+  group_id: string;
+  person_id: string;
+  kind: "include" | "exclude";
+  created_at: string;
+}
+
+/** Response of `GET /api/v1/org/groups/:id/members`. */
+export interface OrgGroupMembersResponse {
+  group_id: string;
+  kind: OrgGroupKind;
+  persons: Person[];
+  memberships: OrgGroupMembership[];
+}
+
+/** Kind canonique d'un site. */
+export type OrgSiteKind = "building" | "floor" | "room" | "desk";
+
+/** `org_sites` row. */
+export interface OrgSiteRecord {
+  id: string;
+  tenant_id: string;
+  parent_id?: string | null;
+  slug: string;
+  name: string;
+  kind: OrgSiteKind;
+  address?: string | null;
+  gps?: { lat: number; lng: number } | null;
+  timezone?: string | null;
+  capacity?: number | null;
+  equipment: Record<string, unknown>;
+  bookable: boolean;
+  active: boolean;
+  attributes: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+}
+
+/** `org_site_persons` row. */
+export interface OrgSitePersonLink {
+  id: string;
+  person_id: string;
+  site_id: string;
+  desk_id?: string | null;
+  role: "primary" | "secondary";
+  valid_from: string;
+  valid_until?: string | null;
+  created_at: string;
+}
+
+/** Response of `GET /api/v1/org/sites/:id/persons`. */
+export interface OrgSitePersonsResponse {
+  assignments: OrgSitePersonLink[];
+  persons: Person[];
+}
+
+/** `org_site_bookings` row. */
+export interface OrgSiteBookingRecord {
+  id: string;
+  site_id: string;
+  person_id: string;
+  start_at: string;
+  end_at: string;
+  purpose?: string | null;
+  status: "confirmed" | "tentative" | "cancelled";
+  meet_room_id?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+/** One 30-minute slot returned by `/availability`. */
+export interface OrgAvailabilitySlot {
+  start_at: string;
+  end_at: string;
+  available: boolean;
+}
+
+/** Response of `GET /api/v1/org/sites/:id/availability`. */
+export interface OrgAvailabilityResponse {
+  site_id: string;
+  day: string;
+  slot_minutes: number;
+  slots: OrgAvailabilitySlot[];
+}
+
+/** One bucket of the occupancy heatmap. */
+export interface OrgOccupancyBucket {
+  key: string;
+  count: number;
+}
+
+/** Response of `GET /api/v1/org/sites/:id/occupancy`. */
+export interface OrgOccupancyResponse {
+  site_id: string;
+  granularity: "day" | "hour";
+  capacity?: number | null;
+  buckets: OrgOccupancyBucket[];
+}
