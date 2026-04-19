@@ -8,7 +8,13 @@ import { usePageTitle } from "@/hooks/use-page-title";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useOrgStore } from "@/stores/org-store";
 import { orgApi } from "@/lib/api/org";
-import type { OrgNode, Person, TreeType, BoardSummary } from "@/types/org";
+import type {
+  OrgNode,
+  Person,
+  TreeType,
+  BoardSummary,
+  Assignment,
+} from "@/types/org";
 import { Building2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -133,6 +139,12 @@ export default function OrgStructurePage() {
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
   const [selectedSiteId, setSelectedSiteId] = useState<string | null>(null);
   const [boardMap, setBoardMap] = useState<Record<string, BoardInfo>>({});
+  const [assignmentsByNode, setAssignmentsByNode] = useState<
+    Record<
+      string,
+      Array<{ personId: string; role?: string; isPrimary: boolean }>
+    >
+  >({});
 
   // Dialog state — create tree
   const [createTreeDialogOpen, setCreateTreeDialogOpen] = useState(false);
@@ -163,6 +175,11 @@ export default function OrgStructurePage() {
   const [moving, setMoving] = useState(false);
 
   const treeHierarchy = useMemo(() => buildTree(nodes), [nodes]);
+  const personsById = useMemo(() => {
+    const map: Record<string, Person> = {};
+    for (const p of persons) map[p.id] = p;
+    return map;
+  }, [persons]);
   const freshSelectedNode = useMemo(
     () =>
       selectedNode
@@ -187,6 +204,40 @@ export default function OrgStructurePage() {
     fetchGroups();
     fetchPolicies();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Per-node assignments — batch fetch so tree can show avatars + roles
+  // on each node. Runs once per `nodes` change, guarded against stale
+  // responses by a version ref.
+  const assignmentsVersionRef = React.useRef(0);
+  useEffect(() => {
+    if (nodes.length === 0) {
+      setAssignmentsByNode({});
+      return;
+    }
+    const version = ++assignmentsVersionRef.current;
+    Promise.all(
+      nodes.map((n) =>
+        orgApi.nodes
+          .assignments(n.id)
+          .then((res) => ({ nodeId: n.id, rows: res.data ?? [] }))
+          .catch(() => ({ nodeId: n.id, rows: [] as Assignment[] })),
+      ),
+    ).then((results) => {
+      if (assignmentsVersionRef.current !== version) return;
+      const map: Record<
+        string,
+        Array<{ personId: string; role?: string; isPrimary: boolean }>
+      > = {};
+      for (const { nodeId, rows } of results) {
+        map[nodeId] = rows.map((a) => ({
+          personId: a.person_id,
+          role: (a as unknown as { role?: string }).role,
+          isPrimary: Boolean(a.is_primary),
+        }));
+      }
+      setAssignmentsByNode(map);
+    });
+  }, [nodes]);
 
   // Board indicators — single batched request with version-guard against
   // stale overwrites when `nodes` changes while a fetch is in flight.
@@ -610,6 +661,8 @@ export default function OrgStructurePage() {
                           onDragEnd={() => setDraggedId(null)}
                           onDoubleClick={handleDoubleClickNode}
                           boardMap={boardMap}
+                          assignmentsByNode={assignmentsByNode}
+                          personsById={personsById}
                         />
                       ))}
                     </div>
