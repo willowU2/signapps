@@ -14,6 +14,9 @@
 //!
 //! **SO4 addition (2026-04-19)** — [`PublicLinkRepository`],
 //! [`WebhookRepository`].
+//!
+//! **SO6 addition (2026-04-19)** — [`PanelLayoutRepository`] pour la
+//! personnalisation du panneau droit `/admin/org-structure`.
 
 pub mod access_grant_repository;
 pub mod ad_config_repository;
@@ -25,6 +28,7 @@ pub mod board_repository;
 pub mod delegation_repository;
 pub mod headcount_repository;
 pub mod node_repository;
+pub mod panel_layout_repository;
 pub mod person_repository;
 pub mod policy_repository;
 pub mod position_repository;
@@ -45,6 +49,7 @@ pub use board_repository::BoardRepository;
 pub use delegation_repository::DelegationRepository;
 pub use headcount_repository::HeadcountRepository;
 pub use node_repository::NodeRepository;
+pub use panel_layout_repository::{default_layout, PanelLayoutRepository, LEGACY_HIDDEN_TABS};
 pub use person_repository::PersonRepository;
 pub use policy_repository::PolicyRepository;
 pub use position_repository::PositionRepository;
