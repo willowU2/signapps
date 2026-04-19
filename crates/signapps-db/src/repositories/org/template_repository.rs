@@ -82,6 +82,7 @@ impl<'a> TemplateRepository<'a> {
     /// # Errors
     ///
     /// Returns the underlying sqlx error.
+    #[allow(clippy::too_many_arguments)]
     pub async fn upsert(
         &self,
         slug: &str,
