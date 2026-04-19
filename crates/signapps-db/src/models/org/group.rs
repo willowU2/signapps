@@ -25,7 +25,7 @@ use uuid::Uuid;
 /// `derived`).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, sqlx::Type)]
 #[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
-#[sqlx(type_name = "TEXT", rename_all = "snake_case")]
+#[sqlx(type_name = "VARCHAR", rename_all = "snake_case")]
 pub enum GroupKind {
     /// Membership explicite via `org_group_members` (include uniquement).
     Static,
@@ -70,7 +70,7 @@ impl GroupKind {
 /// Stored as lowercase `VARCHAR(16)` (`include`, `exclude`).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, sqlx::Type)]
 #[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
-#[sqlx(type_name = "TEXT", rename_all = "snake_case")]
+#[sqlx(type_name = "VARCHAR", rename_all = "snake_case")]
 pub enum MembershipKind {
     /// Personne explicitement ajoutée au groupe.
     Include,

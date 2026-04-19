@@ -45,7 +45,13 @@ fn admin_node_demo() -> serde_json::Value {
             {"type": "builtin", "id": "positions", "position": 2},
             {"type": "builtin", "id": "governance", "position": 3},
             {"type": "builtin", "id": "headcount", "position": 4},
-            {"type": "builtin", "id": "audit", "position": 5}
+            {"type": "builtin", "id": "audit", "position": 5},
+            {"type": "builtin", "id": "groups", "position": 6},
+            {"type": "builtin", "id": "sites", "position": 7},
+            {"type": "builtin", "id": "policies", "position": 8},
+            {"type": "builtin", "id": "decisions", "position": 9},
+            {"type": "builtin", "id": "raci", "position": 10},
+            {"type": "builtin", "id": "delegations", "position": 11}
         ],
         "hidden_tabs": [
             "gpo", "kerberos", "dns", "dhcp", "ntp", "certificates", "deployment"

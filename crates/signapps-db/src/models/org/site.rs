@@ -23,7 +23,7 @@ use uuid::Uuid;
 /// Stored as lowercase `VARCHAR(16)` (`building`, `floor`, `room`, `desk`).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, sqlx::Type)]
 #[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
-#[sqlx(type_name = "TEXT", rename_all = "snake_case")]
+#[sqlx(type_name = "VARCHAR", rename_all = "snake_case")]
 pub enum SiteKind {
     /// Immeuble (racine d'une hiérarchie).
     Building,
@@ -66,7 +66,7 @@ impl SiteKind {
 /// Rôle d'une personne sur un site.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, sqlx::Type)]
 #[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
-#[sqlx(type_name = "TEXT", rename_all = "snake_case")]
+#[sqlx(type_name = "VARCHAR", rename_all = "snake_case")]
 pub enum SitePersonRole {
     /// Site principal (un seul par personne).
     Primary,
@@ -92,7 +92,7 @@ impl SitePersonRole {
 /// Status d'un booking.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, sqlx::Type)]
 #[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
-#[sqlx(type_name = "TEXT", rename_all = "snake_case")]
+#[sqlx(type_name = "VARCHAR", rename_all = "snake_case")]
 pub enum BookingStatus {
     /// Réservation confirmée — bloque le créneau.
     Confirmed,
