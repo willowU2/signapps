@@ -168,9 +168,21 @@ db-migrate:
 db-backup:
     bash scripts/pg-backup.sh
 
-# Seed données démo
+# Seed données démo (Acme Corp) — signapps-seed crate
 db-seed:
-    bash scripts/seed-demo-data.sh
+    cargo run --bin signapps-seed --release
+
+# Reset + reseed (drops Acme data first)
+db-seed-reset:
+    cargo run --bin signapps-seed --release -- --reset
+
+# Dry run (connectivity + validation only)
+db-seed-dry:
+    cargo run --bin signapps-seed --release -- --dry-run
+
+# Run only one seeder (e.g. `just db-seed-only calendar`)
+db-seed-only SERVICE:
+    cargo run --bin signapps-seed --release -- --only {{SERVICE}}
 
 # ─────────────────────────── App Logos ────────────────────────
 
