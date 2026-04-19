@@ -94,14 +94,39 @@ async fn build_state(shared: &SharedState) -> anyhow::Result<AppState> {
 
 /// Spawn the AD / LDAP bidirectional sync workers.
 ///
-/// **Placeholder** — the real implementation arrives in W3 (Tasks 16-21).
-/// For now this spawns a `tokio::spawn` task that simply logs once and
-/// parks forever, so operators see that the hook is wired.
-pub fn spawn_ad_sync_workers(_state: &AppState) {
+/// Runs one supervisor task that polls every 60 s the list of tenants
+/// whose `org_ad_config.mode != 'off'`, loads the per-tenant
+/// [`ad::config::AdSyncConfig`] (with keystore-decrypted bind
+/// password) and drives [`ad::sync::run_cycle`] in a non-dry-run
+/// pass. Errors are logged but never crash the supervisor — the next
+/// tick retries.
+pub fn spawn_ad_sync_workers(state: &AppState) {
+    let pool = state.pool.clone();
+    let keystore = state.keystore.clone();
+    let event_bus = state.event_bus.clone();
     tokio::spawn(async move {
-        tracing::info!("org AD sync workers: placeholder, no-op until W3");
-        // Park forever so the task does not exit and trip supervisors.
-        std::future::pending::<()>().await;
+        tracing::info!("org AD sync supervisor started");
+        loop {
+            let tenants: Vec<uuid::Uuid> =
+                sqlx::query_scalar("SELECT tenant_id FROM org_ad_config WHERE mode != 'off'")
+                    .fetch_all(pool.inner())
+                    .await
+                    .unwrap_or_default();
+            for tenant_id in tenants {
+                match ad::config::AdSyncConfig::load(pool.inner(), &keystore, tenant_id).await {
+                    Ok(Some(cfg)) => {
+                        if let Err(e) =
+                            ad::sync::run_cycle(pool.inner(), &cfg, false, Some(&event_bus)).await
+                        {
+                            tracing::warn!(tenant_id=%tenant_id, ?e, "ad sync cycle failed");
+                        }
+                    }
+                    Ok(None) => {}
+                    Err(e) => tracing::warn!(tenant_id=%tenant_id, ?e, "ad config load failed"),
+                }
+            }
+            tokio::time::sleep(std::time::Duration::from_secs(60)).await;
+        }
     });
 }
 
