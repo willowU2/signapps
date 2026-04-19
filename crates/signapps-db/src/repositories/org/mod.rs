@@ -11,6 +11,9 @@
 //!
 //! **SO3 addition (2026-04-19)** — [`TemplateRepository`],
 //! [`HeadcountRepository`], [`SkillRepository`].
+//!
+//! **SO4 addition (2026-04-19)** — [`PublicLinkRepository`],
+//! [`WebhookRepository`].
 
 pub mod access_grant_repository;
 pub mod ad_config_repository;
@@ -26,9 +29,11 @@ pub mod person_repository;
 pub mod policy_repository;
 pub mod position_repository;
 pub mod provisioning_log_repository;
+pub mod public_link_repository;
 pub mod raci_repository;
 pub mod skill_repository;
 pub mod template_repository;
+pub mod webhook_repository;
 
 pub use access_grant_repository::AccessGrantRepository;
 pub use ad_config_repository::AdConfigRepository;
@@ -44,6 +49,8 @@ pub use person_repository::PersonRepository;
 pub use policy_repository::PolicyRepository;
 pub use position_repository::PositionRepository;
 pub use provisioning_log_repository::ProvisioningLogRepository;
+pub use public_link_repository::PublicLinkRepository;
 pub use raci_repository::RaciRepository;
 pub use skill_repository::SkillRepository;
 pub use template_repository::{CloneOutcome, TemplateRepository};
+pub use webhook_repository::{WebhookRepository, MAX_CONSECUTIVE_FAILURES};

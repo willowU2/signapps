@@ -230,7 +230,9 @@ pub fn create_router(state: AppState) -> Router {
         .route("/health", get(health_check))
         .merge(signapps_common::version::router("signapps-org"))
         // Public grant redirect — no auth, validates via HMAC + DB check.
-        .nest("/g", grants::redirect::routes());
+        .nest("/g", grants::redirect::routes())
+        // SO4 IN2 — public org-chart slug endpoints (no auth).
+        .nest("/public/org", handlers::public_links::public_routes());
 
     // Pre-existing org endpoints (admin UI). Preserved under
     // `/api/v1/admin/org/*` to avoid clashing with the new canonical
@@ -349,6 +351,12 @@ pub fn create_router(state: AppState) -> Router {
         )
         .nest("/api/v1/org/search", handlers::search::routes())
         .nest("/api/v1/org/bulk", handlers::bulk::routes())
+        // ── SO4 integrations ────────────────────────────────────────
+        .nest("/api/v1/org/public-links", handlers::public_links::admin_routes())
+        .nest("/api/v1/org/webhooks", handlers::webhooks::routes())
+        // Photos: nested with absolute paths to avoid clashing with the
+        // canonical persons / nodes routers.
+        .merge(handlers::photos::routes_absolute())
         .route_layer(axum_middleware::from_fn_with_state(
             state.clone(),
             auth_middleware::<AppState>,

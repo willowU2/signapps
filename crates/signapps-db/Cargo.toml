@@ -25,6 +25,7 @@ uuid = { workspace = true }
 chrono = { workspace = true }
 tracing = { workspace = true }
 anyhow = { workspace = true }
+rand = { workspace = true }
 
 # Internal
 signapps-common = { path = "../signapps-common" }

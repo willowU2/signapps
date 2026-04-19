@@ -41,3 +41,9 @@ pub mod headcount;
 pub mod search;
 pub mod skills;
 pub mod templates;
+
+// ── SO4 integrations (AD preview, public links, webhooks, photos) ───────────
+pub mod ad_preview;
+pub mod photos;
+pub mod public_links;
+pub mod webhooks;

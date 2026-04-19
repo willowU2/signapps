@@ -29,6 +29,9 @@ use crate::ad::sync::{run_cycle, SyncReport};
 use crate::AppState;
 
 /// Build the AD router nested at `/api/v1/org/ad`.
+///
+/// Merges the W3 sync endpoints with the SO4 preview/approve endpoints
+/// so the platform mounts a single `/api/v1/org/ad/*` namespace.
 pub fn routes() -> Router<AppState> {
     Router::new()
         .route(
@@ -37,6 +40,8 @@ pub fn routes() -> Router<AppState> {
         )
         .route("/sync/:tenant_id", post(trigger_sync))
         .route("/sync/:tenant_id/dry-run", post(trigger_sync_dry_run))
+        // SO4 IN1 — preview + selective approve.
+        .merge(crate::handlers::ad_preview::routes())
 }
 
 // ════════════════════════════════════════════════════════════════════
