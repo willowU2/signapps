@@ -267,6 +267,10 @@ pub fn create_router(state: AppState) -> Router {
         .nest("/api/v1/org/boards", handlers::boards::routes())
         .nest("/api/v1/org/grants", handlers::grants::routes())
         .nest("/api/v1/org/ad", handlers::ad::routes())
+        .nest(
+            "/api/v1/org/ad/sync-log",
+            handlers::provisioning::ad_sync_log_routes(),
+        )
         .nest("/api/v1/org/provisioning", handlers::provisioning::routes())
         .route_layer(axum_middleware::from_fn_with_state(
             state.clone(),
