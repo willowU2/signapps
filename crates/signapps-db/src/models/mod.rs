@@ -1,5 +1,12 @@
 //! Database models for SignApps Platform.
 
+// Canonical org data model (S1 W1 of the org+RBAC refonte).
+// Lives directly in this crate so the canonical schema is reachable
+// via `signapps_db::models::org::*` without depending on
+// `signapps-db-identity` (which still owns the legacy `core_org` /
+// `org_*` modules during the transition).
+pub mod org;
+
 pub mod activity;
 // Identity domain models — now live in signapps-db-identity (Phase 6 split).
 pub mod audit_log {
