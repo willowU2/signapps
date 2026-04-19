@@ -122,11 +122,15 @@ interface BackendOrgNode {
 
 /** Map a backend node onto the OrgNode shape the UI expects. */
 function mapNode(n: BackendOrgNode): OrgNode {
+  // `kind` is serialized with PascalCase by serde on the server
+  // ("Root", "Unit") while sqlx stores it snake_case in the DB.
+  // Normalise to snake_case so existing UI logic keeps working.
+  const kindNormalised = (n.node_type ?? n.kind ?? "unit").toLowerCase();
   return {
     id: n.id,
     tenant_id: n.tenant_id,
     parent_id: n.parent_id ?? undefined,
-    node_type: n.node_type ?? n.kind ?? "unit",
+    node_type: kindNormalised,
     name: n.name,
     code: n.code ?? n.slug,
     description: n.description,
@@ -139,8 +143,18 @@ function mapNode(n: BackendOrgNode): OrgNode {
 }
 
 function mapNodeList(list: unknown): OrgNode[] {
-  if (!Array.isArray(list)) return [];
-  return (list as BackendOrgNode[]).map(mapNode);
+  if (Array.isArray(list)) {
+    return (list as BackendOrgNode[]).map(mapNode);
+  }
+  // The subtree endpoint wraps results as `{ nodes: [...] }`.
+  if (
+    list &&
+    typeof list === "object" &&
+    Array.isArray((list as { nodes?: unknown }).nodes)
+  ) {
+    return (list as { nodes: BackendOrgNode[] }).nodes.map(mapNode);
+  }
+  return [];
 }
 
 /**
@@ -198,9 +212,7 @@ export const orgApi = {
       return { ...res, data: mapNode(res.data) };
     },
     getFull: async (id: string) => {
-      const res = await client.get<BackendOrgNode[]>(
-        `/api/v1/org/nodes/${id}/subtree`,
-      );
+      const res = await client.get<unknown>(`/api/v1/org/nodes/${id}/subtree`);
       return { ...res, data: mapNodeList(res.data) };
     },
   },
@@ -252,16 +264,13 @@ export const orgApi = {
     // side filtering where needed; the store already consumes subtree
     // + the parent lookup.
     children: async (id: string) => {
-      const sub = await client.get<BackendOrgNode[]>(
-        `/api/v1/org/nodes/${id}/subtree`,
-      );
-      const direct = (sub.data ?? []).filter((n) => n.parent_id === id);
-      return { ...sub, data: direct.map(mapNode) };
+      const sub = await client.get<unknown>(`/api/v1/org/nodes/${id}/subtree`);
+      const nodes = mapNodeList(sub.data);
+      const direct = nodes.filter((n) => n.parent_id === id);
+      return { ...sub, data: direct };
     },
     descendants: async (id: string) => {
-      const res = await client.get<BackendOrgNode[]>(
-        `/api/v1/org/nodes/${id}/subtree`,
-      );
+      const res = await client.get<unknown>(`/api/v1/org/nodes/${id}/subtree`);
       return { ...res, data: mapNodeList(res.data) };
     },
     ancestors: async (_id: string) => shim<OrgNode[]>([]),
@@ -274,14 +283,11 @@ export const orgApi = {
     permissions: async (_id: string) => shim<PermissionProfile | null>(null),
     setPermissions: async (_id: string, _data: Partial<PermissionProfile>) =>
       shim<{ ok: true }>({ ok: true }),
-    // Boards — new board endpoints
-    listBoards: async () => {
-      const tenantId = getCurrentTenantId();
-      const res = await client.get<BoardSummary[]>("/api/v1/org/boards", {
-        params: tenantId ? { tenant_id: tenantId } : undefined,
-      });
-      return res;
-    },
+    // Boards — no list endpoint on the new service, only POST (create)
+    // and GET /by-node/:id. Listing boards requires iterating nodes,
+    // which is expensive — stub with an empty array until the backend
+    // exposes it.
+    listBoards: async () => shim<BoardSummary[]>([]),
     board: async (id: string) =>
       client.get<EffectiveBoard>(`/api/v1/org/boards/by-node/${id}`),
     createBoard: async (id: string) =>
@@ -390,27 +396,12 @@ export const orgApi = {
     }),
 
   // ── Groups (backed by boards — they play the group role) ─────────────────
+  //
+  // The new org service has no list-all-boards endpoint; groups are
+  // therefore stubbed as empty at the root level and will populate once
+  // callers switch to a node-scoped lookup.
   groups: {
-    list: async () => {
-      const tenantId = getCurrentTenantId();
-      if (!tenantId) return shim<OrgGroup[]>([]);
-      // Boards are the closest equivalent; map them into the OrgGroup shape
-      // so the UI renders them as generic "groups".
-      const boards = await client.get<BoardSummary[]>("/api/v1/org/boards", {
-        params: { tenant_id: tenantId },
-      });
-      const groups: OrgGroup[] = (boards.data ?? []).map((b) => ({
-        id: b.board_id,
-        tenant_id: tenantId,
-        name: `Board ${b.node_id.slice(0, 8)}`,
-        group_type: "static" as const,
-        is_active: true,
-        attributes: {},
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      }));
-      return { ...boards, data: groups };
-    },
+    list: async () => shim<OrgGroup[]>([]),
     create: async (data: Partial<OrgGroup>) => {
       // Creating a "group" = creating a board attached to a node id held
       // in `attributes.node_id` (legacy shape). Best-effort.
