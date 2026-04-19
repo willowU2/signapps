@@ -21,13 +21,16 @@ pub mod it_assets;
 pub mod mail;
 pub mod meet;
 pub mod org;
+pub mod photos;
 pub mod positions;
+pub mod public_links;
 pub mod pxe;
 pub mod raci;
 pub mod skills;
 pub mod tasks;
 pub mod templates;
 pub mod vault;
+pub mod webhooks;
 
 /// Return the list of seeders in dependency order.
 pub fn all() -> Vec<Box<dyn Seeder>> {
@@ -60,5 +63,10 @@ pub fn all() -> Vec<Box<dyn Seeder>> {
         Box::new(it_assets::ItAssetsSeeder),
         Box::new(vault::VaultSeeder),
         Box::new(pxe::PxeSeeder),
+        // SO4 integrations — public links + webhooks + person photos.
+        // Depend on org for tenant_id + root_node + persons.
+        Box::new(public_links::PublicLinksSeeder),
+        Box::new(webhooks::WebhooksSeeder),
+        Box::new(photos::PhotosSeeder),
     ]
 }
