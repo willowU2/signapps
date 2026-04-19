@@ -21,6 +21,7 @@ pub mod it_assets;
 pub mod mail;
 pub mod meet;
 pub mod org;
+pub mod panel_layouts;
 pub mod photos;
 pub mod positions;
 pub mod public_links;
@@ -68,5 +69,7 @@ pub fn all() -> Vec<Box<dyn Seeder>> {
         Box::new(public_links::PublicLinksSeeder),
         Box::new(webhooks::WebhooksSeeder),
         Box::new(photos::PhotosSeeder),
+        // SO6 - showcase 2 panel layouts (admin/node + manager/person).
+        Box::new(panel_layouts::PanelLayoutsSeeder),
     ]
 }
