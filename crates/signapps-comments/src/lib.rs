@@ -389,7 +389,7 @@ mod tests {
         // Toggle off
         assert!(store.add_reaction("document", "doc-1", comment.id, "👍", reactor));
         let comments = store.list_comments("document", "doc-1");
-        assert!(comments[0].reactions.get("👍").is_none());
+        assert!(!comments[0].reactions.contains_key("👍"));
     }
 
     #[test]

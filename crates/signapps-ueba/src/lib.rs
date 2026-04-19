@@ -206,6 +206,7 @@ impl AnomalyDetector {
 
     /// Clear all recorded behaviors (for testing).
     #[cfg(test)]
+    #[allow(dead_code)]
     fn clear_behaviors(&self) {
         if let Ok(mut behaviors) = self.behaviors.lock() {
             behaviors.clear();

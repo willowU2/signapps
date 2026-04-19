@@ -470,7 +470,7 @@ mod tests {
 
     #[test]
     fn test_truncate_array() {
-        let arr: Vec<Value> = (0..20).map(|i| Value::from(i)).collect();
+        let arr: Vec<Value> = (0..20).map(Value::from).collect();
         let result = truncate_result(Value::Array(arr));
         assert_eq!(
             result

@@ -142,7 +142,10 @@ mod tests {
 
     fn make_state() -> AppState {
         let jwt_config = JwtConfig::hs256("test-secret-that-is-at-least-32-bytes-long".to_string());
-        AppState { jwt_config }
+        AppState {
+            jwt_config,
+            resolver: None,
+        }
     }
 
     #[tokio::test]

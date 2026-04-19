@@ -720,7 +720,7 @@ mod tests {
 
         // DATA
         let actions = session.feed_line(b"DATA\r\n");
-        assert!(actions.len() >= 1);
+        assert!(!actions.is_empty());
         match &actions[0] {
             SmtpAction::Reply(code, _) => assert_eq!(*code, 354),
             _ => panic!("expected 354 Reply"),

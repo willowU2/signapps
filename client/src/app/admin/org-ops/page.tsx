@@ -14,6 +14,7 @@
  * Backend: signapps-org (port 3026). API client: @/lib/api/org-ops.
  */
 
+import type * as React from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AppLayout } from "@/components/layout/app-layout";
 import { usePageTitle } from "@/hooks/use-page-title";
@@ -48,7 +49,7 @@ import {
 // Helpers
 // ═══════════════════════════════════════════════════════════════════════════
 
-function statusBadge(status: string): JSX.Element {
+function statusBadge(status: string): React.ReactElement {
   const lower = status.toLowerCase();
   if (lower === "ok" || lower === "succeeded") {
     return <Badge variant="default">{status}</Badge>;
@@ -80,7 +81,7 @@ function formatDate(iso: string | null): string {
 /**
  * Admin Org Ops dashboard.
  */
-export default function OrgOpsPage(): JSX.Element {
+export default function OrgOpsPage(): React.ReactElement {
   usePageTitle("Org Ops — Admin");
 
   const [tenantId, setTenantId] = useState<string>("");

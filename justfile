@@ -86,6 +86,21 @@ mutants-crate crate:
 test-e2e:
     cd client && npx playwright test
 
+# Audit /health latency on every declared service port (/health).
+audit-health:
+    bash scripts/health-audit.sh
+
+# Full E2E suite: reset seed, then run Playwright with compact reporter.
+# Requires the backend to already be up (just start or just start-legacy).
+e2e:
+    just db-seed-reset
+    cd client && npx playwright test --reporter=list
+
+# Same as e2e but opens the Playwright UI for interactive debugging.
+e2e-ui:
+    just db-seed-reset
+    cd client && npx playwright test --ui
+
 # ─────────────────────────── Run ─────────────────────────────
 
 # Lancer un service (avec .env)

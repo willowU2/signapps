@@ -5,8 +5,8 @@ mod tests {
     #[test]
     fn test_calendar_model_serialization() {
         // Test that Calendar model serializes correctly
-        let id = Uuid::new_v4();
-        let owner_id = Uuid::new_v4();
+        let _id = Uuid::new_v4();
+        let _owner_id = Uuid::new_v4();
 
         // This is a compile-time test that models are defined correctly
         let _calendar_model_exists = true;

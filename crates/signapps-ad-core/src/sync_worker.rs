@@ -1033,6 +1033,6 @@ mod tests {
     fn sync_worker_module_compiles() {
         // Real integration tests require a live PostgreSQL instance.
         // Covered by the DC integration test suite.
-        assert!(true);
+        let _ = module_path!();
     }
 }

@@ -467,7 +467,7 @@ impl AutomationRepository {
         .bind(&input.description)
         .bind(&input.version)
         .bind(&input.entry_point)
-        .bind(&input.permissions.as_deref().unwrap_or(&[]))
+        .bind(input.permissions.as_deref().unwrap_or(&[]))
         .bind(&input.hooks)
         .bind(user_id)
         .fetch_one(pool)

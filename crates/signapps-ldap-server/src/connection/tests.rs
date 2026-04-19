@@ -1,4 +1,4 @@
-use super::message_decoder::{decode_ldap_message, decode_search_filter};
+use super::message_decoder::decode_ldap_message;
 use super::message_encoder::encode_ldap_message;
 use crate::codec::ber::{self, BerData, BerElement, BerTag};
 use crate::codec::ber::{encode, encode_integer, encode_octet_string, encode_sequence};

@@ -41,3 +41,6 @@ redis = { workspace = true }
 async-stream = { workspace = true }
 utoipa = { version = "5", features = ["uuid", "chrono"] }
 utoipa-swagger-ui = { workspace = true }
+
+[dev-dependencies]
+tower = { workspace = true }

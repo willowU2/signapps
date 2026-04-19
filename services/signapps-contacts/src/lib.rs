@@ -931,6 +931,7 @@ pub(crate) fn row_to_contact(row: &sqlx::postgres::PgRow, group_ids: Vec<uuid::U
     }
 }
 
+#[allow(dead_code)]
 pub(crate) fn row_to_group(row: &sqlx::postgres::PgRow) -> ContactGroup {
     use sqlx::Row;
     let created: chrono::DateTime<chrono::Utc> =

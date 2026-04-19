@@ -1410,7 +1410,7 @@ mod tests {
 
     #[test]
     fn scenario_12_permission_source_multiple_axes() {
-        let sources = vec![
+        let sources = [
             PermissionSource {
                 axis: "group".into(),
                 grantee_name: Some("engineers".into()),

@@ -884,14 +884,14 @@ mod tests {
     #[test]
     fn empty_chain_has_no_primary_resource() {
         let chain: Vec<ResourceRef> = vec![];
-        assert!(chain.first().is_none());
+        assert!(chain.is_empty());
     }
 
     /// A single-element chain represents a resource with no ancestors.
     #[test]
     fn single_element_chain() {
         let id = Uuid::new_v4();
-        let chain = vec![ResourceRef::file(id)];
+        let chain = [ResourceRef::file(id)];
         assert_eq!(chain.len(), 1);
         assert_eq!(chain[0].resource_type, crate::types::ResourceType::File);
         assert_eq!(chain[0].resource_id, id);
@@ -902,7 +902,7 @@ mod tests {
     fn two_element_chain_ordering() {
         let file_id = Uuid::new_v4();
         let folder_id = Uuid::new_v4();
-        let chain = vec![ResourceRef::file(file_id), ResourceRef::folder(folder_id)];
+        let chain = [ResourceRef::file(file_id), ResourceRef::folder(folder_id)];
         assert_eq!(chain[0].resource_id, file_id);
         assert_eq!(chain[1].resource_id, folder_id);
     }
@@ -910,7 +910,7 @@ mod tests {
     /// Role merging: most permissive wins across multiple sources.
     #[test]
     fn role_most_permissive_across_sources() {
-        let sources = vec![
+        let sources = [
             PermissionSource {
                 axis: "user".into(),
                 grantee_name: None,
@@ -938,7 +938,7 @@ mod tests {
         // In the resolver, an explicit deny triggers early return via has_deny.
         // If a Deny role somehow ends up in sources (e.g. a stale record), the
         // most-permissive merge still picks the positive role.
-        let sources = vec![
+        let sources = [
             PermissionSource {
                 axis: "group".into(),
                 grantee_name: None,
@@ -962,7 +962,7 @@ mod tests {
     /// All sources being Deny → effective role is Deny.
     #[test]
     fn all_deny_sources_gives_deny_role() {
-        let sources = vec![PermissionSource {
+        let sources = [PermissionSource {
             axis: "group".into(),
             grantee_name: None,
             role: Role::Deny,
@@ -1000,7 +1000,7 @@ mod tests {
     fn can_reshare_false_for_inherited_level() {
         // Simulate the can_reshare predicate used in resolve_with_parents.
         let found_level: Option<usize> = Some(1); // inherited from parent
-        let sources = vec![PermissionSource {
+        let sources = [PermissionSource {
             axis: "user".into(),
             grantee_name: None,
             role: Role::Editor,
@@ -1016,7 +1016,7 @@ mod tests {
     #[test]
     fn can_reshare_true_for_direct_level() {
         let found_level: Option<usize> = Some(0);
-        let sources = vec![PermissionSource {
+        let sources = [PermissionSource {
             axis: "user".into(),
             grantee_name: None,
             role: Role::Manager,
@@ -1032,7 +1032,7 @@ mod tests {
     #[test]
     fn can_reshare_false_when_no_level_found() {
         let found_level: Option<usize> = None;
-        let sources = vec![PermissionSource {
+        let sources = [PermissionSource {
             axis: "user".into(),
             grantee_name: None,
             role: Role::Editor,
@@ -1052,7 +1052,7 @@ mod tests {
     #[test]
     fn secondary_deny_safety_net_blocks_access() {
         // Mixed sources: one Deny + one Manager
-        let sources_with_deny = vec![
+        let sources_with_deny = [
             PermissionSource {
                 axis: "group".into(),
                 grantee_name: None,
@@ -1071,7 +1071,7 @@ mod tests {
         assert!(blocked, "deny in sources must block access (secondary net)");
 
         // Without Deny sources → not blocked
-        let sources_no_deny = vec![PermissionSource {
+        let sources_no_deny = [PermissionSource {
             axis: "user".into(),
             grantee_name: None,
             role: Role::Manager,
