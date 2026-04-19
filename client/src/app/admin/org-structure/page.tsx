@@ -26,6 +26,8 @@ import type { TreeNode, BoardInfo } from "./components/tree-node-item";
 import { UnassignedPeoplePanel } from "./components/unassigned-people-panel";
 import { ActiveDelegationsPanel } from "./components/active-delegations-panel";
 import { DetailPanel } from "./components/detail-panel";
+import { GroupDetailCard } from "./components/group-detail-card";
+import { SiteDetailCard } from "./components/site-detail-card";
 import { GroupsNav } from "./components/groups-nav";
 import { SitesNav } from "./components/sites-nav";
 import { StatsBar } from "./components/stats-bar";
@@ -820,7 +822,34 @@ export default function OrgStructurePage() {
               </div>
             )}
 
-            {focusMode ? (
+            {activeNavTab === "groups" && selectedGroupId ? (
+              <div className="w-full lg:w-[420px] lg:shrink-0 border-t lg:border-t-0 lg:border-l border-border bg-card flex flex-col overflow-hidden">
+                <GroupDetailCard
+                  groupId={selectedGroupId}
+                  persons={persons}
+                  onClose={() => setSelectedGroupId(null)}
+                />
+              </div>
+            ) : activeNavTab === "sites" && selectedSiteId ? (
+              <div className="w-full lg:w-[420px] lg:shrink-0 border-t lg:border-t-0 lg:border-l border-border bg-card flex flex-col overflow-hidden">
+                <SiteDetailCard
+                  siteId={selectedSiteId}
+                  persons={persons}
+                  onClose={() => setSelectedSiteId(null)}
+                />
+              </div>
+            ) : activeNavTab !== "tree" ? (
+              <div className="hidden lg:flex w-[420px] shrink-0 items-center justify-center text-muted-foreground text-sm p-8 text-center border-l border-border overflow-hidden">
+                <div>
+                  <Building2 className="h-12 w-12 mx-auto mb-3 opacity-20" />
+                  <p>
+                    Selectionnez un{" "}
+                    {activeNavTab === "groups" ? "groupe" : "site"}
+                  </p>
+                  <p className="text-xs mt-1">pour voir ses details</p>
+                </div>
+              </div>
+            ) : focusMode ? (
               <div className="flex-1 bg-card flex flex-col overflow-hidden">
                 <DetailPanel
                   node={freshSelectedNode}
