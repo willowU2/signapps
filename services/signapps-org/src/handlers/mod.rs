@@ -29,3 +29,8 @@ pub mod canonical_assignments;
 pub mod delegations;
 pub mod history;
 pub mod positions;
+
+// ── SO2 governance (rbac visualizer, raci matrix, board decisions) ──────────
+pub mod decisions;
+pub mod raci;
+pub mod rbac;

@@ -98,6 +98,23 @@ impl Modify for SecurityAddon {
         crate::handlers::delegations::detail,
         crate::handlers::delegations::revoke,
         crate::handlers::delegations::delete_delegation,
+        // ── SO2 — RBAC visualizer ─────────────────────────────────────────────
+        crate::handlers::rbac::effective_for_person,
+        crate::handlers::rbac::effective_filtered,
+        crate::handlers::rbac::simulate,
+        // ── SO2 — RACI matrix ────────────────────────────────────────────────
+        crate::handlers::raci::list,
+        crate::handlers::raci::create,
+        crate::handlers::raci::bulk_set,
+        crate::handlers::raci::delete_one,
+        // ── SO2 — Board decisions + votes ────────────────────────────────────
+        crate::handlers::decisions::list_by_board,
+        crate::handlers::decisions::create,
+        crate::handlers::decisions::update_status,
+        crate::handlers::decisions::delete_decision,
+        crate::handlers::decisions::list_votes,
+        crate::handlers::decisions::upsert_vote,
+        crate::handlers::decisions::delete_vote,
     ),
     components(schemas(
         // Canonical models re-exported from signapps-db.
@@ -146,6 +163,24 @@ impl Modify for SecurityAddon {
         crate::handlers::positions::PositionWithOccupancy,
         // SO1 DTOs — delegations
         crate::handlers::delegations::CreateDelegationBody,
+        // ── SO2 — models ──────────────────────────────────────────────────────
+        signapps_db::models::org::Raci,
+        signapps_db::models::org::RaciRole,
+        signapps_db::models::org::BoardDecision,
+        signapps_db::models::org::DecisionStatus,
+        signapps_db::models::org::BoardVote,
+        signapps_db::models::org::VoteKind,
+        // ── SO2 — DTOs ────────────────────────────────────────────────────────
+        crate::handlers::rbac::EffectivePermission,
+        crate::handlers::rbac::PermissionSource,
+        crate::handlers::rbac::SimulateBody,
+        crate::handlers::rbac::SimulateResponse,
+        crate::handlers::raci::CreateBody,
+        crate::handlers::raci::BulkBody,
+        crate::handlers::raci::BulkEntry,
+        crate::handlers::decisions::CreateDecisionBody,
+        crate::handlers::decisions::UpdateStatusBody,
+        crate::handlers::decisions::UpsertVoteBody,
     )),
     modifiers(&SecurityAddon),
     tags(
