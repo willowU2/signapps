@@ -9,14 +9,17 @@ pub mod ad;
 pub mod calendar;
 pub mod chat;
 pub mod contacts;
+pub mod delegations;
 pub mod docs;
 pub mod drive;
+pub mod focus_nodes;
 pub mod forms;
 pub mod identity;
 pub mod it_assets;
 pub mod mail;
 pub mod meet;
 pub mod org;
+pub mod positions;
 pub mod pxe;
 pub mod tasks;
 pub mod vault;
@@ -25,6 +28,11 @@ pub mod vault;
 pub fn all() -> Vec<Box<dyn Seeder>> {
     vec![
         Box::new(org::OrgSeeder),
+        // SO1 foundations — focus + positions + delegations (run right
+        // after OrgSeeder so later seeders can reference focus nodes).
+        Box::new(focus_nodes::FocusNodesSeeder),
+        Box::new(positions::PositionsSeeder),
+        Box::new(delegations::DelegationsSeeder),
         Box::new(identity::IdentitySeeder),
         Box::new(ad::AdSeeder),
         Box::new(calendar::CalendarSeeder),
