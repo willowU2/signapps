@@ -138,6 +138,8 @@ export default function OrgStructurePage() {
   const debouncedSearchQuery = useDebounce(searchQuery, 200);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [detailOpen, setDetailOpen] = useState(false);
+  // SO6 — person mode: when set, the panel opens in Person mode.
+  const [selectedPerson, setSelectedPerson] = useState<Person | null>(null);
   // SO1 — toolbar state
   const [axisFilter, setAxisFilter] = useState<
     "all" | "structure" | "focus" | "group"
@@ -393,10 +395,17 @@ export default function OrgStructurePage() {
   const handleSelectNode = useCallback(
     (node: OrgNode) => {
       selectNode(node);
+      setSelectedPerson(null);
       setDetailOpen(true);
     },
     [selectNode],
   );
+  // SO6 - avatar click: switch panel to Person mode while keeping the
+  // tree/orgchart selection unchanged.
+  const handleSelectPerson = useCallback((person: Person) => {
+    setSelectedPerson(person);
+    setDetailOpen(true);
+  }, []);
   const handleDoubleClickNode = useCallback(
     (node: TreeNode) => {
       selectNode(node);
@@ -409,6 +418,7 @@ export default function OrgStructurePage() {
     if (focusMode) setFocusMode(false);
     setDetailOpen(false);
     selectNode(null);
+    setSelectedPerson(null);
   }, [selectNode, focusMode, setFocusMode]);
   const handleExitFocusMode = useCallback(
     () => setFocusMode(false),
@@ -780,6 +790,7 @@ export default function OrgStructurePage() {
                           personsById={personsById}
                           onPersonDrop={handlePersonDrop}
                           onPersonMove={handlePersonMove}
+                          onPersonSelect={handleSelectPerson}
                         />
                       ))}
                     </div>
@@ -794,6 +805,7 @@ export default function OrgStructurePage() {
                         personsById={personsById}
                         onPersonDrop={handlePersonDrop}
                         onPersonMove={handlePersonMove}
+                        onPersonSelect={handleSelectPerson}
                       />
                     </div>
                   ) : (
@@ -812,6 +824,8 @@ export default function OrgStructurePage() {
               <div className="flex-1 bg-card flex flex-col overflow-hidden">
                 <DetailPanel
                   node={freshSelectedNode}
+                  person={selectedPerson}
+                  mode={selectedPerson ? "person" : "node"}
                   allNodes={nodes}
                   tree={currentTree}
                   onClose={handleCloseDetail}
@@ -830,6 +844,8 @@ export default function OrgStructurePage() {
               <div className="w-full lg:w-[420px] lg:shrink-0 border-t lg:border-t-0 lg:border-l border-border bg-card flex flex-col overflow-hidden">
                 <DetailPanel
                   node={freshSelectedNode}
+                  person={selectedPerson}
+                  mode={selectedPerson ? "person" : "node"}
                   allNodes={nodes}
                   tree={currentTree}
                   onClose={handleCloseDetail}

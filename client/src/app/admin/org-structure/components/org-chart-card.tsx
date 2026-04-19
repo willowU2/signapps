@@ -47,6 +47,11 @@ interface OrgNodeData extends Record<string, unknown> {
     sourceNodeId: string,
     targetNodeId: string,
   ) => void;
+  /**
+   * SO6 — invoked when a user clicks an avatar on the card, so the
+   * parent page can switch the DetailPanel to Person mode.
+   */
+  onPersonSelect?: (person: Person) => void;
 }
 
 // =============================================================================
@@ -166,6 +171,7 @@ function OrgNodeCard({ data }: { data: OrgNodeData }) {
     personsById,
     onPersonDrop,
     onPersonMove,
+    onPersonSelect,
   } = data;
   const [dragOver, setDragOver] = useState(false);
   if (!orgNode?.node_type) return null;
@@ -307,9 +313,15 @@ function OrgNodeCard({ data }: { data: OrgNodeData }) {
                 }),
               );
             }}
-            onClick={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              e.stopPropagation();
+              onPersonSelect?.(managerPerson);
+            }}
             className={cn(
-              "text-[10px] rounded-full w-7 h-7 flex items-center justify-center font-semibold ring-2 ring-primary/60 shrink-0 cursor-grab active:cursor-grabbing",
+              "text-[10px] rounded-full w-7 h-7 flex items-center justify-center font-semibold ring-2 ring-primary/60 shrink-0",
+              onPersonSelect
+                ? "cursor-pointer hover:ring-primary"
+                : "cursor-grab active:cursor-grabbing",
               avatarTint(managerPerson.id),
             )}
             title={`Responsable : ${managerPerson.first_name} ${managerPerson.last_name}${personTitle(managerPerson) ? " — " + personTitle(managerPerson) : ""}`}
@@ -360,9 +372,15 @@ function OrgNodeCard({ data }: { data: OrgNodeData }) {
                     }),
                   );
                 }}
-                onClick={(e) => e.stopPropagation()}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (p) onPersonSelect?.(p);
+                }}
                 className={cn(
-                  "text-[9px] rounded-full w-5 h-5 flex items-center justify-center font-medium ring-1 ring-background cursor-grab active:cursor-grabbing",
+                  "text-[9px] rounded-full w-5 h-5 flex items-center justify-center font-medium ring-1 ring-background",
+                  p && onPersonSelect
+                    ? "cursor-pointer hover:ring-primary"
+                    : "cursor-grab active:cursor-grabbing",
                   avatarTint(a.personId),
                 )}
                 title={
@@ -434,6 +452,7 @@ interface OrgChartFlowProps {
     sourceNodeId: string,
     targetNodeId: string,
   ) => void;
+  onPersonSelect?: (person: Person) => void;
 }
 
 function OrgChartFlow({
@@ -445,6 +464,7 @@ function OrgChartFlow({
   personsById,
   onPersonDrop,
   onPersonMove,
+  onPersonSelect,
 }: OrgChartFlowProps) {
   const positions = useMemo(() => layoutTree(orgNodes), [orgNodes]);
 
@@ -468,6 +488,7 @@ function OrgChartFlow({
             personsById,
             onPersonDrop,
             onPersonMove,
+            onPersonSelect,
           },
           draggable: false,
         };
@@ -482,6 +503,7 @@ function OrgChartFlow({
     personsById,
     onPersonDrop,
     onPersonMove,
+    onPersonSelect,
   ]);
 
   const initialEdges = useMemo<Edge[]>(() => {
@@ -629,6 +651,11 @@ export interface OrgChartCardProps {
     sourceNodeId: string,
     targetNodeId: string,
   ) => void;
+  /**
+   * SO6 — invoked when a user clicks an avatar on the card, so the
+   * parent page can switch the DetailPanel to Person mode.
+   */
+  onPersonSelect?: (person: Person) => void;
 }
 
 export function OrgChartCard({
@@ -640,6 +667,7 @@ export function OrgChartCard({
   personsById,
   onPersonDrop,
   onPersonMove,
+  onPersonSelect,
 }: OrgChartCardProps) {
   // Filter out any invalid nodes (missing id or node_type)
   const validNodes = useMemo(
@@ -667,6 +695,7 @@ export function OrgChartCard({
           personsById={personsById}
           onPersonDrop={onPersonDrop}
           onPersonMove={onPersonMove}
+          onPersonSelect={onPersonSelect}
         />
       </ReactFlowProvider>
     </div>
