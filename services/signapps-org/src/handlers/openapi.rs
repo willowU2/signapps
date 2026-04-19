@@ -59,6 +59,7 @@ impl Modify for SecurityAddon {
         crate::handlers::canonical_assignments::list,
         crate::handlers::canonical_assignments::create,
         crate::handlers::canonical_assignments::archive,
+        crate::handlers::canonical_assignments::axes_summary,
         // ── Policies + bindings ──────────────────────────────────────────────
         crate::handlers::policies::list,
         crate::handlers::policies::create,
@@ -117,6 +118,9 @@ impl Modify for SecurityAddon {
         crate::handlers::persons::CreatePersonBody,
         crate::handlers::persons::UpdatePersonBody,
         crate::handlers::canonical_assignments::CreateAssignmentBody,
+        crate::handlers::canonical_assignments::AxesSummary,
+        crate::handlers::canonical_assignments::AxesCounts,
+        crate::handlers::canonical_assignments::AxisNodeRef,
         crate::handlers::policies::CreatePolicyBody,
         crate::handlers::policies::UpdatePolicyBody,
         crate::handlers::policies::CreateBindingBody,
