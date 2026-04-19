@@ -6,7 +6,10 @@
 use crate::seeder::Seeder;
 
 pub mod ad;
+pub mod calendar;
+pub mod chat;
 pub mod identity;
+pub mod mail;
 pub mod org;
 
 /// Return the list of seeders in dependency order.
@@ -15,5 +18,8 @@ pub fn all() -> Vec<Box<dyn Seeder>> {
         Box::new(org::OrgSeeder),
         Box::new(identity::IdentitySeeder),
         Box::new(ad::AdSeeder),
+        Box::new(calendar::CalendarSeeder),
+        Box::new(mail::MailSeeder),
+        Box::new(chat::ChatSeeder),
     ]
 }
