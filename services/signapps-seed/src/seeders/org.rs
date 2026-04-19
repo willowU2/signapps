@@ -284,10 +284,11 @@ impl Seeder for OrgSeeder {
             let res = sqlx::query(
                 r#"
                 INSERT INTO org_assignments (id, tenant_id, person_id, node_id, axis, role, is_primary)
-                VALUES ($1, $2, $3, $4, 'hierarchy', 'member', TRUE)
+                VALUES ($1, $2, $3, $4, 'structure', 'member', TRUE)
                 ON CONFLICT (id) DO UPDATE SET
                     node_id = EXCLUDED.node_id,
-                    tenant_id = EXCLUDED.tenant_id
+                    tenant_id = EXCLUDED.tenant_id,
+                    axis = 'structure'
                 "#,
             )
             .bind(assignment_id)
