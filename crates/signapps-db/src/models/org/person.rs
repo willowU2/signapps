@@ -65,4 +65,15 @@ pub struct Person {
     pub created_at: DateTime<Utc>,
     /// Date de dernière modification (UTC).
     pub updated_at: DateTime<Utc>,
+    /// Timestamp de la dernière synchronisation AD↔Org (migration 410).
+    ///
+    /// Rempli par `ad::sync::run_cycle` lorsqu'une mise à jour est
+    /// appliquée. Sert de fenêtre de debounce (30 s) côté Org→AD pour
+    /// éviter le ping-pong.
+    #[sqlx(default)]
+    pub last_synced_at: Option<DateTime<Utc>>,
+    /// Identifiant de la source qui a appliqué la dernière sync
+    /// (`"ad"` | `"org"`).
+    #[sqlx(default)]
+    pub last_synced_by: Option<String>,
 }

@@ -403,27 +403,15 @@ async fn apply_ad_view(pool: &PgPool, person_id: Uuid, v: &PersonView) -> Result
 }
 
 /// Best-effort stamp of `last_synced_at` / `last_synced_by` introduced
-/// by migration 410. The columns may be absent on a database that has
-/// not yet run that migration, so we swallow the error here rather
-/// than crashing the whole cycle.
+/// by migration 410. Uses [`PersonRepository::mark_synced`]; a DB
+/// failure is downgraded to a debug log so one misbehaving row cannot
+/// abort a whole sync cycle.
 async fn stamp_sync_markers(pool: &PgPool, person_id: Uuid, by: &str) -> Result<()> {
-    match sqlx::query(
-        "UPDATE org_persons SET
-            last_synced_at = now(),
-            last_synced_by = $2
-         WHERE id = $1",
-    )
-    .bind(person_id)
-    .bind(by)
-    .execute(pool)
-    .await
-    {
-        Ok(_) => Ok(()),
-        Err(e) => {
-            tracing::debug!(?e, "stamp_sync_markers: ignoring (columns may be missing)");
-            Ok(())
-        }
+    let repo = PersonRepository::new(pool);
+    if let Err(e) = repo.mark_synced(person_id, by).await {
+        tracing::debug!(?e, "stamp_sync_markers: ignoring (migration 410 not applied?)");
     }
+    Ok(())
 }
 
 async fn unbind_quiet(client: AdClient) -> Result<()> {
