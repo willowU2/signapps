@@ -17,6 +17,7 @@ pub mod it_assets;
 pub mod mail;
 pub mod meet;
 pub mod org;
+pub mod pxe;
 pub mod tasks;
 pub mod vault;
 
@@ -37,5 +38,6 @@ pub fn all() -> Vec<Box<dyn Seeder>> {
         Box::new(tasks::TasksSeeder),
         Box::new(it_assets::ItAssetsSeeder),
         Box::new(vault::VaultSeeder),
+        Box::new(pxe::PxeSeeder),
     ]
 }
