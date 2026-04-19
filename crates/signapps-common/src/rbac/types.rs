@@ -168,6 +168,13 @@ pub enum DecisionSource {
     },
     /// The caller is a tenant admin (identity role == admin).
     Admin,
+    /// **SO1** — An active delegation escalated the caller's rights.
+    Delegation {
+        /// Matched delegation id.
+        delegation_id: Uuid,
+        /// Person who delegated their rights.
+        delegator_person_id: Uuid,
+    },
 }
 
 /// Why a request was denied.

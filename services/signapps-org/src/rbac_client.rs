@@ -25,8 +25,10 @@
 //! 4. **Tenant admin** — caller's JWT role is 2 (admin) or 3
 //!    (super-admin).  Surfaced via the `admin_role` parameter of
 //!    [`OrgClient::check_with_role`].
-//!
-//! All other shapes return `Decision::Deny { NoGrant }`.
+//! 5. **SO1 delegation** — if the caller is a **delegate** on an
+//!    active `org_delegations` row with `scope IN ('rbac','all')`,
+//!    the resolver re-runs steps 1–3 using the **delegator** identity
+//!    and accepts an allow from that branch.
 
 use std::sync::Arc;
 
@@ -146,11 +148,82 @@ impl OrgClient {
             }
         }
 
+        // 5) SO1 delegation branch — si `who` est delegate actif d'une
+        //    délégation avec scope IN ('rbac','all'), on réessaye les
+        //    checks 1-3 avec l'identité du delegator.
+        if let Some(source) = self
+            .check_via_delegation(who, &resource, action)
+            .await
+            .map_err(|e| RbacError::Unavailable(e.to_string()))?
+        {
+            self.cache
+                .put(who, &resource, action, CachedDecision { allow: true })
+                .await;
+            return Ok(Decision::Allow { source });
+        }
+
         // Nothing matched — cache the deny.
         self.cache
             .put(who, &resource, action, CachedDecision { allow: false })
             .await;
         Ok(Decision::Deny { reason: DenyReason::NoGrant })
+    }
+
+    // ---- Step 5: SO1 delegation branch -----------------------------
+
+    /// Si `who` est delegate actif (scope rbac/all) d'une délégation,
+    /// réessayer steps 1-3 avec l'identité du delegator. Retourne une
+    /// [`DecisionSource::Delegation`] si l'une des checks autorise.
+    async fn check_via_delegation(
+        &self,
+        who: PersonRef,
+        resource: &ResourceRef,
+        action: Action,
+    ) -> Result<Option<DecisionSource>, sqlx::Error> {
+        // Charger les délégations actives pour `who` (comme delegate).
+        let rows: Vec<(Uuid, Uuid)> = sqlx::query_as(
+            r#"
+            SELECT id, delegator_person_id
+              FROM org_delegations
+             WHERE tenant_id = $1
+               AND delegate_person_id = $2
+               AND active = true
+               AND now() BETWEEN start_at AND end_at
+               AND scope IN ('rbac','all')
+            "#,
+        )
+        .bind(who.tenant_id)
+        .bind(who.id)
+        .fetch_all(self.pool.as_ref())
+        .await?;
+
+        for (delegation_id, delegator_person_id) in rows {
+            let as_delegator = PersonRef {
+                id: delegator_person_id,
+                tenant_id: who.tenant_id,
+            };
+            if self.direct_grant(as_delegator, resource, action).await?.is_some() {
+                return Ok(Some(DecisionSource::Delegation {
+                    delegation_id,
+                    delegator_person_id,
+                }));
+            }
+            if let ResourceRef::OrgNode(node_id) = *resource {
+                if self.policy_binding(as_delegator, node_id, action).await?.is_some() {
+                    return Ok(Some(DecisionSource::Delegation {
+                        delegation_id,
+                        delegator_person_id,
+                    }));
+                }
+                if self.board_member(as_delegator, node_id).await?.is_some() {
+                    return Ok(Some(DecisionSource::Delegation {
+                        delegation_id,
+                        delegator_person_id,
+                    }));
+                }
+            }
+        }
+        Ok(None)
     }
 
     // ---- Step 1: direct grants -------------------------------------
