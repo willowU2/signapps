@@ -22,12 +22,12 @@ use axum::{
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use signapps_common::auth::Claims;
-use signapps_common::pg_events::NewEvent;
 use signapps_common::{Error, Result};
 use signapps_db::models::org::AccessGrant;
 use signapps_db::repositories::org::AccessGrantRepository;
 use uuid::Uuid;
 
+use crate::event_publisher::OrgEventPublisher;
 use crate::grants::{peek_tenant_id, resource_target_url, tenant_hmac_secret, token};
 use crate::AppState;
 
@@ -224,23 +224,20 @@ pub async fn create(
     .await
     .map_err(|e| Error::Database(format!("insert grant: {e}")))?;
 
-    // 4. Emit org.grant.created (resource_type + resource_id in the
-    //    payload so the RBAC cache can do targeted invalidation).
-    let _ = st
-        .event_bus
-        .publish(NewEvent {
-            event_type: "org.grant.created".to_string(),
-            aggregate_id: Some(grant.id),
-            payload: serde_json::json!({
-                "id": grant.id,
-                "tenant_id": grant.tenant_id,
-                "resource_type": grant.resource_type,
-                "resource_id": grant.resource_id,
-                "expires_at": grant.expires_at,
-                "granted_to": grant.granted_to,
-            }),
-        })
-        .await;
+    // 4. Emit org.grant.created via the typed publisher — carries
+    //    resource_type + resource_id so the RBAC cache can do
+    //    targeted invalidation.
+    if let Err(e) = OrgEventPublisher::new(&st.event_bus)
+        .grant_created(
+            grant.id,
+            grant.tenant_id,
+            &grant.resource_type,
+            grant.resource_id,
+        )
+        .await
+    {
+        tracing::error!(?e, "failed to publish org.grant.created event");
+    }
 
     // 5. Build the response. The raw token is returned only here.
     let response = CreateGrantResponse {
@@ -370,19 +367,12 @@ pub async fn revoke(State(st): State<AppState>, Path(id): Path<Uuid>) -> Result<
         .await
         .map_err(|e| Error::Database(format!("revoke grant: {e}")))?;
 
-    let _ = st
-        .event_bus
-        .publish(NewEvent {
-            event_type: "org.grant.revoked".to_string(),
-            aggregate_id: Some(id),
-            payload: serde_json::json!({
-                "id": id,
-                "tenant_id": grant.tenant_id,
-                "resource_type": grant.resource_type,
-                "resource_id": grant.resource_id,
-            }),
-        })
-        .await;
+    if let Err(e) = OrgEventPublisher::new(&st.event_bus)
+        .grant_revoked(id, grant.tenant_id, &grant.resource_type, grant.resource_id)
+        .await
+    {
+        tracing::error!(?e, "failed to publish org.grant.revoked event");
+    }
 
     tracing::info!(grant_id = %id, "grant revoked");
     Ok(StatusCode::NO_CONTENT)

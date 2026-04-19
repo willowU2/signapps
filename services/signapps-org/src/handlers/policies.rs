@@ -17,12 +17,12 @@ use axum::{
     Json, Router,
 };
 use serde::Deserialize;
-use signapps_common::pg_events::NewEvent;
 use signapps_common::{Error, Result};
 use signapps_db::models::org::{Policy, PolicyBinding};
 use signapps_db::repositories::org::PolicyRepository;
 use uuid::Uuid;
 
+use crate::event_publisher::OrgEventPublisher;
 use crate::AppState;
 
 // ============================================================================
@@ -150,15 +150,11 @@ pub async fn create(
         .await
         .map_err(|e| Error::Database(format!("create policy: {e}")))?;
 
-    if let Ok(payload) = serde_json::to_value(&policy) {
-        let _ = st
-            .event_bus
-            .publish(NewEvent {
-                event_type: "org.policy.created".to_string(),
-                aggregate_id: Some(policy.id),
-                payload,
-            })
-            .await;
+    if let Err(e) = OrgEventPublisher::new(&st.event_bus)
+        .policy_updated(policy.id)
+        .await
+    {
+        tracing::error!(?e, "failed to publish org.policy.updated event");
     }
     Ok((StatusCode::CREATED, Json(policy)))
 }
@@ -224,15 +220,11 @@ pub async fn update(
     .map_err(|e| Error::Database(format!("update policy: {e}")))?
     .ok_or_else(|| Error::NotFound(format!("org policy {id}")))?;
 
-    if let Ok(payload) = serde_json::to_value(&policy) {
-        let _ = st
-            .event_bus
-            .publish(NewEvent {
-                event_type: "org.policy.updated".to_string(),
-                aggregate_id: Some(policy.id),
-                payload,
-            })
-            .await;
+    if let Err(e) = OrgEventPublisher::new(&st.event_bus)
+        .policy_updated(policy.id)
+        .await
+    {
+        tracing::error!(?e, "failed to publish org.policy.updated event");
     }
     Ok(Json(policy))
 }
@@ -265,14 +257,12 @@ pub async fn delete_policy(
         return Err(Error::NotFound(format!("org policy {id}")));
     }
 
-    let _ = st
-        .event_bus
-        .publish(NewEvent {
-            event_type: "org.policy.deleted".to_string(),
-            aggregate_id: Some(id),
-            payload: serde_json::json!({ "id": id }),
-        })
-        .await;
+    if let Err(e) = OrgEventPublisher::new(&st.event_bus)
+        .policy_updated(id)
+        .await
+    {
+        tracing::error!(?e, "failed to publish org.policy.updated (delete) event");
+    }
     Ok(StatusCode::NO_CONTENT)
 }
 
@@ -302,15 +292,11 @@ pub async fn bind(
         .await
         .map_err(|e| Error::Database(format!("bind policy: {e}")))?;
 
-    if let Ok(payload) = serde_json::to_value(&binding) {
-        let _ = st
-            .event_bus
-            .publish(NewEvent {
-                event_type: "org.policy.binding_changed".to_string(),
-                aggregate_id: Some(policy_id),
-                payload,
-            })
-            .await;
+    if let Err(e) = OrgEventPublisher::new(&st.event_bus)
+        .policy_updated(policy_id)
+        .await
+    {
+        tracing::error!(?e, "failed to publish org.policy.updated (bind) event");
     }
     Ok((StatusCode::CREATED, Json(binding)))
 }
@@ -333,14 +319,12 @@ pub async fn unbind(State(st): State<AppState>, Path(id): Path<Uuid>) -> Result<
     repo.unbind(id)
         .await
         .map_err(|e| Error::Database(format!("unbind: {e}")))?;
-    let _ = st
-        .event_bus
-        .publish(NewEvent {
-            event_type: "org.policy.binding_changed".to_string(),
-            aggregate_id: Some(id),
-            payload: serde_json::json!({ "binding_id": id, "removed": true }),
-        })
-        .await;
+    if let Err(e) = OrgEventPublisher::new(&st.event_bus)
+        .policy_updated(id)
+        .await
+    {
+        tracing::error!(?e, "failed to publish org.policy.updated (unbind) event");
+    }
     Ok(StatusCode::NO_CONTENT)
 }
 

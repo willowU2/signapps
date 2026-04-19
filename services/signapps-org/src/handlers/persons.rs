@@ -21,6 +21,7 @@ use signapps_db::models::org::Person;
 use signapps_db::repositories::org::PersonRepository;
 use uuid::Uuid;
 
+use crate::event_publisher::OrgEventPublisher;
 use crate::AppState;
 
 // ============================================================================
@@ -132,18 +133,8 @@ pub async fn create(
         .await
         .map_err(|e| Error::Database(format!("create person: {e}")))?;
 
-    if let Ok(payload) = serde_json::to_value(&person) {
-        if let Err(e) = st
-            .event_bus
-            .publish(NewEvent {
-                event_type: "org.user.created".to_string(),
-                aggregate_id: Some(person.id),
-                payload,
-            })
-            .await
-        {
-            tracing::error!(?e, "failed to publish org.user.created event");
-        }
+    if let Err(e) = OrgEventPublisher::new(&st.event_bus).user_created(&person).await {
+        tracing::error!(?e, "failed to publish org.user.created event");
     }
     Ok((StatusCode::CREATED, Json(person)))
 }
@@ -211,6 +202,8 @@ pub async fn update(
     .map_err(|e| Error::Database(format!("update person: {e}")))?
     .ok_or_else(|| Error::NotFound(format!("org person {id}")))?;
 
+    // `org.user.updated` stays a raw event (no provisioning consumer
+    // today, so no point promoting it to the typed helper).
     if let Ok(payload) = serde_json::to_value(&person) {
         let _ = st
             .event_bus
@@ -240,24 +233,32 @@ pub async fn update(
 #[tracing::instrument(skip(st))]
 pub async fn archive(State(st): State<AppState>, Path(id): Path<Uuid>) -> Result<StatusCode> {
     let repo = PersonRepository::new(st.pool.inner());
-    if repo
+    let existing = repo
         .get(id)
         .await
         .map_err(|e| Error::Database(format!("get person: {e}")))?
-        .is_none()
-    {
-        return Err(Error::NotFound(format!("org person {id}")));
-    }
+        .ok_or_else(|| Error::NotFound(format!("org person {id}")))?;
     repo.archive(id)
         .await
         .map_err(|e| Error::Database(format!("archive person: {e}")))?;
 
+    // Canonical deactivation topic consumed by the provisioning
+    // fan-out workers (mail suspend, drive freeze, chat removal, ...).
+    if let Err(e) = OrgEventPublisher::new(&st.event_bus)
+        .user_deactivated(id, existing.tenant_id)
+        .await
+    {
+        tracing::error!(?e, "failed to publish org.user.deactivated event");
+    }
+    // Keep the legacy `org.user.archived` alias for any consumer that
+    // still listens for it — cheap to publish, trivial to remove once
+    // all consumers have migrated.
     let _ = st
         .event_bus
         .publish(NewEvent {
             event_type: "org.user.archived".to_string(),
             aggregate_id: Some(id),
-            payload: serde_json::json!({ "id": id }),
+            payload: serde_json::json!({ "id": id, "tenant_id": existing.tenant_id }),
         })
         .await;
     Ok(StatusCode::NO_CONTENT)

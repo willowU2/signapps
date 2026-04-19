@@ -15,6 +15,7 @@
 #![allow(clippy::assertions_on_constants)]
 
 pub mod ad;
+pub mod event_publisher;
 pub mod events;
 pub mod grants;
 pub mod handlers;

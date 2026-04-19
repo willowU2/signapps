@@ -15,12 +15,12 @@ use axum::{
 };
 use chrono::NaiveDate;
 use serde::Deserialize;
-use signapps_common::pg_events::NewEvent;
 use signapps_common::{Error, Result};
 use signapps_db::models::org::{Assignment, Axis};
 use signapps_db::repositories::org::AssignmentRepository;
 use uuid::Uuid;
 
+use crate::event_publisher::OrgEventPublisher;
 use crate::AppState;
 
 // ============================================================================
@@ -152,15 +152,11 @@ pub async fn create(
         .await
         .map_err(|e| Error::Database(format!("create assignment: {e}")))?;
 
-    if let Ok(payload) = serde_json::to_value(&assignment) {
-        let _ = st
-            .event_bus
-            .publish(NewEvent {
-                event_type: "org.assignment.created".to_string(),
-                aggregate_id: Some(assignment.id),
-                payload,
-            })
-            .await;
+    if let Err(e) = OrgEventPublisher::new(&st.event_bus)
+        .assignment_changed(assignment.person_id)
+        .await
+    {
+        tracing::error!(?e, "failed to publish org.assignment.changed event");
     }
     Ok((StatusCode::CREATED, Json(assignment)))
 }
@@ -179,17 +175,27 @@ pub async fn create(
 )]
 #[tracing::instrument(skip(st))]
 pub async fn archive(State(st): State<AppState>, Path(id): Path<Uuid>) -> Result<StatusCode> {
+    // Fetch person_id first so the post-delete event carries enough
+    // context for targeted cache invalidation.
+    let person_id: Option<Uuid> =
+        sqlx::query_scalar("SELECT person_id FROM org_assignments WHERE id = $1")
+            .bind(id)
+            .fetch_optional(st.pool.inner())
+            .await
+            .map_err(|e| Error::Database(format!("fetch assignment person_id: {e}")))?;
+
     let repo = AssignmentRepository::new(st.pool.inner());
     repo.delete(id)
         .await
         .map_err(|e| Error::Database(format!("delete assignment: {e}")))?;
-    let _ = st
-        .event_bus
-        .publish(NewEvent {
-            event_type: "org.assignment.deleted".to_string(),
-            aggregate_id: Some(id),
-            payload: serde_json::json!({ "id": id }),
-        })
-        .await;
+
+    if let Some(pid) = person_id {
+        if let Err(e) = OrgEventPublisher::new(&st.event_bus)
+            .assignment_changed(pid)
+            .await
+        {
+            tracing::error!(?e, "failed to publish org.assignment.changed event");
+        }
+    }
     Ok(StatusCode::NO_CONTENT)
 }
