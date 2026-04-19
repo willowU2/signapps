@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getNodeTypeConfig } from "./tab-config";
+import { avatarTint, personInitials, personTitle } from "./avatar-helpers";
 import type { OrgNode, Person } from "@/types/org";
 
 // =============================================================================
@@ -57,10 +58,18 @@ export function matchesSearch(node: TreeNode, query: string): boolean {
 // =============================================================================
 
 export interface NodeAssignment {
+  assignmentId: string;
   personId: string;
   role?: string;
   isPrimary: boolean;
 }
+
+// Shared HTML5 drag/drop MIME types so node and person drags never
+// collide. Both keys also store a plain JSON payload (see dataTransfer
+// setData calls below) to transport the source ids without any shared
+// JS state (which wouldn't survive cross-window drags).
+export const PERSON_ASSIGN_MIME = "application/x-signapps-person";
+export const PERSON_MOVE_MIME = "application/x-signapps-person-move";
 
 export interface TreeNodeItemProps {
   node: TreeNode;
@@ -79,50 +88,15 @@ export interface TreeNodeItemProps {
   boardMap?: Record<string, BoardInfo>;
   assignmentsByNode?: Record<string, NodeAssignment[]>;
   personsById?: Record<string, Person>;
-}
-
-/**
- * Deterministic color per person, using hash on the id — stable across
- * renders so the same person always gets the same avatar tint.
- */
-function avatarTint(personId: string): string {
-  const palette = [
-    "bg-blue-500/20 text-blue-700 dark:text-blue-300",
-    "bg-emerald-500/20 text-emerald-700 dark:text-emerald-300",
-    "bg-purple-500/20 text-purple-700 dark:text-purple-300",
-    "bg-orange-500/20 text-orange-700 dark:text-orange-300",
-    "bg-pink-500/20 text-pink-700 dark:text-pink-300",
-    "bg-amber-500/20 text-amber-700 dark:text-amber-300",
-    "bg-cyan-500/20 text-cyan-700 dark:text-cyan-300",
-    "bg-rose-500/20 text-rose-700 dark:text-rose-300",
-  ];
-  let h = 0;
-  for (let i = 0; i < personId.length; i++)
-    h = (h * 31 + personId.charCodeAt(i)) | 0;
-  return palette[Math.abs(h) % palette.length];
-}
-
-function personInitials(p: Person | undefined): string {
-  if (!p) return "?";
-  const a = p.first_name?.[0] ?? "";
-  const b = p.last_name?.[0] ?? "";
-  return (a + b).toUpperCase() || "?";
-}
-
-/**
- * Read the title from either `attributes.title` (signapps-org raw
- * response) or `metadata.title` (legacy workforce shape). Types don't
- * match exactly so we index defensively.
- */
-function personTitle(p: Person | undefined): string | undefined {
-  if (!p) return undefined;
-  const raw = p as unknown as {
-    attributes?: Record<string, unknown>;
-    metadata?: Record<string, unknown>;
-  };
-  const src = raw.attributes ?? raw.metadata ?? {};
-  const t = src.title;
-  return typeof t === "string" && t.length > 0 ? t : undefined;
+  /** Invoked when an unassigned person is dropped onto this node. */
+  onPersonDrop?: (targetNodeId: string, personId: string) => void;
+  /** Invoked when an already-assigned person is moved to another node. */
+  onPersonMove?: (
+    assignmentId: string,
+    personId: string,
+    sourceNodeId: string,
+    targetNodeId: string,
+  ) => void;
 }
 
 function TreeNodeItemInner({
@@ -142,6 +116,8 @@ function TreeNodeItemInner({
   boardMap,
   assignmentsByNode,
   personsById,
+  onPersonDrop,
+  onPersonMove,
 }: TreeNodeItemProps) {
   const [dragOver, setDragOver] = useState(false);
   const isExpanded = expanded.has(node.id);
@@ -184,8 +160,12 @@ function TreeNodeItemInner({
             onDragOver={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              e.dataTransfer.dropEffect = "move";
-              if (draggedId !== node.id) {
+              const types = e.dataTransfer.types;
+              const isPersonDrag =
+                types.includes(PERSON_ASSIGN_MIME) ||
+                types.includes(PERSON_MOVE_MIME);
+              e.dataTransfer.dropEffect = isPersonDrag ? "copy" : "move";
+              if (draggedId !== node.id || isPersonDrag) {
                 setDragOver(true);
               }
             }}
@@ -197,6 +177,41 @@ function TreeNodeItemInner({
               e.preventDefault();
               e.stopPropagation();
               setDragOver(false);
+              const assignData = e.dataTransfer.getData(PERSON_ASSIGN_MIME);
+              const moveData = e.dataTransfer.getData(PERSON_MOVE_MIME);
+              if (assignData) {
+                try {
+                  const { personId } = JSON.parse(assignData) as {
+                    personId: string;
+                  };
+                  if (personId) onPersonDrop?.(node.id, personId);
+                } catch {
+                  // malformed payload — ignore silently
+                }
+                return;
+              }
+              if (moveData) {
+                try {
+                  const { assignmentId, personId, sourceNodeId } = JSON.parse(
+                    moveData,
+                  ) as {
+                    assignmentId: string;
+                    personId: string;
+                    sourceNodeId: string;
+                  };
+                  if (assignmentId && sourceNodeId !== node.id) {
+                    onPersonMove?.(
+                      assignmentId,
+                      personId,
+                      sourceNodeId,
+                      node.id,
+                    );
+                  }
+                } catch {
+                  // malformed payload — ignore silently
+                }
+                return;
+              }
               if (draggedId !== node.id) {
                 onDrop(node.id);
               }
@@ -206,10 +221,7 @@ function TreeNodeItemInner({
               isSelected
                 ? "bg-primary/10 ring-1 ring-primary/30 text-foreground"
                 : "hover:bg-muted/60",
-              dragOver &&
-                draggedId &&
-                draggedId !== node.id &&
-                "ring-2 ring-primary bg-primary/10 shadow-md",
+              dragOver && "ring-2 ring-primary bg-primary/10 shadow-md",
             )}
             style={{ paddingLeft: `${depth * 20 + 12}px` }}
             onClick={() => onSelect(node)}
@@ -286,14 +298,28 @@ function TreeNodeItemInner({
             )}
 
             {/* Manager (primary assignment) */}
-            {managerPerson && (
+            {managerPerson && manager && (
               <div
                 className="flex items-center gap-1.5 shrink-0"
                 title={`Responsable : ${managerPerson.first_name} ${managerPerson.last_name}${personTitle(managerPerson) ? " — " + personTitle(managerPerson) : ""}`}
               >
                 <span
+                  draggable={Boolean(onPersonMove)}
+                  onDragStart={(e) => {
+                    e.stopPropagation();
+                    e.dataTransfer.effectAllowed = "move";
+                    e.dataTransfer.setData(
+                      PERSON_MOVE_MIME,
+                      JSON.stringify({
+                        assignmentId: manager.assignmentId,
+                        personId: manager.personId,
+                        sourceNodeId: node.id,
+                      }),
+                    );
+                  }}
+                  onClick={(e) => e.stopPropagation()}
                   className={cn(
-                    "text-[10px] rounded-full w-6 h-6 flex items-center justify-center font-semibold ring-2 ring-primary/60",
+                    "text-[10px] rounded-full w-6 h-6 flex items-center justify-center font-semibold ring-2 ring-primary/60 cursor-grab active:cursor-grabbing",
                     avatarTint(managerPerson.id),
                   )}
                 >
@@ -309,9 +335,23 @@ function TreeNodeItemInner({
                   const p = personsById?.[a.personId];
                   return (
                     <span
-                      key={a.personId}
+                      key={a.assignmentId}
+                      draggable={Boolean(onPersonMove)}
+                      onDragStart={(e) => {
+                        e.stopPropagation();
+                        e.dataTransfer.effectAllowed = "move";
+                        e.dataTransfer.setData(
+                          PERSON_MOVE_MIME,
+                          JSON.stringify({
+                            assignmentId: a.assignmentId,
+                            personId: a.personId,
+                            sourceNodeId: node.id,
+                          }),
+                        );
+                      }}
+                      onClick={(e) => e.stopPropagation()}
                       className={cn(
-                        "text-[9px] rounded-full w-5 h-5 flex items-center justify-center font-medium ring-1 ring-background",
+                        "text-[9px] rounded-full w-5 h-5 flex items-center justify-center font-medium ring-1 ring-background cursor-grab active:cursor-grabbing",
                         avatarTint(a.personId),
                       )}
                       title={
@@ -401,6 +441,8 @@ function TreeNodeItemInner({
               boardMap={boardMap}
               assignmentsByNode={assignmentsByNode}
               personsById={personsById}
+              onPersonDrop={onPersonDrop}
+              onPersonMove={onPersonMove}
             />
           ))}
         </div>
@@ -431,5 +473,7 @@ export const TreeNodeItem = React.memo(
     prev.onDragStart === next.onDragStart &&
     prev.onDragEnd === next.onDragEnd &&
     prev.onContextAction === next.onContextAction &&
-    prev.onDoubleClick === next.onDoubleClick,
+    prev.onDoubleClick === next.onDoubleClick &&
+    prev.onPersonDrop === next.onPersonDrop &&
+    prev.onPersonMove === next.onPersonMove,
 );
