@@ -114,9 +114,10 @@ members = [
     "services/signapps-gateway",
     # Endpoint management agent (standalone binary)
     "services/signapps-agent",
+    # Seeding service (demo data, single source of truth)
+    "services/signapps-seed",
     # Developer tooling
     "tools/signapps-installer",
-    "tools/signapps-seed",
     "tools/migrations-audit",
 ]
 

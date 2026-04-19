@@ -47,19 +47,23 @@ just db-start          # Lance postgres:17-alpine via Docker
 # 3. Migrations
 just db-migrate        # Applique migrations/ séquentiellement
 
-# 4. Compiler le workspace
+# 4. Données démo (Acme Corp — 15 services, ~280 rows, idempotent)
+just db-seed           # signapps-seed — remplace l'ancien script bash
+
+# 5. Compiler le workspace
 just build             # cargo build --workspace (debug)
 
-# 5. Lancer les tests
+# 6. Lancer les tests
 just test              # cargo nextest run --workspace
 
-# 6. Développement
+# 7. Développement
 just dev               # Frontend Next.js — port 3000
 just run identity      # Service identity — port 3001
 bacon                  # Watcher de compilation live
 ```
 
 **Auto-login dev** : `http://localhost:3000/login?auto=admin`
+**Seed users** : `admin` / `admin` ou `marie.dupont` / `Demo1234!` (+ 14 autres Acme users)
 
 ---
 

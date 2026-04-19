@@ -16,6 +16,10 @@ path = "src/lib.rs"
 name = "signapps-pxe"
 path = "src/main.rs"
 
+[[bin]]
+name = "signapps-pxe-sim"
+path = "src/bin/sim.rs"
+
 [dependencies]
 mimalloc = { workspace = true }
 signapps-service = { path = "../../crates/signapps-service" }
@@ -45,7 +49,15 @@ signapps-dns-server = { path = "../../crates/signapps-dns-server" }
 ipnetwork = { version = "0.20", features = ["serde"] }
 async-tftp.workspace = true
 sha2 = "0.10"
+hex = "0.4"
 reqwest.workspace = true
 futures-util.workspace = true
 utoipa.workspace = true
 utoipa-swagger-ui.workspace = true
+async-stream.workspace = true
+tokio-stream.workspace = true
+
+[dev-dependencies]
+rand = "0.8"
+tokio = { version = "1", features = ["full", "test-util"] }
+tracing-subscriber = { workspace = true, features = ["env-filter"] }

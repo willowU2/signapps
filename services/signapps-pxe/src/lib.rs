@@ -16,6 +16,7 @@
 // was bin-only.
 #![allow(clippy::assertions_on_constants)]
 
+pub mod auto_enroll;
 pub mod catalog;
 pub mod dc;
 pub mod dhcp_proxy;
@@ -23,6 +24,7 @@ pub mod handlers;
 pub mod images;
 pub mod models;
 pub mod openapi;
+pub mod sse;
 pub mod tftp;
 
 use axum::{
@@ -55,6 +57,44 @@ pub struct AppState {
 impl signapps_common::middleware::AuthState for AppState {
     fn jwt_config(&self) -> &JwtConfig {
         &self.jwt_config
+    }
+}
+
+/// Resolve the TFTP UDP port for this process.
+///
+/// Resolution order:
+/// 1. If `PXE_TFTP_PORT` is set and parses as `u16`, use it.
+/// 2. If `PXE_MODE=root`, return `69` (standard TFTP, requires root).
+/// 3. Otherwise (default "user" mode), return `6969` (non-privileged).
+pub fn resolve_tftp_port() -> u16 {
+    if let Ok(explicit) = std::env::var("PXE_TFTP_PORT") {
+        if let Ok(p) = explicit.parse::<u16>() {
+            return p;
+        }
+    }
+    match std::env::var("PXE_MODE").as_deref() {
+        Ok("root") => 69,
+        _ => 6969,
+    }
+}
+
+/// Resolve the ProxyDHCP UDP port for this process.
+///
+/// Resolution order:
+/// 1. If `PXE_DHCP_PORT` is set and parses as `u16`, use it.
+/// 2. If `PXE_MODE=root`, return `67` (standard DHCP, requires root AND
+///    conflicts with any LAN DHCP server).
+/// 3. Otherwise (default "user" mode), return `4011` (standard ProxyDHCP
+///    port — non-privileged, does not conflict with regular DHCP).
+pub fn resolve_dhcp_port() -> u16 {
+    if let Ok(explicit) = std::env::var("PXE_DHCP_PORT") {
+        if let Ok(p) = explicit.parse::<u16>() {
+            return p;
+        }
+    }
+    match std::env::var("PXE_MODE").as_deref() {
+        Ok("root") => 67,
+        _ => 4011,
     }
 }
 
@@ -120,26 +160,35 @@ pub async fn router(shared: SharedState) -> anyhow::Result<Router> {
     tokio::fs::create_dir_all("data/pxe/tftpboot/images").await?;
 
     // TFTP UDP listener — gated on PXE_ENABLE_TFTP env flag. Default
-    // disabled so dev boxes (which can't bind :69 without elevation)
-    // don't hit a spurious supervisor restart.
-    let tftp_enabled: bool = env_or("PXE_ENABLE_TFTP", "false").parse().unwrap_or(false);
+    // enabled: with `PXE_MODE=user` (the default), TFTP binds to the
+    // non-privileged port 6969, which a dev box can bind without root.
+    let tftp_enabled: bool = env_or("PXE_ENABLE_TFTP", "true").parse().unwrap_or(true);
     if tftp_enabled {
+        let tftp_port = resolve_tftp_port();
         tokio::spawn(async move {
-            if let Err(e) = tftp::start_tftp_server("data/pxe/tftpboot", 69).await {
+            if let Err(e) = tftp::start_tftp_server("data/pxe/tftpboot", tftp_port).await {
                 tracing::error!("TFTP Server failed (non-fatal — :3016 still serves): {}", e);
             }
         });
-        tracing::info!("TFTP UDP :69 listener enabled");
+        tracing::info!("TFTP UDP :{} listener enabled", tftp_port);
     } else {
         tracing::info!("TFTP UDP listener disabled (set PXE_ENABLE_TFTP=true to enable)");
     }
 
-    // ProxyDHCP listener — gated on PXE_ENABLE_PROXY_DHCP (default off).
-    let proxy_dhcp_enabled: bool = env_or("PXE_ENABLE_PROXY_DHCP", "false")
+    // ProxyDHCP listener — gated on PXE_ENABLE_PROXY_DHCP (default on,
+    // uses port 4011 in user mode which is non-privileged).
+    let proxy_dhcp_enabled: bool = env_or("PXE_ENABLE_PROXY_DHCP", "true")
         .parse()
-        .unwrap_or(false);
+        .unwrap_or(true);
     if proxy_dhcp_enabled {
-        let proxy_config = dhcp_proxy::ProxyDhcpConfig::default();
+        let db_for_auto_enroll = state.db.clone();
+        let auto_enroll: bool = env_or("PXE_AUTO_ENROLL", "true").parse().unwrap_or(true);
+        let proxy_config = dhcp_proxy::ProxyDhcpConfig {
+            db: Some(db_for_auto_enroll),
+            auto_enroll,
+            ..dhcp_proxy::ProxyDhcpConfig::default()
+        };
+        let dhcp_port = resolve_dhcp_port();
         tokio::spawn(async move {
             if let Err(e) = dhcp_proxy::start_proxy_dhcp(proxy_config).await {
                 tracing::warn!(
@@ -148,7 +197,11 @@ pub async fn router(shared: SharedState) -> anyhow::Result<Router> {
                 );
             }
         });
-        tracing::info!("ProxyDHCP listener enabled");
+        tracing::info!(
+            "ProxyDHCP listener enabled on :{} (auto_enroll={})",
+            dhcp_port,
+            auto_enroll
+        );
     } else {
         tracing::info!("ProxyDHCP listener disabled (set PXE_ENABLE_PROXY_DHCP=true to enable)");
     }
@@ -186,6 +239,21 @@ async fn build_state(shared: &SharedState) -> anyhow::Result<AppState> {
     })
 }
 
+/// Test-only routes mounted in debug builds. Returns an empty router in
+/// release builds so the endpoints never ship to production.
+#[cfg(debug_assertions)]
+fn test_routes() -> Router<AppState> {
+    Router::new().route(
+        "/api/v1/pxe/_test/simulate-dhcp",
+        post(handlers::test_simulate_dhcp),
+    )
+}
+
+#[cfg(not(debug_assertions))]
+fn test_routes() -> Router<AppState> {
+    Router::new()
+}
+
 fn create_router(app_state: AppState, http_boot_dir: &str) -> Router {
     Router::new()
         .route("/health", get(health_check))
@@ -215,11 +283,26 @@ fn create_router(app_state: AppState, http_boot_dir: &str) -> Router {
             "/api/v1/pxe/assets",
             get(handlers::list_assets).post(handlers::register_asset),
         )
+        // S2.T4: auto-discovery surface (must be mounted BEFORE :id so the
+        // literal `discovered` path wins over the `:id` extractor).
+        .route(
+            "/api/v1/pxe/assets/discovered",
+            get(handlers::list_discovered),
+        )
+        .route(
+            "/api/v1/pxe/assets/:mac/enroll",
+            post(handlers::enroll_asset),
+        )
         .route(
             "/api/v1/pxe/assets/:id",
             get(handlers::get_asset)
                 .put(handlers::update_asset)
                 .delete(handlers::delete_asset),
+        )
+        // S2.T5: DHCP debug surface
+        .route(
+            "/api/v1/pxe/dhcp/recent",
+            get(handlers::list_recent_dhcp),
         )
         // Boot script
         .route("/api/v1/pxe/boot.ipxe", get(handlers::generate_ipxe_script))
@@ -240,6 +323,11 @@ fn create_router(app_state: AppState, http_boot_dir: &str) -> Router {
             "/api/v1/pxe/deployments/:mac/progress",
             post(images::update_deployment_progress),
         )
+        // S2.T7: SSE live progress stream
+        .route(
+            "/api/v1/pxe/deployments/:mac/stream",
+            get(sse::stream_deployment),
+        )
         // PX6: Golden image capture
         .route(
             "/api/v1/pxe/images/capture",
@@ -251,6 +339,10 @@ fn create_router(app_state: AppState, http_boot_dir: &str) -> Router {
             "/api/v1/pxe/catalog/:index/download",
             post(catalog::download_catalog_image),
         )
+        // S2.T5: catalog sha256 verification
+        .route("/api/v1/pxe/catalog/refresh", post(catalog::refresh_catalog))
+        // S2.T11: test-only simulate-DHCP (debug builds only)
+        .merge(test_routes())
         .merge(openapi::swagger_router())
         .layer(axum::middleware::from_fn_with_state(
             app_state.clone(),
@@ -285,4 +377,63 @@ fn create_router(app_state: AppState, http_boot_dir: &str) -> Router {
         .layer(axum::middleware::from_fn(logging_middleware))
         .layer(axum::middleware::from_fn(request_id_middleware))
         .with_state(app_state)
+}
+
+#[cfg(test)]
+mod mode_tests {
+    //! Tests for PXE port resolution via `PXE_MODE` / `PXE_TFTP_PORT` /
+    //! `PXE_DHCP_PORT`. Env var tests are sequenced with a mutex because
+    //! the process-global env is shared across tests when cargo runs
+    //! them on multiple threads.
+    use super::*;
+    use std::sync::Mutex;
+
+    static ENV_LOCK: Mutex<()> = Mutex::new(());
+
+    #[test]
+    fn test_pxe_mode_user_gives_non_privileged_ports() {
+        let _g = ENV_LOCK.lock().expect("env lock poisoned");
+        std::env::set_var("PXE_MODE", "user");
+        std::env::remove_var("PXE_TFTP_PORT");
+        std::env::remove_var("PXE_DHCP_PORT");
+
+        assert_eq!(resolve_tftp_port(), 6969);
+        assert_eq!(resolve_dhcp_port(), 4011);
+    }
+
+    #[test]
+    fn test_pxe_mode_root_gives_privileged_ports() {
+        let _g = ENV_LOCK.lock().expect("env lock poisoned");
+        std::env::set_var("PXE_MODE", "root");
+        std::env::remove_var("PXE_TFTP_PORT");
+        std::env::remove_var("PXE_DHCP_PORT");
+
+        assert_eq!(resolve_tftp_port(), 69);
+        assert_eq!(resolve_dhcp_port(), 67);
+    }
+
+    #[test]
+    fn test_explicit_port_override_wins() {
+        let _g = ENV_LOCK.lock().expect("env lock poisoned");
+        std::env::set_var("PXE_MODE", "user");
+        std::env::set_var("PXE_TFTP_PORT", "8080");
+        std::env::set_var("PXE_DHCP_PORT", "9090");
+
+        assert_eq!(resolve_tftp_port(), 8080);
+        assert_eq!(resolve_dhcp_port(), 9090);
+
+        std::env::remove_var("PXE_TFTP_PORT");
+        std::env::remove_var("PXE_DHCP_PORT");
+    }
+
+    #[test]
+    fn test_default_mode_gives_non_privileged_ports() {
+        let _g = ENV_LOCK.lock().expect("env lock poisoned");
+        std::env::remove_var("PXE_MODE");
+        std::env::remove_var("PXE_TFTP_PORT");
+        std::env::remove_var("PXE_DHCP_PORT");
+
+        assert_eq!(resolve_tftp_port(), 6969);
+        assert_eq!(resolve_dhcp_port(), 4011);
+    }
 }

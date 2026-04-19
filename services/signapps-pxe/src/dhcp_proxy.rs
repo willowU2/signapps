@@ -5,6 +5,7 @@
 // Machine sends DHCPDISCOVER with option 60 "PXEClient", we respond with
 // DHCPOFFER containing next-server (siaddr) and boot filename (file field).
 
+use signapps_db::DatabasePool;
 use std::net::{IpAddr, Ipv4Addr, SocketAddr, UdpSocket};
 use tracing::{debug, error, info, warn};
 
@@ -25,24 +26,46 @@ const DHCPACK: u8 = 5;
 const BOOTREQUEST: u8 = 1;
 const BOOTREPLY: u8 = 2;
 
-/// ProxyDHCP config
+/// ProxyDHCP config. Bind address defaults to the port resolved by
+/// [`crate::resolve_dhcp_port`] (4011 in user mode, 67 in root mode).
 pub struct ProxyDhcpConfig {
+    /// Primary TFTP server IP advertised in DHCPOFFER (siaddr).
     pub tftp_server_ip: Ipv4Addr,
+    /// Boot filename advertised in DHCPOFFER (file field).
     pub boot_filename: String,
+    /// UDP bind address for the ProxyDHCP socket.
     pub bind_addr: SocketAddr,
+    /// Optional DB pool for auto-discovery logging. When `Some`, every
+    /// received PXE DHCPDISCOVER/REQUEST is recorded in `pxe.dhcp_requests`.
+    pub db: Option<DatabasePool>,
+    /// If `true`, unknown MACs are auto-upserted into `pxe.assets` with
+    /// `status='discovered'` so operators can enroll them from the UI.
+    pub auto_enroll: bool,
 }
 
 impl Default for ProxyDhcpConfig {
     fn default() -> Self {
+        let port = crate::resolve_dhcp_port();
+        let bind_addr = format!("0.0.0.0:{}", port)
+            .parse()
+            .expect("valid bind address");
         Self {
             tftp_server_ip: Ipv4Addr::new(0, 0, 0, 0),
             boot_filename: "pxelinux.0".to_string(),
-            bind_addr: "0.0.0.0:4011".parse().expect("valid bind address"),
+            bind_addr,
+            db: None,
+            auto_enroll: false,
         }
     }
 }
 
 /// Start the proxyDHCP server. Blocks until error.
+///
+/// # Errors
+///
+/// Returns an error if the UDP socket cannot be bound (typically when a
+/// privileged port is requested without root, or the port is already in
+/// use by another process).
 pub async fn start_proxy_dhcp(config: ProxyDhcpConfig) -> anyhow::Result<()> {
     // Resolve the TFTP server IP (use the machine's primary IP if 0.0.0.0)
     let tftp_ip = if config.tftp_server_ip == Ipv4Addr::UNSPECIFIED {
@@ -54,18 +77,31 @@ pub async fn start_proxy_dhcp(config: ProxyDhcpConfig) -> anyhow::Result<()> {
     // Use tokio's blocking task for UDP I/O (simple enough to not need async)
     let bind_addr = config.bind_addr;
     let boot_filename = config.boot_filename.clone();
+    let db = config.db.clone();
+    let auto_enroll = config.auto_enroll;
+    let tokio_handle = tokio::runtime::Handle::current();
 
-    tokio::task::spawn_blocking(move || run_proxy_dhcp_loop(bind_addr, tftp_ip, &boot_filename))
-        .await?
+    tokio::task::spawn_blocking(move || {
+        run_proxy_dhcp_loop(bind_addr, tftp_ip, &boot_filename, db, auto_enroll, tokio_handle)
+    })
+    .await?
 }
 
 fn run_proxy_dhcp_loop(
     bind_addr: SocketAddr,
     tftp_ip: Ipv4Addr,
     boot_filename: &str,
+    db: Option<DatabasePool>,
+    auto_enroll: bool,
+    tokio_handle: tokio::runtime::Handle,
 ) -> anyhow::Result<()> {
     let socket = UdpSocket::bind(bind_addr)?;
-    socket.set_broadcast(true)?;
+    // Enable broadcast only when we're not bound exclusively to loopback —
+    // on Windows, SO_BROADCAST on a loopback socket can interfere with
+    // unicast delivery for integration tests.
+    if !bind_addr.ip().is_loopback() {
+        socket.set_broadcast(true)?;
+    }
     info!(
         "ProxyDHCP server listening on {} (TFTP: {}, file: {})",
         bind_addr, tftp_ip, boot_filename
@@ -77,7 +113,16 @@ fn run_proxy_dhcp_loop(
         match socket.recv_from(&mut buf) {
             Ok((len, src)) => {
                 let packet = &buf[..len];
-                if let Err(e) = handle_dhcp_packet(&socket, packet, src, tftp_ip, boot_filename) {
+                if let Err(e) = handle_dhcp_packet(
+                    &socket,
+                    packet,
+                    src,
+                    tftp_ip,
+                    boot_filename,
+                    db.as_ref(),
+                    auto_enroll,
+                    &tokio_handle,
+                ) {
                     warn!("ProxyDHCP packet handling error from {}: {}", src, e);
                 }
             },
@@ -88,12 +133,16 @@ fn run_proxy_dhcp_loop(
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn handle_dhcp_packet(
     socket: &UdpSocket,
     packet: &[u8],
     src: SocketAddr,
     tftp_ip: Ipv4Addr,
     boot_filename: &str,
+    db: Option<&DatabasePool>,
+    auto_enroll: bool,
+    tokio_handle: &tokio::runtime::Handle,
 ) -> anyhow::Result<()> {
     // Minimum DHCP packet size is 236 bytes (fixed header)
     if packet.len() < 236 {
@@ -148,8 +197,13 @@ fn handle_dhcp_packet(
     };
     let reply = build_pxe_offer(xid, chaddr, tftp_ip, boot_filename, reply_type)?;
 
-    // Send to broadcast or unicast depending on flags
-    let dest = if src.port() == 68 {
+    // Send to broadcast or unicast depending on flags.
+    // Special case: loopback source (integration tests) — always unicast
+    // back to the exact source port, since 255.255.255.255 can't reach
+    // a client socket bound on 127.0.0.1.
+    let dest = if src.ip().is_loopback() {
+        src
+    } else if src.port() == 68 {
         // Client port — send unicast
         src
     } else {
@@ -159,6 +213,37 @@ fn handle_dhcp_packet(
 
     socket.send_to(&reply, dest)?;
     debug!("ProxyDHCP: sent {} bytes to {}", reply.len(), dest);
+
+    // Auto-discovery: record DHCP request in DB and upsert the asset.
+    // We spawn a tokio task so the UDP loop is never blocked on the DB.
+    if let Some(db_ref) = db {
+        let mac = format!(
+            "{:02x}:{:02x}:{:02x}:{:02x}:{:02x}:{:02x}",
+            chaddr[0], chaddr[1], chaddr[2], chaddr[3], chaddr[4], chaddr[5]
+        );
+        let vendor_class = get_option(&options[4..], OPT_CLASS_ID)
+            .and_then(|v| std::str::from_utf8(v).ok())
+            .map(|s| s.to_string());
+        let boot_file = boot_filename.to_string();
+        let msg_type_label = if msg_type == DHCPDISCOVER { "DISCOVER" } else { "REQUEST" };
+        let db_clone = db_ref.clone();
+        tokio_handle.spawn(async move {
+            if let Err(e) = crate::auto_enroll::record_dhcp_request(
+                &db_clone,
+                &mac,
+                msg_type_label,
+                vendor_class.as_deref(),
+                None,
+                true,
+                Some(&boot_file),
+                auto_enroll,
+            )
+            .await
+            {
+                tracing::warn!("Failed to record DHCP request for {}: {}", mac, e);
+            }
+        });
+    }
 
     Ok(())
 }
