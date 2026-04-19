@@ -79,6 +79,24 @@ impl Modify for SecurityAddon {
         crate::handlers::ad::put_config,
         crate::handlers::ad::trigger_sync,
         crate::handlers::ad::trigger_sync_dry_run,
+        // ── SO1 — Positions + incumbents ─────────────────────────────────────
+        crate::handlers::positions::list,
+        crate::handlers::positions::create,
+        crate::handlers::positions::detail,
+        crate::handlers::positions::update,
+        crate::handlers::positions::delete_position,
+        crate::handlers::positions::list_incumbents,
+        crate::handlers::positions::add_incumbent,
+        crate::handlers::positions::revoke_incumbent,
+        // ── SO1 — History / audit log ────────────────────────────────────────
+        crate::handlers::history::list_for_entity,
+        crate::handlers::history::list_for_tenant,
+        // ── SO1 — Delegations ────────────────────────────────────────────────
+        crate::handlers::delegations::list,
+        crate::handlers::delegations::create,
+        crate::handlers::delegations::detail,
+        crate::handlers::delegations::revoke,
+        crate::handlers::delegations::delete_delegation,
     ),
     components(schemas(
         // Canonical models re-exported from signapps-db.
@@ -111,6 +129,19 @@ impl Modify for SecurityAddon {
         crate::handlers::ad::PutConfigBody,
         signapps_db::models::org::AdSyncMode,
         signapps_db::models::org::ConflictStrategy,
+        // SO1 canonical models
+        signapps_db::models::org::Position,
+        signapps_db::models::org::PositionIncumbent,
+        signapps_db::models::org::AuditLogEntry,
+        signapps_db::models::org::Delegation,
+        signapps_db::models::org::DelegationScope,
+        // SO1 DTOs — positions
+        crate::handlers::positions::CreatePositionBody,
+        crate::handlers::positions::UpdatePositionBody,
+        crate::handlers::positions::AddIncumbentBody,
+        crate::handlers::positions::PositionWithOccupancy,
+        // SO1 DTOs — delegations
+        crate::handlers::delegations::CreateDelegationBody,
     )),
     modifiers(&SecurityAddon),
     tags(

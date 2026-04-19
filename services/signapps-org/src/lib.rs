@@ -272,6 +272,10 @@ pub fn create_router(state: AppState) -> Router {
             handlers::provisioning::ad_sync_log_routes(),
         )
         .nest("/api/v1/org/provisioning", handlers::provisioning::routes())
+        // SO1 foundations — positions + history + delegations.
+        .nest("/api/v1/org/positions", handlers::positions::routes())
+        .nest("/api/v1/org/history", handlers::history::routes())
+        .nest("/api/v1/org/delegations", handlers::delegations::routes())
         .route_layer(axum_middleware::from_fn_with_state(
             state.clone(),
             auth_middleware::<AppState>,

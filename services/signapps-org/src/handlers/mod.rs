@@ -24,3 +24,8 @@ pub mod persons;
 pub mod policies;
 pub mod provisioning;
 pub mod canonical_assignments;
+
+// ── SO1 foundations (positions, history, delegations) ────────────────────────
+pub mod delegations;
+pub mod history;
+pub mod positions;
