@@ -30,7 +30,7 @@ serde_json = "1.0"
 sqlx = { version = "0.7", features = ["runtime-tokio-rustls", "postgres", "macros", "uuid", "chrono"] }
 
 # Auth
-signapps-common = { path = "../../crates/signapps-common" }
+signapps-common = { path = "../../crates/signapps-common", features = ["rbac"] }
 
 # Transcription pipeline
 signapps-transcription = { path = "../../crates/signapps-transcription" }

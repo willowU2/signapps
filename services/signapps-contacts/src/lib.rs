@@ -122,6 +122,8 @@ pub struct AppState {
     pub contacts: Arc<Mutex<Vec<Contact>>>,
     pub groups: Arc<Mutex<Vec<ContactGroup>>>,
     pub event_bus: PgEventBus,
+    /// Shared RBAC resolver injected by the runtime. `None` in tests.
+    pub resolver: Option<Arc<dyn signapps_common::rbac::resolver::OrgPermissionResolver>>,
 }
 
 impl AuthState for AppState {
@@ -749,6 +751,7 @@ async fn build_state(shared: &SharedState) -> anyhow::Result<AppState> {
         contacts: Arc::new(Mutex::new(Vec::new())),
         groups: Arc::new(Mutex::new(Vec::new())),
         event_bus: (*shared.event_bus).clone(),
+        resolver: shared.resolver.clone(),
     })
 }
 

@@ -42,7 +42,7 @@ async fn build_state(shared: &SharedState) -> anyhow::Result<AppState> {
     let pool = shared.pool.inner().clone();
     let jwt_config = (*shared.jwt).clone();
     let event_bus = (*shared.event_bus).clone();
-    Ok(AppState::new(pool, jwt_config, event_bus))
+    Ok(AppState::new(pool, jwt_config, event_bus).with_resolver(shared.resolver.clone()))
 }
 
 fn create_router(state: AppState, sharing_engine: SharingEngine) -> Router {

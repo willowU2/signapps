@@ -3,6 +3,7 @@
 use crate::types::{ChatMessage, DirectMessageRoom, PresenceEntry, ReadStatus, WsEvent};
 use dashmap::DashMap;
 use signapps_common::pg_events::PgEventBus;
+use signapps_common::rbac::resolver::OrgPermissionResolver;
 use signapps_common::{AuthState, JwtConfig};
 use sqlx::{Pool, Postgres};
 use std::sync::Arc;
@@ -22,6 +23,8 @@ pub struct AppState {
     pub broadcast_tx: broadcast::Sender<String>,
     pub jwt_config: JwtConfig,
     pub event_bus: PgEventBus,
+    /// Shared RBAC resolver injected by the runtime. `None` in tests.
+    pub resolver: Option<Arc<dyn OrgPermissionResolver>>,
 }
 
 impl AuthState for AppState {
@@ -43,7 +46,15 @@ impl AppState {
             broadcast_tx: tx,
             jwt_config,
             event_bus,
+            resolver: None,
         }
+    }
+
+    /// Replace the current resolver (platform binary call — tests
+    /// leave it at `None`).
+    pub fn with_resolver(mut self, resolver: Option<Arc<dyn OrgPermissionResolver>>) -> Self {
+        self.resolver = resolver;
+        self
     }
 }
 
