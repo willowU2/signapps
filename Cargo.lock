@@ -11811,6 +11811,7 @@ name = "signapps-pxe"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "async-stream",
  "async-tftp",
  "axum 0.7.9",
  "chrono",
@@ -11835,6 +11836,7 @@ dependencies = [
  "sqlx",
  "thiserror 1.0.69",
  "tokio",
+ "tokio-stream",
  "tower 0.4.13",
  "tower-http 0.5.2",
  "tracing",
@@ -11961,10 +11963,15 @@ dependencies = [
 name = "signapps-seed"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
+ "argon2",
+ "async-trait",
  "chrono",
  "clap",
- "rand 0.8.5",
+ "serde",
  "serde_json",
+ "signapps-db",
+ "signapps-db-shared",
  "sqlx",
  "tokio",
  "tracing",

@@ -536,6 +536,7 @@ GPU_BACKEND=auto                   # auto|cuda|rocm|metal|vulkan|cpu
 RUST_LOG=info,signapps=debug,sqlx=warn
 PXE_MODE=user                       # user (ports 6969/4011) ou root (69/67)
 PXE_AUTO_ENROLL=true                # auto-discovery DHCP dans pxe.assets
+SEED_ALLOW_PROD=0                   # 1 autorise `just db-seed` sur DB non-localhost
 ```
 
 Voir `.env.example` pour la liste complète.
@@ -556,6 +557,7 @@ See `docs/architecture/inter-service-communication.md` for details and patterns.
 - **Frontend budget** : `cd client && npm run budget` vérifie la taille gzip par route.
 - **Auto-login dev** : `http://localhost:3000/login?auto=admin`
 - **PXE démo** : `/pxe/wizard` (5 étapes), `/pxe/assets` (tabs), `/pxe/debug` (DHCP audit). SSE live : `GET /api/v1/pxe/deployments/:mac/stream`.
+- **Seeding démo** : `just db-seed` (Acme Corp, 15 services, ~280 rows, idempotent). Remplace l'ancien `scripts/seed-demo-data.sh`. Voir `services/signapps-seed`.
 - **PostgreSQL** : `just db-start` (Docker) ou natif
 - **Runtime backend (défaut)** : `just start` → **signapps-platform** (single binary, 34 services en tokio tasks, cold start < 3 s)
 - **Runtime backend (legacy)** : `just start-legacy` → 33 binaires séparés (debug isolé d'un service)
