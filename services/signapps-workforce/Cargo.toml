@@ -20,7 +20,7 @@ path = "src/main.rs"
 mimalloc = { workspace = true }
 # Post S1 cutover: workforce is HR-only. AD / ldap3 / keystore deps
 # migrated to `signapps-org` along with the handlers that used them.
-signapps-common = { path = "../../crates/signapps-common" }
+signapps-common = { path = "../../crates/signapps-common", features = ["rbac"] }
 signapps-db = { path = "../../crates/signapps-db", features = ["openapi"] }
 signapps-service = { path = "../../crates/signapps-service" }
 axum = { workspace = true }

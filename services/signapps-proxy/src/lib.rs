@@ -56,6 +56,10 @@ pub struct AppState {
     pub jwt_config: JwtConfig,
     pub route_cache: RouteCache,
     pub tls_resolver: Option<TlsCertResolver>,
+    /// Shared RBAC resolver injected by the runtime. `None` in tests.
+    pub rbac_resolver: Option<
+        std::sync::Arc<dyn signapps_common::rbac::resolver::OrgPermissionResolver>,
+    >,
 }
 
 impl AuthState for AppState {
@@ -221,6 +225,7 @@ async fn build_state(shared: &SharedState) -> anyhow::Result<AppState> {
         jwt_config: (*shared.jwt).clone(),
         route_cache,
         tls_resolver,
+        rbac_resolver: shared.resolver.clone(),
     })
 }
 

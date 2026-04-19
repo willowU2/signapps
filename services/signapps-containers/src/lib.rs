@@ -60,6 +60,8 @@ pub struct AppState {
     pub app_data_path: String,
     pub install_channels: Arc<DashMap<uuid::Uuid, tokio::sync::broadcast::Sender<InstallEvent>>>,
     pub indexer: AiIndexerClient,
+    /// Shared RBAC resolver injected by the runtime. `None` in tests.
+    pub resolver: Option<Arc<dyn signapps_common::rbac::resolver::OrgPermissionResolver>>,
 }
 
 impl AuthState for AppState {
@@ -158,6 +160,7 @@ async fn build_state(shared: &SharedState) -> anyhow::Result<AppState> {
         app_data_path,
         install_channels: Arc::new(DashMap::new()),
         indexer: AiIndexerClient::from_env(),
+        resolver: shared.resolver.clone(),
     })
 }
 
