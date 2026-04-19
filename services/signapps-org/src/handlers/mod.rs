@@ -17,7 +17,6 @@ pub mod org_trees;
 // ── S1 canonical surface (W2 scaffold, CRUD wired in Task 10/11) ────────────
 pub mod ad;
 pub mod boards;
-pub mod grant_redirect;
 pub mod grants;
 pub mod nodes;
 pub mod openapi;

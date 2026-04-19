@@ -176,8 +176,8 @@ pub fn create_router(state: AppState) -> Router {
     let public_routes = Router::new()
         .route("/health", get(health_check))
         .merge(signapps_common::version::router("signapps-org"))
-        // Public grant redirect — no auth, validates via token hash.
-        .nest("/g", handlers::grant_redirect::routes());
+        // Public grant redirect — no auth, validates via HMAC + DB check.
+        .nest("/g", grants::redirect::routes());
 
     // Pre-existing org endpoints (admin UI). Preserved under
     // `/api/v1/admin/org/*` to avoid clashing with the new canonical
