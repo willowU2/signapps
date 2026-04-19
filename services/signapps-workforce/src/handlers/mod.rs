@@ -1,30 +1,28 @@
 //! Workforce Service Handlers
 //!
-//! Request handlers organized by domain:
-//! - org: Organizational tree management
-//! - employees: Employee CRUD and functions
-//! - coverage: Coverage templates and rules
-//! - validation: Gap analysis and leave simulation
+//! After the S1 org+RBAC refonte (2026-04-18), workforce keeps only
+//! HR-pure domains:
+//! - attendance: clock-in / clock-out
+//! - audit: org-audit query endpoints (read-only, backed by canonical tables)
+//! - coverage: coverage templates and rules
+//! - expenses: expense approval workflow
+//! - learning / lms: learning courses + progress tracking
+//! - my_team: manager's direct reports + pending actions
+//! - supply_chain: purchase orders, warehouses, inventory
+//! - timesheet: timer + stats
+//! - validation: gap analysis + leave simulation
+//!
+//! AD, org hierarchy CRUD, boards, policies, groups, delegations and
+//! employee CRUD have moved to `signapps-org` (the canonical service).
 
-pub mod ad;
-pub mod ad_delegation;
-pub mod ad_gpo;
-pub mod ad_provisioning;
-pub mod ad_sync;
 pub mod attendance;
 pub mod audit;
-pub mod boards;
 pub mod coverage;
-pub mod delegations;
-pub mod employees;
 pub mod expenses;
-pub mod groups;
 pub mod learning;
 pub mod lms;
 pub mod my_team;
 pub mod openapi;
-pub mod org;
-pub mod policies;
 pub mod supply_chain;
 pub mod timesheet;
 pub mod validation;
