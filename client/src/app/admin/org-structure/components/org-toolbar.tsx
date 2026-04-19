@@ -25,8 +25,10 @@ import {
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { OrgNode } from "@/types/org";
+import type { OrgNode, OrgAxis } from "@/types/org";
 import type { NodeTypeConfig } from "./tab-config";
+import { AxisFilterChip } from "./axis-filter-chip";
+import { TimeTravelSlider } from "./time-travel-slider";
 
 export type ViewMode = "tree" | "orgchart" | "list";
 export type NavTab = "tree" | "groups" | "sites";
@@ -44,6 +46,11 @@ export interface OrgToolbarProps {
   onEnterFocusMode: () => void;
   onExport: (format: "json" | "csv") => void;
   onPrint: () => void;
+  // SO1 — axis filter + time-travel
+  axisFilter?: "all" | OrgAxis;
+  onAxisFilterChange?: (axis: "all" | OrgAxis) => void;
+  atDate?: string | null;
+  onAtDateChange?: (iso: string | null) => void;
 }
 
 const NAV_TABS: Array<{ key: NavTab; label: string; icon: React.ReactNode }> = [
@@ -75,7 +82,12 @@ export function OrgToolbar({
   onEnterFocusMode,
   onExport,
   onPrint,
+  axisFilter = "all",
+  onAxisFilterChange,
+  atDate = null,
+  onAtDateChange,
 }: OrgToolbarProps) {
+  const readOnly = atDate !== null;
   return (
     <div className="flex items-center gap-2 px-4 py-2.5 border-b border-border bg-card shrink-0 flex-wrap">
       {/* Nav tabs */}
@@ -137,10 +149,26 @@ export function OrgToolbar({
         )}
       </div>
 
+      {/* SO1 — Axis filter chip */}
+      {onAxisFilterChange && (
+        <AxisFilterChip value={axisFilter} onChange={onAxisFilterChange} />
+      )}
+
+      {/* SO1 — Time-travel slider */}
+      {onAtDateChange && (
+        <TimeTravelSlider value={atDate} onChange={onAtDateChange} />
+      )}
+
       {/* Add node dropdown */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button size="sm" variant="outline" className="h-8">
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-8"
+            disabled={readOnly}
+            title={readOnly ? "Vue historique, pas d'édition" : undefined}
+          >
             <Plus className="h-4 w-4 mr-1" />
             Ajouter
           </Button>

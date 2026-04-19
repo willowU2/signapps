@@ -40,6 +40,15 @@ import type {
   OrgBoardMember,
   BoardSummary,
   EffectiveBoard,
+  // SO1
+  OrgAxis,
+  OrgPosition,
+  OrgPositionWithOccupancy,
+  OrgPositionIncumbent,
+  OrgDelegationScope,
+  OrgDelegationV2,
+  OrgAuditLogEntry,
+  OrgAxesSummary,
 } from "@/types/org";
 
 const client = getClient(ServiceName.ORG_SVC);
@@ -187,11 +196,13 @@ export const orgApi = {
   // OrgTree entity, so we fetch all nodes for the tenant and surface
   // the parentless ones as trees.
   trees: {
-    list: async () => {
+    list: async (options?: { at?: string }) => {
       const tenantId = getCurrentTenantId();
       if (!tenantId) return shim<OrgNode[]>([]);
+      const params: Record<string, unknown> = { tenant_id: tenantId };
+      if (options?.at) params.at = options.at;
       const res = await client.get<BackendOrgNode[]>("/org/nodes", {
-        params: { tenant_id: tenantId },
+        params,
       });
       return { ...res, data: mapNodeList(res.data) };
     },
@@ -455,7 +466,7 @@ export const orgApi = {
       }),
   },
 
-  // ── Delegations (not yet served by signapps-org) ─────────────────────────
+  // ── Delegations (legacy stubs kept pour compat) ──────────────────────────
   delegations: {
     list: async () => shim<OrgDelegation[]>([]),
     create: async (_data: Partial<OrgDelegation>) =>
@@ -465,12 +476,158 @@ export const orgApi = {
     granted: async () => shim<OrgDelegation[]>([]),
   },
 
-  // ── Audit (not yet served by signapps-org) ───────────────────────────────
+  // ── Audit (legacy stubs — remplacés par history v2 ci-dessous) ───────────
   audit: {
     query: async (_params?: Record<string, unknown>) =>
       shim<OrgAuditEntry[]>([]),
     entityHistory: async (_entityType: string, _entityId: string) =>
       shim<OrgAuditEntry[]>([]),
     actorHistory: async (_actorId: string) => shim<OrgAuditEntry[]>([]),
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // SO1 foundations — 2026-04-19
+  // ═══════════════════════════════════════════════════════════════════════
+
+  /** Positions + incumbents API. */
+  positions: {
+    list: async (params?: { node_id?: string }) => {
+      const tenantId = getCurrentTenantId();
+      if (!tenantId) return shim<OrgPositionWithOccupancy[]>([]);
+      const query: Record<string, unknown> = { tenant_id: tenantId };
+      if (params?.node_id) query.node_id = params.node_id;
+      return client.get<OrgPositionWithOccupancy[]>("/org/positions", {
+        params: query,
+      });
+    },
+    get: async (id: string) => client.get<OrgPosition>(`/org/positions/${id}`),
+    create: async (data: {
+      node_id: string;
+      title: string;
+      head_count?: number;
+      attributes?: Record<string, unknown>;
+    }) => {
+      const tenantId = getCurrentTenantId();
+      return client.post<OrgPosition>("/org/positions", {
+        tenant_id: tenantId,
+        ...data,
+      });
+    },
+    update: async (
+      id: string,
+      data: {
+        title?: string;
+        head_count?: number;
+        attributes?: Record<string, unknown>;
+        active?: boolean;
+      },
+    ) => client.patch<OrgPosition>(`/org/positions/${id}`, data),
+    delete: async (id: string) => client.delete(`/org/positions/${id}`),
+    listIncumbents: async (id: string) =>
+      client.get<OrgPositionIncumbent[]>(`/org/positions/${id}/incumbents`),
+    addIncumbent: async (
+      id: string,
+      data: { person_id: string; start_date?: string },
+    ) => {
+      const tenantId = getCurrentTenantId();
+      return client.post<OrgPositionIncumbent>(
+        `/org/positions/${id}/incumbents`,
+        { tenant_id: tenantId, ...data },
+      );
+    },
+    revokeIncumbent: async (
+      positionId: string,
+      incumbentId: string,
+      endDate?: string,
+    ) => {
+      const params = endDate ? { end_date: endDate } : undefined;
+      return client.delete(
+        `/org/positions/${positionId}/incumbents/${incumbentId}`,
+        { params },
+      );
+    },
+  },
+
+  /** SO1 delegations (v2 backed by org_delegations). */
+  delegationsV2: {
+    list: async (params?: {
+      delegator_person_id?: string;
+      delegate_person_id?: string;
+      active_only?: boolean;
+    }) => {
+      const tenantId = getCurrentTenantId();
+      if (!tenantId) return shim<OrgDelegationV2[]>([]);
+      const query: Record<string, unknown> = {
+        tenant_id: tenantId,
+        ...(params ?? {}),
+      };
+      return client.get<OrgDelegationV2[]>("/org/delegations", {
+        params: query,
+      });
+    },
+    get: async (id: string) =>
+      client.get<OrgDelegationV2>(`/org/delegations/${id}`),
+    create: async (data: {
+      delegator_person_id: string;
+      delegate_person_id: string;
+      node_id?: string | null;
+      scope: OrgDelegationScope;
+      start_at: string;
+      end_at: string;
+      reason?: string;
+    }) => {
+      const tenantId = getCurrentTenantId();
+      return client.post<OrgDelegationV2>("/org/delegations", {
+        tenant_id: tenantId,
+        ...data,
+      });
+    },
+    revoke: async (id: string) =>
+      client.post<OrgDelegationV2>(`/org/delegations/${id}/revoke`),
+    delete: async (id: string) => client.delete(`/org/delegations/${id}`),
+  },
+
+  /** SO1 history / audit log (canonical). */
+  history: {
+    entity: async (params: {
+      entity_type: string;
+      entity_id: string;
+      limit?: number;
+    }) => client.get<OrgAuditLogEntry[]>("/org/history", { params }),
+    tenant: async (params?: { since?: string; limit?: number }) => {
+      const tenantId = getCurrentTenantId();
+      if (!tenantId) return shim<OrgAuditLogEntry[]>([]);
+      const query: Record<string, unknown> = {
+        tenant_id: tenantId,
+        ...(params ?? {}),
+      };
+      return client.get<OrgAuditLogEntry[]>("/org/history/tenant", {
+        params: query,
+      });
+    },
+  },
+
+  /** SO1 multi-axis. */
+  axes: {
+    summary: async () => {
+      const tenantId = getCurrentTenantId();
+      if (!tenantId) {
+        return shim<OrgAxesSummary>({
+          counts: { structure: 0, focus: 0, group: 0 },
+          focus_nodes: [],
+          group_nodes: [],
+        });
+      }
+      return client.get<OrgAxesSummary>("/org/assignments/axes/summary", {
+        params: { tenant_id: tenantId },
+      });
+    },
+    assignments: async (axis: OrgAxis | "all") => {
+      const tenantId = getCurrentTenantId();
+      if (!tenantId) return shim<Assignment[]>([]);
+      const params: Record<string, unknown> = { tenant_id: tenantId };
+      if (axis !== "all") params.axis = axis;
+      return client.get<Assignment[]>("/org/assignments", { params });
+    },
   },
 };

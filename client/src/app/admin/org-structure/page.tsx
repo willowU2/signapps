@@ -137,6 +137,11 @@ export default function OrgStructurePage() {
   const debouncedSearchQuery = useDebounce(searchQuery, 200);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [detailOpen, setDetailOpen] = useState(false);
+  // SO1 — toolbar state
+  const [axisFilter, setAxisFilter] = useState<
+    "all" | "structure" | "focus" | "group"
+  >("all");
+  const [atDate, setAtDate] = useState<string | null>(null);
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
   const [selectedSiteId, setSelectedSiteId] = useState<string | null>(null);
@@ -713,6 +718,10 @@ export default function OrgStructurePage() {
                   }}
                   onExport={handleExport}
                   onPrint={handlePrint}
+                  axisFilter={axisFilter}
+                  onAxisFilterChange={setAxisFilter}
+                  atDate={atDate}
+                  onAtDateChange={setAtDate}
                 />
 
                 <div className="flex-1 overflow-auto min-w-0">

@@ -66,3 +66,26 @@ export function personFullName(p: Person | undefined): string {
   if (!p) return "?";
   return `${p.first_name ?? ""} ${p.last_name ?? ""}`.trim() || "?";
 }
+
+/**
+ * Tailwind ring class for an axis-scoped avatar outline.
+ *
+ * - `structure` (primary reporting line)  → bleu.
+ * - `focus` (projet, topic cross-team)    → violet.
+ * - `group` (committee, guild)            → ambre.
+ * - undefined → pas de ring.
+ */
+export function axisRingClass(
+  axis: "structure" | "focus" | "group" | undefined,
+): string {
+  switch (axis) {
+    case "structure":
+      return "ring-2 ring-blue-400/70 dark:ring-blue-300/70";
+    case "focus":
+      return "ring-2 ring-violet-400/70 dark:ring-violet-300/70";
+    case "group":
+      return "ring-2 ring-amber-400/70 dark:ring-amber-300/70";
+    default:
+      return "";
+  }
+}
