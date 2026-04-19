@@ -115,6 +115,11 @@ impl Modify for SecurityAddon {
         crate::handlers::decisions::list_votes,
         crate::handlers::decisions::upsert_vote,
         crate::handlers::decisions::delete_vote,
+        // ── SO6 — Panel layouts + KPI metrics ────────────────────────────────
+        crate::handlers::panel_layouts::get_layout,
+        crate::handlers::panel_layouts::upsert_layout,
+        crate::handlers::panel_layouts::reset_layout,
+        crate::handlers::panel_layouts::get_metric,
     ),
     components(schemas(
         // Canonical models re-exported from signapps-db.
@@ -181,6 +186,14 @@ impl Modify for SecurityAddon {
         crate::handlers::decisions::CreateDecisionBody,
         crate::handlers::decisions::UpdateStatusBody,
         crate::handlers::decisions::UpsertVoteBody,
+        // ── SO6 — Panel layouts ──────────────────────────────────────────────
+        signapps_db::models::org::PanelLayout,
+        signapps_db::models::org::PanelRole,
+        signapps_db::models::org::PanelEntityType,
+        signapps_db::models::org::PanelLayoutConfig,
+        crate::handlers::panel_layouts::UpsertLayoutBody,
+        crate::handlers::panel_layouts::LayoutResponse,
+        crate::handlers::panel_layouts::MetricResponse,
     )),
     modifiers(&SecurityAddon),
     tags(

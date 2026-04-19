@@ -354,6 +354,11 @@ pub fn create_router(state: AppState) -> Router {
         // ── SO4 integrations ────────────────────────────────────────
         .nest("/api/v1/org/public-links", handlers::public_links::admin_routes())
         .nest("/api/v1/org/webhooks", handlers::webhooks::routes())
+        // ── SO6 refonte DetailPanel ─────────────────────────────────
+        .nest(
+            "/api/v1/org/panel-layouts",
+            handlers::panel_layouts::routes(),
+        )
         // Photos: nested with absolute paths to avoid clashing with the
         // canonical persons / nodes routers.
         .merge(handlers::photos::routes_absolute())
