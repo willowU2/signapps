@@ -1,7 +1,7 @@
 //! SO7 S1 — Sites seeder (Paris HQ / Lyon Annex / Remote).
 //!
-//! Creates a 3-building hierarchy with floors, rooms and desks
-//! + 30 site-person links + 10 upcoming bookings. Deterministic UUIDs
+//! Creates a 3-building hierarchy with floors, rooms and desks, plus
+//! 30 site-person links and 10 upcoming bookings. Deterministic UUIDs
 //! via [`crate::uuid::acme_uuid`] so runs are idempotent.
 
 use crate::context::SeedContext;
