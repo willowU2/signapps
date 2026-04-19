@@ -38,6 +38,7 @@ pub mod jmap;
 pub mod models;
 pub mod oauth_consumer;
 pub mod openapi;
+pub mod provisioning_consumer;
 pub mod queue;
 pub mod sieve;
 pub mod smtp;
@@ -133,6 +134,10 @@ pub async fn router(shared: SharedState) -> anyhow::Result<axum::Router> {
             "signapps-mail".to_string(),
         )),
     );
+
+    // Org provisioning consumer — subscribes to org.user.created /
+    // .deactivated and records attempts in org_provisioning_log.
+    provisioning_consumer::spawn(state.pool.clone());
 
     // Ensure OAuth app configs table exists (auto-migrate).
     crate::auth::ensure_oauth_configs_table(&state.pool).await;

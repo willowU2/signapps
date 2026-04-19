@@ -7,6 +7,7 @@
 //! DMs, presence, search, file attachments and export.
 
 pub mod handlers;
+pub mod provisioning_consumer;
 pub mod state;
 pub mod types;
 
@@ -35,6 +36,11 @@ pub async fn router(shared: SharedState) -> anyhow::Result<Router> {
     let state = build_state(&shared).await?;
     let sharing_engine =
         SharingEngine::new(shared.pool.inner().clone(), CacheService::default_config());
+
+    // Org provisioning consumer — add user to #general on user.created,
+    // remove from all channels on user.deactivated.
+    provisioning_consumer::spawn(shared.pool.inner().clone());
+
     Ok(create_router(state, sharing_engine))
 }
 

@@ -24,6 +24,7 @@ pub use error::CalendarError;
 
 pub mod handlers;
 pub mod oauth_consumer;
+pub mod provisioning_consumer;
 pub mod services;
 
 use axum::{extract::DefaultBodyLimit, middleware, Router};
@@ -130,6 +131,9 @@ pub async fn router(shared: SharedState) -> anyhow::Result<Router> {
             "signapps-calendar".to_string(),
         )),
     );
+
+    // Org provisioning consumer — default calendar on user.created.
+    provisioning_consumer::spawn(state.pool.inner().clone());
 
     // Cross-service event listener (mail.received → auto ICS import hint).
     let cal_listener_pool = state.pool.inner().clone();

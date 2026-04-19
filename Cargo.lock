@@ -11442,6 +11442,7 @@ dependencies = [
  "signapps-cache",
  "signapps-common",
  "signapps-dav",
+ "signapps-db",
  "signapps-dkim",
  "signapps-imap",
  "signapps-jmap",

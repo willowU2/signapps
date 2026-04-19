@@ -6,6 +6,7 @@
 pub mod handlers;
 pub mod jobs;
 pub mod middleware;
+pub mod provisioning_consumer;
 pub mod services;
 pub mod storage;
 
@@ -91,6 +92,10 @@ pub async fn router(shared: SharedState) -> anyhow::Result<Router> {
     tokio::spawn(async move {
         services::backup_worker::run(backup_pool).await;
     });
+
+    // Org provisioning consumer — home folder + quota on user.created,
+    // quota freeze on user.deactivated.
+    provisioning_consumer::spawn(state.pool.inner().clone());
 
     let sharing_engine = state.sharing.clone();
     Ok(create_router(state, sharing_engine))
