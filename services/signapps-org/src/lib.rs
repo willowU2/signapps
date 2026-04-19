@@ -16,6 +16,7 @@
 
 pub mod ad;
 pub mod events;
+pub mod grants;
 pub mod handlers;
 pub mod middleware;
 pub mod rbac_client;

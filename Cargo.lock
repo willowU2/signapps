@@ -10474,6 +10474,7 @@ dependencies = [
  "chrono",
  "dotenvy",
  "jsonwebtoken",
+ "moka",
  "once_cell",
  "opentelemetry",
  "opentelemetry-otlp",
@@ -10638,6 +10639,7 @@ dependencies = [
 name = "signapps-db"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "argon2",
  "async-trait",
  "chrono",
@@ -11660,15 +11662,22 @@ name = "signapps-org"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "async-trait",
  "axum 0.7.9",
+ "base64 0.22.1",
  "chrono",
+ "hmac",
+ "ldap3",
  "mimalloc",
  "serde",
  "serde_json",
+ "sha2",
  "signapps-common",
  "signapps-db",
+ "signapps-keystore",
  "signapps-service",
  "sqlx",
+ "thiserror 1.0.69",
  "tokio",
  "tokio-test",
  "tower 0.4.13",
@@ -12353,7 +12362,6 @@ name = "signapps-workforce"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "async-trait",
  "axum 0.7.9",
  "chrono",
  "dotenvy",
@@ -12361,12 +12369,10 @@ dependencies = [
  "reqwest 0.12.28",
  "serde",
  "serde_json",
- "signapps-ad-core",
  "signapps-common",
  "signapps-db",
  "signapps-service",
  "sqlx",
- "thiserror 1.0.69",
  "tokio",
  "tower-http 0.5.2",
  "tracing",
