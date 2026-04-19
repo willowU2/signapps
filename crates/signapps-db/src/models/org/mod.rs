@@ -17,6 +17,11 @@
 //! - [`BoardDecision`] + [`DecisionStatus`] : décisions d'un board.
 //! - [`BoardVote`] + [`VoteKind`] : votes nominatifs sur décisions.
 //!
+//! **SO3 addition (2026-04-19)** — scale & power tools:
+//! - [`Template`] : hiérarchie prête à cloner (built-in + custom).
+//! - [`HeadcountPlan`] + [`HeadcountRollup`] : planification effectifs.
+//! - [`Skill`] + [`SkillCategory`] + [`PersonSkill`] : compétences.
+//!
 //! ## Design choices
 //!
 //! - Each entity carries `tenant_id` for multi-tenancy.
@@ -37,13 +42,17 @@ pub mod board;
 pub mod board_decision;
 pub mod board_vote;
 pub mod delegation;
+pub mod headcount;
 pub mod node;
 pub mod person;
+pub mod person_skill;
 pub mod policy;
 pub mod position;
 pub mod position_incumbent;
 pub mod provisioning_log;
 pub mod raci;
+pub mod skill;
+pub mod template;
 
 pub use access_grant::AccessGrant;
 pub use ad_config::{AdConfig, AdSyncMode, ConflictStrategy};
@@ -54,10 +63,14 @@ pub use board::{Board, BoardMember};
 pub use board_decision::{BoardDecision, DecisionStatus};
 pub use board_vote::{BoardVote, VoteKind};
 pub use delegation::{Delegation, DelegationScope};
+pub use headcount::{HeadcountPlan, HeadcountRollup};
 pub use node::{NodeKind, OrgNode};
 pub use person::Person;
+pub use person_skill::{PersonSkill, PersonSkillWithName};
 pub use policy::{PermissionSpec, Policy, PolicyBinding};
 pub use position::Position;
 pub use position_incumbent::PositionIncumbent;
 pub use provisioning_log::ProvisioningLog;
 pub use raci::{Raci, RaciRole};
+pub use skill::{Skill, SkillCategory};
+pub use template::{template_spec, Template};
