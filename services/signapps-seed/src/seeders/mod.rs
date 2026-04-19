@@ -8,6 +8,9 @@ use crate::seeder::Seeder;
 pub mod ad;
 pub mod calendar;
 pub mod chat;
+pub mod docs;
+pub mod drive;
+pub mod forms;
 pub mod identity;
 pub mod mail;
 pub mod org;
@@ -21,5 +24,8 @@ pub fn all() -> Vec<Box<dyn Seeder>> {
         Box::new(calendar::CalendarSeeder),
         Box::new(mail::MailSeeder),
         Box::new(chat::ChatSeeder),
+        Box::new(docs::DocsSeeder),
+        Box::new(drive::DriveSeeder),
+        Box::new(forms::FormsSeeder),
     ]
 }
