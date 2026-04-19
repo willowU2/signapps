@@ -8,12 +8,17 @@ use crate::seeder::Seeder;
 pub mod ad;
 pub mod calendar;
 pub mod chat;
+pub mod contacts;
 pub mod docs;
 pub mod drive;
 pub mod forms;
 pub mod identity;
+pub mod it_assets;
 pub mod mail;
+pub mod meet;
 pub mod org;
+pub mod tasks;
+pub mod vault;
 
 /// Return the list of seeders in dependency order.
 pub fn all() -> Vec<Box<dyn Seeder>> {
@@ -27,5 +32,10 @@ pub fn all() -> Vec<Box<dyn Seeder>> {
         Box::new(docs::DocsSeeder),
         Box::new(drive::DriveSeeder),
         Box::new(forms::FormsSeeder),
+        Box::new(contacts::ContactsSeeder),
+        Box::new(meet::MeetSeeder),
+        Box::new(tasks::TasksSeeder),
+        Box::new(it_assets::ItAssetsSeeder),
+        Box::new(vault::VaultSeeder),
     ]
 }
