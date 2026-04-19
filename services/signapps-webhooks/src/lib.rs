@@ -14,6 +14,7 @@
 #![allow(clippy::assertions_on_constants)]
 
 pub mod handlers;
+pub mod org_dispatcher;
 
 use axum::{
     middleware,
@@ -23,9 +24,11 @@ use axum::{
 use signapps_common::middleware::{
     auth_middleware, require_admin, tenant_context_middleware, AuthState,
 };
+use signapps_common::pg_events::PgEventBus;
 use signapps_common::JwtConfig;
 use signapps_db::DatabasePool;
 use signapps_service::shared_state::SharedState;
+use std::sync::Arc;
 use tower_http::{
     cors::{AllowOrigin, CorsLayer},
     trace::TraceLayer,
@@ -44,6 +47,9 @@ pub struct AppState {
     pub resolver: Option<
         std::sync::Arc<dyn signapps_common::rbac::resolver::OrgPermissionResolver>,
     >,
+    /// Shared platform event bus, used by the SO4 org dispatcher to
+    /// subscribe to `org.*` events and fan-out HMAC-signed POSTs.
+    pub event_bus: Option<Arc<PgEventBus>>,
 }
 
 impl AuthState for AppState {
@@ -68,12 +74,18 @@ pub async fn router(shared: SharedState) -> anyhow::Result<Router> {
 
 /// Spawn persistent background tasks tied to the factory scope.
 ///
-/// At the moment the service has no retry-queue worker — outbound
-/// dispatch is synchronous, driven by the `POST /api/v1/webhooks/:id/test`
-/// endpoint. When a retry-queue worker is added (follow-up refactor), it
-/// must be spawned here so it respawns together with the HTTP listener.
-fn spawn_background_tasks(_state: &AppState) {
-    // Placeholder — no background tasks at this time.
+/// SO4 IN3 — the org-events dispatcher is spawned here so it dies with
+/// the service on supervisor respawn. It listens on `platform.events`
+/// for `org.*` topics and fans-out HMAC-signed POSTs to the matching
+/// rows in `org_webhooks`.
+fn spawn_background_tasks(state: &AppState) {
+    if let Some(bus) = state.event_bus.clone() {
+        org_dispatcher::spawn(state.pool.clone(), bus);
+    } else {
+        tracing::info!(
+            "org-webhooks dispatcher not started — no event_bus injected (test mode?)"
+        );
+    }
 }
 
 async fn build_state(shared: &SharedState) -> anyhow::Result<AppState> {
@@ -81,6 +93,7 @@ async fn build_state(shared: &SharedState) -> anyhow::Result<AppState> {
         pool: shared.pool.clone(),
         jwt_config: (*shared.jwt).clone(),
         resolver: shared.resolver.clone(),
+        event_bus: Some(shared.event_bus.clone()),
     })
 }
 
@@ -202,6 +215,7 @@ mod tests {
             pool,
             jwt_config,
             resolver: None,
+            event_bus: None,
         }
     }
 
