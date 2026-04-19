@@ -54,6 +54,8 @@ reqwest.workspace = true
 futures-util.workspace = true
 utoipa.workspace = true
 utoipa-swagger-ui.workspace = true
+async-stream.workspace = true
+tokio-stream.workspace = true
 
 [dev-dependencies]
 rand = "0.8"

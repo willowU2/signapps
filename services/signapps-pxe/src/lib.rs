@@ -24,6 +24,7 @@ pub mod handlers;
 pub mod images;
 pub mod models;
 pub mod openapi;
+pub mod sse;
 pub mod tftp;
 
 use axum::{
@@ -306,6 +307,11 @@ fn create_router(app_state: AppState, http_boot_dir: &str) -> Router {
         .route(
             "/api/v1/pxe/deployments/:mac/progress",
             post(images::update_deployment_progress),
+        )
+        // S2.T7: SSE live progress stream
+        .route(
+            "/api/v1/pxe/deployments/:mac/stream",
+            get(sse::stream_deployment),
         )
         // PX6: Golden image capture
         .route(
