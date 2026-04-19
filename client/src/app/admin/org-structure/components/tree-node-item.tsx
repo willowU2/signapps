@@ -97,6 +97,11 @@ export interface TreeNodeItemProps {
     sourceNodeId: string,
     targetNodeId: string,
   ) => void;
+  /**
+   * SO6 - invoked when a user clicks an avatar so the parent page can
+   * switch the DetailPanel to Person mode.
+   */
+  onPersonSelect?: (person: Person) => void;
 }
 
 function TreeNodeItemInner({
@@ -118,6 +123,7 @@ function TreeNodeItemInner({
   personsById,
   onPersonDrop,
   onPersonMove,
+  onPersonSelect,
 }: TreeNodeItemProps) {
   const [dragOver, setDragOver] = useState(false);
   const isExpanded = expanded.has(node.id);
@@ -317,9 +323,15 @@ function TreeNodeItemInner({
                       }),
                     );
                   }}
-                  onClick={(e) => e.stopPropagation()}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onPersonSelect?.(managerPerson);
+                  }}
                   className={cn(
-                    "text-[10px] rounded-full w-6 h-6 flex items-center justify-center font-semibold ring-2 ring-primary/60 cursor-grab active:cursor-grabbing",
+                    "text-[10px] rounded-full w-6 h-6 flex items-center justify-center font-semibold ring-2 ring-primary/60",
+                    onPersonSelect
+                      ? "cursor-pointer hover:ring-primary"
+                      : "cursor-grab active:cursor-grabbing",
                     avatarTint(managerPerson.id),
                   )}
                 >
@@ -349,9 +361,15 @@ function TreeNodeItemInner({
                           }),
                         );
                       }}
-                      onClick={(e) => e.stopPropagation()}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (p) onPersonSelect?.(p);
+                      }}
                       className={cn(
-                        "text-[9px] rounded-full w-5 h-5 flex items-center justify-center font-medium ring-1 ring-background cursor-grab active:cursor-grabbing",
+                        "text-[9px] rounded-full w-5 h-5 flex items-center justify-center font-medium ring-1 ring-background",
+                        p && onPersonSelect
+                          ? "cursor-pointer hover:ring-primary"
+                          : "cursor-grab active:cursor-grabbing",
                         avatarTint(a.personId),
                       )}
                       title={
@@ -443,6 +461,7 @@ function TreeNodeItemInner({
               personsById={personsById}
               onPersonDrop={onPersonDrop}
               onPersonMove={onPersonMove}
+              onPersonSelect={onPersonSelect}
             />
           ))}
         </div>
@@ -475,5 +494,6 @@ export const TreeNodeItem = React.memo(
     prev.onContextAction === next.onContextAction &&
     prev.onDoubleClick === next.onDoubleClick &&
     prev.onPersonDrop === next.onPersonDrop &&
-    prev.onPersonMove === next.onPersonMove,
+    prev.onPersonMove === next.onPersonMove &&
+    prev.onPersonSelect === next.onPersonSelect,
 );

@@ -47,3 +47,6 @@ pub mod ad_preview;
 pub mod photos;
 pub mod public_links;
 pub mod webhooks;
+
+// ── SO6 refonte DetailPanel (panel layouts + KPI metrics) ───────────────────
+pub mod panel_layouts;

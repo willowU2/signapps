@@ -27,6 +27,11 @@
 //! - [`Webhook`] : souscription sortante HMAC-signée par tenant.
 //! - [`WebhookDelivery`] : log d'audit des fan-outs.
 //!
+//! **SO6 addition (2026-04-19)** — DetailPanel refonte:
+//! - [`PanelLayout`] + [`PanelRole`] + [`PanelEntityType`] +
+//!   [`PanelLayoutConfig`] : config personnalisable par (tenant, role,
+//!   entity_type) du panneau droit `/admin/org-structure`.
+//!
 //! ## Design choices
 //!
 //! - Each entity carries `tenant_id` for multi-tenancy.
@@ -49,6 +54,7 @@ pub mod board_vote;
 pub mod delegation;
 pub mod headcount;
 pub mod node;
+pub mod panel_layout;
 pub mod person;
 pub mod person_skill;
 pub mod policy;
@@ -73,6 +79,9 @@ pub use board_vote::{BoardVote, VoteKind};
 pub use delegation::{Delegation, DelegationScope};
 pub use headcount::{HeadcountPlan, HeadcountRollup};
 pub use node::{NodeKind, OrgNode};
+pub use panel_layout::{
+    PanelEntityType, PanelHeroKpi, PanelLayout, PanelLayoutConfig, PanelRole, PanelTabItem,
+};
 pub use person::Person;
 pub use person_skill::{PersonSkill, PersonSkillWithName};
 pub use policy::{PermissionSpec, Policy, PolicyBinding};
