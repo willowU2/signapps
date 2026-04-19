@@ -14,11 +14,12 @@ use axum::{
     routing::get,
     Json, Router,
 };
+use chrono::{DateTime, Utc};
 use serde::Deserialize;
 use signapps_common::pg_events::NewEvent;
 use signapps_common::{Error, Result};
 use signapps_db::models::org::Person;
-use signapps_db::repositories::org::PersonRepository;
+use signapps_db::repositories::org::{AuditRepository, PersonRepository};
 use uuid::Uuid;
 
 use crate::event_publisher::OrgEventPublisher;
@@ -44,6 +45,8 @@ pub fn routes() -> Router<AppState> {
 pub struct ListQuery {
     /// Tenant UUID — required.
     pub tenant_id: Uuid,
+    /// **SO1 time-travel** — état des persons à cette date (audit replay).
+    pub at: Option<DateTime<Utc>>,
 }
 
 /// Request body for `POST /api/v1/org/persons`.
@@ -95,6 +98,19 @@ pub async fn list(
     State(st): State<AppState>,
     Query(q): Query<ListQuery>,
 ) -> Result<Json<Vec<Person>>> {
+    if let Some(at) = q.at {
+        let snapshots = AuditRepository::new(st.pool.inner())
+            .snapshot_at("org_persons", q.tenant_id, at)
+            .await
+            .map_err(|e| Error::Database(format!("snapshot_at persons: {e}")))?;
+        let persons: Vec<Person> = snapshots
+            .into_iter()
+            .filter_map(|v| serde_json::from_value::<Person>(v).ok())
+            .filter(|p| p.active)
+            .collect();
+        return Ok(Json(persons));
+    }
+
     let repo = PersonRepository::new(st.pool.inner());
     let persons = repo
         .list_by_tenant(q.tenant_id)

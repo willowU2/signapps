@@ -14,11 +14,12 @@ use axum::{
     routing::get,
     Json, Router,
 };
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use signapps_common::pg_events::NewEvent;
 use signapps_common::{Error, Result};
 use signapps_db::models::org::{NodeKind, OrgNode};
-use signapps_db::repositories::org::NodeRepository;
+use signapps_db::repositories::org::{AuditRepository, NodeRepository};
 use uuid::Uuid;
 
 use crate::AppState;
@@ -44,6 +45,9 @@ pub fn routes() -> Router<AppState> {
 pub struct ListQuery {
     /// Tenant UUID — required (every node is tenant-scoped).
     pub tenant_id: Uuid,
+    /// **SO1 time-travel** — if present, renvoie l'état des nodes à cette
+    /// date (reverse-apply de l'audit log). Absent → état courant.
+    pub at: Option<DateTime<Utc>>,
 }
 
 /// Request body for `POST /api/v1/org/nodes`.
@@ -94,6 +98,21 @@ pub async fn list(
     State(st): State<AppState>,
     Query(q): Query<ListQuery>,
 ) -> Result<Json<Vec<OrgNode>>> {
+    // SO1 time-travel : si `?at=<iso8601>` fourni, on reconstruit
+    // l'état passé via l'audit log plutôt que de lire l'état courant.
+    if let Some(at) = q.at {
+        let snapshots = AuditRepository::new(st.pool.inner())
+            .snapshot_at("org_nodes", q.tenant_id, at)
+            .await
+            .map_err(|e| Error::Database(format!("snapshot_at nodes: {e}")))?;
+        let nodes: Vec<OrgNode> = snapshots
+            .into_iter()
+            .filter_map(|v| serde_json::from_value::<OrgNode>(v).ok())
+            .filter(|n| n.active)
+            .collect();
+        return Ok(Json(nodes));
+    }
+
     let repo = NodeRepository::new(st.pool.inner());
     let nodes = repo
         .list_by_tenant(q.tenant_id)
