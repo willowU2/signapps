@@ -31,6 +31,8 @@ import type {
   TreeType,
   OrgGroup,
   OrgGroupMember,
+  GroupType,
+  SiteType,
   OrgPolicy,
   OrgPolicyLink,
   EffectivePolicy,
@@ -381,7 +383,30 @@ export const orgApi = {
   // arrays so the UI renders without errors while surfacing a
   // clear console warning the first time it's called.
   sites: {
-    list: async () => shim<Site[]>([]),
+    list: async () => {
+      // SO7 bridge: fetch real sites from signapps-org and map onto the
+      // legacy `Site` shape consumed by <SitesNav>. Only `building`
+      // kind is surfaced here — nested floors/rooms are reached via
+      // orgApi.orgSites.tree().
+      const tenantId = getCurrentTenantId();
+      if (!tenantId) return shim<Site[]>([]);
+      const res = await client.get<OrgSiteRecord[]>("/org/sites", {
+        params: { tenant_id: tenantId, kind: "building" },
+      });
+      const mapped: Site[] = (res.data ?? []).map((s) => ({
+        id: s.id,
+        tenant_id: s.tenant_id,
+        parent_id: s.parent_id ?? undefined,
+        site_type: "office" as SiteType,
+        name: s.name,
+        address: s.address ?? undefined,
+        timezone: s.timezone ?? "UTC",
+        capacity: s.capacity ?? undefined,
+        is_active: s.active,
+      }));
+      return { ...res, data: mapped };
+    },
+    _stub: async () => shim<Site[]>([]),
     create: async (_data: Partial<Site>) => shim<Site | null>(null),
     update: async (_id: string, _data: Partial<Site>) =>
       shim<Site | null>(null),
@@ -418,7 +443,34 @@ export const orgApi = {
   // therefore stubbed as empty at the root level and will populate once
   // callers switch to a node-scoped lookup.
   groups: {
-    list: async () => shim<OrgGroup[]>([]),
+    // SO7 bridge: map signapps-org groups onto the legacy OrgGroup shape
+    // consumed by <GroupsNav> / <useOrgStore>. We surface every kind here;
+    // the legacy `group_type` field expects values like "static"|"dynamic".
+    list: async () => {
+      const tenantId = getCurrentTenantId();
+      if (!tenantId) return shim<OrgGroup[]>([]);
+      const res = await client.get<OrgGroupRecord[]>("/org/groups", {
+        params: { tenant_id: tenantId },
+      });
+      const mapped: OrgGroup[] = (res.data ?? []).map((g) => ({
+        id: g.id,
+        tenant_id: g.tenant_id,
+        name: g.name,
+        description: g.description ?? undefined,
+        group_type: g.kind as unknown as GroupType,
+        filter: (g.rule_json ?? undefined) as
+          | Record<string, unknown>
+          | undefined,
+        valid_from: undefined,
+        valid_until: undefined,
+        is_active: !g.archived,
+        attributes: g.attributes ?? {},
+        created_at: g.created_at,
+        updated_at: g.updated_at,
+      }));
+      return { ...res, data: mapped };
+    },
+    _stub: async () => shim<OrgGroup[]>([]),
     create: async (data: Partial<OrgGroup>) => {
       // Creating a "group" = creating a board attached to a node id held
       // in `attributes.node_id` (legacy shape). Best-effort.
