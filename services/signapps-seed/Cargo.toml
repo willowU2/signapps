@@ -1,0 +1,30 @@
+[package]
+name = "signapps-seed"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.75"
+license = "MIT"
+
+[dependencies]
+tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
+anyhow = { workspace = true }
+async-trait = { workspace = true }
+clap = { version = "4", features = ["derive", "env"] }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+sqlx = { workspace = true, features = ["runtime-tokio", "postgres", "uuid", "chrono", "json", "macros"] }
+uuid = { workspace = true, features = ["v4", "v5", "serde"] }
+chrono = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+signapps-db = { path = "../../crates/signapps-db" }
+signapps-db-shared = { path = "../../crates/signapps-db-shared" }
+argon2 = "0.5"
+
+[[bin]]
+name = "signapps-seed"
+path = "src/main.rs"
+
+[lib]
+name = "signapps_seed"
+path = "src/lib.rs"
