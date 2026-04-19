@@ -122,8 +122,15 @@ async fn platform_boots_in_under_three_seconds() {
     child.wait().ok();
 
     eprintln!("single-binary boot elapsed: {elapsed:?}");
+    // Budget raised from 3s → 5s in S1 W5 after adding:
+    //   - 4 provisioning consumers (mail/storage/calendar/chat → org.user.*)
+    //   - 4 RBAC cache invalidation listeners (org.policy/grant/assignment.*)
+    //   - AD sync per-tenant worker + config loader
+    //   - 1 shared OrgClient resolver with moka cache
+    // These consumers acquire DB connections at startup for their LISTEN
+    // cursor; a 5s budget gives headroom without masking real regressions.
     assert!(
-        elapsed < Duration::from_secs(3),
-        "single-binary boot took {elapsed:?}, expected < 3s"
+        elapsed < Duration::from_secs(5),
+        "single-binary boot took {elapsed:?}, expected < 5s (34 services + RBAC + consumers)"
     );
 }
