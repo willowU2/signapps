@@ -841,6 +841,43 @@ export const orgApi = {
     },
   },
 
+  /**
+   * SO6 — panel layouts (DetailPanel personnalisation).
+   *
+   * Le baseURL est déjà `http://localhost:3026/api/v1`, donc les paths
+   * restent en `/org/*`.
+   */
+  panelLayouts: {
+    /** Fetch effective layout (custom ou default) pour (role, entity_type). */
+    get: async (role: PanelRoleSlug, entityType: PanelEntitySlug) =>
+      client.get<PanelLayoutResponse>("/org/panel-layouts", {
+        params: { role, entity_type: entityType },
+      }),
+    /** Upsert custom layout — admin only. */
+    upsert: async (
+      role: PanelRoleSlug,
+      entityType: PanelEntitySlug,
+      config: PanelLayoutConfig,
+    ) =>
+      client.put<PanelLayoutRow>(`/org/panel-layouts/${role}/${entityType}`, {
+        config,
+      }),
+    /** Delete custom layout — next fetch returns default. */
+    reset: async (role: PanelRoleSlug, entityType: PanelEntitySlug) =>
+      client.post<{ deleted: number; default: PanelLayoutConfig }>(
+        `/org/panel-layouts/${role}/${entityType}/reset`,
+      ),
+    /** Fetch a KPI metric value. */
+    metric: async (
+      metric: string,
+      entityId: string,
+      entityType: PanelEntitySlug = "node",
+    ) =>
+      client.get<PanelMetricResponse>("/org/panel-layouts/metrics", {
+        params: { metric, entity_id: entityId, entity_type: entityType },
+      }),
+  },
+
   /** Board decisions + votes API. */
   decisions: {
     list: async (boardId: string, params?: { status?: OrgDecisionStatus }) =>
@@ -1108,4 +1145,62 @@ export interface OrgBulkMoveResponse {
   created: number;
   assignment_ids: string[];
   errors: string[];
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SO6 types — DetailPanel refonte.
+// ═══════════════════════════════════════════════════════════════════════════
+
+/** Slug of a panel role — aligned with the Rust `PanelRole` enum. */
+export type PanelRoleSlug = "admin" | "manager" | "viewer";
+
+/** Slug of a panel entity type — aligned with the Rust `PanelEntityType` enum. */
+export type PanelEntitySlug = "node" | "person";
+
+/** One item in `main_tabs` — either a builtin tab or a custom widget. */
+export type PanelTabItem =
+  | { type: "builtin"; id: string; position?: number }
+  | {
+      type: "widget";
+      widget_type: string;
+      config?: Record<string, unknown>;
+      position?: number;
+    };
+
+/** One item in `hero_kpis`. */
+export type PanelHeroKpi =
+  | { type: "builtin"; id: string }
+  | { type: "custom"; expression: string; label?: string };
+
+/** Effective config of a panel layout. */
+export interface PanelLayoutConfig {
+  main_tabs: PanelTabItem[];
+  hidden_tabs: string[];
+  hero_quick_actions: string[];
+  hero_kpis: PanelHeroKpi[];
+}
+
+/** Row as returned by the DB when a custom layout exists. */
+export interface PanelLayoutRow {
+  id: string;
+  tenant_id: string;
+  role: PanelRoleSlug;
+  entity_type: PanelEntitySlug;
+  config: PanelLayoutConfig;
+  updated_by_user_id?: string | null;
+  updated_at: string;
+}
+
+/** Response of `GET /org/panel-layouts`. */
+export interface PanelLayoutResponse {
+  is_custom: boolean;
+  config: PanelLayoutConfig;
+  row: PanelLayoutRow | null;
+}
+
+/** Response of `GET /org/panel-layouts/metrics`. */
+export interface PanelMetricResponse {
+  value: number;
+  label: string;
+  trend?: string | null;
 }
