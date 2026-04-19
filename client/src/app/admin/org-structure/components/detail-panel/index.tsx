@@ -134,6 +134,8 @@ const PERSON_TAB_LABELS: Record<string, string> = {
   permissions: "Permissions",
   delegations: "Délégations",
   audit: "Audit",
+  groups: "Groupes",
+  sites: "Sites",
 };
 
 /** Tabs marked as stubs (no real implementation yet). */
@@ -146,8 +148,6 @@ const STUB_TABS = new Set([
   "dhcp",
   "ntp",
   "deployment",
-  "groups",
-  "sites",
   "policies",
   "permissions",
   "assignments",
@@ -361,10 +361,6 @@ function NodeModeDetailPanel({
           return (
             <DeploymentTabContent nodeId={node.id} nodeType={node.node_type} />
           );
-        case "groups":
-          return <GroupsTab groups={groups} />;
-        case "sites":
-          return <SitesTab sites={sites} />;
         case "policies":
           return <PoliciesTab nodeId={node.id} allPolicies={allPolicies} />;
         default:
@@ -372,6 +368,10 @@ function NodeModeDetailPanel({
       }
     }
     switch (id) {
+      case "groups":
+        return <GroupsTab mode="node" node={node} />;
+      case "sites":
+        return <SitesTab mode="node" />;
       case "details":
         return (
           <DetailsTab
@@ -600,6 +600,10 @@ function PersonModeDetailPanel({
             <SkillsSection personId={person.id} />
           </div>
         );
+      case "groups":
+        return <GroupsTab mode="person" personId={person.id} />;
+      case "sites":
+        return <SitesTab mode="person" personId={person.id} />;
       case "audit":
         return <AuditTab entityType="person" entityId={person.id} />;
       default:
