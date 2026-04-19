@@ -25,6 +25,12 @@ async fn snapshot(pool: &sqlx::PgPool, tenant_id: uuid::Uuid) -> Vec<(String, i6
         ("chat_channels", "SELECT COUNT(*) FROM chat.channels WHERE name IN ('Général','Engineering','Platform Team','Frontend Team','AI Team','Sales EMEA','Sales US','Marketing','Support','Random','Announcements','CEO Office')".to_string()),
         ("pxe_profiles", "SELECT COUNT(*) FROM pxe.profiles WHERE description LIKE 'Profile démo%'".to_string()),
         ("pxe_assets", "SELECT COUNT(*) FROM pxe.assets WHERE mac_address LIKE 'aa:bb:cc:00:00:%'".to_string()),
+        // SO7 — groupes & sites.
+        ("org_groups", format!("SELECT COUNT(*) FROM org_groups WHERE tenant_id = '{}'", tenant_id)),
+        ("org_group_members", format!("SELECT COUNT(*) FROM org_group_members m JOIN org_groups g ON g.id = m.group_id WHERE g.tenant_id = '{}'", tenant_id)),
+        ("org_sites", format!("SELECT COUNT(*) FROM org_sites WHERE tenant_id = '{}'", tenant_id)),
+        ("org_site_persons", "SELECT COUNT(*) FROM org_site_persons".to_string()),
+        ("org_site_bookings", "SELECT COUNT(*) FROM org_site_bookings".to_string()),
     ];
     let mut out = Vec::new();
     for (name, sql) in queries {

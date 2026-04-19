@@ -128,10 +128,13 @@ CREATE INDEX IF NOT EXISTS idx_bookings_person
 -- ─────────────────────────────────────────────────────────────────────
 -- Audit triggers — branchés sur la fonction `org_audit_trigger()` définie
 -- par la migration 500.
+--
+-- Note : `org_site_bookings` n'a pas de `tenant_id` (dérivé via `site_id`)
+-- donc on n'y attache pas le trigger générique — même pattern que
+-- `org_webhook_deliveries` (migration 503).
 -- ─────────────────────────────────────────────────────────────────────
-DROP TRIGGER IF EXISTS org_groups_audit        ON org_groups;
-DROP TRIGGER IF EXISTS org_sites_audit         ON org_sites;
-DROP TRIGGER IF EXISTS org_site_bookings_audit ON org_site_bookings;
+DROP TRIGGER IF EXISTS org_groups_audit ON org_groups;
+DROP TRIGGER IF EXISTS org_sites_audit  ON org_sites;
 
 CREATE TRIGGER org_groups_audit
     AFTER INSERT OR UPDATE OR DELETE ON org_groups
@@ -139,8 +142,4 @@ CREATE TRIGGER org_groups_audit
 
 CREATE TRIGGER org_sites_audit
     AFTER INSERT OR UPDATE OR DELETE ON org_sites
-    FOR EACH ROW EXECUTE FUNCTION org_audit_trigger();
-
-CREATE TRIGGER org_site_bookings_audit
-    AFTER INSERT OR UPDATE OR DELETE ON org_site_bookings
     FOR EACH ROW EXECUTE FUNCTION org_audit_trigger();
