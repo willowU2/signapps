@@ -239,6 +239,21 @@ async fn build_state(shared: &SharedState) -> anyhow::Result<AppState> {
     })
 }
 
+/// Test-only routes mounted in debug builds. Returns an empty router in
+/// release builds so the endpoints never ship to production.
+#[cfg(debug_assertions)]
+fn test_routes() -> Router<AppState> {
+    Router::new().route(
+        "/api/v1/pxe/_test/simulate-dhcp",
+        post(handlers::test_simulate_dhcp),
+    )
+}
+
+#[cfg(not(debug_assertions))]
+fn test_routes() -> Router<AppState> {
+    Router::new()
+}
+
 fn create_router(app_state: AppState, http_boot_dir: &str) -> Router {
     Router::new()
         .route("/health", get(health_check))
@@ -326,6 +341,8 @@ fn create_router(app_state: AppState, http_boot_dir: &str) -> Router {
         )
         // S2.T5: catalog sha256 verification
         .route("/api/v1/pxe/catalog/refresh", post(catalog::refresh_catalog))
+        // S2.T11: test-only simulate-DHCP (debug builds only)
+        .merge(test_routes())
         .merge(openapi::swagger_router())
         .layer(axum::middleware::from_fn_with_state(
             app_state.clone(),

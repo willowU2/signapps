@@ -686,3 +686,68 @@ pub async fn list_recent_dhcp(
     })?;
     Ok(Json(rows))
 }
+
+// ============================================================================
+// Test-only DHCP simulation (S2.T11)
+//
+// Dev-only endpoint that lets Playwright (or a local curl) inject a
+// synthetic DHCPDISCOVER into the audit trail and auto-enroll the MAC.
+// Wired only when `cfg!(debug_assertions)` is true — release builds
+// never expose this route.
+// ============================================================================
+
+/// Request body for `POST /api/v1/pxe/_test/simulate-dhcp`.
+#[derive(Debug, Clone, Deserialize, utoipa::ToSchema)]
+pub struct SimulateDhcpRequest {
+    /// MAC address to simulate a DISCOVER for.
+    pub mac: String,
+    /// Optional vendor class (defaults to `"PXEClient:Arch:00000"`).
+    pub vendor_class: Option<String>,
+    /// Optional detected architecture (defaults to `"bios"`).
+    pub arch: Option<String>,
+}
+
+/// Pure handler body for the test-only simulate endpoint. Kept public
+/// so unit tests can exercise it without an HTTP transport. Called by
+/// [`test_simulate_dhcp`] in dev builds only.
+pub async fn test_simulate_dhcp_impl(
+    db: &DatabasePool,
+    req: &SimulateDhcpRequest,
+) -> anyhow::Result<()> {
+    let vendor = req
+        .vendor_class
+        .as_deref()
+        .unwrap_or("PXEClient:Arch:00000");
+    let arch = req.arch.as_deref().unwrap_or("bios");
+    crate::auto_enroll::record_dhcp_request(
+        db,
+        &req.mac,
+        "DISCOVER",
+        Some(vendor),
+        Some(arch),
+        true,
+        Some("signapps-boot.ipxe"),
+        true,
+    )
+    .await
+}
+
+/// Handler for `POST /api/v1/pxe/_test/simulate-dhcp` — dev builds only.
+///
+/// # Errors
+///
+/// Returns 400 if `mac` is missing and 500 if the DB insert fails.
+#[tracing::instrument(skip(state, req), fields(mac = %req.mac))]
+pub async fn test_simulate_dhcp(
+    State(state): State<AppState>,
+    Json(req): Json<SimulateDhcpRequest>,
+) -> Result<StatusCode, (StatusCode, String)> {
+    if req.mac.is_empty() {
+        return Err((StatusCode::BAD_REQUEST, "mac required".to_string()));
+    }
+    test_simulate_dhcp_impl(&state.db, &req).await.map_err(|e| {
+        tracing::error!("simulate-dhcp failed: {}", e);
+        (StatusCode::INTERNAL_SERVER_ERROR, "Database error".to_string())
+    })?;
+    Ok(StatusCode::OK)
+}
