@@ -9,6 +9,7 @@ pub mod ad;
 pub mod calendar;
 pub mod chat;
 pub mod contacts;
+pub mod decisions;
 pub mod delegations;
 pub mod docs;
 pub mod drive;
@@ -21,6 +22,7 @@ pub mod meet;
 pub mod org;
 pub mod positions;
 pub mod pxe;
+pub mod raci;
 pub mod tasks;
 pub mod vault;
 
@@ -33,6 +35,10 @@ pub fn all() -> Vec<Box<dyn Seeder>> {
         Box::new(focus_nodes::FocusNodesSeeder),
         Box::new(positions::PositionsSeeder),
         Box::new(delegations::DelegationsSeeder),
+        // SO2 governance — RACI matrix + board decisions (depend on
+        // focus nodes for projects + org root for board).
+        Box::new(raci::RaciSeeder),
+        Box::new(decisions::DecisionsSeeder),
         Box::new(identity::IdentitySeeder),
         Box::new(ad::AdSeeder),
         Box::new(calendar::CalendarSeeder),
