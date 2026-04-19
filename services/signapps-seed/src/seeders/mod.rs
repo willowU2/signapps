@@ -15,6 +15,7 @@ pub mod docs;
 pub mod drive;
 pub mod focus_nodes;
 pub mod forms;
+pub mod headcount;
 pub mod identity;
 pub mod it_assets;
 pub mod mail;
@@ -23,7 +24,9 @@ pub mod org;
 pub mod positions;
 pub mod pxe;
 pub mod raci;
+pub mod skills;
 pub mod tasks;
+pub mod templates;
 pub mod vault;
 
 /// Return the list of seeders in dependency order.
@@ -39,6 +42,10 @@ pub fn all() -> Vec<Box<dyn Seeder>> {
         // focus nodes for projects + org root for board).
         Box::new(raci::RaciSeeder),
         Box::new(decisions::DecisionsSeeder),
+        // SO3 scale & power — templates (no dep) + skills + headcount (depend on org).
+        Box::new(templates::TemplatesSeeder),
+        Box::new(skills::SkillsSeeder),
+        Box::new(headcount::HeadcountSeeder),
         Box::new(identity::IdentitySeeder),
         Box::new(ad::AdSeeder),
         Box::new(calendar::CalendarSeeder),

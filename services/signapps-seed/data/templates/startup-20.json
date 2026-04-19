@@ -1,0 +1,15 @@
+{
+  "nodes": [
+    { "slug": "direction", "name": "Direction", "kind": "unit", "parent_slug": null },
+    { "slug": "engineering", "name": "Engineering", "kind": "unit", "parent_slug": null },
+    { "slug": "sales", "name": "Sales", "kind": "unit", "parent_slug": null },
+    { "slug": "ops", "name": "Operations", "kind": "unit", "parent_slug": null }
+  ],
+  "positions": [
+    { "node_slug": "direction", "title": "CEO", "head_count": 1 },
+    { "node_slug": "engineering", "title": "VP Engineering", "head_count": 1 },
+    { "node_slug": "engineering", "title": "Senior Engineer", "head_count": 4 },
+    { "node_slug": "sales", "title": "Head of Sales", "head_count": 1 },
+    { "node_slug": "ops", "title": "Operations Manager", "head_count": 1 }
+  ]
+}

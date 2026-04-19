@@ -1,0 +1,30 @@
+{
+  "nodes": [
+    { "slug": "direction", "name": "Direction", "kind": "unit", "parent_slug": null },
+    { "slug": "engineering", "name": "Engineering", "kind": "unit", "parent_slug": null },
+    { "slug": "eng_platform", "name": "Platform", "kind": "unit", "parent_slug": "engineering" },
+    { "slug": "eng_frontend", "name": "Frontend", "kind": "unit", "parent_slug": "engineering" },
+    { "slug": "product", "name": "Product", "kind": "unit", "parent_slug": null },
+    { "slug": "sales", "name": "Sales", "kind": "unit", "parent_slug": null },
+    { "slug": "marketing", "name": "Marketing", "kind": "unit", "parent_slug": null },
+    { "slug": "customer_success", "name": "Customer Success", "kind": "unit", "parent_slug": null },
+    { "slug": "ops", "name": "Operations", "kind": "unit", "parent_slug": null }
+  ],
+  "positions": [
+    { "node_slug": "direction", "title": "CEO", "head_count": 1 },
+    { "node_slug": "direction", "title": "CTO", "head_count": 1 },
+    { "node_slug": "direction", "title": "CFO", "head_count": 1 },
+    { "node_slug": "engineering", "title": "VP Engineering", "head_count": 1 },
+    { "node_slug": "eng_platform", "title": "Platform Lead", "head_count": 1 },
+    { "node_slug": "eng_platform", "title": "Senior Platform Engineer", "head_count": 4 },
+    { "node_slug": "eng_frontend", "title": "Frontend Lead", "head_count": 1 },
+    { "node_slug": "eng_frontend", "title": "Senior Frontend Engineer", "head_count": 4 },
+    { "node_slug": "product", "title": "VP Product", "head_count": 1 },
+    { "node_slug": "product", "title": "Product Manager", "head_count": 3 },
+    { "node_slug": "sales", "title": "VP Sales", "head_count": 1 },
+    { "node_slug": "sales", "title": "Account Executive", "head_count": 6 },
+    { "node_slug": "marketing", "title": "Marketing Lead", "head_count": 1 },
+    { "node_slug": "customer_success", "title": "CSM", "head_count": 4 },
+    { "node_slug": "ops", "title": "Chief of Staff", "head_count": 1 }
+  ]
+}
