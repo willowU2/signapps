@@ -14,6 +14,7 @@
 
 #![allow(clippy::assertions_on_constants)]
 
+pub mod ad;
 pub mod handlers;
 pub mod middleware;
 
