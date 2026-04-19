@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { AppLayout } from "@/components/layout/app-layout";
 import { WebhookManager } from "@/components/admin/webhook-manager";
+import { OrgWebhooksPanel } from "@/components/admin/org-webhooks-panel";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -286,6 +287,8 @@ export default function WebhooksPage() {
           icon={<Webhook className="h-5 w-5" />}
         />
         <WebhookManager />
+        {/* SO4 IN3 — org events fan-out */}
+        <OrgWebhooksPanel />
         <DeliveryLog />
       </div>
     </AppLayout>
