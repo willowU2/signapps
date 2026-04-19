@@ -1,10 +1,10 @@
 //! signapps-seed — idempotent, deterministic demo data seeder for SignApps.
 //!
-//! Seeds an "Acme Corp" tenant with ~200 cross-service demo items
-//! (org tree, users, calendars, mail, chat, docs, files, PXE assets...)
-//! in under 15 seconds. Safe to re-run — all UUIDs are derived via
-//! [`uuid::acme_uuid`] namespace v5, so second invocation creates zero
-//! new rows.
+//! Seeds a "Nexus Industries" tenant with ~1500 cross-service demo items
+//! (org tree, users, calendars, mail, chat, docs, files, tasks, projects,
+//! IT assets, vault secrets, PXE assets, …) in under a minute. Safe to
+//! re-run — all UUIDs are derived via [`uuid::acme_uuid`] namespace v5,
+//! so a second invocation creates zero new rows.
 //!
 //! # Safety
 //!
@@ -181,7 +181,16 @@ async fn resolve_or_create_tenant(
 }
 
 async fn reset_acme_data(pool: &signapps_db_shared::pool::DatabasePool) -> anyhow::Result<()> {
-    let tenant_id = uuid::acme_uuid("tenant", "acme-corp");
+    // Resolve the tenant by slug so pre-existing rows get wiped even when the
+    // stored UUID differs from the deterministic one we'd normally generate.
+    let tenant_opt: Option<(::uuid::Uuid,)> =
+        sqlx::query_as("SELECT id FROM identity.tenants WHERE slug = 'acme-corp' LIMIT 1")
+            .fetch_optional(pool.inner())
+            .await
+            .unwrap_or(None);
+    let tenant_id = tenant_opt
+        .map(|(id,)| id)
+        .unwrap_or_else(|| uuid::acme_uuid("tenant", "acme-corp"));
     // Cascade-delete starting from tenant — best effort, missing tables are ok
     let tables = [
         "DELETE FROM org_assignments WHERE tenant_id = $1",

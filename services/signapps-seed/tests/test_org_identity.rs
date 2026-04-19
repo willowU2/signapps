@@ -44,8 +44,8 @@ async fn test_org_identity_ad_creates_expected_rows() {
             .await
             .expect("node count");
     assert!(
-        nodes.0 >= 5,
-        "expected >= 5 org_nodes (root + 4 OUs), got {}",
+        nodes.0 >= 14,
+        "expected >= 14 org_nodes (root + 13 OUs), got {}",
         nodes.0
     );
 
@@ -56,17 +56,17 @@ async fn test_org_identity_ad_creates_expected_rows() {
             .await
             .expect("person count");
     assert!(
-        persons.0 >= 15,
-        "expected >= 15 org_persons, got {}",
+        persons.0 >= 80,
+        "expected >= 80 org_persons, got {}",
         persons.0
     );
 
     let users: (i64,) =
-        sqlx::query_as("SELECT COUNT(*) FROM identity.users WHERE email LIKE '%@acme.corp'")
+        sqlx::query_as("SELECT COUNT(*) FROM identity.users WHERE email LIKE '%@nexus.corp'")
             .fetch_one(&pool)
             .await
             .expect("user count");
-    assert!(users.0 >= 15, "expected >= 15 Acme users, got {}", users.0);
+    assert!(users.0 >= 80, "expected >= 80 Nexus users, got {}", users.0);
 
     let ad: (i64,) =
         sqlx::query_as("SELECT COUNT(*) FROM org_ad_config WHERE tenant_id = $1")

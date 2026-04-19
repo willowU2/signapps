@@ -1,4 +1,4 @@
-//! Meet seeder — 4 persistent meeting rooms.
+//! Meet seeder — 10 persistent meeting rooms (physical + virtual).
 
 use crate::context::SeedContext;
 use crate::seeder::{SeedReport, Seeder};
@@ -6,7 +6,7 @@ use crate::seeders::org::bump;
 use crate::uuid::acme_uuid;
 use async_trait::async_trait;
 
-/// Seeds 4 demo rooms (direction/engineering/all-hands/client).
+/// Seeds 10 demo rooms covering physical meeting rooms + virtual spaces.
 pub struct MeetSeeder;
 
 #[async_trait]
@@ -28,10 +28,16 @@ impl Seeder for MeetSeeder {
             .ok_or_else(|| anyhow::anyhow!("marie.dupont not registered"))?;
 
         let rooms: &[(&str, &str, &str, &str, bool)] = &[
-            ("direction-weekly", "Direction Weekly", "Point hebdomadaire direction", "ACME-DIR1", true),
-            ("engineering-standup", "Engineering Standup", "Daily eng", "ACME-ENG1", true),
-            ("all-hands", "All Hands", "All Hands mensuel", "ACME-ALL1", false),
-            ("client-calls", "Client Calls", "Salle pour appels client", "ACME-CLI1", true),
+            ("boardroom", "Boardroom", "Salle conseil d'administration", "NEX-BOR1", true),
+            ("salle-einstein", "Salle Einstein", "Salle réunion 12 pers (R+2)", "NEX-EIN1", false),
+            ("salle-curie", "Salle Curie", "Salle réunion 8 pers (R+2)", "NEX-CUR1", false),
+            ("salle-turing", "Salle Turing", "Salle réunion 6 pers (R+3)", "NEX-TUR1", false),
+            ("salle-ada", "Salle Ada", "Salle réunion 4 pers (R+1)", "NEX-ADA1", false),
+            ("salle-hopper", "Salle Hopper", "Salle phone-booth solo (R+3)", "NEX-HOP1", false),
+            ("engineering-standup", "Engineering Standup", "Daily eng virtuel", "NEX-ENG1", false),
+            ("all-hands", "All Hands", "All Hands mensuel virtuel", "NEX-ALL1", false),
+            ("client-calls", "Client Calls", "Salle virtuelle pour calls client", "NEX-CLI1", true),
+            ("interviews", "Interviews", "Salle virtuelle recrutement", "NEX-INT1", true),
         ];
 
         for (slug, name, description, room_code, is_private) in rooms.iter() {

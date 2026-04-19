@@ -1,12 +1,13 @@
-//! PXE seeder — 5 boot profiles + 3 enrolled assets bound to Acme users.
+//! PXE seeder — 5 boot profiles + 20 enrolled assets bound to Nexus users
+//! (MACs simulated as aa:bb:cc:00:00:0x..).
 
 use crate::context::SeedContext;
 use crate::seeder::{SeedReport, Seeder};
-use crate::seeders::org::bump;
+use crate::seeders::org::{bump, PERSONS};
 use crate::uuid::acme_uuid;
 use async_trait::async_trait;
 
-/// Seeds 5 PXE boot profiles and 3 enrolled PXE assets (MACs aa:bb:cc:00:00:0x).
+/// Seeds 5 PXE boot profiles and 20 enrolled PXE assets.
 pub struct PxeSeeder;
 
 #[async_trait]
@@ -81,19 +82,29 @@ impl Seeder for PxeSeeder {
             bump(&mut report, res, "pxe-profile");
         }
 
-        // 3 enrolled assets (fixed MACs, linked to users)
-        let assets: &[(&str, &str, &str, &str)] = &[
-            ("aa:bb:cc:00:00:01", "poste-jean", "jean.martin", "ubuntu-24.04-server"),
-            ("aa:bb:cc:00:00:02", "laptop-marie", "marie.dupont", "windows-pe-11"),
-            ("aa:bb:cc:00:00:03", "devbox-sophie", "sophie.leroy", "ubuntu-24.04-server"),
+        // 20 enrolled assets — MACs aa:bb:cc:00:00:01 → aa:bb:cc:00:00:14
+        // Each asset is linked to one of the first 20 PERSONS with a rotating
+        // profile.
+        let profile_rotation = [
+            "ubuntu-24.04-server",
+            "debian-12",
+            "windows-pe-11",
+            "clonezilla",
+            "memtest86",
         ];
+        let n_persons = PERSONS.len();
 
-        for (mac, hostname, user, profile_slug) in assets.iter() {
+        for i in 0..20usize {
+            let mac = format!("aa:bb:cc:00:00:{:02x}", i + 1);
+            let username = PERSONS[i % n_persons].0;
+            let hostname = format!("poste-{}", username.replace('.', "-"));
+            let profile_slug = profile_rotation[i % profile_rotation.len()];
+
             let user_id = ctx
-                .user(user)
-                .ok_or_else(|| anyhow::anyhow!("user not registered: {}", user))?;
+                .user(username)
+                .ok_or_else(|| anyhow::anyhow!("user not registered: {}", username))?;
             let profile_id = acme_uuid("pxe-profile", profile_slug);
-            let asset_id = acme_uuid("pxe-asset", mac);
+            let asset_id = acme_uuid("pxe-asset", &mac);
 
             let res = sqlx::query(
                 r#"
@@ -104,8 +115,8 @@ impl Seeder for PxeSeeder {
                 "#,
             )
             .bind(asset_id)
-            .bind(mac)
-            .bind(hostname)
+            .bind(&mac)
+            .bind(&hostname)
             .bind(profile_id)
             .bind(user_id)
             .execute(pool)

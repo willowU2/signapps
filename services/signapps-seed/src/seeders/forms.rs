@@ -1,4 +1,4 @@
-//! Forms seeder — 5 demo forms.
+//! Forms seeder — 10 demo forms covering HR, Sales, Support, Internal ops.
 
 use crate::context::SeedContext;
 use crate::seeder::{SeedReport, Seeder};
@@ -6,7 +6,7 @@ use crate::seeders::org::bump;
 use crate::uuid::acme_uuid;
 use async_trait::async_trait;
 
-/// Seeds 5 demo forms (candidacy, satisfaction, demo request, leave, expense).
+/// Seeds 10 demo forms.
 pub struct FormsSeeder;
 
 #[async_trait]
@@ -41,8 +41,8 @@ impl Seeder for FormsSeeder {
             ),
             (
                 "satisfaction-client",
-                "Satisfaction client",
-                "Questionnaire trimestriel",
+                "Satisfaction client trimestrielle",
+                "Votre feedback nous aide à progresser",
                 true,
                 serde_json::json!([
                     {"type": "rating", "label": "Note", "required": true},
@@ -60,14 +60,66 @@ impl Seeder for FormsSeeder {
                 ]),
             ),
             (
-                "conge-exceptionnel",
-                "Demande congé exceptionnel",
-                "Interne — validée par le manager",
+                "nps",
+                "Enquête NPS",
+                "Recommanderiez-vous Nexus à un confrère ?",
+                true,
+                serde_json::json!([
+                    {"type": "rating", "label": "Score 0-10", "required": true},
+                    {"type": "textarea", "label": "Pourquoi ?"}
+                ]),
+            ),
+            (
+                "support-ticket",
+                "Ouvrir un ticket support",
+                "Décrivez votre problème",
+                true,
+                serde_json::json!([
+                    {"type": "text", "label": "Sujet", "required": true},
+                    {"type": "textarea", "label": "Description", "required": true},
+                    {"type": "select", "label": "Priorité", "options": ["P0","P1","P2","P3"]}
+                ]),
+            ),
+            (
+                "feature-request",
+                "Feature request",
+                "Suggérez une nouvelle fonctionnalité",
+                true,
+                serde_json::json!([
+                    {"type": "text", "label": "Titre", "required": true},
+                    {"type": "textarea", "label": "Use case"}
+                ]),
+            ),
+            (
+                "bug-report",
+                "Signaler un bug",
+                "Aidez-nous à améliorer le produit",
+                true,
+                serde_json::json!([
+                    {"type": "text", "label": "Résumé", "required": true},
+                    {"type": "textarea", "label": "Étapes", "required": true},
+                    {"type": "file", "label": "Capture d'écran"}
+                ]),
+            ),
+            (
+                "event-signup",
+                "Inscription événement",
+                "All-Hands mensuel",
+                true,
+                serde_json::json!([
+                    {"type": "text", "label": "Nom", "required": true},
+                    {"type": "checkbox", "label": "Participera en présentiel"}
+                ]),
+            ),
+            (
+                "performance-review",
+                "Revue de performance Q2",
+                "Auto-évaluation trimestrielle",
                 false,
                 serde_json::json!([
-                    {"type": "date", "label": "Début", "required": true},
-                    {"type": "date", "label": "Fin", "required": true},
-                    {"type": "textarea", "label": "Motif"}
+                    {"type": "textarea", "label": "Succès", "required": true},
+                    {"type": "textarea", "label": "Axes d'amélioration"},
+                    {"type": "rating", "label": "Auto-note", "required": true}
                 ]),
             ),
             (
