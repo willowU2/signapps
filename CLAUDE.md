@@ -574,6 +574,9 @@ See `docs/architecture/inter-service-communication.md` for details and patterns.
 - **AD sync bidirectionnel** : `signapps-org::ad::sync` avec `AdSyncMode = Off|OrgToAd|AdToOrg|Bidirectional`. Secrets via keystore. Debounce 30s anti-ping-pong.
 - **Provisioning événementiel** : événements `org.user.created|deactivated` via `PgEventBus`. Consumers dans mail/storage/calendar/chat créent/suspendent leurs ressources.
 - **Access grants** : HMAC-SHA256 par tenant (`Keystore::dek("org-grants-v1")` + tenant salt). Endpoint `/g/:token` redirect avec cookie `grant_token`.
+- **Positions & incumbents (SO1)** : `org_positions` (siège typé + head_count) + `org_position_incumbents` (temporal start/end_date). CRUD `/api/v1/org/positions` + `/incumbents`. Spec `docs/product-specs/66-so1-foundations.md`.
+- **Time-travel org (SO1)** : `org_audit_log` alimenté par triggers SQL sur 5 tables org_* (`org_audit_trigger()`). `GET /org/nodes?at=<iso>` reconstruit l'état passé via reverse-apply. Cron tokio 15 min `expire_due` pour `org_delegations` + event `org.delegation.expired`.
+- **Délégations RBAC (SO1)** : scope `manager | rbac | all` sur `org_delegations`. Résolveur `OrgClient::check` ajoute branche 5 — si delegate actif avec scope ∈ {rbac, all}, permissions unies du delegator. `DecisionSource::Delegation { delegation_id, delegator_person_id }`.
 - **Pool DB** : 50 connexions par défaut (override `DB_MAX_CONNECTIONS`). Boot test budget 5s.
 
 ## graphify
