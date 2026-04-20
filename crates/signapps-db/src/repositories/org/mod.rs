@@ -21,6 +21,10 @@
 //! **SO7 addition (2026-04-19)** — [`GroupRepository`], [`SiteRepository`],
 //! [`BookingRepository`] pour les groupes transverses et la gestion des
 //! lieux physiques.
+//!
+//! **SO8 addition (2026-04-19)** — [`ResourceRepository`] pour le
+//! catalogue unifié de ressources tangibles (IT + véhicules + clés +
+//! badges + AV + licences).
 
 pub mod access_grant_repository;
 pub mod ad_config_repository;
@@ -41,6 +45,7 @@ pub mod position_repository;
 pub mod provisioning_log_repository;
 pub mod public_link_repository;
 pub mod raci_repository;
+pub mod resource_repository;
 pub mod site_repository;
 pub mod skill_repository;
 pub mod template_repository;
@@ -65,6 +70,9 @@ pub use position_repository::PositionRepository;
 pub use provisioning_log_repository::ProvisioningLogRepository;
 pub use public_link_repository::PublicLinkRepository;
 pub use raci_repository::RaciRepository;
+pub use resource_repository::{
+    NewResource, ResourceListFilters, ResourceRepository, ResourceUpdate,
+};
 pub use site_repository::SiteRepository;
 pub use skill_repository::SkillRepository;
 pub use template_repository::{CloneOutcome, TemplateRepository};
