@@ -83,6 +83,10 @@ pub struct NewResource {
     pub next_maintenance_date: Option<NaiveDate>,
     /// Token QR (si pré-calculé ; sinon le handler le set après create).
     pub qr_token: Option<String>,
+    /// URL photo hero.
+    pub photo_url: Option<String>,
+    /// Type de l'identifiant primaire (snake_case, défaut `'none'`).
+    pub primary_identifier_type: Option<String>,
 }
 
 /// Payload pour update partiel (tous les champs modifiables).
@@ -115,6 +119,10 @@ pub struct ResourceUpdate {
     pub warranty_end_date: Option<Option<NaiveDate>>,
     /// Prochaine maintenance.
     pub next_maintenance_date: Option<Option<NaiveDate>>,
+    /// URL photo hero (Some(None) = vider).
+    pub photo_url: Option<Option<String>>,
+    /// Type de l'identifiant primaire.
+    pub primary_identifier_type: Option<String>,
 }
 
 impl<'a> ResourceRepository<'a> {
@@ -337,24 +345,32 @@ impl<'a> ResourceRepository<'a> {
         if let Some(v) = patch.next_maintenance_date {
             current.next_maintenance_date = v;
         }
+        if let Some(v) = patch.photo_url {
+            current.photo_url = v;
+        }
+        if let Some(v) = patch.primary_identifier_type {
+            current.primary_identifier_type = v;
+        }
 
         let row = sqlx::query_as::<_, Resource>(
             r"
             UPDATE org_resources
-               SET name                  = $2,
-                   description           = $3,
-                   serial_or_ref         = $4,
-                   attributes            = $5,
-                   assigned_to_person_id = $6,
-                   assigned_to_node_id   = $7,
-                   primary_site_id       = $8,
-                   purchase_date         = $9,
-                   purchase_cost_cents   = $10,
-                   currency              = $11,
-                   amortization_months   = $12,
-                   warranty_end_date     = $13,
-                   next_maintenance_date = $14,
-                   updated_at            = now()
+               SET name                    = $2,
+                   description             = $3,
+                   serial_or_ref           = $4,
+                   attributes              = $5,
+                   assigned_to_person_id   = $6,
+                   assigned_to_node_id     = $7,
+                   primary_site_id         = $8,
+                   purchase_date           = $9,
+                   purchase_cost_cents     = $10,
+                   currency                = $11,
+                   amortization_months     = $12,
+                   warranty_end_date       = $13,
+                   next_maintenance_date   = $14,
+                   photo_url               = $15,
+                   primary_identifier_type = $16,
+                   updated_at              = now()
              WHERE id = $1
              RETURNING *
             ",
@@ -373,6 +389,29 @@ impl<'a> ResourceRepository<'a> {
         .bind(current.amortization_months)
         .bind(current.warranty_end_date)
         .bind(current.next_maintenance_date)
+        .bind(&current.photo_url)
+        .bind(&current.primary_identifier_type)
+        .fetch_optional(self.pool)
+        .await?;
+        Ok(row)
+    }
+
+    /// Set the photo URL on a resource (used by `/org/resources/:id/photo`).
+    ///
+    /// # Errors
+    ///
+    /// Returns the underlying sqlx error.
+    pub async fn set_photo_url(
+        &self,
+        id: Uuid,
+        photo_url: Option<&str>,
+    ) -> Result<Option<Resource>> {
+        let row = sqlx::query_as::<_, Resource>(
+            "UPDATE org_resources SET photo_url = $2, updated_at = now()
+              WHERE id = $1 RETURNING *",
+        )
+        .bind(id)
+        .bind(photo_url)
         .fetch_optional(self.pool)
         .await?;
         Ok(row)
@@ -498,10 +537,11 @@ async fn insert_resource(
             attributes, status, assigned_to_person_id, assigned_to_node_id,
             primary_site_id, purchase_date, purchase_cost_cents, currency,
             amortization_months, warranty_end_date, next_maintenance_date,
-            qr_token
+            qr_token, photo_url, primary_identifier_type
         ) VALUES (
             $1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
-            $11, $12, $13, $14, $15, $16, $17, $18
+            $11, $12, $13, $14, $15, $16, $17, $18, $19,
+            COALESCE($20, 'none')
         )
         RETURNING *
         ",
@@ -524,6 +564,8 @@ async fn insert_resource(
     .bind(input.warranty_end_date)
     .bind(input.next_maintenance_date)
     .bind(&input.qr_token)
+    .bind(&input.photo_url)
+    .bind(&input.primary_identifier_type)
     .fetch_one(&mut **tx)
     .await?;
     Ok(row)

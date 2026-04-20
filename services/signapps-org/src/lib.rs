@@ -82,6 +82,7 @@ pub async fn router(shared: SharedState) -> anyhow::Result<Router> {
     spawn_ad_sync_workers(&state);
     spawn_provisioning_dispatcher(&state);
     spawn_delegation_expire_worker(&state);
+    spawn_resource_renewal_worker(&state);
     Ok(create_router(state))
 }
 
@@ -143,6 +144,86 @@ pub fn spawn_provisioning_dispatcher(_state: &AppState) {
     tokio::spawn(async move {
         tracing::info!("org provisioning dispatcher: placeholder, no-op until W5");
         std::future::pending::<()>().await;
+    });
+}
+
+/// Spawn the SO9 resource-renewal cron (tick = 24 hours).
+///
+/// À chaque tick :
+/// 1. Query les renewals open (pending/snoozed/escalated) dont due_date
+///    est dans les 60 prochains jours.
+/// 2. Pour chaque row, classe par proximité J-60 / J-30 / J-7 / overdue.
+/// 3. Publie un event PgEventBus
+///    `org.resource.renewal.due.{j60,j30,j7,overdue}` selon la proximité.
+/// 4. Passe `status = 'escalated'` si overdue et l'event de la veille
+///    n'a pas abouti au renouvellement.
+///
+/// Désactivable en dev via `SO9_RENEWAL_TICK_ENABLED=false`.
+pub fn spawn_resource_renewal_worker(state: &AppState) {
+    use signapps_common::pg_events::NewEvent;
+    use signapps_db::repositories::org::ResourceRenewalRepository;
+
+    if std::env::var("SO9_RENEWAL_TICK_ENABLED")
+        .map(|v| v == "false" || v == "0")
+        .unwrap_or(false)
+    {
+        tracing::info!("SO9 resource renewal worker DISABLED by env");
+        return;
+    }
+
+    let pool = state.pool.clone();
+    let event_bus = state.event_bus.clone();
+    tokio::spawn(async move {
+        tracing::info!("org resource renewal worker started (tick = 24h)");
+        let mut interval = tokio::time::interval(std::time::Duration::from_secs(24 * 60 * 60));
+        // Skip the first immediate tick.
+        interval.tick().await;
+        loop {
+            interval.tick().await;
+            let today = chrono::Utc::now().date_naive();
+            let repo = ResourceRenewalRepository::new(pool.inner());
+            match repo.list_open_due_within(today, 60).await {
+                Ok(rows) => {
+                    for row in rows {
+                        let days = row.days_to_due(today);
+                        let grace = i64::from(row.grace_period_days);
+                        let kind_event = if days + grace < 0 {
+                            "overdue"
+                        } else if days <= 7 {
+                            "j7"
+                        } else if days <= 30 {
+                            "j30"
+                        } else if days <= 60 {
+                            "j60"
+                        } else {
+                            continue;
+                        };
+                        // Escalate if overdue and not already.
+                        if kind_event == "overdue"
+                            && row.status != signapps_db::models::org::RenewalStatus::Escalated
+                        {
+                            let _ = repo.escalate(row.id, chrono::Utc::now()).await;
+                        } else {
+                            let _ = repo.bump_reminder(row.id, chrono::Utc::now()).await;
+                        }
+                        let payload = match serde_json::to_value(&row) {
+                            Ok(v) => v,
+                            Err(_) => serde_json::json!({"id": row.id}),
+                        };
+                        let _ = event_bus
+                            .publish(NewEvent {
+                                event_type: format!("org.resource.renewal.due.{kind_event}"),
+                                aggregate_id: Some(row.id),
+                                payload,
+                            })
+                            .await;
+                    }
+                }
+                Err(e) => {
+                    tracing::warn!(?e, "resource renewal worker: query failed");
+                }
+            }
+        }
     });
 }
 
@@ -377,6 +458,20 @@ pub fn create_router(state: AppState) -> Router {
         .nest("/api/v1/org/resources", handlers::resources::routes())
         // `/me/inventory` — available to any authenticated user.
         .nest("/api/v1/me/inventory", handlers::resources::me_routes())
+        // ── SO9 multi-assign + ACL + renewals ───────────────────────
+        .nest(
+            "/api/v1/org/resources",
+            handlers::resource_assignments::routes(),
+        )
+        .nest(
+            "/api/v1/org/resources",
+            handlers::resource_renewals::resource_renewals_routes(),
+        )
+        .nest(
+            "/api/v1/org/renewals",
+            handlers::resource_renewals::cross_renewals_routes(),
+        )
+        .nest("/api/v1/org/acl", handlers::acl::routes())
         // Photos: nested with absolute paths to avoid clashing with the
         // canonical persons / nodes routers.
         .merge(handlers::photos::routes_absolute())

@@ -43,6 +43,14 @@
 //! - [`Resource`] + [`ResourceKind`] + [`ResourceStatus`] +
 //!   [`ResourceStatusLog`] : IT, véhicules, clés, badges, AV, licences.
 //!
+//! **SO9 addition (2026-04-20)** — multi-assign + ACL universelle + renewals:
+//! - [`ResourceAssignment`] + [`AssignmentRole`] + [`AssignmentSubjectType`]
+//!   : liens N:N entre acteurs (personne/node/group/site) et ressources.
+//! - [`Acl`] + [`AclSubjectType`] + [`AclEffect`] : permission universelle
+//!   ReBAC-style (deny wins).
+//! - [`ResourceRenewal`] + [`RenewalKind`] + [`RenewalStatus`] : cycle
+//!   de renouvellement (garanties, licences, contrôles, badges).
+//!
 //! ## Design choices
 //!
 //! - Each entity carries `tenant_id` for multi-tenancy.
@@ -55,6 +63,7 @@
 //!   the `openapi` feature, matching the rest of `signapps-db`.
 
 pub mod access_grant;
+pub mod acl;
 pub mod ad_config;
 pub mod ad_sync_log;
 pub mod assignment;
@@ -76,6 +85,8 @@ pub mod provisioning_log;
 pub mod public_link;
 pub mod raci;
 pub mod resource;
+pub mod resource_assignment;
+pub mod resource_renewal;
 pub mod site;
 pub mod skill;
 pub mod template;
@@ -83,6 +94,7 @@ pub mod webhook;
 pub mod webhook_delivery;
 
 pub use access_grant::AccessGrant;
+pub use acl::{Acl, AclEffect, AclSubjectType};
 pub use ad_config::{AdConfig, AdSyncMode, ConflictStrategy};
 pub use ad_sync_log::AdSyncLog;
 pub use assignment::{Assignment, Axis};
@@ -106,6 +118,8 @@ pub use provisioning_log::ProvisioningLog;
 pub use public_link::{PublicLink, Visibility};
 pub use raci::{Raci, RaciRole};
 pub use resource::{Resource, ResourceKind, ResourceStatus, ResourceStatusLog};
+pub use resource_assignment::{AssignmentRole, AssignmentSubjectType, ResourceAssignment};
+pub use resource_renewal::{RenewalKind, RenewalStatus, ResourceRenewal};
 pub use site::{BookingStatus, OrgSite, SiteBooking, SiteKind, SitePerson, SitePersonRole};
 pub use skill::{Skill, SkillCategory};
 pub use template::{template_spec, Template};

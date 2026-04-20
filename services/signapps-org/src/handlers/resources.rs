@@ -168,6 +168,10 @@ pub struct CreateBody {
     pub warranty_end_date: Option<NaiveDate>,
     /// Prochaine maintenance.
     pub next_maintenance_date: Option<NaiveDate>,
+    /// URL photo hero (SO9).
+    pub photo_url: Option<String>,
+    /// Type de l'identifiant primaire (SO9).
+    pub primary_identifier_type: Option<String>,
 }
 
 /// Body for `PUT /org/resources/:id`.
@@ -213,6 +217,11 @@ pub struct UpdateBody {
     /// Prochaine maintenance.
     #[serde(default, deserialize_with = "deserialize_optional_option")]
     pub next_maintenance_date: Option<Option<NaiveDate>>,
+    /// URL photo hero (SO9).
+    #[serde(default, deserialize_with = "deserialize_optional_option")]
+    pub photo_url: Option<Option<String>>,
+    /// Type de l'identifiant primaire (SO9).
+    pub primary_identifier_type: Option<String>,
 }
 
 /// Custom deserializer: `None` field absent, `Some(None)` JSON null,
@@ -416,6 +425,8 @@ pub async fn create(
                 warranty_end_date: body.warranty_end_date,
                 next_maintenance_date: body.next_maintenance_date,
                 qr_token: None,
+                photo_url: body.photo_url.clone(),
+                primary_identifier_type: body.primary_identifier_type.clone(),
             },
             Some(claims.sub),
         )
@@ -466,6 +477,8 @@ pub async fn update(
         amortization_months: body.amortization_months,
         warranty_end_date: body.warranty_end_date,
         next_maintenance_date: body.next_maintenance_date,
+        photo_url: body.photo_url,
+        primary_identifier_type: body.primary_identifier_type,
     };
 
     let row = ResourceRepository::new(st.pool.inner())

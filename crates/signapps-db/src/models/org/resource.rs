@@ -266,6 +266,11 @@ pub struct Resource {
     pub next_maintenance_date: Option<NaiveDate>,
     /// Token hex 16 chars pour QR code public (unique global).
     pub qr_token: Option<String>,
+    /// URL photo hero (uploaded via `/org/resources/:id/photo`).
+    pub photo_url: Option<String>,
+    /// Type de l'identifiant primaire (`serial` / `plate` / `vin` /
+    /// `license_key` / `badge_number` / `key_number` / `none`).
+    pub primary_identifier_type: String,
     /// `true` = soft-deleted.
     pub archived: bool,
     /// Date de création (UTC).
@@ -453,6 +458,8 @@ mod tests {
             warranty_end_date: None,
             next_maintenance_date: None,
             qr_token: None,
+            photo_url: None,
+            primary_identifier_type: "none".into(),
             archived: false,
             created_at: Utc::now(),
             updated_at: Utc::now(),

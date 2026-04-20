@@ -8,11 +8,16 @@
 //! Gated behind the `rbac` cargo feature to keep compile-times down on
 //! crates that don't care (e.g. pure-UI or offline utilities).
 
+pub mod acl;
 pub mod cache;
 pub mod middleware;
 pub mod resolver;
 pub mod types;
 
+pub use acl::{
+    resolve as resolve_acl, AclAction, AclCacheKey, AclCached, AclDecision, AclDecisionCache,
+    AclEffect, AclEntry, AclSubjectCtx, AssignmentInheritance, MatchedRule, RuleSource,
+};
 pub use cache::{CacheKey, CachedDecision, DecisionCache};
 pub use middleware::{
     calendar_from_path, document_from_path, folder_from_path, form_from_path,
