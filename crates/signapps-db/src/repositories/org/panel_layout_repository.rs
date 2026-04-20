@@ -309,16 +309,23 @@ mod tests {
     fn admin_node_default_has_5_main_tabs() {
         let cfg = default_layout(PanelRole::Admin, PanelEntityType::Node);
         let ids = tab_ids(&cfg);
-        assert_eq!(ids.len(), 5);
+        // Hero 5 + overflow — we assert the first 5 since MAX_MAIN_TABS=5
+        // on the UI side. Overflow lives in `...` menu.
+        assert!(ids.len() >= 5, "admin/node must carry at least 5 tabs");
         assert_eq!(
-            ids,
-            vec![
+            &ids[0..5],
+            &[
                 "people".to_string(),
                 "positions".to_string(),
                 "governance".to_string(),
                 "headcount".to_string(),
                 "audit".to_string(),
             ]
+        );
+        // SO8 addition — `resources` must be in overflow.
+        assert!(
+            ids.contains(&"resources".to_string()),
+            "admin/node must include 'resources' in overflow"
         );
         assert!(cfg.hidden_tabs.iter().any(|s| s == "gpo"));
     }
@@ -327,7 +334,22 @@ mod tests {
     fn admin_person_default_has_5_main_tabs() {
         let cfg = default_layout(PanelRole::Admin, PanelEntityType::Person);
         let ids = tab_ids(&cfg);
-        assert_eq!(ids, vec!["profile", "assignments", "skills", "permissions", "delegations"]);
+        assert!(
+            ids.len() >= 5,
+            "admin/person must carry at least 5 tabs"
+        );
+        assert_eq!(
+            &ids[0..5],
+            &[
+                "profile".to_string(),
+                "assignments".to_string(),
+                "skills".to_string(),
+                "permissions".to_string(),
+                "delegations".to_string(),
+            ]
+        );
+        // SO8 addition — `resources` must be in overflow.
+        assert!(ids.contains(&"resources".to_string()));
     }
 
     #[test]
