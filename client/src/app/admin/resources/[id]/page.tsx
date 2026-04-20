@@ -42,7 +42,13 @@ import {
   QrCode,
   History,
   ArrowRightLeft,
+  Users,
+  CalendarClock,
+  ShieldCheck,
 } from "lucide-react";
+import { AssignDialog } from "@/components/resources/assign-dialog";
+import { AclTable } from "@/components/resources/acl-table";
+import type { ResourceAssignment, ResourceRenewal } from "@/types/org";
 
 const STATUS_LABELS: Record<ResourceStatus, string> = {
   ordered: "Commandée",
@@ -75,6 +81,11 @@ export default function ResourceDetailPage() {
   const [target, setTarget] = useState<ResourceStatus>("active");
   const [reason, setReason] = useState("");
 
+  // SO9
+  const [assignments, setAssignments] = useState<ResourceAssignment[]>([]);
+  const [renewals, setRenewals] = useState<ResourceRenewal[]>([]);
+  const [assignOpen, setAssignOpen] = useState(false);
+
   const load = async () => {
     setLoading(true);
     try {
@@ -84,6 +95,19 @@ export default function ResourceDetailPage() {
       ]);
       setResource(rRes.data);
       setHistory(hRes.data ?? []);
+      // SO9 — parallel fetch, tolerate failure (if SO9 not deployed).
+      try {
+        const [aRes, reRes] = await Promise.all([
+          orgApi.resources.assignments.list(id),
+          orgApi.resources.renewals.list(id),
+        ]);
+        setAssignments(aRes.data.assignments ?? []);
+        setRenewals(reRes.data ?? []);
+      } catch (inner) {
+        console.warn("SO9 fetch failed (optional)", inner);
+        setAssignments([]);
+        setRenewals([]);
+      }
     } catch (e) {
       console.error(e);
       toast.error("Ressource introuvable");
@@ -278,6 +302,16 @@ export default function ResourceDetailPage() {
           <TabsList>
             <TabsTrigger value="details">Détails</TabsTrigger>
             <TabsTrigger value="attribution">Attribution</TabsTrigger>
+            <TabsTrigger value="assignments">
+              <Users className="h-4 w-4 mr-1" /> Rôles ({assignments.length})
+            </TabsTrigger>
+            <TabsTrigger value="renewals">
+              <CalendarClock className="h-4 w-4 mr-1" /> Renouvellements (
+              {renewals.length})
+            </TabsTrigger>
+            <TabsTrigger value="acl">
+              <ShieldCheck className="h-4 w-4 mr-1" /> ACL
+            </TabsTrigger>
             <TabsTrigger value="history">
               <History className="h-4 w-4 mr-1" /> Historique ({history.length})
             </TabsTrigger>
@@ -323,6 +357,103 @@ export default function ResourceDetailPage() {
                 </Row>
                 <Row label="Node">{resource.assigned_to_node_id ?? "—"}</Row>
                 <Row label="Site">{resource.primary_site_id ?? "—"}</Row>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="assignments" className="space-y-2">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle className="text-base">Assignments actifs</CardTitle>
+                <Button size="sm" onClick={() => setAssignOpen(true)}>
+                  Ajouter
+                </Button>
+              </CardHeader>
+              <CardContent>
+                {assignments.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">
+                    Aucun assignment.
+                  </p>
+                ) : (
+                  <ul className="space-y-2">
+                    {assignments.map((a) => (
+                      <li
+                        key={a.id}
+                        className="flex items-center gap-3 rounded border p-2 text-sm"
+                      >
+                        <Badge>{a.role}</Badge>
+                        <Badge variant="outline">{a.subject_type}</Badge>
+                        <code className="font-mono text-xs text-muted-foreground">
+                          {a.subject_id.slice(0, 12)}…
+                        </code>
+                        {a.is_primary && (
+                          <Badge variant="secondary">Primary</Badge>
+                        )}
+                        {a.reason && (
+                          <span className="text-xs text-muted-foreground italic">
+                            {a.reason}
+                          </span>
+                        )}
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="ml-auto text-destructive"
+                          onClick={async () => {
+                            await orgApi.resources.assignments.end(
+                              resource.id,
+                              a.id,
+                            );
+                            toast.success("Assignment clos");
+                            await load();
+                          }}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="renewals" className="space-y-2">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle className="text-base">
+                  Renouvellements actifs
+                </CardTitle>
+                <Button size="sm" variant="outline" asChild>
+                  <Link href="/admin/resources/renewals">Dashboard</Link>
+                </Button>
+              </CardHeader>
+              <CardContent>
+                {renewals.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">
+                    Aucun renouvellement suivi.
+                  </p>
+                ) : (
+                  <ul className="space-y-2">
+                    {renewals.map((r) => (
+                      <li
+                        key={r.id}
+                        className="flex items-center gap-3 rounded border p-2 text-sm"
+                      >
+                        <Badge variant="outline">{r.kind}</Badge>
+                        <span>échéance {r.due_date}</span>
+                        <Badge className="ml-auto">{r.status}</Badge>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="acl" className="space-y-2">
+            <Card>
+              <CardContent className="pt-6">
+                <AclTable resourceId={resource.id} />
               </CardContent>
             </Card>
           </TabsContent>
@@ -393,6 +524,13 @@ export default function ResourceDetailPage() {
           </TabsContent>
         </Tabs>
       </div>
+
+      <AssignDialog
+        resourceId={resource.id}
+        open={assignOpen}
+        onOpenChange={setAssignOpen}
+        onCreated={() => load()}
+      />
 
       <Dialog open={transitionOpen} onOpenChange={setTransitionOpen}>
         <DialogContent>

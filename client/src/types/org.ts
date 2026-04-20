@@ -562,10 +562,24 @@ export interface Resource {
   warranty_end_date?: string | null;
   next_maintenance_date?: string | null;
   qr_token?: string | null;
+  /** SO9 — hero photo URL (uploaded via /org/resources/:id/photo). */
+  photo_url?: string | null;
+  /** SO9 — type de l'identifiant primaire. */
+  primary_identifier_type?: ResourcePrimaryIdentifierType;
   archived: boolean;
   created_at: string;
   updated_at: string;
 }
+
+/** SO9 — Type de l'identifiant primaire d'une ressource. */
+export type ResourcePrimaryIdentifierType =
+  | "serial"
+  | "plate"
+  | "vin"
+  | "license_key"
+  | "badge_number"
+  | "key_number"
+  | "none";
 
 /** Append-only status log entry. */
 export interface ResourceStatusLog {
@@ -588,4 +602,133 @@ export interface ResourceCountsResponse {
 export interface InventoryResponse {
   by_kind: Array<{ kind: string; resources: Resource[] }>;
   total: number;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SO9 — multi-assign + ACL universelle + renouvellements
+// ═══════════════════════════════════════════════════════════════════════════
+
+/** Type de sujet d'un `org_resource_assignments` row. */
+export type AssignmentSubjectType = "person" | "node" | "group" | "site";
+
+/** Rôle dans un assignment. */
+export type AssignmentRole =
+  | "owner"
+  | "primary_user"
+  | "secondary_user"
+  | "caretaker"
+  | "maintainer";
+
+/** `org_resource_assignments` row. */
+export interface ResourceAssignment {
+  id: string;
+  tenant_id: string;
+  resource_id: string;
+  subject_type: AssignmentSubjectType;
+  subject_id: string;
+  role: AssignmentRole;
+  is_primary: boolean;
+  start_at: string;
+  end_at?: string | null;
+  reason?: string | null;
+  created_by_user_id?: string | null;
+  created_at: string;
+}
+
+/** Type de sujet ACL. */
+export type AclSubjectType =
+  | "person"
+  | "group"
+  | "role"
+  | "everyone"
+  | "auth_user";
+
+/** Effet ACL. */
+export type AclEffect = "allow" | "deny";
+
+/** Action ACL (valeur reconnues côté resolver). */
+export type AclAction =
+  | "create"
+  | "read"
+  | "update"
+  | "delete"
+  | "list"
+  | "assign"
+  | "unassign"
+  | "transition"
+  | "renew"
+  | "*";
+
+/** `org_acl` row. */
+export interface Acl {
+  id: string;
+  tenant_id: string;
+  subject_type: AclSubjectType;
+  subject_id?: string | null;
+  subject_ref?: string | null;
+  action: string;
+  resource_type: string;
+  resource_id?: string | null;
+  effect: AclEffect;
+  reason?: string | null;
+  valid_from?: string | null;
+  valid_until?: string | null;
+  created_by_user_id?: string | null;
+  created_at: string;
+}
+
+/** Type de renouvellement. */
+export type RenewalKind =
+  | "warranty_end"
+  | "license_expiry"
+  | "badge_validity"
+  | "insurance_expiry"
+  | "technical_inspection"
+  | "maintenance_due"
+  | "battery_replacement"
+  | "key_rotation"
+  | "custom";
+
+/** Statut d'un renouvellement. */
+export type RenewalStatus =
+  | "pending"
+  | "snoozed"
+  | "renewed"
+  | "escalated"
+  | "cancelled";
+
+/** `org_resource_renewals` row. */
+export interface ResourceRenewal {
+  id: string;
+  tenant_id: string;
+  resource_id: string;
+  kind: RenewalKind;
+  due_date: string;
+  grace_period_days: number;
+  status: RenewalStatus;
+  last_reminded_at?: string | null;
+  snoozed_until?: string | null;
+  renewed_at?: string | null;
+  renewed_by_user_id?: string | null;
+  renewal_notes?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+/** Matched rule returned by `POST /org/acl/test`. */
+export interface MatchedRule {
+  source: "acl" | "inherited_from_assignment" | "global_admin";
+  acl_id?: string | null;
+  subject_type?: string | null;
+  role?: string | null;
+  effect: AclEffect;
+  reason: string;
+}
+
+/** `POST /org/acl/test` response. */
+export interface TestAclResponse {
+  effect: AclEffect;
+  source: string;
+  matched_acls: MatchedRule[];
+  inherited_reasons: MatchedRule[];
 }

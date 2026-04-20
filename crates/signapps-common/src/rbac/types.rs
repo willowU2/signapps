@@ -175,6 +175,14 @@ pub enum DecisionSource {
         /// Person who delegated their rights.
         delegator_person_id: Uuid,
     },
+    /// **SO9** — An explicit `org_acl` row granted the action.
+    Acl {
+        /// Matched ACL row id.
+        acl_id: Uuid,
+        /// Subject type of the ACL (`person` | `group` | `role` |
+        /// `everyone` | `auth_user`).
+        subject_type: String,
+    },
 }
 
 /// Why a request was denied.

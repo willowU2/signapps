@@ -27,6 +27,7 @@
 //! badges + AV + licences).
 
 pub mod access_grant_repository;
+pub mod acl_repository;
 pub mod ad_config_repository;
 pub mod ad_sync_log_repository;
 pub mod assignment_repository;
@@ -45,6 +46,8 @@ pub mod position_repository;
 pub mod provisioning_log_repository;
 pub mod public_link_repository;
 pub mod raci_repository;
+pub mod resource_assignment_repository;
+pub mod resource_renewal_repository;
 pub mod resource_repository;
 pub mod site_repository;
 pub mod skill_repository;
@@ -52,6 +55,7 @@ pub mod template_repository;
 pub mod webhook_repository;
 
 pub use access_grant_repository::AccessGrantRepository;
+pub use acl_repository::{AclListFilters, AclRepository, NewAcl};
 pub use ad_config_repository::AdConfigRepository;
 pub use ad_sync_log_repository::AdSyncLogRepository;
 pub use assignment_repository::AssignmentRepository;
@@ -70,6 +74,12 @@ pub use position_repository::PositionRepository;
 pub use provisioning_log_repository::ProvisioningLogRepository;
 pub use public_link_repository::PublicLinkRepository;
 pub use raci_repository::RaciRepository;
+pub use resource_assignment_repository::{
+    NewResourceAssignment, ResourceAssignmentRepository,
+};
+pub use resource_renewal_repository::{
+    NewResourceRenewal, RenewalListFilters, ResourceRenewalRepository,
+};
 pub use resource_repository::{
     NewResource, ResourceListFilters, ResourceRepository, ResourceUpdate,
 };

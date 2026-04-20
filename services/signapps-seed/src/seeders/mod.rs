@@ -5,6 +5,7 @@
 
 use crate::seeder::Seeder;
 
+pub mod acl_renewals;
 pub mod ad;
 pub mod calendar;
 pub mod chat;
@@ -81,5 +82,7 @@ pub fn all() -> Vec<Box<dyn Seeder>> {
         Box::new(groups::GroupsSeeder),
         // SO8 - resources catalog (depends on org, sites, it-assets).
         Box::new(resources::ResourcesSeeder),
+        // SO9 - ACL + renewals + multi-role assignments (depends on resources).
+        Box::new(acl_renewals::AclRenewalsSeeder),
     ]
 }

@@ -52,6 +52,9 @@ import {
   Download,
   Trash2,
   ExternalLink,
+  CalendarClock,
+  List,
+  LayoutGrid,
 } from "lucide-react";
 
 const KIND_OPTIONS: { value: ResourceKind; label: string; emoji: string }[] = [
@@ -111,6 +114,7 @@ export default function ResourcesPage() {
     "all",
   );
 
+  const [viewMode, setViewMode] = useState<"table" | "grid">("table");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [creating, setCreating] = useState(false);
   const [form, setForm] = useState<{
@@ -245,6 +249,29 @@ export default function ResourcesPage() {
           icon={<Package className="h-5 w-5 text-primary" />}
           actions={
             <div className="flex gap-2">
+              <Button variant="outline" asChild>
+                <Link href="/admin/resources/renewals">
+                  <CalendarClock className="mr-2 h-4 w-4" /> Renouvellements
+                </Link>
+              </Button>
+              <div className="inline-flex rounded-md border">
+                <Button
+                  variant={viewMode === "table" ? "secondary" : "ghost"}
+                  size="sm"
+                  onClick={() => setViewMode("table")}
+                  aria-label="Vue table"
+                >
+                  <List className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant={viewMode === "grid" ? "secondary" : "ghost"}
+                  size="sm"
+                  onClick={() => setViewMode("grid")}
+                  aria-label="Vue grid"
+                >
+                  <LayoutGrid className="h-4 w-4" />
+                </Button>
+              </div>
               <Button variant="outline" onClick={handleExportCsv}>
                 <Download className="mr-2 h-4 w-4" /> Export CSV
               </Button>
@@ -302,6 +329,58 @@ export default function ResourcesPage() {
         {loading ? (
           <div className="py-12 text-center text-muted-foreground">
             Chargement…
+          </div>
+        ) : viewMode === "grid" ? (
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+            {filtered.map((r) => (
+              <Link
+                key={r.id}
+                href={`/admin/resources/${r.id}`}
+                className="group rounded-lg border bg-card p-4 hover:shadow transition"
+              >
+                {r.photo_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={r.photo_url}
+                    alt={r.name}
+                    className="mb-3 h-28 w-full rounded object-cover"
+                  />
+                ) : (
+                  <div className="mb-3 h-28 w-full rounded bg-muted flex items-center justify-center text-muted-foreground text-xs">
+                    Pas de photo
+                  </div>
+                )}
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-semibold">{r.name}</p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {r.slug}
+                    </p>
+                  </div>
+                  <Badge
+                    variant={statusBadgeVariant(r.status)}
+                    className="shrink-0"
+                  >
+                    {statusLabel(r.status)}
+                  </Badge>
+                </div>
+                <div className="mt-2 flex items-center gap-2">
+                  <Badge variant="outline" className="text-[10px]">
+                    {kindLabel(r.kind)}
+                  </Badge>
+                  {r.serial_or_ref && (
+                    <span className="truncate text-xs text-muted-foreground">
+                      {r.serial_or_ref}
+                    </span>
+                  )}
+                </div>
+              </Link>
+            ))}
+            {filtered.length === 0 && (
+              <div className="col-span-full rounded-md border border-dashed p-8 text-center text-muted-foreground">
+                Aucune ressource trouvée
+              </div>
+            )}
           </div>
         ) : (
           <div className="rounded-md border overflow-x-auto">

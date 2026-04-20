@@ -58,3 +58,8 @@ pub mod sites;
 
 // ── SO8 catalogue unifié de ressources tangibles ────────────────────────────
 pub mod resources;
+
+// ── SO9 multi-assign + ACL universelle + renouvellements ────────────────────
+pub mod acl;
+pub mod resource_assignments;
+pub mod resource_renewals;
