@@ -55,3 +55,6 @@ pub mod panel_layouts;
 pub mod bookings;
 pub mod groups;
 pub mod sites;
+
+// ── SO8 catalogue unifié de ressources tangibles ────────────────────────────
+pub mod resources;

@@ -233,7 +233,9 @@ pub fn create_router(state: AppState) -> Router {
         // Public grant redirect — no auth, validates via HMAC + DB check.
         .nest("/g", grants::redirect::routes())
         // SO4 IN2 — public org-chart slug endpoints (no auth).
-        .nest("/public/org", handlers::public_links::public_routes());
+        .nest("/public/org", handlers::public_links::public_routes())
+        // SO8 — public QR redirect (no auth, token-scoped lookup only).
+        .nest("/public/resource", handlers::resources::public_routes());
 
     // Pre-existing org endpoints (admin UI). Preserved under
     // `/api/v1/admin/org/*` to avoid clashing with the new canonical
@@ -371,6 +373,10 @@ pub fn create_router(state: AppState) -> Router {
             "/api/v1/org/site-bookings",
             handlers::bookings::routes(),
         )
+        // ── SO8 catalogue unifié de ressources tangibles ───────────
+        .nest("/api/v1/org/resources", handlers::resources::routes())
+        // `/me/inventory` — available to any authenticated user.
+        .nest("/api/v1/me/inventory", handlers::resources::me_routes())
         // Photos: nested with absolute paths to avoid clashing with the
         // canonical persons / nodes routers.
         .merge(handlers::photos::routes_absolute())
