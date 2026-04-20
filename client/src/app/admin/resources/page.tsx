@@ -1,9 +1,21 @@
 "use client";
 
-import { useEffect, useState } from "react";
+/**
+ * SO8 — Catalogue unifié de ressources tangibles.
+ *
+ * Remplace la page /admin/resources legacy (qui tapait l'identity service) par
+ * la surface canonique `org_resources` exposée par signapps-org (port 3026).
+ *
+ * Filtres: kind, status, search. Actions: créer, archiver, transition de
+ * statut, export CSV (bulk). Chaque ligne lie vers `/admin/resources/:id`.
+ */
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { AppLayout } from "@/components/layout/app-layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import {
   Table,
   TableBody,
@@ -19,10 +31,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -30,197 +39,202 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
+import { PageHeader } from "@/components/ui/page-header";
+import { toast } from "sonner";
+import { usePageTitle } from "@/hooks/use-page-title";
+import { orgApi } from "@/lib/api/org";
+import type { Resource, ResourceKind, ResourceStatus } from "@/types/org";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
+  Package,
   Plus,
   Search,
-  MoreHorizontal,
-  Pencil,
+  Download,
   Trash2,
-  Check,
-  X,
-  Clock,
-  Package,
+  ExternalLink,
 } from "lucide-react";
-import { PageHeader } from "@/components/ui/page-header";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { useResourcesStore } from "@/stores/resources-store";
-import {
-  Resource,
-  ResourceTypeCategory,
-  getResourceTypeIcon,
-  getResourceTypeLabel,
-  getReservationStatusColor,
-  getReservationStatusLabel,
-} from "@/lib/api/resources";
-import { toast } from "sonner";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { usePageTitle } from "@/hooks/use-page-title";
 
-const resourceTypeOptions: {
-  value: ResourceTypeCategory;
-  label: string;
-  icon: string;
-}[] = [
-  { value: "room", label: "Salle", icon: "🚪" },
-  { value: "equipment", label: "Équipement", icon: "🖥️" },
-  { value: "vehicle", label: "Véhicule", icon: "🚗" },
-  { value: "desk", label: "Bureau", icon: "🪑" },
+const KIND_OPTIONS: { value: ResourceKind; label: string; emoji: string }[] = [
+  { value: "it_device", label: "IT / informatique", emoji: "💻" },
+  { value: "vehicle", label: "Véhicule", emoji: "🚗" },
+  { value: "key_physical", label: "Clé physique", emoji: "🔑" },
+  { value: "badge", label: "Badge", emoji: "🪪" },
+  { value: "av_equipment", label: "Équipement AV", emoji: "📹" },
+  { value: "furniture", label: "Mobilier", emoji: "🪑" },
+  { value: "mobile_phone", label: "Téléphone", emoji: "📱" },
+  { value: "license_software", label: "Licence logiciel", emoji: "🧾" },
+  { value: "other", label: "Autre", emoji: "📦" },
 ];
+
+const STATUS_OPTIONS: { value: ResourceStatus; label: string }[] = [
+  { value: "ordered", label: "Commandée" },
+  { value: "active", label: "En service" },
+  { value: "loaned", label: "Prêtée" },
+  { value: "in_maintenance", label: "En maintenance" },
+  { value: "returned", label: "Rendue" },
+  { value: "retired", label: "Retirée" },
+];
+
+function kindLabel(kind: string): string {
+  const opt = KIND_OPTIONS.find((o) => o.value === kind);
+  return opt ? `${opt.emoji} ${opt.label}` : kind;
+}
+
+function statusLabel(status: ResourceStatus): string {
+  return STATUS_OPTIONS.find((o) => o.value === status)?.label ?? status;
+}
+
+function statusBadgeVariant(
+  status: ResourceStatus,
+): "default" | "secondary" | "destructive" | "outline" {
+  switch (status) {
+    case "active":
+      return "default";
+    case "loaned":
+    case "in_maintenance":
+      return "secondary";
+    case "retired":
+      return "destructive";
+    default:
+      return "outline";
+  }
+}
 
 export default function ResourcesPage() {
   usePageTitle("Ressources");
-  const {
-    resources,
-    resourcesLoading,
-    resourceTypes,
-    resourceTypesLoading,
-    pendingReservations,
-    pendingLoading,
-    fetchResources,
-    fetchResourceTypes,
-    fetchPendingReservations,
-    createResource,
-    deleteResource,
-    approveReservation,
-    rejectReservation,
-  } = useResourcesStore();
 
+  const [resources, setResources] = useState<Resource[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [typeFilter, setTypeFilter] = useState<ResourceTypeCategory | "all">(
+  const [kindFilter, setKindFilter] = useState<ResourceKind | "all">("all");
+  const [statusFilter, setStatusFilter] = useState<ResourceStatus | "all">(
     "all",
   );
+
   const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [deleteResourceTarget, setDeleteResourceTarget] =
-    useState<Resource | null>(null);
-  const [rejectReservationId, setRejectReservationId] = useState<string | null>(
-    null,
-  );
-  const [rejectReason, setRejectReason] = useState("");
-  const [newResource, setNewResource] = useState({
+  const [creating, setCreating] = useState(false);
+  const [form, setForm] = useState<{
+    slug: string;
+    kind: ResourceKind;
+    name: string;
+    description: string;
+    serial_or_ref: string;
+    purchase_cost_cents: string;
+  }>({
+    slug: "",
+    kind: "it_device",
     name: "",
-    resource_type: "room" as ResourceTypeCategory,
     description: "",
-    capacity: "",
-    location: "",
-    floor: "",
-    building: "",
-    requires_approval: false,
+    serial_or_ref: "",
+    purchase_cost_cents: "",
   });
+
+  const load = useMemo(
+    () => async () => {
+      setLoading(true);
+      try {
+        const res = await orgApi.resources.list({
+          kind: kindFilter === "all" ? undefined : kindFilter,
+          status: statusFilter === "all" ? undefined : statusFilter,
+        });
+        setResources(res.data ?? []);
+      } catch (e) {
+        console.error(e);
+        toast.error("Erreur de chargement");
+      } finally {
+        setLoading(false);
+      }
+    },
+    [kindFilter, statusFilter],
+  );
 
   useEffect(() => {
-    fetchResources();
-    fetchResourceTypes();
-    fetchPendingReservations();
-  }, [fetchResources, fetchResourceTypes, fetchPendingReservations]);
+    void load();
+  }, [load]);
 
-  const filteredResources = resources.filter((resource) => {
-    const matchesSearch =
-      resource.name.toLowerCase().includes(search.toLowerCase()) ||
-      (resource.description?.toLowerCase() ?? "").includes(
-        search.toLowerCase(),
-      ) ||
-      (resource.location?.toLowerCase() ?? "").includes(search.toLowerCase());
-    const matchesType =
-      typeFilter === "all" || resource.resource_type === typeFilter;
-    return matchesSearch && matchesType;
-  });
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return resources;
+    return resources.filter((r) => {
+      return (
+        r.name.toLowerCase().includes(q) ||
+        r.slug.toLowerCase().includes(q) ||
+        (r.serial_or_ref ?? "").toLowerCase().includes(q) ||
+        (r.description ?? "").toLowerCase().includes(q)
+      );
+    });
+  }, [resources, search]);
 
   const handleCreate = async () => {
-    if (!newResource.name.trim()) return;
-    setIsSubmitting(true);
+    if (!form.name.trim() || !form.slug.trim()) {
+      toast.error("Nom et slug obligatoires");
+      return;
+    }
+    setCreating(true);
     try {
-      await createResource({
-        name: newResource.name,
-        resource_type: newResource.resource_type,
-        description: newResource.description || undefined,
-        capacity: newResource.capacity
-          ? parseInt(newResource.capacity, 10)
+      const res = await orgApi.resources.create({
+        slug: form.slug.trim(),
+        kind: form.kind,
+        name: form.name.trim(),
+        description: form.description || undefined,
+        serial_or_ref: form.serial_or_ref || undefined,
+        purchase_cost_cents: form.purchase_cost_cents
+          ? parseInt(form.purchase_cost_cents, 10)
           : undefined,
-        location: newResource.location || undefined,
-        floor: newResource.floor || undefined,
-        building: newResource.building || undefined,
-        requires_approval: newResource.requires_approval,
       });
+      toast.success("Ressource créée");
       setIsCreateOpen(false);
-      setNewResource({
+      setForm({
+        slug: "",
+        kind: "it_device",
         name: "",
-        resource_type: "room",
         description: "",
-        capacity: "",
-        location: "",
-        floor: "",
-        building: "",
-        requires_approval: false,
+        serial_or_ref: "",
+        purchase_cost_cents: "",
       });
-    } catch {
-      toast.error("Erreur lors de la création de la ressource");
+      setResources((list) => [res.data, ...list]);
+    } catch (e) {
+      console.error(e);
+      toast.error("Création refusée (slug déjà utilisé ?)");
     } finally {
-      setIsSubmitting(false);
+      setCreating(false);
     }
   };
 
-  const handleDelete = (resource: Resource) => {
-    setDeleteResourceTarget(resource);
-  };
-
-  const handleDeleteConfirm = async () => {
-    if (!deleteResourceTarget) return;
-    setDeleteResourceTarget(null);
+  const handleArchive = async (id: string) => {
+    if (!confirm("Archiver cette ressource ?")) return;
     try {
-      await deleteResource(deleteResourceTarget.id);
-    } catch {
-      toast.error("Erreur lors de la suppression de la ressource");
+      await orgApi.resources.archive(id);
+      toast.success("Ressource archivée");
+      setResources((list) => list.filter((r) => r.id !== id));
+    } catch (e) {
+      console.error(e);
+      toast.error("Échec de l'archivage");
     }
   };
 
-  const handleApprove = async (reservationId: string) => {
-    try {
-      await approveReservation(reservationId);
-    } catch {
-      toast.error("Erreur lors de l'approbation de la réservation");
-    }
-  };
-
-  const handleReject = (reservationId: string) => {
-    setRejectReason("");
-    setRejectReservationId(reservationId);
-  };
-
-  const handleRejectConfirm = async () => {
-    if (!rejectReservationId) return;
-    setRejectReservationId(null);
-    try {
-      await rejectReservation(rejectReservationId, rejectReason || undefined);
-    } catch {
-      toast.error("Erreur lors du refus de la réservation");
-    }
+  const handleExportCsv = () => {
+    const header = "id,slug,kind,name,status,serial,cost_cents,assigned_person";
+    const rows = filtered.map((r) =>
+      [
+        r.id,
+        r.slug,
+        r.kind,
+        `"${r.name.replaceAll('"', '""')}"`,
+        r.status,
+        r.serial_or_ref ?? "",
+        r.purchase_cost_cents ?? "",
+        r.assigned_to_person_id ?? "",
+      ].join(","),
+    );
+    const csv = [header, ...rows].join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `resources-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -230,489 +244,258 @@ export default function ResourcesPage() {
           title="Ressources"
           icon={<Package className="h-5 w-5 text-primary" />}
           actions={
-            <Button onClick={() => setIsCreateOpen(true)}>
-              <Plus className="mr-2 h-4 w-4" /> Nouvelle ressource
-            </Button>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={handleExportCsv}>
+                <Download className="mr-2 h-4 w-4" /> Export CSV
+              </Button>
+              <Button onClick={() => setIsCreateOpen(true)}>
+                <Plus className="mr-2 h-4 w-4" /> Nouvelle ressource
+              </Button>
+            </div>
           }
         />
+
+        <div className="flex items-center gap-4 flex-wrap">
+          <div className="relative flex-1 max-w-sm">
+            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Rechercher nom, slug, serial…"
+              className="pl-8"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+          <Select
+            value={kindFilter}
+            onValueChange={(v) => setKindFilter(v as ResourceKind | "all")}
+          >
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="Type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tous les types</SelectItem>
+              {KIND_OPTIONS.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>
+                  {opt.emoji} {opt.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select
+            value={statusFilter}
+            onValueChange={(v) => setStatusFilter(v as ResourceStatus | "all")}
+          >
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Statut" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tous les statuts</SelectItem>
+              {STATUS_OPTIONS.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>
+                  {opt.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {loading ? (
+          <div className="py-12 text-center text-muted-foreground">
+            Chargement…
+          </div>
+        ) : (
+          <div className="rounded-md border overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nom</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Statut</TableHead>
+                  <TableHead>Serial</TableHead>
+                  <TableHead>Coût</TableHead>
+                  <TableHead className="w-[120px]">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filtered.length === 0 ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={6}
+                      className="text-center py-8 text-muted-foreground"
+                    >
+                      Aucune ressource trouvée
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filtered.map((r) => (
+                    <TableRow key={r.id}>
+                      <TableCell className="font-medium">
+                        <Link
+                          href={`/admin/resources/${r.id}`}
+                          className="hover:underline"
+                        >
+                          {r.name}
+                        </Link>
+                        <p className="text-xs text-muted-foreground">
+                          {r.slug}
+                        </p>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="text-xs">
+                          {kindLabel(r.kind)}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={statusBadgeVariant(r.status)}>
+                          {statusLabel(r.status)}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-xs text-muted-foreground">
+                        {r.serial_or_ref ?? "—"}
+                      </TableCell>
+                      <TableCell className="text-xs text-muted-foreground">
+                        {r.purchase_cost_cents
+                          ? `${(r.purchase_cost_cents / 100).toLocaleString(
+                              "fr-FR",
+                            )} ${r.currency ?? "EUR"}`
+                          : "—"}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-1">
+                          <Link
+                            href={`/admin/resources/${r.id}`}
+                            title="Voir le détail"
+                          >
+                            <Button size="sm" variant="ghost" asChild>
+                              <span>
+                                <ExternalLink className="h-4 w-4" />
+                              </span>
+                            </Button>
+                          </Link>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleArchive(r.id)}
+                            title="Archiver"
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+
         <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
           <DialogContent className="max-w-md">
             <DialogHeader>
               <DialogTitle>Créer une ressource</DialogTitle>
               <DialogDescription>
-                Ajoutez une nouvelle ressource réservable (salle, équipement,
-                véhicule, bureau).
+                Les champs spécifiques au type sont éditables sur la fiche
+                détaillée après création.
               </DialogDescription>
             </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Nom *</Label>
+            <div className="space-y-3 py-2">
+              <div>
+                <Label htmlFor="slug">Slug *</Label>
                 <Input
-                  id="name"
-                  placeholder="Salle de réunion A"
-                  value={newResource.name}
+                  id="slug"
+                  placeholder="veh-tesla-y-02"
+                  value={form.slug}
                   onChange={(e) =>
-                    setNewResource((prev) => ({
-                      ...prev,
-                      name: e.target.value,
-                    }))
+                    setForm((f) => ({ ...f, slug: e.target.value }))
                   }
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="type">Type *</Label>
+              <div>
+                <Label htmlFor="kind">Type *</Label>
                 <Select
-                  value={newResource.resource_type}
-                  onValueChange={(value: ResourceTypeCategory) =>
-                    setNewResource((prev) => ({
-                      ...prev,
-                      resource_type: value,
-                    }))
+                  value={form.kind}
+                  onValueChange={(v) =>
+                    setForm((f) => ({ ...f, kind: v as ResourceKind }))
                   }
                 >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {resourceTypeOptions.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.icon} {option.label}
+                    {KIND_OPTIONS.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        {opt.emoji} {opt.label}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="description">Description</Label>
-                <Textarea
-                  id="description"
-                  placeholder="Description de la ressource..."
-                  value={newResource.description}
+              <div>
+                <Label htmlFor="name">Nom *</Label>
+                <Input
+                  id="name"
+                  placeholder="Tesla Model Y (Paris)"
+                  value={form.name}
                   onChange={(e) =>
-                    setNewResource((prev) => ({
-                      ...prev,
-                      description: e.target.value,
-                    }))
+                    setForm((f) => ({ ...f, name: e.target.value }))
                   }
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="capacity">Capacité</Label>
-                  <Input
-                    id="capacity"
-                    type="number"
-                    placeholder="10"
-                    value={newResource.capacity}
-                    onChange={(e) =>
-                      setNewResource((prev) => ({
-                        ...prev,
-                        capacity: e.target.value,
-                      }))
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="floor">Étage</Label>
-                  <Input
-                    id="floor"
-                    placeholder="2"
-                    value={newResource.floor}
-                    onChange={(e) =>
-                      setNewResource((prev) => ({
-                        ...prev,
-                        floor: e.target.value,
-                      }))
-                    }
-                  />
-                </div>
+              <div>
+                <Label htmlFor="serial">Numéro de série / ref</Label>
+                <Input
+                  id="serial"
+                  placeholder="VIN-XXX ou S/N"
+                  value={form.serial_or_ref}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, serial_or_ref: e.target.value }))
+                  }
+                />
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="building">Bâtiment</Label>
-                  <Input
-                    id="building"
-                    placeholder="Bâtiment A"
-                    value={newResource.building}
-                    onChange={(e) =>
-                      setNewResource((prev) => ({
-                        ...prev,
-                        building: e.target.value,
-                      }))
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="location">Emplacement</Label>
-                  <Input
-                    id="location"
-                    placeholder="Aile Est"
-                    value={newResource.location}
-                    onChange={(e) =>
-                      setNewResource((prev) => ({
-                        ...prev,
-                        location: e.target.value,
-                      }))
-                    }
-                  />
-                </div>
+              <div>
+                <Label htmlFor="desc">Description</Label>
+                <Textarea
+                  id="desc"
+                  rows={2}
+                  placeholder="Note facultative"
+                  value={form.description}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, description: e.target.value }))
+                  }
+                />
               </div>
-              <div className="flex items-center justify-between rounded-lg border p-4">
-                <div className="space-y-0.5">
-                  <Label>Approbation requise</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Les réservations doivent être approuvées
-                  </p>
-                </div>
-                <Switch
-                  checked={newResource.requires_approval}
-                  onCheckedChange={(checked) =>
-                    setNewResource((prev) => ({
-                      ...prev,
-                      requires_approval: checked,
+              <div>
+                <Label htmlFor="cost">Coût d&apos;achat (centimes)</Label>
+                <Input
+                  id="cost"
+                  type="number"
+                  placeholder="500000"
+                  value={form.purchase_cost_cents}
+                  onChange={(e) =>
+                    setForm((f) => ({
+                      ...f,
+                      purchase_cost_cents: e.target.value,
                     }))
                   }
                 />
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setIsCreateOpen(false)}>
+              <Button
+                variant="outline"
+                onClick={() => setIsCreateOpen(false)}
+                disabled={creating}
+              >
                 Annuler
               </Button>
-              <Button
-                onClick={handleCreate}
-                disabled={isSubmitting || !newResource.name.trim()}
-              >
-                {isSubmitting ? "Création..." : "Créer"}
+              <Button onClick={handleCreate} disabled={creating}>
+                {creating ? "Création…" : "Créer"}
               </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
-
-        <Tabs defaultValue="resources" className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="resources">Ressources</TabsTrigger>
-            <TabsTrigger value="pending" className="relative">
-              Réservations en attente
-              {pendingReservations.length > 0 && (
-                <Badge
-                  variant="destructive"
-                  className="ml-2 h-5 w-5 rounded-full p-0 text-xs"
-                >
-                  {pendingReservations.length}
-                </Badge>
-              )}
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="resources" className="space-y-4">
-            <div className="flex items-center gap-4">
-              <div className="relative flex-1 max-w-sm">
-                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Rechercher..."
-                  className="pl-8"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                />
-              </div>
-              <Select
-                value={typeFilter}
-                onValueChange={(value) =>
-                  setTypeFilter(value as ResourceTypeCategory | "all")
-                }
-              >
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Tous les types" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tous les types</SelectItem>
-                  {resourceTypeOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.icon} {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {resourcesLoading ? (
-              <div className="flex items-center justify-center py-8">
-                <div className="text-muted-foreground">Chargement...</div>
-              </div>
-            ) : (
-              <div className="rounded-md border overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Nom</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead>Emplacement</TableHead>
-                      <TableHead>Capacité</TableHead>
-                      <TableHead>Statut</TableHead>
-                      <TableHead className="w-[50px]"></TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredResources.length === 0 ? (
-                      <TableRow>
-                        <TableCell
-                          colSpan={6}
-                          className="text-center py-8 text-muted-foreground"
-                        >
-                          Aucune ressource trouvée
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      filteredResources.map((resource) => (
-                        <TableRow key={resource.id}>
-                          <TableCell className="font-medium">
-                            <div>
-                              <div className="flex items-center gap-2">
-                                <span>
-                                  {getResourceTypeIcon(resource.resource_type)}
-                                </span>
-                                {resource.name}
-                              </div>
-                              {resource.description && (
-                                <p className="text-sm text-muted-foreground truncate max-w-[200px]">
-                                  {resource.description}
-                                </p>
-                              )}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="outline">
-                              {getResourceTypeLabel(resource.resource_type)}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-muted-foreground">
-                            {[
-                              resource.building,
-                              resource.floor,
-                              resource.location,
-                            ]
-                              .filter(Boolean)
-                              .join(", ") || "-"}
-                          </TableCell>
-                          <TableCell>
-                            {resource.capacity
-                              ? `${resource.capacity} pers.`
-                              : "-"}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex flex-col gap-1">
-                              <Badge
-                                variant={
-                                  resource.is_available
-                                    ? "default"
-                                    : "secondary"
-                                }
-                              >
-                                {resource.is_available
-                                  ? "Disponible"
-                                  : "Indisponible"}
-                              </Badge>
-                              {resource.requires_approval && (
-                                <Badge variant="outline" className="text-xs">
-                                  <Clock className="mr-1 h-3 w-3" />
-                                  Approbation
-                                </Badge>
-                              )}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" className="h-8 w-8 p-0">
-                                  <span className="sr-only">Menu</span>
-                                  <MoreHorizontal className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                <DropdownMenuItem
-                                  onClick={() =>
-                                    navigator.clipboard.writeText(resource.id)
-                                  }
-                                >
-                                  Copier l&apos;ID
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem>
-                                  <Pencil className="mr-2 h-4 w-4" />
-                                  Modifier
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem
-                                  className="text-destructive"
-                                  onClick={() => handleDelete(resource)}
-                                >
-                                  <Trash2 className="mr-2 h-4 w-4" />
-                                  Supprimer
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
-          </TabsContent>
-
-          <TabsContent value="pending" className="space-y-4">
-            {pendingLoading ? (
-              <div className="flex items-center justify-center py-8">
-                <div className="text-muted-foreground">Chargement...</div>
-              </div>
-            ) : pendingReservations.length === 0 ? (
-              <Card>
-                <CardContent className="flex flex-col items-center justify-center py-12">
-                  <Check className="h-12 w-12 text-green-500 mb-4" />
-                  <CardTitle className="text-lg">
-                    Aucune réservation en attente
-                  </CardTitle>
-                  <CardDescription>
-                    Toutes les demandes de réservation ont été traitées.
-                  </CardDescription>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="grid gap-4">
-                {pendingReservations.map((reservation) => (
-                  <Card key={reservation.id}>
-                    <CardHeader className="pb-2">
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <CardTitle className="text-base">
-                            Réservation #{reservation.id.slice(0, 8)}
-                          </CardTitle>
-                          <CardDescription>
-                            Demandée le{" "}
-                            {new Date(
-                              reservation.created_at,
-                            ).toLocaleDateString("fr-FR", {
-                              day: "numeric",
-                              month: "long",
-                              year: "numeric",
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })}
-                          </CardDescription>
-                        </div>
-                        <Badge
-                          className={getReservationStatusColor(
-                            reservation.status,
-                          )}
-                        >
-                          {getReservationStatusLabel(reservation.status)}
-                        </Badge>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-2 text-sm">
-                        <div>
-                          <span className="text-muted-foreground">
-                            Ressource:{" "}
-                          </span>
-                          <span className="font-medium">
-                            {reservation.resource_id}
-                          </span>
-                        </div>
-                        <div>
-                          <span className="text-muted-foreground">
-                            Demandeur:{" "}
-                          </span>
-                          <span className="font-medium">
-                            {reservation.requested_by}
-                          </span>
-                        </div>
-                        {reservation.notes && (
-                          <div>
-                            <span className="text-muted-foreground">
-                              Notes:{" "}
-                            </span>
-                            <span>{reservation.notes}</span>
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex gap-2 mt-4">
-                        <Button
-                          size="sm"
-                          onClick={() => handleApprove(reservation.id)}
-                        >
-                          <Check className="mr-2 h-4 w-4" />
-                          Approuver
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleReject(reservation.id)}
-                        >
-                          <X className="mr-2 h-4 w-4" />
-                          Refuser
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </TabsContent>
-        </Tabs>
       </div>
-
-      {/* Delete resource confirm */}
-      <AlertDialog
-        open={!!deleteResourceTarget}
-        onOpenChange={() => setDeleteResourceTarget(null)}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              Supprimer &quot;{deleteResourceTarget?.name}&quot; ?
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              Cette action est irréversible.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteConfirm}>
-              Supprimer
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* Reject reservation dialog */}
-      <AlertDialog
-        open={!!rejectReservationId}
-        onOpenChange={() => setRejectReservationId(null)}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Refuser la réservation</AlertDialogTitle>
-            <AlertDialogDescription>
-              <Input
-                value={rejectReason}
-                onChange={(e) => setRejectReason(e.target.value)}
-                placeholder="Motif du refus (optionnel)"
-                className="mt-2"
-              />
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction onClick={handleRejectConfirm}>
-              Refuser
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </AppLayout>
   );
 }

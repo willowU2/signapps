@@ -52,6 +52,8 @@ image = { version = "0.25", default-features = false, features = ["png", "jpeg",
 # HMAC for signed grant tokens (W5 use)
 hmac = "0.12"
 sha2 = "0.10"
+# Hex encoding for QR tokens (SO8)
+hex = { workspace = true }
 thiserror = { workspace = true }
 
 # Cache for RBAC visualizer results (5 min TTL).

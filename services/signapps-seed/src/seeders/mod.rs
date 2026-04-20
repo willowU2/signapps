@@ -28,6 +28,7 @@ pub mod positions;
 pub mod public_links;
 pub mod pxe;
 pub mod raci;
+pub mod resources;
 pub mod sites;
 pub mod skills;
 pub mod tasks;
@@ -78,5 +79,7 @@ pub fn all() -> Vec<Box<dyn Seeder>> {
         // paris-hq site UUID.
         Box::new(sites::SitesSeeder),
         Box::new(groups::GroupsSeeder),
+        // SO8 - resources catalog (depends on org, sites, it-assets).
+        Box::new(resources::ResourcesSeeder),
     ]
 }

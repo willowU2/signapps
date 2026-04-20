@@ -11725,6 +11725,7 @@ dependencies = [
  "axum 0.7.9",
  "base64 0.22.1",
  "chrono",
+ "hex",
  "hmac",
  "image 0.25.9",
  "ldap3",

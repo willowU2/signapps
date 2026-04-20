@@ -47,6 +47,7 @@ import { PeopleTab } from "../people-tab";
 import { PoliciesTab } from "../policies-tab";
 import { PositionsTab } from "../positions-tab";
 import { RaciMatrixTab } from "../raci-matrix-tab";
+import { ResourcesTab } from "../resources-tab";
 import { SitesTab } from "../sites-tab";
 import { SkillsSection } from "../skills-section";
 
@@ -115,6 +116,7 @@ const NODE_TAB_LABELS: Record<string, string> = {
   policies: "Policies",
   groups: "Groupes",
   sites: "Sites",
+  resources: "Ressources",
   gpo: "GPO",
   computers: "Ordinateurs",
   kerberos: "Kerberos",
@@ -136,6 +138,7 @@ const PERSON_TAB_LABELS: Record<string, string> = {
   audit: "Audit",
   groups: "Groupes",
   sites: "Sites",
+  resources: "Ressources",
 };
 
 /** Tabs marked as stubs (no real implementation yet). */
@@ -372,6 +375,8 @@ function NodeModeDetailPanel({
         return <GroupsTab mode="node" node={node} />;
       case "sites":
         return <SitesTab mode="node" />;
+      case "resources":
+        return <ResourcesTab mode="node" nodeId={node.id} />;
       case "details":
         return (
           <DetailsTab
@@ -604,6 +609,8 @@ function PersonModeDetailPanel({
         return <GroupsTab mode="person" personId={person.id} />;
       case "sites":
         return <SitesTab mode="person" personId={person.id} />;
+      case "resources":
+        return <ResourcesTab mode="person" personId={person.id} />;
       case "audit":
         return <AuditTab entityType="person" entityId={person.id} />;
       default:

@@ -39,6 +39,10 @@
 //!   [`SiteBooking`] + [`BookingStatus`] : hiérarchie building > floor >
 //!   room > desk + rattachements + réservations.
 //!
+//! **SO8 addition (2026-04-19)** — catalogue unifié de ressources tangibles:
+//! - [`Resource`] + [`ResourceKind`] + [`ResourceStatus`] +
+//!   [`ResourceStatusLog`] : IT, véhicules, clés, badges, AV, licences.
+//!
 //! ## Design choices
 //!
 //! - Each entity carries `tenant_id` for multi-tenancy.
@@ -71,6 +75,7 @@ pub mod position_incumbent;
 pub mod provisioning_log;
 pub mod public_link;
 pub mod raci;
+pub mod resource;
 pub mod site;
 pub mod skill;
 pub mod template;
@@ -100,6 +105,7 @@ pub use position_incumbent::PositionIncumbent;
 pub use provisioning_log::ProvisioningLog;
 pub use public_link::{PublicLink, Visibility};
 pub use raci::{Raci, RaciRole};
+pub use resource::{Resource, ResourceKind, ResourceStatus, ResourceStatusLog};
 pub use site::{BookingStatus, OrgSite, SiteBooking, SiteKind, SitePerson, SitePersonRole};
 pub use skill::{Skill, SkillCategory};
 pub use template::{template_spec, Template};

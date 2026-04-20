@@ -63,6 +63,13 @@ import type {
   OrgSiteBookingRecord,
   OrgAvailabilityResponse,
   OrgOccupancyResponse,
+  // SO8
+  Resource,
+  ResourceKind,
+  ResourceStatus,
+  ResourceStatusLog,
+  ResourceCountsResponse,
+  InventoryResponse,
 } from "@/types/org";
 
 const client = getClient(ServiceName.ORG_SVC);
@@ -1132,6 +1139,101 @@ export const orgApi = {
     }) => client.post<OrgSiteBookingRecord>("/org/site-bookings", body),
     cancel: async (id: string) =>
       client.patch<void>(`/org/site-bookings/${id}/cancel`),
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // SO8 resources catalog
+  // ═══════════════════════════════════════════════════════════════════════
+  resources: {
+    list: async (params?: {
+      kind?: ResourceKind;
+      status?: ResourceStatus;
+      assigned_to_person_id?: string;
+      assigned_to_node_id?: string;
+      primary_site_id?: string;
+      include_archived?: boolean;
+    }) => {
+      const tenantId = getCurrentTenantId();
+      if (!tenantId) return shim<Resource[]>([]);
+      const p: Record<string, unknown> = { tenant_id: tenantId };
+      if (params?.kind) p.kind = params.kind;
+      if (params?.status) p.status = params.status;
+      if (params?.assigned_to_person_id)
+        p.assigned_to_person_id = params.assigned_to_person_id;
+      if (params?.assigned_to_node_id)
+        p.assigned_to_node_id = params.assigned_to_node_id;
+      if (params?.primary_site_id) p.primary_site_id = params.primary_site_id;
+      if (params?.include_archived)
+        p.include_archived = params.include_archived;
+      return client.get<Resource[]>("/org/resources", { params: p });
+    },
+    counts: async () => {
+      const tenantId = getCurrentTenantId();
+      if (!tenantId)
+        return shim<ResourceCountsResponse>({ buckets: [], total: 0 });
+      return client.get<ResourceCountsResponse>("/org/resources/counts", {
+        params: { tenant_id: tenantId },
+      });
+    },
+    get: async (id: string) => client.get<Resource>(`/org/resources/${id}`),
+    create: async (body: {
+      slug: string;
+      kind: ResourceKind;
+      name: string;
+      description?: string;
+      serial_or_ref?: string;
+      attributes?: Record<string, unknown>;
+      status?: ResourceStatus;
+      assigned_to_person_id?: string | null;
+      assigned_to_node_id?: string | null;
+      primary_site_id?: string | null;
+      purchase_date?: string;
+      purchase_cost_cents?: number;
+      currency?: string;
+      amortization_months?: number;
+      warranty_end_date?: string;
+      next_maintenance_date?: string;
+    }) => {
+      const tenantId = getCurrentTenantId();
+      return client.post<Resource>("/org/resources", {
+        tenant_id: tenantId,
+        ...body,
+      });
+    },
+    update: async (
+      id: string,
+      body: Partial<{
+        name: string;
+        description: string | null;
+        serial_or_ref: string | null;
+        attributes: Record<string, unknown>;
+        assigned_to_person_id: string | null;
+        assigned_to_node_id: string | null;
+        primary_site_id: string | null;
+        purchase_date: string | null;
+        purchase_cost_cents: number | null;
+        currency: string | null;
+        amortization_months: number | null;
+        warranty_end_date: string | null;
+        next_maintenance_date: string | null;
+      }>,
+    ) => client.put<Resource>(`/org/resources/${id}`, body),
+    archive: async (id: string) => client.delete(`/org/resources/${id}`),
+    transition: async (
+      id: string,
+      body: { to: ResourceStatus; reason?: string },
+    ) => client.post<Resource>(`/org/resources/${id}/status`, body),
+    history: async (id: string) =>
+      client.get<ResourceStatusLog[]>(`/org/resources/${id}/history`),
+    rotateQr: async (id: string) =>
+      client.post<Resource>(`/org/resources/${id}/qr/rotate`, {}),
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // SO8 user inventory (authenticated — any role)
+  // ═══════════════════════════════════════════════════════════════════════
+  inventory: {
+    mine: async () => client.get<InventoryResponse>("/me/inventory"),
   },
 };
 
