@@ -70,6 +70,17 @@ import type {
   ResourceStatusLog,
   ResourceCountsResponse,
   InventoryResponse,
+  // SO9
+  ResourceAssignment,
+  AssignmentSubjectType,
+  AssignmentRole,
+  Acl,
+  AclSubjectType,
+  AclEffect,
+  ResourceRenewal,
+  RenewalKind,
+  RenewalStatus,
+  TestAclResponse,
 } from "@/types/org";
 
 const client = getClient(ServiceName.ORG_SVC);
@@ -1227,6 +1238,162 @@ export const orgApi = {
       client.get<ResourceStatusLog[]>(`/org/resources/${id}/history`),
     rotateQr: async (id: string) =>
       client.post<Resource>(`/org/resources/${id}/qr/rotate`, {}),
+
+    // ─── SO9 — assignments N:N ────────────────────────────────────────
+    assignments: {
+      list: async (resourceId: string) =>
+        client.get<{ assignments: ResourceAssignment[] }>(
+          `/org/resources/${resourceId}/assignments`,
+        ),
+      history: async (resourceId: string) =>
+        client.get<{ assignments: ResourceAssignment[] }>(
+          `/org/resources/${resourceId}/assignments/history`,
+        ),
+      create: async (
+        resourceId: string,
+        body: {
+          subject_type: AssignmentSubjectType;
+          subject_id: string;
+          role: AssignmentRole;
+          is_primary?: boolean;
+          start_at?: string;
+          end_at?: string;
+          reason?: string;
+        },
+      ) => {
+        const tenantId = getCurrentTenantId();
+        return client.post<ResourceAssignment>(
+          `/org/resources/${resourceId}/assignments`,
+          { tenant_id: tenantId, ...body },
+        );
+      },
+      end: async (resourceId: string, assignmentId: string) =>
+        client.delete<ResourceAssignment>(
+          `/org/resources/${resourceId}/assignments/${assignmentId}`,
+        ),
+    },
+
+    // ─── SO9 — renouvellements ────────────────────────────────────────
+    renewals: {
+      list: async (resourceId: string) =>
+        client.get<ResourceRenewal[]>(`/org/resources/${resourceId}/renewals`),
+      create: async (
+        resourceId: string,
+        body: {
+          kind: RenewalKind;
+          due_date: string;
+          grace_period_days?: number;
+          renewal_notes?: string;
+        },
+      ) => {
+        const tenantId = getCurrentTenantId();
+        return client.post<ResourceRenewal>(
+          `/org/resources/${resourceId}/renewals`,
+          { tenant_id: tenantId, ...body },
+        );
+      },
+    },
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // SO9 — cross-resource renewals dashboard
+  // ═══════════════════════════════════════════════════════════════════════
+  renewals: {
+    list: async (params?: {
+      resource_id?: string;
+      kind?: RenewalKind;
+      status?: RenewalStatus;
+      due_from?: string;
+      due_to?: string;
+    }) => {
+      const tenantId = getCurrentTenantId();
+      if (!tenantId) return shim<ResourceRenewal[]>([]);
+      const p: Record<string, unknown> = { tenant_id: tenantId };
+      if (params?.resource_id) p.resource_id = params.resource_id;
+      if (params?.kind) p.kind = params.kind;
+      if (params?.status) p.status = params.status;
+      if (params?.due_from) p.due_from = params.due_from;
+      if (params?.due_to) p.due_to = params.due_to;
+      return client.get<ResourceRenewal[]>("/org/renewals", { params: p });
+    },
+    renew: async (id: string, body: { renewal_notes?: string } = {}) =>
+      client.post<ResourceRenewal>(`/org/renewals/${id}/renew`, body),
+    snooze: async (id: string, snoozed_until: string) =>
+      client.post<ResourceRenewal>(`/org/renewals/${id}/snooze`, {
+        snoozed_until,
+      }),
+    cancel: async (id: string) =>
+      client.post<ResourceRenewal>(`/org/renewals/${id}/cancel`, {}),
+    delete: async (id: string) => client.delete(`/org/renewals/${id}`),
+    exportIcsUrl: (params?: {
+      kind?: RenewalKind;
+      status?: RenewalStatus;
+    }): string => {
+      const tenantId = getCurrentTenantId();
+      const q = new URLSearchParams();
+      if (tenantId) q.set("tenant_id", tenantId);
+      if (params?.kind) q.set("kind", params.kind);
+      if (params?.status) q.set("status", params.status);
+      // Service base URL already carries /api/v1.
+      return `/api/v1/org/renewals/export.ics?${q.toString()}`;
+    },
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // SO9 — ACL universelle
+  // ═══════════════════════════════════════════════════════════════════════
+  acl: {
+    list: async (params?: {
+      subject_type?: AclSubjectType;
+      subject_id?: string;
+      resource_type?: string;
+      resource_id?: string;
+      action?: string;
+    }) => {
+      const tenantId = getCurrentTenantId();
+      if (!tenantId) return shim<Acl[]>([]);
+      const p: Record<string, unknown> = { tenant_id: tenantId };
+      if (params?.subject_type) p.subject_type = params.subject_type;
+      if (params?.subject_id) p.subject_id = params.subject_id;
+      if (params?.resource_type) p.resource_type = params.resource_type;
+      if (params?.resource_id) p.resource_id = params.resource_id;
+      if (params?.action) p.action = params.action;
+      return client.get<Acl[]>("/org/acl", { params: p });
+    },
+    create: async (body: {
+      subject_type: AclSubjectType;
+      subject_id?: string;
+      subject_ref?: string;
+      action: string;
+      resource_type: string;
+      resource_id?: string;
+      effect: AclEffect;
+      reason?: string;
+      valid_from?: string;
+      valid_until?: string;
+    }) => {
+      const tenantId = getCurrentTenantId();
+      return client.post<Acl>("/org/acl", {
+        tenant_id: tenantId,
+        ...body,
+      });
+    },
+    delete: async (id: string) => client.delete(`/org/acl/${id}`),
+    test: async (body: {
+      subject_type: "person";
+      subject_id: string;
+      action: string;
+      resource_type: string;
+      resource_id?: string;
+      roles?: string[];
+      group_ids?: string[];
+    }) => {
+      const tenantId = getCurrentTenantId();
+      return client.post<TestAclResponse>("/org/acl/test", {
+        tenant_id: tenantId,
+        ...body,
+      });
+    },
   },
 
   // ═══════════════════════════════════════════════════════════════════════
