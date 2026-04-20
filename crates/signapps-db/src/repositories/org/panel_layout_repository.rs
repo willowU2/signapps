@@ -160,6 +160,9 @@ pub fn default_layout(role: PanelRole, entity_type: PanelEntityType) -> PanelLay
                 // Extras below go into the "..." overflow menu (after MAX_MAIN_TABS=5).
                 "groups",
                 "sites",
+                // SO8 — resources right after sites so admin can pivot from
+                // physical space to the assets based there.
+                "resources",
                 "policies",
                 "decisions",
                 "raci",
@@ -181,6 +184,9 @@ pub fn default_layout(role: PanelRole, entity_type: PanelEntityType) -> PanelLay
                 // Overflow "..." menu.
                 "groups",
                 "sites",
+                // SO8 — after sites so admin can see the person's assigned
+                // resources next to their physical location.
+                "resources",
                 "audit",
             ],
             LEGACY_HIDDEN_TABS.to_vec(),

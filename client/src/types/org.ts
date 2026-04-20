@@ -515,3 +515,77 @@ export interface OrgOccupancyResponse {
   capacity?: number | null;
   buckets: OrgOccupancyBucket[];
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SO8 — catalogue unifié de ressources tangibles
+// ═══════════════════════════════════════════════════════════════════════════
+
+/** Taxonomie fermée des ressources gérées. */
+export type ResourceKind =
+  | "it_device"
+  | "vehicle"
+  | "key_physical"
+  | "badge"
+  | "av_equipment"
+  | "furniture"
+  | "mobile_phone"
+  | "license_software"
+  | "other";
+
+/** Cycle de vie d'une ressource. */
+export type ResourceStatus =
+  | "ordered"
+  | "active"
+  | "loaned"
+  | "in_maintenance"
+  | "returned"
+  | "retired";
+
+/** `org_resources` row. */
+export interface Resource {
+  id: string;
+  tenant_id: string;
+  kind: ResourceKind;
+  slug: string;
+  name: string;
+  description?: string | null;
+  serial_or_ref?: string | null;
+  attributes: Record<string, unknown>;
+  status: ResourceStatus;
+  assigned_to_person_id?: string | null;
+  assigned_to_node_id?: string | null;
+  primary_site_id?: string | null;
+  purchase_date?: string | null;
+  purchase_cost_cents?: number | null;
+  currency?: string | null;
+  amortization_months?: number | null;
+  warranty_end_date?: string | null;
+  next_maintenance_date?: string | null;
+  qr_token?: string | null;
+  archived: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+/** Append-only status log entry. */
+export interface ResourceStatusLog {
+  id: number;
+  resource_id: string;
+  from_status?: ResourceStatus | null;
+  to_status: ResourceStatus;
+  actor_user_id?: string | null;
+  reason?: string | null;
+  at: string;
+}
+
+/** Response of `GET /org/resources/counts`. */
+export interface ResourceCountsResponse {
+  buckets: Array<{ kind: string; count: number }>;
+  total: number;
+}
+
+/** Response of `GET /me/inventory`. */
+export interface InventoryResponse {
+  by_kind: Array<{ kind: string; resources: Resource[] }>;
+  total: number;
+}
