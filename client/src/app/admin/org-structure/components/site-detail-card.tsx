@@ -3,8 +3,10 @@
 import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MapPin, X, Users } from "lucide-react";
+import { MapPin, X, Users, UserPlus, UserMinus } from "lucide-react";
+import { toast } from "sonner";
 import { orgApi } from "@/lib/api/org";
+import { AddSitePersonDialog } from "./dialogs/add-site-person-dialog";
 import type {
   OrgSiteRecord,
   OrgSitePersonsResponse,
@@ -45,6 +47,11 @@ export function SiteDetailCard({
   );
   const [bookings, setBookings] = useState<OrgSiteBookingRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const [addOpen, setAddOpen] = useState(false);
+  const [removing, setRemoving] = useState<string | null>(null);
+  const [reloadTick, setReloadTick] = useState(0);
+
+  const reload = () => setReloadTick((t) => t + 1);
 
   useEffect(() => {
     let cancelled = false;
@@ -81,7 +88,20 @@ export function SiteDetailCard({
     return () => {
       cancelled = true;
     };
-  }, [siteId]);
+  }, [siteId, reloadTick]);
+
+  const handleDetach = async (linkId: string) => {
+    setRemoving(linkId);
+    try {
+      await orgApi.orgSites.detachPerson(linkId);
+      toast.success("Rattachement retiré");
+      reload();
+    } catch (err) {
+      toast.error(`Erreur : ${(err as Error).message}`);
+    } finally {
+      setRemoving(null);
+    }
+  };
 
   const personsById = new Map(persons.map((p) => [p.id, p]));
 
@@ -177,19 +197,31 @@ export function SiteDetailCard({
         )}
 
         <div className="p-4 border-b border-border">
-          <p className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-1">
-            <Users className="h-3 w-3" />
-            {assignedPersons.length} personne
-            {assignedPersons.length > 1 ? "s" : ""} rattachée
-            {assignedPersons.length > 1 ? "s" : ""}
-          </p>
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+              <Users className="h-3 w-3" />
+              {assignedPersons.length} personne
+              {assignedPersons.length > 1 ? "s" : ""} rattachée
+              {assignedPersons.length > 1 ? "s" : ""}
+            </p>
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-7 text-xs"
+              onClick={() => setAddOpen(true)}
+              title="Rattacher une personne"
+            >
+              <UserPlus className="h-3 w-3 mr-1" />
+              Rattacher
+            </Button>
+          </div>
           <div className="space-y-2">
             {assignedPersons.slice(0, 15).map((link) => {
               const p = personsById.get(link.person_id);
               return (
                 <div
                   key={link.id}
-                  className="flex items-center gap-2 p-1.5 rounded hover:bg-muted/50"
+                  className="group flex items-center gap-2 p-1.5 rounded hover:bg-muted/50"
                 >
                   <span
                     className={`text-[10px] rounded-full w-7 h-7 flex items-center justify-center font-semibold ${avatarTint(link.person_id)}`}
@@ -197,15 +229,26 @@ export function SiteDetailCard({
                     {personInitials(p)}
                   </span>
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm truncate">
+                    <p className="text-sm truncate font-medium">
                       {p
                         ? `${p.first_name} ${p.last_name}`
-                        : link.person_id.slice(0, 8)}
+                        : "Personne inconnue"}
                     </p>
                     <p className="text-[10px] text-muted-foreground">
-                      {link.role}
+                      {link.role === "primary" ? "Principal" : "Secondaire"}
+                      {p?.email ? ` · ${p.email}` : ""}
                     </p>
                   </div>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive"
+                    onClick={() => handleDetach(link.id)}
+                    disabled={removing === link.id}
+                    title="Détacher"
+                  >
+                    <UserMinus className="h-3.5 w-3.5" />
+                  </Button>
                 </div>
               );
             })}
@@ -263,6 +306,13 @@ export function SiteDetailCard({
           </div>
         </div>
       </div>
+
+      <AddSitePersonDialog
+        site={addOpen ? site : null}
+        persons={persons}
+        onClose={() => setAddOpen(false)}
+        onAdded={reload}
+      />
     </div>
   );
 }

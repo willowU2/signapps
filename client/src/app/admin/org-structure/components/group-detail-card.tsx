@@ -3,8 +3,10 @@
 import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Users, X } from "lucide-react";
+import { Users, X, UserPlus, UserMinus } from "lucide-react";
+import { toast } from "sonner";
 import { orgApi } from "@/lib/api/org";
+import { AddGroupMemberDialog } from "./dialogs/add-group-member-dialog";
 import type {
   OrgGroupRecord,
   OrgGroupMembersResponse,
@@ -40,6 +42,11 @@ export function GroupDetailCard({
   const [group, setGroup] = useState<OrgGroupRecord | null>(null);
   const [members, setMembers] = useState<OrgGroupMembersResponse | null>(null);
   const [loading, setLoading] = useState(true);
+  const [addOpen, setAddOpen] = useState(false);
+  const [removing, setRemoving] = useState<string | null>(null);
+  const [reloadTick, setReloadTick] = useState(0);
+
+  const reload = () => setReloadTick((t) => t + 1);
 
   useEffect(() => {
     let cancelled = false;
@@ -64,7 +71,25 @@ export function GroupDetailCard({
     return () => {
       cancelled = true;
     };
-  }, [groupId]);
+  }, [groupId, reloadTick]);
+
+  const handleRemove = async (personId: string) => {
+    if (!group) return;
+    setRemoving(personId);
+    try {
+      await orgApi.orgGroups.removeMember(group.id, personId);
+      toast.success("Membre retiré");
+      reload();
+    } catch (err) {
+      toast.error(`Erreur : ${(err as Error).message}`);
+    } finally {
+      setRemoving(null);
+    }
+  };
+
+  const canEditMembers = group
+    ? group.kind === "static" || group.kind === "hybrid"
+    : false;
 
   // Prefer personsById built from resolved members first (freshest data),
   // fall back on the broader persons prop.
@@ -138,17 +163,33 @@ export function GroupDetailCard({
 
       <div className="flex-1 overflow-y-auto">
         <div className="p-4">
-          <p className="text-xs font-medium text-muted-foreground mb-3">
-            {resolvedIds.length} membre{resolvedIds.length > 1 ? "s" : ""}{" "}
-            résolu{resolvedIds.length > 1 ? "s" : ""}
-          </p>
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-xs font-medium text-muted-foreground">
+              {resolvedIds.length} membre{resolvedIds.length > 1 ? "s" : ""}{" "}
+              résolu{resolvedIds.length > 1 ? "s" : ""}
+            </p>
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-7 text-xs"
+              onClick={() => setAddOpen(true)}
+              title={
+                canEditMembers
+                  ? "Ajouter un membre"
+                  : "Groupe dynamic/derived — membership auto"
+              }
+            >
+              <UserPlus className="h-3 w-3 mr-1" />
+              Ajouter
+            </Button>
+          </div>
           <div className="space-y-2">
             {resolvedIds.map((id: string) => {
               const p = personsById.get(id);
               return (
                 <div
                   key={id}
-                  className="flex items-center gap-2 p-2 rounded hover:bg-muted/50"
+                  className="group flex items-center gap-2 p-2 rounded hover:bg-muted/50"
                 >
                   <span
                     className={`text-[10px] rounded-full w-7 h-7 flex items-center justify-center font-semibold ${avatarTint(id)}`}
@@ -156,8 +197,8 @@ export function GroupDetailCard({
                     {personInitials(p)}
                   </span>
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm truncate">
-                      {p ? `${p.first_name} ${p.last_name}` : id.slice(0, 8)}
+                    <p className="text-sm truncate font-medium">
+                      {p ? `${p.first_name} ${p.last_name}` : `Membre inconnu`}
                     </p>
                     {p?.email && (
                       <p className="text-[10px] text-muted-foreground truncate">
@@ -165,6 +206,18 @@ export function GroupDetailCard({
                       </p>
                     )}
                   </div>
+                  {canEditMembers && (
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive"
+                      onClick={() => handleRemove(id)}
+                      disabled={removing === id}
+                      title="Retirer du groupe"
+                    >
+                      <UserMinus className="h-3.5 w-3.5" />
+                    </Button>
+                  )}
                 </div>
               );
             })}
@@ -176,6 +229,13 @@ export function GroupDetailCard({
           </div>
         </div>
       </div>
+
+      <AddGroupMemberDialog
+        group={addOpen ? group : null}
+        persons={persons}
+        onClose={() => setAddOpen(false)}
+        onAdded={reload}
+      />
     </div>
   );
 }
